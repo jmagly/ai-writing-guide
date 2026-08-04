@@ -76,6 +76,40 @@ aiwg storage migrate memory \
 
 (`fortemi:<server-name>` references an MCP server registered via `aiwg mcp add fortemi --command <…>`.)
 
+### Ingest the research corpus into a memory store
+
+The provider-neutral corpus command selects textual research records, preserves
+Markdown frontmatter as adapter metadata, and skips binary attachments rather
+than decoding them as UTF-8. Previewing never connects to the destination:
+
+```bash
+aiwg storage import-corpus --dry-run
+aiwg storage import-corpus                       # local `fortemi` stdio server
+aiwg storage import-corpus --server fortemi-enterprise
+aiwg storage import-corpus --to obsidian:~/vault # any implemented storage backend
+```
+
+Fortemi destinations use deterministic IDs of the form
+`research:<corpus-relative-path>`, so the resumable AIWG migration receipt
+replaces the old machine-specific `import-ids.log`. Binary attachment upload is
+not part of the text-based `StorageAdapter` contract; skipped paths are counted
+explicitly and remain in the source corpus for a future binary-attachment
+adapter rather than being corrupted or silently discarded.
+
+For an authenticated internal/Enterprise service, register an HTTPS MCP server
+with a credential reference. Only the environment-variable name is persisted:
+
+```bash
+aiwg mcp add fortemi-enterprise \
+  --type http \
+  --url https://memory.example.internal/mcp \
+  --header-env Authorization=AIWG_FORTEMI_TOKEN
+```
+
+Set `AIWG_FORTEMI_TOKEN` in the approved process secret provider before the live
+run. AIWG does not read legacy Claude credential files and does not accept a
+token in `storage.config`. Non-loopback remote endpoints must use HTTPS.
+
 ## How it works
 
 1. **Build adapters** — one each from `--from` and `--to` specs.

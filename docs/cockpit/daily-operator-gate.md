@@ -29,6 +29,8 @@ Required configuration:
 export AIWG_COCKPIT_EXECUTOR_URL=http://127.0.0.1:8122
 export AIWG_COCKPIT_EXECUTOR_TOKEN_FILE=/protected/path/cockpit-executor.token
 export AIWG_COCKPIT_LIVE_PROVIDER=codex
+# Optional: allow a slow provider-backed discovery turn up to two minutes.
+export AIWG_COCKPIT_LIVE_WORKLOAD_TIMEOUT_MS=120000
 
 export AIWG_COCKPIT_DAILY_PREVIOUS_AIWG_VERSION=2026.7.14
 export AIWG_COCKPIT_DAILY_CANDIDATE_AIWG_VERSION=2026.7.15
@@ -44,14 +46,45 @@ export AIWG_COCKPIT_LIVE_EXPECT_CWD_HOST=/home/operator
 export AIWG_COCKPIT_LIVE_EXPECT_CWD_CONTAINER=/home/agent
 export AIWG_COCKPIT_LIVE_MUTATION_FILE=/operator/scratch/cockpit-daily-mutation
 export AIWG_COCKPIT_LIVE_PROVISION_IMAGE=agentic/codex@sha256:<digest>
+# Optional: gate-owned provider-login copy or other operator-approved input.
+export AIWG_COCKPIT_LIVE_PROVISION_CONTAINER_MOUNT=/operator/protected/codex:/home/agent/.codex
+# Optional: explicit Tier 0 network for a provider workload that needs egress.
+export AIWG_COCKPIT_LIVE_PROVISION_CONTAINER_NETWORK=bridge
 ```
 
 The token file must be a regular file inaccessible to group and other users
 (mode `0600` on Unix). The mutation path must be a harmless, gate-owned scratch
-path visible at the same location from the test runner and the temporary target
-(for a container, use a scoped bind mount or loadout). The gate verifies exact
-content and removes the mutation file during scoped cleanup. The container image
-must use an immutable tag or digest; `latest` fails preflight.
+path with a dedicated non-root parent directory. For a provisioned container,
+the harness creates that parent with mode `0700` and bind-mounts only that
+directory at the same absolute path. The gate verifies exact content and removes
+the mutation file during scoped cleanup; operators remain responsible for
+removing the empty parent after retaining the reports. The container image must
+use an immutable tag or digest; `latest` fails preflight.
+
+If previous-stable targets are provisioned outside the gate, their container
+must already bind-mount the mutation file's parent directory at the same
+absolute path. Candidate targets provisioned by the gate receive that mount
+automatically. Before either phase, grant the declared non-root container uid
+write access to that dedicated directory without opening it to other users; a
+POSIX ACL for that uid preserves the host operator's ownership and private
+default mode. The provider workload timeout defaults to 120 seconds and may be
+set from 10 seconds through 15 minutes with
+`AIWG_COCKPIT_LIVE_WORKLOAD_TIMEOUT_MS`; keep it bounded to the slowest
+approved provider turn rather than using an unbounded wait.
+
+When the provider workload needs a pre-authenticated file-backed profile, point
+`AIWG_COCKPIT_LIVE_PROVISION_CONTAINER_MOUNT` at one gate-owned host directory
+and its absolute container destination. The value is a mount reference, never a
+credential value, and is not written to the reports. Do not point it at the
+operator's original profile: make a private, disposable copy, grant only the
+container runtime uid access, and remove that copy after the gate.
+
+Managed sandbox networks remain internal by default. If the selected live
+provider requires upstream egress, set
+`AIWG_COCKPIT_LIVE_PROVISION_CONTAINER_NETWORK` to an existing
+operator-approved Docker network such as `bridge`. The report records that
+network choice. It is an explicit Tier 0 compatibility posture, not a claim
+that the container retains the managed default-deny network boundary.
 
 Use exact CalVer package versions for AIWG and an immutable release version or
 commit for the executor. Mutable names such as `main` and `latest` fail
@@ -87,6 +120,12 @@ runtimes, or broaden host mutation. The wrapper attempts rollback after every
 attempted upgrade, including a failed or partially applied upgrade. A successful
 gate intentionally finishes on the declared previous-stable versions after the
 rollback smoke.
+
+The disconnect hook must also close existing keep-alive connections between the
+Bridge and executor. Stopping only a proxy listener is insufficient when its
+already-forked connection handlers remain alive; terminate those scoped child
+connections or apply an equivalently narrow network interruption before the
+hook returns.
 
 ## What must pass
 

@@ -38,6 +38,18 @@ vi.mock('node:fs', () => {
     writeFile: vi.fn(async (path: string, content: string) => {
       store.set(path, content);
     }),
+    rename: vi.fn(async (from: string, to: string) => {
+      const content = store.get(from);
+      if (content === undefined) throw Object.assign(new Error(`ENOENT: ${from}`), { code: 'ENOENT' });
+      store.set(to, content);
+      store.delete(from);
+    }),
+    unlink: vi.fn(async (path: string) => { store.delete(path); }),
+    open: vi.fn(async (path: string) => {
+      if (store.has(path)) throw Object.assign(new Error(`EEXIST: ${path}`), { code: 'EEXIST' });
+      store.set(path, 'locked');
+      return { close: vi.fn(async () => undefined) };
+    }),
     appendFile: vi.fn(async () => undefined),
     readdir: vi.fn(async (path: string, _opts?: unknown) => {
       const prefix = path.endsWith('/') ? path : path + '/';
@@ -84,6 +96,24 @@ vi.mock('../../../../src/cli/handlers/ralph-launcher.js', () => ({
     pid: 99999,
     message: 'mock-launched',
   })),
+}));
+
+vi.mock('../../../../src/serve/shared-host-scheduler.js', () => ({
+  FileAdmissionStore: class FileAdmissionStore {},
+  SharedHostScheduler: class SharedHostScheduler {
+    submit(request: { requestId: string }) {
+      return {
+        requestId: request.requestId,
+        state: 'admitted',
+        reason: 'admitted by test policy',
+        leaseExpiresAt: '2026-08-03T12:05:00.000Z',
+      };
+    }
+    renew(requestId: string) {
+      return { requestId, state: 'admitted', leaseExpiresAt: '2026-08-03T12:05:00.000Z' };
+    }
+    release() { return { revision: 1, records: {} }; }
+  },
 }));
 
 import { mcHandler } from '../../../../src/cli/handlers/mc.js';
@@ -331,6 +361,37 @@ describe('mc abort', () => {
     const missionId = dispatchResult.message!;
     const abortResult = await mcHandler.execute(makeCtx(['abort', sessionId, missionId]));
     expect(abortResult.exitCode).toBe(0);
+    consoleSpy.mockRestore();
+  });
+
+  it('rejects stale revisions and replays an idempotent cancel', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const sessionId = (await mcHandler.execute(makeCtx(['start']))).message!;
+    const missionId = (await mcHandler.execute(makeCtx(['dispatch', sessionId, 'Some task']))).message!;
+    const path = `.aiwg/ralph-external/mc/sessions/${sessionId}/session.json`;
+    const current = JSON.parse(inMemoryFs.store.get(path)!);
+
+    const stale = await mcHandler.execute(makeCtx([
+      'cancel', sessionId, missionId,
+      '--expected-updated-at', '2000-01-01T00:00:00.000Z',
+      '--request-id', 'request-stale',
+    ]));
+    expect(stale.exitCode).toBe(3);
+
+    const first = await mcHandler.execute(makeCtx([
+      'cancel', sessionId, missionId,
+      '--expected-updated-at', current.updatedAt,
+      '--request-id', 'request-1',
+    ]));
+    expect(first.exitCode).toBe(0);
+    expect(JSON.parse(first.message!)).toMatchObject({ ok: true, replayed: false });
+
+    const replay = await mcHandler.execute(makeCtx([
+      'cancel', sessionId, missionId,
+      '--request-id', 'request-1',
+    ]));
+    expect(replay.exitCode).toBe(0);
+    expect(JSON.parse(replay.message!)).toMatchObject({ ok: true, replayed: true });
     consoleSpy.mockRestore();
   });
 });

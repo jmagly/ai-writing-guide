@@ -5,7 +5,7 @@
     "email": "support@aiwg.io"
   },
   "description": "AIWG - Modular agentic framework for SDLC, marketing automation, and workflow orchestration. 200+ agents, 67+ CLI commands, 400+ deployable agent/skill/command/rule artifacts.",
-  "version": "2026.8.3",
+  "version": "2026.8.4",
   "plugins": [
     {
       "name": "sdlc",
@@ -245,6 +245,25 @@
       ]
     },
     {
+      "name": "aiwg-dev",
+      "source": "./agentic/code/plugins/aiwg-dev",
+      "description": "Developer tooling for building AIWG itself and AIWG addons/frameworks. Not for end users — install explicitly with `aiwg use aiwg-dev`.",
+      "version": "2026.8.3",
+      "author": {
+        "name": "AIWG Contributors"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "aiwg",
+        "development",
+        "validation",
+        "contributor",
+        "devtools",
+        "scaffolding"
+      ]
+    },
+    {
       "name": "auto-memory",
       "source": "./agentic/code/plugins/auto-memory",
       "description": "Automatic memory seed templates for AIWG projects",
@@ -260,6 +279,30 @@
         "context",
         "scaffolding",
         "claude-code"
+      ]
+    },
+    {
+      "name": "browser-control",
+      "source": "./agentic/code/plugins/browser-control",
+      "description": "Drive a real, user-installed Chromium-derived browser from an AIWG agent. Wraps @playwright/mcp with a setup wizard, health-check doctor, allow-list enforcement, and an opinionated agent persona that respects authorization and audit boundaries.",
+      "version": "2026.8.3",
+      "author": {
+        "name": "AIWG Contributors"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "browser",
+        "playwright",
+        "playwright-mcp",
+        "automation",
+        "authentication",
+        "extension",
+        "chromium",
+        "chrome",
+        "edge",
+        "cdp",
+        "browser-extension"
       ]
     },
     {
@@ -293,6 +336,25 @@
       "license": "MIT",
       "category": "productivity",
       "keywords": []
+    },
+    {
+      "name": "compound-memory",
+      "source": "./agentic/code/plugins/compound-memory",
+      "description": "Governed orchestration across AIWG line memory, semantic memory, and llm-wiki.",
+      "version": "2026.8.3",
+      "author": {
+        "name": "AIWG Contributors"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "memory",
+        "compound-memory",
+        "line-memory",
+        "llm-wiki",
+        "semantic-memory",
+        "persistent-context"
+      ]
     },
     {
       "name": "daemon",

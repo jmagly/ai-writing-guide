@@ -56,7 +56,7 @@ try {
 
   // S1 — surface auth: control surface is gated, constant-time bearer token
   assert.equal((await fetch(`${base}/api/inventory`)).status, 401, 'S1: unauthed -> 401');
-  assert.equal((await fetch(`${base}/api/inventory?token=not-it`)).status, 401, 'S1: wrong token -> 401');
+  assert.equal((await fetch(`${base}/api/inventory?token=${encodeURIComponent(TOKEN)}`)).status, 401, 'S1: URL token is rejected even when valid');
   assert.equal((await api('/api/inventory')).status, 200, 'S1: authed -> 200');
 
   // E1/S3 — approval integrity: a decision needs the token AND cannot be flipped

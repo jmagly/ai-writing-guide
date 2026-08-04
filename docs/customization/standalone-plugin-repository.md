@@ -39,6 +39,27 @@ rewritten.
 
 ## Install smoke
 
+Before publication, exercise the same Git-native install path consumers use.
+Choose project-local or global state explicitly; both update their associated
+package registry and marketplace/Fortemi indices.
+
+```bash
+aiwg install https://git.example.org/team/team-tools.git \
+  --ref v1.0.0 \
+  --package team-tools \
+  --project-local \
+  --deploy \
+  --provider claude
+
+aiwg marketplace verify team/team-tools --project-local
+```
+
+See [Git-Native Package Exchange](../providers/git-native-marketplace.md) for
+publisher signatures, trust policy, catalogs, portable export/import, mirrors,
+recovery, and key rotation.
+
+The provider-native archive smoke remains useful as a second packaging gate:
+
 Extract each archive into a disposable repository before publication:
 
 ```bash

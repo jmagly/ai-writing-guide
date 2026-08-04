@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/marketplace/aiwg-marketplace-lock.v1.schema.json",
+  "title": "Immutable AIWG Git package lock",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "lockId",
+    "identity",
+    "version",
+    "canonicalRemote",
+    "requestedRef",
+    "resolvedCommit",
+    "gitTreeObject",
+    "treeSha256",
+    "artifactSha256",
+    "wrapperSchemaVersion",
+    "fortemiProfile",
+    "envelopeSha256",
+    "dependencyLocks",
+    "createdAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "aiwg.marketplace.package-lock.v1" },
+    "lockId": { "$ref": "aiwg-marketplace-envelope.v1.schema.json#/$defs/lockId" },
+    "identity": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "minLength": 1 },
+    "canonicalRemote": { "type": "string", "pattern": "^(https?://|ssh://|git@)" },
+    "requestedRef": { "type": "string", "minLength": 1 },
+    "resolvedCommit": { "$ref": "aiwg-marketplace-envelope.v1.schema.json#/$defs/gitObject" },
+    "gitTreeObject": { "$ref": "aiwg-marketplace-envelope.v1.schema.json#/$defs/gitObject" },
+    "treeSha256": { "$ref": "aiwg-marketplace-envelope.v1.schema.json#/$defs/sha256" },
+    "artifactSha256": { "$ref": "aiwg-marketplace-envelope.v1.schema.json#/$defs/sha256" },
+    "wrapperSchemaVersion": { "type": "string", "minLength": 1 },
+    "fortemiProfile": { "const": "2.0.0/full-v1" },
+    "envelopeSha256": { "$ref": "aiwg-marketplace-envelope.v1.schema.json#/$defs/sha256" },
+    "dependencyLocks": {
+      "type": "object",
+      "propertyNames": { "minLength": 1 },
+      "additionalProperties": { "$ref": "aiwg-marketplace-envelope.v1.schema.json#/$defs/lockId" }
+    },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

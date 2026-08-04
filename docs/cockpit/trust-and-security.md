@@ -6,24 +6,28 @@ to trust each instance's link to the executor). Keeping them separate is
 deliberate — a green local session tells you nothing about a degraded
 instance transport, and vice versa.
 
-## Local auth: token, CSRF, origin
+## Local auth: one-time bootstrap, session, CSRF, origin
 
-Every Bridge launch mints a fresh random bearer token. All `/api` requests
-must pass, in order:
+Every Bridge launch mints a native-shell bearer that never enters browser
+content. A shell uses it once to request a 60-second, audience-bound bootstrap
+nonce, places only that nonce in a URL fragment, and the page exchanges it for
+an HttpOnly `SameSite=Strict` session. The nonce is deleted on every exchange
+attempt, so expiry, audience mismatch, and replay fail closed. All `/api`
+requests must then pass, in order:
 
 1. **Origin check** — browser requests must originate from the Bridge's own
    loopback origin.
-2. **Bearer token** — `Authorization: Bearer …` (or `?token=` for
-   EventSource), compared constant-time.
-3. **CSRF** — mutating verbs with an Origin must echo the token in an
-   `x-cockpit-csrf` header (the served app receives it via a
-   `SameSite=Strict` cookie).
+2. **Authentication** — either an explicit constant-time bearer for native
+   automation or the HttpOnly browser session cookie. Query credentials are
+   never accepted.
+3. **CSRF** — session-authenticated mutations must echo their independent,
+   session-bound CSRF value in `x-cockpit-csrf`.
 4. **Real-executor assertion** — requests are refused when the upstream looks
    like the test mock, unless a test harness explicitly allows it.
 
-The UI receives the token by injection into the served page
-(`window.__COCKPIT_TOKEN__`); shells receive it through the runtime handshake
-below.
+The UI receives no reusable token. REST, native `EventSource` reconnects, and
+PTY WebSocket upgrades use the same-origin session cookie. The bootstrap
+fragment is removed with `history.replaceState` before API traffic begins.
 
 ## Executor identity and PTY custody
 
@@ -38,8 +42,8 @@ errors.
 The executor bearer never enters HTML, browser state, WebSocket URLs, Cockpit
 audit JSON, or process arguments. REST/A2A calls receive the header inside the
 Bridge. PTY sockets also terminate at the Bridge: the browser presents only the
-per-launch Cockpit token as a private WebSocket subprotocol, which the Bridge
-removes before adding the executor bearer to the upstream upgrade. Attach
+HttpOnly Cockpit session cookie, which the Bridge validates before adding the
+executor bearer to the upstream upgrade. Attach
 targets are opaque, in-memory, same-executor mappings restricted to the formal
 `/agents/:id/sessions/:id/attach` shape.
 
@@ -85,6 +89,12 @@ Strictness knobs:
 - `AIWG_COCKPIT_REQUIRE_KEYCHAIN=1` — fail launch on keychain store failure.
 - `AIWG_COCKPIT_KEYCHAIN_DISABLED=1` — skip the keychain (plaintext runtime
   file only; for constrained environments).
+
+The runtime bearer remains native-shell material. Browser, Tauri, and VS Code
+load URLs contain only one-time fragment nonces; SSE uses `/api/events` with
+the HttpOnly session and no query credential. The VS Code wrapper permits only
+the exact resolved Bridge origin in `frame-src`, and the Tauri baseline contains
+no wildcard loopback port.
 
 ## Posture badges (what the UI is telling you)
 
@@ -162,3 +172,6 @@ Two proof-of-concept gates run in CI with every Cockpit check
 executor sessions alive — control plane and data plane genuinely separate)
 and a security-checks suite (auth, origin, injection surfaces). The mock
 executor these use is test-only ([Development](./development.md#the-mock-boundary)).
+Integration proofs additionally cover missing bootstrap, expiry, replay,
+audience mismatch, cross-Bridge use, cookie-bound REST/SSE/PTY, and scans that
+prevent reusable token material from entering HTML or URLs (#1595/#1968).

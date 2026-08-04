@@ -1,0 +1,44 @@
+{
+  "task": {
+    "id": "task-release-42",
+    "status": {
+      "state": "input-required",
+      "message": {
+        "messageId": "prompt-message-42",
+        "role": "agent",
+        "parts": [
+          { "kind": "text", "text": "Approve the production release?" }
+        ],
+        "metadata": {
+          "https://agentic-sandbox.aiwg.io/extensions/hitl-prompt/v1": {
+            "prompt_id": "9f4b15b6-6e1d-4c83-9a7f-43f8dd2d0d65",
+            "prompt": "Approve the production release?",
+            "response_schema": {
+              "type": "object",
+              "required": ["approved"],
+              "properties": {
+                "approved": { "type": "boolean" }
+              },
+              "additionalProperties": false
+            },
+            "allowed_responders": ["specific:release-manager@example.com"]
+          }
+        }
+      }
+    }
+  },
+  "response": {
+    "messageId": "response-message-42",
+    "role": "user",
+    "taskId": "task-release-42",
+    "parts": [
+      { "kind": "data", "data": { "approved": true } }
+    ],
+    "metadata": {
+      "hitl_response_for": {
+        "prompt_id": "9f4b15b6-6e1d-4c83-9a7f-43f8dd2d0d65",
+        "payload": { "approved": true }
+      }
+    }
+  }
+}

@@ -73,6 +73,8 @@ export interface WebReleaseOptions {
   cacheRoot?: string;
   publicKeyPem?: string | Buffer;
   fetcher?: ResourceFetcher;
+  /** Returns a bearer token at request time. Tokens never participate in URLs or cache keys. */
+  credentialProvider?: () => Promise<string | null>;
   /** Test/development escape hatch. HTTP remains restricted to loopback. */
   allowInsecureLoopbackHttp?: boolean;
 }
@@ -104,7 +106,7 @@ export interface VerifiedWebRelease {
 }
 
 export interface VerifiedRawResourceOptions
-  extends Pick<WebReleaseOptions, "baseUrl" | "fetcher" | "allowInsecureLoopbackHttp"> {
+  extends Pick<WebReleaseOptions, "baseUrl" | "fetcher" | "credentialProvider" | "allowInsecureLoopbackHttp"> {
   offline?: boolean;
 }
 
@@ -425,29 +427,12 @@ function resourceUrl(base: URL, relativePath: string): string {
   return url.toString();
 }
 
-function resourceAccessToken(): string | undefined {
-  const token = process.env.AIWG_RESOURCE_ACCESS_TOKEN;
-  const tokenFile = process.env.AIWG_RESOURCE_ACCESS_TOKEN_FILE;
-  if (token && tokenFile) throw new Error("Configure only one AIWG resource access token source");
-  if (token) {
-    if (token.trim() !== token || token.length < 16) throw new Error("AIWG resource access token is malformed");
-    return token;
-  }
-  if (!tokenFile) return undefined;
-  const bytes = readVerifiedRegularFile(path.resolve(tokenFile), {
-    label: "AIWG resource access token file",
-    maxBytes: 4096,
-  });
-  const value = bytes.toString("utf8").trim();
-  if (value.length < 16 || /\s/.test(value)) throw new Error("AIWG resource access token file is malformed");
-  return value;
-}
-
 async function fetchBytes(
   fetcher: ResourceFetcher,
   url: string,
   label: string,
   maxBytes: number,
+  bearerToken?: string | null,
 ): Promise<Buffer> {
   if (!Number.isSafeInteger(maxBytes) || maxBytes < 0) throw new Error(`${label} has an invalid network size limit`);
   const controller = new AbortController();
@@ -462,13 +447,12 @@ async function fetchBytes(
     }, RESOURCE_FETCH_TIMEOUT_MS);
   });
   try {
-    const accessToken = resourceAccessToken();
     const response = await Promise.race([
       fetcher(url, {
         redirect: "error",
         headers: {
           "accept-encoding": "identity",
-          ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}),
+          ...(bearerToken ? { authorization: `Bearer ${bearerToken}` } : {}),
         },
         signal: controller.signal,
       }),
@@ -1147,16 +1131,21 @@ export async function resolveWebRelease(options: WebReleaseOptions = {}): Promis
   const base = normalizeBaseUrl(options.baseUrl ?? DEFAULT_RESOURCE_BASE_URL, options.allowInsecureLoopbackHttp === true);
   // Validate injected trust material before reading cache or making requests.
   loadTrustRoot(publicKeyPem);
+  const bearerToken = options.offline ? null : await options.credentialProvider?.() ?? null;
+  const authorize: ResourceFetcher = async (input, init = {}) => {
+    const headers = { ...(init.headers || {}), ...(bearerToken ? { authorization: `Bearer ${bearerToken}` } : {}) };
+    return (options.fetcher ?? (globalThis.fetch as unknown as ResourceFetcher))(input, { ...init, headers });
+  };
 
   if (selector.kind === "exact") {
     if (options.offline) return resolveOfflineExact(cacheRoot, selector, selector.value, publicKeyPem, base);
-    const fetcher = options.fetcher ?? (globalThis.fetch as unknown as ResourceFetcher);
+    const fetcher = authorize;
     if (!fetcher) throw new Error("No fetch implementation is available for AIWG web resources");
     return fetchAndCacheRelease(base, fetcher, cacheRoot, selector, selector.value, publicKeyPem);
   }
 
   if (selector.kind === "range" || selector.kind === "digest") {
-    const fetcher = options.fetcher ?? (globalThis.fetch as unknown as ResourceFetcher);
+    const fetcher = authorize;
     const index = await resolveVersionIndex(base, fetcher, cacheRoot, publicKeyPem, options.offline);
     const selected = selectVersionFromIndex(index, selector);
     if (options.offline) {
@@ -1195,7 +1184,7 @@ export async function resolveWebRelease(options: WebReleaseOptions = {}): Promis
     );
   }
 
-  const fetcher = options.fetcher ?? (globalThis.fetch as unknown as ResourceFetcher);
+  const fetcher = authorize;
   if (!fetcher) throw new Error("No fetch implementation is available for AIWG web resources");
   const channelPrefix = `resources/channels/${selector.value}`;
   const channelBytes = await fetchBytes(fetcher, resourceUrl(base, `${channelPrefix}.json`), `channel ${selector.value}`, MAX_SIGNED_METADATA_BYTES);
@@ -1272,6 +1261,7 @@ export async function fetchVerifiedRawResource(
     resourceUrl(base, `resources/${release.version}/${resourcePath}`),
     `raw resource ${resourcePath}`,
     Math.min(descriptor.size, MAX_RAW_RESOURCE_BYTES),
+    await options.credentialProvider?.() ?? null,
   );
   verifyDescriptor(bytes, descriptor);
   const stagingRoot = path.join(release.cacheDir, ".raw-staging");

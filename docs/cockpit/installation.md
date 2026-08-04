@@ -16,7 +16,8 @@ aiwg cockpit
 `aiwg use cockpit` installs the package **outside the base package footprint**,
 under `~/.aiwg/cockpit/package` (override the root with `AIWG_COCKPIT_HOME`),
 pinned to the installed AIWG version. `aiwg cockpit` then launches the local
-Bridge, which serves the web UI token-injected.
+Bridge, which serves the web UI through a one-time bootstrap and HttpOnly
+session.
 
 Useful flags on the launcher:
 
@@ -49,7 +50,8 @@ global-prefix permissions entirely.
    installed `agentic-mgmt` binary (disable with
    `AIWG_COCKPIT_AUTOSTART_EXECUTOR=0`, pin the command with
    `AIWG_COCKPIT_EXECUTOR_COMMAND`).
-3. Serves the built React UI at `http://127.0.0.1:8140/?token=…`.
+3. Prints a 60-second, one-time browser bootstrap URL whose nonce is in the
+   fragment. The reusable bearer never enters the URL.
 
 Point at a different executor:
 
@@ -65,13 +67,14 @@ The full environment-variable reference lives in
 Every shell resolves the Bridge the same way: read
 `~/.aiwg/cockpit/runtime/bridge.json` → `{token | token_ref, port}` → resolve
 the token (keychain ref preferred) → poll `/healthz` and the authed
-`/api/health` → load `http://127.0.0.1:<port>/?token=<token>`.
+`/api/health` → request an audience-bound nonce → load
+`http://127.0.0.1:<port>/#bootstrap=<one-time-nonce>`.
 
 - **Desktop (Tauri)** — a native window hosting the same Bridge UI. Build/run
   from `apps/cockpit/desktop` with `cargo tauri dev` / `cargo tauri build`
   (Linux needs webkit2gtk-4.1, libsoup-3.0, libappindicator; artifacts are
   .deb/.rpm/.AppImage). The window waits for `bridge.json`, then opens the
-  token URL.
+  one-time bootstrap URL.
 - **VS Code** — the `aiwg-cockpit` extension (`apps/cockpit/vscode`) opens the
   UI in a webview via the **AIWG Cockpit: Open** command. Launch the Bridge
   first. The `aiwg-cockpit.bridgeRuntimeFile` setting overrides the runtime

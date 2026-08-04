@@ -1,0 +1,20 @@
+{
+  "name": "compound-memory",
+  "version": "2026.8.3",
+  "description": "Governed orchestration across AIWG line memory, semantic memory, and llm-wiki.",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/aiwg",
+  "license": "MIT",
+  "keywords": [
+    "memory",
+    "compound-memory",
+    "line-memory",
+    "llm-wiki",
+    "semantic-memory",
+    "persistent-context"
+  ]
+}

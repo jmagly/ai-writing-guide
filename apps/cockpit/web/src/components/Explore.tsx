@@ -3,19 +3,29 @@ import { api } from '../api';
 import { CapabilitySearch } from './CapabilitySearch';
 import type { CapabilityResult, IndexQueryResponse, IndexStatusResponse } from '../types';
 
-export function Explore() {
+export function Explore({ refreshTick = 0 }: { refreshTick?: number }) {
   const [body, setBody] = useState<{ type: string; name: string; body: string } | null>(null);
   const [status, setStatus] = useState<IndexStatusResponse | null>(null);
   const [query, setQuery] = useState('requirements');
   const [queryResults, setQueryResults] = useState<IndexQueryResponse | null>(null);
+  const [graphName, setGraphName] = useState('');
+  const [scanDirs, setScanDirs] = useState('docs');
   const [busy, setBusy] = useState('');
   const [err, setErr] = useState('');
+  const [stale, setStale] = useState(false);
 
   const loadStatus = () => {
-    api<IndexStatusResponse>('/api/index/status').then(setStatus).catch((e) => setErr((e as Error).message));
+    api<IndexStatusResponse>('/api/index/status').then((next) => {
+      setStatus(next);
+      setStale(false);
+      setErr('');
+    }).catch((e) => {
+      setErr((e as Error).message);
+      setStale(true);
+    });
   };
 
-  useEffect(() => { loadStatus(); }, []);
+  useEffect(() => { loadStatus(); }, [refreshTick]);
 
   const show = (r: CapabilityResult) => {
     setBody(null); setErr('');
@@ -56,6 +66,24 @@ export function Explore() {
     }
   };
 
+  const createGraph = async () => {
+    if (!graphName.trim() || !scanDirs.trim()) return;
+    setBusy('create'); setErr('');
+    try {
+      await api('/api/index/graphs', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: graphName.trim(), scanDirs: scanDirs.split(',').map((value) => value.trim()).filter(Boolean) }),
+      });
+      setGraphName('');
+      loadStatus();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy('');
+    }
+  };
+
   const graphs = status?.graphs ?? [];
   const queryItems = queryResults?.results ?? [];
 
@@ -65,7 +93,7 @@ export function Explore() {
         Read-only catalog from the AIWG registry — display, not execution. To <em>run</em> a capability, inject it into a
         session (Actions/Sessions). Search modeled on the fortemi-react patterns.
       </p>
-      {err && <p className="err">{err}</p>}
+      {err && <p className="err">{err}{status ? ' — showing last-known index state.' : ''}</p>}
       <section className="index-live" aria-label="Live index status">
         <div className="section-toolbar">
           <div>
@@ -74,6 +102,7 @@ export function Explore() {
               {status
                 ? `${status.summary.built}/${status.summary.total} graphs built, ${status.summary.missing} missing, ${status.summary.orphans} orphan dirs.`
                 : 'Loading index status.'}
+              {stale && status ? ' Stale: live refresh is temporarily unavailable.' : ''}
             </p>
           </div>
           <div className="manage-actions">
@@ -96,6 +125,17 @@ export function Explore() {
           </label>
           <button onClick={runIndexQuery} disabled={busy === 'query'}>{busy === 'query' ? 'Searching...' : 'Search index'}</button>
         </div>
+        <div className="index-query" aria-label="Create user index graph">
+          <label>
+            New graph name
+            <input value={graphName} onChange={(e) => setGraphName(e.target.value)} placeholder="references" />
+          </label>
+          <label>
+            Scan directories (comma-separated)
+            <input value={scanDirs} onChange={(e) => setScanDirs(e.target.value)} placeholder="docs,research" />
+          </label>
+          <button onClick={createGraph} disabled={busy === 'create' || !graphName.trim()}>{busy === 'create' ? 'Creating...' : 'Create graph'}</button>
+        </div>
         {queryResults && (
           <div className="index-results" aria-label="Index query results">
             {queryItems.length
@@ -111,7 +151,7 @@ export function Explore() {
         )}
       </section>
       <div className="grid2">
-        <CapabilitySearch onPick={show} autoFocus />
+        <CapabilitySearch onPick={show} autoFocus refreshTick={refreshTick} />
         <div role="region" aria-label="Capability detail">
           {!body
             ? <p className="empty">Select a capability to inspect its definition.</p>

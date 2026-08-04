@@ -1877,7 +1877,7 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
         ]),
       ).rejects.toThrow("process.exit");
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Error: --schema-version must be v1 or v2",
+        "Error: --schema-version requires a value",
       );
       expect(exitSpy).toHaveBeenCalledWith(1);
       consoleErrorSpy.mockClear();

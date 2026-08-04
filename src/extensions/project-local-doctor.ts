@@ -13,8 +13,7 @@
  * @implements #1037
  */
 
-import { join, resolve } from 'path';
-import { homedir } from 'os';
+import { join } from 'path';
 import { discoverProjectLocalBundles } from './project-local-discovery.js';
 import { buildUpstreamRegistry } from './upstream-registry.js';
 import { resolveShadows } from './shadow-resolver.js';
@@ -25,6 +24,7 @@ import type { AiwgConfig } from '../config/aiwg-config.js';
 import { projectAiwgPath } from '../config/project-artifacts.js';
 import { projectRelativePathIfInside } from './project-local-paths.js';
 import { auditProjectQuickref } from './project-quickref.js';
+import { artifactHashesForProvider, candidateDeployedPaths } from './project-local-remove.js';
 
 export interface DoctorSectionResult {
   /** Pre-formatted multi-line section (empty string when no project-local content). */
@@ -74,24 +74,6 @@ const TYPE_DIR: Record<ProjectLocalType, string> = {
   framework: 'frameworks',
   plugin: 'plugins',
   provider: 'providers',
-};
-
-// Per PUW-026 (#1127): home-deploying providers get absolute prefixes so
-// `resolve(projectDir, prefix)` correctly produces the home-rooted path
-// (resolve treats absolute paths as authoritative). Previously these were
-// `null`, which silently skipped lifecycle operations against home-deployed
-// project-local bundles.
-const PROVIDER_PREFIX: Record<string, string | null> = {
-  claude: '.claude',
-  cursor: '.cursor',
-  factory: '.factory',
-  opencode: '.opencode',
-  windsurf: '.windsurf',
-  warp: '.warp',
-  codex: '.codex',
-  copilot: '.github',
-  openclaw: resolve(homedir(), '.openclaw'),
-  hermes: resolve(homedir(), '.hermes'),
 };
 
 export async function buildProjectLocalDoctorSection(
@@ -203,17 +185,18 @@ export async function buildProjectLocalDoctorSection(
     for (const bundle of discovery.bundles) {
       const entry = config.installed[bundle.id];
       if (!entry || entry.source !== 'project-local') continue;
-      const hashes = entry.artifactHashes;
-      if (!hashes) {
+      if (!entry.artifactHashes && !entry.deployedArtifactHashes) {
         unhashedSeen = true;
         continue;
       }
       for (const provider of Object.keys(entry.deployedTo)) {
-        const prefix = PROVIDER_PREFIX[provider];
-        if (!prefix) continue;
+        const hashes = artifactHashesForProvider(entry, provider);
         for (const [sourceRel, expectedHash] of Object.entries(hashes)) {
-          const deployedAbs = resolve(projectDir, `${prefix}/${sourceRel}`);
-          const actualHash = await hashDeployed(deployedAbs);
+          let actualHash: { raw: string; normalized: string } | null = null;
+          for (const deployedAbs of candidateDeployedPaths(projectDir, provider, sourceRel)) {
+            actualHash = await hashDeployed(deployedAbs);
+            if (actualHash) break;
+          }
           if (actualHash === null) {
             // Missing — not drift, deploy is just absent
             continue;

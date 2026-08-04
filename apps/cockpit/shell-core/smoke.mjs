@@ -29,7 +29,10 @@ try {
   const rt = await connect({ timeoutMs: 6000 });   // reads ~/.aiwg/cockpit/runtime/bridge.json + waits for /healthz
   assert.equal(rt.port, PORT, 'runtime port matches the launched Bridge');
   assert.ok(rt.token && rt.token.length >= 32, 'runtime carries a per-launch token');
-  assert.match(webviewUrl(rt), /\/\?token=/, 'webview url carries the token');
+  const launchUrl = await webviewUrl(rt, { audience: 'browser' });
+  assert.match(launchUrl, /\/#bootstrap=/, 'webview URL carries a one-time fragment bootstrap');
+  assert.ok(!launchUrl.includes(rt.token), 'webview URL does not carry the reusable token');
+  assert.ok(!launchUrl.includes('?token='), 'webview URL has no token query parameter');
 
   // the shell handshake: authed call succeeds, unauthed is gated
   assert.equal((await api(rt, '/api/health')).status, 200, 'authed /api/health 200');

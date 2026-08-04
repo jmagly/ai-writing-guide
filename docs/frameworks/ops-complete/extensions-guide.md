@@ -1,6 +1,6 @@
 # ops-complete Extensions Guide
 
-The four ops-complete extensions add domain-specific agents, templates, rules, and skills on top of the base framework. Each extension targets a specific type of operational repository. This guide covers what each extension provides and when to use it.
+The five ops-complete extensions add domain-specific agents, templates, rules, and skills on top of the base framework. Each extension targets a specific type of operational repository. This guide covers what each extension provides and when to use it.
 
 ## Extension Basics
 
@@ -239,6 +239,7 @@ Install when your repository manages live streaming or media pipeline infrastruc
 
 **Rules**:
 - `stream-key-safety` — Stream keys must be stored in vault; never in plaintext in ops documents
+- `stream-pipeline-gates` — Pipeline changes require health verification before traffic shift
 
 ---
 
@@ -294,7 +295,6 @@ Forge permission detection runs first. If the permission API denies or the opera
 ```
 
 Keys may be resolved remote URLs, `owner/repo` slugs, remote names, or `local`.
-- `stream-pipeline-gates` — Pipeline changes require health verification before traffic shift
 
 ### Example: Stream Service
 

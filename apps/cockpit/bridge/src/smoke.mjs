@@ -19,7 +19,7 @@ const f = (p, o = {}) => fetch(base + p, { ...o, headers: { ...(o.headers || {})
 try {
   // auth gate: /api/ without the token is 401; /healthz is open
   assert.equal((await fetch(`${base}/api/inventory`)).status, 401, 'gate: no token -> 401');
-  assert.equal((await fetch(`${base}/api/inventory?token=wrong`)).status, 401, 'gate: bad token -> 401');
+  assert.equal((await fetch(`${base}/api/inventory?token=${encodeURIComponent(bridge.cockpitToken)}`)).status, 401, 'gate: URL token is never accepted');
   assert.equal((await fetch(`${base}/healthz`)).status, 200, 'healthz open (no token)');
 
   // data path: Bridge reads the executor admin inventory
@@ -222,11 +222,11 @@ try {
   assert.match(started.id ?? '', /^sess-/, 'start-session returns a new session id');
   assert.match(started.attach_url ?? '', /\/sessions\/sess-[^/]+\/attach\/[A-Za-z0-9_-]+$/, 'start-session issues a proxied ws attach_url');
 
-  // app shell served with the per-launch token injected (React build if present, else
-  // the legacy fallback — both carry the title + token)
+  // app shell is served without reusable credential material.
   const html = await (await fetch(base + "/")).text();
   assert.match(html, /AIWG.?Cockpit/i, 'app title rendered');
-  assert.ok(html.includes(`window.__COCKPIT_TOKEN__=${JSON.stringify(bridge.cockpitToken)}`), 'token injected into the served app');
+  assert.ok(!html.includes(bridge.cockpitToken), 'root does not inject the control token');
+  assert.ok(!html.includes('__COCKPIT_TOKEN__'), 'root has no legacy token bootstrap global');
   // strip HTML comments BEFORE matching — a module script trapped inside a comment
   // (the Vite '</head>'-in-comment gotcha) must not count as "referenced".
   const live = html.replace(/<!--[\s\S]*?-->/g, '');

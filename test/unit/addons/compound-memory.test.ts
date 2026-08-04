@@ -1,0 +1,373 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { access, mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+import {
+  compoundMemoryStatus,
+  default as compoundMemoryCommand,
+} from '../../../agentic/code/addons/compound-memory/commands/compound-memory.mjs';
+
+let projectDir: string;
+let frameworkRoot: string;
+
+const digest = (value: string) => `sha256:${createHash('sha256').update(value).digest('hex')}`;
+
+beforeEach(async () => {
+  projectDir = await mkdtemp(path.join(os.tmpdir(), 'aiwg-compound-memory-'));
+  frameworkRoot = await mkdtemp(path.join(os.tmpdir(), 'aiwg-compound-framework-'));
+  for (const id of ['aiwg-utils', 'semantic-memory', 'llm-wiki', 'line-memory']) {
+    const dir = path.join(frameworkRoot, 'agentic/code/addons', id);
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, 'manifest.json'), JSON.stringify({ id }));
+  }
+});
+
+afterEach(async () => {
+  vi.restoreAllMocks();
+  await rm(projectDir, { recursive: true, force: true });
+  await rm(frameworkRoot, { recursive: true, force: true });
+});
+
+describe('compound-memory status', () => {
+  it('reports an empty but ready bounded memory workspace', async () => {
+    const report = await compoundMemoryStatus(projectDir, frameworkRoot);
+    expect(report).toMatchObject({
+      schemaVersion: 'aiwg.compound-memory.status.v1',
+      status: 'ready',
+      lineMemory: { initialized: false, facts: 0, integrity: 'ok' },
+      wiki: { initialized: false, indexPresent: false, stale: false },
+      review: { status: 'query-required' },
+      integrityFailures: [],
+    });
+    expect(report.wiki.scan.filesVisited).toBeLessThanOrEqual(1000);
+  });
+
+  it('reports missing dependencies, corrupt sidecars, and stale wiki indexes', async () => {
+    await rm(path.join(frameworkRoot, 'agentic/code/addons/llm-wiki'), {
+      recursive: true, force: true,
+    });
+    await mkdir(path.join(projectDir, '.aiwg/memory'), { recursive: true });
+    await writeFile(path.join(projectDir, '.aiwg/memory/line-memory.txt'), 'fact\n');
+    await writeFile(path.join(projectDir, '.aiwg/memory/line-memory.meta.json'), '{broken');
+    await mkdir(path.join(projectDir, '.aiwg/wiki/concepts'), { recursive: true });
+    await writeFile(path.join(projectDir, '.aiwg/wiki/concepts/fact.md'), '# Fact\n');
+
+    const report = await compoundMemoryStatus(projectDir, frameworkRoot);
+    expect(report).toMatchObject({
+      status: 'degraded',
+      lineMemory: { integrity: 'invalid', detail: 'metadata is not valid JSON' },
+      wiki: { initialized: true, indexPresent: false, stale: true },
+      integrityFailures: [{ component: 'line-memory' }],
+    });
+    expect(report.dependencies.find(item => item.id === 'llm-wiki')?.available).toBe(false);
+    expect(report.nextActions).toContain('aiwg use compound-memory');
+  });
+
+  it('emits the versioned JSON status contract', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation(value => output.push(String(value)));
+    const result = await compoundMemoryCommand(['--json'], {
+      cwd: projectDir,
+      frameworkRoot,
+      namespace: 'compound-memory',
+      subcommand: 'status',
+    });
+    expect(result.exitCode).toBe(0);
+    expect(JSON.parse(output.join('\n'))).toMatchObject({
+      schemaVersion: 'aiwg.compound-memory.status.v1',
+      status: 'ready',
+      review: { pending: 0, status: 'ready', bounded: true },
+    });
+  });
+});
+
+describe('compound-memory output capture', () => {
+  it('previews, confirms, and idempotently registers exact output lineage', async () => {
+    const repositoryRoot = path.resolve(__dirname, '../../..');
+    await mkdir(path.join(projectDir, 'output/reports'), { recursive: true });
+    await writeFile(path.join(projectDir, 'output/reports/result.md'), '# Result\n');
+    const baseArgs = [
+      'output/reports/result.md',
+      '--media-type', 'text/markdown',
+      '--context-pack-id', 'context-pack:test',
+      '--context-pack-digest', digest('bounded context'),
+      '--source-ref', 'session:opaque-test',
+      '--source-digest', digest('session evidence'),
+      '--json',
+    ];
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation(value => output.push(String(value)));
+
+    const previewResult = await compoundMemoryCommand(baseArgs, {
+      cwd: projectDir,
+      frameworkRoot: repositoryRoot,
+      namespace: 'compound-memory',
+      subcommand: 'capture-output',
+    });
+    expect(previewResult.exitCode).toBe(0);
+    const preview = JSON.parse(output.pop()!);
+    expect(preview).toMatchObject({
+      status: 'preview',
+      mutation: { wouldRegister: true, wouldPromoteKnowledge: false },
+    });
+    expect(await fileExists(path.join(projectDir, '.aiwg/memory/output-registration'))).toBe(false);
+
+    const confirmed = await compoundMemoryCommand([
+      ...baseArgs,
+      '--confirm',
+      '--operation-id', preview.preview.operationId,
+    ], {
+      cwd: projectDir,
+      frameworkRoot: repositoryRoot,
+      namespace: 'compound-memory',
+      subcommand: 'capture-output',
+    });
+    expect(confirmed.exitCode).toBe(0);
+    const receipt = JSON.parse(output.pop()!);
+    expect(receipt).toMatchObject({
+      status: 'ok',
+      knowledgePromotion: 'not-performed',
+      receipt: { duplicate: false, sourceRefs: ['session:opaque-test'] },
+    });
+
+    await compoundMemoryCommand([
+      ...baseArgs,
+      '--confirm',
+      '--operation-id', preview.preview.operationId,
+    ], {
+      cwd: projectDir,
+      frameworkRoot: repositoryRoot,
+      namespace: 'compound-memory',
+      subcommand: 'capture-output',
+    });
+    expect(JSON.parse(output.pop()!).receipt.duplicate).toBe(true);
+  });
+});
+
+describe('compound-memory intake', () => {
+  it('previews and confirms immutable raw registration without promotion', async () => {
+    await mkdir(path.join(projectDir, 'sources'), { recursive: true });
+    await writeFile(path.join(projectDir, 'sources/decision.md'), '# Decision\nSQLite is authoritative.\n');
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation(value => output.push(String(value)));
+    const context = {
+      cwd: projectDir,
+      frameworkRoot: path.resolve(__dirname, '../../..'),
+      namespace: 'compound-memory',
+      subcommand: 'ingest',
+    };
+    await compoundMemoryCommand(['sources/decision.md', '--json'], context);
+    const preview = JSON.parse(output.pop()!);
+    expect(preview).toMatchObject({ route: 'llm-wiki', confirmationRequired: true });
+    await compoundMemoryCommand([
+      'sources/decision.md', '--confirm', '--operation-id', preview.operationId, '--json',
+    ], context);
+    expect(JSON.parse(output.pop()!)).toMatchObject({
+      status: 'ok',
+      knowledgePromotion: 'not-performed',
+      receipt: { route: 'llm-wiki' },
+    });
+  });
+});
+
+describe('compound-memory review and maintenance', () => {
+  it('returns an empty bounded review queue without creating a session catalog', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation(value => output.push(String(value)));
+    const result = await compoundMemoryCommand(['--limit', '10', '--json'], {
+      cwd: projectDir,
+      frameworkRoot: path.resolve(__dirname, '../../..'),
+      namespace: 'compound-memory',
+      subcommand: 'review',
+    });
+    expect(result.exitCode).toBe(0);
+    expect(JSON.parse(output.pop()!)).toMatchObject({
+      schemaVersion: 'aiwg.compound-memory.review.v1',
+      status: 'ready',
+      items: [],
+      count: 0,
+      limit: 10,
+      mutation: false,
+    });
+    expect(await fileExists(path.join(projectDir, '.aiwg/sessions/catalog.sqlite'))).toBe(false);
+  });
+
+  it('surfaces bounded cross-store review signals without returning bodies', async () => {
+    await mkdir(path.join(projectDir, '.aiwg/wiki/concepts'), { recursive: true });
+    await mkdir(path.join(projectDir, '.aiwg/memory'), { recursive: true });
+    await mkdir(path.join(projectDir, 'output/reports'), { recursive: true });
+    await writeFile(
+      path.join(projectDir, '.aiwg/wiki/concepts/conflict.md'),
+      '# Conflict\n\n> [!contradiction]\n> Two reviewed sources disagree.\n',
+    );
+    await writeFile(path.join(projectDir, 'output/reports/unlinked.md'), '# Unlinked\nprivate body\n');
+    await writeFile(path.join(projectDir, '.aiwg/memory/line-memory.meta.json'), JSON.stringify({
+      schemaVersion: 'aiwg.line-memory.v1',
+      version: 1,
+      entries: {
+        old: {
+          id: 'lm_old', status: 'active', digest: digest('old'),
+          updatedAt: '2020-01-01T00:00:00.000Z', lastAccessedAt: '2020-01-01T00:00:00.000Z',
+        },
+      },
+    }));
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation(value => output.push(String(value)));
+    await compoundMemoryCommand(['--json'], {
+      cwd: projectDir,
+      frameworkRoot: path.resolve(__dirname, '../../..'),
+      namespace: 'compound-memory',
+      subcommand: 'review',
+    });
+    const report = JSON.parse(output.pop()!);
+    expect(report.signals).toMatchObject({
+      total: 3,
+      contradictions: [{ locator: '.aiwg/wiki/concepts/conflict.md' }],
+      staleFacts: [{ handle: 'lm_old' }],
+      unlinkedOutputs: [{ locator: 'output/reports/unlinked.md' }],
+    });
+    expect(JSON.stringify(report)).not.toContain('private body');
+    expect(report.mutation).toBe(false);
+  });
+
+  it('requires an exact preview and records a restart-safe maintenance receipt', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation(value => output.push(String(value)));
+    const context = {
+      cwd: projectDir,
+      frameworkRoot: path.resolve(__dirname, '../../..'),
+      namespace: 'compound-memory',
+      subcommand: 'maintain',
+    };
+    const previewResult = await compoundMemoryCommand(['--json'], context);
+    expect(previewResult.exitCode).toBe(0);
+    const preview = JSON.parse(output.pop()!);
+    expect(preview).toMatchObject({
+      schemaVersion: 'aiwg.compound-memory.maintenance-preview.v1',
+      confirmationRequired: true,
+      actions: [expect.objectContaining({ id: 'wiki-index', mode: 'delegated' })],
+    });
+    expect(await fileExists(path.join(projectDir, '.aiwg/memory/compound-memory'))).toBe(false);
+
+    const stale = await compoundMemoryCommand([
+      '--confirm', '--operation-id', digest('wrong'), '--json',
+    ], context);
+    expect(stale.exitCode).toBe(1);
+    expect(JSON.parse(output.pop()!).status).toBe('error');
+
+    const confirmed = await compoundMemoryCommand([
+      '--confirm', '--operation-id', preview.operationId, '--json',
+    ], context);
+    expect(confirmed.exitCode).toBe(0);
+    expect(JSON.parse(output.pop()!)).toMatchObject({
+      schemaVersion: 'aiwg.compound-memory.maintenance-receipt.v1',
+      operationId: preview.operationId,
+      duplicate: false,
+      results: [expect.objectContaining({ id: 'wiki-index', status: 'deferred' })],
+    });
+
+    await compoundMemoryCommand([
+      '--confirm', '--operation-id', preview.operationId, '--json',
+    ], context);
+    expect(JSON.parse(output.pop()!).duplicate).toBe(true);
+  });
+});
+
+describe('compound-memory context', () => {
+  it('builds a bounded hybrid pack and touches only selected line facts', async () => {
+    await mkdir(path.join(projectDir, '.aiwg/memory'), { recursive: true });
+    await mkdir(path.join(projectDir, '.aiwg/wiki/concepts'), { recursive: true });
+    await writeFile(path.join(projectDir, '.aiwg/memory/line-memory.txt'), [
+      'SQLite catalog retains provenance.',
+      'Unrelated visual preference.',
+    ].join('\n'));
+    await writeFile(path.join(projectDir, '.aiwg/wiki/concepts/catalog.md'), [
+      '---',
+      'source: session:decision',
+      '---',
+      '# Catalog',
+      'The SQLite catalog keeps provenance receipts.',
+    ].join('\n'));
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation(value => output.push(String(value)));
+    const context = {
+      cwd: projectDir,
+      frameworkRoot: path.resolve(__dirname, '../../..'),
+      namespace: 'compound-memory',
+      subcommand: 'context',
+    };
+
+    await compoundMemoryCommand(['SQLite', 'catalog', 'provenance', '--no-touch', '--json'], context);
+    const inspection = JSON.parse(output.pop()!);
+    expect(inspection).toMatchObject({
+      schemaVersion: 'aiwg.compound-memory.context-pack.v1',
+      inspection: true,
+      recency: { touched: false, entries: 0 },
+    });
+    expect(inspection.items.map((item: { tier: string }) => item.tier))
+      .toEqual(expect.arrayContaining(['line', 'wiki']));
+    expect(await fileExists(path.join(projectDir, '.aiwg/memory/line-memory.meta.json'))).toBe(false);
+
+    await compoundMemoryCommand(['SQLite', 'catalog', 'provenance', '--json'], context);
+    const used = JSON.parse(output.pop()!);
+    expect(used.recency).toMatchObject({ touched: true, entries: 1 });
+    const metadata = JSON.parse(await import('node:fs/promises').then(fs => fs.readFile(
+      path.join(projectDir, '.aiwg/memory/line-memory.meta.json'),
+      'utf8',
+    )));
+    expect(Object.values(metadata.entries)).toEqual([
+      expect.objectContaining({ value: 'SQLite catalog retains provenance.', accessCount: 1 }),
+      expect.objectContaining({ value: 'Unrelated visual preference.', accessCount: 0 }),
+    ]);
+  });
+});
+
+describe('compound-memory canonical context update', () => {
+  it('previews and confirms a canonical update without modifying provider adapters', async () => {
+    const output: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation(value => output.push(String(value)));
+    const baseArgs = [
+      'decision', 'session.catalog', 'SQLite', 'is', 'authoritative.',
+      '--source-ref', 'session:decision',
+      '--reviewer', 'maintainer:test',
+      '--reason', 'Reviewed decision',
+      '--json',
+    ];
+    const context = {
+      cwd: projectDir,
+      frameworkRoot: path.resolve(__dirname, '../../..'),
+      namespace: 'compound-memory',
+      subcommand: 'update',
+    };
+    await compoundMemoryCommand(baseArgs, context);
+    const preview = JSON.parse(output.pop()!);
+    expect(preview).toMatchObject({
+      schemaVersion: 'aiwg.canonical-context-preview.v1',
+      operation: 'upsert',
+      duplicate: false,
+    });
+    expect(await fileExists(path.join(projectDir, '.aiwg/context/compound-memory'))).toBe(false);
+
+    await compoundMemoryCommand([
+      ...baseArgs, '--confirm', '--operation-id', preview.operationId,
+    ], context);
+    const result = JSON.parse(output.pop()!);
+    expect(result).toMatchObject({
+      status: 'ok',
+      providerAdaptersModified: false,
+      receipt: { operation: 'upsert', revision: 1 },
+    });
+    expect(await fileExists(path.join(projectDir, 'AGENTS.md'))).toBe(false);
+    expect(await fileExists(path.join(projectDir, 'CLAUDE.md'))).toBe(false);
+  });
+});
+
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}

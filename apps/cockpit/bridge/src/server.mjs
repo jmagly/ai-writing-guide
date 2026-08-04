@@ -8,9 +8,9 @@
 import http from 'node:http';
 import https from 'node:https';
 import { spawn } from 'node:child_process';
-import { readFile, mkdir, writeFile, chmod, readdir, cp, rm, stat, appendFile } from 'node:fs/promises';
+import { readFile, mkdir, writeFile, rename, chmod, readdir, cp, rm, stat, appendFile } from 'node:fs/promises';
 import { existsSync, realpathSync } from 'node:fs';
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -42,7 +42,13 @@ const auditLog = () => join(auditDir(), 'events.jsonl');
 // legacy vanilla page so the Bridge works even before a web build.
 const WEB_DIST = fileURLToPath(new URL('../../web/dist', import.meta.url));
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json', '.ico': 'image/x-icon', '.png': 'image/png', '.woff2': 'font/woff2', '.map': 'application/json' };
-const CAPABILITY_TYPES = new Set(['skill', 'agent', 'command', 'rule', 'flow']);
+// Discovery indexes more than the four executable provider artifacts. Keep the
+// Bridge filter aligned with the complete corpus so Explore does not hide
+// extension and documentation surfaces (#1592).
+const CAPABILITY_TYPES = new Set([
+  'skill', 'agent', 'command', 'rule', 'flow', 'behavior', 'hook', 'template',
+  'tool', 'addon', 'framework', 'extension', 'plugin', 'provider', 'document',
+]);
 const mcSessionsDir = () => join(process.cwd(), '.aiwg', 'ralph-external', 'mc', 'sessions');
 const executorRequestContext = new AsyncLocalStorage();
 
@@ -96,13 +102,29 @@ async function serveDistFile(res, relPath) {
 // First-party contribution manifests; AIWG-extension-sourced ones layer in via AIWG_COCKPIT_CONTRIB (#1591).
 const CONTRIB_DIRS = [fileURLToPath(new URL('../../contrib', import.meta.url)), ...(process.env.AIWG_COCKPIT_CONTRIB ? [process.env.AIWG_COCKPIT_CONTRIB] : [])];
 
-/** Constant-time bearer-token check (header or ?token=). */
-function authed(req, url, token) {
+function constantTimeEqual(presented, expected) {
+  if (presented.length !== expected.length) return false;
+  try { return timingSafeEqual(Buffer.from(presented), Buffer.from(expected)); } catch { return false; }
+}
+
+/** Constant-time bearer-token check. URL query credentials are never accepted. */
+function bearerAuthed(req, token) {
   const hdr = String(req.headers['authorization'] ?? '');
   const bearer = hdr.startsWith('Bearer ') ? hdr.slice(7) : '';
-  const presented = bearer || url.searchParams.get('token') || '';
-  if (presented.length !== token.length) return false;
-  try { return timingSafeEqual(Buffer.from(presented), Buffer.from(token)); } catch { return false; }
+  return constantTimeEqual(bearer, token);
+}
+
+function cookies(req) {
+  return Object.fromEntries(String(req.headers.cookie ?? '')
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const split = part.indexOf('=');
+      if (split < 0) return [part, ''];
+      try { return [part.slice(0, split), decodeURIComponent(part.slice(split + 1))]; }
+      catch { return [part.slice(0, split), '']; }
+    }));
 }
 
 function isLocalHostName(hostname) {
@@ -115,21 +137,21 @@ function validBrowserOrigin(req) {
   try {
     const o = new URL(String(origin));
     const host = new URL(`http://${req.headers.host ?? 'localhost'}`);
-    return ['http:', 'https:'].includes(o.protocol) &&
+    return o.protocol === host.protocol &&
       isLocalHostName(o.hostname) &&
       isLocalHostName(host.hostname) &&
-      (!o.port || !host.port || o.port === host.port);
+      o.hostname === host.hostname &&
+      o.port === host.port;
   } catch {
     return false;
   }
 }
 
-function validCsrf(req, token) {
+function validCsrf(req, auth) {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method ?? 'GET')) return true;
-  if (!req.headers.origin) return true;
+  if (auth?.kind === 'bearer' && !req.headers.origin) return true;
   const csrf = String(req.headers['x-cockpit-csrf'] ?? '');
-  if (csrf.length !== token.length) return false;
-  try { return timingSafeEqual(Buffer.from(csrf), Buffer.from(token)); } catch { return false; }
+  return constantTimeEqual(csrf, auth?.csrf ?? '');
 }
 
 /** Persist the per-launch token for the desktop/VS Code shells to read (mode 600). */
@@ -161,12 +183,87 @@ function spawnCollect(cmd, args) {
     p.stdout.on('data', (d) => (out += d));
     p.stderr.on('data', (d) => (err += d));
     p.once('error', reject);
-    p.once('close', (code) => (code === 0 ? resolve(out) : reject(new Error(err.trim() || `aiwg exit ${code}`))));
+    p.once('close', (code) => {
+      if (code === 0) return resolve(out);
+      const failure = new Error(err.trim() || `aiwg exit ${code}`);
+      failure.exitCode = code;
+      failure.stdout = out;
+      reject(failure);
+    });
   });
 }
 async function runAiwg(args) {
   try { return await spawnCollect('aiwg', args); }
   catch (e) { if (e && e.code === 'ENOENT') return spawnCollect(process.execPath, [REPO_BIN, ...args]); throw e; }
+}
+
+const MISSION_CONTROL_ID_RE = /^[a-zA-Z0-9._-]+$/;
+async function controlMission({ action, sessionId, missionId, expectedUpdatedAt, requestId }) {
+  if (!['pause', 'resume', 'cancel'].includes(action)) throw Object.assign(new Error('unsupported mission control action'), { status: 400 });
+  if (!MISSION_CONTROL_ID_RE.test(sessionId) || (missionId && !MISSION_CONTROL_ID_RE.test(missionId))) {
+    throw Object.assign(new Error('invalid Mission control identifier'), { status: 400 });
+  }
+  const args = ['mc', action, sessionId];
+  if (action === 'cancel') {
+    if (!missionId) throw Object.assign(new Error('mission id required'), { status: 400 });
+    args.push(missionId);
+  }
+  if (expectedUpdatedAt) args.push('--expected-updated-at', String(expectedUpdatedAt));
+  if (requestId) args.push('--request-id', String(requestId));
+  await appendAudit('mission.control.requested', {
+    action,
+    session_id: sessionId,
+    mission_id: missionId ?? null,
+    expected_updated_at: expectedUpdatedAt ?? null,
+    request_id: requestId ?? null,
+  });
+  try {
+    await runAiwg(args);
+  } catch (error) {
+    const message = String(error?.message ?? error);
+    const status = error?.exitCode === 3 || /mission_conflict/.test(message) ? 409 : 422;
+    await appendAudit('mission.control.rejected', { action, session_id: sessionId, mission_id: missionId ?? null, request_id: requestId ?? null, status, reason: message });
+    throw Object.assign(new Error(message), { status });
+  }
+  await appendAudit('mission.control.completed', { action, session_id: sessionId, mission_id: missionId ?? null, request_id: requestId ?? null });
+  return { ok: true, action, session_id: sessionId, mission_id: missionId ?? null, request_id: requestId ?? null };
+}
+
+async function dispatchMission(body, upstreamUrl) {
+  const sessionId = String(body?.session_id ?? '');
+  const objective = String(body?.objective ?? '').trim();
+  const completion = String(body?.completion ?? '').trim();
+  const requestId = String(body?.request_id ?? randomBytes(16).toString('hex'));
+  if (!MISSION_CONTROL_ID_RE.test(sessionId)) throw Object.assign(new Error('invalid Mission control session id'), { status: 400 });
+  if (!objective || objective.length > 4096) throw Object.assign(new Error('objective is required and must be at most 4096 characters'), { status: 400 });
+  if (completion.length > 4096) throw Object.assign(new Error('completion must be at most 4096 characters'), { status: 400 });
+  if (!MISSION_CONTROL_ID_RE.test(requestId)) throw Object.assign(new Error('request_id must contain only letters, digits, dot, underscore, or hyphen'), { status: 400 });
+  const args = ['mc', 'dispatch', sessionId, objective, '--request-id', requestId];
+  if (completion) args.push('--completion', completion);
+  if (body?.priority) args.push('--priority', String(body.priority));
+  if (body?.expected_updated_at) args.push('--expected-updated-at', String(body.expected_updated_at));
+  if (body?.max_iterations !== undefined) {
+    const maxIterations = Number(body.max_iterations);
+    if (!Number.isInteger(maxIterations) || maxIterations < 1 || maxIterations > 10_000) {
+      throw Object.assign(new Error('max_iterations must be an integer from 1 to 10000'), { status: 400 });
+    }
+    args.push('--max-iterations', String(maxIterations));
+  }
+  await appendAudit('mission.dispatch.requested', { session_id: sessionId, request_id: requestId, objective_digest: `sha256:${createHash('sha256').update(objective).digest('hex')}` });
+  try {
+    await runAiwg(args);
+    if (body?.run === true) {
+      await runAiwg(['mc', 'run', sessionId, ...(body?.accept_cost === true ? ['--accept-cost'] : [])]);
+    }
+  } catch (error) {
+    const message = String(error?.message ?? error);
+    const status = error?.exitCode === 3 || /mission_conflict/.test(message) ? 409 : 422;
+    await appendAudit('mission.dispatch.rejected', { session_id: sessionId, request_id: requestId, status, reason: message });
+    throw Object.assign(new Error(message), { status });
+  }
+  const missionId = `m-${createHash('sha256').update(requestId).digest('hex').slice(0, 16)}`;
+  await appendAudit('mission.dispatch.completed', { session_id: sessionId, mission_id: missionId, request_id: requestId, run: body?.run === true });
+  return { ok: true, session_id: sessionId, mission_id: missionId, request_id: requestId, projection: await getMissions(upstreamUrl) };
 }
 // --- user asset library (#1591/#1593): the operator's OWN copied/cloned/imported
 // assets, on disk under ~/.aiwg/cockpit/library. AIWG install files are NEVER written
@@ -240,23 +337,32 @@ function resolveCorpusPath(p) {
 // --- UI contribution model (#1591): declarative screens/actions/event-hooks ---
 const ID_RE = /^[a-z0-9][a-z0-9._-]{0,63}$/i;
 /** Validate one contribution manifest. Throws with a precise message on bad shape. */
-function validateContribution(m, where) {
+function validateContribution(m, where, { firstParty = false } = {}) {
   const fail = (msg) => { throw new Error(`${where}: ${msg}`); };
   if (!m || typeof m !== 'object') fail('manifest must be an object');
   if (!ID_RE.test(m.id || '')) fail('id must match [a-z0-9._-]{1,64}');
-  if (typeof m.version !== 'string') fail('version (string) required');
+  if (typeof m.version !== 'string' || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(m.version)) fail('version must be semantic version syntax');
   const c = m.contributes || {};
+  const actionIds = new Set();
   for (const a of c.actions || []) {
     if (!ID_RE.test(a.id || '')) fail(`action.id invalid: ${a.id}`);
+    if (actionIds.has(a.id)) fail(`duplicate action.id: ${a.id}`);
+    actionIds.add(a.id);
     if (typeof a.title !== 'string') fail(`action ${a.id}: title required`);
     // An action INJECTS a command into an agentic session — it does NOT run the CLI.
     if (!a.inject || typeof a.inject.command !== 'string') fail(`action ${a.id}: inject.command (string) required`);
+    if (!/^\/[a-z0-9][a-z0-9._-]*(?:\s[^\r\n]*)?$/i.test(a.inject.command)) fail(`action ${a.id}: inject.command must be one slash command without newlines`);
     if (a.inject.target && !['focused', 'new'].includes(a.inject.target)) fail(`action ${a.id}: inject.target must be focused|new`);
   }
   for (const s of c.screens || []) {
     if (!ID_RE.test(s.id || '')) fail(`screen.id invalid: ${s.id}`);
     if (typeof s.title !== 'string') fail(`screen ${s.id}: title required`);
     if (typeof s.source !== 'string') fail(`screen ${s.id}: source required`);
+    if (firstParty) {
+      if (!s.source.startsWith('cockpit://')) fail(`screen ${s.id}: first-party source must use cockpit://`);
+    } else if (!s.source.startsWith(`sandbox://${m.id}/`)) {
+      fail(`screen ${s.id}: third-party source must use sandbox://${m.id}/`);
+    }
   }
   for (const w of c.workflows || []) {
     if (!ID_RE.test(w.id || '')) fail(`workflow.id invalid: ${w.id}`);
@@ -264,24 +370,39 @@ function validateContribution(m, where) {
     if (!Array.isArray(w.steps) || w.steps.length === 0) fail(`workflow ${w.id}: steps required`);
     for (const step of w.steps) {
       if (!step || typeof step !== 'object' || !ID_RE.test(step.action || '')) fail(`workflow ${w.id}: step.action invalid`);
+      if (!actionIds.has(step.action)) fail(`workflow ${w.id}: unknown action ${step.action}`);
     }
   }
-  for (const h of c.hooks || []) { if (typeof h.on !== 'string' || !ID_RE.test(h.action || '')) fail(`hook invalid: on=${h.on}`); }
+  for (const h of c.hooks || []) {
+    if (typeof h.on !== 'string' || !ID_RE.test(h.action || '') || !actionIds.has(h.action)) fail(`hook invalid: on=${h.on}`);
+  }
   return m;
 }
 /** Load + validate + merge all contribution manifests across the configured dirs. */
 async function loadContributions() {
   const sources = [], actions = [], screens = [], hooks = [], workflows = [];
-  for (const dir of CONTRIB_DIRS) {
+  const manifestIds = new Set();
+  const itemIds = new Set();
+  for (const [dirIndex, dir] of CONTRIB_DIRS.entries()) {
+    const trustTier = dirIndex === 0 ? 'first-party' : 'sandboxed-third-party';
     let entries = [];
     try { entries = (await readdir(dir)).filter((f) => f.endsWith('.json') && f !== 'contribution.schema.json'); } catch { continue; }
     for (const file of entries) {
-      const m = validateContribution(JSON.parse(await readFile(join(dir, file), 'utf8')), file);
-      sources.push({ id: m.id, version: m.version, title: m.title ?? m.id, file });
-      for (const a of m.contributes?.actions || []) actions.push({ ...a, source: m.id });
-      for (const s of m.contributes?.screens || []) screens.push({ ...s, contribution: m.id });
-      for (const h of m.contributes?.hooks || []) hooks.push({ ...h, source: m.id });
-      for (const w of m.contributes?.workflows || []) workflows.push({ ...w, source: m.id });
+      const m = validateContribution(JSON.parse(await readFile(join(dir, file), 'utf8')), file, { firstParty: dirIndex === 0 });
+      if (manifestIds.has(m.id)) throw new Error(`${file}: duplicate contribution id ${m.id}`);
+      manifestIds.add(m.id);
+      sources.push({ id: m.id, version: m.version, title: m.title ?? m.id, file, trust_tier: trustTier });
+      for (const [kind, rows] of Object.entries({ actions: m.contributes?.actions || [], screens: m.contributes?.screens || [], hooks: m.contributes?.hooks || [], workflows: m.contributes?.workflows || [] })) {
+        for (const row of rows) {
+          const globalId = `${kind}:${row.id ?? `${row.on}:${row.action}`}`;
+          if (itemIds.has(globalId)) throw new Error(`${file}: duplicate ${globalId}`);
+          itemIds.add(globalId);
+        }
+      }
+      for (const a of m.contributes?.actions || []) actions.push({ ...a, source: m.id, trust_tier: trustTier });
+      for (const s of m.contributes?.screens || []) screens.push({ ...s, contribution: m.id, trust_tier: trustTier });
+      for (const h of m.contributes?.hooks || []) hooks.push({ ...h, source: m.id, trust_tier: trustTier });
+      for (const w of m.contributes?.workflows || []) workflows.push({ ...w, source: m.id, trust_tier: trustTier });
     }
   }
   return { sources, actions, screens, hooks, workflows };
@@ -338,6 +459,42 @@ async function rebuildIndex(req) {
   const status = await getIndexStatus();
   await appendAudit('index.rebuild.completed', { request_ts: requested.ts, graph: body.graph ?? null, all: body.all === true, force: body.force === true });
   return { status: 200, body: { ok: true, command: `aiwg ${args.join(' ')}`, output, status } };
+}
+
+export async function createUserIndexGraph(body, projectRoot = process.cwd()) {
+  const name = safeIndexGraph(body?.name);
+  if (!name || ['project', 'codebase', 'framework'].includes(name)) {
+    throw new Error('name must be a non-built-in graph identifier');
+  }
+  const scanDirs = Array.isArray(body?.scanDirs) ? body.scanDirs.map((value) => String(value).trim()) : [];
+  if (!scanDirs.length || scanDirs.some((value) => !value || value.startsWith('/') || value.split(/[\\/]+/).includes('..'))) {
+    throw new Error('scanDirs must contain safe project-relative paths');
+  }
+  const extensions = Array.isArray(body?.extensions) && body.extensions.length
+    ? body.extensions.map((value) => String(value).trim())
+    : ['.md', '.yaml', '.json'];
+  if (extensions.some((value) => !/^\.[a-z0-9]+$/i.test(value))) {
+    throw new Error('extensions must use forms such as .md or .json');
+  }
+  const configDir = join(projectRoot, '.aiwg');
+  const configPath = join(configDir, 'aiwg.config');
+  await mkdir(configDir, { recursive: true, mode: 0o700 });
+  let config = {};
+  try { config = JSON.parse(await readFile(configPath, 'utf8')); }
+  catch (error) { if (error?.code !== 'ENOENT') throw error; }
+  config.index = config.index && typeof config.index === 'object' ? config.index : {};
+  config.index.graphs = config.index.graphs && typeof config.index.graphs === 'object' ? config.index.graphs : {};
+  if (config.index.graphs[name]) throw new Error(`graph '${name}' already exists`);
+  config.index.graphs[name] = {
+    scanDirs,
+    extensions,
+    defaultBuild: body?.defaultBuild === true,
+    shared: body?.shared === true,
+  };
+  const temporary = `${configPath}.${process.pid}.${randomBytes(4).toString('hex')}.tmp`;
+  await writeFile(temporary, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
+  await rename(temporary, configPath);
+  return { name, definition: config.index.graphs[name], config_path: configPath };
 }
 
 function json(res, status, body) {
@@ -1409,7 +1566,11 @@ function defaultSessionLaunch(instance) {
     };
   }
   if (runtime === 'container' || runtime === 'docker' || runtime === 'vm' || runtime === 'qemu' || runtime === 'kvm') {
-    const home = runtime === 'container' || runtime === 'docker' ? '/root' : '/home/agent';
+    // Prefer the executor-reported target-local cwd. Current agentic-sandbox
+    // container and VM contracts report `/home/agent`; retain that value as a
+    // compatibility fallback for older inventory responses. `/root` is not
+    // readable by the mandatory uid 10001 container identity.
+    const home = instance?.launch_context?.cwd ?? '/home/agent';
     return {
       command: '/bin/bash',
       args: ['-lc', `cd ${shellSingleQuote(home)} && exec /bin/bash -l`],
@@ -1856,8 +2017,12 @@ async function taskMissionSession(executorUrl) {
 
 async function getMissions(executorUrl) {
   const sessions = await readMcSessions();
-  const live = await taskMissionSession(executorUrl);
+  const [live, fleetSessions] = await Promise.all([
+    taskMissionSession(executorUrl),
+    fleetMissionSessions(executorUrl),
+  ]);
   if (live) sessions.unshift(live);
+  sessions.unshift(...fleetSessions);
   const missions = sessions.flatMap((s) => s.missions);
   return {
     source: 'aiwg-mc + agentic-sandbox',
@@ -1866,6 +2031,104 @@ async function getMissions(executorUrl) {
     sessions,
     missions,
   };
+}
+
+const FLEET_TERMINAL_STATES = new Set(['succeeded', 'failed', 'cancelled', 'timed-out']);
+
+function fleetParentState(records) {
+  const states = records.map((record) => record.status?.observed_state ?? 'unknown');
+  if (states.some((state) => state === 'operator-review-required' || state === 'unknown')) return 'operator-review-required';
+  if (records.some((record) => record.status?.backpressure?.reason === 'approval')) return 'awaiting-approval';
+  if (states.some((state) => state === 'failed' || state === 'timed-out')) return 'failed';
+  if (states.length > 0 && states.every((state) => FLEET_TERMINAL_STATES.has(state))) return 'completed';
+  return 'active';
+}
+
+function fleetMissionProjection(record, sessionId) {
+  const lineage = record.lineage ?? {};
+  const status = record.status ?? {};
+  const artifacts = Array.isArray(status.artifacts) ? status.artifacts : [];
+  return {
+    id: lineage.child_id,
+    session_id: sessionId,
+    source: 'agentic-sandbox-fleet',
+    title: `${record.kind ?? 'workload'} ${lineage.child_id ?? 'unknown'}`,
+    status: status.observed_state ?? 'unknown',
+    terminal: FLEET_TERMINAL_STATES.has(status.observed_state),
+    parent_mission_id: lineage.mission_id,
+    workload_kind: record.kind,
+    desired_state: record.spec?.desired_state,
+    target_id: lineage.target_id,
+    executor_id: lineage.executor_id,
+    runtime_id: lineage.runtime_id,
+    instance_id: lineage.runtime_id,
+    runtime_session_id: lineage.session_id,
+    task_id: lineage.task_id,
+    command_id: lineage.command_id,
+    dispatch_id: lineage.dispatch_id,
+    revision: status.revision,
+    last_seen: status.last_seen,
+    health: status.health,
+    backpressure: status.backpressure,
+    artifacts,
+    exit_classification: status.exit_classification,
+    error: status.error_code,
+    schedule: record.spec?.schedule,
+  };
+}
+
+async function fleetMissionSessions(executorUrl) {
+  let response;
+  try {
+    response = await fetchJsonFirst([`${executorUrl}/api/v2/fleet/workloads`]);
+  } catch (err) {
+    rethrowExecutorSecurityError(err);
+    if (/\s->\s(?:404|405)(?:;|$)/.test(String(err?.message ?? err))) return [];
+    throw err;
+  }
+  if (response.status === 404 || response.status === 405) return [];
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(`Agentic Sandbox fleet inventory failed with HTTP ${response.status}`);
+  }
+  const snapshot = response.body?.inventory ?? response.body;
+  if (
+    snapshot?.document_type !== 'inventory'
+    || snapshot?.api_version !== 'agentic-orchestration/v1'
+    || !Array.isArray(snapshot?.records)
+  ) {
+    throw new Error('Agentic Sandbox returned an invalid fleet inventory envelope');
+  }
+  const records = snapshot.records;
+  const groups = new Map();
+  const childIds = new Set();
+  for (const record of records) {
+    const missionId = record?.lineage?.mission_id;
+    const childId = record?.lineage?.child_id;
+    if (!missionId || !childId || !record?.kind || !record?.status?.observed_state) {
+      throw new Error('Agentic Sandbox fleet inventory contains an invalid workload record');
+    }
+    if (childIds.has(childId)) throw new Error(`Agentic Sandbox fleet inventory repeats child '${childId}'`);
+    childIds.add(childId);
+    const group = groups.get(missionId) ?? [];
+    group.push(record);
+    groups.set(missionId, group);
+  }
+  return [...groups.entries()].map(([missionId, missionRecords]) => {
+    const sessionId = `fleet:${missionId}`;
+    const lastSeen = missionRecords.map((record) => record.status?.last_seen).filter(Boolean).sort().at(-1);
+    return {
+      id: sessionId,
+      parent_mission_id: missionId,
+      name: `Fleet mission ${missionId}`,
+      state: fleetParentState(missionRecords),
+      source: 'agentic-sandbox-fleet',
+      updated_at: lastSeen ?? snapshot.generated_at,
+      inventory_revision: snapshot.inventory_revision,
+      audit_count: 0,
+      audit_tail: [],
+      missions: missionRecords.map((record) => fleetMissionProjection(record, sessionId)),
+    };
+  });
 }
 
 async function getSessionEventRows(executorUrl, instances) {
@@ -2244,9 +2507,46 @@ export function createBridge({
   token,
   executorTokenFile = EXECUTOR_TOKEN_FILE,
   requireSandboxMtls = REQUIRE_SANDBOX_MTLS,
+  bootstrapTtlMs = 60_000,
+  sessionTtlMs = 12 * 60 * 60 * 1000,
 } = {}) {
   const upstreamUrl = executorUrl;
   const TOKEN = token ?? randomBytes(24).toString('hex');
+  const bootstrapNonces = new Map();
+  const browserSessions = new Map();
+  const digest = (value) => createHash('sha256').update(String(value)).digest('base64url');
+  const issueBootstrapNonce = (audience = 'browser') => {
+    if (!['browser', 'tauri', 'vscode'].includes(audience)) {
+      throw executorAuthError('invalid_bootstrap_audience', 'bootstrap audience must be browser, tauri, or vscode');
+    }
+    const nonce = randomBytes(24).toString('base64url');
+    bootstrapNonces.set(digest(nonce), { audience, expiresAt: Date.now() + bootstrapTtlMs });
+    return nonce;
+  };
+  const consumeBootstrapNonce = (nonce, audience) => {
+    const key = digest(nonce);
+    const pending = bootstrapNonces.get(key);
+    bootstrapNonces.delete(key);
+    return Boolean(
+      pending &&
+      pending.expiresAt >= Date.now() &&
+      pending.audience === audience &&
+      ['browser', 'tauri', 'vscode'].includes(audience),
+    );
+  };
+  const sessionAuth = (req) => {
+    const id = cookies(req).cockpit_session ?? '';
+    const session = browserSessions.get(digest(id));
+    if (!session) return null;
+    if (session.expiresAt < Date.now()) {
+      browserSessions.delete(digest(id));
+      return null;
+    }
+    return { kind: 'session', csrf: session.csrf };
+  };
+  const requestAuth = (req) => bearerAuthed(req, TOKEN)
+    ? { kind: 'bearer', csrf: TOKEN }
+    : sessionAuth(req);
   const executorOrigin = new URL(upstreamUrl).origin;
   const executorAddress = new URL(upstreamUrl);
   const attachTargets = new Map();
@@ -2268,14 +2568,62 @@ export function createBridge({
     try {
       // unauthenticated liveness probe (no /api/ prefix) — for the shell to wait on
       if (url.pathname === '/healthz') return json(res, 200, { status: 'ok' });
+      if (url.pathname === '/bootstrap/nonce' && req.method === 'POST') {
+        if (!validBrowserOrigin(req) || !bearerAuthed(req, TOKEN)) {
+          return json(res, 401, { error: 'unauthorized' });
+        }
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        try {
+          const payload = JSON.stringify({
+            nonce: issueBootstrapNonce(String(parsed.body.audience ?? 'browser')),
+            expires_in_ms: bootstrapTtlMs,
+          });
+          res.writeHead(201, {
+            'content-type': 'application/json',
+            'cache-control': 'no-store',
+            'content-length': Buffer.byteLength(payload),
+          });
+          return res.end(payload);
+        } catch (err) {
+          return json(res, 400, { error: err.code ?? 'invalid_bootstrap_audience' });
+        }
+      }
+      if (url.pathname === '/bootstrap/session' && req.method === 'POST') {
+        if (!validBrowserOrigin(req)) return json(res, 403, { error: 'forbidden_origin' });
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        const nonce = String(parsed.body.nonce ?? '');
+        const audience = String(parsed.body.audience ?? '');
+        if (!nonce || !consumeBootstrapNonce(nonce, audience)) {
+          return json(res, 401, { error: 'bootstrap_invalid_or_expired' });
+        }
+        const id = randomBytes(32).toString('base64url');
+        const csrf = randomBytes(24).toString('base64url');
+        browserSessions.set(digest(id), { csrf, audience, expiresAt: Date.now() + sessionTtlMs });
+        res.writeHead(201, {
+          'content-type': 'application/json',
+          'cache-control': 'no-store',
+          'set-cookie': `cockpit_session=${encodeURIComponent(id)}; HttpOnly; Path=/; SameSite=Strict; Max-Age=${Math.ceil(sessionTtlMs / 1000)}`,
+        });
+        return res.end(JSON.stringify({ csrf, expires_in_ms: sessionTtlMs }));
+      }
+      if (url.pathname === '/bootstrap/session' && req.method === 'GET') {
+        const auth = sessionAuth(req);
+        if (!auth) return json(res, 401, { error: 'unauthorized' });
+        res.setHeader('cache-control', 'no-store');
+        return json(res, 200, { csrf: auth.csrf });
+      }
       if (url.pathname.startsWith('/api/') && !validBrowserOrigin(req)) {
         return json(res, 403, { error: 'forbidden_origin' });
       }
-      // gate the control surface: per-launch bearer token on every /api/ call
-      if (url.pathname.startsWith('/api/') && !authed(req, url, TOKEN)) {
+      // Gate the control surface with either an explicit bearer for non-browser
+      // clients or the HttpOnly session established by a one-time bootstrap.
+      const auth = url.pathname.startsWith('/api/') ? requestAuth(req) : null;
+      if (url.pathname.startsWith('/api/') && !auth) {
         return json(res, 401, { error: 'unauthorized', detail: 'missing or invalid cockpit token' });
       }
-      if (url.pathname.startsWith('/api/') && !validCsrf(req, TOKEN)) {
+      if (url.pathname.startsWith('/api/') && !validCsrf(req, auth)) {
         return json(res, 403, { error: 'csrf_required' });
       }
       if (url.pathname.startsWith('/api/')) {
@@ -2311,7 +2659,12 @@ export function createBridge({
       if (url.pathname === '/api/mcp/discovery' && req.method === 'GET') return json(res, 200, await getMcpDiscovery(upstreamUrl));
       if (url.pathname === '/api/mcp' && req.method === 'POST') return proxyMcpRequest(req, res, upstreamUrl, MCP_TOKEN_FILE);
       if (url.pathname === '/api/running') return json(res, 200, await getRunning(upstreamUrl));
-      if (url.pathname === '/api/missions') return json(res, 200, await getMissions(upstreamUrl));
+      if (url.pathname === '/api/missions' && req.method === 'GET') return json(res, 200, await getMissions(upstreamUrl));
+      if (url.pathname === '/api/missions' && req.method === 'POST') {
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        return json(res, 201, await dispatchMission(parsed.body, upstreamUrl));
+      }
       if (url.pathname === '/api/events/snapshot') return json(res, 200, await getEventSnapshot(upstreamUrl));
       if (url.pathname === '/api/loadouts') return json(res, 200, await getLoadouts(upstreamUrl));
       if (url.pathname === '/api/index/status' && req.method === 'GET') return json(res, 200, await getIndexStatus());
@@ -2322,6 +2675,19 @@ export function createBridge({
       if (url.pathname === '/api/index/rebuild' && req.method === 'POST') {
         const result = await rebuildIndex(req);
         return json(res, result.status, result.body);
+      }
+      if (url.pathname === '/api/index/graphs' && req.method === 'POST') {
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        const requested = await appendAudit('index.graph.create.requested', { graph: parsed.body?.name ?? null });
+        try {
+          const graph = await createUserIndexGraph(parsed.body);
+          await appendAudit('index.graph.create.completed', { request_ts: requested.ts, graph: graph.name });
+          return json(res, 201, { ok: true, graph });
+        } catch (error) {
+          await appendAudit('index.graph.create.rejected', { request_ts: requested.ts, reason: String(error?.message ?? error) });
+          return json(res, 400, { error: 'invalid_graph_definition', detail: String(error?.message ?? error) });
+        }
       }
       if (url.pathname === '/api/audit' && req.method === 'GET') {
         const limit = Math.max(1, Math.min(200, Number(url.searchParams.get('limit') || 50)));
@@ -2413,7 +2779,7 @@ export function createBridge({
         if (type && type !== 'all') {
           const types = type.split(',').map((t) => t.trim()).filter(Boolean);
           if (!types.length || types.some((t) => !CAPABILITY_TYPES.has(t))) {
-            return json(res, 400, { error: 'invalid_type', detail: 'type must be all, skill, agent, command, rule, flow, or a comma list of those kinds' });
+            return json(res, 400, { error: 'invalid_type', detail: `type must be all or a comma list of: ${[...CAPABILITY_TYPES].join(', ')}` });
           }
           args.push('--type', types.join(','));
         }
@@ -2614,6 +2980,29 @@ export function createBridge({
         await appendAudit('instance.destroy.requested', { instance_id: decodeURIComponent(m[1]), status, result: body });
         return json(res, status, body);
       }
+      if ((m = url.pathname.match(/^\/api\/missions\/([^/]+)\/(pause|resume)$/)) && req.method === 'POST') {
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        const result = await controlMission({
+          action: m[2],
+          sessionId: decodeURIComponent(m[1]),
+          expectedUpdatedAt: parsed.body?.expected_updated_at,
+          requestId: parsed.body?.request_id,
+        });
+        return json(res, 200, { ...result, projection: await getMissions(upstreamUrl) });
+      }
+      if ((m = url.pathname.match(/^\/api\/missions\/([^/]+)\/([^/]+)\/cancel$/)) && req.method === 'POST') {
+        const parsed = await readJsonBody(req);
+        if (parsed.error) return json(res, 400, { error: parsed.error });
+        const result = await controlMission({
+          action: 'cancel',
+          sessionId: decodeURIComponent(m[1]),
+          missionId: decodeURIComponent(m[2]),
+          expectedUpdatedAt: parsed.body?.expected_updated_at,
+          requestId: parsed.body?.request_id,
+        });
+        return json(res, 200, { ...result, projection: await getMissions(upstreamUrl) });
+      }
       if ((m = url.pathname.match(/^\/api\/tasks\/([^/]+)\/([^/]+)\/cancel$/)) && req.method === 'POST') {
         await appendAudit('task.cancel.requested', { instance_id: decodeURIComponent(m[1]), task_id: decodeURIComponent(m[2]) });
         return proxy(res, 'POST', `${upstreamUrl}/agents/${encodeURIComponent(m[1])}/tasks/${encodeURIComponent(m[2])}:cancel`);
@@ -2642,13 +3031,15 @@ export function createBridge({
         const distIndex = join(WEB_DIST, 'index.html');
         const src = existsSync(distIndex) ? distIndex : join(__dir, 'public', 'index.html');
         const raw = await readFile(src, 'utf8');
-        // Inject the per-launch token so the same-origin app can call the gated API.
-        const html = raw.replace('</head>', `<script>window.__COCKPIT_TOKEN__=${JSON.stringify(TOKEN)}</script>\n</head>`);
-        // never cache the shell — it must always reference the latest hashed bundle
+        // The app exchanges a one-time nonce from the URL fragment for an
+        // HttpOnly session. No reusable credential is injected into HTML.
+        const html = raw;
+        // Never cache the shell or bootstrap-bearing navigation.
         res.writeHead(200, {
           'content-type': 'text/html; charset=utf-8',
-          'cache-control': 'no-cache',
-          'set-cookie': `cockpit_csrf=${TOKEN}; Path=/; SameSite=Strict`,
+          'cache-control': 'no-store',
+          'content-security-policy': `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws://${req.headers.host} wss://${req.headers.host}; frame-ancestors 'self' vscode-webview: tauri:`,
+          'referrer-policy': 'no-referrer',
         });
         return res.end(html);
       }
@@ -2658,7 +3049,7 @@ export function createBridge({
       }
       json(res, 404, { error: 'not_found', path: url.pathname });
     } catch (err) {
-      const status = Number(err?.upstreamStatus) || 502;
+      const status = Number(err?.status) || Number(err?.upstreamStatus) || 502;
       json(res, status, { error: err?.code ?? 'bridge_upstream_error', message: String(err?.message ?? err) });
     }
   };
@@ -2676,7 +3067,7 @@ export function createBridge({
           socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
           return;
         }
-        if (!websocketAuthed(req, TOKEN)) {
+        if (!websocketAuthed(req, TOKEN) && !sessionAuth(req)) {
           socket.end('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
           return;
         }
@@ -2692,6 +3083,7 @@ export function createBridge({
     },
   ));
   server.cockpitToken = TOKEN; // exposed for shells/tests
+  server.issueBootstrapNonce = issueBootstrapNonce;
   return server;
 }
 
@@ -2741,8 +3133,10 @@ if (isDirectExecution()) {
   server.listen(port, '127.0.0.1', async () => {
     try {
       const file = await writeRuntimeToken({ token: server.cockpitToken, port, pid: process.pid });
+      const browserNonce = server.issueBootstrapNonce('browser');
       console.log(`[cockpit-bridge] http://127.0.0.1:${port}  (executor ${EXECUTOR_URL})`);
-      console.log(`  token written ${file} (mode 600) — open the URL in a browser or attach a shell`);
+      console.log(`  runtime handshake ${file} (mode 600)`);
+      console.log(`  browser bootstrap http://127.0.0.1:${port}/#bootstrap=${browserNonce}&audience=browser (one-time, 60s)`);
     } catch (err) {
       console.error(`[cockpit-bridge] failed to persist runtime token: ${String(err?.message ?? err)}`);
       server.close(() => process.exit(1));

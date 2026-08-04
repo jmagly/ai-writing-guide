@@ -16,12 +16,13 @@ import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import * as ui from '../ui.js';
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 
 // ── Constants ────────────────────────────────────────────────
 
 const MC_ROOT = '.aiwg/ralph-external/mc';
 const SESSIONS_DIR = join(MC_ROOT, 'sessions');
+const CONTROL_ID_RE = /^[a-zA-Z0-9._-]+$/;
 
 type MissionStatus = 'queued' | 'running' | 'done' | 'failed' | 'aborted' | 'paused';
 type SessionState = 'active' | 'paused' | 'stopped';
@@ -53,6 +54,11 @@ interface Mission {
   ralphLoopId?: string;
   /** Ralph process PID once the mission is launched (#1439) */
   ralphPid?: number;
+  /** Shared-host admission lease backing this local execution (#1566, #1657). */
+  admissionRequestId?: string;
+  admissionState?: string;
+  admissionLeaseExpiresAt?: string;
+  admissionSubmittedAt?: string;
 }
 
 interface Session {
@@ -63,6 +69,8 @@ interface Session {
   createdAt: string;
   updatedAt: string;
   missions: Mission[];
+  /** Idempotency ledger shared by CLI and Cockpit control mutations. */
+  mutationKeys?: Record<string, { action: string; target: string; updatedAt: string }>;
 }
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -76,6 +84,7 @@ async function ensureDir(dir: string): Promise<void> {
 }
 
 async function readSession(sessionId: string): Promise<Session | null> {
+  if (!CONTROL_ID_RE.test(sessionId)) return null;
   const path = join(SESSIONS_DIR, sessionId, 'session.json');
   try {
     const raw = await fs.readFile(path, 'utf-8');
@@ -85,17 +94,95 @@ async function readSession(sessionId: string): Promise<Session | null> {
   }
 }
 
-async function writeSession(session: Session): Promise<void> {
+async function writeSession(session: Session, { touch = true }: { touch?: boolean } = {}): Promise<void> {
   const dir = join(SESSIONS_DIR, session.id);
   await ensureDir(dir);
-  session.updatedAt = new Date().toISOString();
-  await fs.writeFile(join(dir, 'session.json'), JSON.stringify(session, null, 2));
+  if (touch) session.updatedAt = new Date().toISOString();
+  const destination = join(dir, 'session.json');
+  const temporary = join(dir, `.session.${process.pid}.${randomBytes(4).toString('hex')}.tmp`);
+  await fs.writeFile(temporary, JSON.stringify(session, null, 2));
+  await fs.rename(temporary, destination);
 }
 
 async function appendLog(sessionId: string, event: Record<string, unknown>): Promise<void> {
   const logPath = join(SESSIONS_DIR, sessionId, 'log.jsonl');
   const entry = JSON.stringify({ ...event, ts: new Date().toISOString() });
   await fs.appendFile(logPath, entry + '\n');
+}
+
+type MutationResult =
+  | { ok: true; session: Session; replayed: boolean }
+  | { ok: false; code: 'mission_conflict' | 'session_not_found' | 'target_not_found' | 'invalid_state' | 'capacity'; message: string };
+
+/**
+ * Apply one durable Mission Control mutation under a cross-process lock.
+ * `expectedUpdatedAt` provides optimistic concurrency and `requestId` makes
+ * retries idempotent across CLI/Cockpit reconnects.
+ */
+async function mutateSession(
+  sessionId: string,
+  action: string,
+  target: string,
+  expectedUpdatedAt: string | undefined,
+  requestId: string | undefined,
+  mutate: (session: Session) => string | undefined,
+): Promise<MutationResult> {
+  if (!CONTROL_ID_RE.test(sessionId) || !CONTROL_ID_RE.test(target)) {
+    return { ok: false, code: 'target_not_found', message: 'invalid Mission control identifier' };
+  }
+  const dir = join(SESSIONS_DIR, sessionId);
+  await ensureDir(dir);
+  const lockPath = join(dir, '.control.lock');
+  let lock;
+  try {
+    lock = await fs.open(lockPath, 'wx', 0o600);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+      return { ok: false, code: 'mission_conflict', message: 'another Mission control mutation is in progress' };
+    }
+    throw error;
+  }
+  try {
+    const session = await readSession(sessionId);
+    if (!session) return { ok: false, code: 'session_not_found', message: `Session not found: ${sessionId}` };
+    if (expectedUpdatedAt && session.updatedAt !== expectedUpdatedAt) {
+      return { ok: false, code: 'mission_conflict', message: `expected revision ${expectedUpdatedAt}; current revision is ${session.updatedAt}` };
+    }
+    if (requestId && session.mutationKeys?.[requestId]) {
+      const prior = session.mutationKeys[requestId]!;
+      if (prior.action !== action || prior.target !== target) {
+        return { ok: false, code: 'mission_conflict', message: `request id '${requestId}' was already used for another mutation` };
+      }
+      return { ok: true, session, replayed: true };
+    }
+    const errorCode = mutate(session);
+    if (errorCode === 'target_not_found') return { ok: false, code: errorCode, message: `Mission not found: ${target}` };
+    if (errorCode === 'invalid_state') return { ok: false, code: errorCode, message: `Mutation '${action}' is invalid from state '${session.state}'` };
+    if (errorCode === 'capacity') return { ok: false, code: errorCode, message: `Session at capacity (${session.maxMissions} missions)` };
+    const nextUpdatedAt = new Date().toISOString();
+    session.updatedAt = nextUpdatedAt;
+    if (requestId) {
+      session.mutationKeys = { ...(session.mutationKeys ?? {}), [requestId]: { action, target, updatedAt: nextUpdatedAt } };
+    }
+    await writeSession(session, { touch: false });
+    await appendLog(session.id, { event: `control_${action}`, target, requestId: requestId ?? null, replayed: false, revision: session.updatedAt });
+    return { ok: true, session, replayed: false };
+  } finally {
+    await lock.close();
+    await fs.unlink(lockPath).catch(() => undefined);
+  }
+}
+
+function mutationFlags(args: string[]): { expectedUpdatedAt?: string; requestId?: string } {
+  return {
+    expectedUpdatedAt: parseFlag(args, '--expected-updated-at'),
+    requestId: parseFlag(args, '--request-id'),
+  };
+}
+
+function mutationFailure(result: Extract<MutationResult, { ok: false }>): HandlerResult {
+  ui.error(`${result.code}: ${result.message}`);
+  return { exitCode: result.code === 'mission_conflict' ? 3 : 1, message: `${result.code}: ${result.message}` };
 }
 
 async function listSessions(): Promise<Session[]> {
@@ -198,7 +285,9 @@ Queue a mission onto a session. Does NOT execute — use 'aiwg mc run' to launch
                                 (off unless declared; no default K)
   --budget-stop-policy P        completion-wins (default) | budget-wins
   --mode pty-orchestrator       PTY-orchestrator mode (requires --target-agent)
-  --target-agent <id>           Required for --mode pty-orchestrator`,
+  --target-agent <id>           Required for --mode pty-orchestrator
+  --expected-updated-at <time>  Reject stale state with exit 3
+  --request-id <id>             Idempotent dispatch key`,
 
   run: `Usage: aiwg mc run [<session-id>] [--accept-cost]
 
@@ -220,15 +309,24 @@ Live-monitor mission progress (non-interactive context prints status once).`,
 
   abort: `Usage: aiwg mc abort <session-id> <mission-id>
 
-Mark a specific mission as aborted.`,
+Mark a specific mission as aborted.
+
+  --expected-updated-at <timestamp>  Reject stale state with exit 3
+  --request-id <id>                  Idempotent mutation key`,
 
   pause: `Usage: aiwg mc pause [<session-id>]
 
-Pause an active session; running missions transition to 'paused' status.`,
+Pause an active session; running missions transition to 'paused' status.
+
+  --expected-updated-at <timestamp>  Reject stale state with exit 3
+  --request-id <id>                  Idempotent mutation key`,
 
   resume: `Usage: aiwg mc resume [<session-id>]
 
-Resume a paused session; paused missions transition back to 'running'.`,
+Resume a paused session; paused missions transition back to 'running'.
+
+  --expected-updated-at <timestamp>  Reject stale state with exit 3
+  --request-id <id>                  Idempotent mutation key`,
 
   stop: `Usage: aiwg mc stop [<session-id>] [--drain]
 
@@ -363,14 +461,9 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
     return { exitCode: 1 };
   }
 
-  const session = await findActiveSession(sessionId);
-  if (!session) {
+  const selected = await findActiveSession(sessionId);
+  if (!selected) {
     ui.error(sessionId ? `Session not found: ${sessionId}` : 'No active session. Run `aiwg mc start` first.');
-    return { exitCode: 1 };
-  }
-
-  if (session.missions.length >= session.maxMissions) {
-    ui.error(`Session at capacity (${session.maxMissions} missions). Increase with --max-missions or stop completed missions.`);
     return { exitCode: 1 };
   }
 
@@ -383,7 +476,7 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
     const cfg = await readAiwgConfig(ctx.cwd || process.cwd());
     if (cfg) {
       const resolved = resolveParallelism(cfg.parallelism, cfg.providers[0]);
-      const activeCount = session.missions.filter(
+      const activeCount = selected.missions.filter(
         m => m.status === 'running' || m.status === 'queued' || m.status === 'paused',
       ).length;
       if (activeCount >= resolved.max_parallel_mc_missions) {
@@ -394,8 +487,11 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
     // Non-fatal — config read failure doesn't block dispatch
   }
 
+  const flags = mutationFlags(ctx.args);
   const mission: Mission = {
-    id: genId('m'),
+    id: flags.requestId
+      ? `m-${createHash('sha256').update(flags.requestId).digest('hex').slice(0, 16)}`
+      : genId('m'),
     objective,
     completion,
     status: 'queued',
@@ -413,27 +509,35 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
     targetAgent: targetAgent || undefined,
   };
 
-  session.missions.push(mission);
-  await writeSession(session);
-  await appendLog(session.id, {
-    event: 'mission_dispatched',
-    missionId: mission.id,
-    objective,
-    priority,
-    mode,
-    targetAgent,
-    lfdBudgets: {
-      maxTotalTokens,
-      maxOutputTokens,
-      maxToolCalls,
-      maxTotalCost,
-      maxWallClockMinutes,
-      explorationQuota,
-    },
+  const result = await mutateSession(selected.id, 'dispatch', mission.id, flags.expectedUpdatedAt, flags.requestId, session => {
+    if (session.state !== 'active') return 'invalid_state';
+    if (session.missions.length >= session.maxMissions) return 'capacity';
+    session.missions.push(mission);
+    return undefined;
   });
+  if (!result.ok) return mutationFailure(result);
+  if (!result.replayed) {
+    await appendLog(selected.id, {
+      event: 'mission_dispatched',
+      missionId: mission.id,
+      objective,
+      priority,
+      mode,
+      targetAgent,
+      requestId: flags.requestId ?? null,
+      lfdBudgets: {
+        maxTotalTokens,
+        maxOutputTokens,
+        maxToolCalls,
+        maxTotalCost,
+        maxWallClockMinutes,
+        explorationQuota,
+      },
+    });
+  }
 
   if (capWarning) ui.warn(capWarning);
-  ui.success(`Dispatched mission ${mission.id}: ${objective}`);
+  ui.success(`${result.replayed ? 'Replayed dispatch for' : 'Dispatched mission'} ${mission.id}: ${objective}`);
   const modeLabel = mode === 'pty-orchestrator' ? ` | Mode: PTY orchestrator → ${targetAgent}` : '';
   ui.info(`Priority: ${priority} | Max iterations: ${maxIterations}${modeLabel}`);
   const lfdLimits = [
@@ -450,7 +554,7 @@ async function mcDispatch(ctx: HandlerContext): Promise<HandlerResult> {
 
   // #1439: dispatch alone does NOT execute the mission. Surface the next step
   // so the user knows the queue won't drain on its own.
-  ui.info(`Next: run \`aiwg mc run ${session.id}\` to launch queued missions as ralph loops.`);
+  ui.info(`Next: run \`aiwg mc run ${selected.id}\` to launch queued missions as ralph loops.`);
 
   return { exitCode: 0, message: mission.id };
 }
@@ -534,6 +638,21 @@ async function mcRun(ctx: HandlerContext): Promise<HandlerResult> {
   let failed = 0;
   const projectRoot = ctx.cwd || process.cwd();
   const frameworkRoot = ctx.frameworkRoot;
+  const { readAiwgConfig, resolveParallelism } = await import('../../config/aiwg-config.js');
+  const { FileAdmissionStore, SharedHostScheduler } = await import('../../serve/shared-host-scheduler.js');
+  const cfg = await readAiwgConfig(projectRoot).catch(() => null);
+  const provider = cfg?.providers[0] ?? 'unknown';
+  const maxConcurrent = resolveParallelism(cfg?.parallelism, provider).max_parallel_mc_missions;
+  const scheduler = new SharedHostScheduler(
+    new FileAdmissionStore(join(projectRoot, MC_ROOT, 'admission.json')),
+    {
+      maxConcurrent,
+      leaseTtlMs: 5 * 60_000,
+      agingIntervalMs: 30_000,
+      allowPreemption: false,
+      defaultHostQuota: maxConcurrent,
+    },
+  );
 
   for (const mission of queued) {
     if (mission.mode === 'pty-orchestrator') {
@@ -544,6 +663,41 @@ async function mcRun(ctx: HandlerContext): Promise<HandlerResult> {
 
     if (!mission.completion) {
       ui.warn(`Mission ${mission.id} has no --completion criteria; ralph requires one. Skipping. Re-dispatch with --completion "<criteria>" to include this mission.`);
+      skipped += 1;
+      continue;
+    }
+
+    const admissionRequestId = mission.admissionState === 'released'
+      ? `${session.id}.${mission.id}.${Date.now().toString(36)}`
+      : mission.admissionRequestId ?? `${session.id}.${mission.id}`;
+    const admissionSubmittedAt = mission.admissionState === 'released'
+      ? new Date().toISOString()
+      : mission.admissionSubmittedAt ?? new Date().toISOString();
+    const admission = scheduler.submit({
+      requestId: admissionRequestId,
+      orchestratorId: session.id,
+      environment: process.env.AIWG_ENVIRONMENT ?? 'default',
+      provider,
+      runtimeKind: 'host',
+      priority: mission.priority === 'critical' ? 100 : mission.priority === 'high' ? 50 : mission.priority === 'low' ? 0 : 10,
+      submittedAt: admissionSubmittedAt,
+      queueTimeoutMs: 24 * 60 * 60_000,
+      preemptible: false,
+      metadata: { missionId: mission.id },
+    });
+    mission.admissionRequestId = admissionRequestId;
+    mission.admissionSubmittedAt = admissionSubmittedAt;
+    mission.admissionState = admission.state;
+    mission.admissionLeaseExpiresAt = admission.leaseExpiresAt;
+    await writeSession(session);
+    if (admission.state !== 'admitted') {
+      await appendLog(session.id, {
+        event: 'mission_admission_queued',
+        missionId: mission.id,
+        admissionRequestId,
+        reason: admission.reason,
+      });
+      ui.info(`Queued ${mission.id}: ${admission.reason}`);
       skipped += 1;
       continue;
     }
@@ -583,6 +737,9 @@ async function mcRun(ctx: HandlerContext): Promise<HandlerResult> {
       mission.status = 'failed';
       mission.error = msg;
       mission.completedAt = new Date().toISOString();
+      scheduler.release(admissionRequestId);
+      mission.admissionState = 'released';
+      mission.admissionLeaseExpiresAt = undefined;
       await writeSession(session);
       await appendLog(session.id, {
         event: 'mission_launch_failed',
@@ -618,6 +775,15 @@ async function mcRun(ctx: HandlerContext): Promise<HandlerResult> {
  */
 async function syncMissionsFromRalph(session: Session, projectRoot: string): Promise<boolean> {
   let mutated = false;
+  const { readAiwgConfig, resolveParallelism } = await import('../../config/aiwg-config.js');
+  const { FileAdmissionStore, SharedHostScheduler } = await import('../../serve/shared-host-scheduler.js');
+  const cfg = await readAiwgConfig(projectRoot).catch(() => null);
+  const provider = cfg?.providers[0] ?? 'unknown';
+  const maxConcurrent = resolveParallelism(cfg?.parallelism, provider).max_parallel_mc_missions;
+  const scheduler = new SharedHostScheduler(
+    new FileAdmissionStore(join(projectRoot, MC_ROOT, 'admission.json')),
+    { maxConcurrent, leaseTtlMs: 5 * 60_000, agingIntervalMs: 30_000, allowPreemption: false, defaultHostQuota: maxConcurrent },
+  );
   for (const mission of session.missions) {
     if (mission.status !== 'running') continue;
     if (!mission.ralphLoopId) continue;
@@ -659,6 +825,20 @@ async function syncMissionsFromRalph(session: Session, projectRoot: string): Pro
           mission.error = state.error;
         }
         mutated = true;
+        if (mission.admissionRequestId) {
+          try { scheduler.release(mission.admissionRequestId); } catch { /* already expired or released */ }
+          mission.admissionState = 'released';
+          mission.admissionLeaseExpiresAt = undefined;
+        }
+      } else if (mission.admissionRequestId) {
+        try {
+          const renewed = scheduler.renew(mission.admissionRequestId);
+          mission.admissionState = renewed.state;
+          mission.admissionLeaseExpiresAt = renewed.leaseExpiresAt;
+          mutated = true;
+        } catch {
+          // An expired lease is reconciled on the next run; status remains best-effort.
+        }
       }
     } catch {
       // State file missing/unreadable — leave mission status unchanged.
@@ -775,67 +955,84 @@ async function mcAbort(ctx: HandlerContext): Promise<HandlerResult> {
     return { exitCode: 1 };
   }
 
-  const session = await readSession(sessionId);
-  if (!session) {
-    ui.error(`Session not found: ${sessionId}`);
-    return { exitCode: 1 };
+  const flags = mutationFlags(ctx.args);
+  const result = await mutateSession(sessionId, 'cancel', missionId, flags.expectedUpdatedAt, flags.requestId, session => {
+    const mission = session.missions.find(m => m.id === missionId);
+    if (!mission) return 'target_not_found';
+    if (mission.status === 'done' || mission.status === 'failed' || mission.status === 'aborted') return 'invalid_state';
+    mission.status = 'aborted';
+    mission.completedAt = new Date().toISOString();
+    return undefined;
+  });
+  if (!result.ok) return mutationFailure(result);
+
+  if (!result.replayed) {
+    const mission = result.session.missions.find(candidate => candidate.id === missionId);
+    if (mission?.admissionRequestId) {
+      try {
+        const projectRoot = ctx.cwd || process.cwd();
+        const { readAiwgConfig, resolveParallelism } = await import('../../config/aiwg-config.js');
+        const { FileAdmissionStore, SharedHostScheduler } = await import('../../serve/shared-host-scheduler.js');
+        const cfg = await readAiwgConfig(projectRoot).catch(() => null);
+        const provider = cfg?.providers[0] ?? 'unknown';
+        const maxConcurrent = resolveParallelism(cfg?.parallelism, provider).max_parallel_mc_missions;
+        const scheduler = new SharedHostScheduler(
+          new FileAdmissionStore(join(projectRoot, MC_ROOT, 'admission.json')),
+          { maxConcurrent, leaseTtlMs: 5 * 60_000, agingIntervalMs: 30_000, allowPreemption: false, defaultHostQuota: maxConcurrent },
+        );
+        scheduler.cancel(mission.admissionRequestId);
+      } catch {
+        // The mission state is authoritative; lease expiry provides recovery.
+      }
+    }
   }
 
-  const mission = session.missions.find(m => m.id === missionId);
-  if (!mission) {
-    ui.error(`Mission not found: ${missionId}`);
-    return { exitCode: 1 };
-  }
-
-  mission.status = 'aborted';
-  mission.completedAt = new Date().toISOString();
-  await writeSession(session);
-  await appendLog(session.id, { event: 'mission_aborted', missionId });
-
-  ui.success(`Aborted mission: ${missionId}`);
-  return { exitCode: 0 };
+  ui.success(`${result.replayed ? 'Replayed' : 'Aborted'} mission: ${missionId}`);
+  return { exitCode: 0, message: JSON.stringify({ ok: true, replayed: result.replayed, updated_at: result.session.updatedAt }) };
 }
 
 async function mcPause(ctx: HandlerContext): Promise<HandlerResult> {
   const positional = getPositionalArgs(ctx.args);
   const sessionId = positional[0];
 
-  const session = await findActiveSession(sessionId);
-  if (!session) {
+  const selected = await findActiveSession(sessionId);
+  if (!selected) {
     ui.error('No active session to pause.');
     return { exitCode: 1 };
   }
+  const flags = mutationFlags(ctx.args);
+  const result = await mutateSession(selected.id, 'pause', selected.id, flags.expectedUpdatedAt, flags.requestId, session => {
+    if (session.state !== 'active') return 'invalid_state';
+    session.state = 'paused';
+    for (const mission of session.missions) if (mission.status === 'running') mission.status = 'paused';
+    return undefined;
+  });
+  if (!result.ok) return mutationFailure(result);
 
-  session.state = 'paused';
-  for (const m of session.missions) {
-    if (m.status === 'running') m.status = 'paused';
-  }
-  await writeSession(session);
-  await appendLog(session.id, { event: 'session_paused' });
-
-  ui.success(`Paused session: ${session.id}`);
-  return { exitCode: 0 };
+  ui.success(`${result.replayed ? 'Replayed pause for' : 'Paused'} session: ${selected.id}`);
+  return { exitCode: 0, message: JSON.stringify({ ok: true, replayed: result.replayed, updated_at: result.session.updatedAt }) };
 }
 
 async function mcResume(ctx: HandlerContext): Promise<HandlerResult> {
   const positional = getPositionalArgs(ctx.args);
   const sessionId = positional[0];
 
-  const session = await findActiveSession(sessionId);
-  if (!session || session.state !== 'paused') {
+  const selected = await findActiveSession(sessionId);
+  if (!selected || selected.state !== 'paused') {
     ui.error('No paused session to resume.');
     return { exitCode: 1 };
   }
+  const flags = mutationFlags(ctx.args);
+  const result = await mutateSession(selected.id, 'resume', selected.id, flags.expectedUpdatedAt, flags.requestId, session => {
+    if (session.state !== 'paused') return 'invalid_state';
+    session.state = 'active';
+    for (const mission of session.missions) if (mission.status === 'paused') mission.status = 'running';
+    return undefined;
+  });
+  if (!result.ok) return mutationFailure(result);
 
-  session.state = 'active';
-  for (const m of session.missions) {
-    if (m.status === 'paused') m.status = 'running';
-  }
-  await writeSession(session);
-  await appendLog(session.id, { event: 'session_resumed' });
-
-  ui.success(`Resumed session: ${session.id}`);
-  return { exitCode: 0 };
+  ui.success(`${result.replayed ? 'Replayed resume for' : 'Resumed'} session: ${selected.id}`);
+  return { exitCode: 0, message: JSON.stringify({ ok: true, replayed: result.replayed, updated_at: result.session.updatedAt }) };
 }
 
 async function mcStop(ctx: HandlerContext): Promise<HandlerResult> {
@@ -1047,6 +1244,7 @@ const subcommands: Record<string, (ctx: HandlerContext) => Promise<HandlerResult
   status: mcStatus,
   watch: mcWatch,
   abort: mcAbort,
+  cancel: mcAbort,
   pause: mcPause,
   resume: mcResume,
   stop: mcStop,
@@ -1081,7 +1279,7 @@ function showMcHelp(): void {
                                   Cost gate warns/refuses above ~$5 estimate
     status [<id>] [--json]        View mission status dashboard
     watch [<id>]                  Live monitor (streaming)
-    abort <session> <mission>     Abort a specific mission
+    abort|cancel <session> <mission> Abort a specific mission
     pause [<id>]                  Pause active session
     resume [<id>]                 Resume paused session
     stop [<id>] [--drain]         Shut down session

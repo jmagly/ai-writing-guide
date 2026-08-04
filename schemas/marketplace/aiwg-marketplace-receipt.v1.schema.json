@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/marketplace/aiwg-marketplace-receipt.v1.schema.json",
+  "title": "AIWG marketplace operation and Fortemi conformance receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "receiptId", "operation", "occurredAt", "actor", "lockId", "envelopeSha256", "result", "verificationStatus", "evidence", "conformance"],
+  "properties": {
+    "schemaVersion": { "const": "aiwg.marketplace.operation-receipt.v1" },
+    "receiptId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "operation": { "enum": ["publish", "export", "import", "verify", "install"] },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "actor": { "type": "string", "minLength": 1 },
+    "lockId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "envelopeSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "result": { "enum": ["success", "failure"] },
+    "verificationStatus": { "enum": ["verified", "integrity-only", "untrusted", "failed"] },
+    "evidence": { "type": "object" },
+    "conformance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "lossless", "contractValid"],
+      "properties": {
+        "profile": { "const": "2.0.0/full-v1" },
+        "lossless": { "const": true },
+        "contractValid": { "type": "boolean" },
+        "shardSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "conversionReceipt": { "type": "object" }
+      }
+    }
+  }
+}

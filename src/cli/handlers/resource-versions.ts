@@ -10,6 +10,7 @@ import { getProjectDir } from "../../config/aiwg-config.js";
 import { cleanWebResourceCache } from "../../resources/cache-cleanup.js";
 import { writeWebResourceLock } from "../../resources/lockfile.js";
 import type { CommandHandler, HandlerContext, HandlerResult } from "./types.js";
+import { createResourceCredentialProvider } from "../../auth/resource-credentials.js";
 
 const MAX_RESOURCE_MANIFEST_BYTES = 4 * 1024 * 1024;
 const DEFAULT_CHANNELS = ["stable", "latest", "canary", "main"] as const;
@@ -119,6 +120,7 @@ function webReleaseOptionsFromEnvironment(): Omit<WebReleaseOptions, "selector" 
     : loadResourceTrustRootFile(path.resolve(trustRootFile));
 
   return {
+    credentialProvider: createResourceCredentialProvider(process.env),
     ...(baseUrl === undefined ? {} : { baseUrl }),
     ...(cacheRoot === undefined ? {} : { cacheRoot }),
     ...(publicKeyPem === undefined ? {} : { publicKeyPem }),

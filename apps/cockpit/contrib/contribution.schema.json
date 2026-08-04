@@ -31,7 +31,7 @@
                 "required": ["command"],
                 "additionalProperties": false,
                 "properties": {
-                  "command": { "type": "string", "description": "command/prompt injected into an agentic session" },
+                  "command": { "type": "string", "pattern": "^/[a-zA-Z0-9][a-zA-Z0-9._-]*(\\s[^\\r\\n]*)?$", "description": "single slash command injected into an agentic session; newlines are forbidden" },
                   "target": { "type": "string", "enum": ["focused", "new"], "default": "focused", "description": "focused = inject into the attached session, else offer a new one; new = always a fresh session" },
                   "needs_args": { "type": "boolean", "description": "prompt for arguments before injecting" },
                   "args_hint": { "type": "string" }
@@ -49,7 +49,7 @@
             "properties": {
               "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
               "title": { "type": "string" },
-              "source": { "type": "string", "description": "url or path the screen iframe/region loads" }
+              "source": { "type": "string", "pattern": "^(cockpit|sandbox)://", "description": "first-party cockpit:// route or third-party sandbox://<contribution-id>/ resource" }
             }
           }
         },

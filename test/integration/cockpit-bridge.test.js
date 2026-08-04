@@ -7,13 +7,13 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocket } from 'ws';
 import { createExecutor } from '../../apps/cockpit/mock-executor/src/server.mjs';
-import { createBridge, resolveBridgePort, DEFAULT_BRIDGE_PORT, EXECUTOR_RESERVED_PORTS, ensureExecutor, fetchJsonFirst, isDirectExecution } from '../../apps/cockpit/bridge/src/server.mjs';
+import { createBridge, createUserIndexGraph, resolveBridgePort, DEFAULT_BRIDGE_PORT, EXECUTOR_RESERVED_PORTS, ensureExecutor, fetchJsonFirst, isDirectExecution } from '../../apps/cockpit/bridge/src/server.mjs';
 
 let mock, bridge, base, token;
 const testMcSessionId = `mc-cockpit-test-${Date.now()}`;
@@ -63,10 +63,131 @@ afterAll(async () => {
 });
 
 describe('cockpit Bridge — control surface', () => {
+  it('creates validated user-defined index graph configuration atomically', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aiwg-cockpit-index-'));
+    try {
+      const created = await createUserIndexGraph({ name: 'references', scanDirs: ['docs/references'], extensions: ['.md'] }, root);
+      expect(created).toMatchObject({ name: 'references', definition: { scanDirs: ['docs/references'], extensions: ['.md'] } });
+      const config = JSON.parse(await readFile(join(root, '.aiwg', 'aiwg.config'), 'utf8'));
+      expect(config.index.graphs.references.defaultBuild).toBe(false);
+      await expect(createUserIndexGraph({ name: '../escape', scanDirs: ['docs'] }, root)).rejects.toThrow(/graph must match/);
+      await expect(createUserIndexGraph({ name: 'bad-path', scanDirs: ['../outside'] }, root)).rejects.toThrow(/project-relative/);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
   it('gates /api with the per-launch token; /healthz is open', async () => {
     expect((await fetch(`${base}/api/inventory`)).status).toBe(401);
+    expect((await fetch(`${base}/api/inventory?token=${encodeURIComponent(token)}`)).status).toBe(401);
     expect((await fetch(`${base}/healthz`)).status).toBe(200);
     expect((await f('/api/inventory')).status).toBe(200);
+  });
+
+  it('exchanges a one-time bootstrap for an HttpOnly session and rejects replay', async () => {
+    const issued = await f('/bootstrap/nonce', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ audience: 'browser' }),
+    });
+    expect(issued.status).toBe(201);
+    const { nonce } = await issued.json();
+
+    const exchange = await fetch(`${base}/bootstrap/session`, {
+      method: 'POST',
+      headers: { origin: base, 'content-type': 'application/json' },
+      body: JSON.stringify({ nonce, audience: 'browser' }),
+    });
+    expect(exchange.status).toBe(201);
+    const cookie = exchange.headers.get('set-cookie');
+    expect(cookie).toMatch(/^cockpit_session=[^;]+; HttpOnly; Path=\/; SameSite=Strict/);
+    expect(cookie).not.toContain(token);
+    const { csrf } = await exchange.json();
+    expect(csrf).toMatch(/^[A-Za-z0-9_-]+$/);
+
+    const replay = await fetch(`${base}/bootstrap/session`, {
+      method: 'POST',
+      headers: { origin: base, 'content-type': 'application/json' },
+      body: JSON.stringify({ nonce, audience: 'browser' }),
+    });
+    expect(replay.status).toBe(401);
+
+    const cookieHeader = cookie.split(';', 1)[0];
+    expect((await fetch(`${base}/api/inventory`, { headers: { cookie: cookieHeader, origin: base } })).status).toBe(200);
+    const mutationPath = '/api/instances/9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b/start';
+    expect((await fetch(base + mutationPath, {
+      method: 'POST',
+      headers: { cookie: cookieHeader, origin: base },
+    })).status).toBe(403);
+    expect((await fetch(base + mutationPath, {
+      method: 'POST',
+      headers: { cookie: cookieHeader, origin: base, 'x-cockpit-csrf': csrf },
+    })).status).toBe(200);
+
+    const events = await fetch(`${base}/api/events`, { headers: { cookie: cookieHeader, origin: base } });
+    expect(events.status).toBe(200);
+    expect(events.url).not.toContain('token=');
+    const reader = events.body.getReader();
+    await reader.read();
+    await reader.cancel();
+
+    const sessions = await (await fetch(
+      `${base}/api/sessions?instance=550e8400-e29b-41d4-a716-446655440000`,
+      { headers: { cookie: cookieHeader, origin: base } },
+    )).json();
+    const attachUrl = sessions.sessions.find((entry) => entry.id === 'demo-shell')?.attach_url;
+    expect(attachUrl).toMatch(/^ws:\/\/.*\/api\/pty\//);
+    const socket = new WebSocket(attachUrl, ['pty-ws.v1'], { headers: { cookie: cookieHeader } });
+    await new Promise((resolve, reject) => {
+      socket.once('open', resolve);
+      socket.once('error', reject);
+    });
+    socket.close();
+  });
+
+  it('rejects expired, wrong-audience, and cross-Bridge bootstrap attempts', async () => {
+    const candidate = createBridge({
+      executorUrl: `http://127.0.0.1:${mock.address().port}`,
+      allowMockExecutor: true,
+      bootstrapTtlMs: 1,
+    });
+    await new Promise((resolve) => candidate.listen(0, '127.0.0.1', resolve));
+    const candidateBase = `http://127.0.0.1:${candidate.address().port}`;
+    try {
+      const issue = async (audience = 'vscode') => {
+        const response = await fetch(`${candidateBase}/bootstrap/nonce`, {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${candidate.cockpitToken}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ audience }),
+        });
+        return (await response.json()).nonce;
+      };
+      const wrongAudience = await issue();
+      expect((await fetch(`${candidateBase}/bootstrap/session`, {
+        method: 'POST',
+        headers: { origin: candidateBase, 'content-type': 'application/json' },
+        body: JSON.stringify({ nonce: wrongAudience, audience: 'tauri' }),
+      })).status).toBe(401);
+
+      const expired = await issue();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect((await fetch(`${candidateBase}/bootstrap/session`, {
+        method: 'POST',
+        headers: { origin: candidateBase, 'content-type': 'application/json' },
+        body: JSON.stringify({ nonce: expired, audience: 'vscode' }),
+      })).status).toBe(401);
+
+      const foreign = bridge.issueBootstrapNonce('browser');
+      expect((await fetch(`${candidateBase}/bootstrap/session`, {
+        method: 'POST',
+        headers: { origin: candidateBase, 'content-type': 'application/json' },
+        body: JSON.stringify({ nonce: foreign, audience: 'browser' }),
+      })).status).toBe(401);
+    } finally {
+      await new Promise((resolve) => candidate.close(resolve));
+    }
   });
 
   it('rejects spoofed browser origins and requires CSRF on browser mutations', async () => {
@@ -334,6 +455,18 @@ describe('cockpit Bridge — control surface', () => {
       source: 'aiwg-mc',
     });
     expect(missions.sessions.some((s) => s.id === 'executor-live')).toBe(true);
+    const fleetSession = missions.sessions.find((s) => s.parent_mission_id === 'mission-fleet-demo');
+    expect(fleetSession).toMatchObject({
+      id: 'fleet:mission-fleet-demo',
+      source: 'agentic-sandbox-fleet',
+      state: 'awaiting-approval',
+      inventory_revision: 12,
+    });
+    expect(fleetSession.missions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ workload_kind: 'persistent-agent', target_id: 'target-1', runtime_session_id: 'session-agent-1', status: 'retained', terminal: false }),
+      expect.objectContaining({ workload_kind: 'daemon', target_id: 'target-2', health: 'healthy', status: 'healthy', terminal: false }),
+      expect.objectContaining({ workload_kind: 'one-shot-command', target_id: 'target-3', command_id: 'command-1', status: 'blocked', backpressure: { reason: 'approval', retryable: false }, terminal: false }),
+    ]));
 
     const events = await (await f('/api/events/snapshot')).json();
     expect(events.source).toBe('cockpit.unified-event-model/v1');
@@ -549,6 +682,14 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
               status: 'running',
               tenantId: 'default',
               launchContext: { selectedTier: 'vm' },
+            }, {
+              instanceId: 'v2-container-1',
+              runtime: { kind: 'container' },
+              loadout: 'agentic-dev',
+              status: 'running',
+              tenantId: 'default',
+              cwd: '/srv/container-home',
+              launchContext: { selectedTier: 'container' },
             }],
           },
         });
@@ -576,6 +717,7 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
         return send(200, { agents: [
           { id: 'agent-v2-host-1', instance_id: 'v2-host-1', status: 'Ready' },
           { id: 'agent-ready-qemu-1', instance_id: 'ready-qemu-1', status: 'Ready' },
+          { id: 'agent-v2-container-1', instance_id: 'v2-container-1', status: 'Ready' },
         ] });
       }
       if (url.pathname === '/agents/v2-host-1/sessions') return send(404, { error: 'legacy_sessions_absent' });
@@ -620,6 +762,15 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
         req.on('end', () => {
           const body = raw ? JSON.parse(raw) : {};
           send(201, { session_id: 'sess-created-v1', requested: body, pty_ws_url: 'wss://{host}/agents/v2-host-1/sessions/sess-created-v1/attach' });
+        });
+        return;
+      }
+      if (url.pathname === '/api/v1/agents/agent-v2-container-1/sessions' && req.method === 'POST') {
+        let raw = '';
+        req.on('data', (chunk) => { raw += chunk; });
+        req.on('end', () => {
+          const body = raw ? JSON.parse(raw) : {};
+          send(201, { session_id: 'sess-created-container-v1', requested: body, pty_ws_url: 'wss://{host}/agents/v2-container-1/sessions/sess-created-container-v1/attach' });
         });
         return;
       }
@@ -696,6 +847,23 @@ describe('cockpit Bridge — real sandbox v2 admin compatibility', () => {
     expect(created.attach_url).toMatch(/^ws:\/\/127\.0\.0\.1:.*\/api\/pty\/agents\/v2-host-1\/sessions\/sess-created-v1\/attach\/[A-Za-z0-9_-]+$/);
   });
 
+  it('starts non-root container sessions in the executor-reported target cwd', async () => {
+    const created = await (await cf('/api/instances/v2-container-1/sessions', { method: 'POST' })).json();
+    expect(created).toMatchObject({
+      id: 'sess-created-container-v1',
+      requested: {
+        session_backend: 'tmux',
+        session_class: 'managed',
+        command: '/bin/bash',
+        working_dir: '/srv/container-home',
+      },
+    });
+    expect(created.requested.args).toEqual([
+      '-lc',
+      "cd '/srv/container-home' && exec /bin/bash -l",
+    ]);
+  });
+
   it('caches agent-list resolution across session polls (#1747)', async () => {
     let agentListCalls = 0;
     const cacheUpstream = http.createServer((req, res) => {
@@ -757,6 +925,7 @@ describe('cockpit Bridge — executor without running/approvals admin surface (#
   // A2A tasks; when no task surface is available it returns empty 200s so Home
   // binds inventory and stays usable.
   let upstream, b, ubase, utoken;
+  let fleetMode = 'missing';
   beforeAll(async () => {
     upstream = http.createServer((req, res) => {
       const url = new URL(req.url, 'http://127.0.0.1');
@@ -771,6 +940,12 @@ describe('cockpit Bridge — executor without running/approvals admin surface (#
         }] } });
       }
       if (url.pathname === '/api/v1/agents') return send(200, { agents: [] });
+      if (url.pathname === '/api/v2/fleet/workloads' && fleetMode === 'error') {
+        return send(500, { error: 'fleet_unavailable' });
+      }
+      if (url.pathname === '/api/v2/fleet/workloads' && fleetMode === 'malformed') {
+        return send(200, { document_type: 'inventory', api_version: 'wrong/v1', records: [] });
+      }
       // No task surface on this executor — everything else 404s.
       return send(404, { error: 'not_found', path: url.pathname });
     });
@@ -796,6 +971,22 @@ describe('cockpit Bridge — executor without running/approvals admin surface (#
     const approvals = await uf('/api/approvals?status=pending');
     expect(approvals.status).toBe(200);
     expect(await approvals.json()).toMatchObject({ approvals: [] });
+  });
+
+  it('keeps older no-fleet executors compatible but fails closed on fleet faults', async () => {
+    fleetMode = 'missing';
+    expect((await uf('/api/missions')).status).toBe(200);
+
+    fleetMode = 'error';
+    const failed = await uf('/api/missions');
+    expect(failed.status).toBe(502);
+    expect(await failed.json()).toMatchObject({ error: 'bridge_upstream_error' });
+
+    fleetMode = 'malformed';
+    const malformed = await uf('/api/missions');
+    expect(malformed.status).toBe(502);
+    expect((await malformed.json()).message).toMatch(/invalid fleet inventory envelope/);
+    fleetMode = 'missing';
   });
 });
 
@@ -930,7 +1121,10 @@ describe('cockpit web — app shell served', () => {
 
   it('declares a document language', () => expect(html).toMatch(/<html lang="en"/));
   it('renders the Cockpit title', () => expect(html).toMatch(/AIWG.?Cockpit/i));
-  it('injects the per-launch token', () => expect(html).toContain(`window.__COCKPIT_TOKEN__=${JSON.stringify(token)}`));
+  it('does not inject reusable credential material', () => {
+    expect(html).not.toContain(token);
+    expect(html).not.toContain('__COCKPIT_TOKEN__');
+  });
   it('references + serves the built bundle outside comments when a React build is present', async () => {
     // strip comments first: a module script trapped in a comment must not count.
     const live = html.replace(/<!--[\s\S]*?-->/g, '');

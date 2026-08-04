@@ -15,6 +15,7 @@ export { createScriptRunner, DefaultScriptRunner } from './script-runner.js';
 // Import all handlers
 import { helpHandler } from './help.js';
 import { versionHandler } from './version.js';
+import { authHandler } from './auth.js';
 import { useHandler } from './use.js';
 import {
   statusHandler,
@@ -133,6 +134,7 @@ import { commandLogHandler } from './command-log.js';
 import { skillUsageHandler } from './skill-usage.js';
 import { modelsHandler } from './models.js';
 import { versionsHandler } from './resource-versions.js';
+import { jobHandler } from './job.js';
 
 import type { CommandHandler } from './types.js';
 
@@ -141,6 +143,7 @@ export {
   // Maintenance
   helpHandler,
   versionHandler,
+  authHandler,
   doctorHandler,
   updateHandler,
   refreshHandler,
@@ -163,6 +166,7 @@ export {
   issueHandler,
   issueAuditHandler,
   runHandler,
+  jobHandler,
 
   // Project
   newBundleHandler,
@@ -313,6 +317,7 @@ export const allHandlers: CommandHandler[] = [
   // Maintenance (shown first in help)
   helpHandler,
   versionHandler,
+  authHandler,
   doctorHandler,
   updateHandler,
   refreshHandler,
@@ -340,6 +345,7 @@ export const allHandlers: CommandHandler[] = [
   issueHandler,
   issueAuditHandler,
   runHandler,
+  jobHandler,
 
   // Workspace management
   ...workspaceHandlers,

@@ -1,6 +1,6 @@
 {
   "name": "@aiwg/cli",
-  "version": "2026.8.3",
+  "version": "2026.8.4",
   "description": "Lightweight AIWG CLI for signed, versioned web-backed resources.",
   "type": "module",
   "license": "MIT",
@@ -25,12 +25,19 @@
   "files": [
     "LICENSE",
     "bin/",
+    "agentic/code/providers/",
     "dist/src/",
     "!dist/**/*.d.ts",
     "!dist/**/*.map",
     "dist/src/api/index.d.ts",
     "dist/src/resources/index.d.ts",
     "dist/src/resources/web-release.d.ts",
+    "tools/_resolve-impl.mjs",
+    "tools/agents/deploy-agents.mjs",
+    "tools/agents/providers/",
+    "tools/commands/deploy-prompts-codex.mjs",
+    "tools/plugin/package-plugins.mjs",
+    "tools/skills/deploy-skills-codex.mjs",
     "README.md"
   ],
   "repository": {
@@ -57,22 +64,22 @@
   },
   "dependencies": {
     "@fortemi/core": "2026.7.15",
-    "@modelcontextprotocol/sdk": "^1.24.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "chalk": "^4.1.2",
-    "chokidar": "^3.6.0",
+    "chokidar": "^4.0.3",
     "commander": "^12.1.0",
-    "glob": "^13.0.1",
+    "glob": "^13.0.6",
     "graceful-fs": "^4.2.11",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.3.0",
     "listr2": "^8.2.5",
     "ora": "^5.4.1",
     "semver": "^7.8.5",
-    "yaml": "^2.8.1",
+    "yaml": "^2.9.0",
     "zod": "^3.25.0"
   },
   "optionalDependencies": {
-    "@hono/node-server": "^1.19.14",
-    "hono": "^4.12.18",
-    "ws": "^8.20.0"
+    "@hono/node-server": "2.0.11",
+    "hono": "^4.12.31",
+    "ws": "^8.21.1"
   }
 }

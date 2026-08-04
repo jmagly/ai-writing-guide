@@ -33,6 +33,63 @@ interface Env {
   bundleDir: string;
 }
 
+function runAiwg(env: Env, args: string[]): { stdout: string; status: number } {
+  const aiwgBin = path.join(REPO_ROOT, 'bin/aiwg.mjs');
+  try {
+    const stdout = execFileSync(process.execPath, [aiwgBin, ...args], {
+      cwd: env.projectDir,
+      env: { ...projectLocalTestEnv(env), AIWG_ROOT: REPO_ROOT },
+      encoding: 'utf-8',
+      timeout: 180_000,
+    });
+    return { stdout, status: 0 };
+  } catch (e: any) {
+    return { status: e.status ?? 1, stdout: (e.stdout || '') + (e.stderr || '') };
+  }
+}
+
+function makePluginWrapperEnv(label: string): Env {
+  const env = makeEnv(label);
+  const wrapper = path.join(env.projectDir, '.aiwg', 'plugins', 'bt6-maintainer');
+  const payload = path.join(wrapper, 'payload');
+  mkdirSync(payload, { recursive: true });
+  writeFileSync(path.join(wrapper, 'manifest.json'), JSON.stringify({
+    id: 'bt6-maintainer',
+    type: 'plugin',
+    name: 'BT6 Maintainer',
+    version: '1.0.0',
+    description: 'Wrapper round-trip fixture',
+    manifestVersion: '1',
+    platforms: { claude: 'full', codex: 'full' },
+    keywords: ['test'],
+    deployment: { pathTemplate: '.aiwg/plugins/bt6-maintainer' },
+    pluginConfig: { payloadType: 'addon', payloadPath: 'payload/' },
+  }, null, 2));
+  writeFileSync(path.join(payload, 'manifest.json'), JSON.stringify({
+    id: 'bt6-maintainer-core',
+    type: 'addon',
+    name: 'BT6 Maintainer Core',
+    version: '1.0.0',
+    description: 'Wrapper payload fixture',
+    manifestVersion: '1',
+    platforms: { claude: 'full', codex: 'full' },
+    keywords: ['test'],
+    deployment: { pathTemplate: '.aiwg/addons/bt6-maintainer-core' },
+    addonConfig: { entry: { agents: 'agents/', skills: 'skills/', rules: 'rules/' } },
+  }, null, 2));
+  mkdirSync(path.join(payload, 'agents'), { recursive: true });
+  mkdirSync(path.join(payload, 'rules'), { recursive: true });
+  writeFileSync(path.join(payload, 'agents', 'bt6-agent.md'), `---\nname: bt6-agent\ndescription: Wrapper agent\nmodel: claude-sonnet-4-6\ntools: Read\n---\n\n# Agent\n`);
+  writeFileSync(path.join(payload, 'rules', 'bt6-rule.md'), `---\nid: bt6-rule\nname: bt6-rule\n---\n\n# Rule\n`);
+  for (let index = 1; index <= 5; index += 1) {
+    const name = `bt6-skill-${index}`;
+    mkdirSync(path.join(payload, 'skills', name), { recursive: true });
+    writeFileSync(path.join(payload, 'skills', name, 'SKILL.md'), `---\nname: ${name}\ndescription: Wrapper skill ${index}\nplatforms: [all]\n---\n\n# ${name}\n`);
+  }
+  rmSync(env.bundleDir, { recursive: true, force: true });
+  return { ...env, bundleDir: payload };
+}
+
 function makeEnv(label: string): Env {
   const base = mkdtempSync(path.join(os.tmpdir(), `aiwg-pl-deploy-${label}-`));
   const projectDir = path.join(base, 'project');
@@ -399,4 +456,47 @@ describe('project-local deploy integration (#1046)', () => {
     const config = JSON.parse(readFileSync(path.join(env.projectDir, '.aiwg', 'aiwg.config'), 'utf-8'));
     expect(config.installed?.['pl-test']?.deployedTo?.codex?.skills).toBe(1);
   });
+
+  it.each([
+    ['claude', false],
+    ['codex', false],
+    ['claude', true],
+    ['codex', true],
+  ] as const)(
+    'PL-REMOVE (#1998): %s %s deployment immediately removes pristine transformed skills',
+    (provider, wrapper) => {
+      const roundTripEnv = wrapper ? makePluginWrapperEnv(`${provider}-wrapper`) : makeEnv(`${provider}-direct`);
+      try {
+        writeFileSync(
+          path.join(roundTripEnv.projectDir, '.aiwg', 'aiwg.config'),
+          JSON.stringify({ version: '1', providers: [provider], installed: {}, scripts: {} }, null, 2),
+        );
+        const bundleId = wrapper ? 'bt6-maintainer' : 'pl-test';
+        const use = runAiwg(roundTripEnv, ['use', bundleId, '--provider', provider, '--quiet']);
+        expect(use.status, use.stdout).toBe(0);
+
+        const configAfterUse = JSON.parse(readFileSync(path.join(roundTripEnv.projectDir, '.aiwg', 'aiwg.config'), 'utf-8'));
+        expect(configAfterUse.installed[bundleId].deployedArtifactHashes[provider]).toBeDefined();
+
+        const remove = runAiwg(roundTripEnv, ['remove', bundleId]);
+        expect(remove.status, remove.stdout).toBe(0);
+        expect(remove.stdout).not.toContain('[mutated]');
+
+        const skillRoot = provider === 'codex'
+          ? path.join(roundTripEnv.projectDir, '.agents', 'skills')
+          : path.join(roundTripEnv.projectDir, '.claude', '.aiwg', 'skills');
+        const skills = wrapper
+          ? Array.from({ length: 5 }, (_, index) => `bt6-skill-${index + 1}`)
+          : ['demo-skill'];
+        for (const skill of skills) {
+          expect(existsSync(path.join(skillRoot, skill, 'SKILL.md'))).toBe(false);
+        }
+        const configAfterRemove = JSON.parse(readFileSync(path.join(roundTripEnv.projectDir, '.aiwg', 'aiwg.config'), 'utf-8'));
+        expect(configAfterRemove.installed?.[bundleId]).toBeUndefined();
+      } finally {
+        cleanup(roundTripEnv);
+      }
+    },
+    240_000,
+  );
 });

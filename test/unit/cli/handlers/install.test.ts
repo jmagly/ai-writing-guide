@@ -18,6 +18,14 @@ vi.mock('../../../../src/packages/package-registry.js', () => ({
   recordDeployment: vi.fn(),
 }));
 
+vi.mock('../../../../src/marketplace/exchange.js', () => ({
+  marketplaceConfigDir: vi.fn(({ projectLocal, projectDir }) => projectLocal ? `${projectDir}/.aiwg` : '/mock/.aiwg'),
+  resolveVerificationPolicy: vi.fn(async () => ({
+    policy: {},
+    trustStore: { schemaVersion: 'aiwg.marketplace.trust-store.v1', keys: [] },
+  })),
+}));
+
 // Shared runner so tests can inspect and override `run`
 const mockRun = vi.fn().mockResolvedValue({ exitCode: 0, output: '' });
 vi.mock('../../../../src/cli/handlers/script-runner.js', () => ({
@@ -63,6 +71,9 @@ describe('installHandler', () => {
       cachePath: '/home/user/.cache/aiwg/packages/roko/ring-methodology@latest',
       key: 'roko/ring-methodology',
       type: 'framework',
+      namespace: 'roko',
+      lock: { lockId: `sha256:${'a'.repeat(64)}` },
+      verification: { status: 'integrity-only' },
     });
     mockRecordDeployment.mockResolvedValue(undefined);
   });
@@ -96,7 +107,11 @@ describe('installHandler', () => {
       vi.spyOn(console, 'log').mockImplementation(() => {});
       const result = await installHandler.execute(makeCtx(['roko/ring-methodology']));
 
-      expect(mockInstallPackage).toHaveBeenCalledWith('roko/ring-methodology', { refresh: false });
+      expect(mockInstallPackage).toHaveBeenCalledWith('roko/ring-methodology', expect.objectContaining({
+        refresh: false,
+        configDir: '/mock/.aiwg',
+        verify: false,
+      }));
       expect(result.exitCode).toBe(0);
     });
 
@@ -106,7 +121,7 @@ describe('installHandler', () => {
       vi.spyOn(console, 'log').mockImplementation(() => {});
       await installHandler.execute(makeCtx(['roko/ring-methodology', '--refresh']));
 
-      expect(mockInstallPackage).toHaveBeenCalledWith('roko/ring-methodology', { refresh: true });
+      expect(mockInstallPackage).toHaveBeenCalledWith('roko/ring-methodology', expect.objectContaining({ refresh: true }));
     });
   });
 
@@ -122,12 +137,13 @@ describe('installHandler', () => {
       expect(mockInstallPackage).toHaveBeenCalled();
       expect(mockRun).toHaveBeenCalledWith(
         'tools/agents/deploy-agents.mjs',
-        expect.arrayContaining(['--provider', 'copilot']),
+        expect.arrayContaining(['--copy-all', '--provider', 'copilot']),
         expect.anything()
       );
       expect(mockRecordDeployment).toHaveBeenCalledWith(
         'roko/ring-methodology',
-        expect.objectContaining({ provider: 'copilot' })
+        expect.objectContaining({ provider: 'copilot' }),
+        '/mock/.aiwg',
       );
       expect(result.exitCode).toBe(0);
     });

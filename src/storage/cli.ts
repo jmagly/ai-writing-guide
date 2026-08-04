@@ -7,6 +7,7 @@
  *   test <subsystem>   — round-trip read/write/list/delete through the
  *                        configured backend
  *   migrate <subsystem> — copy entries from one backend to another
+ *   import-corpus       — ingest the local research corpus through a storage backend
  *
  * @design @.aiwg/architecture/storage-design.md (§7)
  * @issue #934
@@ -17,7 +18,8 @@
 import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
 import { mkdir, readFile, writeFile, appendFile } from 'fs/promises';
-import { dirname, join, resolve as resolvePath } from 'path';
+import { dirname, extname, join, resolve as resolvePath } from 'path';
+import { parseFrontmatter } from '../artifacts/index-builder.js';
 import {
   BACKEND_TYPES,
   FilesystemAdapter,
@@ -36,10 +38,9 @@ import {
 } from './index.js';
 import { projectAiwgPath, resolveProjectAiwgDir } from '../config/project-artifacts.js';
 
-export async function main(args: string[]): Promise<void> {
+export async function main(args: string[], projectRoot = process.cwd()): Promise<void> {
   const subcommand = args[0];
   const subArgs = args.slice(1);
-  const projectRoot = process.cwd();
 
   switch (subcommand) {
     case 'show':
@@ -53,6 +54,9 @@ export async function main(args: string[]): Promise<void> {
       break;
     case 'migrate':
       await handleMigrate(projectRoot, subArgs);
+      break;
+    case 'import-corpus':
+      await handleImportCorpus(projectRoot, subArgs);
       break;
     default:
       printUsage();
@@ -204,7 +208,7 @@ async function handleMigrate(projectRoot: string, args: string[]): Promise<void>
   }
 
   if (source.init) await source.init();
-  if (destination.init) await destination.init();
+  if (!opts.dryRun && destination.init) await destination.init();
 
   console.log(`storage migrate (${opts.dryRun ? 'DRY RUN' : 'live'})`);
   console.log(`  subsystem: ${opts.subsystem}`);
@@ -230,8 +234,14 @@ async function handleMigrate(projectRoot: string, args: string[]): Promise<void>
   let copied = 0;
   let skipped = 0;
   let errored = 0;
+  let unsupported = 0;
 
   for (const entry of entries) {
+    if (opts.textOnly && !isTextCorpusEntry(entry.path)) {
+      unsupported++;
+      console.log(`  · ${entry.path} (non-text attachment skipped)`);
+      continue;
+    }
     if (completed.has(entry.path)) {
       skipped++;
       console.log(`  ✓ ${entry.path} (already migrated, skipped)`);
@@ -249,7 +259,7 @@ async function handleMigrate(projectRoot: string, args: string[]): Promise<void>
         console.log(`  ✗ ${entry.path} (read returned null)`);
         continue;
       }
-      await destination.write(entry.path, content);
+      await destination.write(entry.path, content, migrationMetadata(entry.path, content));
       await recordCompletion(migrationLogPath, entry.path);
       copied++;
       console.log(`  ✓ ${entry.path}`);
@@ -263,7 +273,10 @@ async function handleMigrate(projectRoot: string, args: string[]): Promise<void>
   if (destination.close) await destination.close();
 
   console.log('');
-  console.log(`Summary: copied=${copied} skipped=${skipped} errored=${errored} total=${entries.length}`);
+  console.log(
+    `Summary: copied=${copied} skipped=${skipped} unsupported=${unsupported} ` +
+      `errored=${errored} total=${entries.length}`,
+  );
   if (!opts.dryRun) {
     console.log(`Migration log: ${migrationLogPath}`);
   }
@@ -277,6 +290,7 @@ interface MigrateArgs {
   from: BackendSpec;
   to: BackendSpec;
   dryRun: boolean;
+  textOnly: boolean;
 }
 
 interface BackendSpec {
@@ -292,6 +306,7 @@ function parseMigrateArgs(args: string[]): MigrateArgs {
   let fromFolder: string | undefined;
   let toFolder: string | undefined;
   let dryRun = false;
+  let textOnly = false;
 
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -300,6 +315,7 @@ function parseMigrateArgs(args: string[]): MigrateArgs {
     else if (a === '--from-folder') fromFolder = args[++i];
     else if (a === '--to-folder') toFolder = args[++i];
     else if (a === '--dry-run') dryRun = true;
+    else if (a === '--text-only') textOnly = true;
     else if (!a.startsWith('--') && !subsystem) subsystem = a;
     else throw new Error(`Unknown migrate flag: ${a}`);
   }
@@ -317,7 +333,71 @@ function parseMigrateArgs(args: string[]): MigrateArgs {
     from: { ...parseSpec(from), ...(fromFolder ? { folder: fromFolder } : {}) },
     to: { ...parseSpec(to), ...(toFolder ? { folder: toFolder } : {}) },
     dryRun,
+    textOnly,
   };
+}
+
+const TEXT_CORPUS_EXTENSIONS = new Set([
+  '.bib',
+  '.csv',
+  '.htm',
+  '.html',
+  '.json',
+  '.md',
+  '.ris',
+  '.txt',
+  '.xml',
+  '.yaml',
+  '.yml',
+]);
+
+export function isTextCorpusEntry(entryPath: string): boolean {
+  return TEXT_CORPUS_EXTENSIONS.has(extname(entryPath).toLowerCase());
+}
+
+function migrationMetadata(entryPath: string, content: string) {
+  const extension = extname(entryPath).toLowerCase();
+  const contentType = extension === '.md' ? 'text/markdown' : 'text/plain';
+  if (extension !== '.md') return { contentType };
+  return { contentType, frontmatter: parseFrontmatter(content).data };
+}
+
+async function handleImportCorpus(projectRoot: string, args: string[]): Promise<void> {
+  let server = 'fortemi';
+  let destination: string | undefined;
+  let serverSelected = false;
+  let dryRun = false;
+  for (let index = 0; index < args.length; index++) {
+    const arg = args[index];
+    if (arg === '--server') {
+      server = args[++index] ?? '';
+      serverSelected = true;
+      if (!server) throw new Error('storage import-corpus: --server requires a name');
+    } else if (arg === '--to') {
+      destination = args[++index] ?? '';
+      if (!destination) throw new Error('storage import-corpus: --to requires a backend spec');
+    } else if (arg === '--dry-run') {
+      dryRun = true;
+    } else {
+      throw new Error(`Unknown import-corpus flag: ${arg}`);
+    }
+  }
+  if (serverSelected && destination) {
+    throw new Error('storage import-corpus: use either --server or --to, not both');
+  }
+
+  await initStorage(projectRoot);
+  const config = await getLoadedConfig(projectRoot);
+  const sourceRoot = resolveSubsystemRoot('research', projectRoot, config);
+  await handleMigrate(projectRoot, [
+    'research',
+    '--from',
+    `fs:${sourceRoot}`,
+    '--to',
+    destination ?? `fortemi:${server}`,
+    '--text-only',
+    ...(dryRun ? ['--dry-run'] : []),
+  ]);
 }
 
 function parseSpec(raw: string): BackendSpec {
@@ -524,11 +604,16 @@ Subcommands:
   list-backends [--json]        Inventory of compiled-in adapters; --json emits structured output including tracking_issue URL for stubs
   test <subsystem>              Round-trip read/write/list/delete through the configured backend
   migrate <subsystem>           Copy entries from one backend to another (#955)
+  import-corpus                 Ingest local research text through a storage backend (#1508)
+    --to <type>:<location>      Provider-neutral destination backend (default: fortemi:fortemi)
+    --server <name>             MCP registry server name (default: fortemi)
+    --dry-run                   Preview corpus selection without connecting
     --from <type>:<location>    Source spec (fs:./dir, obsidian:~/vault, logseq:./graph, fortemi:server)
     --to <type>:<location>      Destination spec (same format)
     --from-folder <folder>      Optional Obsidian subfolder for source
     --to-folder <folder>        Optional Obsidian subfolder for destination
     --dry-run                   Preview operations without writing
+    --text-only                 Skip non-text attachments
 
 Subsystems: ${SUBSYSTEM_KEYS.join(', ')}
 
@@ -538,6 +623,9 @@ Examples:
   aiwg storage test activity_log
   aiwg storage migrate memory --from fs:.aiwg/memory --to obsidian:~/vault --to-folder AIWG/memory --dry-run
   aiwg storage migrate kb --from fs:.aiwg/kb --to fortemi:fortemi
+  aiwg storage import-corpus --dry-run
+  aiwg storage import-corpus --to obsidian:~/vault --dry-run
+  aiwg storage import-corpus --server fortemi-enterprise
 
 See @.aiwg/architecture/storage-design.md for the design.`);
 }

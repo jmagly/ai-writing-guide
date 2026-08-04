@@ -10,6 +10,7 @@ on:
       - 'test/unit/artifacts/fortemi-shard-export.test.ts'
       - 'test/fixtures/fortemi-shard/**'
       - 'schemas/artifacts/aiwg-fortemi-shard-receipt.v1.schema.json'
+      - 'schemas/artifacts/aiwg-fortemi-full-v1-consumer-receipt.v1.schema.json'
       - 'tools/ci/verify-aiwg-fortemi-shard-receipt.mjs'
       - '.gitea/workflows/fortemi-shard-conformance.yml'
   pull_request:
@@ -21,6 +22,7 @@ on:
       - 'test/unit/artifacts/fortemi-shard-export.test.ts'
       - 'test/fixtures/fortemi-shard/**'
       - 'schemas/artifacts/aiwg-fortemi-shard-receipt.v1.schema.json'
+      - 'schemas/artifacts/aiwg-fortemi-full-v1-consumer-receipt.v1.schema.json'
       - 'tools/ci/verify-aiwg-fortemi-shard-receipt.mjs'
       - '.gitea/workflows/fortemi-shard-conformance.yml'
 
@@ -30,7 +32,7 @@ concurrency:
 
 jobs:
   producer-consumer-receipt:
-    name: Published Core receipts → core-v1 clean Fortemi
+    name: Published Core receipts → full-v1 clean PGlite and Fortemi
     runs-on: matric-builder
     timeout-minutes: 30
 
@@ -50,6 +52,9 @@ jobs:
           SOURCE_AUTHORITY_COMMIT="$(node -p "require('./test/fixtures/fortemi-shard/aiwg-core-v1.receipt.json').producer.source_contract.authority_commit")"
           git fetch --quiet --no-tags --depth=1 origin "$SOURCE_AUTHORITY_COMMIT"
           test "$(git rev-parse "$SOURCE_AUTHORITY_COMMIT^{commit}")" = "$SOURCE_AUTHORITY_COMMIT"
+          FULL_CONSUMER_COMMIT="$(node -p "require('./test/fixtures/fortemi-shard/aiwg-full-v1.consumer.receipt.json').consumer.commit")"
+          git fetch --quiet --no-tags --depth=1 origin "$FULL_CONSUMER_COMMIT"
+          test "$(git rev-parse "$FULL_CONSUMER_COMMIT^{commit}")" = "$FULL_CONSUMER_COMMIT"
 
       - name: Install locked published package graph
         run: npm ci
@@ -63,7 +68,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          FORTEMI_COMMIT="$(node -p "require('./test/fixtures/fortemi-shard/aiwg-core-v1.receipt.json').consumers.fortemi.commit")"
+          FORTEMI_COMMIT="$(node -p "require('./test/fixtures/fortemi-shard/aiwg-full-v1.consumer.receipt.json').consumers.fortemi.commit")"
           rm -rf /tmp/aiwg-fortemi-consumer
           git init -q /tmp/aiwg-fortemi-consumer
           git -C /tmp/aiwg-fortemi-consumer remote add origin https://git.integrolabs.net/Fortemi/fortemi.git

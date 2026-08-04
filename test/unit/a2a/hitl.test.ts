@@ -6,6 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { A2A_HITL_PROMPT_V1 } from '../../../src/a2a/client.js';
 import {
   buildHitlResponseMessage,
@@ -14,6 +15,8 @@ import {
   type HitlDeliveryAdapter,
 } from '../../../src/a2a/hitl.js';
 import type { Task, JsonValue } from '../../../src/a2a/types.js';
+
+const PROMPT_ID = '9f4b15b6-6e1d-4c83-9a7f-43f8dd2d0d65';
 
 function makeTask(overrides: Partial<Task> = {}, envelope?: Record<string, JsonValue>): Task {
   const base: Task = {
@@ -37,14 +40,14 @@ function makeTask(overrides: Partial<Task> = {}, envelope?: Record<string, JsonV
 describe('extractHitlEnvelope', () => {
   it('returns the envelope for an input-required Task with a valid envelope', () => {
     const task = makeTask({}, {
-      prompt_id: 'p-1',
+      prompt_id: PROMPT_ID,
       prompt: 'Approve deploy?',
       response_schema: { type: 'object' } as JsonValue,
     });
     const result = extractHitlEnvelope(task);
     expect(result?.ok).toBe(true);
     if (result?.ok) {
-      expect(result.envelope.prompt_id).toBe('p-1');
+      expect(result.envelope.prompt_id).toBe(PROMPT_ID);
       expect(result.envelope.prompt).toBe('Approve deploy?');
     }
   });
@@ -80,7 +83,7 @@ describe('extractHitlEnvelope', () => {
 
   it('flags envelope missing required keys', () => {
     const task = makeTask({}, {
-      prompt_id: 'p-1',
+      prompt_id: PROMPT_ID,
       prompt: 'x',
       // response_schema missing
     });
@@ -101,6 +104,40 @@ describe('extractHitlEnvelope', () => {
     expect(result?.ok).toBe(false);
   });
 
+  it('rejects non-UUID correlation ids and non-canonical response schemas', () => {
+    const badId = extractHitlEnvelope(makeTask({}, {
+      prompt_id: 'p-1',
+      prompt: 'x',
+      response_schema: { type: 'object' } as JsonValue,
+    }));
+    expect(badId).toMatchObject({ ok: false, reason: expect.stringMatching(/UUID/) });
+
+    const badSchema = extractHitlEnvelope(makeTask({}, {
+      prompt_id: PROMPT_ID,
+      prompt: 'x',
+      response_schema: { type: 'string' } as JsonValue,
+    }));
+    expect(badSchema).toMatchObject({ ok: false, reason: expect.stringMatching(/top-level type object/) });
+  });
+
+  it('validates deadline, responder policy, and closed envelope shape', () => {
+    const invalidResponder = extractHitlEnvelope(makeTask({}, {
+      prompt_id: PROMPT_ID,
+      prompt: 'x',
+      response_schema: { type: 'object' } as JsonValue,
+      allowed_responders: ['specific:release manager'] as unknown as JsonValue,
+    }));
+    expect(invalidResponder).toMatchObject({ ok: false, reason: expect.stringMatching(/responder policy/) });
+
+    const extraProperty = extractHitlEnvelope(makeTask({}, {
+      prompt_id: PROMPT_ID,
+      prompt: 'x',
+      response_schema: { type: 'object' } as JsonValue,
+      vendor_extension: true,
+    }));
+    expect(extraProperty).toMatchObject({ ok: false, reason: expect.stringMatching(/unsupported key/) });
+  });
+
   it('works with bare TaskStatus too', () => {
     const result = extractHitlEnvelope({
       state: 'input-required',
@@ -110,9 +147,9 @@ describe('extractHitlEnvelope', () => {
         parts: [],
         metadata: {
           [A2A_HITL_PROMPT_V1]: {
-            prompt_id: 'p-2',
+            prompt_id: PROMPT_ID,
             prompt: 'hi',
-            response_schema: { type: 'string' },
+            response_schema: { type: 'object' },
           } as unknown as JsonValue,
         },
       },
@@ -127,9 +164,26 @@ describe('extractHitlEnvelope', () => {
 });
 
 describe('buildHitlResponseMessage', () => {
+  it('matches the canonical agentic-sandbox prompt and response fixture', () => {
+    const fixture = JSON.parse(readFileSync(
+      new URL('../../fixtures/contracts/hitl-prompt-v1.json', import.meta.url),
+      'utf8',
+    ));
+    const extracted = extractHitlEnvelope(fixture.task as Task);
+    expect(extracted?.ok).toBe(true);
+    if (!extracted?.ok) return;
+    const built = buildHitlResponseMessage({
+      promptId: extracted.envelope.prompt_id,
+      response: { approved: true },
+      messageId: fixture.response.messageId,
+      taskId: fixture.response.taskId,
+    });
+    expect(built).toEqual(fixture.response);
+  });
+
   it('produces a Message with hitl_response_for correlation', () => {
     const msg = buildHitlResponseMessage({
-      promptId: 'p-1',
+      promptId: PROMPT_ID,
       response: { approved: true } as JsonValue,
       messageId: 'reply-1',
       taskId: 't-1',
@@ -137,14 +191,16 @@ describe('buildHitlResponseMessage', () => {
     expect(msg.messageId).toBe('reply-1');
     expect(msg.role).toBe('user');
     expect(msg.taskId).toBe('t-1');
-    expect(msg.metadata?.['hitl_response_for']).toBe('p-1');
-    const envResp = msg.metadata?.[A2A_HITL_PROMPT_V1] as { response?: unknown };
-    expect(envResp?.response).toEqual({ approved: true });
+    expect(msg.metadata?.['hitl_response_for']).toEqual({
+      prompt_id: PROMPT_ID,
+      payload: { approved: true },
+    });
+    expect(msg.metadata?.[A2A_HITL_PROMPT_V1]).toBeUndefined();
   });
 
   it('omits taskId when not provided', () => {
     const msg = buildHitlResponseMessage({
-      promptId: 'p-1',
+      promptId: PROMPT_ID,
       response: { approved: false } as JsonValue,
       messageId: 'reply-2',
     });

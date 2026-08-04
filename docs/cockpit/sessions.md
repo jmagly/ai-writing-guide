@@ -50,6 +50,20 @@ reason instead of failing silently. Managed backends are what make sessions
 survivable across agent restarts and reconnects (the multiplexer holds the
 session; see [Recovery](./recovery.md) for the survival rules).
 
+## Target working directory
+
+Provider processes start in the working directory reported by the selected
+target. Host sessions use the host runtime's resolved workspace. Container and
+VM sessions use the executor-reported target directory; with Agentic Sandbox
+`v2026.7.18` that directory is `/home/agent`. Cockpit falls back to
+`/home/agent` for older container or VM inventory that does not expose cwd
+metadata.
+
+This path belongs to the target, not the machine running Cockpit Bridge. It may
+therefore be absent from the Bridge host filesystem. The protected daily
+operator gate verifies the exact managed-PTY cwd for its candidate host and
+container targets.
+
 ## Response detection
 
 Cockpit watches for sessions that are **waiting on a human**. A screen monitor

@@ -1,0 +1,25 @@
+{
+  "name": "browser-control",
+  "version": "2026.8.3",
+  "description": "Drive a real, user-installed Chromium-derived browser from an AIWG agent. Wraps @playwright/mcp with a setup wizard, health-check doctor, allow-list enforcement, and an opinionated agent persona that respects authorization and audit boundaries.",
+  "author": {
+    "name": "AIWG Contributors",
+    "email": "support@aiwg.io"
+  },
+  "homepage": "https://aiwg.io",
+  "repository": "https://github.com/jmagly/aiwg",
+  "license": "MIT",
+  "keywords": [
+    "browser",
+    "playwright",
+    "playwright-mcp",
+    "automation",
+    "authentication",
+    "extension",
+    "chromium",
+    "chrome",
+    "edge",
+    "cdp",
+    "browser-extension"
+  ]
+}

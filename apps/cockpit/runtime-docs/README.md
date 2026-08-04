@@ -21,7 +21,9 @@ Every shell (browser, VS Code, Tauri) resolves the Bridge the same way — see
 1. read `bridge.json` → `{ token_ref, port }` or fallback `{ token, port }`
 2. resolve `token_ref` through `apps/cockpit/shell-core/keychain.mjs` when present
 3. wait for `http://127.0.0.1:<port>/healthz`
-4. load the UI at `http://127.0.0.1:<port>/?token=<token>`
+4. authenticate `POST /bootstrap/nonce` natively and load the UI with only the
+   returned one-time nonce in the URL fragment
+5. exchange the nonce for an HttpOnly `SameSite=Strict` browser session
 
 ## Security
 
@@ -35,8 +37,10 @@ Every shell (browser, VS Code, Tauri) resolves the Bridge the same way — see
   `AIWG_COCKPIT_KEYCHAIN_STRICT=1` to omit the inline token when keychain storage
   succeeds; set `AIWG_COCKPIT_REQUIRE_KEYCHAIN=1` to fail Bridge launch if no OS
   credential backend is usable.
-- `token` gates every `/api/*` call (constant-time bearer check); `tenant_id` elsewhere
-  is a **routing** token, never authentication.
+- The native `token` can authenticate non-browser `/api/*` calls and issue
+  one-time browser bootstraps. Browser REST, SSE, and PTY traffic use an
+  HttpOnly session; query-token authentication is not accepted. `tenant_id`
+  elsewhere is a **routing** token, never authentication.
 - Browser-origin `/api/*` calls are localhost-origin checked, and state-changing
   browser calls must include the CSRF double-submit header emitted by the web clients.
 

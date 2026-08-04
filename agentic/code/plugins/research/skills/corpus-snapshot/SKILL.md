@@ -213,12 +213,12 @@ The default template uses markers for computed vs analyzed sections:
 
 ## Fortemi Core Migration Note
 
-During the Fortemi Core index migration preview, corpus snapshots remain
-AIWG-rendered from corpus sidecars, corpus views, and the local `.aiwg/.index`
-artifacts. Do not use `--backend fortemi-core` as the source of truth for
-snapshot metrics until #1690 explicitly accepts a Fortemi-projected snapshot
-contract and #1691 parity fixtures prove identical REF/PROF, citation,
-profile, radar, discovery, and quality metrics.
+By the #1690 boundary decision, corpus snapshots remain AIWG-rendered from
+corpus sidecars, corpus views, and the local `.aiwg/.index` artifacts. Fortemi
+v2 projects the underlying research and KB records for search and traversal;
+it does not replace the snapshot renderer. The golden corpus-view fixtures
+remain the parity contract for REF/PROF, citation, profile, radar, discovery,
+and quality metrics.
 
 ## Examples
 

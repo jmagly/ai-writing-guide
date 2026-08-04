@@ -3,8 +3,9 @@
 A lightweight native window hosting the **same registry-bound Bridge UI** as the
 VS Code shell and the browser. The shell does not replace the CLI or reimplement
 the control plane — `src-tauri/src/main.rs` waits for the Bridge's per-launch
-runtime handshake file (`~/.aiwg/cockpit/runtime/bridge.json`) and opens a window
-at the Bridge UI with the resolved per-launch token on the query string.
+runtime handshake file (`~/.aiwg/cockpit/runtime/bridge.json`), exchanges the
+native credential for a one-time nonce, and opens the Bridge UI without a
+reusable credential in the URL.
 
 ## Architecture
 
@@ -14,7 +15,7 @@ operator/CLI: aiwg cockpit
       ▼
 Bridge (127.0.0.1:PORT, token-gated /api) ── proxies ──▶ agentic-sandbox executor
       ▲
-      │  loads http://127.0.0.1:PORT/?token=…
+      │  loads http://127.0.0.1:PORT/#bootstrap=…
 desktop window  (this app)   ◀── same UI ──▶   VS Code webview  /  browser
 ```
 

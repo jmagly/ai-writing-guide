@@ -3,15 +3,16 @@ import { api } from '../api';
 import { useDebounced } from '../useDebounce';
 import type { CapabilityResult } from '../types';
 
-const TYPES = ['all', 'skill', 'agent', 'command', 'rule', 'flow'];
+const TYPES = ['all', 'skill', 'agent', 'command', 'rule', 'flow', 'behavior', 'hook', 'template', 'tool', 'addon', 'framework', 'extension', 'plugin', 'provider', 'document'];
 
 // Tenor-style capability search — modeled on fortemi-react's SearchBar + SearchResults
 // (debounced input, Ctrl/⌘-K focus, card grid with rank + snippet + trigger tags),
 // wired to the AIWG registry via the Bridge (read-only catalog data; never execution).
-export function CapabilitySearch({ onPick, autoFocus, compact }: {
+export function CapabilitySearch({ onPick, autoFocus, compact, refreshTick = 0 }: {
   onPick: (c: CapabilityResult) => void;
   autoFocus?: boolean;
   compact?: boolean;
+  refreshTick?: number;
 }) {
   const [q, setQ] = useState('');
   const [type, setType] = useState('all');
@@ -36,7 +37,7 @@ export function CapabilitySearch({ onPick, autoFocus, compact }: {
       .then((d) => { if (live) { setResults(d.results); setErr(''); } })
       .catch((e) => { if (live) setErr((e as Error).message); });
     return () => { live = false; };
-  }, [debounced, type]);
+  }, [debounced, type, refreshTick]);
 
   return (
     <div>
@@ -49,7 +50,7 @@ export function CapabilitySearch({ onPick, autoFocus, compact }: {
       </div>
       {err && <p className="err">{err}</p>}
       {results === null
-        ? <p className="hint">Type to search skills, agents, commands, rules, flows.</p>
+        ? <p className="hint">Type to search every indexed capability and artifact type.</p>
         : !results.length
           ? <p className="empty">No matches.</p>
           : (

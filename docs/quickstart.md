@@ -18,13 +18,19 @@ The agent should:
 5. run the setup or workflow;
 6. report the outcome and concrete verification evidence.
 
-Every project requires one first-session connection step. Install AIWG, run
-`aiwg use all --provider <provider>` from the project root, build the indices,
-reopen the provider in that project, and invoke `/aiwg-regenerate` on
-slash-command platforms or `$aiwg-regenerate` in Codex. If the provider uses
-neither prefix, ask it to run `aiwg-regenerate` for the project. Do not begin
-project work until the agent verifies engagement. See
+First-time setup uses one canonical path: install AIWG, run `aiwg use all
+--provider <provider>` from the project root, reopen the provider, invoke
+`/aiwg-regenerate` on slash-command platforms or `$aiwg-regenerate` in Codex,
+and ask the agent to verify engagement. See
 [Install, Connect, and Verify](getting-started/install-connect-verify.md).
+
+Codex setup writes generated provider artifacts beneath `.codex/` and
+`.agents/` and adds both directories to the project `.gitignore` unless they
+are already covered. Existing tracked files remain tracked, and `--dry-run`
+does not change `.gitignore`. Reopen Codex at the target project root so it can
+discover `.codex/agents/` and the native kernel skills in `.agents/skills/`.
+Standard AIWG skills remain available through discovery and natural-language
+routing unless deployment is explicitly run with `--copy-all`.
 
 ## Choose a starting point
 

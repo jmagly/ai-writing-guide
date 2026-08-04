@@ -33,9 +33,9 @@ export type FeatureKey =
 /**
  * Daemon support tier for a provider.
  *
- * - `native`      — full headless daemon (aiwg daemon start/stop/status)
- * - `pty-adapter` — PTY bridge for TUI-based platforms (secondary/opt-in mode)
- * - `unsupported` — requires a display server or IDE host; daemon not applicable
+ * The current production CLI has no daemon lifecycle command, so bundled
+ * providers resolve to `unsupported`. Other values remain in the type for
+ * project-local provider manifests and future atomic CLI implementations.
  *
  * @issue #656
  */
@@ -47,7 +47,12 @@ export type EmulationStrategy =
   | 'aiwg-mc'
   | 'aiwg-schedule'
   | 'aiwg-daemon'
+  | 'external-trigger'
   | null;
+
+export function isExternalStrategy(strategy: EmulationStrategy): boolean {
+  return strategy === 'external-trigger';
+}
 
 export type DeployTarget = 'project' | 'home' | 'mixed';
 
@@ -458,6 +463,7 @@ export function formatCapabilityTable(): string {
     const cells = features.map((f) => {
       if (caps.native_features[f]) return padRight('NATIVE', 15);
       const emu = caps.emulation[f];
+      if (isExternalStrategy(emu)) return padRight('EXTERNAL', 15);
       if (emu) return padRight(emu, 15);
       return padRight('--', 15);
     });
@@ -465,7 +471,7 @@ export function formatCapabilityTable(): string {
   }
 
   lines.push('');
-  lines.push('Legend: NATIVE = built-in support, aiwg-* = AIWG emulation, -- = unsupported');
+  lines.push('Legend: NATIVE = built-in support, aiwg-* = AIWG emulation, EXTERNAL = host/CI owns the trigger, -- = unsupported');
 
   return lines.join('\n');
 }
@@ -492,9 +498,11 @@ export function formatFeatureSupport(feature: FeatureKey): string {
     const strategy = caps.emulation[feature];
     const status = native
       ? 'NATIVE'
-      : strategy
-        ? `emulated (${strategy})`
-        : 'unsupported';
+      : isExternalStrategy(strategy)
+        ? 'external trigger'
+        : strategy
+          ? `emulated (${strategy})`
+          : 'unsupported';
     lines.push(`  ${padRight(caps.display_name, 18)} ${status}`);
   }
 

@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentic-orchestration:fleet-workload:v1",
+  "title": "Fleet Workload Contract v1",
+  "description": "Orchestrator-neutral workload, inventory, and reconciliation envelopes for agentic execution substrates.",
+  "oneOf": [
+    { "$ref": "#/$defs/workload_record" },
+    { "$ref": "#/$defs/inventory_snapshot" },
+    { "$ref": "#/$defs/reconciliation_report" }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[^\\s]+$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "workload_kind": {
+      "type": "string",
+      "enum": ["persistent-agent", "daemon", "scheduled-collector", "one-shot-command"]
+    },
+    "desired_state": {
+      "type": "string",
+      "enum": ["pending", "running", "detached", "stopped", "cancelled"]
+    },
+    "observed_state": {
+      "type": "string",
+      "enum": [
+        "pending", "admitted", "starting", "running", "blocked", "detached",
+        "retained", "healthy", "degraded", "restarting", "scheduled", "missed",
+        "catching-up", "stopping", "succeeded", "failed", "cancelled",
+        "timed-out", "unknown", "operator-review-required"
+      ]
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "orchestrator_id", "mission_id", "dispatch_id", "idempotency_key",
+        "child_id", "target_id", "executor_id", "runtime_id"
+      ],
+      "properties": {
+        "orchestrator_id": { "$ref": "#/$defs/id" },
+        "mission_id": { "$ref": "#/$defs/id" },
+        "dispatch_id": { "$ref": "#/$defs/id" },
+        "idempotency_key": { "$ref": "#/$defs/id" },
+        "parent_id": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+        "child_id": { "$ref": "#/$defs/id" },
+        "target_id": { "$ref": "#/$defs/id" },
+        "executor_id": { "$ref": "#/$defs/id" },
+        "runtime_id": { "$ref": "#/$defs/id" },
+        "session_id": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+        "task_id": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+        "command_id": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] }
+      }
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "status"],
+      "properties": {
+        "name": { "$ref": "#/$defs/id" },
+        "status": { "enum": ["supported", "unsupported", "degraded", "policy-blocked"] },
+        "reason": { "type": "string", "maxLength": 512 }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trust_tier", "isolation_kind"],
+      "properties": {
+        "trust_tier": { "type": "string", "pattern": "^T[0-9]+$" },
+        "isolation_kind": { "enum": ["host", "container", "vm", "microvm", "custom"] },
+        "credential_policy_ref": { "$ref": "#/$defs/id" },
+        "network_policy_ref": { "$ref": "#/$defs/id" }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_attempts", "timeout_seconds"],
+      "properties": {
+        "max_attempts": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "timeout_seconds": { "type": "integer", "minimum": 1 },
+        "max_cost_usd": { "type": "number", "minimum": 0 }
+      }
+    },
+    "backpressure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason", "retryable"],
+      "properties": {
+        "reason": { "enum": ["capacity", "policy", "approval", "rate-limit", "dependency"] },
+        "retryable": { "type": "boolean" },
+        "retry_after": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "uri", "sha256"],
+      "properties": {
+        "kind": { "enum": ["result", "log", "telemetry", "verifier", "other"] },
+        "uri": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "workload_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["document_type", "api_version", "kind", "lineage", "spec", "status"],
+      "properties": {
+        "document_type": { "const": "workload" },
+        "api_version": { "const": "agentic-orchestration/v1" },
+        "kind": { "$ref": "#/$defs/workload_kind" },
+        "lineage": { "$ref": "#/$defs/lineage" },
+        "spec": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["desired_state", "capabilities", "policy", "budgets"],
+          "properties": {
+            "desired_state": { "$ref": "#/$defs/desired_state" },
+            "capabilities": { "type": "array", "items": { "$ref": "#/$defs/capability" }, "uniqueItems": true },
+            "policy": { "$ref": "#/$defs/policy" },
+            "budgets": { "$ref": "#/$defs/budgets" },
+            "schedule": { "type": "string", "minLength": 1 },
+            "orchestrator_metadata": { "type": "object", "additionalProperties": true }
+          }
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["observed_state", "revision", "last_seen", "artifacts"],
+          "properties": {
+            "observed_state": { "$ref": "#/$defs/observed_state" },
+            "revision": { "type": "integer", "minimum": 0 },
+            "last_seen": { "$ref": "#/$defs/timestamp" },
+            "health": { "enum": ["healthy", "degraded", "unhealthy", "unknown"] },
+            "backpressure": { "$ref": "#/$defs/backpressure" },
+            "artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } },
+            "exit_classification": { "enum": ["success", "failure", "cancelled", "timeout", "unknown"] },
+            "error_code": { "type": "string", "minLength": 1 }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "scheduled-collector" } }, "required": ["kind"] },
+          "then": { "properties": { "spec": { "type": "object", "properties": { "schedule": true }, "required": ["schedule"] } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "daemon" } }, "required": ["kind"] },
+          "then": { "properties": { "status": { "type": "object", "properties": { "health": true }, "required": ["health"] } } }
+        }
+      ]
+    },
+    "inventory_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["document_type", "api_version", "inventory_revision", "generated_at", "records"],
+      "properties": {
+        "document_type": { "const": "inventory" },
+        "api_version": { "const": "agentic-orchestration/v1" },
+        "inventory_revision": { "type": "integer", "minimum": 0 },
+        "generated_at": { "$ref": "#/$defs/timestamp" },
+        "records": { "type": "array", "items": { "$ref": "#/$defs/workload_record" }, "minItems": 1 }
+      }
+    },
+    "reconciliation_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["child_id", "classification", "observed_state", "revision"],
+      "properties": {
+        "child_id": { "$ref": "#/$defs/id" },
+        "classification": { "enum": ["re-adopted", "terminal", "unknown", "failed-or-aborted", "operator-review-required"] },
+        "observed_state": { "$ref": "#/$defs/observed_state" },
+        "revision": { "type": "integer", "minimum": 0 },
+        "reason": { "type": "string", "maxLength": 512 }
+      },
+      "not": {
+        "properties": {
+          "classification": { "const": "unknown" },
+          "observed_state": { "enum": ["succeeded", "failed", "cancelled", "timed-out"] }
+        },
+        "required": ["classification", "observed_state"]
+      }
+    },
+    "reconciliation_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["document_type", "api_version", "generated_at", "before_revision", "after_revision", "rows"],
+      "properties": {
+        "document_type": { "const": "reconciliation" },
+        "api_version": { "const": "agentic-orchestration/v1" },
+        "generated_at": { "$ref": "#/$defs/timestamp" },
+        "before_revision": { "type": "integer", "minimum": 0 },
+        "after_revision": { "type": "integer", "minimum": 0 },
+        "rows": { "type": "array", "items": { "$ref": "#/$defs/reconciliation_row" }, "minItems": 1 }
+      }
+    }
+  }
+}

@@ -18,7 +18,12 @@
  * @module tools/plugin/plugin-installer-cli
  */
 
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { importImpl } from '../_resolve-impl.mjs';
+
+const SCRIPT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // Try to import from dist first, then from src via tsx
 async function loadPluginInstaller() {
@@ -49,11 +54,11 @@ function parseArgs(args) {
     if (arg === '--help' || arg === '-h') {
       options.help = true;
     } else if (arg === '--type') {
-      options.type = args[++i];
+      options.type = requiredValue(args, ++i, '--type');
     } else if (arg === '--parent') {
-      options.parent = args[++i];
+      options.parent = requiredValue(args, ++i, '--parent');
     } else if (arg === '--source') {
-      options.source = args[++i];
+      options.source = requiredValue(args, ++i, '--source');
     } else if (arg === '--dry-run') {
       options.dryRun = true;
     } else if (arg === '--force') {
@@ -67,6 +72,54 @@ function parseArgs(args) {
   return options;
 }
 
+function requiredValue(args, index, flag) {
+  const value = args[index];
+  if (typeof value !== 'string' || value.length === 0 || value.startsWith('-')) {
+    throw new Error(`${flag} requires a value`);
+  }
+  return value;
+}
+
+function isGitUrl(value) {
+  return /^(?:https?|ssh|git):\/\//i.test(value) || /^git@[^:]+:.+/.test(value);
+}
+
+async function resolveSource(options) {
+  const requested = options.source ?? options.pluginId;
+  if (isGitUrl(requested)) {
+    throw new Error(
+      `Git URL sources are handled by the package installer. Run \`aiwg install ${requested}${options.dryRun ? ' --dry-run' : ''}\`, then \`aiwg use <plugin-id>\`.`,
+    );
+  }
+  const source = path.resolve(process.cwd(), requested);
+  let stat;
+  try {
+    stat = await fs.stat(source);
+  } catch (error) {
+    if (error?.code === 'ENOENT') {
+      throw new Error(`Plugin source does not exist: ${source}`);
+    }
+    throw error;
+  }
+  if (!stat.isDirectory()) throw new Error(`Plugin source must be a directory: ${source}`);
+
+  const manifestPath = path.join(source, 'manifest.json');
+  let manifest;
+  try {
+    manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
+  } catch (error) {
+    if (error?.code === 'ENOENT') throw new Error(`Plugin manifest not found: ${manifestPath}`);
+    if (error instanceof SyntaxError) throw new Error(`Plugin manifest is not valid JSON: ${manifestPath}`);
+    throw error;
+  }
+  if (manifest?.type === 'plugin' || manifest?.pluginConfig) {
+    throw new Error(
+      `Standalone plugin wrappers use the package workflow. Run \`aiwg install ${source}${options.dryRun ? ' --dry-run' : ''}\`, then \`aiwg use ${manifest?.id ?? options.pluginId}\`.`,
+    );
+  }
+  return source;
+}
+
 function printHelp() {
   console.log(`
 Plugin Installer CLI
@@ -74,7 +127,7 @@ Plugin Installer CLI
 Installs plugins (frameworks, add-ons, extensions) with dependency resolution.
 
 USAGE:
-  aiwg -install-plugin <plugin-id> [options]
+  aiwg install-plugin <plugin-id> [options]
 
 ARGUMENTS:
   <plugin-id>         Plugin ID to install (e.g., sdlc-complete, gdpr-compliance)
@@ -82,7 +135,7 @@ ARGUMENTS:
 OPTIONS:
   --type <type>       Plugin type: framework, add-on, extension
   --parent <id>       Parent framework ID (required for add-ons)
-  --source <path>     Install from local path instead of registry
+  --source <path>     Install a legacy framework/add-on/extension manifest from a local directory
   --dry-run           Preview installation without executing
   --force             Overwrite existing installation
   --help, -h          Show this help message
@@ -94,8 +147,12 @@ EXAMPLES:
   # Install add-on with parent framework
   aiwg -install-plugin gdpr-compliance --parent sdlc-complete
 
-  # Install from local path
-  aiwg -install-plugin ./my-custom-plugin --type extension
+  # Install a legacy local manifest
+  aiwg install-plugin my-custom-plugin --source ./my-custom-plugin --type extension
+
+  # Standalone wrappers and Git URLs use the package workflow
+  aiwg install <path-or-git-url> --dry-run
+  aiwg use <plugin-id>
 
   # Preview installation
   aiwg -install-plugin marketing-flow --dry-run
@@ -103,8 +160,13 @@ EXAMPLES:
 }
 
 async function main() {
-  const args = process.argv.slice(2);
-  const options = parseArgs(args);
+  let options;
+  try {
+    options = parseArgs(process.argv.slice(2));
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    process.exit(2);
+  }
 
   if (options.help || !options.pluginId) {
     printHelp();
@@ -114,10 +176,11 @@ async function main() {
   try {
     const { PluginInstaller } = await loadPluginInstaller();
 
-    const installer = new PluginInstaller({
-      dryRun: options.dryRun,
-      force: options.force
-    });
+    const aiwgRoot = process.env.AIWG_ROOT
+      ? path.resolve(process.env.AIWG_ROOT)
+      : SCRIPT_ROOT;
+    const installer = new PluginInstaller(aiwgRoot);
+    const source = await resolveSource(options);
 
     console.log(`Installing plugin: ${options.pluginId}...`);
 
@@ -125,10 +188,11 @@ async function main() {
       console.log('[DRY RUN] No changes will be made\n');
     }
 
-    const result = await installer.install(options.pluginId, {
+    const result = await installer.install(source, {
       type: options.type,
-      parent: options.parent,
-      source: options.source
+      parentFramework: options.parent,
+      dryRun: options.dryRun,
+      force: options.force,
     });
 
     if (result.success) {
@@ -138,7 +202,7 @@ async function main() {
         result.directories.forEach(d => console.log(`    - ${d}`));
       }
     } else {
-      console.error(`\n✗ Failed to install plugin: ${result.error}`);
+      console.error(`\n✗ Failed to install plugin: ${(result.errors ?? []).join('; ') || 'unknown installer error'}`);
       process.exit(1);
     }
   } catch (error) {

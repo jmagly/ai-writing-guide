@@ -130,7 +130,10 @@ fi
 echo "  [2/13] package.json lockstep OK"
 
 # ---------------------------------------------------------------------------
-# 3. .claude-plugin/marketplace.json metadata.version lockstep (PUW-038 #1139)
+# 3. .claude-plugin/marketplace.json version lockstep (PUW-038 #1139)
+#    Current manifests use the top-level field. Keep the legacy metadata.version
+#    fallback aligned with tools/workspace/check-marketplace-version.mjs so older
+#    release branches can still use this wrapper.
 # ---------------------------------------------------------------------------
 MP_VERSION=$(node -e "const m=JSON.parse(require('fs').readFileSync('.claude-plugin/marketplace.json','utf8')); console.log(m.version ?? m.metadata?.version ?? '')")
 if [ "$MP_VERSION" != "$VERSION" ]; then

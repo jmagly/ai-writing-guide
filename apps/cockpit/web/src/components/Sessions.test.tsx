@@ -68,7 +68,6 @@ function stubSession(state: Partial<SessionApi['state']> = {}): SessionApi {
 }
 
 beforeEach(() => {
-  (window as unknown as { __COCKPIT_TOKEN__: string }).__COCKPIT_TOKEN__ = 'test-token';
   resetSessionRegistryForTest();
   vi.spyOn(window, 'confirm').mockReturnValue(true);
 });

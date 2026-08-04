@@ -10,12 +10,209 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 ### Added
 
 - **Session analytics and forensic evidence indices** - session import and
-  reindex now maintain versioned, content-free tool, escalation, HITL,
-  lifecycle, retry/quota-pressure, and anomaly facts with stable source
+  reindex maintain versioned, content-free operational facts with stable source
   citations. New `sessions analytics` and explicitly authorized
   `sessions forensics` views provide filtered JSON and sanitized Markdown
   timelines without executing or exporting historical provider payloads
   (#1974).
+- **Reviewed line-memory promotion** - line-memory interoperates with reviewed
+  promotion workflows while preserving provenance and review boundaries.
+- **Marketing design operations** - theme selection, comparison, templates,
+  schemas, and a theme-manager workflow support repeatable cross-channel visual
+  design decisions.
+
+## [2026.8.4] - 2026-08-03 - "Governed missions and complete plugin delivery"
+
+### Added
+
+- **Complete Claude Code plugin catalog** - all 40 packaged frameworks and
+  addons are independently installable from the marketplace, with cached
+  bundles retaining their complete runtime-relative dependency trees.
+- **Provider-neutral corpus memory ingest** - `aiwg storage import-corpus`
+  previews and ingests local research text through the storage/MCP abstraction,
+  preserves Markdown metadata, and skips binary attachments safely. Fortemi
+  storage supports local stdio plus authenticated HTTPS/SSE Enterprise MCP
+  registry entries without persisting credential values (#1508).
+- **Shared-host mission admission** - mission workloads declare resource,
+  isolation, and policy requirements before dispatch, with deterministic
+  admission decisions and auditable denial evidence (#1566).
+- **Operator decision evidence** - approvals, denials, overrides, and expired
+  decisions use a canonical audit model with stable identities and sanitized
+  evidence projections (#1567).
+- **Durable mission controls** - pause, resume, cancel, retry, and recovery
+  controls survive conductor restarts and are projected into Cockpit alongside
+  approval and mission activity views (#1591, #1592, #1657).
+
+### Changed
+
+- **Fortemi research retrieval** - corpus snapshots and query results preserve
+  curated retrieval evidence across package boundaries instead of reducing it
+  to the core-only representation (#1690).
+
+### Fixed
+
+- **HITL approval interoperability** - drivers and consumers now use the
+  canonical approval contract, preserving decision identity and lifecycle
+  semantics across runtime boundaries (#1565).
+- **Annotated release tag verification** - GitHub mirroring compares the
+  peeled commit behind annotated tags, avoiding false mismatches against tag
+  object IDs.
+- **Claude trace hooks** - generated `SubagentStart` and `SubagentStop`
+  commands pass the required `start` and `stop` arguments and repair stale
+  registrations on refresh.
+
+## [2026.8.3] - 2026-08-03 - "Plugin lifecycle and release reliability"
+
+### Changed
+
+- **MCP server dependency compatibility** - MCP SDK 1.30.0 permits the fixed
+  Hono v2 server line, so the production graph deduplicates to
+  `@hono/node-server@2.0.11` and removes the Windows static-serving advisory
+  route tracked in #1973.
+
+### Fixed
+
+- **Project-local plugin removal** - removal and doctor checks compare deployed
+  files with provider-transformed hashes, preventing freshly deployed skills
+  from being reported as mutated while preserving later operator edits (#1998).
+- **Local plugin source handling** - `install-plugin --source` now preserves the
+  framework-root contract and provides supported migration guidance for
+  project-local plugin wrappers instead of crashing on a path-type error
+  (#1996).
+- **GitHub release mirroring** - stable releases wait for and verify the
+  operator-pushed signed annotated tag before release creation, eliminating the
+  tag-arrival race without synthesizing tags in CI (#1988).
+
+## [2026.8.2] - 2026-08-03 - "Git-native provenance exchange"
+
+### Added
+
+- **Git-native package exchange** - versioned closed envelopes bind package
+  identity to canonical Git remotes, immutable commits, tree/artifact digests,
+  W3C PROV, Ed25519 publisher trust, dependencies, licenses, optional SBOMs,
+  and lossless Fortemi `2.0.0/full-v1` evidence. Signed federated catalogs,
+  project/global indices, offline verification, portable export/import, and
+  operation receipts provide decentralized discovery without treating catalog
+  inclusion as endorsement (#2009).
+
+### Changed
+
+- **Remote package installation** - movable refs resolve to commit-keyed
+  detached caches before deployment, standalone `.aiwg/plugins/` wrappers are
+  discovered safely, and external payload deployment copies complete skills,
+  agents, and rules for the selected provider (#2009).
+
+## [2026.8.1] - 2026-08-02 - "Persistent memory and governed fleet operations"
+
+### Added
+
+- **Compound memory** - a provider-neutral addon now composes immutable raw
+  intake, linked llm-wiki knowledge, reviewed line-memory facts, bounded hybrid
+  context packs, registered outputs, governed canonical context, and auditable
+  review/maintenance cycles. Three-session conformance proves continuity,
+  provenance, hard context budgets, portable migration, and deterministic
+  fallback behavior (#1999-#2006).
+- **Sandbox fleet workloads and missions** - a neutral workload contract,
+  durable multi-target conductor, Cockpit projections, restart-safe identity,
+  bounded retries, and three-target recovery evidence support governed fleet
+  operations across sandbox runtimes (#1992-#1994).
+- **Paid-resource authentication** - `aiwg auth` adds OS-backed account
+  storage, exact-origin authorization, account/status/logout controls, and
+  signed-resource integration without exposing access material in URLs, cache
+  keys, or repository state (#1995).
+
+### Changed
+
+- **Codex deployment reliability** - component-scoped addon sweeps preserve
+  kernel skills, generated native skills include `agents/openai.yaml` metadata,
+  setup reports `$aiwg-regenerate`, and Codex provider trees are added to
+  `.gitignore` without changing already tracked files.
+- **Development-checkout notifier routing** - the launcher resolves logging and
+  update-notifier modules from the active package, and ignores cache notices
+  produced by a different installed version.
+
+### Fixed
+
+- **Lightweight external addon workflows** - `@aiwg/cli` now ships the runtime
+  needed to create deterministic standalone plugin archives and deploys valid
+  project-local wrappers for their declared providers. Installations can target
+  the current project or the global user scope, with the corresponding artifact
+  and Fortemi indices refreshed after deployment (#2007, #2008).
+- **Fleet admission and recovery** - inventory faults now fail closed, runtime
+  child identities survive dispatch and restart, and daemon health semantics
+  remain stable during fleet reconciliation.
+- **Provider documentation drift** - Codex skill paths, RLM verification,
+  regeneration syntax, addon catalog coverage, and Ops extension structure now
+  match the shipped runtime contracts.
+
+## [2026.8.0] - 2026-08-01 - "Secure external jobs and operational intelligence"
+
+### Added
+
+- **Session analytics and forensic evidence** - session import and reindex now
+  maintain a versioned, content-free analytics index for tool, escalation, HITL,
+  lifecycle, retry/quota-pressure, and anomaly facts with stable source
+  citations. New `sessions analytics` and explicitly authorized
+  `sessions forensics` views provide filtered JSON and sanitized Markdown
+  facts and authorized forensic timelines without executing or exporting historical provider payloads
+  (#1974).
+- **External-trigger single-shot jobs** - the new `aiwg job validate`,
+  `aiwg job render-cron`, and `aiwg job run --once` commands define and execute
+  approval-gated provider work while cron, systemd timers, or Gitea Actions own
+  scheduling. Runs use prompt-on-stdin execution, structured results, stable
+  idempotency, locking, redacted evidence, and race-safe Gitea claims (#1985).
+- **Design theme operations** - the media-marketing framework now includes a
+  theme manager, schemas, templates, comparison workflows, and design QA
+  guidance for reusable cross-channel visual systems.
+
+### Changed
+
+- **Registry-signature CI runtime** - main Gitea CI now uses the repository's
+  digest-pinned Node 24/npm 11 runtime so the non-waiveable dependency-signature
+  gate recognizes npm's rotated registry signing keys.
+- **Fortemi shard interoperability** - shard export now defaults to the
+  `full-v1` receipt contract, binds producer, converter, and consumer evidence,
+  and keeps legacy core-only output available through an explicit mode.
+- **Fortemi core dependency** - the supported core and receipt fixtures now use
+  `@fortemi/core@2026.7.15`, with conformance and discovery gates enforcing the
+  same converter lineage.
+- **Truthful scheduling capability reporting** - provider matrices, daemon
+  guidance, CLI references, and steward output now distinguish external
+  scheduling from AIWG-owned orchestration instead of implying a resident
+  scheduler exists (#1984).
+- **Cockpit live acceptance evidence** - protected daily validation now waits
+  for runtime re-adoption, requires an observable transient disconnect, and
+  records the executor-reported version before accepting recovery (#1981).
+
+### Security
+
+- **Windows static-asset traversal defense** - AIWG serve now uses
+  `@hono/node-server@2.0.11`, a fixed v2 line for
+  `GHSA-frvp-7c67-39w9`. A regression rejects percent-encoded Windows
+  backslashes before they can resolve outside the configured static root
+  (#1973).
+- **Production dependency floor** - minimum compatible versions now include
+  current fixes for Hono, MCP SDK, js-yaml, ws, yaml, glob/minimatch, and their
+  routed validator dependencies. Chokidar moves to v4 to remove the vulnerable
+  picomatch v2 chain. SDK 1.29 still retains a transitive Hono node-server v1
+  advisory; SDK 1.30 fixes that route but remains blocked by the seven-day
+  minimum-release-age policy (#1973).
+- **Cockpit launch credentials** - reusable launch material is no longer placed
+  in URLs; scoped handoff and transport state keep it out of history, referrer,
+  UI, and routine logging surfaces (#1968).
+
+## [2026.7.25] - 2026-07-31 - "Target-native managed session directories"
+
+### Fixed
+
+- **Cockpit managed-session working directories** - The Bridge now honors the
+  executor-reported target cwd for host, container, and VM sessions, with
+  `/home/agent` as the compatibility fallback for older container/VM inventory.
+  Protected daily validation checks the new cwd invariant on the candidate
+  phase while retaining upgrade and rollback coverage for immutable baselines.
+- **Cockpit Codex live workload** - Gate-owned workspaces can run the bounded
+  Codex discovery probe outside a Git checkout without weakening read-only
+  sandboxing.
 
 ## [2026.7.24] - 2026-07-29 - "Sandbox runtime readiness and setup manifest CLI"
 

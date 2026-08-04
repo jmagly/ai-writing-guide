@@ -2,7 +2,7 @@
 namespace: aiwg
 name: install-plugin
 platforms: [all]
-description: Install Claude Code marketplace plugins with registry lookup, download, and local deployment
+description: Install Claude Code marketplace plugins or route local/Git wrappers through the supported package workflow
 ---
 
 # Install Plugin
@@ -28,6 +28,8 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 | Claude Code plugin | "install claude code plugin utils" | Run `aiwg install-plugin utils@aiwg` |
 | Dry run | "show me what installing sdlc would do" | Run `aiwg install-plugin sdlc@aiwg --dry-run` |
 | Specific version | "install sdlc version 2026.3.0" | Run `aiwg install-plugin sdlc@aiwg@2026.3.0` |
+| Local wrapper | "install this local plugin wrapper" | Run `aiwg install <path> --dry-run`, then `aiwg use <plugin-id>` |
+| Git wrapper | "install this plugin Git URL" | Run `aiwg install <git-url> --dry-run`, then `aiwg use <plugin-id>` |
 
 ## Behavior
 
@@ -55,6 +57,12 @@ When triggered:
 
    # Force reinstall even if already installed
    aiwg install-plugin sdlc@aiwg --force
+
+   # Standalone local/Git wrappers use the package installer, not the legacy
+   # manifest-only install-plugin backend.
+   aiwg install ./path/to/wrapper --dry-run
+   aiwg install https://example.invalid/owner/wrapper.git --dry-run
+   aiwg use <plugin-id>
    ```
 
 3. **Report the result** — name the installed marketplace wrapper and confirm which agents, skills, commands, and rules were deployed and where.

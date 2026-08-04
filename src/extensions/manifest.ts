@@ -138,6 +138,7 @@ const ProviderCapabilityEmulationSchema = z.enum([
   'aiwg-mc',
   'aiwg-schedule',
   'aiwg-daemon',
+  'external-trigger',
 ]).nullable();
 
 const ProviderCapabilityOverridesSchema = z.object({

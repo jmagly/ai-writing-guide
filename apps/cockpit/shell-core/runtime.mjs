@@ -1,9 +1,9 @@
 // Shell-core: the handshake every Cockpit shell (VS Code, Tauri, browser) shares.
 // The Bridge writes ~/.aiwg/cockpit/runtime/bridge.json (mode 600) on launch with
 // { token_ref, port } when OS-keychain storage is available, else { token, port }.
-// A shell resolves the token, waits for liveness, and loads the Bridge UI at
-// <url>/?token=<token>. Control plane is the gated Bridge API; data plane (pty) is
-// the executor URL the Bridge issues. This module is the one source of that contract.
+// A shell resolves the token, waits for liveness, then asks the Bridge for a
+// one-time bootstrap nonce. The reusable token stays in the native shell and
+// never enters the webview URL. This module is the one source of that contract.
 import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -40,9 +40,19 @@ export async function connect({ timeoutMs = 5000, file = RUNTIME_FILE } = {}) {
   }
 }
 
-/** The webview URL a shell loads — Bridge UI with the token on the query string. */
-export function webviewUrl(rt) {
-  return `${rt.url}/?token=${encodeURIComponent(rt.token)}`;
+/** Issue a short-lived, one-time browser bootstrap and place only that nonce in
+ * the URL fragment (fragments are not sent in HTTP requests or referrers). */
+export async function webviewUrl(rt, { audience = 'browser', next = '' } = {}) {
+  const response = await api(rt, '/bootstrap/nonce', {
+    method: 'POST',
+    body: JSON.stringify({ audience }),
+    headers: { 'content-type': 'application/json' },
+  });
+  if (!response.ok) throw new Error(`Bridge bootstrap refused (${response.status})`);
+  const { nonce } = await response.json();
+  if (!nonce) throw new Error('Bridge bootstrap returned no nonce');
+  const fragment = new URLSearchParams({ bootstrap: nonce, audience, ...(next ? { next } : {}) });
+  return `${rt.url}/#${fragment}`;
 }
 
 /** Authed fetch against the Bridge control surface, for shells that call the API directly. */

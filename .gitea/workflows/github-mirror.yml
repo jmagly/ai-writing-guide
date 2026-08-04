@@ -1,8 +1,9 @@
-# GitHub Mirror — auto-push tag + create Release on stable tags (#1251)
+# GitHub Mirror — wait for operator tag + create Release on stable tags (#1251)
 #
 # Triggered by tag pushes. On STABLE tags only (no pre-release suffix), this
 # workflow:
-#   1. Pushes main + the tag to the GitHub mirror at jmagly/aiwg
+#   1. Pushes main and waits for the operator to push the original signed,
+#      annotated tag object to the GitHub mirror at jmagly/aiwg
 #   2. Creates a GitHub Release using docs/releases/v${VERSION}-announcement.md
 #      as the body (falls back to extracting the CHANGELOG section if the
 #      announcement file is missing).
@@ -146,7 +147,29 @@ jobs:
             echo "body_file=/tmp/release-body.md" >> $GITHUB_OUTPUT
           fi
 
+      - name: Wait for operator-pushed signed annotated tag
+        if: ${{ steps.classify.outputs.skip != 'true' && steps.token.outputs.skip != 'true' }}
+        run: |
+          set -euo pipefail
+          TAG="v${{ steps.classify.outputs.version }}"
+          # actions/checkout peels a tag-trigger checkout to its commit and may
+          # expose refs/tags/$TAG as that commit. Resolve the authoritative
+          # annotated-tag object directly from Gitea instead, so the GitHub API
+          # comparison is tag-object-to-tag-object.
+          EXPECTED_TAG_OBJECT="$(git ls-remote origin "refs/tags/$TAG" | awk 'NR == 1 { print $1 }')"
+          if ! [[ "$EXPECTED_TAG_OBJECT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "ERROR: could not resolve annotated tag object for $TAG from Gitea." >&2
+            exit 1
+          fi
+          node tools/ci/wait-for-github-tag.mjs \
+            --repo jmagly/aiwg \
+            --tag "$TAG" \
+            --expected-sha "$EXPECTED_TAG_OBJECT" \
+            --attempts 30 \
+            --delay-seconds 10
+
       - name: Create GitHub Release
+        id: release
         if: ${{ steps.classify.outputs.skip != 'true' && steps.token.outputs.skip != 'true' }}
         run: |
           set -euo pipefail
@@ -172,6 +195,9 @@ jobs:
             echo "✓ Pre-release tag — GitHub fan-out skipped by design."
           elif [ "${{ steps.token.outputs.skip }}" = "true" ]; then
             echo "✓ Stable tag, but vault CI bootstrap is not configured — skipped."
-          else
+          elif [ "${{ steps.release.outcome }}" = "success" ]; then
             echo "✓ Stable tag v${{ steps.classify.outputs.version }} mirrored + released to github.com/jmagly/aiwg."
+          else
+            echo "✗ GitHub Release v${{ steps.classify.outputs.version }} was not completed."
+            exit 1
           fi

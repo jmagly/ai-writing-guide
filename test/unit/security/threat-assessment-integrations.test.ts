@@ -11,7 +11,8 @@ describe('shared threat-assessment workflow integrations', () => {
     const sdlcMirror = read('agentic/code/plugins/sdlc/skills/address-issues-threat-assess/scripts/assess.mjs');
     const codexMirror = read('agentic/code/plugins/codex-sdlc/skills/address-issues-threat-assess/scripts/assess.mjs');
     expect(canonical).toContain('tools/security/threat-assessment.mjs');
-    expect(sdlcMirror).toContain('frameworks/sdlc-complete/skills/address-issues-threat-assess/scripts/assess.mjs');
+    expect(sdlcMirror).toContain("from '../../../tools/security/threat-assessment.mjs'");
+    expect(read('agentic/code/plugins/sdlc/tools/security/threat-assessment.mjs')).toContain('export function assessThreat');
     expect(codexMirror).toContain('frameworks/sdlc-complete/skills/address-issues-threat-assess/scripts/assess.mjs');
     expect(sdlcMirror).not.toContain('credential-or-env-probing');
     expect(codexMirror).not.toContain('credential-or-env-probing');

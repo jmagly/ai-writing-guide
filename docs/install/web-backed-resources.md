@@ -127,6 +127,22 @@ bytes.
 
 ## Web-Backed `versions`
 
+### Authentication for paid resources
+
+Use `aiwg auth login` for browser-based authorization-code login with PKCE, or
+`aiwg auth login --device` on a headless machine. `aiwg auth status [--json]`
+shows account, organization, scopes, plan, access reason, expiry, and the
+credential-store location. `aiwg auth logout` revokes the current refresh token
+and removes local credentials; `--all` opens account-wide revocation controls.
+
+Credentials use macOS Keychain, Linux Secret Service, or Windows Credential
+Manager. A mode-0600 file is available only with `--store file` plus
+`--allow-file-store` (or `AIWG_AUTH_ALLOW_FILE_STORE=1`). For legacy automation,
+`AIWG_RESOURCE_TOKEN_FILE` (required mode 0600) takes precedence over
+`AIWG_RESOURCE_TOKEN`, and either takes precedence over login credentials.
+Tokens are sent only as HTTPS Authorization headers; they are never written to
+project configuration, resource locks, URLs, diagnostics, or cache keys.
+
 - `versions list` resolves configured signed channels. By default it probes
   `stable`, `latest`, `canary`, and `main`; `--channels stable,latest` narrows
   the channel set.

@@ -256,6 +256,16 @@
   },
   {
     "kind": "addons",
+    "name": "compound-memory",
+    "source": "agentic/code/addons/compound-memory/docs",
+    "dest": "docs/addons/compound-memory",
+    "files": [
+      "operator-guide.md",
+      "overview.md"
+    ]
+  },
+  {
+    "kind": "addons",
     "name": "daemon",
     "source": "agentic/code/addons/daemon/docs",
     "dest": "docs/addons/daemon",

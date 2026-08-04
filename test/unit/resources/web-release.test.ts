@@ -83,15 +83,18 @@ describe("signed web release resolver", () => {
     ]);
   });
 
-  it("sends the configured paid-resource credential without placing it in URLs", async () => {
+  it("adds credential headers without putting credentials in request paths or cache keys", async () => {
     fixture.publishRelease();
-    vi.stubEnv("AIWG_RESOURCE_ACCESS_TOKEN", "aiwg_rt_test_customer_token");
-    await resolveWebRelease(options());
-
-    expect(fixture.requestHeaders.every((headers) =>
-      headers.authorization === "Bearer aiwg_rt_test_customer_token",
-    )).toBe(true);
-    expect(fixture.requestPaths.join("\n")).not.toContain("aiwg_rt_test_customer_token");
+    const secret = "aiwg_at_fixture_header_only";
+    const fetcher = vi.fn(async (input: string | URL, init) => fetch(input, init));
+    const release = await resolveWebRelease({
+      ...options(),
+      fetcher,
+      credentialProvider: async () => secret,
+    });
+    expect(fetcher.mock.calls.every(([, init]) => init?.headers?.authorization === `Bearer ${secret}`)).toBe(true);
+    expect(JSON.stringify(fixture.requestPaths)).not.toContain(secret);
+    expect(release.cacheDir).not.toContain(secret);
   });
 
   it("resolves a signed channel and records its monotonic sequence", async () => {

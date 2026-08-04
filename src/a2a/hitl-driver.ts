@@ -48,6 +48,7 @@ import {
   validateResponseStructurally,
 } from './hitl.js';
 import type { JsonValue, StreamEvent } from './types.js';
+import { digestDecisionContext } from '../audit/operator-decision.js';
 
 // ── Audit log surface ──────────────────────────────────────────────────
 
@@ -61,9 +62,9 @@ export interface HitlAuditEntry {
   prompt_id: string;
   task_id?: string;
   context_id?: string;
-  outcome: 'responded' | 'invalid' | 'expired' | 'aborted' | 'send_failed';
-  /** Operator's response payload — present only on `outcome === 'responded'`. */
-  response?: JsonValue;
+  outcome: 'responded' | 'invalid' | 'expired' | 'aborted' | 'unauthorized' | 'send_failed';
+  /** Redacted response-context digest; raw approval payloads are never audited. */
+  response_digest?: string;
   /** Failure detail — present on non-success outcomes. */
   error?: string;
   /** How long the operator took (ms). */
@@ -284,6 +285,22 @@ export async function driveOnePrompt(opts: {
   const messageIdFactory = opts.messageIdFactory ?? defaultMessageIdFactory;
   const startedAt = Date.now();
 
+  const operator = adapterOperator(opts.adapter);
+  if (!isResponderAllowed(opts.envelope.allowed_responders, operator)) {
+    await auditLog.append({
+      decided_at: new Date().toISOString(),
+      operator,
+      channel: opts.adapter.name,
+      prompt_id: opts.envelope.prompt_id,
+      ...(opts.taskId !== undefined ? { task_id: opts.taskId } : {}),
+      ...(opts.contextId !== undefined ? { context_id: opts.contextId } : {}),
+      outcome: 'unauthorized',
+      error: 'operator is not authorized by allowed_responders',
+      duration_ms: Date.now() - startedAt,
+    });
+    return;
+  }
+
   // Set up the deadline AbortController if the envelope declares one.
   const controller = new AbortController();
   const deadlineMs = parseDeadline(opts.envelope.deadline);
@@ -399,7 +416,7 @@ export async function driveOnePrompt(opts: {
         ...(opts.taskId !== undefined ? { task_id: opts.taskId } : {}),
         ...(opts.contextId !== undefined ? { context_id: opts.contextId } : {}),
         outcome: 'responded',
-        response,
+        response_digest: digestDecisionContext(response),
         duration_ms: Date.now() - startedAt,
       });
       return;
@@ -461,6 +478,22 @@ function adapterOperator(adapter: HitlDeliveryAdapter): string {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const id = (adapter as any).operatorId;
   return typeof id === 'string' && id.length > 0 ? id : adapter.name;
+}
+
+/**
+ * Enforce the v1 coarse responder policy before collecting or forwarding a
+ * response. Consensus policies require an aggregate routing adapter and are
+ * therefore not satisfied by a single-principal adapter.
+ */
+export function isResponderAllowed(
+  policies: string[] | undefined,
+  responderId: string,
+): boolean {
+  const effective = policies?.length ? policies : ['any'];
+  if (effective.includes('any')) return true;
+  return effective.some(policy =>
+    policy.startsWith('specific:') && policy.slice('specific:'.length) === responderId
+  );
 }
 
 function defaultMessageIdFactory(): string {

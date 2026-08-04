@@ -29,6 +29,20 @@ Complete reference for all `aiwg` CLI commands.
 
 **Prerequisites:** Node.js ≥20.0.0 and `npm install -g aiwg`
 
+## Authentication
+
+```bash
+aiwg auth login [--device] [--device-label <label>]
+aiwg auth status [--json]
+aiwg auth logout [--all]
+```
+
+Authentication uses the native operating-system credential store. A mode-0600
+file fallback requires explicit `--store file --allow-file-store` opt-in. Exit
+codes are 0 success, 2 usage, 3 not authenticated, 4 denied/expired, 5
+credential-store failure, and 6 network/protocol failure. Status output never
+contains access or refresh tokens.
+
 **References:**
 
 - @src/extensions/commands/definitions.ts - Command extension definitions
@@ -50,6 +64,7 @@ Complete reference for all `aiwg` CLI commands.
 - [MCP Commands](#mcp-commands)
 - [Catalog Commands](#catalog-commands)
 - [Toolsmith Commands](#toolsmith-commands)
+- [External Job Command](#external-job-command)
 - [Utility Commands](#utility-commands)
 - [Plugin Commands](#plugin-commands)
 - [Scaffolding Commands](#scaffolding-commands)
@@ -788,7 +803,9 @@ remote Git repository into the local registry cache. Distinct from
 `install-plugin` (Claude Code plugin format).
 
 ```bash
-aiwg install <ref> [--deploy] [--provider <name>] [--target <dir>] [--refresh]
+aiwg install <ref> [--ref <tag-or-sha>] [--package <id>] [--verify]
+  [--deploy] [--provider <name>] [--target <dir>]
+  [--project-local|--global] [--refresh]
 ```
 
 **Arguments:**
@@ -801,6 +818,18 @@ aiwg install <ref> [--deploy] [--provider <name>] [--target <dir>] [--refresh]
 - `--provider <name>` - Target provider (claude, copilot, cursor, ...) — default `claude`
 - `--target <dir>` - Project directory to deploy into — default cwd
 - `--refresh` - Force re-pull even if package is already cached
+- `--ref <tag-or-sha>` - Resolve and lock this Git ref before deployment
+- `--package <id>` - Select a wrapper when the repository contains several
+- `--verify` - Require a trusted Ed25519 publisher signature
+- `--policy <name|path>` - Apply a named local trust policy or JSON policy
+- `--project-local` - Store registry, lock, receipts, and indices below the
+  target project's `.aiwg/` directory
+- `--global` - Store package state in the user AIWG directory (default)
+
+Mutable refs are resolved to immutable commits and cached by commit. Direct
+Git installs support root bundles and validated standalone
+`.aiwg/plugins/<id>` wrappers. Without `--verify`, an unsigned but digest-valid
+package is reported as `integrity-only`.
 
 **Capabilities:** cli, framework, install, git
 **Tools:** Read, Write, Bash
@@ -809,22 +838,43 @@ aiwg install <ref> [--deploy] [--provider <name>] [--target <dir>] [--refresh]
 
 ### marketplace
 
-Search and list packages across configured marketplace adapters (clawhub, openclaw, local).
+Exchange Git-native packages through direct remotes and independently signed
+catalogs. Catalog inclusion is an observation, not an AIWG endorsement.
 
 ```bash
+aiwg marketplace add <catalog-git-url> [--ref <tag-or-sha>]
 aiwg marketplace search <query> [--source <id>] [--json]
-aiwg marketplace list [--source <id>] [--json]
+aiwg marketplace info <package>
+aiwg marketplace install <git-url|package> [--ref <tag-or-sha>] [--verify]
+aiwg marketplace verify <package|lock-id> [--require-signature]
+aiwg marketplace export <package> --output <archive.json>
+aiwg marketplace import <archive.json> [--verify]
+aiwg marketplace publish <source> --key <pem> --publisher <id>
+aiwg marketplace remove <catalog-id>
+aiwg marketplace list [--json]
 ```
 
 **Subcommands:**
 
-- `search <query>` - Search marketplace catalogs for matching packages
-- `list` - List all packages from configured sources
+- `add` - Verify and register a signed Git catalog
+- `search` - Search source adapters and signed catalog observations
+- `info` - Show immutable lock, verification status, and catalog observations
+- `install` - Install direct Git or catalog coordinates through one lock path
+- `verify` - Verify cached bytes and evidence offline and emit a receipt
+- `export` / `import` - Move a complete package, receipts, and Fortemi shard
+  through an offline portable archive
+- `publish` - Create a signed provenance envelope, lock, receipt, and Fortemi
+  `2.0.0/full-v1` shard
+- `remove` - Remove catalog discovery state while retaining installed locks
+- `list` - List installed packages and verification status
 
 **Options:**
 
-- `--source <id>` - Limit to a specific source (clawhub, openclaw, local)
+- `--source <id>` - Limit search to an adapter or `catalog:<catalog-id>`
 - `--json` - Emit structured JSON for programmatic consumption
+- `--project-local` / `--global` - Select project or user state and indices
+- `--target <dir>` - Select the project for project-local state
+- `--policy <name|path>` - Select local signature/trust policy
 
 **Capabilities:** cli, marketplace, search, discovery
 **Tools:** Read
@@ -833,9 +883,15 @@ aiwg marketplace list [--source <id>] [--json]
 
 ```bash
 aiwg marketplace search auth
-aiwg marketplace search auth --source clawhub
+aiwg marketplace search auth --source catalog:community
+aiwg marketplace verify team/auth-tools --project-local
+aiwg marketplace export team/auth-tools --output auth-tools.aiwg.json
 aiwg marketplace list --json
 ```
+
+See [Git-Native Package Exchange](../providers/git-native-marketplace.md) for
+the envelope, lock, W3C PROV, trust, catalog, mirror, recovery, and key-rotation
+contracts.
 
 ---
 
@@ -1428,6 +1484,7 @@ Register an MCP server in the AIWG server registry (`~/.aiwg/mcp-servers.json`).
 
 ```bash
 aiwg mcp add <name> --url <url> [--type http|stdio|sse] [--description <text>]
+aiwg mcp add <name> --url <url> --header-env Authorization=ENV_VAR
 aiwg mcp add <name> --type stdio --command <cmd> [--args <a,b>] [--env KEY=VAL]
 ```
 
@@ -1443,6 +1500,9 @@ aiwg mcp add <name> --type stdio --command <cmd> [--args <a,b>] [--env KEY=VAL]
 - `--args <a,b>` - Comma-separated args for stdio command
 - `--env KEY=VAL` - Environment variable(s) for stdio servers
 - `--headers KEY=VAL` - HTTP headers for http/sse servers
+- `--header-env HEADER=ENV_VAR` - Resolve a remote HTTP/SSE header from an
+  environment variable at connection time. The registry stores only the
+  variable name. An `Authorization` reference is sent as a Bearer token.
 - `--description <text>` - Human-readable description
 
 **Example:**
@@ -1450,6 +1510,10 @@ aiwg mcp add <name> --type stdio --command <cmd> [--args <a,b>] [--env KEY=VAL]
 ```bash
 # HTTP server
 aiwg mcp add my-api --url http://localhost:3001 --description "Local API server"
+
+# Authenticated Enterprise server; no token is stored in the registry
+aiwg mcp add fortemi-enterprise --url https://memory.example.internal/mcp \
+  --header-env Authorization=AIWG_FORTEMI_TOKEN
 
 # stdio server
 aiwg mcp add git-server --type stdio --command npx --args @gitea/mcp-server
@@ -1787,7 +1851,7 @@ System Utilities:
   ✗ gh (GitHub CLI not installed)
 
 Scheduler:
-  Backend:  native-cron (CronCreate) / aiwg-cli fallback
+  Backend:  native-cron (CronCreate); external trigger outside agent sessions
   Chrony:   ✓ installed (precise NTP)
 
 Environment: Linux 6.14.0-37-generic
@@ -1797,67 +1861,37 @@ Environment: Linux 6.14.0-37-generic
 
 ## Schedule Skill
 
-Cross-provider scheduler that detects native cron capability (Claude Code `CronCreate`) and falls back to the AIWG daemon CLI on all other providers. Checks `chrony` installation for precise timing.
+The Schedule skill routes to provider-native tools when they exist. In a
+Claude Code agent session it may use `CronCreate`, `CronList`, and
+`CronDelete`.
 
-### schedule create
+The production CLI does not expose `aiwg schedule`, `aiwg daemon`, or a daemon
+scheduler fallback. On Codex, recurring execution is **external**: system cron,
+a systemd timer, or CI owns time and launches a reviewed non-interactive
+provider command. This is not AIWG emulation.
 
-```bash
-/schedule create --name <name> --cron "<expr>" --task "<prompt>"
-```
+Use `aiwg steward capabilities --provider codex --feature cron` to inspect the
+current classification and `aiwg help` to verify registered top-level commands.
 
-**Options:**
+---
 
-- `--name` — Unique task name (required)
-- `--cron` — 5-field cron expression (required)
-- `--task` — Prompt or command to run (required)
-- `--provider native|aiwg-cli` — Override backend detection
+## External Job Command
 
-**Examples:**
-
-```bash
-/schedule create --name daily-refresh --cron "0 9 * * *" --task "aiwg refresh"
-/schedule create --name health-check --cron "0 */6 * * *" --task "aiwg doctor"
-```
-
-### schedule list
+The `job` command implements reviewed, single-shot work launched by an external
+scheduler. It does not run a clock or resident daemon.
 
 ```bash
-/schedule list
+aiwg job validate jobs/publish.yaml
+aiwg job render-cron jobs/publish.yaml --format cron
+aiwg job render-cron jobs/publish.yaml --format systemd
+aiwg job render-cron jobs/publish.yaml --format gitea-actions
+aiwg job run jobs/publish.yaml --once --json
 ```
 
-Lists all scheduled tasks, showing name, cron expression, next run time, and backend in use.
-
-### schedule delete
-
-```bash
-/schedule delete --name <name>
-```
-
-Deletes a scheduled task by name.
-
-### Backend Detection
-
-| Provider    | Backend                                        |
-| ----------- | ---------------------------------------------- |
-| Claude Code | `native-cron` (CronCreate/CronList/CronDelete) |
-| All others  | `aiwg-cli` (AIWG daemon)                       |
-
-The active backend is reported in `aiwg runtime-info`. Override with `--provider` flag.
-
-### Chrony Recommendation
-
-When scheduling tasks, the skill checks whether `chrony` is installed and recommends it if missing. Chrony provides accurate NTP time synchronization, preventing clock drift that causes tasks to run at unexpected times — especially on servers that sleep or in virtual environments.
-
-```bash
-# Ubuntu/Debian
-sudo apt install chrony
-
-# RHEL/Fedora
-sudo dnf install chrony
-
-# macOS
-brew install chrony
-```
+The v1 contract covers a Codex stdin executor, Gitea work-item claims,
+approval policy, allowed origins/accounts/attachment roots, stable idempotency,
+private run evidence, and completion verification. See
+[External-trigger jobs](../guides/external-trigger-jobs.md).
 
 ---
 
@@ -2137,12 +2171,20 @@ Install any of them with `/plugin install <name>@aiwg` after running `/plugin ma
 Install Claude Code plugin.
 
 ```bash
-aiwg install-plugin <name>
+aiwg install-plugin <name> [--source <local-path>] [--dry-run]
 ```
 
 **Arguments:**
 
 - `<name>` - Plugin name from marketplace
+- `--source <local-path>` - Compatibility input for legacy framework/add-on/extension manifests. Standalone plugin wrappers return an actionable migration to `aiwg install <path>` followed by `aiwg use <plugin-id>`.
+
+Git URLs and standalone local wrappers use the package workflow directly:
+
+```bash
+aiwg install <path-or-git-url> --dry-run
+aiwg use <plugin-id>
+```
 
 **Capabilities:** cli, plugin, install
 **Platform:** Claude Code only
@@ -4439,6 +4481,7 @@ aiwg storage <subcommand>
 | `list-backends`       | Inventory of compiled-in adapters with READY/STUB status               |
 | `test <subsystem>`    | Round-trip write/read/list/delete probe through the configured backend |
 | `migrate <subsystem>` | Copy entries from one backend to another (#955)                        |
+| `import-corpus`       | Ingest local research text through an implemented storage backend (#1508) |
 
 **Examples:**
 
@@ -4451,6 +4494,15 @@ aiwg storage list-backends
 
 # Verify connectivity for the activity_log subsystem
 aiwg storage test activity_log
+
+# Preview local-workstation research ingest without connecting
+aiwg storage import-corpus --dry-run
+
+# Route through another implemented storage backend
+aiwg storage import-corpus --to obsidian:~/vault
+
+# Ingest through an authenticated Enterprise MCP registry entry
+aiwg storage import-corpus --server fortemi-enterprise
 
 # Migrate AIWG memory from local fs to an Obsidian vault
 aiwg storage migrate memory \

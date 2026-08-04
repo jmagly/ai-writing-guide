@@ -142,6 +142,42 @@ export async function hashBundleArtifacts(
   return out;
 }
 
+/**
+ * Hash the provider-transformed files produced by a successful deployment.
+ * The source hash map supplies the canonical inventory/key shape; values are
+ * read from the first canonical provider path that exists.
+ */
+export async function hashDeployedBundleArtifacts(
+  projectDir: string,
+  provider: string,
+  sourceHashes: Record<string, string>,
+): Promise<Record<string, string>> {
+  const deployed: Record<string, string> = {};
+  for (const [sourceRel, sourceHash] of Object.entries(sourceHashes)) {
+    // Keep the complete inventory if a provider path unexpectedly cannot be
+    // resolved. Removal then fails safely instead of clearing the registry
+    // while leaving an untracked provider artifact behind.
+    deployed[sourceRel] = sourceHash;
+    for (const candidate of candidateDeployedPaths(projectDir, provider, sourceRel)) {
+      try {
+        deployed[sourceRel] = await sha256Hex(candidate);
+        break;
+      } catch {
+        // Try translated/provider-alternate paths before leaving it absent.
+      }
+    }
+  }
+  return deployed;
+}
+
+/** Resolve current provider hashes while preserving old registry entries. */
+export function artifactHashesForProvider(
+  entry: InstalledEntry,
+  provider: string,
+): Record<string, string> {
+  return entry.deployedArtifactHashes?.[provider] ?? entry.artifactHashes ?? {};
+}
+
 /** Resolve a recorded source-relative artifact through the canonical provider
  * definition rather than assuming every artifact lives directly under the
  * provider prefix (#1869). Returned paths are absolute for both project- and
@@ -163,6 +199,12 @@ export function candidateDeployedPaths(
   const tail = sourceRel.slice(separator + 1);
   const absoluteRoot = isAbsolute(root) ? root : resolve(projectDir, root);
   const candidates = [join(absoluteRoot, tail)];
+
+  // Codex discovers project skills from the shared native `.agents/skills`
+  // root while retaining `.codex` as its compatibility deployment surface.
+  if (provider === 'codex' && artifactType === 'skills') {
+    candidates.unshift(join(resolve(projectDir, '.agents', 'skills'), tail));
+  }
 
   // Provider adapters may translate source extensions.
   if (provider === 'cursor' && artifactType === 'rules' && tail.endsWith('.md')) {
@@ -238,11 +280,10 @@ function resolveOwnership(
   for (const [name, entry] of Object.entries(config.installed)) {
     if (name === selfBundleId) continue;
     if (entry.source !== 'project-local') continue;
-    if (!entry.artifactHashes) continue;
-    if (sourceRel in entry.artifactHashes) {
+    const hashes = artifactHashesForProvider(entry, provider);
+    if (sourceRel in hashes) {
       // Same source-rel path claimed by another project-local bundle —
       // the deployed file (if present) is theirs, not ours.
-      void provider;
       return name;
     }
   }
@@ -279,7 +320,6 @@ export async function removeProjectLocalBundle(
   const confirmMutation = opts.confirmMutation ?? (async () => false);
 
   const installedEntry = entry as InstalledEntry;
-  const artifactHashes = installedEntry.artifactHashes ?? {};
   const providers = Object.keys(installedEntry.deployedTo).filter(
     p => !onlyProvider || p === onlyProvider,
   );
@@ -289,6 +329,7 @@ export async function removeProjectLocalBundle(
   const partialProviders: string[] = [];
 
   for (const provider of providers) {
+    const artifactHashes = artifactHashesForProvider(installedEntry, provider);
     let providerHadSkip = false;
 
     for (const sourceRel of Object.keys(artifactHashes)) {
@@ -398,6 +439,12 @@ export async function removeProjectLocalBundle(
     // Mutate registry for fully-reverted providers
     if (!dryRun && !keepRegistry && !providerHadSkip) {
       delete installedEntry.deployedTo[provider];
+      if (installedEntry.deployedArtifactHashes) {
+        delete installedEntry.deployedArtifactHashes[provider];
+        if (Object.keys(installedEntry.deployedArtifactHashes).length === 0) {
+          delete installedEntry.deployedArtifactHashes;
+        }
+      }
     }
   }
 

@@ -65,6 +65,7 @@
     "quickstart-sdlc",
     "quickstart-mmk",
     "guides",
+    "guides/external-trigger-jobs",
     "models",
     "models/claude-optimization",
     "models/gpt-optimization",
@@ -445,7 +446,10 @@
     "addons/line-memory",
     "addons/line-memory/overview",
     "blog/2026-07-aiwg-discovery-first",
-    "frameworks/media-marketing-kit/design-operations-examples"
+    "frameworks/media-marketing-kit/design-operations-examples",
+    "addons/compound-memory",
+    "addons/compound-memory/operator-guide",
+    "addons/compound-memory/overview"
   ],
   "sections": [
     {
@@ -3342,6 +3346,27 @@
       "summary": "These examples use the same lifecycle—constraints, history, research, five comparable candidates, hu",
       "file": "frameworks/media-marketing-kit/design-operations-examples.md",
       "parent": "frameworks/media-marketing-kit"
+    },
+    {
+      "id": "addons/compound-memory",
+      "title": "Compound Memory",
+      "summary": "",
+      "collapsed": true,
+      "parent": "addons"
+    },
+    {
+      "id": "addons/compound-memory/operator-guide",
+      "title": "Operator Guide",
+      "summary": "aiwg use compound-memory --provider <provider>",
+      "file": "addons/compound-memory/operator-guide.md",
+      "parent": "addons/compound-memory"
+    },
+    {
+      "id": "addons/compound-memory/overview",
+      "title": "Overview",
+      "summary": "Compound Memory composes AIWG's existing memory capabilities into a governed",
+      "file": "addons/compound-memory/overview.md",
+      "parent": "addons/compound-memory"
     }
   ],
   "pages": [

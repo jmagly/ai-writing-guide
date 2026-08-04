@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import type { Role } from './types';
-import { TOKEN } from './api';
 
 // The pty session connections, lifted to App so the Sessions tab renders them and the
 // Actions tab can inject into the active one. Both planes terminate at the Bridge:
@@ -40,12 +39,7 @@ const textEnc = new TextEncoder();
 const textDec = new TextDecoder();
 
 function websocketProtocols(url: string): string[] | undefined {
-  if (!TOKEN || !/\/api\/pty\/agents\//.test(url)) return undefined;
-  const bytes = textEnc.encode(TOKEN);
-  let raw = '';
-  for (let index = 0; index < bytes.length; index += 1) raw += String.fromCharCode(bytes[index]);
-  const encoded = btoa(raw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-  return ['pty-ws.v1', `cockpit.${encoded}`];
+  return /\/api\/pty\/agents\//.test(url) ? ['pty-ws.v1'] : undefined;
 }
 
 // base64 → raw bytes. xterm does its own UTF-8 decoding and escape-sequence parsing, so

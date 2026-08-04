@@ -8,7 +8,7 @@ contributed actions as command-palette entries. No build step (CommonJS
 
 | Command | Effect |
 |---|---|
-| **AIWG Cockpit: Open** | Opens the Cockpit UI in a webview (reads the Bridge runtime handshake, resolves the token, loads `http://127.0.0.1:PORT/?token=…`). |
+| **AIWG Cockpit: Open** | Opens the Cockpit UI in a webview after exchanging the native runtime credential for a one-time fragment bootstrap. |
 | **AIWG Cockpit: Audit Issues** | Opens Cockpit on the contributed Actions view; the action injects into an agentic session instead of running from the extension. |
 
 ## Run it
@@ -19,6 +19,9 @@ contributed actions as command-palette entries. No build step (CommonJS
 
 If the Bridge isn't running, the commands show a hint to start it — the shell
 never replaces the CLI; it fronts it.
+
+The wrapper CSP permits only the exact resolved Bridge origin and port. It
+does not allow arbitrary `localhost:*` or `127.0.0.1:*` frames.
 
 ## Settings
 

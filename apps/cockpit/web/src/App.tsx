@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useSession } from './useSession';
-import { api, TOKEN } from './api';
+import { api, sessionReady } from './api';
 import type { Approval, Instance, ResponseNeeded } from './types';
 import { runtimeFamily } from './util';
 import { Welcome } from './components/Welcome';
@@ -126,23 +126,35 @@ export function App() {
   }, [session.responseNeeded.needed, refreshTick, registryResponses.length]);
 
   useEffect(() => {
-    if (typeof EventSource === 'undefined' || !TOKEN) return;
-    const events = new EventSource(`/api/events?token=${encodeURIComponent(TOKEN)}`);
+    if (typeof EventSource === 'undefined') return;
+    let events: EventSource | undefined;
+    let cancelled = false;
     const refresh = () => {
       eventsDownRef.current = false;
       setRefreshTick((t) => t + 1);
     };
-    events.onopen = refresh;
-    events.addEventListener('cockpit.refresh', refresh);
-    events.onerror = () => {
+    sessionReady().then(() => {
+      if (cancelled) return;
+      // Native EventSource carries the same-origin HttpOnly session cookie.
+      events = new EventSource('/api/events');
+      events.onopen = refresh;
+      events.addEventListener('cockpit.refresh', refresh);
+      events.onerror = () => {
+        eventsDownRef.current = true;
+        reconnectPendingRef.current = true;
+        setConnectionState('reconnecting');
+        // EventSource reconnects itself. Pulse the REST path now as well so a
+        // Bridge/executor drop does not wait for the normal poll interval.
+        setRefreshTick((t) => t + 1);
+      };
+    }).catch(() => {
       eventsDownRef.current = true;
-      reconnectPendingRef.current = true;
       setConnectionState('reconnecting');
-      // EventSource reconnects itself. Pulse the REST path now as well so a
-      // Bridge/executor drop does not wait for the normal poll interval.
-      setRefreshTick((t) => t + 1);
+    });
+    return () => {
+      cancelled = true;
+      events?.close();
     };
-    return () => events.close();
   }, []);
 
   useEffect(() => {
@@ -242,7 +254,7 @@ export function App() {
           <Sessions session={session} composer={composer} setComposer={setComposer} onRequestStart={requestStart} refreshTick={refreshTick} />
         </section>
         <Panel id="approvals" tab={tab}><Approvals refreshTick={refreshTick} responses={[...registryResponses, ...(session.responseNeeded.needed ? [sessionResponse(session)] : [])]} goSessions={() => setTab('sessions')} /></Panel>
-        <Panel id="explore" tab={tab}><Explore /></Panel>
+        <Panel id="explore" tab={tab}><Explore refreshTick={refreshTick} /></Panel>
         <Panel id="library" tab={tab}>
           <Library session={session} setComposer={setComposer} goSessions={() => setTab('sessions')} />
         </Panel>

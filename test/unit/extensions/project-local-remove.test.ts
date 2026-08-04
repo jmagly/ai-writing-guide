@@ -15,6 +15,7 @@ import { tmpdir } from 'os';
 import { createHash } from 'crypto';
 import {
   candidateDeployedPaths,
+  hashDeployedBundleArtifacts,
   hashBundleArtifacts,
   removeProjectLocalBundle,
 } from '../../../src/extensions/project-local-remove.js';
@@ -96,6 +97,21 @@ describe('hashBundleArtifacts', () => {
     expect(Object.keys(hashes)).not.toContain('rules/README.md');
     expect(Object.keys(hashes)).not.toContain('rules/INDEX.md');
   });
+
+  it('records provider-transformed deployed bytes rather than source bytes (#1998)', async () => {
+    const dir = writeBundle(projectDir, 'foo');
+    const sourceHashes = await hashBundleArtifacts(dir);
+    deployArtifacts(projectDir);
+    writeFileSync(
+      join(projectDir, '.claude', '.aiwg', 'skills', 'demo-skill', 'SKILL.md'),
+      'provider-transformed skill body',
+    );
+
+    const deployed = await hashDeployedBundleArtifacts(projectDir, 'claude', sourceHashes);
+    expect(deployed['rules/r1.md']).toBe(sourceHashes['rules/r1.md']);
+    expect(deployed['skills/demo-skill/SKILL.md']).toBe(sha256('provider-transformed skill body'));
+    expect(deployed['skills/demo-skill/SKILL.md']).not.toBe(sourceHashes['skills/demo-skill/SKILL.md']);
+  });
 });
 
 describe('candidateDeployedPaths (#1869)', () => {
@@ -109,6 +125,10 @@ describe('candidateDeployedPaths (#1869)', () => {
     expect(candidateDeployedPaths('/project', 'codex', 'agents/reviewer.md')).toEqual([
       '/project/.codex/agents/reviewer.md',
       '/project/.codex/agents/reviewer.toml',
+    ]);
+    expect(candidateDeployedPaths('/project', 'codex', 'skills/demo/SKILL.md')).toEqual([
+      '/project/.agents/skills/demo/SKILL.md',
+      '/project/.codex/.aiwg/skills/demo/SKILL.md',
     ]);
     expect(candidateDeployedPaths('/project', 'cursor', 'rules/policy.md')).toEqual([
       '/project/.cursor/rules/policy.md',
@@ -179,6 +199,43 @@ describe('removeProjectLocalBundle (#1037 / #1048)', () => {
     expect(existsSync(join(dir, 'rules', 'r1.md'))).toBe(true);
     expect(existsSync(join(dir, 'manifest.json'))).toBe(false); // we never wrote manifest in this fixture
     expect(existsSync(join(dir, 'skills', 'demo-skill', 'SKILL.md'))).toBe(true);
+  });
+
+  it('Case 1 (#1998): provider-specific deployed hashes classify transformed skills as pristine', async () => {
+    const dir = writeBundle(projectDir, 'foo');
+    deployArtifacts(projectDir);
+    const deployedSkill = join(projectDir, '.claude', '.aiwg', 'skills', 'demo-skill', 'SKILL.md');
+    writeFileSync(deployedSkill, 'provider-transformed skill body');
+    const sourceHashes = await hashBundleArtifacts(dir);
+    const deployedHashes = await hashDeployedBundleArtifacts(projectDir, 'claude', sourceHashes);
+    const config = makeConfig('foo', sourceHashes);
+    config.installed.foo.deployedArtifactHashes = { claude: deployedHashes };
+
+    const result = await removeProjectLocalBundle(config, projectDir, 'foo');
+
+    expect(result.partialProviders).toEqual([]);
+    expect(result.outcomes.every(outcome => outcome.case === 'pristine')).toBe(true);
+    expect(existsSync(deployedSkill)).toBe(false);
+    expect(config.installed.foo).toBeUndefined();
+  });
+
+  it('Case 2 (#1998): edits after provider-hash capture remain protected', async () => {
+    const dir = writeBundle(projectDir, 'foo');
+    deployArtifacts(projectDir);
+    const deployedSkill = join(projectDir, '.claude', '.aiwg', 'skills', 'demo-skill', 'SKILL.md');
+    writeFileSync(deployedSkill, 'provider-transformed skill body');
+    const sourceHashes = await hashBundleArtifacts(dir);
+    const deployedHashes = await hashDeployedBundleArtifacts(projectDir, 'claude', sourceHashes);
+    const config = makeConfig('foo', sourceHashes);
+    config.installed.foo.deployedArtifactHashes = { claude: deployedHashes };
+    writeFileSync(deployedSkill, 'operator edit after deployment');
+
+    const result = await removeProjectLocalBundle(config, projectDir, 'foo');
+
+    expect(result.partialProviders).toEqual(['claude']);
+    expect(result.outcomes.find(outcome => outcome.artifactPath.includes('demo-skill'))?.case).toBe('mutated');
+    expect(existsSync(deployedSkill)).toBe(true);
+    expect(config.installed.foo).toBeDefined();
   });
 
   it('Case 2 (mutated): default refuses, leaves file, marks partial', async () => {
@@ -319,6 +376,22 @@ describe('removeProjectLocalBundle (#1037 / #1048)', () => {
     expect(config.installed['foo']).toBeDefined();
     // Provider entries also preserved (we only delete deployedTo when not keepRegistry)
     expect(config.installed['foo'].deployedTo['claude']).toBeDefined();
+  });
+
+  it('provider-scoped full removal clears only that provider hash registry (#1998)', async () => {
+    const dir = writeBundle(projectDir, 'foo');
+    deployArtifacts(projectDir);
+    const hashes = await hashBundleArtifacts(dir);
+    const config = makeConfig('foo', hashes);
+    config.installed.foo.deployedTo.codex = { agents: 0, commands: 0, skills: 1, rules: 1 };
+    config.installed.foo.deployedArtifactHashes = { claude: hashes, codex: hashes };
+
+    await removeProjectLocalBundle(config, projectDir, 'foo', { provider: 'claude' });
+
+    expect(config.installed.foo.deployedTo.claude).toBeUndefined();
+    expect(config.installed.foo.deployedTo.codex).toBeDefined();
+    expect(config.installed.foo.deployedArtifactHashes?.claude).toBeUndefined();
+    expect(config.installed.foo.deployedArtifactHashes?.codex).toEqual(hashes);
   });
 
   // Sanity: source preservation invariant — verify no test scenario above

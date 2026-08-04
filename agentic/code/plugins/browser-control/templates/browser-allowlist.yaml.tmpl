@@ -1,0 +1,50 @@
+# Browser control allow-list
+#
+# Place at .aiwg/browser-allowlist.yaml in your workspace to constrain which
+# origins the browser-driver agent may navigate to without per-call authorization.
+#
+# Modes:
+#   allow-list  -- only origins in `allow` may be navigated without per-call auth
+#   block-list  -- origins in `deny` are refused; all others permitted
+#   strict      -- every navigation requires per-call authorization (no allow needed)
+#
+# If this file is missing, the agent defaults to strict mode.
+
+version: 1
+mode: allow-list
+
+# Origins (hostname or *.domain wildcard) that may be navigated without per-call
+# authorization. The agent still logs every navigation to .aiwg/activity.log.
+allow:
+  - example.com
+  - github.com
+  - news.ycombinator.com
+  # - your-internal-admin.corp.local
+  # - "*.your-company.com"
+
+# Origins explicitly refused. Evaluated BEFORE allow when both are present.
+deny:
+  # - chase.com
+  # - bankofamerica.com
+
+# Patterns that ALWAYS require per-call human-authorization, regardless of
+# allow/deny state. Form submissions and clicks on these origins are gated even
+# if read-only navigation has been authorized.
+#
+# These are layered on top of the addon's built-in sensitive-domain list
+# (bank, identity providers, payment, github settings, etc.) — your entries
+# extend, they don't replace.
+sensitive_patterns:
+  # - "*.bank*"
+  # - "accounts.google.com"
+  # - "github.com/settings/*"
+  # - "mail.google.com"
+  # - "admin.your-company.com"
+
+# Behavior when an off-allow-list URL is requested.
+#   prompt   -- ask the user via human-authorization gate (default)
+#   refuse   -- refuse without prompting
+on_off_allowlist: prompt
+
+# Behavior for sensitive-pattern hits. `prompt` is the only safe value.
+on_sensitive: prompt

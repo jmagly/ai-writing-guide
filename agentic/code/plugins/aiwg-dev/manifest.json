@@ -1,0 +1,64 @@
+{
+  "id": "aiwg-dev",
+  "type": "addon",
+  "name": "AIWG Developer Tools",
+  "version": "2026.4.0",
+  "description": "Developer tooling for building AIWG itself and AIWG addons/frameworks. Not for end users \u2014 install explicitly with `aiwg use aiwg-dev`.",
+  "core": false,
+  "autoInstall": false,
+  "devOnly": true,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "aiwg",
+    "development",
+    "validation",
+    "contributor",
+    "devtools",
+    "scaffolding"
+  ],
+  "entry": {
+    "rules": "rules/",
+    "skills": "skills/"
+  },
+  "consolidation": {
+    "strategy": "index-with-links",
+    "rulesIndex": "rules/RULES-INDEX.md",
+    "deployIndexOnly": true
+  },
+  "dependencies": ["aiwg-utils"],
+  "rules": [
+    "skill-placement",
+    "no-circular-skill-calls",
+    "component-completeness",
+    "addon-boundaries",
+    "aiwg-dir-reference-contract"
+  ],
+  "commands": [
+    "dev-mode-init",
+    "devkit-create-addon",
+    "devkit-create-extension",
+    "devkit-create-framework",
+    "devkit-create-agent",
+    "devkit-create-command",
+    "devkit-create-skill",
+    "devkit-validate",
+    "devkit-test"
+  ],
+  "skills": [
+    "dev-mode-init",
+    "validate-component",
+    "validate-addon",
+    "dev-doctor",
+    "devkit-create-addon",
+    "devkit-create-extension",
+    "devkit-create-framework",
+    "devkit-create-agent",
+    "devkit-create-command",
+    "devkit-create-skill",
+    "devkit-validate",
+    "devkit-test",
+    "link-check"
+  ]
+}

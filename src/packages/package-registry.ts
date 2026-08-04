@@ -168,6 +168,8 @@ export async function listPackages(configDir?: string): Promise<PackageInfo[]> {
       source: entry.source,
       installedAt: entry.installedAt,
       deployCount: entry.deployedTo?.length ?? 0,
+      ...(entry.provenance?.lockId ? { lockId: entry.provenance.lockId } : {}),
+      ...(entry.provenance?.verificationStatus ? { verificationStatus: entry.provenance.verificationStatus } : {}),
     };
   });
 }

@@ -9,7 +9,7 @@
   "app": {
     "withGlobalTauri": false,
     "security": {
-      "csp": "default-src 'none'; frame-src http://127.0.0.1:* http://localhost:*; style-src 'unsafe-inline'"
+      "csp": "default-src 'none'; frame-src 'self'; style-src 'unsafe-inline'"
     }
   },
   "bundle": {

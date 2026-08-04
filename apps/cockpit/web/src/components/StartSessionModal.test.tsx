@@ -31,7 +31,7 @@ function stubSession(attached = false): SessionApi {
   } as unknown as SessionApi;
 }
 
-beforeEach(() => { (window as unknown as { __COCKPIT_TOKEN__: string }).__COCKPIT_TOKEN__ = 't'; });
+beforeEach(() => {});
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
 describe('StartSessionModal (#1640/#1641)', () => {

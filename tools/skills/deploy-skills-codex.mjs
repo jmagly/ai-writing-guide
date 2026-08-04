@@ -437,9 +437,9 @@ function isFullAiwgSourceRoot(srcRoot) {
 
   // Honor #1217 kernel-pivot default: deploy only kernel skills unless
   // the operator opts in via `--copy-all` (or `--copy-standard-skills`).
-  // Codex deploys to ~/.codex/skills/ (home dir) so the kernel/standard
-  // split is enforced at filter time rather than via separate
-  // destination directories.
+  // Codex normally deploys to the project `.agents/skills/` target, so the
+  // kernel/standard split is enforced at filter time rather than via separate
+  // destination directories. The standalone legacy default remains supported.
   const copyStandardSkills = cfg.copyStandardSkills === true;
 
   // Track every AIWG-managed source skill name so we can scope post-deploy
@@ -453,11 +453,10 @@ function isFullAiwgSourceRoot(srcRoot) {
   const allManagedNames = new Set();
   const desiredNames = new Set();
 
-  // Pre-pass: walk every framework/addon skill directory in the source
-  // tree (not just those matching the requested mode) so cleanup can
-  // remove stale skills from previously-deployed-but-no-longer-deployed
-  // frameworks. Bounded to AIWG source roots so user-authored skills in
-  // ~/.codex/skills/ are never affected.
+  // Pre-pass: walk every framework/addon skill directory in the source tree
+  // so full-root cleanup can remove stale AIWG skills. Component-scoped
+  // cleanup is limited below to names owned by that component, preserving
+  // user-authored skills alongside the generated set.
   for (const { dir } of getSkillDirectories(srcRoot, 'all')) {
     const allSkills = findSkillDirs(dir);
     for (const s of allSkills) {

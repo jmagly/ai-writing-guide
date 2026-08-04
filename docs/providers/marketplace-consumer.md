@@ -2,9 +2,12 @@
 
 AIWG can ingest plugins from any supported marketplace and deploy them across all configured providers. This document describes the design and implementation of the consumer side of the marketplace system.
 
-**Related issue**: #787 (consumer side of #783)
+**Related issues**: #787 (consumer side of #783), #2009 (Git-native exchange)
 
-**Status**: Design specification + scaffold implementation
+**Status**: The legacy source-adapter design below remains useful background.
+The implemented Git-native provenance, catalog, trust, offline exchange, and
+scope contract is documented in
+[`git-native-marketplace.md`](git-native-marketplace.md).
 
 ---
 

@@ -8,4 +8,5 @@
 export { run } from '../cli/router.js';
 export * from '../resources/index.js';
 export * from '../sessions/index.js';
+export * from '../memory/index.js';
 export * from '../security/threat-assessment-config.js';

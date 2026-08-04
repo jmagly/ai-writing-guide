@@ -6,7 +6,7 @@
 
 **Multi-agent AI framework for Claude Code, Copilot, Cursor, Warp, and 6 more platforms**
 
-200+ agents, 109+ CLI commands, 400+ deployable agent/skill/command/rule artifacts, 8 core frameworks, 27 addons, and a training marketplace package. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
+200+ agents, 109+ CLI commands, 400+ deployable agent/skill/command/rule artifacts, 8 core frameworks, 32 addons, and a 40-plugin Claude Code marketplace. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
 
 The simplest setup is to paste this into a supported AI provider:
 
@@ -31,26 +31,12 @@ npm i -g aiwg
 cd /path/to/your/project
 aiwg use all --provider <provider>
 aiwg index build --all
+aiwg regenerate --provider <provider>
+aiwg status --probe --json
 ```
 
 Replace `<provider>` with your AI tool's name, such as `claude`, `codex`,
 `copilot`, or `cursor`.
-
-Every project needs one first-session connection step after deployment. Open or
-reopen your AI provider in the project root, then invoke the deployed
-`aiwg-regenerate` skill inside the agentic session:
-
-```text
-/aiwg-regenerate   # Slash-command platforms
-$aiwg-regenerate   # OpenAI Codex
-```
-
-If your provider uses neither prefix, ask it: `Run aiwg-regenerate for this
-project, preserve project-authored instructions, and verify that AIWG is
-active.` This step integrates the deployed AIWG context into the project the
-agent is actually working in; do not skip it on first setup. Then ask the agent
-to report the engaged state, project root, provider files, and installed
-frameworks.
 
 For the complete beginner path and provider-name table, see
 [Install, Connect, and Verify](docs/getting-started/install-connect-verify.md).
@@ -541,7 +527,8 @@ The orchestration pattern: **Primary Author → Parallel Reviewers → Synthesiz
 - **334 artifact templates** — progressive disclosure templates for requirements, architecture, testing, security, deployment, and more
 - **8 platform support** — deploy to Claude Code, Copilot, Cursor, Warp, Factory AI, OpenCode, Codex, and Windsurf
 - **8 core frameworks + training marketplace package** — SDLC, Digital Forensics, Marketing Operations, Research Management, Media Curation, Ops Infrastructure, Knowledge Base, Security Engineering, plus [`aiwg-training`](https://github.com/jmagly/aiwg-training) for fine-tuning dataset curation (corpus-to-dataset pipeline with DPO/KTO/ORPO/SimPO export)
-- **27 addons** — semantic-memory kernel, llm-wiki (Obsidian-native knowledge base), RLM recursive decomposition, voice profiles, testing quality, mutation testing, UAT automation, and more
+- **32 addons** — compound memory, line memory, llm-wiki (Obsidian-native knowledge base), RLM recursive decomposition, fleet operations, browser control, testing quality, and more
+- **40 Claude Code plugins** — the complete framework and addon catalog is installable independently from the AIWG marketplace
 - **Agent Loop** — iterative task execution with automatic error recovery and crash resilience (6-8 hour sessions)
 - **RLM addon** — recursive context decomposition for processing 10M+ tokens via sub-agent delegation
 - **YAML metalanguage** — declarative schema-validated workflow definitions (JSON Schema 2020-12)
@@ -620,10 +607,15 @@ The bundle is **byte-identical** in shape to its upstream form, so
 
 ### Claude Code Marketplace (Alternative)
 
-Claude Code plugin installation is an alternative distribution path, not part
-of the primary quickstart. See the
-[Plugin Marketplace Guide](docs/plugin-marketplace-guide.md) for marketplace
-setup and individual plugin IDs.
+```bash
+/plugin marketplace add jmagly/ai-writing-guide
+/plugin install sdlc@aiwg
+/plugin install agent-loop@aiwg
+/plugin install compound-memory@aiwg
+```
+
+The marketplace contains all 40 packaged frameworks and addons, so you can
+install only the capabilities a Claude Code workspace needs.
 
 ### Multi-Platform Deployment
 
@@ -672,7 +664,7 @@ If you ship a product that bundles AIWG and want to be listed here, open an issu
 | **[Ops Complete](agentic/code/frameworks/ops-complete/)** | 12 | 3 | Operational infrastructure — incident management, runbooks, troubleshooting workflows |
 | **[Security Engineering](agentic/code/frameworks/security-engineering/)** | 2 | 5 | Applied security beyond STRIDE/OWASP — cryptographic primitive selection, chain-of-trust integrity, authentication-factor architecture, degraded-mode design, runtime secret hygiene, supply-chain trust, physical-access threats. Pattern-based, product-agnostic |
 
-### Addons (27)
+### Addons (31)
 
 | Addon | What It Does |
 |-------|--------------|
@@ -686,6 +678,8 @@ If you ship a product that bundles AIWG and want to be listed here, open an issu
 | **[Agentic Installer](agentic/code/addons/agentic-installer/)** | `setup.aiwg.io/v1` SetupManifest installer — cross-platform install workflows with recovery |
 | **[AIWG Dev](agentic/code/addons/aiwg-dev/)** | AIWG development tooling — extension scaffolding, local-source dev mode |
 | **[Daemon](agentic/code/addons/daemon/)** | Persistent daemon mode — background sessions, task queue, health monitoring |
+| **[Compound Memory](agentic/code/addons/compound-memory/)** | Persistent context architecture combining immutable raw inputs, linked wiki knowledge, line-memory facts, generated outputs, and governed maintenance workflows |
+| **[Line Memory](agentic/code/addons/line-memory/)** | Durable append-only facts with retrieval, reinforcement, decay, pruning, and concurrent process safety |
 | **[LLM Wiki](agentic/code/addons/llm-wiki/)** | Obsidian-native knowledge base for LLM agents — semantic linking, vault integration |
 | **[NLP Prod](agentic/code/addons/nlp-prod/)** | Production NLP pipelines — entity extraction, classification, summarization |
 | **[Prose Integration](agentic/code/addons/prose-integration/)** | OpenProse contract grammar integration — declarative service contracts |
@@ -701,6 +695,9 @@ If you ship a product that bundles AIWG and want to be listed here, open an issu
 | **[AIWG Hooks](agentic/code/addons/aiwg-hooks/)** | Lifecycle event handlers — pre-session, post-write, workflow tracing |
 | **[AIWG Utils](agentic/code/addons/aiwg-utils/)** | Core meta-utilities (auto-installed with any framework) |
 | **[Droid Bridge](agentic/code/addons/droid-bridge/)** | Factory Droid orchestration — multi-platform agent bridge |
+| **[AIWG Fleet](agentic/code/addons/aiwg-fleet/)** | Governed multi-project maintenance with repository discovery, policy-aware planning, approval gates, and auditable execution |
+| **[Browser Control](agentic/code/addons/browser-control/)** | Permission-aware browser automation for user-controlled sessions through Playwright MCP |
+| **[Twelve-Factor](agentic/code/addons/twelve-factor/)** | Evidence-based application architecture review against Twelve-Factor and modern 12+ Factor criteria |
 | **[Star Prompt](agentic/code/addons/star-prompt/)** | Repository star prompt for success celebration |
 
 ---

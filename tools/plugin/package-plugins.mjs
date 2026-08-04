@@ -37,6 +37,16 @@ const PLUGIN_CONFIGS = {
       commands: 'agentic/code/frameworks/sdlc-complete/commands',
       skills: 'agentic/code/frameworks/sdlc-complete/skills'
     },
+    extraCopy: [
+      { from: 'tools/security/threat-assessment.mjs', to: 'tools/security/threat-assessment.mjs' }
+    ],
+    rewrites: [
+      {
+        file: 'skills/address-issues-threat-assess/scripts/assess.mjs',
+        from: '../../../../../../../tools/security/threat-assessment.mjs',
+        to: '../../../tools/security/threat-assessment.mjs'
+      }
+    ],
     readme: `# AIWG SDLC Complete
 
 Complete Software Development Lifecycle framework with 180+ specialized agents.
@@ -610,9 +620,12 @@ const MANIFEST_PLUGIN_SOURCES = [
   ['agent-persistence', 'agentic/code/addons/agent-persistence'],
   ['agentic-installer', 'agentic/code/addons/agentic-installer'],
   ['aiwg-evals', 'agentic/code/addons/aiwg-evals'],
+  ['aiwg-dev', 'agentic/code/addons/aiwg-dev'],
   ['auto-memory', 'agentic/code/addons/auto-memory'],
+  ['browser-control', 'agentic/code/addons/browser-control'],
   ['color-palette', 'agentic/code/addons/color-palette'],
   ['context-curator', 'agentic/code/addons/context-curator'],
+  ['compound-memory', 'agentic/code/addons/compound-memory'],
   ['daemon', 'agentic/code/addons/daemon'],
   ['doc-intelligence', 'agentic/code/addons/doc-intelligence'],
   ['droid-bridge', 'agentic/code/addons/droid-bridge'],
@@ -632,6 +645,7 @@ const MANIFEST_PLUGIN_SOURCES = [
 ];
 
 for (const [id, sourceRoot] of MANIFEST_PLUGIN_SOURCES) {
+  if (!fs.existsSync(path.join(ROOT_DIR, sourceRoot, 'manifest.json'))) continue;
   const manifest = JSON.parse(
     fs.readFileSync(path.join(ROOT_DIR, sourceRoot, 'manifest.json'), 'utf8'),
   );
@@ -813,8 +827,28 @@ function packagePlugin(name, config, options) {
   for (const extra of config.extraCopy || []) {
     const destPath = path.join(pluginDir, extra.to);
     console.log(`  📁 Copying ${extra.to}...`);
-    const count = copyDir(extra.from, destPath, options.dryRun);
+    const sourcePath = path.join(ROOT_DIR, extra.from);
+    let count;
+    if (fs.statSync(sourcePath).isFile()) {
+      count = 1;
+      if (!options.dryRun) {
+        fs.mkdirSync(path.dirname(destPath), { recursive: true });
+        fs.copyFileSync(sourcePath, destPath);
+      }
+    } else {
+      count = copyDir(extra.from, destPath, options.dryRun);
+    }
     console.log(`     ${count} files`);
+  }
+
+  for (const rewrite of config.rewrites || []) {
+    if (options.dryRun) continue;
+    const target = path.join(pluginDir, rewrite.file);
+    const body = fs.readFileSync(target, 'utf8');
+    if (!body.includes(rewrite.from)) {
+      throw new Error(`${name}: rewrite source not found in ${rewrite.file}`);
+    }
+    fs.writeFileSync(target, body.replaceAll(rewrite.from, rewrite.to), 'utf8');
   }
 
   // Write README

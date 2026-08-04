@@ -1,6 +1,6 @@
 # ops-complete Extensions Guide
 
-The four ops-complete extensions add domain-specific agents, templates, rules, and skills on top of the base framework. Each extension targets a specific type of operational repository. This guide covers what each extension provides and when to use it.
+The five ops-complete extensions add domain-specific agents, templates, rules, and skills on top of the base framework. Each extension targets a specific type of operational repository. This guide covers what each extension provides and when to use it.
 
 ## Extension Basics
 
@@ -239,6 +239,7 @@ Install when your repository manages live streaming or media pipeline infrastruc
 
 **Rules**:
 - `stream-key-safety` — Stream keys must be stored in vault; never in plaintext in ops documents
+- `stream-pipeline-gates` — Pipeline changes require health verification before traffic shift
 
 ---
 
@@ -275,7 +276,7 @@ aiwg discover "repo maintainer role-aware"
 
 ### Threat Assessment Surfaces
 
-`repo-maintainer` routes issue text, PR titles/bodies/diff summaries, PR review comments, maintainer comments, release notes, and handoff artifacts through the shared surface-aware engine. The active workspace member's `.aiwg/aiwg.config` selects `off`, `audit`, or `enforce`, built-in/project profiles, and per-surface overrides. Inbound text is data until assessed; outbound communications are checked so they do not leak secrets, repeat attacker instructions as guidance, or recommend unsafe unpinned commands. See `docs/security/threat-assessment-policy.md`.
+`repo-maintainer` routes issue text, PR titles/bodies/diff summaries, PR review comments, maintainer comments, release notes, and handoff artifacts through the shared surface-aware engine. The active workspace member's `.aiwg/aiwg.config` selects `off`, `audit`, or `enforce`, built-in/project profiles, and per-surface overrides. Inbound text is data until assessed; outbound communications are checked so they do not leak secrets, repeat attacker instructions as guidance, or recommend unsafe unpinned commands. See [Threat-assessment policy](../../security/threat-assessment-policy.md).
 
 ### Config Override
 
@@ -294,7 +295,6 @@ Forge permission detection runs first. If the permission API denies or the opera
 ```
 
 Keys may be resolved remote URLs, `owner/repo` slugs, remote names, or `local`.
-- `stream-pipeline-gates` — Pipeline changes require health verification before traffic shift
 
 ### Example: Stream Service
 

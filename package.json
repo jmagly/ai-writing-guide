@@ -1,6 +1,6 @@
 {
   "name": "aiwg",
-  "version": "2026.8.3",
+  "version": "2026.8.4",
   "description": "Deployment tool and support utility for AI context. Copies agents, skills, commands, rules, and behaviors into the paths each AI platform reads (Claude Code, Codex, Copilot, Cursor, Warp, OpenClaw, and 6 more) so one source of truth works across 10 platforms. Optional utilities for persistent artifact memory, background orchestration, autonomous loops, and artifact indexing.",
   "type": "module",
   "bin": {
@@ -78,6 +78,7 @@
     "uat:daemon:claude": "vitest run --config config/vitest.uat-daemon.config.js --reporter=verbose daemon-live-claude",
     "uat:cockpit-live": "vitest run --config config/vitest.uat-cockpit-live.config.js",
     "uat:cockpit-live:matrix": "AIWG_COCKPIT_LIVE_REQUIRED=1 AIWG_COCKPIT_LIVE_MATRIX_REQUIRED=1 vitest run --config config/vitest.uat-cockpit-live.config.js",
+    "uat:fleet-sandbox-live": "vitest run --config config/vitest.uat-fleet-sandbox.config.js",
     "uat:cockpit-daily": "node apps/cockpit/scripts/cockpit-daily-gate.mjs",
     "e2e:cockpit-dev": "node test/e2e/cockpit-dev-e2e.mjs",
     "cockpit:up": "bash apps/cockpit/scripts/cockpit-up.sh",
@@ -97,7 +98,7 @@
     "provision:vault-approle": "node ci/provision-vault-approle.mjs",
     "configure:gitea-vault": "node ci/configure-gitea-vault-bootstrap.mjs",
     "validate:claude-context": "node tools/validation/claude-context-repro.mjs",
-    "test:conformance": "vitest run --config config/vitest.conformance.config.js test/conformance/executor-v1/",
+    "test:conformance": "vitest run --config config/vitest.conformance.config.js",
     "test:contract": "vitest run --config config/vitest.contract.config.js test/contract/",
     "test:integration:serve": "vitest run --config config/vitest.integration.config.js",
     "uat:serve-live": "vitest run --config config/vitest.uat-serve-live.config.js",
@@ -128,6 +129,7 @@
     "tools/manifest/check-discovery-coverage.mjs",
     "!tools/release/",
     "schemas/security/",
+    "schemas/marketplace/",
     "vscode-extension/schemas/aiwg.config.v1.json",
     "agentic/",
     "!agentic/**/*.test.ts",
@@ -309,23 +311,23 @@
   },
   "dependencies": {
     "@fortemi/core": "2026.7.15",
-    "@modelcontextprotocol/sdk": "^1.24.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "chalk": "^4.1.2",
-    "chokidar": "^3.6.0",
+    "chokidar": "^4.0.3",
     "commander": "^12.1.0",
-    "glob": "^13.0.1",
+    "glob": "^13.0.6",
     "graceful-fs": "^4.2.11",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.3.0",
     "listr2": "^8.2.5",
     "ora": "^5.4.1",
     "semver": "^7.8.5",
-    "yaml": "^2.8.1",
+    "yaml": "^2.9.0",
     "zod": "^3.25.0"
   },
   "optionalDependencies": {
-    "@hono/node-server": "^1.19.14",
-    "hono": "^4.12.18",
-    "ws": "^8.20.0"
+    "@hono/node-server": "2.0.11",
+    "hono": "^4.12.31",
+    "ws": "^8.21.1"
   },
   "peerDependencies": {
     "@xenova/transformers": "^2.17.2",

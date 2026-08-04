@@ -2,6 +2,11 @@
 
 Generated: 2026-05-23
 
+Manifest/lockfile version inventory refreshed: 2026-08-01
+
+Individual linked reports retain their own audit dates and evidence. A newer
+version in this index does not imply that its linked report has been re-audited.
+
 Parent: #1443
 
 This directory tracks external npm package audit evidence for the current dependency-audit wave:
@@ -14,22 +19,22 @@ This directory tracks external npm package audit evidence for the current depend
 
 | Package | Version | Tracking | Native/Binary/Lifecycle Surface | Status | Report |
 |---|---:|---|---|---|---|
-| `@modelcontextprotocol/sdk` | `1.24.3` | #1444, #1447 | no | complete | [report](modelcontextprotocol__sdk.md) |
+| `@modelcontextprotocol/sdk` | `1.30.0` | #1444, #1447, #1973 | no | complete | [report](modelcontextprotocol__sdk.md) |
 | `chalk` | `4.1.2` | #1444 | no | complete | [report](chalk.md) |
-| `chokidar` | `3.6.0` | #1444 | no | complete | [report](chokidar.md) |
+| `chokidar` | `4.0.3` | #1444 | no | complete | [report](chokidar.md) |
 | `commander` | `12.1.0` | #1444, #1447 | no | complete | [report](commander.md) |
-| `glob` | `13.0.1` | #1444 | no | complete | [report](glob.md) |
+| `glob` | `13.0.6` | #1444 | no | complete | [report](glob.md) |
 | `graceful-fs` | `4.2.11` | #1444 | no | complete | [report](graceful-fs.md) |
-| `js-yaml` | `4.1.1` | #1444, #1447 | no | complete | [report](js-yaml.md) |
+| `js-yaml` | `4.3.0` | #1444, #1447 | no | complete | [report](js-yaml.md) |
 | `listr2` | `8.3.3` | #1444 | no | complete | [report](listr2.md) |
 | `ora` | `5.4.1` | #1444 | no | complete | [report](ora.md) |
-| `yaml` | `2.8.2` | #1444 | no | complete | [report](yaml.md) |
+| `yaml` | `2.9.0` | #1444 | no | complete | [report](yaml.md) |
 | `zod` | `3.25.76` | #1444 | no | complete | [report](zod.md) |
-| `@hono/node-server` | `1.19.14` | #1445 | no | complete | [report](hono__node-server.md) |
+| `@hono/node-server` | `2.0.11` | #1973 | no | complete | [report](hono__node-server.md) |
 | `hnswlib-node` | `3.0.0` | #1445 | yes | complete | [report](hnswlib-node.md) |
-| `hono` | `4.12.18` | #1445 | no | complete | [report](hono.md) |
+| `hono` | `4.12.31` | #1445 | no | complete | [report](hono.md) |
 | `node-pty` | `1.1.0` | #1445 | yes | complete | [report](node-pty.md) |
-| `ws` | `8.20.0` | #1445 | no | complete | [report](ws.md) |
+| `ws` | `8.21.1` | #1445 | no | complete | [report](ws.md) |
 | `@xenova/transformers` | `2.17.2` | #1445 | yes | complete | [report](xenova__transformers.md) |
 | `better-sqlite3` | `12.8.0` | #1445 | yes | complete | [report](better-sqlite3.md) |
 | `@matric/eval-client` | `0.1.0` | #1447 | no | complete | [report](matric__eval-client.md) |
