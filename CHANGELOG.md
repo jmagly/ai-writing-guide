@@ -7,14 +7,45 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.4] - 2026-08-03 - "Governed missions and complete plugin delivery"
+
 ### Added
 
+- **Complete Claude Code plugin catalog** - all 40 packaged frameworks and
+  addons are independently installable from the marketplace, with cached
+  bundles retaining their complete runtime-relative dependency trees.
 - **Provider-neutral corpus memory ingest** - `aiwg storage import-corpus`
   previews and ingests local research text through the storage/MCP abstraction,
   preserves Markdown metadata, and skips binary attachments safely. Fortemi
-  storage now supports local stdio plus authenticated HTTPS/SSE Enterprise MCP
-  registry entries using environment-variable header references, without
-  persisting credential values (#1508).
+  storage supports local stdio plus authenticated HTTPS/SSE Enterprise MCP
+  registry entries without persisting credential values (#1508).
+- **Shared-host mission admission** - mission workloads declare resource,
+  isolation, and policy requirements before dispatch, with deterministic
+  admission decisions and auditable denial evidence (#1566).
+- **Operator decision evidence** - approvals, denials, overrides, and expired
+  decisions use a canonical audit model with stable identities and sanitized
+  evidence projections (#1567).
+- **Durable mission controls** - pause, resume, cancel, retry, and recovery
+  controls survive conductor restarts and are projected into Cockpit alongside
+  approval and mission activity views (#1591, #1592, #1657).
+
+### Changed
+
+- **Fortemi research retrieval** - corpus snapshots and query results preserve
+  curated retrieval evidence across package boundaries instead of reducing it
+  to the core-only representation (#1690).
+
+### Fixed
+
+- **HITL approval interoperability** - drivers and consumers now use the
+  canonical approval contract, preserving decision identity and lifecycle
+  semantics across runtime boundaries (#1565).
+- **Annotated release tag verification** - GitHub mirroring compares the
+  peeled commit behind annotated tags, avoiding false mismatches against tag
+  object IDs.
+- **Claude trace hooks** - generated `SubagentStart` and `SubagentStop`
+  commands pass the required `start` and `stop` arguments and repair stale
+  registrations on refresh.
 
 ## [2026.8.3] - 2026-08-03 - "Plugin lifecycle and release reliability"
 

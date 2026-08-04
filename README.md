@@ -6,7 +6,7 @@
 
 **Multi-agent AI framework for Claude Code, Copilot, Cursor, Warp, and 6 more platforms**
 
-200+ agents, 109+ CLI commands, 400+ deployable agent/skill/command/rule artifacts, 8 core frameworks, 27 addons, and a training marketplace package. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
+200+ agents, 109+ CLI commands, 400+ deployable agent/skill/command/rule artifacts, 8 core frameworks, 32 addons, and a 40-plugin Claude Code marketplace. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
 
 The simplest setup is to paste this into a supported AI provider:
 
@@ -527,7 +527,8 @@ The orchestration pattern: **Primary Author → Parallel Reviewers → Synthesiz
 - **334 artifact templates** — progressive disclosure templates for requirements, architecture, testing, security, deployment, and more
 - **8 platform support** — deploy to Claude Code, Copilot, Cursor, Warp, Factory AI, OpenCode, Codex, and Windsurf
 - **8 core frameworks + training marketplace package** — SDLC, Digital Forensics, Marketing Operations, Research Management, Media Curation, Ops Infrastructure, Knowledge Base, Security Engineering, plus [`aiwg-training`](https://github.com/jmagly/aiwg-training) for fine-tuning dataset curation (corpus-to-dataset pipeline with DPO/KTO/ORPO/SimPO export)
-- **31 addons** — compound memory, line memory, llm-wiki (Obsidian-native knowledge base), RLM recursive decomposition, fleet operations, browser control, testing quality, and more
+- **32 addons** — compound memory, line memory, llm-wiki (Obsidian-native knowledge base), RLM recursive decomposition, fleet operations, browser control, testing quality, and more
+- **40 Claude Code plugins** — the complete framework and addon catalog is installable independently from the AIWG marketplace
 - **Agent Loop** — iterative task execution with automatic error recovery and crash resilience (6-8 hour sessions)
 - **RLM addon** — recursive context decomposition for processing 10M+ tokens via sub-agent delegation
 - **YAML metalanguage** — declarative schema-validated workflow definitions (JSON Schema 2020-12)
@@ -609,7 +610,12 @@ The bundle is **byte-identical** in shape to its upstream form, so
 ```bash
 /plugin marketplace add jmagly/ai-writing-guide
 /plugin install sdlc@aiwg
+/plugin install agent-loop@aiwg
+/plugin install compound-memory@aiwg
 ```
+
+The marketplace contains all 40 packaged frameworks and addons, so you can
+install only the capabilities a Claude Code workspace needs.
 
 ### Multi-Platform Deployment
 

@@ -5,7 +5,7 @@
     "email": "support@aiwg.io"
   },
   "description": "AIWG - Modular agentic framework for SDLC, marketing automation, and workflow orchestration. 200+ agents, 67+ CLI commands, 400+ deployable agent/skill/command/rule artifacts.",
-  "version": "2026.8.3",
+  "version": "2026.8.4",
   "plugins": [
     {
       "name": "sdlc",
