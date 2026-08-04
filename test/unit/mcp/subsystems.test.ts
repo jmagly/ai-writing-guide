@@ -58,7 +58,7 @@ describe("MCP subsystems — toolset parsing", () => {
   });
 
   it("known toolsets match expected list", () => {
-    const expected = ['flows', 'missions', 'memory', 'kb', 'research', 'activity-log', 'index', 'ralph', 'mc', 'ops'];
+    const expected = ['flows', 'missions', 'memory', 'kb', 'research', 'activity-log', 'index', 'ralph', 'mc', 'ops', 'sandbox'];
     for (const t of expected) {
       expect(KNOWN_TOOLSETS).toContain(t);
     }
@@ -68,6 +68,7 @@ describe("MCP subsystems — toolset parsing", () => {
     const all = parseToolsets("all");
     expect(all.has("flows")).toBe(true);
     expect(all.has("missions")).toBe(true);
+    expect(all.has("sandbox")).toBe(true);
   });
 
   it("mc-dispatch forwards LFD budget controls to the CLI", async () => {

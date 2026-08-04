@@ -33,12 +33,21 @@ aiwg mcp info
 | `artifact-write` | Write artifacts to .aiwg/ directory |
 
 Opt-in toolsets add Flow, Mission, memory, knowledge-base, research,
-activity-log, index, Ralph, Mission Control, and ops tools:
+activity-log, index, Ralph, Mission Control, ops, and Agentic Sandbox tools:
 
 ```bash
 aiwg mcp serve --toolsets=flows,missions
+aiwg mcp serve --toolsets=sandbox
 aiwg mcp serve --toolsets=all
 ```
+
+The `sandbox` toolset exposes revisioned fleet inventory/admission/observation/
+reconciliation and governed activity coverage/timeline/export. Configure it with
+`AIWG_SANDBOX_MANAGEMENT_URL` and a mode-`0600` bearer file named by
+`AIWG_SANDBOX_MANAGEMENT_TOKEN_FILE`. Credentials are server configuration,
+never tool inputs or outputs. Non-loopback endpoints must use HTTPS. Mutations
+and evidence export require `confirmed: true`; unsupported upstream endpoints
+return a typed `supported: false` result for HTTP 404/405.
 
 `workflow-run` has been removed from the core MCP surface. Use `command-run`
 for general CLI execution, the `flows` toolset for `flow-list` / `flow-show` /

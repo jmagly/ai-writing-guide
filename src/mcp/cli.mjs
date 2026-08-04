@@ -415,7 +415,7 @@ CORE TOOLS (15, always registered):
   command-run                       Allow-listed CLI dispatch; confirmation-gated when needed
   artifact-read / artifact-write    Project .aiwg/ artifact IO
 
-OPT-IN TOOLSETS (51 additional tools):
+OPT-IN TOOLSETS (60 additional tools):
   flows          flow-list / flow-show / flow-run
   missions       mission-guide / mission-dispatch / mission-status
   memory         memory-* and reflections-* storage operations
@@ -426,9 +426,10 @@ OPT-IN TOOLSETS (51 additional tools):
   ralph          start / status / abort / attach
   mc             start / dispatch / status / stop / list
   ops            status / list / use / push
+  sandbox        fleet inventory / mutation / reconciliation and governed activity
 
 Enable opt-in tools:
-  AIWG_MCP_TOOLSETS=flows,missions,memory,kb,ralph aiwg mcp serve
+  AIWG_MCP_TOOLSETS=flows,missions,memory,kb,ralph,sandbox aiwg mcp serve
   aiwg mcp serve --toolsets=all
 
 RESOURCES:
@@ -451,6 +452,8 @@ TRANSPORTS:
 ENVIRONMENT:
   AIWG_ROOT          Path to AIWG installation (default: ~/.local/share/ai-writing-guide)
   AIWG_MCP_TOOLSETS  Comma-separated opt-in toolsets; use all for every toolset
+  AIWG_SANDBOX_MANAGEMENT_URL         Sandbox management API origin (HTTPS except loopback)
+  AIWG_SANDBOX_MANAGEMENT_TOKEN_FILE  Mode-0600 management bearer file for sandbox tools
 
 Docs:
   docs/integrations/mcp-capability-audit.md

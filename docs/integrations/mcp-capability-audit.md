@@ -1,6 +1,6 @@
 # AIWG MCP Capability Audit
 
-Status: v2026.6.1 re-audit pass for #1584 and #1613
+Status: v2026.8.5 re-audit pass for #2015
 
 AIWG's MCP server is a provider-agnostic optional hook. The baseline integration path for every provider is file deployment plus the CLI bridge: `aiwg discover` to find a capability and `aiwg show <type> <name>` to fetch it. MCP adds structured, model-callable access to the same catalog and to selected project operations, but no provider should depend on MCP for basic AIWG reachability.
 
@@ -23,7 +23,7 @@ The default `aiwg mcp serve` surface currently registers 15 tools:
 
 ### Opt-in toolsets
 
-`AIWG_MCP_TOOLSETS` or `aiwg mcp serve --toolsets=<csv>` enables 51 additional tools:
+`AIWG_MCP_TOOLSETS` or `aiwg mcp serve --toolsets=<csv>` enables 60 additional tools:
 
 | Toolset | Tools | Count | Boundary decision |
 |---|---:|---:|---|
@@ -37,6 +37,7 @@ The default `aiwg mcp serve` surface currently registers 15 tools:
 | `ralph` | start/status/abort/attach | 4 | Long-running loops; start/abort require confirmation semantics |
 | `mc` | start/dispatch/status/stop/list | 5 | Mission Control orchestration; stop is destructive |
 | `ops` | status/list/use/push | 4 | Operational workspace actions; push is shared-state affecting |
+| `sandbox` | fleet list/get/preview/admit/observe/reconcile; activity coverage/timeline/export | 9 | Remote management-plane access, state mutation, and signed evidence export require an explicit opt-in boundary |
 
 `core` is always implicit. `all` expands to all opt-in toolsets. Unknown toolset names warn and are skipped rather than aborting server startup.
 
@@ -54,6 +55,7 @@ This re-audit keeps the default core lean and classifies the post-#1533 surfaces
 | New/renamed CLI commands (`fanout`, `chunk`, `corpus`, `wizard`, `session`, `repo-access`, `features`, `feedback`, `address-issues`, `issue-audit`, `diagnose`, `doc-consolidate`, `best-practices-audit`, `skill-lint`, `agentcard`, `packages`, `local-executor`) | Command-run allow-listed | Unit coverage now compares `loadCommandAllowList()` with the TypeScript command registry so additions fail on drift |
 | agentskills.io import/validation (#1569) | Not a separate MCP source yet | Standard-conforming skills should surface through the existing `skill-list`, `skill-show`, `discover`, and `command-run` paths after they enter the AIWG artifact corpus |
 | Browser-consumable index export (#1578) | CLI/index toolset boundary | Existing `index-*` MCP tools cover build/query/deps/stats. Browser export remains CLI/API surface until a stable export command needs a schema wrapper |
+| Agentic Sandbox v2026.8.3 fleet/activity APIs (#2015) | First-class through opt-in `sandbox` toolset | Management credentials are file-backed server configuration; mutating fleet calls and evidence export are confirmation-gated; 404/405 capability absence and upstream authorization/conflict/unavailable status remain typed |
 
 ## Provider-Agnostic Positioning
 
@@ -103,6 +105,6 @@ Decision: keep MCP optional and lean by default. Do not move baseline rule or sk
 
 - `workflow-run` has been removed from core. Migration path: use `command-run` for general CLI execution, `AIWG_MCP_TOOLSETS=flows` plus `flow-list` / `flow-show` / `flow-run` for declarative YAML Flow access, or `AIWG_MCP_TOOLSETS=missions` plus `mission-guide` / `mission-dispatch` / `mission-status` for Mission access.
 - Keep `command-run` in core; it is the structured equivalent of the CLI bridge and preserves one canonical execution path.
-- Keep flows, missions, memory, research, activity-log, index, ralph, mc, and ops outside core because they expand schema size, touch project state, or trigger long-running/shared-state operations.
+- Keep flows, missions, memory, research, activity-log, index, ralph, mc, ops, and sandbox outside core because they expand schema size, touch project or remote state, or trigger long-running/shared-state operations.
 - Update provider docs that still say MCP is required or that only the legacy five-tool surface exists.
 - Re-measure schema token cost after each toolset change and publish the core/all count in release notes.
