@@ -7,6 +7,39 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.6] - 2026-08-04 - "Governed sandbox integration and external artifact roots"
+
+### Added
+
+- **External artifact-root attachment** - `aiwg artifacts attach --to <path>`
+  connects an existing AIWG artifact corpus without moving or overwriting either
+  tree, validates the target project, writes the location pointer, and refreshes
+  discovery metadata.
+- **Agentic Sandbox MCP operations** - Cockpit exposes the qualified nine-tool
+  fleet and activity surface with explicit authorization, completeness, and
+  fail-closed contract handling.
+- **Regression coverage for reorganized contracts** - exact mirrored Activity
+  v1 schemas, drift checks, external-root resolution, and the credential-free
+  Sandbox qualification prevent stale source locations and API assumptions from
+  silently returning.
+
+### Changed
+
+- **Claude plugin release metadata** - all 39 repository-hosted plugins and the
+  marketplace catalog advance to `2026.8.6`; the externally hosted `training`
+  plugin retains its independent `1.0.0` version.
+- **Sandbox compatibility evidence** - qualification is pinned to Agentic
+  Sandbox `v2026.8.3` and records unavailable runtime tiers as insufficient
+  evidence rather than a passing result.
+
+### Fixed
+
+- **Artifact discovery outside the repository** - workspace status, resource
+  preflight, indexing, and synchronization now consistently follow the
+  `.aiwg-location` contract after a corpus is attached.
+- **Activity schema drift** - the Cockpit and Sandbox boundary now uses exact,
+  mirrored schemas with a CI gate that detects upstream divergence.
+
 ## [2026.8.5] - 2026-08-04 - "Observable sandbox operations and reliable plugin delivery"
 
 ### Added
