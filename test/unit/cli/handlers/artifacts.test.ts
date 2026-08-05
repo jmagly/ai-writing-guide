@@ -23,6 +23,7 @@ describe('artifactsHandler', () => {
     const result = await artifactsHandler.execute(ctx(['--help']));
     expect(result.exitCode).toBe(0);
     expect(result.message).toContain('aiwg artifacts move --to <path>');
+    expect(result.message).toContain('aiwg artifacts attach --to <existing-path>');
   });
 
   it('requires --to for move', async () => {

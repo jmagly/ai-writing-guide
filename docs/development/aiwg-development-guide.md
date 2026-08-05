@@ -206,12 +206,14 @@ that corpus lives in the private `roctinam/aiwg-web-release-ops` repo at
 | **private git** | Yes | `roctinam/aiwg-web-release-ops/corpus/.aiwg` |
 | **npm** | No | `package.json` `files` allowlist + `.npmignore` |
 | **edge** (`aiwg --use-main`) | No | Git sparse checkout excludes `.aiwg/` |
-| **dev** (`aiwg --use-dev`) | Optional | Use `aiwg artifacts move --to ../aiwg-web-release-ops/corpus/.aiwg` for durable local relocation, or `AIWG_ARTIFACTS_PATH=...` for one shell |
+| **dev** (`aiwg --use-dev`) | Optional | Use `aiwg artifacts attach --to ../aiwg-web-release-ops/corpus/.aiwg` for the existing private corpus, or `AIWG_ARTIFACTS_PATH=...` for one shell |
 
 See [Private AIWG Corpus](./private-aiwg-corpus.md) for maintainer setup.
 
-`aiwg artifacts move --to <path>` writes `.aiwg-location`, updates local
-bindings, rebuilds the project index, and syncs the Fortemi Core static cache.
+`aiwg artifacts attach --to <path>` adopts an existing populated corpus;
+`aiwg artifacts move --to <path>` relocates a local corpus into a new or empty
+destination. Both write `.aiwg-location`, update local bindings, rebuild the
+project index, and sync the Fortemi Core static cache.
 `AIWG_ARTIFACTS_PATH` still wins over the pointer file for per-call or per-shell
 overrides.
 

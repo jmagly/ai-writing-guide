@@ -26,18 +26,20 @@ That relative path assumes adjacent local checkouts:
 ## Maintainer Setup
 
 Public clones can build and test AIWG without private corpus access. Maintainers
-who need AIWG SDLC workflows should point the CLI at the private corpus with
-the managed move command:
+who already have the adjacent private repository should attach its populated
+corpus non-destructively:
 
 ```bash
-aiwg artifacts move --to ../aiwg-web-release-ops/corpus/.aiwg
+aiwg artifacts attach --to ../aiwg-web-release-ops/corpus/.aiwg
 aiwg config show --project
 ```
 
-The move command writes a local `.aiwg-location` pointer, updates `.gitignore`,
-rebuilds the project index, and syncs the Fortemi Core static cache. The pointer
-file is intentionally local/private and should not be committed to the public
-product repository.
+The attach command validates the existing root, writes a local
+`.aiwg-location` pointer, updates `.gitignore`, rebuilds the project index, and
+syncs the Fortemi Core static cache. It does not move or overwrite either tree.
+The pointer file is intentionally local/private and should not be committed to
+the public product repository. Use `aiwg artifacts move --to <path>` only when
+relocating a local artifact root into a new or empty destination.
 
 For temporary one-off sessions, set the path directly:
 
@@ -68,6 +70,7 @@ corpus/.aiwg/migration-manifest-2026-07-22.md
 - Keep public operator-facing docs in `docs/`.
 - Keep monetization-sensitive ADRs, private CI topology, entitlement design, and
   release-host deployment details in `roctinam/aiwg-web-release-ops`.
-- Use `aiwg artifacts move --to <path>` for durable local relocation and
-  `AIWG_ARTIFACTS_PATH` for temporary per-shell overrides instead of symlinks or
-  git submodules.
+- Use `aiwg artifacts attach --to <path>` for an existing private corpus,
+  `aiwg artifacts move --to <path>` for durable local relocation, and
+  `AIWG_ARTIFACTS_PATH` for temporary per-shell overrides instead of symlinks
+  or git submodules.

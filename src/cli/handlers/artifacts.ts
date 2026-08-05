@@ -7,9 +7,11 @@ function usage(): string {
     'aiwg artifacts — Manage the project AIWG artifact root',
     '',
     'Usage:',
-    '  aiwg artifacts move --to <path> [--from <path>] [--dry-run] [--force] [--no-reindex] [--no-sync]',
+    '  aiwg artifacts move --to <path> [--from <path>] [--dry-run] [--no-reindex] [--no-sync]',
+    '  aiwg artifacts attach --to <existing-path> [--dry-run] [--no-reindex] [--no-sync]',
     '',
     'Notes:',
+    '  move relocates a local artifact root; attach adopts an existing populated root.',
     '  --to points at the artifact directory itself, not its parent.',
     '  AIWG_ARTIFACTS_PATH overrides the generated .aiwg-location pointer.',
   ].join('\n');
@@ -34,7 +36,7 @@ export const artifactsHandler: CommandHandler = {
     if (action === 'help' || ctx.args.includes('--help') || ctx.args.includes('-h')) {
       return { exitCode: 0, message: usage() };
     }
-    if (action !== 'move') {
+    if (action !== 'move' && action !== 'attach') {
       return { exitCode: 1, message: `Unknown artifacts action: ${action}\n\n${usage()}` };
     }
 
@@ -48,13 +50,16 @@ export const artifactsHandler: CommandHandler = {
         projectDir: getProjectDir(ctx, ctx.args),
         from: valueAfter(ctx.args, '--from'),
         to,
+        attach: action === 'attach',
         dryRun: ctx.dryRun || ctx.args.includes('--dry-run'),
         force: ctx.args.includes('--force'),
         reindex: !ctx.args.includes('--no-reindex'),
         syncFortemi: !ctx.args.includes('--no-sync'),
       });
 
-      const verb = result.dryRun ? 'Would move' : 'Moved';
+      const verb = result.dryRun
+        ? (action === 'attach' ? 'Would attach' : 'Would move')
+        : (result.attached ? 'Attached' : 'Moved');
       return {
         exitCode: 0,
         message: [
