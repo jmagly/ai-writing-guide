@@ -7,6 +7,22 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.7] - 2026-08-05 - "Audited activity fixtures"
+
+### Changed
+
+- **Claude plugin release metadata** - all 39 repository-hosted plugins and the
+  marketplace catalog advance to `2026.8.7`; the externally hosted `training`
+  plugin retains its independent `1.0.0` version.
+
+### Fixed
+
+- **npm publication boundary** - the intentional Activity v1 conformance
+  fixtures are now represented in the tarball top-level allowlist, allowing the
+  supply-chain audit to distinguish them from an injected package root.
+- **Packaging regression prevention** - a unit test now requires every positive
+  root in `package.json#files` to be declared in the audited tarball allowlist.
+
 ## [2026.8.6] - 2026-08-04 - "Governed sandbox integration and external artifact roots"
 
 ### Added
