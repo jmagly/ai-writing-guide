@@ -44,6 +44,26 @@ describe('Workspace CLI Commands', () => {
       }
     });
 
+    it('should resolve an external workspace through .aiwg-location', async () => {
+      const externalAiwg = path.join(testDir, '..', 'workspace-test-private', '.aiwg');
+      await fs.mkdir(path.join(externalAiwg, 'frameworks'), { recursive: true });
+      await fs.writeFile(path.join(testDir, '.aiwg-location'), '../workspace-test-private/.aiwg\n');
+      await fs.writeFile(
+        path.join(externalAiwg, 'frameworks', 'registry.json'),
+        JSON.stringify({ frameworks: { sdlc: { id: 'sdlc', version: '1.0.0', health: 'healthy' } } }),
+      );
+
+      const { buildWorkspaceStatus } = await import('../../../tools/cli/workspace-status.mjs');
+      try {
+        const output = await buildWorkspaceStatus(testDir);
+        expect(output.workspace.exists).toBe(true);
+        expect(output.workspace.path).toBe(externalAiwg);
+        expect(output.frameworks[0].id).toBe('sdlc');
+      } finally {
+        await fs.rm(path.dirname(externalAiwg), { recursive: true, force: true });
+      }
+    });
+
     it('should detect legacy workspace structure', async () => {
       // Create legacy structure
       await fs.mkdir(path.join(aiwgDir, 'intake'), { recursive: true });

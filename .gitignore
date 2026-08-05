@@ -96,7 +96,8 @@ opencode.json
 #
 #   ../aiwg-web-release-ops/corpus/.aiwg
 #
-# Maintainer checkouts should set AIWG_ARTIFACTS_PATH to that directory.
+# Maintainer checkouts should use a local `.aiwg-location` pointer to that
+# directory. AIWG_ARTIFACTS_PATH remains available as a temporary override.
 # Public clones can build and test without private corpus access.
 .aiwg/
 .aiwg-location

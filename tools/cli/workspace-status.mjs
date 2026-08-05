@@ -24,6 +24,7 @@ import http from 'http';
 import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { resolveProjectAiwgDir } from '../../src/config/project-artifacts-runtime.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -286,9 +287,10 @@ function parseActivityLogLine(line) {
 }
 
 async function collectActivityLog(projectRoot, hours) {
+  const aiwgRoot = resolveProjectAiwgDir(projectRoot);
   const candidates = [
-    path.join(projectRoot, '.aiwg', 'activity.log'),
-    path.join(projectRoot, '.aiwg', 'activity-log', 'activity.log')
+    path.join(aiwgRoot, 'activity.log'),
+    path.join(aiwgRoot, 'activity-log', 'activity.log')
   ];
   let content = null;
   let source = null;
@@ -315,10 +317,11 @@ async function collectActivityLog(projectRoot, hours) {
 }
 
 async function collectActiveOperations(projectRoot) {
+  const aiwgRoot = resolveProjectAiwgDir(projectRoot);
   const checks = [
-    { name: 'mission-control', path: path.join(projectRoot, '.aiwg', 'mc') },
-    { name: 'ralph', path: path.join(projectRoot, '.aiwg', 'ralph') },
-    { name: 'daemon', path: path.join(projectRoot, '.aiwg', 'daemon') }
+    { name: 'mission-control', path: path.join(aiwgRoot, 'mc') },
+    { name: 'ralph', path: path.join(aiwgRoot, 'ralph') },
+    { name: 'daemon', path: path.join(aiwgRoot, 'daemon') }
   ];
   const operations = [];
   for (const check of checks) {
@@ -340,7 +343,7 @@ async function collectActiveOperations(projectRoot) {
 }
 
 async function buildWorkspaceStatus(projectRoot) {
-  const aiwgPath = path.join(projectRoot, '.aiwg');
+  const aiwgPath = resolveProjectAiwgDir(projectRoot);
   const result = {
     workspace: {
       path: aiwgPath,

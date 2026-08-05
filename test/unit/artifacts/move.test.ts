@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { mkdirSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import { basename, join, relative as pathRelative } from 'node:path';
 import { tmpdir } from 'node:os';
 import { moveProjectArtifacts } from '../../../src/artifacts/move.js';
 import { PROJECT_AIWG_LOCATION_FILE, resolveProjectAiwgDir } from '../../../src/config/project-artifacts.js';
@@ -100,6 +100,59 @@ describe('moveProjectArtifacts', () => {
     } finally {
       rmSync(projectDir, { recursive: true, force: true });
       rmSync(destination, { recursive: true, force: true });
+    }
+  });
+
+  it('attaches an existing populated artifact root without moving either tree', async () => {
+    const projectDir = mkdtempSync(join(tmpdir(), 'aiwg-artifacts-attach-'));
+    const destination = join(projectDir, '..', `${basename(projectDir)}-private`, '.aiwg');
+    try {
+      mkdirSync(join(projectDir, '.aiwg', 'working'), { recursive: true });
+      mkdirSync(join(destination, 'requirements'), { recursive: true });
+      writeFileSync(join(projectDir, '.gitignore'), '.aiwg/\n', 'utf-8');
+      writeFileSync(join(projectDir, '.aiwg', 'working', 'local.md'), '# Local\n', 'utf-8');
+      writeFileSync(join(destination, 'aiwg.config'), '{"version":"1"}\n', 'utf-8');
+      writeFileSync(
+        join(destination, 'requirements', 'UC-ATTACH.md'),
+        ['---', 'title: Attached Requirement', 'type: use-case', '---', '', '# Attached Requirement', ''].join('\n'),
+        'utf-8',
+      );
+
+      const result = await moveProjectArtifacts({
+        projectDir,
+        to: destination,
+        attach: true,
+        syncFortemi: false,
+      });
+
+      expect(result.moved).toBe(false);
+      expect(result.attached).toBe(true);
+      expect(existsSync(join(projectDir, '.aiwg', 'working', 'local.md'))).toBe(true);
+      expect(existsSync(join(destination, 'requirements', 'UC-ATTACH.md'))).toBe(true);
+      expect(resolveProjectAiwgDir(projectDir, {})).toBe(destination);
+      expect(readFileSync(join(projectDir, PROJECT_AIWG_LOCATION_FILE), 'utf-8')).toContain(
+        pathRelative(projectDir, destination),
+      );
+      expect(existsSync(join(destination, '.index', 'project', 'metadata.json'))).toBe(true);
+    } finally {
+      rmSync(projectDir, { recursive: true, force: true });
+      rmSync(destination, { recursive: true, force: true });
+    }
+  });
+
+  it('refuses to attach a directory that is not an AIWG artifact root', async () => {
+    const projectDir = mkdtempSync(join(tmpdir(), 'aiwg-artifacts-attach-invalid-'));
+    const destination = join(projectDir, 'not-an-artifact-root');
+    try {
+      mkdirSync(destination, { recursive: true });
+      await expect(moveProjectArtifacts({
+        projectDir,
+        to: destination,
+        attach: true,
+        syncFortemi: false,
+      })).rejects.toThrow(/has no aiwg\.config/);
+    } finally {
+      rmSync(projectDir, { recursive: true, force: true });
     }
   });
 });

@@ -3966,12 +3966,16 @@ Manage the configured project AIWG artifact root.
 
 ```bash
 aiwg artifacts move --to <path> [--from <path>] [--dry-run] [--no-reindex] [--no-sync]
+aiwg artifacts attach --to <existing-path> [--dry-run] [--no-reindex] [--no-sync]
 ```
 
 `move` relocates or renames the current artifact root, writes `.aiwg-location`
 in the project root, updates `.gitignore` so the pointer remains local,
 rebuilds the project index, and syncs the Fortemi Core cache. `--from` overrides
 the source root; otherwise AIWG resolves it the same way runtime config does.
+`attach` adopts an already populated artifact root without moving or
+overwriting the local or external tree; it validates that `aiwg.config` exists,
+writes the same pointer, and rebuilds the external index.
 `AIWG_ARTIFACTS_PATH` still has highest precedence for per-call overrides.
 
 **Capabilities:** cli, index, artifacts, search, dependencies

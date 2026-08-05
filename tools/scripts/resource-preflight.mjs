@@ -3,6 +3,7 @@ import { readFileSync, statfsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { resolveProjectAiwgDir } from '../../src/config/project-artifacts-runtime.mjs';
 
 const BYTES_PER_GB = 1024 ** 3;
 
@@ -46,7 +47,7 @@ function readJson(path) {
 }
 
 function readProjectConfig(projectDir) {
-  const configPath = join(projectDir, '.aiwg', 'aiwg.config');
+  const configPath = join(resolveProjectAiwgDir(projectDir), 'aiwg.config');
   try {
     return { config: readJson(configPath), configPath };
   } catch (error) {

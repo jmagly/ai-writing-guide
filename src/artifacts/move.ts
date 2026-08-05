@@ -13,6 +13,8 @@ export interface MoveProjectArtifactsOptions {
   projectDir: string;
   from?: string;
   to: string;
+  /** Attach an existing artifact root without moving a local directory. */
+  attach?: boolean;
   dryRun?: boolean;
   force?: boolean;
   reindex?: boolean;
@@ -26,6 +28,7 @@ export interface MoveProjectArtifactsResult {
   pointerPath: string;
   pointerValue: string;
   moved: boolean;
+  attached: boolean;
   gitignoreUpdated: boolean;
   reindexed: boolean;
   fortemiSynced: boolean;
@@ -144,18 +147,26 @@ export async function moveProjectArtifacts(
   );
   const destination = path.resolve(expandProjectArtifactPath(options.to, projectDir));
   const dryRun = options.dryRun === true;
+  const attach = options.attach === true;
   const reindex = options.reindex !== false;
   const syncFortemi = options.syncFortemi !== false;
 
-  if (samePath(source, destination)) {
+  if (!attach && samePath(source, destination)) {
     throw new Error(`Source and destination are the same directory: ${source}`);
   }
 
-  if (!existsSync(source)) {
+  if (!attach && !existsSync(source)) {
     throw new Error(`Source AIWG artifact directory does not exist: ${source}`);
   }
 
-  if (existsSync(destination) && !(await isEmptyDirectory(destination))) {
+  if (attach) {
+    if (!existsSync(destination) || !(await stat(destination)).isDirectory()) {
+      throw new Error(`Artifact root to attach does not exist or is not a directory: ${destination}`);
+    }
+    if (!existsSync(path.join(destination, 'aiwg.config'))) {
+      throw new Error(`Artifact root to attach has no aiwg.config: ${destination}`);
+    }
+  } else if (existsSync(destination) && !(await isEmptyDirectory(destination))) {
     throw new Error(`Destination already exists and is not empty: ${destination}`);
   }
 
@@ -163,7 +174,7 @@ export async function moveProjectArtifacts(
   const pointerPath = path.join(projectDir, PROJECT_AIWG_LOCATION_FILE);
 
   const gitignoreUpdated = await ensureGitignorePointer(projectDir, dryRun);
-  if (!dryRun) {
+  if (!dryRun && !attach) {
     await moveDirectory(source, destination);
   }
   await writePointer(projectDir, pointerValue, dryRun);
@@ -187,7 +198,8 @@ export async function moveProjectArtifacts(
     to: destination,
     pointerPath,
     pointerValue,
-    moved: !dryRun,
+    moved: !dryRun && !attach,
+    attached: attach && !dryRun,
     gitignoreUpdated,
     reindexed,
     fortemiSynced,
