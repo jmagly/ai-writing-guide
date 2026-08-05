@@ -38,6 +38,7 @@ import type { Platform } from '../../agents/types.js';
 import { resolveActiveProvider } from '../provider-resolution.js';
 import { getProviderContextDiscoveryPathStrings } from '../../providers/provider-definitions.js';
 import { projectAiwgPath } from '../../config/project-artifacts.js';
+import { selectRegenerateBranch } from '../regenerate-selector.js';
 
 async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   if (args.includes('--help') || args.includes('-h')) {
@@ -53,7 +54,8 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
     or commands — use 'aiwg refresh' for that.
 
   Options:
-    --workspace             Canonical WORKSPACE.md → AIWG.md graph (default)
+    (no branch flag)        Intelligently select workspace refresh or adoption preview
+    --workspace             Explicit canonical WORKSPACE.md → AIWG.md graph
     --existing-project      Transactionally extract an established project into WORKSPACE.md
     --legacy, --full-inject Legacy inline compatibility branch
     --apply                 Apply --existing-project after its mandatory preflight
@@ -70,6 +72,7 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
     aiwg regenerate --workspace
     aiwg regenerate --existing-project --dry-run
     aiwg regenerate --existing-project --apply
+    aiwg regenerate --apply
     aiwg regenerate --full-inject
     aiwg regenerate --dry-run
     aiwg regenerate --provider codex
@@ -83,9 +86,9 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   const skipAiwgMd = args.includes('--no-aiwg-md');
   const skipAgentsMd = args.includes('--no-agents-md');
   const skipWorkspaceMd = args.includes('--no-workspace-md');
-  const legacy = args.includes('--legacy') || args.includes('--full-inject');
-  const workspace = args.includes('--workspace');
-  const existingProject = args.includes('--existing-project');
+  const requestedLegacy = args.includes('--legacy') || args.includes('--full-inject');
+  const requestedWorkspace = args.includes('--workspace');
+  const requestedExistingProject = args.includes('--existing-project');
   const apply = args.includes('--apply');
 
   const valueFlags = new Set(['--provider']);
@@ -108,20 +111,25 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
       });
     }
   }
-  const selectedBranches = Number(legacy) + Number(workspace) + Number(existingProject);
+  const selectedBranches = Number(requestedLegacy) + Number(requestedWorkspace) + Number(requestedExistingProject);
   if (selectedBranches > 1) throw new AiwgError({
     code: 'ERR_USAGE_CONFLICTING_FLAGS',
     message: 'Choose exactly one regenerate branch: --workspace, --existing-project, or --full-inject.',
     exitCode: EXIT_CODES.USAGE,
   });
-  if (apply && !existingProject) throw new AiwgError({
+  if (dryRun && apply) throw new AiwgError({
     code: 'ERR_USAGE_CONFLICTING_FLAGS',
-    message: '--apply is only valid with --existing-project.',
+    message: 'Choose either --dry-run or --apply.',
     exitCode: EXIT_CODES.USAGE,
   });
-  if (existingProject && dryRun && apply) throw new AiwgError({
+
+  const selection = await selectRegenerateBranch(cwd, args);
+  const legacy = selection.branch === 'legacy';
+  const existingProject = selection.branch === 'existing-project';
+  if (apply && !existingProject) throw new AiwgError({
     code: 'ERR_USAGE_CONFLICTING_FLAGS',
-    message: 'Choose either --dry-run or --apply for --existing-project.',
+    message: '--apply is only valid when the existing-project branch is selected.',
+    hint: 'Use `aiwg regenerate --existing-project --apply`, or run without --apply to inspect the selected branch.',
     exitCode: EXIT_CODES.USAGE,
   });
   if (existingProject && (force || skipAiwgMd || skipAgentsMd || skipWorkspaceMd)) throw new AiwgError({
@@ -152,6 +160,8 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
   console.log(`  Provider: ${provider}`);
   console.log(`  Target:   ${target}`);
   console.log(`  Branch:   ${legacy ? 'legacy full injection' : existingProject ? 'canonical existing-project extraction' : 'canonical workspace graph'}`);
+  console.log(`  Selected: ${selection.explicit ? 'explicit' : 'inferred'} — ${selection.reason}`);
+  if (selection.evidence.length > 0) console.log(`  Evidence: ${selection.evidence.join(', ')}`);
 
   if (existingProject) {
     const preflight = await migrateWorkspaceContext(target, {
