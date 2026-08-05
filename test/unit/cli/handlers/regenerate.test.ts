@@ -133,7 +133,7 @@ describe('regenerateHandler', () => {
     vi.stubEnv('CODEX_HOME', join(tmpDir, '.codex-home'));
     vi.stubEnv('ANTHROPIC_API_KEY', 'test-anthropic-key');
 
-    const result = await regenerateHandler.execute(makeCtx(tmpDir));
+    const result = await regenerateHandler.execute(makeCtx(tmpDir, ['--workspace']));
     expect(result.exitCode).toBe(0);
 
     expect(existsSync(join(tmpDir, 'AGENTS.md'))).toBe(true);
@@ -243,6 +243,44 @@ describe('regenerateHandler', () => {
     expect(output).toContain('aiwg workspace-context rollback');
     consoleSpy.mockRestore();
   });
+
+  it('keeps inferred adoption read-only until an explicit apply', async () => {
+    const { regenerateHandler } = await import('../../../../src/cli/handlers/regenerate.js');
+    writeConfig(tmpDir, ['codex']);
+    writeFileSync(join(tmpDir, 'Gemfile'), "source 'https://rubygems.org'\ngem 'rails'\n");
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const preview = await regenerateHandler.execute(makeCtx(tmpDir, ['--provider', 'codex']));
+    expect(preview.exitCode).toBe(0);
+    expect(existsSync(join(tmpDir, 'WORKSPACE.md'))).toBe(false);
+    let output = consoleSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    expect(output).toContain('Selected: inferred');
+    expect(output).toContain('existing-project');
+    expect(output).toContain('Re-run with --apply');
+
+    consoleSpy.mockClear();
+    const applied = await regenerateHandler.execute(makeCtx(tmpDir, ['--provider', 'codex', '--apply']));
+    expect(applied.exitCode).toBe(0);
+    expect(readFileSync(join(tmpDir, 'WORKSPACE.md'), 'utf8')).toContain('Gemfile');
+    output = consoleSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    expect(output).toContain('Transaction:');
+    expect(output).toContain('aiwg workspace-context rollback');
+    consoleSpy.mockRestore();
+  });
+
+  it.each(['--force', '--no-aiwg-md', '--no-agents-md', '--no-workspace-md'])(
+    'rejects %s when inference selects existing-project adoption',
+    async (control) => {
+      const { regenerateHandler } = await import('../../../../src/cli/handlers/regenerate.js');
+      writeConfig(tmpDir, ['codex']);
+      writeFileSync(join(tmpDir, 'Gemfile'), "source 'https://rubygems.org'\n");
+
+      const result = await regenerateHandler.execute(makeCtx(tmpDir, ['--provider', 'codex', control]));
+      expect(result.exitCode).toBe(2);
+      expect(result.message).toMatch(/complete transaction/);
+      expect(existsSync(join(tmpDir, 'WORKSPACE.md'))).toBe(false);
+    },
+  );
 
   it('leaves a fresh project unchanged in existing-project mode', async () => {
     const { regenerateHandler } = await import('../../../../src/cli/handlers/regenerate.js');

@@ -13,12 +13,12 @@ script:
 
 # Regenerate Context — Branch Selector
 
-The CLI is the deterministic source of truth for context regeneration. The
-selector is intentionally intelligent: an unqualified `aiwg-regenerate`
-invocation routes an established, not-yet-extracted repository through preview
-and transactional adoption; fresh or already-adopted projects route to the
-canonical refresh. Do not make users choose a branch unless they want to
-override that decision.
+The CLI is the deterministic source of truth for context regeneration. An
+unqualified invocation previews transactional adoption for an established,
+not-yet-extracted repository; fresh or already-adopted projects route to the
+canonical refresh. Mutation of an inferred adoption always requires an explicit
+`--apply`. Do not make users choose a branch unless they want to override the
+selection.
 
 Select and load exactly one linked branch before execution:
 
@@ -26,7 +26,7 @@ Select and load exactly one linked branch before execution:
   refresh for new and already-migrated projects.
 - [Existing-project extraction](../aiwg-regenerate-existing-project/SKILL.md) —
   transactional adoption of stable project metadata and provider context into
-  the canonical graph; preview is the default and `--apply` is explicit.
+  the canonical graph; preview is the default and `--apply` is required.
 - [Legacy full injection](../aiwg-regenerate-legacy/SKILL.md) — compatibility
   branch; embeds normalized AIWG context inside the provider startup file.
 
@@ -55,10 +55,9 @@ exact extracted block and transaction targets, and prints the rollback command
 after apply.
 
 Explicit branch flags always win. Without one, the executable selector checks
-for stable project signals (`package.json`, common language manifests, or a
-README) and the project-extraction marker. A first-time established project is
-previewed and then applied; an already-extracted or fresh project uses
-`--workspace`. Passing only `--dry-run` keeps inferred adoption read-only.
+the canonical extractor's complete stable-source inventory and managed markers.
+A first-time established project is previewed; rerun with `--apply` to adopt it.
+An already-extracted or genuinely signal-free project uses `--workspace`.
 
 Supported shared controls are `--dry-run`, `--provider <name>`, `--force`,
 `--no-aiwg-md`, `--no-agents-md`, and `--no-workspace-md`. The last option is
