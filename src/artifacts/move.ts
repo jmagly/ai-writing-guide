@@ -37,10 +37,25 @@ export interface MoveProjectArtifactsResult {
 
 const GITIGNORE_BLOCK = [
   '',
-  '# AIWG artifact root pointer (local/private path)',
+  '# AIWG external artifact corpus (retain the project-local control plane)',
+  '!.aiwg/',
+  '.aiwg/*',
+  '!.aiwg/AIWG.md',
+  '!.aiwg/aiwg.config',
+  '!.aiwg/frameworks/',
+  '.aiwg/frameworks/*',
+  '!.aiwg/frameworks/registry.json',
+  '',
+  '# AIWG artifact root pointer (machine-local/private path)',
   PROJECT_AIWG_LOCATION_FILE,
   '',
 ].join('\n');
+
+const LOCAL_CONTROL_PLANE_FILES = [
+  'AIWG.md',
+  'aiwg.config',
+  path.join('frameworks', 'registry.json'),
+] as const;
 
 async function exists(filePath: string): Promise<boolean> {
   try {
@@ -81,12 +96,44 @@ async function ensureGitignorePointer(projectDir: string, dryRun: boolean): Prom
   }
 
   const lines = current.split(/\r?\n/).map(line => line.trim());
-  if (lines.includes(PROJECT_AIWG_LOCATION_FILE)) return false;
+  const required = GITIGNORE_BLOCK.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  if (required.every(line => lines.includes(line))) return false;
   if (!dryRun) {
     const separator = current.length === 0 || current.endsWith('\n') ? '' : '\n';
     await writeFile(gitignorePath, `${current}${separator}${GITIGNORE_BLOCK}`, 'utf-8');
   }
   return true;
+}
+
+async function materializeLocalControlPlane(
+  projectDir: string,
+  artifactRoot: string,
+  dryRun: boolean,
+): Promise<void> {
+  const localRoot = path.join(projectDir, '.aiwg');
+
+  for (const relativePath of LOCAL_CONTROL_PLANE_FILES) {
+    const sourcePath = path.join(artifactRoot, relativePath);
+    if (!(await exists(sourcePath))) continue;
+
+    const destinationPath = path.join(localRoot, relativePath);
+    const sourceContent = await readFile(sourcePath);
+    if (await exists(destinationPath)) {
+      const destinationContent = await readFile(destinationPath);
+      if (!sourceContent.equals(destinationContent)) {
+        throw new Error(
+          `Local AIWG control-plane file differs from the external artifact root: ${destinationPath}. `
+          + 'Reconcile the files before attaching the corpus.',
+        );
+      }
+      continue;
+    }
+
+    if (!dryRun) {
+      await mkdir(path.dirname(destinationPath), { recursive: true });
+      await writeFile(destinationPath, sourceContent);
+    }
+  }
 }
 
 async function writePointer(projectDir: string, pointerValue: string, dryRun: boolean): Promise<string> {
@@ -177,6 +224,7 @@ export async function moveProjectArtifacts(
   if (!dryRun && !attach) {
     await moveDirectory(source, destination);
   }
+  await materializeLocalControlPlane(projectDir, destination, dryRun);
   await writePointer(projectDir, pointerValue, dryRun);
 
   let reindexed = false;
