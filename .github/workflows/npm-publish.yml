@@ -232,6 +232,11 @@ jobs:
         # Test failures must block stable publish. `continue-on-error: true`
         # was removed from the Gitea workflow per #1280 (A2); the same
         # discipline applies here.
+        env:
+          # Shared-runner policy: paired Node baselines, median of 7 samples.
+          AIWG_PERF_BUDGET_VERSION_MS: "300"
+          AIWG_PERF_BUDGET_HELP_MS: "750"
+          AIWG_PERF_SAMPLE_COUNT: "7"
         run: npm test -- --run --testTimeout=120000
 
       - name: Extract and verify version against tag

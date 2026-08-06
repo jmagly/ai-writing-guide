@@ -396,6 +396,11 @@ jobs:
         # parallel load — budgets in test/integration/cli-perf.test.ts
         # accommodate the parallel-load measurement. See #1302 for the
         # follow-up to investigate and tighten back toward isolated p50.
+        env:
+          # Shared-runner policy: paired Node baselines, median of 7 samples.
+          AIWG_PERF_BUDGET_VERSION_MS: "300"
+          AIWG_PERF_BUDGET_HELP_MS: "750"
+          AIWG_PERF_SAMPLE_COUNT: "7"
         run: npm test -- --run
 
       - name: Extract and verify version

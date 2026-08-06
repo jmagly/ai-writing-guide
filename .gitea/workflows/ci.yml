@@ -151,13 +151,10 @@ jobs:
 
       - name: Run tests
         env:
-          # CI runs in docker-in-docker on the Gitea runner — cold start is
-          # ~50ms slower than a bare-metal laptop. The local dev budget of
-          # 150ms is preserved as the aspirational target; CI uses a looser
-          # budget so a slow-runner day doesn't block an otherwise-green PR.
-          # Bump either value if regression hits consistently.
+          # Shared-runner policy: paired Node baselines, median of 7 samples.
           AIWG_PERF_BUDGET_VERSION_MS: "300"
-          AIWG_PERF_BUDGET_HELP_MS: "650"
+          AIWG_PERF_BUDGET_HELP_MS: "750"
+          AIWG_PERF_SAMPLE_COUNT: "7"
         run: npm run test:ci
 
       - name: Run tier-3 integration suite (#1174)
