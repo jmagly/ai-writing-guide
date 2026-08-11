@@ -94,7 +94,7 @@ function parseId(raw: string): { id?: string; name?: string } {
   };
 }
 
-interface BundleArtifact {
+export interface BundleArtifact {
   id: string;
   type: UpstreamArtifactType;
   sourcePath: string;

@@ -8,6 +8,7 @@ import {
   deployProjectQuickref,
   generateProjectQuickref,
   projectQuickrefSkillName,
+  resolveProjectQuickref,
   renderProjectQuickref,
   type ProjectQuickref,
 } from '../../../src/extensions/project-quickref.js';
@@ -48,6 +49,28 @@ async function fixture(): Promise<{ projectDir: string; homeDir: string; definit
   return { projectDir, homeDir, definition };
 }
 
+async function writeBundle(
+  projectDir: string,
+  id: string,
+  options: { name?: string; description?: string; keyword?: string; skill?: string } = {},
+): Promise<void> {
+  const dir = projectAiwgPath(projectDir, 'extensions', id);
+  const skill = options.skill ?? `${id}-skill`;
+  await mkdir(join(dir, 'skills', skill), { recursive: true });
+  await writeFile(join(dir, 'skills', skill, 'SKILL.md'), `---\nname: ${skill}\n---\n\n# ${skill}\n`);
+  await writeFile(join(dir, 'manifest.json'), JSON.stringify({
+    id,
+    type: 'extension',
+    name: options.name ?? id,
+    version: '1.0.0',
+    description: options.description ?? `${id} project capability`,
+    manifestVersion: '1',
+    platforms: { claude: 'full' },
+    keywords: [options.keyword ?? id],
+    deployment: { pathTemplate: '.{platform}/skills/{id}' },
+  }, null, 2));
+}
+
 beforeEach(() => {
   originalEnv = {};
   for (const key of ARTIFACT_ENV_KEYS) {
@@ -66,6 +89,131 @@ afterEach(async () => {
 });
 
 describe('project quickref generation and deployment (#1788)', () => {
+  it('synthesizes a managed project quickref from discovered bundles without a legacy source', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aiwg-project-quickref-managed-'));
+    roots.push(root);
+    const projectDir = join(root, 'managed-project');
+    await writeBundle(projectDir, 'team-tools', { name: 'Team Tools', skill: 'team-workflow' });
+
+    const resolved = await resolveProjectQuickref(projectDir);
+    expect(resolved.exists).toBe(true);
+    expect(resolved.provenance).toBe('managed');
+    expect(resolved.definition?.project.id).toBe('managed-project');
+    expect(resolved.definition?.entries).toEqual([expect.objectContaining({
+      title: 'Team Tools',
+      show: [{ type: 'skill', name: 'team-workflow' }],
+    })]);
+
+    const generated = await generateProjectQuickref(projectDir, { dryRun: true });
+    expect(generated.content).toContain('name: aiwg-project-managed-project-quickref');
+    expect(generated.content).toContain('aiwg show skill team-workflow');
+    expect(existsSync(projectAiwgPath(projectDir, 'generated'))).toBe(false);
+  });
+
+  it('applies managed exclusions and overrides without rewriting operator config', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aiwg-project-quickref-config-'));
+    roots.push(root);
+    const projectDir = join(root, 'project');
+    await writeBundle(projectDir, 'alpha');
+    await writeBundle(projectDir, 'beta');
+    const configPath = projectAiwgPath(projectDir, 'quickref.config.json');
+    const config = {
+      version: '1',
+      project: { id: 'org-project', name: 'Org Project', description: 'Managed orientation.' },
+      precedence: 'Prefer repository workflows.',
+      entries: [{ title: 'Manual', summary: 'Curated route.', discover: ['manual route'], show: [] }],
+      discovery: {
+        enabled: true,
+        excludeBundles: ['beta'],
+        overrides: { alpha: { title: 'Alpha Override', discover: ['alpha custom'] } },
+      },
+    };
+    await writeFile(configPath, JSON.stringify(config, null, 2) + '\n');
+
+    const before = await readFile(configPath, 'utf8');
+    const generated = await generateProjectQuickref(projectDir);
+    expect(generated.content).toContain('# Org Project Quick Reference');
+    expect(generated.content).toContain('## Alpha Override');
+    expect(generated.content).toContain('## Manual');
+    expect(generated.content).not.toContain('## beta');
+    expect(await readFile(configPath, 'utf8')).toBe(before);
+    expect(existsSync(projectAiwgPath(projectDir, 'generated', 'project-quickref', 'definition.json'))).toBe(true);
+  });
+
+  it('sorts discovered bundles deterministically and fails closed on discovery errors', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aiwg-project-quickref-sort-'));
+    roots.push(root);
+    const projectDir = join(root, 'project');
+    await writeBundle(projectDir, 'zeta');
+    await writeBundle(projectDir, 'alpha');
+    const resolved = await resolveProjectQuickref(projectDir);
+    expect(resolved.definition?.entries.map(entry => entry.title)).toEqual(['alpha', 'zeta']);
+
+    const invalid = projectAiwgPath(projectDir, 'extensions', 'broken');
+    await mkdir(invalid, { recursive: true });
+    await writeFile(join(invalid, 'manifest.json'), '{"id":"broken"}');
+    await expect(resolveProjectQuickref(projectDir)).rejects.toThrow(/broken/);
+  });
+
+  it('enumerates plugin payload capabilities once through the validated artifact path', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aiwg-project-quickref-plugin-'));
+    roots.push(root);
+    const projectDir = join(root, 'project');
+    const wrapper = projectAiwgPath(projectDir, 'plugins', 'team-plugin');
+    await mkdir(join(wrapper, 'payload', 'skills', 'payload-skill'), { recursive: true });
+    await writeFile(join(wrapper, 'payload', 'skills', 'payload-skill', 'SKILL.md'), '---\nname: payload-skill\n---\n');
+    await writeFile(join(wrapper, 'payload', 'manifest.json'), JSON.stringify({
+      id: 'team-plugin-core', type: 'addon', name: 'Team Plugin Core', version: '1.0.0',
+      description: 'Payload', manifestVersion: '1', platforms: { claude: 'full' }, keywords: ['team'],
+      deployment: { pathTemplate: '.aiwg/addons/team-plugin-core' },
+      addonConfig: { entry: { skills: 'skills/' } },
+    }));
+    await writeFile(join(wrapper, 'manifest.json'), JSON.stringify({
+      id: 'team-plugin', type: 'plugin', name: 'Team Plugin', version: '1.0.0',
+      description: 'Wrapper', manifestVersion: '1', platforms: { claude: 'full' }, keywords: ['team'],
+      deployment: { pathTemplate: '.aiwg/plugins/team-plugin' },
+      pluginConfig: { payloadType: 'addon', payloadPath: 'payload/' },
+    }));
+
+    const resolved = await resolveProjectQuickref(projectDir);
+    expect(resolved.definition?.entries).toHaveLength(1);
+    expect(resolved.definition?.entries[0].show).toEqual([{ type: 'skill', name: 'payload-skill' }]);
+  });
+
+  it('bounds kernel entries and show hints with deterministic diagnostics', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aiwg-project-quickref-bounds-'));
+    roots.push(root);
+    const projectDir = join(root, 'project');
+    const bundle = projectAiwgPath(projectDir, 'extensions', 'many-tools');
+    for (let index = 0; index < 9; index += 1) {
+      const name = `skill-${index}`;
+      await mkdir(join(bundle, 'skills', name), { recursive: true });
+      await writeFile(join(bundle, 'skills', name, 'SKILL.md'), `---\nname: ${name}\n---\n`);
+    }
+    await writeFile(join(bundle, 'manifest.json'), JSON.stringify({
+      id: 'many-tools', type: 'extension', name: 'Many Tools', version: '1.0.0',
+      description: 'Many capabilities', manifestVersion: '1', platforms: { claude: 'full' }, keywords: ['many'],
+      deployment: { pathTemplate: '.{platform}/skills/{id}' },
+    }));
+    const manualEntries = Array.from({ length: 50 }, (_, index) => ({
+      title: `Manual ${index}`,
+      summary: `Manual route ${index}`,
+      discover: [`manual ${index}`],
+      show: [],
+    }));
+    await writeFile(projectAiwgPath(projectDir, 'quickref.config.json'), JSON.stringify({
+      version: '1', entries: manualEntries,
+    }));
+
+    const resolved = await resolveProjectQuickref(projectDir);
+    expect(resolved.definition?.entries).toHaveLength(50);
+    expect(resolved.definition?.entries[0].show).toHaveLength(8);
+    expect(resolved.warnings).toEqual(expect.arrayContaining([
+      expect.stringContaining('show hints truncated'),
+      expect.stringContaining('entries truncated'),
+    ]));
+  });
+
   it('renders deterministic preview output without writing in dry-run mode', async () => {
     const { projectDir, definition } = await fixture();
     const first = await generateProjectQuickref(projectDir, { dryRun: true });

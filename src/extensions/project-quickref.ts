@@ -8,7 +8,7 @@
 
 import { createHash } from 'crypto';
 import { access, mkdir, readFile, readdir, rm, writeFile } from 'fs/promises';
-import { dirname, isAbsolute, join, resolve } from 'path';
+import { basename, dirname, isAbsolute, join, resolve } from 'path';
 import { homedir } from 'os';
 import { z } from 'zod';
 import {
@@ -18,6 +18,8 @@ import {
 import { OPERATIONAL_SHOW_TYPES } from '../artifacts/types.js';
 import { projectAiwgPath } from '../config/project-artifacts.js';
 import { appendAiwgSourceTrackBlock } from './project-local-gitignore.js';
+import { discoverProjectLocalBundles } from './project-local-discovery.js';
+import { enumerateBundleArtifacts } from './shadow-resolver.js';
 
 const OWNERSHIP_MARKER = '.aiwg-project-quickref.json';
 
@@ -49,6 +51,37 @@ export const ProjectQuickrefSchema = z.object({
 
 export type ProjectQuickref = z.infer<typeof ProjectQuickrefSchema>;
 
+const QuickrefOverrideSchema = z.object({
+  title: z.string().min(1).max(128).optional(),
+  summary: z.string().min(1).max(512).optional(),
+  discover: z.array(z.string().min(1).max(256)).max(10).optional(),
+  show: z.array(ShowHintSchema).max(20).optional(),
+  hidden: z.boolean().optional(),
+  order: z.number().int().optional(),
+}).strict();
+
+export const ProjectQuickrefConfigSchema = z.object({
+  version: z.literal('1'),
+  project: ProjectQuickrefSchema.shape.project.optional(),
+  precedence: z.string().min(1).max(1024).optional(),
+  entries: z.array(QuickrefEntrySchema).max(50).default([]),
+  discovery: z.object({
+    enabled: z.boolean().default(true),
+    excludeBundles: z.array(z.string().min(1)).max(200).default([]),
+    overrides: z.record(z.string(), QuickrefOverrideSchema).default({}),
+  }).strict().default({ enabled: true, excludeBundles: [], overrides: {} }),
+}).strict();
+
+export type ProjectQuickrefConfig = z.infer<typeof ProjectQuickrefConfigSchema>;
+
+export interface ProjectQuickrefResolution {
+  definition?: ProjectQuickref;
+  exists: boolean;
+  sourcePath: string;
+  provenance: 'legacy' | 'managed';
+  warnings: string[];
+}
+
 export interface ProjectQuickrefLoadResult {
   sourcePath: string;
   definition?: ProjectQuickref;
@@ -63,6 +96,8 @@ export interface ProjectQuickrefGenerateResult {
   content: string;
   changed: boolean;
   dryRun: boolean;
+  provenance: 'legacy' | 'managed';
+  warnings: string[];
 }
 
 export interface ProjectQuickrefDeployResult {
@@ -130,6 +165,168 @@ export async function loadProjectQuickref(projectDir: string): Promise<ProjectQu
   }
 }
 
+function slug(value: string): string {
+  const normalized = value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return normalized || 'project';
+}
+
+async function inferredProject(projectDir: string): Promise<ProjectQuickref['project']> {
+  let packageName = basename(resolve(projectDir));
+  let description = `Managed project-specific orientation for ${packageName}.`;
+  try {
+    const parsed = JSON.parse(await readFile(join(projectDir, 'package.json'), 'utf8')) as {
+      name?: string;
+      description?: string;
+    };
+    if (parsed.name) packageName = parsed.name;
+    if (parsed.description) description = parsed.description.slice(0, 512);
+  } catch {
+    // package metadata is optional
+  }
+  const id = slug(packageName);
+  const name = packageName
+    .replace(/^@[^/]+\//, '')
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map(part => part[0]?.toUpperCase() + part.slice(1))
+    .join(' ') || 'Project';
+  return { id, name, description };
+}
+
+async function loadManagedConfig(projectDir: string): Promise<{
+  config?: ProjectQuickrefConfig;
+  path: string;
+}> {
+  const path = projectAiwgPath(projectDir, 'quickref.config.json');
+  const raw = await readIfPresent(path);
+  if (raw === null) return { path };
+  let json: unknown;
+  try {
+    json = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(`${path}: invalid JSON: ${(error as Error).message}`);
+  }
+  const parsed = ProjectQuickrefConfigSchema.safeParse(json);
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues.map(issue =>
+      `${path}: ${issue.path.join('.') || '(root)'}: ${issue.message}`
+    ).join('\n'));
+  }
+  return { path, config: parsed.data };
+}
+
+function dedupe(values: string[]): string[] {
+  const seen = new Set<string>();
+  return values.filter(value => {
+    const key = value.trim().toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function dedupeShow(values: Array<{ type: typeof OPERATIONAL_SHOW_TYPES[number]; name: string }>): ProjectQuickref['entries'][number]['show'] {
+  const seen = new Set<string>();
+  return values.filter(value => {
+    const key = `${value.type}:${value.name.toLowerCase()}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/** Resolve legacy operator input or synthesize a managed definition from project-local bundles. */
+export async function resolveProjectQuickref(projectDir: string): Promise<ProjectQuickrefResolution> {
+  const legacy = await loadProjectQuickref(projectDir);
+  if (legacy.exists) {
+    if (!legacy.definition) throw new Error(legacy.errors.join('\n'));
+    return {
+      definition: legacy.definition,
+      exists: true,
+      sourcePath: legacy.sourcePath,
+      provenance: 'legacy',
+      warnings: [],
+    };
+  }
+
+  const managed = await loadManagedConfig(projectDir);
+  const discovery = await discoverProjectLocalBundles(projectDir);
+  if (discovery.errors.length > 0) {
+    throw new Error(discovery.errors.map(error =>
+      `${error.path}: ${error.field}: ${error.actual}`
+    ).join('\n'));
+  }
+  if (!managed.config && discovery.bundles.length === 0) {
+    return { exists: false, sourcePath: managed.path, provenance: 'managed', warnings: [] };
+  }
+
+  const config = managed.config ?? ProjectQuickrefConfigSchema.parse({ version: '1' });
+  const excluded = new Set(config.discovery.excludeBundles.map(id => id.toLowerCase()));
+  const warnings: string[] = [];
+  const candidates: Array<{ order: number; type: string; id: string; entry: ProjectQuickref['entries'][number] }> = [];
+
+  if (config.discovery.enabled) {
+    for (const bundle of discovery.bundles) {
+      if (excluded.has(bundle.id.toLowerCase())) continue;
+      const override = config.discovery.overrides[bundle.id];
+      if (override?.hidden) continue;
+      const artifacts = (await enumerateBundleArtifacts(bundle.artifactPath ?? bundle.bundlePath))
+        .sort((a, b) => a.type.localeCompare(b.type) || a.id.localeCompare(b.id));
+      const inferredShow = dedupeShow(artifacts.map(artifact => ({
+        type: artifact.type,
+        name: artifact.id,
+      }))).slice(0, 8);
+      if (artifacts.length > inferredShow.length && inferredShow.length === 8) {
+        warnings.push(`${bundle.id}: show hints truncated from ${artifacts.length} artifacts to 8`);
+      }
+      let discover = override?.discover ?? dedupe([
+        bundle.id,
+        bundle.manifest.name,
+        ...(bundle.manifest.keywords ?? []),
+      ]).slice(0, 3);
+      const show = override?.show ? dedupeShow(override.show) : inferredShow;
+      if (discover.length === 0 && show.length === 0) discover = [bundle.id];
+      candidates.push({
+        order: override?.order ?? 0,
+        type: bundle.type,
+        id: bundle.id,
+        entry: {
+          title: override?.title ?? bundle.manifest.name,
+          summary: override?.summary ?? bundle.manifest.description,
+          discover,
+          show,
+        },
+      });
+    }
+  }
+
+  candidates.sort((a, b) => a.order - b.order || a.type.localeCompare(b.type) || a.id.localeCompare(b.id));
+  const discoveredEntries = candidates.map(candidate => candidate.entry);
+  const entries = [...discoveredEntries, ...config.entries];
+  if (entries.length > 50) warnings.push(`quickref entries truncated from ${entries.length} to 50`);
+  const bounded = entries.slice(0, 50);
+  if (bounded.length === 0) {
+    return { exists: false, sourcePath: managed.path, provenance: 'managed', warnings };
+  }
+
+  return {
+    definition: {
+      version: '1',
+      project: config.project ?? await inferredProject(projectDir),
+      precedence: config.precedence ?? 'Use project-local capabilities before generic AIWG workflows when they apply.',
+      entries: bounded,
+    },
+    exists: true,
+    sourcePath: managed.path,
+    provenance: 'managed',
+    warnings,
+  };
+}
+
+export async function hasProjectQuickref(projectDir: string): Promise<boolean> {
+  return (await resolveProjectQuickref(projectDir)).exists;
+}
+
 export function renderProjectQuickref(definition: ProjectQuickref): string {
   const skillName = projectQuickrefSkillName(definition.project.id);
   const lines = [
@@ -172,9 +369,8 @@ export async function generateProjectQuickref(
   projectDir: string,
   options: { dryRun?: boolean } = {},
 ): Promise<ProjectQuickrefGenerateResult> {
-  const loaded = await loadProjectQuickref(projectDir);
-  if (!loaded.exists) throw new Error(`Project quickref source not found: ${loaded.sourcePath}`);
-  if (!loaded.definition) throw new Error(loaded.errors.join('\n'));
+  const loaded = await resolveProjectQuickref(projectDir);
+  if (!loaded.exists || !loaded.definition) throw new Error(`Project quickref source not found: ${loaded.sourcePath}`);
 
   if (!options.dryRun) await appendAiwgSourceTrackBlock(projectDir);
 
@@ -187,6 +383,14 @@ export async function generateProjectQuickref(
   if (!options.dryRun && changed) {
     await mkdir(dirname(outputPath), { recursive: true });
     await writeFile(outputPath, content, 'utf8');
+  }
+  if (!options.dryRun && loaded.provenance === 'managed') {
+    const snapshotPath = projectAiwgPath(projectDir, 'generated', 'project-quickref', 'definition.json');
+    const snapshot = JSON.stringify(loaded.definition, null, 2) + '\n';
+    if (await readIfPresent(snapshotPath) !== snapshot) {
+      await mkdir(dirname(snapshotPath), { recursive: true });
+      await writeFile(snapshotPath, snapshot, 'utf8');
+    }
   }
   if (!options.dryRun) {
     const generatedRoot = projectAiwgPath(projectDir, 'generated', 'project-quickref');
@@ -209,6 +413,8 @@ export async function generateProjectQuickref(
     content,
     changed,
     dryRun: options.dryRun ?? false,
+    provenance: loaded.provenance,
+    warnings: loaded.warnings,
   };
 }
 
@@ -277,8 +483,8 @@ export async function deployProjectQuickref(
   options: { dryRun?: boolean; homeDir?: string } = {},
 ): Promise<ProjectQuickrefDeployResult> {
   const generated = await generateProjectQuickref(projectDir, { dryRun: options.dryRun });
-  const loaded = await loadProjectQuickref(projectDir);
-  if (!loaded.definition) throw new Error(loaded.errors.join('\n'));
+  const loaded = await resolveProjectQuickref(projectDir);
+  if (!loaded.definition) throw new Error(`Project quickref source not found: ${loaded.sourcePath}`);
   const target = resolveProviderSkillsRoot(provider, projectDir, options.homeDir ?? homedir());
   const targetDir = join(target.root, generated.skillName);
   const targetPath = join(targetDir, 'SKILL.md');
@@ -336,9 +542,14 @@ export async function auditProjectQuickref(
   providers: string[],
   options: { homeDir?: string } = {},
 ): Promise<{ exists: boolean; errors: string[]; drift: string[]; skillName?: string }> {
-  const loaded = await loadProjectQuickref(projectDir);
-  if (!loaded.exists) return { exists: false, errors: loaded.errors, drift: [] };
-  if (!loaded.definition) return { exists: true, errors: loaded.errors, drift: [] };
+  let loaded: ProjectQuickrefResolution;
+  try {
+    loaded = await resolveProjectQuickref(projectDir);
+  } catch (error) {
+    return { exists: true, errors: [(error as Error).message], drift: [] };
+  }
+  if (!loaded.exists) return { exists: false, errors: [], drift: [] };
+  if (!loaded.definition) return { exists: true, errors: ['project quickref definition unavailable'], drift: [] };
 
   const content = renderProjectQuickref(loaded.definition);
   const skillName = projectQuickrefSkillName(loaded.definition.project.id);

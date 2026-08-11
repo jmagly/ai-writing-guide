@@ -153,6 +153,21 @@ describe('project-local-doctor (DC-1)', () => {
     expect(current.hasFailures).toBe(false);
   });
 
+  it('audits a managed quickref synthesized from bundles without a legacy source', async () => {
+    writeBundle(projectDir, 'managed-tools');
+    const config: AiwgConfig = { version: '1', providers: ['claude'], installed: {}, scripts: {} };
+
+    const stale = await buildProjectLocalDoctorSection({ projectDir, frameworkRoot, config });
+    expect(stale.output).toContain('Project quickref: aiwg-project-');
+    expect(stale.driftCount).toBe(2);
+
+    await deployProjectQuickref(projectDir, 'claude');
+    const current = await buildProjectLocalDoctorSection({ projectDir, frameworkRoot, config });
+    expect(current.validationErrors).toBe(0);
+    expect(current.driftCount).toBe(0);
+    expect(current.hasFailures).toBe(false);
+  });
+
   it('reports per-type counts and bundle ids when content exists', async () => {
     writeBundle(projectDir, 'foo');
     writeBundle(projectDir, 'bar');
@@ -183,6 +198,7 @@ describe('project-local-doctor (DC-1)', () => {
 
   it('detects drift when deployed file differs from registered hash', async () => {
     writeBundle(projectDir, 'foo');
+    await deployProjectQuickref(projectDir, 'claude');
     deployRule(projectDir, 'mutated content');
     const hashes = { 'rules/r1.md': sha256('rule body') }; // expected hash != deployed
     const config = makeConfig('foo', hashes);
@@ -198,6 +214,7 @@ describe('project-local-doctor (DC-1)', () => {
 
   it('reports zero drift when deployed file matches', async () => {
     writeBundle(projectDir, 'foo');
+    await deployProjectQuickref(projectDir, 'claude');
     deployRule(projectDir, 'rule body');
     const hashes = { 'rules/r1.md': sha256('rule body') };
     const config = makeConfig('foo', hashes);
@@ -215,6 +232,7 @@ describe('project-local-doctor (DC-1)', () => {
     // Deployer injected an HTML-comment marker on line 1 — normalization
     // must strip it on both sides so the hash equivalence still holds.
     writeBundle(projectDir, 'foo');
+    await deployProjectQuickref(projectDir, 'claude');
     deployRule(projectDir, '<!-- aiwg:managed v2026.5.0-rc.6 bundled -->\nrule body');
     const hashes = { 'rules/r1.md': sha256('rule body') };
     const config = makeConfig('foo', hashes);
@@ -228,6 +246,7 @@ describe('project-local-doctor (DC-1)', () => {
 
   it('reports zero drift for a stale raw deployed hash with only managed-marker delta (#1370)', async () => {
     writeBundle(projectDir, 'foo');
+    await deployProjectQuickref(projectDir, 'claude');
     const deployed =
       '---\n' +
       '# aiwg:managed vunknown bundled\n' +
@@ -251,6 +270,7 @@ describe('project-local-doctor (DC-1)', () => {
 
   it('still detects real drift when content differs beyond the marker (#1086)', async () => {
     writeBundle(projectDir, 'foo');
+    await deployProjectQuickref(projectDir, 'claude');
     deployRule(
       projectDir,
       '<!-- aiwg:managed v2026.5.0-rc.6 bundled -->\nrule body EDITED',
@@ -267,6 +287,7 @@ describe('project-local-doctor (DC-1)', () => {
 
   it('quiet mode suppresses informational subsections but keeps failures', async () => {
     writeBundle(projectDir, 'foo');
+    await deployProjectQuickref(projectDir, 'claude');
     deployRule(projectDir, 'mutated');
     const hashes = { 'rules/r1.md': sha256('rule body') };
     const config = makeConfig('foo', hashes);
@@ -295,6 +316,7 @@ describe('project-local-doctor (DC-1)', () => {
 
   it('warns when entries lack artifactHashes (older deploys)', async () => {
     writeBundle(projectDir, 'foo');
+    await deployProjectQuickref(projectDir, 'claude');
     const config = makeConfig('foo', {});
     delete config.installed['foo'].artifactHashes;
 

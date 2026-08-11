@@ -55,6 +55,7 @@ export const quickrefHandler: CommandHandler = {
         console.log(`${verb} ${result.skillName}`);
         console.log(`  Source: ${result.sourcePath}`);
         console.log(`  Output: ${result.outputPath}`);
+        for (const warning of result.warnings) console.log(`  Warning: ${warning}`);
         if (ctx.dryRun) {
           console.log('\n--- preview ---\n');
           console.log(result.content);
@@ -953,6 +954,22 @@ export const promoteHandler: CommandHandler = {
       console.log(`✓ Promoted '${positional}' → ${result.plan?.destination}`);
       if (cleanup) {
         console.log('  Source removed from .aiwg/');
+        try {
+          const { deployProjectQuickref, generateProjectQuickref, hasProjectQuickref } = await import('../../extensions/project-quickref.js');
+          if (await hasProjectQuickref(projectDir)) {
+            if (config.providers.length > 0) {
+              for (const provider of config.providers) await deployProjectQuickref(projectDir, provider);
+              console.log(`  Managed project quickref refreshed for: ${config.providers.join(', ')}.`);
+            } else {
+              await generateProjectQuickref(projectDir);
+              console.log('  Managed project quickref generated; no providers are configured for deployment.');
+            }
+          } else {
+            console.log('  Managed project quickref is now empty; run `aiwg doctor --project-local` to inspect deployed stale copies.');
+          }
+        } catch (error) {
+          console.log(`  Managed project quickref refresh failed: ${(error as Error).message}`);
+        }
       }
       return { exitCode: 0 };
     } catch (err) {
@@ -1069,6 +1086,14 @@ export const newBundleHandler: CommandHandler = {
         }
       } catch {
         // .gitignore management is best-effort; don't fail the scaffold
+      }
+
+      try {
+        const { generateProjectQuickref } = await import('../../extensions/project-quickref.js');
+        await generateProjectQuickref(ctx.cwd);
+        console.log('  → Managed project quickref refreshed from discovered capabilities.');
+      } catch (error) {
+        console.log(`  → Managed project quickref refresh deferred: ${(error as Error).message}`);
       }
 
       // #1235 / #1758 — auto-rebuild the project graph and refresh the

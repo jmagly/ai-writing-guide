@@ -1286,16 +1286,15 @@ async function deployProjectLocalBundles(opts: {
 
   if (targetBundles.length === 0) {
     if (!onlyBundleId) {
-      const { loadProjectQuickref, deployProjectQuickref } = await import('../../extensions/project-quickref.js');
-      const quickref = await loadProjectQuickref(projectDir);
-      if (quickref.exists) {
-        try {
+      const { hasProjectQuickref, deployProjectQuickref } = await import('../../extensions/project-quickref.js');
+      try {
+        if (await hasProjectQuickref(projectDir)) {
           await deployProjectQuickref(projectDir, provider, { dryRun });
           if (verbose || dryRun) ui.dim(`  + project quickref -> ${provider}`);
-        } catch (error) {
-          ui.warn(`Project quickref deployment failed: ${(error as Error).message}`);
-          return { deployed: 0, failed: 1, bundles: [] };
         }
+      } catch (error) {
+        ui.warn(`Project quickref deployment failed: ${(error as Error).message}`);
+        return { deployed: 0, failed: 1, bundles: [] };
       }
     }
     return { deployed: 0, failed: 0, bundles: [] };
@@ -1421,21 +1420,19 @@ async function deployProjectLocalBundles(opts: {
     }
   }
 
-  // A committed `.aiwg/quickref.json` is the canonical orientation source.
-  // Refresh its provider kernel copy whenever project-local bundles deploy so
-  // `aiwg use <bundle>` keeps the always-visible surface in sync.
-  const { loadProjectQuickref, deployProjectQuickref } = await import('../../extensions/project-quickref.js');
-  const quickref = await loadProjectQuickref(projectDir);
-  if (quickref.exists) {
-    try {
+  // Refresh the project kernel quickref from either legacy operator input or
+  // managed project-local discovery whenever bundles deploy.
+  const { hasProjectQuickref, deployProjectQuickref } = await import('../../extensions/project-quickref.js');
+  try {
+    if (await hasProjectQuickref(projectDir)) {
       const quickrefResult = await deployProjectQuickref(projectDir, provider, { dryRun });
       if (verbose || dryRun) {
         ui.dim(`  + project quickref -> ${quickrefResult.provider}${quickrefResult.emulated ? ' (emulated)' : ''}`);
       }
-    } catch (error) {
-      failed++;
-      ui.warn(`Project quickref deployment failed: ${(error as Error).message}`);
     }
+  } catch (error) {
+    failed++;
+    ui.warn(`Project quickref deployment failed: ${(error as Error).message}`);
   }
 
   return { deployed, failed, bundles: targetBundles };

@@ -43,6 +43,7 @@ export const AIWG_GITIGNORE_BLOCK = [
   AIWG_GITIGNORE_SENTINEL,
   '!.aiwg/aiwg.config',
   '!.aiwg/quickref.json',
+  '!.aiwg/quickref.config.json',
   '!.aiwg/addons/',
   '!.aiwg/extensions/',
   '!.aiwg/frameworks/',
@@ -166,11 +167,16 @@ export async function appendAiwgSourceTrackBlock(
   // runs.
   if (report.hasManagedBlock) {
     const path = join(projectDir, '.gitignore');
-    const existing = await readFile(path, 'utf8');
-    if (!existing.split(/\r?\n/).some(line => line.trim() === '!.aiwg/quickref.json')) {
+    let existing = await readFile(path, 'utf8');
+    const required = ['!.aiwg/quickref.json', '!.aiwg/quickref.config.json'];
+    const missing = required.filter(negation =>
+      !existing.split(/\r?\n/).some(line => line.trim() === negation)
+    );
+    if (missing.length > 0) {
       const sep = existing.endsWith('\n') ? '' : '\n';
-      await writeFile(path, `${existing}${sep}!.aiwg/quickref.json\n`, 'utf8');
-      return { added: true, reason: 'updated managed block to track .aiwg/quickref.json' };
+      existing = `${existing}${sep}${missing.join('\n')}\n`;
+      await writeFile(path, existing, 'utf8');
+      return { added: true, reason: `updated managed block to track ${missing.join(', ')}` };
     }
     return { added: false, reason: 'block already present — no change' };
   }

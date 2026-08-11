@@ -13,7 +13,8 @@ types over their full lifetime: discovery → deploy or provider selection
 ├── frameworks/<id>/    # Complete workflow domains
 ├── plugins/<id>/       # Marketplace-packaged bundles
 ├── providers/<id>/     # Custom provider definitions
-└── quickref.json       # Canonical project orientation definition (optional)
+├── quickref.config.json # Optional managed quickref overrides
+└── quickref.json        # Legacy complete v1 quickref definition (optional)
 ```
 
 The logical `.aiwg/` root is resolved through the same project artifact
@@ -141,10 +142,11 @@ Per-bundle deploy:
 
 `--dry-run` and `--no-project-local` are supported.
 
-When `.aiwg/quickref.json` exists, each project-local deploy also regenerates
-and refreshes that provider's project quickref. The generated skill stays short:
-it states local precedence and points to indexed assets rather than embedding
-their full bodies. See [Project Quickrefs](project-quickrefs.md).
+Each project-local deploy resolves a managed quickref from discovered bundles
+(or a legacy `.aiwg/quickref.json`) and refreshes that provider's project
+quickref. The generated skill stays short: it states local precedence and
+points to indexed assets rather than embedding their full bodies. See
+[Project Quickrefs](project-quickrefs.md).
 
 ## Conflict resolution (shadow policy)
 

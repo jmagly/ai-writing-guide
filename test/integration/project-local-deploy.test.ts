@@ -183,6 +183,18 @@ describe('project-local deploy integration (#1046)', () => {
     cleanup(env);
   });
 
+  it('bootstraps a managed quickref preview from bundles with zero dry-run writes', () => {
+    writeFileSync(
+      path.join(env.projectDir, '.aiwg', 'aiwg.config'),
+      JSON.stringify({ version: '1', providers: ['codex'], installed: {}, scripts: {} }, null, 2),
+    );
+    const result = runAiwg(env, ['quickref', 'generate', '--project', '--dry-run']);
+    expect(result.status, result.stdout).toBe(0);
+    expect(result.stdout).toContain('aiwg-project-project-quickref');
+    expect(result.stdout).toContain('aiwg show skill demo-skill');
+    expect(existsSync(path.join(env.projectDir, '.aiwg', 'generated', 'project-quickref'))).toBe(false);
+  });
+
   it('DP-1: deploys a project-local bundle to .claude/ paths', () => {
     const result = runDeploy(env, 'claude');
     expect(result.status).toBe(0);
@@ -449,6 +461,14 @@ describe('project-local deploy integration (#1046)', () => {
 
     const codexSkill = path.join(env.projectDir, '.agents', 'skills', 'demo-skill', 'SKILL.md');
     expect(existsSync(codexSkill), `project-local Codex skill must deploy to ${codexSkill}`).toBe(true);
+    const managedQuickref = path.join(
+      env.projectDir,
+      '.agents',
+      'skills',
+      'aiwg-project-project-quickref',
+      'SKILL.md',
+    );
+    expect(existsSync(managedQuickref), 'bundle-only project should receive a managed project quickref').toBe(true);
 
     const legacyStandardSkill = path.join(env.projectDir, '.codex', '.aiwg', 'skills', 'demo-skill', 'SKILL.md');
     expect(existsSync(legacyStandardSkill), 'Codex project-local skill should use the native .agents/skills discovery path').toBe(false);

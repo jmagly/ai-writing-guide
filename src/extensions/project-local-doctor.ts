@@ -85,12 +85,15 @@ export async function buildProjectLocalDoctorSection(
   const quickrefAudit = await auditProjectQuickref(projectDir, config?.providers ?? []);
   const quickrefErrors = [...quickrefAudit.errors];
   if (quickrefAudit.exists) {
-    const quickrefRelPath = projectRelativePathIfInside(projectDir, projectAiwgPath(projectDir, 'quickref.json'));
-    const ignored = quickrefRelPath
-      ? await checkBundleManifestIgnored(projectDir, quickrefRelPath)
-      : null;
-    if (ignored === true && quickrefRelPath) {
-      quickrefErrors.push(`${quickrefRelPath} is ignored by git; canonical project quickref source must be committed`);
+    for (const name of ['quickref.json', 'quickref.config.json']) {
+      const sourcePath = projectAiwgPath(projectDir, name);
+      const quickrefRelPath = projectRelativePathIfInside(projectDir, sourcePath);
+      const ignored = quickrefRelPath
+        ? await checkBundleManifestIgnored(projectDir, quickrefRelPath)
+        : null;
+      if (ignored === true && quickrefRelPath) {
+        quickrefErrors.push(`${quickrefRelPath} is ignored by git; operator project quickref input must be committed`);
+      }
     }
   }
 
@@ -274,6 +277,7 @@ export async function buildProjectLocalDoctorSection(
       }
       lines.push('    Project-local bundle source should be tracked. Add to .gitignore:');
       lines.push('      !.aiwg/quickref.json');
+      lines.push('      !.aiwg/quickref.config.json');
       lines.push('      !.aiwg/addons/');
       lines.push('      !.aiwg/extensions/');
       lines.push('      !.aiwg/frameworks/');

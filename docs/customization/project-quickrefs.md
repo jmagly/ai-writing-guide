@@ -10,12 +10,16 @@ processes. It tells an agent which project workflow takes precedence and how to
 retrieve the authoritative skill, agent, command, or rule with `aiwg discover`
 and `aiwg show`. It does not copy full workflow bodies into startup context.
 
-## Canonical source
+## Managed discovery and operator input
 
-Commit one `.aiwg/quickref.json` file. If the project artifact root has been
-moved with `.aiwg-location` or `AIWG_ARTIFACTS_PATH`, place `quickref.json` in
-that configured root; AIWG still treats it as the logical `.aiwg/quickref.json`
-source.
+By default, AIWG discovers validated bundles under
+`.aiwg/{extensions,addons,frameworks,plugins,providers}/` and synthesizes one
+bounded routing entry per bundle. This project-only skill remains separate from
+the base `aiwg-utils-quickref`; repository capabilities never expand the base
+quickref.
+
+Commit `.aiwg/quickref.config.json` only when the inferred project identity or
+generated routes need operator overrides:
 
 ```json
 {
@@ -33,9 +37,34 @@ source.
       "discover": ["project issue handling"],
       "show": [{ "type": "skill", "name": "project-issue-workflow" }]
     }
-  ]
+  ],
+  "discovery": {
+    "enabled": true,
+    "excludeBundles": ["internal-experiment"],
+    "overrides": {
+      "team-tools": {
+        "title": "Team workflows",
+        "discover": ["repository team workflow"],
+        "order": -10
+      }
+    }
+  }
 }
 ```
+
+Operator configuration is never rewritten. AIWG writes the resolved definition
+to `generated/project-quickref/definition.json` and the generated skill beside
+it. Discovery fails closed: an invalid or colliding manifest does not replace a
+last known-good generated or deployed quickref with partial output.
+
+### Legacy v1 migration
+
+Existing `.aiwg/quickref.json` files remain supported as complete legacy v1
+definitions and take precedence over managed discovery. To migrate, rename the
+operator-owned settings to `.aiwg/quickref.config.json`, retain `project`,
+`precedence`, and curated `entries`, then add a `discovery` block. Preview the
+merged result with `aiwg quickref generate --project --dry-run` before removing
+the legacy file.
 
 The `project.id` is kebab-case and forms the globally collision-resistant skill
 name `aiwg-project-<id>-quickref`. Choose an organization-qualified id when a
@@ -55,12 +84,11 @@ aiwg quickref deploy --project              # all configured providers
 aiwg quickref deploy --project --provider warp
 ```
 
-Generation writes
+Generation writes `generated/project-quickref/definition.json` and
 `generated/project-quickref/<skill-name>/SKILL.md` under the configured artifact
-root. Repeated generation is
-byte-identical for unchanged source. `aiwg use <project-local-bundle>` and
-normal framework deployment also refresh the quickref when the canonical source
-exists.
+root. Repeated generation is byte-identical for unchanged discovery and
+configuration. `aiwg new-bundle` refreshes generated state, and
+`aiwg use <project-local-bundle>` refreshes the selected provider copy.
 
 Deployment resolves each target through the provider definition:
 
@@ -78,10 +106,16 @@ Files without the marker are operator-owned and are never deleted or replaced.
 
 ## Validation and precedence
 
-`aiwg doctor --project-local` validates the JSON schema, generated output, and
+`aiwg doctor --project-local` re-runs discovery without writing, validates
+operator input, and compares the resolved definition with generated output and
 configured-provider copies. Missing or changed copies are reported as drift.
 
 Keep the quickref small. Its job is to make important local processes visible,
 state explicit precedence, and point to indexed assets. Put detailed steps in
 project-local skills or rules so startup context grows with the number of
 critical routing decisions, not with the size of every workflow.
+
+Managed generation caps the quickref at 50 bundle/curated entries and selects
+at most eight supported `skill`, `agent`, `command`, or `rule` show hints per
+bundle. The complete inventory remains available through `aiwg discover` and
+`aiwg show`; truncation is reported as a generation diagnostic.
