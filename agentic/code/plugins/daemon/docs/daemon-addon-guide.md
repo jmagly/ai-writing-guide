@@ -133,10 +133,10 @@ This removes all deployed artifacts. Daemon infrastructure (`tools/daemon/`) is 
 ## References
 
 - @$AIWG_ROOT/docs/daemon-guide.md — Daemon architecture
-- @$AIWG_ROOT/agentic/code/addons/daemon/behaviors/concierge.behavior.md — Concierge behavior
-- @$AIWG_ROOT/agentic/code/addons/daemon/agents/concierge.md — Concierge agent
-- @$AIWG_ROOT/agentic/code/addons/daemon/skills/daemon-status/SKILL.md — Status skill
-- @$AIWG_ROOT/agentic/code/addons/daemon/rules/daemon-interaction.md — Interaction rules
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/behaviors/concierge.behavior.md — Concierge behavior
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/agents/concierge.md — Concierge agent
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/daemon-status/SKILL.md — Status skill
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/daemon-interaction.md — Interaction rules
 - Issue #605 — This addon's tracking issue
 - Issue #603 — BEHAVIOR.md spec (blocking)
 - Issue #602 — Concierge spec (blocking)

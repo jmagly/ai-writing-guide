@@ -7,6 +7,38 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.8] - 2026-08-12 - "Managed project capability routing"
+
+### Added
+
+- **Managed project capability quickrefs** - project-local extensions, addons,
+  frameworks, plugins, and providers can synthesize a compact, project-only
+  kernel quickref from discovered bundle manifests. Operators can curate the
+  result with `.aiwg/quickref.config.json`; legacy `.aiwg/quickref.json`
+  definitions remain supported without expanding the base AIWG quickrefs.
+- **Intelligent regeneration selection** - `aiwg regenerate` now inspects
+  canonical workspace markers and stable project or legacy context, explains
+  its evidence, and selects workspace refresh or transactional adoption when no
+  branch flag is supplied.
+
+### Changed
+
+- **Relocated artifact control plane** - artifact moves preserve local project
+  control files while discovery and synchronization follow the attached corpus.
+- **CLI performance enforcement** - CI applies a stable cold-start performance
+  gate with documented local reproduction and diagnostics.
+- **Documentation release cadence** - scheduled documentation publication now
+  checks for releasable changes every six hours.
+
+### Fixed
+
+- **Project-bound session lookup** - session catalog discovery stops at the
+  nearest repository boundary instead of adopting an unrelated ancestor AIWG
+  workspace.
+- **Deterministic provider packaging** - clean plugin builds remove undeclared
+  legacy skills, normalize flat skills into provider-compatible directories,
+  and rewrite checkout-only self references to packaged plugin roots.
+
 ## [2026.8.7] - 2026-08-05 - "Audited activity fixtures"
 
 ### Changed

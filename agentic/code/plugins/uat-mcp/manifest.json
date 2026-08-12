@@ -35,10 +35,7 @@
     "uat-report"
   ],
   "skills": [
-    "uat-mode",
-    "uat-generate",
-    "uat-execute",
-    "uat-report"
+    "uat-mode"
   ],
   "schemas": [
     "uat-plan",

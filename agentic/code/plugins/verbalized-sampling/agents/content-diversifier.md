@@ -38,7 +38,7 @@ Determine the task type and identify which VS prompt variant to use:
 
 ### Step 2: Apply VS Prompt
 
-Use the selected prompt template from `@$AIWG_ROOT/agentic/code/addons/verbalized-sampling/prompts/`.
+Use the selected prompt template from `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/prompts/`.
 
 ### Step 3: Post-Process
 

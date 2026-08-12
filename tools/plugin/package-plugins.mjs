@@ -657,6 +657,13 @@ for (const [id, sourceRoot] of MANIFEST_PLUGIN_SOURCES) {
     keywords: manifest.keywords || manifest.tags || [],
     category: manifest.category || 'productivity',
     sourceRoot,
+    declaredSkills: manifest.skills ?? [],
+    // Plugin payloads run outside the checkout. Rewrite references back to
+    // their packaged root, including the pre-rename Ralph path retained by
+    // older Agent Loop documentation.
+    selfReferenceRoots: id === 'agent-loop'
+      ? [sourceRoot, 'agentic/code/addons/ralph']
+      : [sourceRoot],
   };
 }
 
@@ -774,6 +781,48 @@ function copyDir(src, dest, dryRun = false, filter = null) {
   return copied;
 }
 
+function rewritePackagedSelfReferences(pluginDir, roots = []) {
+  if (roots.length === 0) return;
+  const pending = [pluginDir];
+  while (pending.length > 0) {
+    const current = pending.pop();
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const target = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        pending.push(target);
+      } else if (entry.isFile() && /\.(?:md|json|ya?ml)$/.test(entry.name)) {
+        const original = fs.readFileSync(target, 'utf8');
+        let rewritten = original;
+        for (const root of roots) {
+          rewritten = rewritten.replaceAll(`${root}/`, '${CLAUDE_PLUGIN_ROOT}/');
+        }
+        if (rewritten !== original) fs.writeFileSync(target, rewritten, 'utf8');
+      }
+    }
+  }
+}
+
+function pruneUndeclaredPackagedSkills(pluginDir, declaredSkills) {
+  if (!declaredSkills) return;
+  const skillsRoot = path.join(pluginDir, 'skills');
+  if (!fs.existsSync(skillsRoot)) return;
+  const allowed = new Set(declaredSkills);
+  for (const entry of fs.readdirSync(skillsRoot, { withFileTypes: true })) {
+    if (entry.isDirectory() && !allowed.has(entry.name)) {
+      fs.rmSync(path.join(skillsRoot, entry.name), { recursive: true, force: true });
+    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+      const skillId = path.basename(entry.name, '.md');
+      if (allowed.has(skillId)) {
+        const skillDir = path.join(skillsRoot, skillId);
+        fs.mkdirSync(skillDir, { recursive: true });
+        fs.renameSync(path.join(skillsRoot, entry.name), path.join(skillDir, 'SKILL.md'));
+      } else {
+        fs.rmSync(path.join(skillsRoot, entry.name), { force: true });
+      }
+    }
+  }
+}
+
 // Clean plugin directory (except .claude-plugin)
 function cleanPlugin(pluginDir) {
   if (!fs.existsSync(pluginDir)) return;
@@ -811,6 +860,10 @@ function packagePlugin(name, config, options) {
     console.log(`  📁 Copying self-contained source from ${config.sourceRoot}...`);
     const count = copyDir(config.sourceRoot, pluginDir, options.dryRun);
     console.log(`     ${count} files`);
+    if (!options.dryRun) {
+      rewritePackagedSelfReferences(pluginDir, config.selfReferenceRoots);
+      pruneUndeclaredPackagedSkills(pluginDir, config.declaredSkills);
+    }
   }
 
   // Copy sources

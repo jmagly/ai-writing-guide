@@ -85,5 +85,5 @@ Reference: `@$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/commands/flow-guid
 
 ## References
 
-- `@$AIWG_ROOT/agentic/code/addons/guided-implementation/skills/iteration-control/SKILL.md` — Full skill definition
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/iteration-control/SKILL.md` — Full skill definition
 - `@$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/commands/flow-guided-implementation.md` — The command this skill supports

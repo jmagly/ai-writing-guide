@@ -32,7 +32,7 @@ This addon provides a single skill (`iteration-control`) that enables autonomous
 aiwg addon install guided-implementation
 
 # Or copy to project
-cp -r agentic/code/addons/guided-implementation/ .aiwg/addons/
+cp -r ${CLAUDE_PLUGIN_ROOT}/ .aiwg/addons/
 ```
 
 ## Usage

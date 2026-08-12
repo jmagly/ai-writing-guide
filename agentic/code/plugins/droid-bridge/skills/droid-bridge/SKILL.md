@@ -28,4 +28,4 @@ untracked background process.
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/droid-bridge/README.md
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md

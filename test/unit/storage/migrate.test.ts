@@ -116,7 +116,7 @@ describe('aiwg storage migrate (#955)', () => {
         `fs:${src}`,
         '--to',
         `fs:${dst}`,
-      ]);
+      ], projectRoot);
 
       expect(await readFile(join(dst, 'a/one.md'), 'utf-8')).toBe('content one');
       expect(await readFile(join(dst, 'a/two.md'), 'utf-8')).toBe('content two');
@@ -141,7 +141,7 @@ describe('aiwg storage migrate (#955)', () => {
         '--to',
         `fs:${dst}`,
         '--dry-run',
-      ]);
+      ], projectRoot);
 
       expect(existsSync(join(dst, 'a.md'))).toBe(false);
       const summary = stdout.join('\n');
@@ -160,7 +160,7 @@ describe('aiwg storage migrate (#955)', () => {
         `fs:${src}`,
         '--to',
         `fs:${dst}`,
-      ]);
+      ], projectRoot);
       expect(stdout.join('\n')).toMatch(/No entries to migrate/);
     });
 
@@ -244,7 +244,7 @@ describe('aiwg storage migrate (#955)', () => {
         `fs:${src}`,
         '--to',
         `fs:${dst}`,
-      ]);
+      ], projectRoot);
       expect(stdout.join('\n')).toMatch(/copied=2/);
 
       // Second run — both should be skipped per the migration log
@@ -256,7 +256,7 @@ describe('aiwg storage migrate (#955)', () => {
         `fs:${src}`,
         '--to',
         `fs:${dst}`,
-      ]);
+      ], projectRoot);
       const second = stdout.join('\n');
       expect(second).toMatch(/copied=0/);
       expect(second).toMatch(/skipped=2/);
@@ -275,7 +275,7 @@ describe('aiwg storage migrate (#955)', () => {
         `fs:${src}`,
         '--to',
         `fs:${dst}`,
-      ]);
+      ], projectRoot);
 
       // The log path uses cwd-relative .aiwg/ — we can't predict cwd in
       // workers, but we can scan the project root for it
@@ -308,7 +308,7 @@ describe('aiwg storage migrate (#955)', () => {
         `obsidian:${vault}`,
         '--to-folder',
         'AIWG/memory',
-      ]);
+      ], projectRoot);
 
       expect(existsSync(join(vault, 'AIWG/memory/note.md'))).toBe(true);
       const content = await readFile(join(vault, 'AIWG/memory/note.md'), 'utf-8');

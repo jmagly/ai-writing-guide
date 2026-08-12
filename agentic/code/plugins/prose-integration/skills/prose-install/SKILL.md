@@ -126,7 +126,7 @@ This skill runs on **Haiku** — it's confirmation prompts and shell commands.
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/prose-integration/README.md — prose-integration addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — prose-integration addon overview
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/human-authorization.md — Explicit user confirmation required before installing
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md — Validate installation after each method before declaring success
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference for AIWG addon configuration

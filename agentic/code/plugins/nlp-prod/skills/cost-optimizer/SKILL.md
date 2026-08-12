@@ -106,7 +106,7 @@ Never recommend optimizations without a validation path — every recommendation
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/nlp-prod/README.md — nlp-prod addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — nlp-prod addon overview
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/vague-discretion.md — Concrete savings estimates and validation requirements
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md — Analyze pipeline config before making recommendations
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference for cost-report and metrics commands

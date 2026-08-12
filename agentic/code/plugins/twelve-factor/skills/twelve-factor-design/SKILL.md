@@ -60,6 +60,6 @@ Remediation: externalize payment provider config; add OpenTelemetry trace plan; 
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/twelve-factor/checklists/design-checklist.md
-- @$AIWG_ROOT/agentic/code/addons/twelve-factor/templates/remediation-backlog.md
-- @$AIWG_ROOT/agentic/code/addons/twelve-factor/rules/twelve-factor-evidence.md
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/checklists/design-checklist.md
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/templates/remediation-backlog.md
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/twelve-factor-evidence.md

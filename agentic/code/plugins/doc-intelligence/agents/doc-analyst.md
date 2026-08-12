@@ -194,6 +194,6 @@ or would you like to review the conflicts first?
 
 ## References
 
-- doc-intelligence addon: `agentic/code/addons/doc-intelligence/`
+- doc-intelligence addon: `${CLAUDE_PLUGIN_ROOT}/`
 - REF-001: Production-Grade Agentic Workflows
 - REF-002: LLM Failure Modes in Agentic Scenarios

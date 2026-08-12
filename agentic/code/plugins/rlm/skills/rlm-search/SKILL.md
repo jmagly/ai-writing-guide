@@ -206,11 +206,11 @@ If the user's intent is ambiguous:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/rlm/skills/chunk/SKILL.md — Chunking used in prep stage
-- @$AIWG_ROOT/agentic/code/addons/rlm/skills/fanout/SKILL.md — Fanout used at each recursion level
-- @$AIWG_ROOT/agentic/code/addons/rlm/skills/rlm-prep/SKILL.md — Prep stage (called automatically if needed)
-- @$AIWG_ROOT/agentic/code/addons/rlm/skills/rlm-status/SKILL.md — Monitor a running rlm-search
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-state.yaml — State schema for in-progress searches
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/chunk/SKILL.md — Chunking used in prep stage
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/fanout/SKILL.md — Fanout used at each recursion level
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/rlm-prep/SKILL.md — Prep stage (called automatically if needed)
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/rlm-status/SKILL.md — Monitor a running rlm-search
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-state.yaml — State schema for in-progress searches
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md — Budget and parallel limits
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md — Subagent isolation (max 2-level delegation)
 - @.aiwg/research/findings/REF-089-recursive-language-models.md — RLM research foundation

@@ -36,5 +36,5 @@ put secrets, credentials, tokens, or sensitive personal data in memory files.
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/auto-memory/docs/overview.md
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/overview.md
 - @$AIWG_ROOT/agentic/code/addons/semantic-memory/skills/memory-ingest/SKILL.md

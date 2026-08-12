@@ -336,7 +336,7 @@ const grandchildTask = supervisor.submit(grandchildPrompt, {
 
 ### Enforcement of maxDepth
 
-**Default max depth**: 3 (from `agentic/code/addons/rlm/manifest.json`)
+**Default max depth**: 3 (from `${CLAUDE_PLUGIN_ROOT}/manifest.json`)
 
 ```json
 {
@@ -571,7 +571,7 @@ const supervisor = new AgentSupervisor({
 
 ### RLM Addon Configuration
 
-From `agentic/code/addons/rlm/manifest.json`:
+From `${CLAUDE_PLUGIN_ROOT}/manifest.json`:
 
 ```json
 {
@@ -787,10 +787,10 @@ if (metadata.depth >= maxDepth) {
 ## References
 
 - @$AIWG_ROOT/tools/daemon/agent-supervisor.mjs - Agent Supervisor implementation
-- @$AIWG_ROOT/agentic/code/addons/rlm/agents/rlm-agent.md - RLM agent definition
-- @$AIWG_ROOT/agentic/code/addons/rlm/commands/rlm-query.md - Single sub-call command
-- @$AIWG_ROOT/agentic/code/addons/rlm/commands/rlm-batch.md - Batch parallel command
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-task-tree.yaml - Task tree schema
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/agents/rlm-agent.md - RLM agent definition
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/commands/rlm-query.md - Single sub-call command
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/commands/rlm-batch.md - Batch parallel command
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-task-tree.yaml - Task tree schema
 - @$AIWG_ROOT/tools/daemon/task-store.mjs - Persistent task state
 - @.aiwg/research/findings/REF-089-recursive-language-models.md - RLM research
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md - Subagent context minimization

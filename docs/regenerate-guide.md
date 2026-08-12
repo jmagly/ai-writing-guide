@@ -4,9 +4,24 @@
 agents, skills, rules, or commands. Use `aiwg refresh` when deployment content
 also needs to change.
 
-## Choose a branch
+## Let AIWG choose a branch
 
-### Canonical refresh (default)
+For normal use, invoke regeneration without a branch flag:
+
+```bash
+aiwg regenerate --provider <name> --dry-run
+aiwg regenerate --provider <name>
+```
+
+AIWG inspects the workspace graph and stable project signals, then reports the
+selected branch, whether the choice was inferred or explicit, and the evidence
+behind it. It selects canonical workspace refresh for fresh or already-adopted
+projects, transactional existing-project adoption when project or legacy
+operator context still needs extraction, and never infers legacy full injection.
+
+Use an explicit branch when you need to override that decision.
+
+### Canonical refresh
 
 Use this for a fresh project or an already-migrated repository:
 

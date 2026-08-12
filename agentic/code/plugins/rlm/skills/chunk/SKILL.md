@@ -160,8 +160,8 @@ If the user's intent is ambiguous:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/rlm/skills/fanout/SKILL.md — Next step after chunking
-- @$AIWG_ROOT/agentic/code/addons/rlm/skills/rlm-prep/SKILL.md — One-shot prep (chunk + index)
-- @$AIWG_ROOT/agentic/code/addons/rlm/skills/rlm-search/SKILL.md — Full pipeline using chunk output
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-chunk-manifest.yaml — Manifest schema
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/fanout/SKILL.md — Next step after chunking
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/rlm-prep/SKILL.md — One-shot prep (chunk + index)
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/rlm-search/SKILL.md — Full pipeline using chunk output
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-chunk-manifest.yaml — Manifest schema
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md — Parallel context budget rules

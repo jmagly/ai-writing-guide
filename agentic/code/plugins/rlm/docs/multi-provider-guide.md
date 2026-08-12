@@ -726,8 +726,8 @@ aiwg rlm-query "task" --provider claude --sub-provider claude
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/rlm/manifest.json - Default configuration
-- @$AIWG_ROOT/agentic/code/addons/rlm/agents/rlm-agent.md - RLM agent definition
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/manifest.json - Default configuration
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/agents/rlm-agent.md - RLM agent definition
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/config/models.json - Model mappings
 - @.aiwg/research/findings/REF-089-recursive-language-models.md - Research foundation
 - @$AIWG_ROOT/docs/integrations/codex-quickstart.md - OpenAI Codex setup

@@ -126,6 +126,6 @@ This addon is **experimental** (v0.1.0). The Prose VM spec and Forme Container s
 ## References
 
 - OpenProse repository: `github.com/openprose/prose`
-- `@$AIWG_ROOT/agentic/code/addons/prose-integration/skills/` — All skill definitions
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/` — All skill definitions
 - OpenProse spec: `prose.md` in the OpenProse installation (auto-downloaded)
 - Forme Container spec: `forme.md` in the OpenProse installation (auto-downloaded)

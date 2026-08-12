@@ -1404,12 +1404,13 @@ function projectRootCandidate(start: string): string | null {
   } catch {
     current = resolve(start);
   }
-  let gitRoot: string | null = null;
   while (true) {
     if (existsSync(resolve(current, '.aiwg', 'aiwg.config'))) return current;
-    if (!gitRoot && existsSync(resolve(current, '.git'))) gitRoot = current;
+    // A repository root is the project boundary. Do not let an unrelated
+    // ancestor workspace configuration capture session catalog reads.
+    if (existsSync(resolve(current, '.git'))) return current;
     const parent = dirname(current);
-    if (parent === current) return gitRoot;
+    if (parent === current) return null;
     current = parent;
   }
 }

@@ -119,7 +119,7 @@ This skill runs on **Haiku** — it's just git operations and file checks.
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/prose-integration/README.md — prose-integration addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — prose-integration addon overview
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md — Verify installation state before cloning or pulling
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/human-authorization.md — Confirm custom install location with user when non-default path requested
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference for AIWG addon configuration

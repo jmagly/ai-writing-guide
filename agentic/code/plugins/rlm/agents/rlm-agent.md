@@ -314,10 +314,10 @@ intermediate dir, final-result.md).
 
 ## Schema References
 
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-task-state.yaml - Task state tracking
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-config.yaml - Configuration options
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-trajectory.yaml - Execution trajectory format
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/cost-tracking.yaml - Sub-call cost tracking
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-task-state.yaml - Task state tracking
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-config.yaml - Configuration options
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-trajectory.yaml - Execution trajectory format
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/cost-tracking.yaml - Sub-call cost tracking
 
 ## References
 

@@ -95,7 +95,7 @@ If Claude Code v2.1.32+ is detected, memory seeds are automatically copied to `~
 For an existing project:
 
 ```bash
-cp agentic/code/addons/auto-memory/seeds/*.md ~/.claude/projects/$(basename $(pwd))/memory/
+cp ${CLAUDE_PLUGIN_ROOT}/seeds/*.md ~/.claude/projects/$(basename $(pwd))/memory/
 ```
 
 ### Verify
@@ -178,5 +178,5 @@ If you switch platforms, the knowledge in automatic memory files is transferable
 
 ## References
 
-- `@$AIWG_ROOT/agentic/code/addons/auto-memory/seeds/` — Seed template files
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/seeds/` — Seed template files
 - `@$AIWG_ROOT/agentic/code/addons/ralph/schemas/debug-memory.yaml` — agent loop debug memory schema

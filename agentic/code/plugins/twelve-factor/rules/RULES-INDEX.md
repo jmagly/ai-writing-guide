@@ -6,4 +6,4 @@
 
 **When to apply**: Apply during `twelve-factor-design`, `twelve-factor-audit`, architecture reviews, operational readiness reviews, and remediation backlog generation.
 
-**Full rule**: @$AIWG_ROOT/agentic/code/addons/twelve-factor/rules/twelve-factor-evidence.md
+**Full rule**: @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/twelve-factor-evidence.md

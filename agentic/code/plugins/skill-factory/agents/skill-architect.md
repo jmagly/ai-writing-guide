@@ -210,6 +210,6 @@ claims-validator → quality-checker extends
 
 ## References
 
-- skill-factory addon: `agentic/code/addons/skill-factory/`
+- skill-factory addon: `${CLAUDE_PLUGIN_ROOT}/`
 - REF-001: Production-Grade Agentic Workflows
 - REF-002: LLM Failure Modes in Agentic Scenarios

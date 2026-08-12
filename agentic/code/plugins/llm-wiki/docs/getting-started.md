@@ -81,4 +81,4 @@ This runs four checks: broken `[[wikilinks]]`, incorrect `@-mention` usage, orph
 ## Next Steps
 
 - Open `.aiwg/wiki/` in Obsidian for graph visualization — see [Obsidian Integration](obsidian-integration.md)
-- Review the [Page Schema](https://github.com/jmagly/aiwg/blob/main/agentic/code/addons/llm-wiki/schemas/page-schema.md) for frontmatter requirements
+- Review the [Page Schema](https://github.com/jmagly/aiwg/blob/main/${CLAUDE_PLUGIN_ROOT}/schemas/page-schema.md) for frontmatter requirements

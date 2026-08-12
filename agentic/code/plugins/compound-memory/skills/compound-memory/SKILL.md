@@ -63,7 +63,7 @@ ground truth.
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/compound-memory/docs/overview.md
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/overview.md
 - @$AIWG_ROOT/agentic/code/addons/line-memory/skills/line-memory/SKILL.md
 - @$AIWG_ROOT/agentic/code/addons/llm-wiki/skills/llm-wiki/SKILL.md
 - @$AIWG_ROOT/agentic/code/addons/semantic-memory/skills/memory-ingest/SKILL.md

@@ -361,7 +361,7 @@ The orchestrator computes `content_hash` once per input file (via the same sha25
 
 ### Schema reference
 
-A machine-readable JSON schema for the citation tuple is at `agentic/code/addons/rlm/schemas/citation-tuple.json` (#1223). Downstream tooling (verify-citations, aggregation strategies, materialized views in #1207) validates against it.
+A machine-readable JSON schema for the citation tuple is at `${CLAUDE_PLUGIN_ROOT}/schemas/citation-tuple.json` (#1223). Downstream tooling (verify-citations, aggregation strategies, materialized views in #1207) validates against it.
 
 ### Why this matters
 
@@ -498,7 +498,7 @@ Estimated time remaining: {estimate}
 
 Apply aggregation strategy. When `--require-citations` is active, every strategy below MUST preserve sub-agent citation tuples through the merge — see [Citation Format → Aggregation Behavior](#aggregation-behavior) for the per-strategy contract. Implementation specifics for each strategy follow.
 
-**Citation parsing** (used by `merge` and `summarize`): extract inline citations from each sub-agent result by matching the bracket pattern from the [Citation Format](#citation-format) section. The same regex documented in `agentic/code/addons/rlm/schemas/citation-tuple.json` (`x-inline-form.pattern`) applies. Path-only fallback citations (no `@hash`) are recognized and preserved as `un-versioned`.
+**Citation parsing** (used by `merge` and `summarize`): extract inline citations from each sub-agent result by matching the bracket pattern from the [Citation Format](#citation-format) section. The same regex documented in `${CLAUDE_PLUGIN_ROOT}/schemas/citation-tuple.json` (`x-inline-form.pattern`) applies. Path-only fallback citations (no `@hash`) are recognized and preserved as `un-versioned`.
 
 #### For concat strategy:
 ```bash
@@ -932,5 +932,5 @@ Proceed? (y/n)
 - RLM methodology: Retrieval, Long-form thinking, Multi-step
 - Parallel fan-out pattern for chunked processing
 - @.aiwg/rlm/ - RLM batch results directory
-- @$AIWG_ROOT/agentic/code/addons/rlm/docs/batch-processing.md - Detailed batch patterns
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/batch-config.yaml - Batch configuration schema
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/batch-processing.md - Detailed batch patterns
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/batch-config.yaml - Batch configuration schema

@@ -523,13 +523,13 @@ Based on REF-089 benchmarks:
 - `.aiwg/research/synthesis/topic-02-decomposition.md` — Task decomposition strategies
 
 **AIWG Documentation**:
-- `agentic/code/addons/rlm/docs/architecture.md` — Architecture details
-- `agentic/code/addons/rlm/docs/cost-optimization.md` — Cost optimization guide
-- `agentic/code/addons/rlm/docs/parallel-patterns.md` — Parallelization patterns
+- `${CLAUDE_PLUGIN_ROOT}/docs/architecture.md` — Architecture details
+- `${CLAUDE_PLUGIN_ROOT}/docs/cost-optimization.md` — Cost optimization guide
+- `${CLAUDE_PLUGIN_ROOT}/docs/parallel-patterns.md` — Parallelization patterns
 
 **Rules and Schemas**:
-- `agentic/code/addons/rlm/rules/rlm-context-management.md` — Context management rules
-- `agentic/code/addons/rlm/schemas/` — All schema definitions
+- `${CLAUDE_PLUGIN_ROOT}/rules/rlm-context-management.md` — Context management rules
+- `${CLAUDE_PLUGIN_ROOT}/schemas/` — All schema definitions
 
 **Related Issues**:
 - #322 — Core RLM addon implementation

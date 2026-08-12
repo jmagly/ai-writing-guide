@@ -178,8 +178,8 @@ If the user's intent is ambiguous:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/rlm/skills/chunk/SKILL.md — Single-file chunking (used internally by rlm-prep)
-- @$AIWG_ROOT/agentic/code/addons/rlm/skills/fanout/SKILL.md — Query the prepared manifest
-- @$AIWG_ROOT/agentic/code/addons/rlm/skills/rlm-search/SKILL.md — Full pipeline that calls rlm-prep automatically
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-chunk-manifest.yaml — Manifest schema
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/chunk/SKILL.md — Single-file chunking (used internally by rlm-prep)
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/fanout/SKILL.md — Query the prepared manifest
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/rlm-search/SKILL.md — Full pipeline that calls rlm-prep automatically
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-chunk-manifest.yaml — Manifest schema
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md — Budget guidance for downstream fanout

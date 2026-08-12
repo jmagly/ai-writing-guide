@@ -564,10 +564,10 @@ rlm:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-state.yaml - RLM state schema
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-task-tree.yaml - Task tree structure
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-cost.yaml - Cost tracking schema
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-trajectory.yaml - Execution trajectory
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-state.yaml - RLM state schema
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-task-tree.yaml - Task tree structure
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-cost.yaml - Cost tracking schema
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-trajectory.yaml - Execution trajectory
 - @$AIWG_ROOT/agentic/code/addons/ralph/schemas/loop-state.yaml - agent loop state reference
 - @$AIWG_ROOT/agentic/code/addons/ralph/commands/ralph-status.md - Al status command
 - @.aiwg/research/findings/REF-089-recursive-language-models.md - RLM research foundation

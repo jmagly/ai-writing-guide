@@ -65,7 +65,7 @@ Structured JSON suitable for both human display and CI consumption:
       "name": "Allow-list present (optional)",
       "status": "warn",
       "detail": ".aiwg/browser-allowlist.yaml not found",
-      "remediation": "cp $AIWG_ROOT/agentic/code/addons/browser-control/templates/browser-allowlist.yaml.tmpl .aiwg/browser-allowlist.yaml"
+      "remediation": "cp $AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/templates/browser-allowlist.yaml.tmpl .aiwg/browser-allowlist.yaml"
     }
   ]
 }

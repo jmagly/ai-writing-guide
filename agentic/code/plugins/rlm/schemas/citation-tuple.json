@@ -60,7 +60,7 @@
     "issues": ["#1205", "#1223"],
     "epic": "#1196",
     "adr": ".aiwg/architecture/adr-rlm-index-integration.md",
-    "skill": "agentic/code/addons/rlm/skills/rlm-batch/SKILL.md",
+    "skill": "${CLAUDE_PLUGIN_ROOT}/skills/rlm-batch/SKILL.md",
     "hash_implementation": "src/artifacts/index-builder.ts:243"
   }
 }

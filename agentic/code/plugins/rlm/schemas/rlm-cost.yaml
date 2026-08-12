@@ -833,9 +833,9 @@ references:
     - "REF-089: Recursive Language Models (Zhang et al., 2026)"
     - "REF-089 Figure 3: Cost comparison showing bimodal distribution"
   related:
-    - "@agentic/code/addons/rlm/schemas/rlm-task-tree.yaml"
-    - "@agentic/code/addons/rlm/schemas/rlm-state.yaml"
-    - "@agentic/code/addons/rlm/schemas/rlm-trajectory.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/rlm-task-tree.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/rlm-state.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/rlm-trajectory.yaml"
   implementation:
     - "@tools/rlm/"
-    - "@agentic/code/addons/rlm/"
+    - "@${CLAUDE_PLUGIN_ROOT}/"

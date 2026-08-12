@@ -59,7 +59,7 @@
       "action": "copy_seeds"
     },
     "manual_installation": {
-      "command": "cp agentic/code/addons/auto-memory/seeds/*.md ~/.claude/projects/<project>/memory/",
+      "command": "cp ${CLAUDE_PLUGIN_ROOT}/seeds/*.md ~/.claude/projects/<project>/memory/",
       "when": "Manual setup or non-Claude Code platform"
     }
   },

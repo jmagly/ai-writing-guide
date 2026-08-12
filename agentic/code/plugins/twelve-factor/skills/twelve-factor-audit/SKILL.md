@@ -62,8 +62,8 @@ Remediation: split release metadata from image build; add SBOM/provenance eviden
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/twelve-factor/checklists/audit-checklist.md
-- @$AIWG_ROOT/agentic/code/addons/twelve-factor/templates/audit-report.md
-- @$AIWG_ROOT/agentic/code/addons/twelve-factor/schemas/audit-report.schema.json
-- @$AIWG_ROOT/agentic/code/addons/twelve-factor/fixtures/sample-audit-report.json
-- @$AIWG_ROOT/agentic/code/addons/twelve-factor/rules/twelve-factor-evidence.md
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/checklists/audit-checklist.md
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/templates/audit-report.md
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/audit-report.schema.json
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/fixtures/sample-audit-report.json
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/twelve-factor-evidence.md

@@ -122,7 +122,10 @@ output.
 Refresh or adopt the project context graph without redeploying frameworks.
 
 ```bash
-# Fresh or already-migrated project (default branch)
+# Infer the correct branch from workspace state (recommended)
+aiwg regenerate [--provider <name>] [--dry-run]
+
+# Force a fresh or already-migrated project refresh
 aiwg regenerate --workspace [--provider <name>] [--dry-run] [--force]
 
 # Established project: preview is default, apply is explicit
@@ -138,9 +141,13 @@ one rollback-capable transaction. It refuses possible credentials, directive
 conflicts, `--force`, and partial `--no-*-md` writes. A successful apply prints
 `aiwg workspace-context rollback <transaction-id>`.
 
-`--legacy` aliases `--full-inject`. Omitting a branch selects `--workspace`.
-The CLI rejects unknown flags, missing values, and conflicting branches with
-usage status.
+`--legacy` aliases `--full-inject`. When no branch is supplied, the selector
+inspects canonical workspace markers, extracted project context, stable project
+metadata, and legacy operator-authored provider context. It chooses `workspace`
+or `existing-project`, then prints the selected branch, whether it was inferred
+or explicit, and its evidence. Legacy full injection is explicit-only. The CLI
+rejects malformed marker state, unknown flags, missing values, and conflicting
+branches with usage status.
 
 ### help
 

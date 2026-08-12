@@ -572,6 +572,10 @@ aiwg regenerate --existing-project --dry-run
 aiwg regenerate --existing-project --apply
 aiwg workspace-context doctor
 
+# Recommended default: inspect project state and select the safe branch
+aiwg regenerate --dry-run
+aiwg regenerate
+
 # Fresh or already-migrated projects: ordinary canonical refresh
 aiwg regenerate --workspace
 

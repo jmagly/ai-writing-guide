@@ -133,7 +133,7 @@ If you detect contamination mid-run, stop and flag it rather than continue with 
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/nlp-prod/README.md — nlp-prod addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — nlp-prod addon overview
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/vague-discretion.md — Concrete pass thresholds and max-attempts escape hatch requirements
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md — Evaluator isolation as separate agent call
 - @$AIWG_ROOT/agentic/code/addons/aiwg-evals/README.md — aiwg-evals addon providing complementary agent evaluation

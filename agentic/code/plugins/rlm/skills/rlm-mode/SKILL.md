@@ -504,8 +504,8 @@ The orchestrating agent (the one invoking `/rlm-query` or `/rlm-batch`) should i
 
 - `/rlm-query` command — recursive information extraction (positional: context-source, sub-prompt)
 - `/rlm-batch` command — parallel batch processing (positional: glob-pattern, operation; supports `--aggregate summarize` for hierarchical summary)
-- `@$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-config.yaml` - RLM configuration schema
-- `@$AIWG_ROOT/agentic/code/addons/rlm/docs/rlm-architecture.md` - RLM system design
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-config.yaml` - RLM configuration schema
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/rlm-architecture.md` - RLM system design
 - `@.aiwg/research/findings/REF-087-recursive-decomposition.md` - Decomposition research
 
 ## Version History
@@ -515,9 +515,9 @@ The orchestrating agent (the one invoking `/rlm-query` or `/rlm-batch`) should i
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/rlm/README.md — RLM addon overview and architecture
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-config.yaml — RLM configuration schema
-- @$AIWG_ROOT/agentic/code/addons/rlm/docs/rlm-architecture.md — RLM system design and decomposition strategy
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — RLM addon overview and architecture
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-config.yaml — RLM configuration schema
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/rlm-architecture.md — RLM system design and decomposition strategy
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md — Subagent scoping and context budget rules
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md — Context window budgeting for parallel subagents
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference for rlm commands

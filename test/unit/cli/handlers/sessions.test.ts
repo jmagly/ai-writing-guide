@@ -433,6 +433,28 @@ describe('sessions CLI catalog lifecycle', () => {
     });
   });
 
+  it('does not cross a repository boundary to adopt an ancestor workspace', async () => {
+    const ancestor = resolve(root, 'ancestor');
+    const workspace = resolve(ancestor, 'project');
+    mkdirSync(resolve(ancestor, '.aiwg'), { recursive: true });
+    writeFileSync(resolve(ancestor, '.aiwg', 'aiwg.config'), '{}\n');
+    mkdirSync(resolve(workspace, '.git'), { recursive: true });
+
+    const result = await sessionsHandler.execute(context([
+      'list', '--db', resolve(root, 'catalog.sqlite'), '--json',
+    ], workspace));
+    expect(result.exitCode).toBe(0);
+    expect(jsonOutput(log)).toMatchObject({
+      status: 'ok',
+      data: {
+        coverage: {
+          status: 'unknown',
+          workspaceId: realpathSync(workspace),
+        },
+      },
+    });
+  });
+
   it('uses one canonical workspace identity across symlink and real paths', async () => {
     const workspace = resolve(root, 'workspace');
     const alias = resolve(root, 'workspace-alias');

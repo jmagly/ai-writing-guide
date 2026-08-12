@@ -730,8 +730,8 @@ references:
     - "Hierarchical RAG architectures"
   implementation:
     - "@tools/rlm/"
-    - "@agentic/code/addons/rlm/"
+    - "@${CLAUDE_PLUGIN_ROOT}/"
   related:
-    - "@agentic/code/addons/rlm/schemas/rlm-state.yaml"
-    - "@agentic/code/addons/rlm/schemas/rlm-trajectory.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/rlm-state.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/rlm-trajectory.yaml"
     - "@agentic/code/addons/ralph/schemas/iteration-analytics.yaml"

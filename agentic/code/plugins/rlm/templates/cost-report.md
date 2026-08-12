@@ -140,9 +140,9 @@ Depth {{depth}}: {{bar}} {{node_count}} nodes (${{cost}})
 
 ## References
 
-- **Schema**: `@$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-cost.yaml`
+- **Schema**: `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-cost.yaml`
 - **Research**: REF-089 (Zhang et al., 2026) - Recursive Language Models
-- **Documentation**: `@$AIWG_ROOT/agentic/code/addons/rlm/docs/cost-analysis.md`
+- **Documentation**: `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/cost-analysis.md`
 
 ---
 

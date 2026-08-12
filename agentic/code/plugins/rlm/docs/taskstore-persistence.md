@@ -950,8 +950,8 @@ The RLM-TaskStore integration provides:
 ## References
 
 - @$AIWG_ROOT/tools/daemon/task-store.mjs - TaskStore implementation
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-state.yaml - RLM state schema
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-task-tree.yaml - Task tree schema
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-state.yaml - RLM state schema
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-task-tree.yaml - Task tree schema
 - @.aiwg/requirements/use-cases/UC-IPC-002.md - TaskStore requirements
 - @.aiwg/research/findings/REF-089-rlm.md - RLM research foundation
 - @test/unit/daemon/task-store.test.js - TaskStore test suite

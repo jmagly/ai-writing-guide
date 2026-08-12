@@ -218,8 +218,8 @@ Behavior is emulated via:
 
 - @$AIWG_ROOT/docs/daemon-guide.md — Daemon architecture
 - @$AIWG_ROOT/agentic/code/addons/voice-framework/ — Voice/tone system
-- @$AIWG_ROOT/agentic/code/addons/daemon/agents/concierge.md — Agent definition
-- @$AIWG_ROOT/agentic/code/addons/daemon/rules/daemon-interaction.md — Tone enforcement rules
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/agents/concierge.md — Agent definition
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/daemon-interaction.md — Tone enforcement rules
 - @$AIWG_ROOT/tools/daemon/concierge/intent-router.mjs — Intent router implementation (#606)
 - @$AIWG_ROOT/tools/daemon/concierge/response-translator.mjs — Response translator implementation (#607)
 - @$AIWG_ROOT/agentic/code/providers/capability-matrix.yaml — Provider capability matrix (#604)

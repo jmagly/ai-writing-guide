@@ -70,8 +70,8 @@ aiwg discover "ingest source into knowledge base"
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/llm-wiki/README.md
-- @$AIWG_ROOT/agentic/code/addons/llm-wiki/docs/getting-started.md
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/getting-started.md
 - @$AIWG_ROOT/agentic/code/frameworks/knowledge-base/skills/kb-ingest/SKILL.md
 - @$AIWG_ROOT/agentic/code/frameworks/knowledge-base/skills/kb-health/SKILL.md
 - @$AIWG_ROOT/agentic/code/addons/semantic-memory/skills/memory-ingest/SKILL.md

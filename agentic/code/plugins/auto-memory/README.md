@@ -74,10 +74,10 @@ Copy seed files to your project's memory directory:
 
 ```bash
 # For current project
-cp agentic/code/addons/auto-memory/seeds/*.md ~/.claude/projects/$(basename $(pwd))/memory/
+cp ${CLAUDE_PLUGIN_ROOT}/seeds/*.md ~/.claude/projects/$(basename $(pwd))/memory/
 
 # For specific project
-cp agentic/code/addons/auto-memory/seeds/*.md ~/.claude/projects/my-project/memory/
+cp ${CLAUDE_PLUGIN_ROOT}/seeds/*.md ~/.claude/projects/my-project/memory/
 ```
 
 ### Verification

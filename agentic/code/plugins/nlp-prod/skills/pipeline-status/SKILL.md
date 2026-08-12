@@ -82,7 +82,7 @@ Actions recommended:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/nlp-prod/README.md — nlp-prod addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — nlp-prod addon overview
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/vague-discretion.md — Concrete health score thresholds and pass/fail criteria
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md — Scan pipeline configs before reporting status
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference for aiwg nlp and metrics commands

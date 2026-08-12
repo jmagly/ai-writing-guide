@@ -205,7 +205,7 @@ When `docker-compose.yml` or `compose.yaml` is found during Phase 1 discovery, a
 ### Phase 3: Script Assembly
 
 For each script step:
-1. Copy the relevant template from `agentic/code/addons/agentic-installer/scripts/templates/`
+1. Copy the relevant template from `${CLAUDE_PLUGIN_ROOT}/scripts/templates/`
 2. For developer manifests, copy dev templates from `scripts/templates/dev/`
 3. Place in `<project>/installer/scripts/` (user install) or `<project>/installer/scripts/dev/` (developer install)
 4. Customize placeholders (package lists, config paths, extension IDs, etc.)
@@ -414,8 +414,8 @@ spec:
 
 ## References
 
-- Schema: `agentic/code/addons/agentic-installer/schemas/v1/setup-manifest.schema.json`
-- Templates (user): `agentic/code/addons/agentic-installer/scripts/templates/`
-- Templates (dev): `agentic/code/addons/agentic-installer/scripts/templates/dev/`
-- Run skill: `agentic/code/addons/agentic-installer/skills/setup-run/SKILL.md`
-- Validate skill: `agentic/code/addons/agentic-installer/skills/setup-validate/SKILL.md`
+- Schema: `${CLAUDE_PLUGIN_ROOT}/schemas/v1/setup-manifest.schema.json`
+- Templates (user): `${CLAUDE_PLUGIN_ROOT}/scripts/templates/`
+- Templates (dev): `${CLAUDE_PLUGIN_ROOT}/scripts/templates/dev/`
+- Run skill: `${CLAUDE_PLUGIN_ROOT}/skills/setup-run/SKILL.md`
+- Validate skill: `${CLAUDE_PLUGIN_ROOT}/skills/setup-validate/SKILL.md`

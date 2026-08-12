@@ -5,7 +5,7 @@ Importable prompt for classifying context relevance before task execution.
 ## Usage
 
 ```markdown
-@~/.local/share/ai-writing-guide/agentic/code/addons/context-curator/prompts/context-classification.md
+@~/.local/share/ai-writing-guide/${CLAUDE_PLUGIN_ROOT}/prompts/context-classification.md
 ```
 
 ## Prompt

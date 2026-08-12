@@ -592,8 +592,8 @@ limits:
 # References
 references:
   related:
-    - "@agentic/code/addons/rlm/schemas/rlm-task-tree.yaml"
-    - "@agentic/code/addons/rlm/schemas/rlm-trajectory.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/rlm-task-tree.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/rlm-trajectory.yaml"
     - "@tools/rlm/"
   patterns:
     - "REPL-style variable management"

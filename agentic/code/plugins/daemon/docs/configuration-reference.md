@@ -295,6 +295,6 @@ For a development project with file watching and no spend cap:
 
 ## References
 
-- `@$AIWG_ROOT/agentic/code/addons/daemon/docs/quickstart.md` — Start and stop the daemon
-- `@$AIWG_ROOT/agentic/code/addons/daemon/docs/daemon-addon-guide.md` — Architecture and provider support
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/quickstart.md` — Start and stop the daemon
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/daemon-addon-guide.md` — Architecture and provider support
 - `@$AIWG_ROOT/docs/daemon-guide.md` — Supervisor architecture and headend details

@@ -71,6 +71,6 @@ Cached paths are still validated on subsequent calls (files might have moved or 
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/prose-integration/skills/prose-detect/SKILL.md — Full detection implementation
-- @$AIWG_ROOT/agentic/code/addons/prose-integration/skills/prose-install/SKILL.md — Install on demand
-- @$AIWG_ROOT/agentic/code/addons/prose-integration/rules/prose-bridge.md — When and how to use Prose from AIWG workflows
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/prose-detect/SKILL.md — Full detection implementation
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/skills/prose-install/SKILL.md — Install on demand
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/prose-bridge.md — When and how to use Prose from AIWG workflows

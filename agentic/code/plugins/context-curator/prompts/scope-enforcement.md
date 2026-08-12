@@ -5,7 +5,7 @@ Importable prompt for maintaining task boundaries during execution.
 ## Usage
 
 ```markdown
-@~/.local/share/ai-writing-guide/agentic/code/addons/context-curator/prompts/scope-enforcement.md
+@~/.local/share/ai-writing-guide/${CLAUDE_PLUGIN_ROOT}/prompts/scope-enforcement.md
 ```
 
 ## Prompt

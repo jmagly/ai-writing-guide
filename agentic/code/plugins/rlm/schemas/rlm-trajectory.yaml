@@ -796,10 +796,10 @@ references:
     - "REF-018 ReAct methodology"
   implementation:
     - "@tools/rlm/"
-    - "@agentic/code/addons/rlm/"
+    - "@${CLAUDE_PLUGIN_ROOT}/"
   related:
-    - "@agentic/code/addons/rlm/schemas/rlm-task-tree.yaml"
-    - "@agentic/code/addons/rlm/schemas/rlm-state.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/rlm-task-tree.yaml"
+    - "@${CLAUDE_PLUGIN_ROOT}/schemas/rlm-state.yaml"
     - "@.claude/rules/tao-loop.md"
     - "@.claude/rules/thought-protocol.md"
     - "@agentic/code/addons/ralph/schemas/iteration-analytics.yaml"

@@ -30,6 +30,6 @@ than being converted into a pass.
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/frameworks/validation-complete/README.md
-- @$AIWG_ROOT/agentic/code/frameworks/validation-complete/playbooks/provider-validation.yaml
-- @$AIWG_ROOT/agentic/code/frameworks/validation-complete/playbooks/validate-all-providers.yaml
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/playbooks/provider-validation.yaml
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/playbooks/validate-all-providers.yaml

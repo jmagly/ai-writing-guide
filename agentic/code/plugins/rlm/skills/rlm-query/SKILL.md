@@ -249,7 +249,7 @@ Result saved to: {output-file}
 /rlm-query "results/*.json" "combine all JSON arrays into single array"
 ```
 
-See `@$AIWG_ROOT/agentic/code/addons/rlm/commands/rlm-batch.md` for batch processing patterns.
+See `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/commands/rlm-batch.md` for batch processing patterns.
 
 ## Error Handling
 
@@ -537,7 +537,7 @@ This command succeeds when:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/rlm/commands/rlm-batch.md - Batch parallel queries
-- @$AIWG_ROOT/agentic/code/addons/rlm/docs/rlm-patterns.md - RLM design patterns
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/commands/rlm-batch.md - Batch parallel queries
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/docs/rlm-patterns.md - RLM design patterns
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md - Subagent scoping rules (context minimization)
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/instruction-comprehension.md - Instruction following for sub-prompts

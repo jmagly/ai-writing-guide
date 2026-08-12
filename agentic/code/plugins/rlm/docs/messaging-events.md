@@ -1129,9 +1129,9 @@ _Completed: 2026-02-09 10:03:00 UTC_
 - `@$AIWG_ROOT/tools/messaging/adapters/slack.mjs` — Slack adapter
 - `@$AIWG_ROOT/tools/messaging/adapters/discord.mjs` — Discord adapter
 - `@$AIWG_ROOT/tools/messaging/adapters/telegram.mjs` — Telegram adapter
-- `@$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-task-tree.yaml` — Task tree schema
-- `@$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-cost.yaml` — Cost tracking schema
-- `@$AIWG_ROOT/agentic/code/addons/rlm/manifest.json` — RLM addon manifest
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-task-tree.yaml` — Task tree schema
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-cost.yaml` — Cost tracking schema
+- `@$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/manifest.json` — RLM addon manifest
 - `@.aiwg/architecture/adrs/ADR-messaging-bot-mode.md` — Messaging architecture
 
 ---

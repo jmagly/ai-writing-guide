@@ -127,6 +127,6 @@ validates and reports only; it does not mutate manifests.
 
 ## References
 
-- Schema: `agentic/code/addons/agentic-installer/schemas/v1/setup-manifest.schema.json`
-- Run skill: `agentic/code/addons/agentic-installer/skills/setup-run/SKILL.md`
-- Generate skill: `agentic/code/addons/agentic-installer/skills/setup-generate/SKILL.md`
+- Schema: `${CLAUDE_PLUGIN_ROOT}/schemas/v1/setup-manifest.schema.json`
+- Run skill: `${CLAUDE_PLUGIN_ROOT}/skills/setup-run/SKILL.md`
+- Generate skill: `${CLAUDE_PLUGIN_ROOT}/skills/setup-generate/SKILL.md`

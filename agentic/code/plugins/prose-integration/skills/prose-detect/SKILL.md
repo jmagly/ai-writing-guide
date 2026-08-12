@@ -207,7 +207,7 @@ All prose-integration skills call prose-detect as their first step:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/prose-integration/README.md — prose-integration addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — prose-integration addon overview
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md — Priority-ordered detection chain before deciding installation path
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/human-authorization.md — Never install silently; always confirm before running prose-setup
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference for AIWG addon configuration

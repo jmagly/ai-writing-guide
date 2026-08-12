@@ -226,13 +226,13 @@ jobs:
       - name: Structure Validation
         run: |
           for skill in doc-scraper pdf-extractor llms-txt-support source-unifier doc-splitter; do
-            test -f "agentic/code/addons/doc-intelligence/skills/$skill/SKILL.md"
+            test -f "${CLAUDE_PLUGIN_ROOT}/skills/$skill/SKILL.md"
           done
       - name: Content Validation
         run: |
           for skill in doc-scraper pdf-extractor llms-txt-support source-unifier doc-splitter; do
-            grep -q "Grounding Checkpoint" "agentic/code/addons/doc-intelligence/skills/$skill/SKILL.md"
-            grep -q "Recovery Protocol" "agentic/code/addons/doc-intelligence/skills/$skill/SKILL.md"
+            grep -q "Grounding Checkpoint" "${CLAUDE_PLUGIN_ROOT}/skills/$skill/SKILL.md"
+            grep -q "Recovery Protocol" "${CLAUDE_PLUGIN_ROOT}/skills/$skill/SKILL.md"
           done
 ```
 

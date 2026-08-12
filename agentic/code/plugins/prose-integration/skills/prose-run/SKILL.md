@@ -127,7 +127,7 @@ Run artifacts saved to: `.aiwg/working/prose-runs/{run-id}/`
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/prose-integration/README.md — prose-integration addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — prose-integration addon overview
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/subagent-scoping.md — Sub-agent spawning via Task tool for multi-component execution
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/context-budget.md — Monitor context budget for large multi-service programs
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md — Run prose-detect and prose-validate before execution

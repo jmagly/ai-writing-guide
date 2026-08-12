@@ -994,9 +994,9 @@ ralph "task" --strategy rlm --completion "Final set AND output exists"
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/rlm/agents/rlm-agent.md - RLM agent definition
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-task-tree.yaml - Task tree structure
-- @$AIWG_ROOT/agentic/code/addons/rlm/schemas/rlm-state.yaml - State management
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/agents/rlm-agent.md - RLM agent definition
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-task-tree.yaml - Task tree structure
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/schemas/rlm-state.yaml - State management
 - @$AIWG_ROOT/agentic/code/addons/ralph/agents/ralph-loop.md - Agent loop implementation
 - @.aiwg/research/findings/REF-089-recursive-language-models.md - Research foundation
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/rules/tao-loop.md - TAO loop standardization

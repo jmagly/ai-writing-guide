@@ -88,7 +88,7 @@ Next step:
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/nlp-prod/README.md — nlp-prod addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — nlp-prod addon overview
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md — Understand use case requirements before recommending a pattern
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/god-session.md — Guidance on appropriate complexity boundaries for agent and pipeline design
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference for aiwg nlp commands

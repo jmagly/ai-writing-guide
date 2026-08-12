@@ -1,9 +1,7 @@
 ---
-namespace: aiwg
 name: star-prompt
-description: Prompt users tastefully to star AIWG after a successful regenerate or intake workflow.
-version: 1.0.0
-platforms: [all]
+description: Tastefully invite users to star AIWG after a successful workflow.
+namespace: aiwg
 ---
 
 # Star Prompt Skill
@@ -15,7 +13,7 @@ platforms: [all]
 ```markdown
 ## Star the Repository
 
-@~/.local/share/ai-writing-guide/agentic/code/addons/star-prompt/skills/star-prompt.md
+@~/.local/share/ai-writing-guide/${CLAUDE_PLUGIN_ROOT}/skills/star-prompt.md
 ```
 
 ---

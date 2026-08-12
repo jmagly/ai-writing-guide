@@ -10,11 +10,11 @@ Safety and authoring rules for the `setup.aiwg.io/v1` SetupManifest language and
 
 #### installer-safety
 **Summary**: 7 mandatory safety behaviors for installer-agent and setup-run: show before run, confirm destructive operations, validate schema before execution, treat agentic steps as exception-handling only, collect all required params before execution…
-**Full rule**: @$AIWG_ROOT/agentic/code/addons/agentic-installer/rules/installer-safety.md
+**Full rule**: @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/installer-safety.md
 
 #### installer-authoring
 **Summary**: 5 authoring rules for SetupManifest files and script templates: script-first design (agentic steps are exception handling only), always source lib scripts in bash/PowerShell templates, manifests describe while scripts act, one manifest per…
-**Full rule**: @$AIWG_ROOT/agentic/code/addons/agentic-installer/rules/installer-authoring.md
+**Full rule**: @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/installer-authoring.md
 
 ---
 
@@ -34,4 +34,4 @@ Safety and authoring rules for the `setup.aiwg.io/v1` SetupManifest language and
 ---
 
 *Generated from agentic-installer manifest.json — 2 rules*
-*Full rule files: @$AIWG_ROOT/agentic/code/addons/agentic-installer/rules/*
+*Full rule files: @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/*

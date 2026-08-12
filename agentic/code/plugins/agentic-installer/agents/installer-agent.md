@@ -34,7 +34,7 @@ If you can write a script for it, write a script.
 1. **Generate** `setup.manifest.yaml` files from project context, readme, or requirements
 2. **Validate** manifests against the `setup.aiwg.io/v1` schema
 3. **Execute** manifests step-by-step with proper platform detection
-4. **Assemble** script templates from `agentic/code/addons/agentic-installer/scripts/templates/`
+4. **Assemble** script templates from `${CLAUDE_PLUGIN_ROOT}/scripts/templates/`
 5. **Handle** recovery when steps fail — diagnose before retrying
 
 ## Schema Reference
@@ -94,7 +94,7 @@ recovery_procedures:
 
 ## Script Template Library
 
-Located at `agentic/code/addons/agentic-installer/scripts/`:
+Located at `${CLAUDE_PLUGIN_ROOT}/scripts/`:
 
 ```
 lib/
@@ -160,7 +160,7 @@ When executing a manifest, report each step:
 
 ## References
 
-- Schema: `agentic/code/addons/agentic-installer/schemas/v1/setup-manifest.schema.json`
-- Rules: `agentic/code/addons/agentic-installer/rules/`
-- Script lib: `agentic/code/addons/agentic-installer/scripts/lib/`
-- Templates: `agentic/code/addons/agentic-installer/scripts/templates/`
+- Schema: `${CLAUDE_PLUGIN_ROOT}/schemas/v1/setup-manifest.schema.json`
+- Rules: `${CLAUDE_PLUGIN_ROOT}/rules/`
+- Script lib: `${CLAUDE_PLUGIN_ROOT}/scripts/lib/`
+- Templates: `${CLAUDE_PLUGIN_ROOT}/scripts/templates/`

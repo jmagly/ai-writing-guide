@@ -119,7 +119,7 @@ This skill runs on **Sonnet** — parsing and extraction don't require complex r
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/addons/prose-integration/README.md — prose-integration addon overview
+- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/README.md — prose-integration addon overview
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/research-before-decision.md — Run prose-detect before reading any program file
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/instruction-comprehension.md — Extract all contract fields; do not skip optional sections
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference for AIWG addon integration commands

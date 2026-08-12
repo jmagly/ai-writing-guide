@@ -231,21 +231,21 @@ jobs:
       - name: Structure Validation
         run: |
           for skill in skill-builder skill-enhancer quality-checker skill-packager; do
-            test -f "agentic/code/addons/skill-factory/skills/$skill/SKILL.md"
+            test -f "${CLAUDE_PLUGIN_ROOT}/skills/$skill/SKILL.md"
           done
 
       - name: Content Validation
         run: |
           for skill in skill-builder skill-enhancer quality-checker skill-packager; do
-            grep -q "Grounding Checkpoint" "agentic/code/addons/skill-factory/skills/$skill/SKILL.md"
-            grep -q "Recovery Protocol" "agentic/code/addons/skill-factory/skills/$skill/SKILL.md"
-            grep -q "Uncertainty Escalation" "agentic/code/addons/skill-factory/skills/$skill/SKILL.md"
+            grep -q "Grounding Checkpoint" "${CLAUDE_PLUGIN_ROOT}/skills/$skill/SKILL.md"
+            grep -q "Recovery Protocol" "${CLAUDE_PLUGIN_ROOT}/skills/$skill/SKILL.md"
+            grep -q "Uncertainty Escalation" "${CLAUDE_PLUGIN_ROOT}/skills/$skill/SKILL.md"
           done
 
       - name: Orchestrator Validation
         run: |
-          test -f "agentic/code/addons/skill-factory/agents/skill-architect.md"
-          grep -q "orchestration: true" "agentic/code/addons/skill-factory/agents/skill-architect.md"
+          test -f "${CLAUDE_PLUGIN_ROOT}/agents/skill-architect.md"
+          grep -q "orchestration: true" "${CLAUDE_PLUGIN_ROOT}/agents/skill-architect.md"
 ```
 
 ## Revision History
