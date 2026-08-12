@@ -1,5 +1,7 @@
 ---
 name: color-accessibility
+namespace: aiwg
+platforms: [all]
 description: WCAG accessibility analysis for color palettes including contrast ratios, compliance checking, and remediation suggestions. Use when user needs to verify colors meet accessibility standards.
 version: 1.0.0
 ---

@@ -1,5 +1,7 @@
 ---
 name: color-palette
+namespace: aiwg
+platforms: [all]
 description: Generate, analyze, compare, export, and suggest color palettes using color theory. Use when user asks about colors, palettes, color schemes, or needs help choosing colors for a project.
 version: 1.0.0
 ---

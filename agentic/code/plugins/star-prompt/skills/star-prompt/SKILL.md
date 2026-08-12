@@ -2,6 +2,7 @@
 name: star-prompt
 description: Tastefully invite users to star AIWG after a successful workflow.
 namespace: aiwg
+platforms: [all]
 ---
 
 # Star Prompt Skill

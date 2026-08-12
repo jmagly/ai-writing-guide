@@ -1,5 +1,7 @@
 ---
 name: color-trends
+namespace: aiwg
+platforms: [all]
 description: Research current color trends from Pantone, architecture, film, and design. Use when user asks about trending colors, popular palettes, or wants research-backed color inspiration.
 version: 1.0.0
 ---
