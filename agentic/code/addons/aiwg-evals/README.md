@@ -15,6 +15,14 @@ AIWG Evals provides:
 2. **Workflow Scenarios**: Test multi-agent orchestration
 3. **Archetype Detection**: Identify failure pattern susceptibility
 4. **Quality Reports**: Track agent health over time
+5. **Integrity-Gated Evidence**: Distinguish smoke diagnostics from verified
+   evals with uncertainty, paired baselines, compromise labels, and
+   PROMOTE/HOLD/ROLLBACK decisions
+
+> A dimension score is a smoke diagnostic unless the report includes
+> `sample_n`, uncertainty, `integrity_state`, and `trusted_score_source`.
+> Detected `test_edit`, `scorer_edit`, `fixture_edit`, `metric_leakage`, or
+> `unknown` compromise labels prevent promotion regardless of score.
 
 ## Installation
 

@@ -44,8 +44,50 @@ Options:
   --dimensions <list>   Comma-separated dimensions to evaluate
   --output <format>     json or markdown (default: markdown)
   --ollama-url <url>    Ollama API URL (default: http://localhost:11434)
+  --integrity-mode <m>  standard, fresh, locked, or full-locked
+  --fresh-workspace-required
+                        Hold promotion unless workspace freshness is verified
+  --fresh-workspace-verified
+                        Record runtime evidence that workspace freshness was checked
+  --baseline-score <n>  Add a paired overall-score baseline
+  --baseline-label <s>  Label for the paired baseline
   --verbose             Show detailed progress
 ```
+
+## Evaluation Integrity and Release Gates
+
+Every runner-produced JSON and Markdown report includes:
+
+- `sample_n` and a 95% Wilson uncertainty interval
+- `paired_baseline` when a baseline score is supplied
+- `integrity_state` and `trusted_score_source`
+- explicit `fresh_workspace_required` and `fresh_workspace_verified` evidence
+- `compromise_labels` using `test_edit`, `scorer_edit`, `fixture_edit`,
+  `metric_leakage`, or `unknown`
+- `weak_signal_reason`
+- a calibrated `PROMOTE`, `HOLD`, or `ROLLBACK` release-gate decision
+
+`standard` mode preserves the historical execution path, but labels its scores
+as unverified smoke diagnostics and holds release promotion. `locked` snapshots
+the datasets and scoring implementation before the run and detects changes.
+`fresh` additionally requires caller-provided workspace-freshness evidence, and
+`full-locked` combines both expectations. A freshness declaration is evidence
+provenance, not a substitute for an isolated workspace created by the caller.
+
+Example:
+
+```bash
+npx tsx src/index.ts hermes3:latest \
+  --integrity-mode full-locked \
+  --fresh-workspace-required \
+  --fresh-workspace-verified \
+  --baseline-score 78 \
+  --baseline-label previous-release
+```
+
+Dimension scores are smoke diagnostics unless integrity and uncertainty fields
+are present. A high score cannot override detected fixture/scorer/test edits or
+an unverified freshness requirement.
 
 ## Adding Test Cases
 

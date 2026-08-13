@@ -18,6 +18,7 @@ import { OllamaModel } from './models/ollama.js';
 import { EvalRunner } from './runner.js';
 import { generateMarkdownReport } from './reporters/markdown.js';
 import { generateJsonReport } from './reporters/json.js';
+import type { IntegrityMode } from './models/types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATASETS_DIR = path.resolve(__dirname, '../datasets');
@@ -33,8 +34,23 @@ program
   .option('--dimensions <list>', 'Comma-separated dimensions to evaluate')
   .option('--output <format>', 'Output format: json or markdown', 'markdown')
   .option('--ollama-url <url>', 'Ollama API URL', 'http://localhost:11434')
+  .option('--integrity-mode <mode>', 'Integrity mode: standard, fresh, locked, or full-locked', 'standard')
+  .option('--fresh-workspace-required', 'Require independently verified workspace freshness', false)
+  .option('--fresh-workspace-verified', 'Record that the calling runtime verified workspace freshness', false)
+  .option('--baseline-score <score>', 'Paired baseline overall score')
+  .option('--baseline-label <label>', 'Paired baseline label', 'baseline')
   .option('--verbose', 'Show detailed progress', false)
   .action(async (modelId: string, options: Record<string, string | boolean>) => {
+    const integrityMode = options.integrityMode as IntegrityMode;
+    if (!['standard', 'fresh', 'locked', 'full-locked'].includes(integrityMode)) {
+      throw new Error(`Unsupported integrity mode: ${integrityMode}`);
+    }
+    const baselineScore = options.baselineScore === undefined
+      ? undefined
+      : Number(options.baselineScore);
+    if (baselineScore !== undefined && (!Number.isFinite(baselineScore) || baselineScore < 0 || baselineScore > 100)) {
+      throw new Error('--baseline-score must be a number from 0 to 100');
+    }
     console.log(`\nAIWG Model Evaluation Suite`);
     console.log(`Model: ${modelId}`);
     console.log(`Backend: ${options.backend}`);
@@ -54,6 +70,15 @@ program
     const report = await runner.run({
       dimensions,
       verbose: options.verbose as boolean,
+      integrityMode,
+      freshWorkspaceRequired: options.freshWorkspaceRequired as boolean,
+      freshWorkspaceVerified: options.freshWorkspaceVerified as boolean,
+      pairedBaseline: baselineScore !== undefined
+        ? {
+            label: options.baselineLabel as string,
+            score: baselineScore,
+          }
+        : undefined,
     });
 
     // Generate report
