@@ -1445,7 +1445,8 @@ aiwg doc-sync code-to-docs --dry-run
 aiwg doc-sync full --interactive
 
 # Metrics
-aiwg cost-report                 # Session cost breakdown
+aiwg cost-report                 # Agent-native session cost breakdown
+aiwg cost-report --fleet         # OpenRouter per-bot MTD spend observation
 aiwg metrics-tokens              # Token usage
 
 # SDLC accelerate

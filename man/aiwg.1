@@ -39,6 +39,13 @@ Install MCP config for a target (claude, cursor).
 .TP
 .B mcp info
 Display MCP server information.
+.TP
+.B cost-report --fleet [--source openrouter] [--config fleet.yaml] [--json]
+Observe per-bot OpenRouter month-to-date spend and correlate generation IDs
+recorded in the local AIWG activity log. AIWG observes spend; OpenRouter
+enforces key limits and caps.
+.br
+Use B--key key_refR for a single referenced key without a fleet file.
 .SH OPTIONS
 .TP
 .B \-version, \-V
@@ -103,6 +110,10 @@ Project context file for Warp Terminal provider.
 .TP
 .B AIWG_ROOT
 Override the AIWG installation directory.
+.TP
+.B AIWG_OPENROUTER_KEY_IKEY_REFR
+Provide an OpenRouter credential for a fleet key reference. The key reference
+is uppercased and non-alphanumeric characters become underscores.
 .SH EXIT STATUS
 .TP
 .B 0

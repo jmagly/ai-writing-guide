@@ -28,6 +28,8 @@ describe('Cost & Metrics Commands', () => {
     it('should have cost-tracking capability', () => {
       expect(costReportCommand.capabilities).toContain('cost-tracking');
       expect(costReportCommand.capabilities).toContain('metrics');
+      expect(costReportCommand.capabilities).toContain('fleet');
+      expect(costReportCommand.capabilities).toContain('openrouter');
     });
 
     it('should be in metrics category', () => {
@@ -43,6 +45,7 @@ describe('Cost & Metrics Commands', () => {
     it('should have valid metadata', () => {
       expect(costReportCommand.metadata).toBeDefined();
       expect(costReportCommand.metadata.type).toBe('skill');
+      expect(costReportCommand.metadata.commandHint?.cliDisabled).toBe(false);
     });
   });
 

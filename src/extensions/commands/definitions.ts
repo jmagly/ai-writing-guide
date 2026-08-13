@@ -2545,10 +2545,10 @@ export const costReportCommand: Extension = {
   id: 'cost-report',
   type: 'skill',
   name: 'Cost Report',
-  description: 'Generate token cost and spending report for workflows',
-  version: '1.0.0',
-  capabilities: ['cli', 'metrics', 'cost-tracking', 'reporting'],
-  keywords: ['cost', 'report', 'tokens', 'spending', 'budget', 'metrics'],
+  description: 'Generate session or OpenRouter fleet cost and spending reports',
+  version: '1.1.0',
+  capabilities: ['cli', 'metrics', 'cost-tracking', 'reporting', 'fleet', 'openrouter'],
+  keywords: ['cost', 'report', 'tokens', 'spending', 'budget', 'metrics', 'fleet', 'openrouter'],
   category: 'metrics',
   platforms: {
     claude: 'full',
@@ -2560,11 +2560,11 @@ export const costReportCommand: Extension = {
   },
   metadata: {
     type: 'skill',
-    triggerPhrases: ['cost report', 'show costs', 'token spending', 'cost summary', 'budget report'],
+    triggerPhrases: ['cost report', 'show costs', 'token spending', 'cost summary', 'budget report', 'fleet spend'],
     commandHint: {
       template: 'utility',
       allowedTools: ['Read', 'Bash'],
-      cliDisabled: true,
+      cliDisabled: false,
     },
   } satisfies SkillMetadata,
 };

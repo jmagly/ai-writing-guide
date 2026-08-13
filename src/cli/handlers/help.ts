@@ -113,6 +113,10 @@ function displayHelp(): void {
     ['validate-metadata [path]', 'Validate AIWG component metadata (defaults to agentic/code)'],
   ]);
 
+  helpGroup('METRICS', [
+    ['cost-report --fleet', 'Observe OpenRouter per-bot MTD spend and correlate local activity'],
+  ]);
+
   helpGroup('SCAFFOLDING', [
     ['new-bundle <name>', 'Create project-local bundle (--type extension|addon|framework|plugin|provider, --starter skill|rule|agent|minimal, --dry-run)'],
     ['new-extension <name>', 'Alias for new-bundle --type extension'],

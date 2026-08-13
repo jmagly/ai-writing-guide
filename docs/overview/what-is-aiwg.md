@@ -484,7 +484,7 @@ aiwg ralph-external "..."  # Crash-resilient long-running
 aiwg index build           # Artifact discovery
 aiwg doc-sync              # Bidirectional doc sync
 aiwg sdlc-accelerate "..." # Idea to construction-ready
-aiwg cost-report           # Token cost tracking
+aiwg cost-report --fleet   # OpenRouter fleet cost observation
 ```
 
 Full reference: `@docs/agents/cli-reference.md`

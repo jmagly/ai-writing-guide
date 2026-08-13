@@ -56,6 +56,7 @@ Records aggregate into per-agent efficiency summaries showing average tokens per
 ```bash
 aiwg metrics-tokens                         # Current session report
 aiwg cost-report                            # Session cost summary
+aiwg cost-report --fleet                    # OpenRouter fleet spend observation
 aiwg cost-history                           # Historical data
 aiwg metrics-tokens --agent requirements-analyst --since 30d
 ```

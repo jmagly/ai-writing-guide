@@ -2,7 +2,7 @@
 namespace: aiwg
 name: cost-report
 platforms: [all]
-description: Generate a cost and token-spending report for the current or most recent workflow session
+description: Generate a cost report for an AIWG session or observe per-bot OpenRouter fleet spend
 
 ---
 
@@ -28,10 +28,27 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 | Named session | "cost for the greenfield run" | `aiwg cost-report --session greenfield` |
 | Model breakdown | "show costs by model" | `aiwg cost-report --by-model` |
 | Budget check | "are we over budget" | `aiwg cost-report --budget <N>` |
+| Fleet spend | "show fleet spend" | `aiwg cost-report --fleet` |
 
 ## Behavior
 
 When triggered:
+
+### Fleet mode
+
+For `--fleet`, run the native CLI handler. It reads `~/.config/aiwg/fleet.yaml`, resolves each `key_ref` only from `~/.config/aiwg/keys/` or `AIWG_OPENROUTER_KEY_*`, and reports `bot | machine | spend MTD | cap | % used | top-3 expensive sessions`.
+
+Fleet manifests contain references only. Never read a credential from a project manifest, print a credential, or copy one into an artifact. AIWG observes and correlates spend; OpenRouter enforces all limits and caps. Session/model correlation is optional and uses locally recorded `bot=`, `session=`, and `generation_id=` tags in `.aiwg/activity.log`.
+
+```bash
+aiwg cost-report --fleet
+aiwg cost-report --fleet --json
+aiwg cost-report --key <key_ref> --monthly-cap 10
+```
+
+For setup and security details, see `@$AIWG_ROOT/docs/guides/openrouter-fleet-costs.md`.
+
+### Session mode
 
 1. **Determine scope**:
    - Default: most recent completed session
@@ -174,3 +191,4 @@ If the session is ambiguous:
 - @$AIWG_ROOT/src/cli/handlers/subcommands.ts — Cost report handler
 - @$AIWG_ROOT/src/metrics/token-counter.ts — Token counting and MetaGPT baseline (REF-013)
 - @$AIWG_ROOT/docs/cli-reference.md — CLI reference
+- @$AIWG_ROOT/docs/guides/openrouter-fleet-costs.md — OpenRouter fleet configuration and security contract
