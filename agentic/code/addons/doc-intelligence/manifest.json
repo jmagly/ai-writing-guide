@@ -2,8 +2,8 @@
   "id": "doc-intelligence",
   "type": "addon",
   "name": "Doc Intelligence",
-  "version": "1.0.0",
-  "description": "Documentation intelligence addon for scraping, extraction, and analysis. Coordinates doc-scraper, pdf-extractor, llms-txt-support, source-unifier, and doc-splitter skills.",
+  "version": "1.1.0",
+  "description": "Documentation intelligence addon for scraping, extraction, analysis, and generated-docs auditing.",
   "core": false,
   "autoInstall": false,
   "author": "AIWG Contributors",
@@ -15,7 +15,9 @@
     "pdf",
     "extraction",
     "llms-txt",
-    "doc-analysis"
+    "doc-analysis",
+    "docs-audit",
+    "discoverability"
   ],
   "entry": {
     "agents": "agents/",
@@ -29,7 +31,8 @@
     "pdf-extractor",
     "llms-txt-support",
     "source-unifier",
-    "doc-splitter"
+    "doc-splitter",
+    "generated-docs-audit"
   ],
   "platforms": ["claude-code", "factory-ai", "openai-codex"],
   "dependencies": {

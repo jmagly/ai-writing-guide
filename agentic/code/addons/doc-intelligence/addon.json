@@ -1,7 +1,7 @@
 {
   "name": "doc-intelligence",
-  "version": "1.0.0",
-  "description": "Documentation intelligence addon for scraping, extraction, and analysis",
+  "version": "1.1.0",
+  "description": "Documentation intelligence addon for scraping, extraction, analysis, and generated-docs auditing",
   "category": "documentation",
   "author": "AIWG",
   "license": "MIT",
@@ -10,7 +10,8 @@
     "pdf-extractor",
     "llms-txt-support",
     "source-unifier",
-    "doc-splitter"
+    "doc-splitter",
+    "generated-docs-audit"
   ],
   "agents": [
     "doc-analyst"
