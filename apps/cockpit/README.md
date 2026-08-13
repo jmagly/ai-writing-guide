@@ -41,6 +41,22 @@ aiwg cockpit         # launch the local Bridge + web UI
 
 ## Quick Start
 
+For the complete Cockpit + Agentic Sandbox path, including a host audit,
+prerequisite installation, runtime-policy choices, repair handling, and
+end-to-end verification, paste this into a supported AI provider:
+
+```text
+Install or repair AIWG Cockpit and Agentic Sandbox by following
+https://raw.githubusercontent.com/jmagly/agentic-sandbox/main/setup.aiwg.yaml
+Install the required prerequisites, explain the plan before changing anything,
+preserve my existing work, and ask me about the isolation, network, storage,
+and access choices you cannot safely determine.
+```
+
+The manifest defaults to local-only Cockpit and executor endpoints and asks
+before enabling remote access, services, privileged runtime prerequisites, or
+custom mounts and network policy.
+
 The recommended path is through the base `aiwg` CLI. It installs Cockpit outside
 the base package footprint, under `~/.aiwg/cockpit/package`, and pins the Cockpit
 version to the installed AIWG version.

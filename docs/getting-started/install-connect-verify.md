@@ -1,5 +1,10 @@
 # Install, Connect, and Verify AIWG
 
+> Need secure long-running agents? Use the [AIWG Cockpit + Agentic Sandbox
+> installer](https://raw.githubusercontent.com/jmagly/agentic-sandbox/main/setup.aiwg.yaml).
+> It audits the host, installs approved container or VM prerequisites, connects
+> Cockpit to the self-hosted executor, and verifies the control and audit path.
+
 This is the preferred first-run path for every supported provider.
 
 You do not need to know how AIWG works internally. This guide distinguishes

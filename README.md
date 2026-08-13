@@ -24,6 +24,21 @@ and verifies engagement. Most providers can continue in the same session. It
 asks you to restart only when the provider is demonstrably caching old startup
 instructions.
 
+For secure long-running agents, install AIWG Cockpit with a self-hosted Agentic
+Sandbox executor you control and audit:
+
+```text
+Install or repair AIWG Cockpit and Agentic Sandbox by following
+https://raw.githubusercontent.com/jmagly/agentic-sandbox/main/setup.aiwg.yaml
+Install the required prerequisites, explain the plan before changing anything,
+preserve my existing work, and ask me about the isolation, network, storage,
+and access choices you cannot safely determine.
+```
+
+This option audits the host, installs the approved Docker or KVM/libvirt runtime
+and sandbox prerequisites, connects Cockpit to the real executor, applies your
+resource and access choices, and verifies the control and audit path end to end.
+
 If you prefer to install manually:
 
 ```bash
