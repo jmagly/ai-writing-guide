@@ -29,6 +29,7 @@
     "docs:collect": "node tools/manifest/collect-component-docs.mjs",
     "docs:public-source": "node tools/docs/build-public-source.mjs",
     "docs:audience:audit": "node tools/docs/audit-audiences.mjs",
+    "docs:discoverability:audit": "node tools/docs/audit-discoverability.mjs",
     "docs:collect:dry": "node tools/manifest/collect-component-docs.mjs --dry-run",
     "release:fortemi-index": "tsx tools/release/build-fortemi-core-indices.mjs",
     "prepack": "npm run release:fortemi-index",

@@ -1,0 +1,27 @@
+{
+  "schema": "aiwg.docs-discoverability/v1",
+  "baseUrl": "https://docs.example.test/",
+  "artifacts": {
+    "llms": "llms.txt",
+    "llmsFull": "llms-full.txt",
+    "sitemap": "sitemap.xml",
+    "robots": "robots.txt"
+  },
+  "thresholds": {
+    "thinWords": 50,
+    "staleDays": 90,
+    "nearDuplicate": 0.8,
+    "doorwayMinPages": 3,
+    "doorwaySimilarity": 0.7
+  },
+  "pages": [
+    { "url": "/", "urlClass": "guide", "html": "index.html", "markdown": "index.md", "generatedAt": "2026-07-20T00:00:00Z", "expected": { "crawl": true, "index": true, "ai": true, "structuredData": true } },
+    { "url": "/api/", "urlClass": "api", "html": "api/index.html", "markdown": "api/index.md", "generatedAt": "2026-07-20T00:00:00Z", "expected": { "crawl": true, "index": true, "ai": true, "structuredData": true, "apiSpec": true } },
+    { "url": "/orphan/", "urlClass": "guide", "html": "orphan/index.html", "markdown": "orphan/index.md", "generatedAt": "2026-07-20T00:00:00Z", "expected": { "crawl": false, "index": true, "ai": false, "structuredData": false } },
+    { "url": "/private/", "urlClass": "private", "html": "private/index.html", "markdown": "private/index.md", "generatedAt": "2026-07-20T00:00:00Z", "expected": { "crawl": false, "index": true, "ai": false, "structuredData": false } },
+    { "url": "/stale/", "urlClass": "guide", "html": "stale/index.html", "markdown": "stale/index.md", "generatedAt": "2025-01-01T00:00:00Z", "expected": { "crawl": true, "index": true, "ai": true, "structuredData": false } },
+    { "url": "/landing/one/", "urlClass": "landing", "html": "landing/one/index.html", "markdown": "landing/one/index.md", "generatedAt": "2026-07-20T00:00:00Z", "expected": { "crawl": true, "index": true, "ai": true, "structuredData": false } },
+    { "url": "/landing/two/", "urlClass": "landing", "html": "landing/two/index.html", "markdown": "landing/two/index.md", "generatedAt": "2026-07-20T00:00:00Z", "expected": { "crawl": true, "index": true, "ai": true, "structuredData": false } },
+    { "url": "/landing/three/", "urlClass": "landing", "html": "landing/three/index.html", "markdown": "landing/three/index.md", "generatedAt": "2026-07-20T00:00:00Z", "expected": { "crawl": true, "index": true, "ai": true, "structuredData": false } }
+  ]
+}

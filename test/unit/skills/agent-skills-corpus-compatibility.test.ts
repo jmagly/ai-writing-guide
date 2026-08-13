@@ -70,7 +70,7 @@ function formatDiagnostics(diagnostics: readonly AgentSkillDiagnostic[]): string
 }
 
 describe('canonical Agent Skills-compatible corpus', () => {
-  it('keeps all 506 canonical skills compatible with stable path diagnostics', () => {
+  it('keeps all 507 canonical skills compatible with stable path diagnostics', () => {
     const skills = canonicalSkills();
     const diagnostics = skills.flatMap((skill) => (
       validateCompatibleAgentSkillMetadata(
@@ -87,7 +87,7 @@ describe('canonical Agent Skills-compatible corpus', () => {
       diagnostic.code === 'AS_ADVISORY_LINES'
     ));
 
-    expect(skills).toHaveLength(506);
+    expect(skills).toHaveLength(507);
     expect(errors, formatDiagnostics(errors)).toEqual([]);
     expect(lineAdvisories).toHaveLength(85);
     expect(lineAdvisories.every((diagnostic) => (

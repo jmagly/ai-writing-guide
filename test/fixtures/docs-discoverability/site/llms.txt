@@ -1,0 +1,8 @@
+# Fixture documentation
+
+- [Home](/)
+- [API](/api/)
+- [History](/stale/)
+- [Landing one](/landing/one/)
+- [Landing two](/landing/two/)
+- [Landing three](/landing/three/)
