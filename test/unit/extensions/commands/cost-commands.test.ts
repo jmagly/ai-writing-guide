@@ -9,6 +9,7 @@
 
 import { describe, it, expect } from 'vitest';
 import {
+  evidenceCommand,
   costReportCommand,
   costHistoryCommand,
   metricsTokensCommand,
@@ -19,6 +20,14 @@ import {
 } from '../../../../src/extensions/commands/definitions.js';
 
 describe('Cost & Metrics Commands', () => {
+  describe('evidenceCommand', () => {
+    it('exposes portable evidence export and verification through discovery', () => {
+      expect(evidenceCommand).toMatchObject({ id: 'evidence', type: 'skill', category: 'metrics' });
+      expect(evidenceCommand.capabilities).toEqual(expect.arrayContaining(['evidence', 'provenance', 'verification']));
+      expect(evidenceCommand.metadata.commandHint?.cliDisabled).toBe(false);
+    });
+  });
+
   describe('costReportCommand', () => {
     it('should have correct id and type', () => {
       expect(costReportCommand.id).toBe('cost-report');
@@ -88,12 +97,14 @@ describe('Cost & Metrics Commands', () => {
   describe('registration in commandDefinitions', () => {
     it('should include all cost commands in the definitions array', () => {
       const ids = commandDefinitions.map((cmd) => cmd.id);
+      expect(ids).toContain('evidence');
       expect(ids).toContain('cost-report');
       expect(ids).toContain('cost-history');
       expect(ids).toContain('metrics-tokens');
     });
 
     it('should be findable by getCommandDefinition', () => {
+      expect(getCommandDefinition('evidence')).toBeDefined();
       expect(getCommandDefinition('cost-report')).toBeDefined();
       expect(getCommandDefinition('cost-history')).toBeDefined();
       expect(getCommandDefinition('metrics-tokens')).toBeDefined();
@@ -101,8 +112,9 @@ describe('Cost & Metrics Commands', () => {
 
     it('should be findable by category', () => {
       const metricsCommands = getCommandsByCategory('metrics');
-      expect(metricsCommands.length).toBe(3);
+      expect(metricsCommands.length).toBe(4);
       const ids = metricsCommands.map((cmd) => cmd.id);
+      expect(ids).toContain('evidence');
       expect(ids).toContain('cost-report');
       expect(ids).toContain('cost-history');
       expect(ids).toContain('metrics-tokens');
