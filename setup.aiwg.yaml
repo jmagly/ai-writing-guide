@@ -5,6 +5,7 @@ metadata:
   description: Safely install, repair, update, connect, and verify AIWG for a supported provider.
   version: "1.0.0"
   install_type: user
+  execution_mode: provider-orchestrated
 spec:
   platforms:
     - os: linux
@@ -57,7 +58,10 @@ spec:
         AIWG_ROOT and related AIWG environment variables, and PROJECT_DIR. Detect
         shadowed or duplicate binaries, system-owned npm prefixes, versions older than
         Node 20, stale or broken AIWG packages, package/version mismatches, and provider
-        files already deployed in the project. Run an existing aiwg doctor and
+        files already deployed in the project. Also detect an empty/new project,
+        a non-Git folder, a monorepo or nested workspace, read-only filesystems,
+        low disk space, offline/proxy/registry restrictions, and concurrent package
+        manager or AIWG processes. Run an existing aiwg doctor and
         aiwg status --probe --json only when the resolved executable can be invoked
         safely. Never use sudo to repair a global npm installation.
     - id: detect-development-mode
@@ -91,7 +95,11 @@ spec:
         or broken, propose repairing or updating the full aiwg package. Explain any
         duplicate or shadowed binaries and identify the exact paths affected. Obtain
         approval before any installation, update, unlink, PATH/profile edit, Git pull,
-        or provider-file mutation.
+        or provider-file mutation. If more than one provider is requested, explain
+        that deployment and regeneration must be verified separately for each one.
+        If the environment is CI, headless, a container, SSH-only, offline, or
+        read-only, stop using this interactive manifest and route to the documented
+        non-interactive or offline flow instead of improvising prompts or mutations.
     - id: repair-or-install
       type: agentic
       depends_on:
@@ -117,7 +125,10 @@ spec:
         preferred complete system with aiwg use all --provider PROVIDER. Preserve
         project-authored files and report every conflict instead of forcing an
         overwrite. This is a project-local deployment unless the user explicitly
-        requested and approved user or global scope.
+        requested and approved user or global scope. For a monorepo, confirm whether
+        PROJECT_DIR is the repository root or an intentionally isolated package before
+        writing provider files. Never initialize Git or create a new project structure
+        unless the user explicitly requested it.
       on_fail: diagnose-install
     - id: build-and-regenerate
       type: agentic
@@ -141,7 +152,8 @@ spec:
         WORKSPACE.md and AIWG.md, and the provider adapter. Also verify that the
         current agent can read the generated bootstrap and discover an AIWG
         capability. Report each check as pass, repaired, warning, or blocked, with a
-        concrete next action for any non-pass result.
+        concrete next action for any non-pass result. When multiple providers were
+        selected, repeat provider adapter and discovery verification for each provider.
       on_fail: diagnose-install
     - id: session-handoff
       type: agentic

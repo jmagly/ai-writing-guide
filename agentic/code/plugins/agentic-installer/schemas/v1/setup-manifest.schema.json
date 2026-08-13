@@ -28,6 +28,12 @@
           "enum": ["user", "developer", "ci"],
           "default": "user",
           "description": "Audience and scope of this manifest. 'user' = production deploy. 'developer' = local dev environment. 'ci' = headless pipeline setup."
+        },
+        "execution_mode": {
+          "type": "string",
+          "enum": ["deterministic", "provider-orchestrated"],
+          "default": "deterministic",
+          "description": "Execution contract. Deterministic manifests run through setup-run and use agentic steps only for exceptional recovery. Provider-orchestrated manifests are interpreted by a capable AI provider and may use agentic steps as the primary workflow."
         }
       }
     },

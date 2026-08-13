@@ -13,7 +13,13 @@ Rules for writing `setup.aiwg.io/v1` SetupManifest files and their accompanying 
 
 ## Rule 1: Script-First Design
 
-**Every installation step that can be expressed in shell must be a `script` step.**
+**Every deterministic installation step that can be expressed in shell must be a `script` step.**
+
+This rule applies when `metadata.execution_mode` is omitted or set to
+`deterministic`. A `provider-orchestrated` manifest is a separate, explicit
+contract for adaptive inspection and repair. Use that mode only when the
+workflow genuinely depends on provider reasoning, approvals, and preservation
+of heterogeneous existing state; never use it to disguise routine commands.
 
 The decision tree:
 

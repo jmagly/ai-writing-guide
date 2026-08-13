@@ -34,11 +34,14 @@ When a route is ambiguous, ask **one** clarifying question before acting. When a
 2. Refresh/update deployments with `aiwg refresh` (`aiwg sync` is deprecated).
 3. Deploy frameworks/providers with `aiwg use`.
 4. Repair broken installs non-destructively and verify afterward.
-5. Route provider capability questions to native tools or AIWG emulation.
-6. Route model policy/discovery questions to `aiwg steward models` and the
+5. Route zero-to-working AIWG installation or repair through the public
+   provider-orchestrated `setup.aiwg.yaml` flow; use deterministic `setup-run`
+   only for manifests designed for CLI execution.
+6. Route provider capability questions to native tools or AIWG emulation.
+7. Route model policy/discovery questions to `aiwg steward models` and the
    `aiwg models sources|refresh|audit|resolve` command family.
-7. Route capability discovery to `aiwg-finder` or `aiwg discover` / `aiwg show`.
-8. Route issue-workflow setup, project-local customization, persona/SOUL, and project creation requests to their owning quickrefs instead of guessing.
+8. Route capability discovery to `aiwg-finder` or `aiwg discover` / `aiwg show`.
+9. Route issue-workflow setup, project-local customization, persona/SOUL, and project creation requests to their owning quickrefs instead of guessing.
 
 ## Context Discipline
 
@@ -67,6 +70,8 @@ AIWG CLI output is verbose. Preserve context:
 
 | Intent | First route |
 |---|---|
+| Install or repair AIWG from zero to verified engagement | Follow `https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml` in the current provider; inspect and plan before mutation, then verify with `aiwg status --probe --json` and `aiwg doctor` |
+| CI, container image, cloud-init, SSH-only, offline, or non-interactive setup | `docs/install/non-interactive.md`; do not force the conversational manifest through `setup-run` |
 | Provider native/emulated support | `aiwg steward capabilities` or `aiwg steward find --capability <feature>`; source: `agentic/code/providers/capability-matrix.yaml` |
 | Model routing, model catalog provenance, token/cost escalation | `aiwg steward models`; then `aiwg models sources --json`, `aiwg models refresh --json`, `aiwg models audit --provider <provider>`, or `aiwg models resolve --provider <provider>` |
 | Maintenance, refresh, deploy, doctor, regenerate | `[[aiwg-utils-quickref]]` and the paired kernel skill (`aiwg-doctor`, `aiwg-refresh`, `use`, `aiwg-regenerate`, `aiwg-status`) |
@@ -123,6 +128,12 @@ confirmation is required.
 2. Prefer AIWG CLI commands over direct edits to deployed provider directories.
 3. Use `--dry-run` before uncertain or broad changes.
 4. Always verify after maintenance actions.
+
+For requests to externalize, attach, diagnose, or repair a project corpus,
+preserve the repository-local `.aiwg` control plane. Run `aiwg status --probe
+--json` or `aiwg doctor` first. Route repair through `aiwg artifacts repair
+--dry-run`, require explicit operator intent before `--apply`, and never remove
+or overwrite divergent local/external files automatically.
 5. Treat project-local artifacts, provider definitions, rules, and agent files as trusted repo code that must be reviewed before deploy.
 6. For destructive operations, list affected files/agents/skills and wait for confirmation.
 7. If discovery, show, or a documented link fails, retry once with a broader phrase; then file a correction issue with evidence instead of inventing a route.

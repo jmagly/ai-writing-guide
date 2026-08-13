@@ -25,6 +25,7 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 - "what command handles Y" → find subcommand
 - "which model should this use" → model policy route
 - "model catalog or routing" → `aiwg steward models`
+- "install or repair AIWG" → public provider-orchestrated setup manifest
 
 ## Trigger Patterns Reference
 
@@ -36,6 +37,22 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 | Feature check | "does my provider support agent teams" | `aiwg steward capabilities --feature agent_teams` |
 | Routing lookup | "which providers support cron" | `aiwg steward find --capability cron` |
 | Model routing | "which model should this use" | `aiwg steward models`; then `aiwg models audit` or `aiwg models resolve` |
+| Install or repair AIWG | "get AIWG working in this project" | Follow the public `setup.aiwg.yaml` in the current provider, then verify status and doctor |
+
+## AIWG Installation Routing
+
+For an interactive new, existing, stale, broken, duplicate, or development-mode
+AIWG installation, follow
+`https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml` in the
+current supported provider. It is a `provider-orchestrated` manifest: inspect
+and explain before mutation, preserve existing work, deploy `all`, regenerate,
+and verify with `aiwg status --probe --json` plus `aiwg doctor`. Do not send it
+to deterministic `aiwg setup-run`.
+
+Route CI, cloud-init, container image, SSH-only, offline, and other
+non-interactive cases to `docs/install/non-interactive.md`. Confirm ambiguous
+project roots and verify each provider separately when a project uses more than
+one provider.
 
 ## Behavior
 

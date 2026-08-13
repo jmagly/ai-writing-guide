@@ -1,6 +1,7 @@
 # Agentic Installer
 
-An AIWG addon that defines the `setup.aiwg.io/v1` SetupManifest language for cross-platform, script-first software installation workflows.
+An AIWG addon that defines the `setup.aiwg.io/v1` SetupManifest language for
+cross-platform deterministic and provider-orchestrated installation workflows.
 
 ## Overview
 
@@ -14,9 +15,15 @@ The agentic-installer addon provides:
 
 ## Design Philosophy
 
-**Scripts are the primary artifact. Agentic steps are exception handling only.**
+**Deterministic manifests are script-first. Provider-orchestrated manifests are
+explicitly labeled.**
 
-A well-written SetupManifest produces shell scripts that run standalone, without AI tooling. The `type: agentic` step exists only for recovery from unexpected environment states. If you can script it, script it.
+A deterministic SetupManifest produces shell scripts that run standalone,
+without AI tooling. Its `type: agentic` step exists only for recovery from
+unexpected environment states. A manifest with
+`metadata.execution_mode: provider-orchestrated` is instead interpreted by a
+capable AI provider and may use reasoning steps as the workflow. The CLI
+validates that mode but does not execute it through `setup-run`.
 
 ## Quick Start
 

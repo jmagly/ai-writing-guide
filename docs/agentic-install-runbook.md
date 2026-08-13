@@ -2,6 +2,11 @@
 
 ## Canonical agentic installer
 
+This is the fastest supported route from an AI conversation to a verified AIWG
+project. The user pastes one prompt; the provider inspects, plans, asks only for
+decisions it cannot safely infer, installs or repairs AIWG, deploys `all`, builds
+indices, regenerates context, and verifies engagement.
+
 For a new, outdated, broken, duplicate, or development-mode installation, use
 the public [`SetupManifest`](../setup.aiwg.yaml). A user can paste:
 
@@ -17,6 +22,24 @@ explicit approval for repairs and mode switches, preservation of source
 checkouts, the complete `all` deployment, index construction, regeneration,
 and evidence-based verification. Use the manual notes below when the manifest
 cannot be retrieved.
+
+The public manifest declares `metadata.execution_mode: provider-orchestrated`.
+Give it to a supported AI provider; do not run it with `aiwg setup-run`.
+`setup-run` is the deterministic runner for script-first application manifests.
+This distinction is intentional: AIWG installation repair must reason about
+existing checkouts, duplicate binaries, provider state, and user-authored files.
+
+### Which path applies?
+
+| Scenario | Route |
+|---|---|
+| New project, existing project, stale/broken install, or development checkout | Paste the canonical prompt into the provider |
+| Multiple providers in one project | Use the prompt and have the installer deploy and verify each provider separately |
+| CI, cloud-init, container image, SSH-only, or other headless provisioning | Use [Non-Interactive Installation](/install/non-interactive) |
+| Offline or restricted registry/proxy environment | Use an approved package/cache source, then follow the manual verification sequence below |
+| Provider cannot retrieve the URL | Paste the manifest contents or use the manual fallback |
+| Provider cannot execute local tools | Use the manual fallback, then ask the provider only to verify engagement |
+| Read-only workspace or insufficient permissions/disk | Resolve the environment constraint before deployment; do not force partial setup |
 
 Use this runbook when an agent or steward needs to take a machine or project
 from zero to a working AIWG session. The human-facing path is short: install
@@ -68,7 +91,8 @@ npm config get prefix
 "$(npm config get prefix)/bin/aiwg" --version
 ```
 
-In automation or fresh shells where PATH may be unreliable, use `npx`:
+In automation or fresh shells where PATH may be unreliable, use `npx` with an
+explicit package name and version policy approved for that environment:
 
 ```bash
 npx aiwg --version

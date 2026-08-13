@@ -8,10 +8,10 @@ Find the scenario that matches where you are right now.
 
 | I want to... | Guide |
 |---|---|
+| Get AIWG installed, repaired, connected, and verified with one pasted prompt | [Agentic Install Runbook](../agentic-install-runbook.md) |
 | Get one useful AIWG result before learning the whole system | [Start Here](start-here.md) |
 | Install AIWG and correctly connect it to my provider | [Install, Connect, and Verify](install-connect-verify.md) |
 | Install Node.js/npm without version or permission conflicts | [Install Node.js and npm Safely](install-node.md) |
-| Have an agent or steward install AIWG from zero to running | [Agentic Install Runbook](../agentic-install-runbook.md) |
 | Install AIWG on macOS or fix npm `EACCES` | [macOS Install Guide](macos-install.md) |
 | Walk through provider, project, deployment, and verification choices | [Start Here: guided recovery](start-here.md#guided-recovery-escape-hatch) |
 | Ask AIWG which path to use first | [Ask The Steward To Route You](first-success-ask-steward.md) |

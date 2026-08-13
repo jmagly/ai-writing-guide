@@ -40,6 +40,7 @@ Reserved for future safe autofixes. The current CLI validates and reports only.
 - All step types are one of: `script`, `detect`, `ask`, `verify`, `agentic`, `platform-route`, `chain`, `os-config`
 - Param types are one of: `string`, `path`, `boolean`, `integer`, `choice`
 - `metadata.install_type` must be one of: `user`, `developer`, `ci` (if present)
+- `metadata.execution_mode` must be `deterministic` or `provider-orchestrated` (if present)
 
 ### Reference Checks
 - Every `script:` path exists relative to the manifest directory
@@ -76,7 +77,8 @@ These checks apply only to manifests with `install_type: developer`:
 - Warn if a script template is used directly without customization (template placeholder text detected)
 
 ### Agentic Step Audit
-- Warn on any `type: agentic` step — print a reminder that agentic steps are exception handling only
+- Warn on any `type: agentic` step in a deterministic manifest — print a reminder that agentic steps are exception handling only
+- Do not warn merely because a provider-orchestrated manifest uses agentic steps
 - Error if `type: agentic` step has no `instruction` field
 
 ## Output Format

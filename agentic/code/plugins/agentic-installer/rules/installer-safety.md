@@ -61,11 +61,11 @@ Always invoke `setup-validate` internally before `setup-run` executes the first 
 
 **Do not generate `type: agentic` steps for operations that can be scripted.**
 
-When generating a manifest (`setup-generate`), only emit `type: agentic` steps when:
+When generating a deterministic manifest (`setup-generate`), only emit `type: agentic` steps when:
 - The operation cannot be expressed in bash/PowerShell without runtime AI reasoning
 - A prior script step has already failed and the agentic step is the recovery path
 
-When executing a manifest (`setup-run`), if an `agentic` step is encountered:
+When executing a deterministic manifest (`setup-run`), if an `agentic` step is encountered:
 1. Explain to the user why this step requires AI intervention
 2. Show the `instruction` field
 3. Describe the actions you intend to take before taking them
@@ -73,6 +73,10 @@ When executing a manifest (`setup-run`), if an `agentic` step is encountered:
 **Why:** Agentic steps are non-reproducible and cannot be audited like scripts. Over-use erodes trust in the installer.
 
 **How to apply:** In `setup-generate`, prefer `script` for every step. Flag any `type: agentic` in `setup-validate` output with a warning.
+
+For `metadata.execution_mode: provider-orchestrated`, validation permits
+agentic steps, but the deterministic CLI must stop before mutation and direct
+the operator to give the manifest to a supported provider.
 
 ---
 

@@ -3,15 +3,18 @@
 ## Overview
 
 `setup.aiwg.io/v1` is a Kubernetes-style YAML language for declaring cross-platform,
-script-first software installation. A SetupManifest declares a platform matrix,
+software installation. A SetupManifest declares a platform matrix,
 user-facing parameters, prerequisite checks, OS-level configuration entries, ordered
 installation steps, and named recovery procedures. Manifests are validated, executed,
 and authored by the **agentic-installer** addon.
 
-**Design philosophy**: scripts are the primary artifact. The `agentic` step type exists
-only for exception handling and adaptive recovery — not as a substitute for scripting
-known sequences. A well-written SetupManifest produces shell scripts that run
-standalone without AI tooling.
+The default `deterministic` execution mode is script-first: `agentic` steps are
+reserved for exception handling and adaptive recovery. The
+`provider-orchestrated` mode is for a manifest deliberately interpreted by a
+capable AI provider, such as AIWG's public install/repair flow. It may use
+reasoning steps as its primary workflow because inspection, authorization, and
+non-destructive repair vary by machine and project. `aiwg setup-run` executes
+only deterministic manifests.
 
 The authoritative JSON Schema lives at
 `agentic/code/addons/agentic-installer/schemas/v1/setup-manifest.schema.json`. This
@@ -59,9 +62,16 @@ spec:
 | `description`  | string       | optional         | Free-form description.        |
 | `version`      | string       | optional         | Manifest version.             |
 | `install_type` | enum (below) | optional, `user` | Audience tag.                 |
+| `execution_mode` | enum (below) | optional, `deterministic` | Runtime contract. |
 
 `install_type` values: `user` (production deploy), `developer` (local dev environment),
 `ci` (headless pipeline setup). Only `developer` manifests may use `os_config`.
+
+`execution_mode` values:
+
+- `deterministic` — executable through `aiwg setup-run`; use scripts for known work.
+- `provider-orchestrated` — give the manifest URL or contents to a supported AI
+  provider. The CLI validates it but returns a handoff message instead of executing it.
 
 ### `spec`
 

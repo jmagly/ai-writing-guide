@@ -30,7 +30,17 @@ Recommend one path, one reason, and one fallback.
 
 ## Setup and Approval
 
-The preferred setup sequence is:
+The fastest supported setup is one paste into the AI provider with the project
+open:
+
+```text
+Install or repair AIWG for this project by following
+https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml
+Explain the plan before changing anything, preserve my existing work, and ask
+me only for choices you cannot safely determine.
+```
+
+The provider performs the preferred sequence:
 
 1. install AIWG;
 2. deploy `all` for the provider you use;
@@ -38,8 +48,8 @@ The preferred setup sequence is:
 4. invoke `aiwg-regenerate` so AIWG is tailored and hooked into the project;
 5. verify engagement.
 
-Follow [Install, Connect, and Verify](install-connect-verify.md) for the exact
-bootstrap commands and the conversational regeneration/verification steps.
+Follow [Install, Connect, and Verify](install-connect-verify.md) when you need
+the manual fallback, provider-name table, or restricted/headless guidance.
 
 After bootstrap, ask the agent to handle ongoing setup from the project folder:
 

@@ -9,6 +9,11 @@ description: "Execute a `setup.aiwg.io/v1` SetupManifest, performing cross-platf
 
 Execute a `setup.aiwg.io/v1` SetupManifest, performing cross-platform installation step by step.
 
+This skill executes deterministic manifests. If
+`metadata.execution_mode: provider-orchestrated`, validate the manifest and
+hand it to the current supported AI provider; do not begin deterministic CLI
+execution.
+
 ## Trigger Phrases
 
 - "run the setup manifest"

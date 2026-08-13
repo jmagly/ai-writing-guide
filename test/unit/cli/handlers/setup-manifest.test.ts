@@ -187,6 +187,26 @@ describe('setup manifest CLI handlers', () => {
     expect(stdoutSpy.mock.calls.map(([chunk]) => String(chunk)).join('\n')).toContain('[setup:dry-run]');
   });
 
+  it('accepts provider-orchestrated agentic workflows and hands them off before CLI execution', () => {
+    const manifest = baseManifest({ id: 'inspect', type: 'agentic', instruction: 'Inspect the project safely.' });
+    manifest.metadata.execution_mode = 'provider-orchestrated';
+    writeManifest(tmpDir, manifest);
+
+    const validation = validateSetupManifest({ cwd: tmpDir, frameworkRoot: REPO_ROOT });
+    expect(validation.findings.filter((finding) => finding.rule === 'agenticStep')).toEqual([]);
+    expect(runSetupManifest({
+      cwd: tmpDir,
+      frameworkRoot: REPO_ROOT,
+      platform: 'linux',
+      paramValues: { INSTALL_DIR: tmpDir },
+      skip: new Set(),
+      yes: true,
+    })).toMatchObject({
+      exitCode: 2,
+      message: expect.stringContaining('provider-orchestrated'),
+    });
+  });
+
   it('fails invalid manifests and missing params before execution', () => {
     const marker = path.join(tmpDir, 'marker');
     writeExecutable(path.join(tmpDir, 'scripts/install.sh'), `#!/usr/bin/env sh\nprintf ran > ${marker}\n`);

@@ -23,6 +23,7 @@ interface SetupManifest {
     description?: string;
     version?: string;
     install_type?: 'user' | 'developer' | 'ci';
+    execution_mode?: 'deterministic' | 'provider-orchestrated';
   };
   spec: {
     platforms: Array<{ os: string; distros?: string[]; arch?: string[]; shell?: string }>;
@@ -345,6 +346,7 @@ function installerConsistencyChecks(manifest: SetupManifest | null, manifestDir:
   const recoveryIds = new Set((manifest.spec.recovery ?? []).map((recovery) => recovery.id));
   const osConfigIds = new Set((manifest.spec.os_config ?? []).map((entry) => entry.id));
   const installType = manifest.metadata.install_type ?? 'user';
+  const executionMode = manifest.metadata.execution_mode ?? 'deterministic';
 
   for (const [index, step] of manifest.spec.steps.entries()) {
     if (allStepIds.has(step.id)) {
@@ -374,7 +376,7 @@ function installerConsistencyChecks(manifest: SetupManifest | null, manifestDir:
     if (step.type === 'agentic') {
       if (!step.instruction) {
         findings.push({ severity: 'error', path: `${pointer}/instruction`, rule: 'agenticInstruction', message: 'agentic step requires instruction' });
-      } else {
+      } else if (executionMode !== 'provider-orchestrated') {
         findings.push({ severity: 'warning', path: pointer, rule: 'agenticStep', message: 'agentic steps are exception handling only and require manual intervention during setup-run' });
       }
     }
@@ -800,6 +802,12 @@ export function runSetupManifest(options: RunOptions): HandlerResult {
     return { exitCode: 1, message: 'setup-run: manifest validation failed before execution' };
   }
   const manifest = validation.manifest;
+  if (manifest.metadata.execution_mode === 'provider-orchestrated') {
+    return {
+      exitCode: 2,
+      message: 'setup-run: this manifest is provider-orchestrated; give its URL or contents to a supported AI provider instead of executing it as a deterministic CLI manifest',
+    };
+  }
   const target = detectPlatform(options);
   if (!manifest.spec.platforms.some((candidate) => platformMatches(target, candidate))) {
     return { exitCode: 1, message: `setup-run: platform ${target.os}${target.distro ? `/${target.distro}` : ''}/${target.arch}/${target.shell} is not declared in the manifest` };
