@@ -9,12 +9,13 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
-import { createClient, type MatricEvalClient, type EvalSummary } from '@matric/eval-client';
+import type { EvalSummary } from '@matric/eval-client';
 import type {
   GenerationModel,
   TestCase,
   EvalResult,
   DimensionScore,
+  EvalIntegrityMetadata,
   EvalReportWithIntegrity,
   IntegrityMode,
   PairedBaselineInput,
@@ -47,12 +48,10 @@ export interface RunnerOptions {
 export class AiwgEvalRunner {
   private model: GenerationModel;
   private datasetsDir: string;
-  private matricClient: MatricEvalClient;
 
   constructor(model: GenerationModel, datasetsDir: string) {
     this.model = model;
     this.datasetsDir = datasetsDir;
-    this.matricClient = createClient();
   }
 
   async run(options: RunnerOptions = {}): Promise<EvalReportWithIntegrity> {
@@ -124,15 +123,30 @@ export class AiwgEvalRunner {
 
     // Optionally include standard matric-eval benchmark scores
     let matricSummary: EvalSummary | undefined;
-    if (options.includeMatricBenchmarks && (await this.matricClient.isAvailable())) {
+    if (options.includeMatricBenchmarks) {
+      // Keep the optional client behind a runtime boundary. Root-level AIWG tests do
+      // not install tools/eval's isolated dependencies, while the tool package does.
+      const { createMatricClient } = await import('./matric-client.js');
+      const matricClient = createMatricClient();
+      if (!(await matricClient.isAvailable())) return this.buildReport(dimensionScores, overall, totalLatency, integrity);
       if (options.verbose) console.log('\nRunning standard matric-eval benchmarks...');
-      matricSummary = await this.matricClient.run({
+      matricSummary = await matricClient.run({
         models: [this.model.name],
         tier: 'smoke',
         logLevel: options.verbose ? 'INFO' : 'WARNING',
       });
     }
 
+    return this.buildReport(dimensionScores, overall, totalLatency, integrity, matricSummary);
+  }
+
+  private buildReport(
+    dimensionScores: DimensionScore[],
+    overall: number,
+    totalLatency: number,
+    integrity: EvalIntegrityMetadata,
+    matricSummary?: EvalSummary,
+  ): EvalReportWithIntegrity {
     return {
       model: this.model.name,
       backend: 'ollama',
