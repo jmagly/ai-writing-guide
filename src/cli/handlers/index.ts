@@ -136,6 +136,7 @@ import { modelsHandler } from './models.js';
 import { versionsHandler } from './resource-versions.js';
 import { jobHandler } from './job.js';
 import { costReportHandler } from './cost-report.js';
+import { evidenceHandler } from './evidence.js';
 
 import type { CommandHandler } from './types.js';
 
@@ -169,6 +170,7 @@ export {
   runHandler,
   jobHandler,
   costReportHandler,
+  evidenceHandler,
 
   // Project
   newBundleHandler,
@@ -349,6 +351,7 @@ export const allHandlers: CommandHandler[] = [
   runHandler,
   jobHandler,
   costReportHandler,
+  evidenceHandler,
 
   // Workspace management
   ...workspaceHandlers,

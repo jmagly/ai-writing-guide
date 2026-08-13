@@ -2541,6 +2541,35 @@ export const teamCommand: Extension = {
 
 // Cost & Metrics Commands
 
+export const evidenceCommand: Extension = {
+  id: 'evidence',
+  type: 'skill',
+  name: 'Evidence',
+  description: 'Export and verify portable evaluation evidence bundles',
+  version: '1.0.0',
+  capabilities: ['cli', 'evidence', 'provenance', 'verification', 'evaluation'],
+  keywords: ['evidence', 'bundle', 'provenance', 'verify', 'evaluation', 'activity-export'],
+  category: 'metrics',
+  platforms: {
+    claude: 'full',
+    generic: 'full',
+  },
+  deployment: {
+    pathTemplate: '.{platform}/commands/{id}.md',
+    core: false,
+  },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['evidence bundle', 'export evidence', 'verify evidence', 'evaluation provenance'],
+    commandHint: {
+      template: 'utility',
+      allowedTools: ['Read', 'Bash'],
+      argumentHint: '<export|verify> [options]',
+      cliDisabled: false,
+    },
+  } satisfies SkillMetadata,
+};
+
 export const costReportCommand: Extension = {
   id: 'cost-report',
   type: 'skill',
@@ -3736,7 +3765,8 @@ export const commandDefinitions: Extension[] = [
   // Agent Teams (1)
   teamCommand,
 
-  // Metrics (3)
+  // Metrics (4)
+  evidenceCommand,
   costReportCommand,
   costHistoryCommand,
   metricsTokensCommand,

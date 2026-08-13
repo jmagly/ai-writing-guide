@@ -117,6 +117,11 @@ function displayHelp(): void {
     ['cost-report --fleet', 'Observe OpenRouter per-bot MTD spend and correlate local activity'],
   ]);
 
+  helpGroup('EVIDENCE', [
+    ['evidence export --output <dir>', 'Package portable activity, report, source, eval, and provenance evidence'],
+    ['evidence verify <bundle>', 'Verify every member hash and the bundle checkpoint'],
+  ]);
+
   helpGroup('SCAFFOLDING', [
     ['new-bundle <name>', 'Create project-local bundle (--type extension|addon|framework|plugin|provider, --starter skill|rule|agent|minimal, --dry-run)'],
     ['new-extension <name>', 'Alias for new-bundle --type extension'],

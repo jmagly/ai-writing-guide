@@ -1405,7 +1405,7 @@ All 8 platforms receive agents, commands, skills, and rules. Deployment adapts t
 | **Marketplace packaging** | `install-plugin`, `uninstall-plugin`, `plugin-status`, `package-plugin`, `package-all-plugins` | Install and package delivery wrappers |
 | **Scaffolding** | `add-agent`, `add-command`, `add-skill`, `add-template`, `scaffold-addon`, `scaffold-extension`, `scaffold-framework` | Create new extensions |
 | **Ralph** | `ralph`, `ralph-status`, `ralph-abort`, `ralph-resume`, `ralph-external`, `ralph-memory`, `ralph-config` | Iterative execution engine |
-| **Metrics** | `cost-report`, `cost-history`, `metrics-tokens` | Token usage and cost tracking |
+| **Metrics & evidence** | `cost-report`, `cost-history`, `metrics-tokens`, `evidence` | Token usage, cost tracking, and portable evaluation evidence |
 | **Index** | `index build`, `index query`, `index deps`, `index stats` | Artifact discovery and dependency graphing |
 | **Documentation** | `doc-sync` | Bidirectional doc-code synchronization |
 | **SDLC** | `sdlc-accelerate` | Idea-to-construction-ready pipeline |
@@ -1447,6 +1447,8 @@ aiwg doc-sync full --interactive
 # Metrics
 aiwg cost-report                 # Agent-native session cost breakdown
 aiwg cost-report --fleet         # OpenRouter per-bot MTD spend observation
+aiwg evidence export --output ./evidence  # Package evaluation evidence and provenance
+aiwg evidence verify ./evidence           # Verify hashes and the bundle checkpoint
 aiwg metrics-tokens              # Token usage
 
 # SDLC accelerate
