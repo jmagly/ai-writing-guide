@@ -123,6 +123,12 @@ confirmation is required.
 2. Prefer AIWG CLI commands over direct edits to deployed provider directories.
 3. Use `--dry-run` before uncertain or broad changes.
 4. Always verify after maintenance actions.
+
+For requests to externalize, attach, diagnose, or repair a project corpus,
+preserve the repository-local `.aiwg` control plane. Run `aiwg status --probe
+--json` or `aiwg doctor` first. Route repair through `aiwg artifacts repair
+--dry-run`, require explicit operator intent before `--apply`, and never remove
+or overwrite divergent local/external files automatically.
 5. Treat project-local artifacts, provider definitions, rules, and agent files as trusted repo code that must be reviewed before deploy.
 6. For destructive operations, list affected files/agents/skills and wait for confirmation.
 7. If discovery, show, or a documented link fails, retry once with a broader phrase; then file a correction issue with evidence instead of inventing a route.

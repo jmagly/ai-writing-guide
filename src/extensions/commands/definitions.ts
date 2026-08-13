@@ -1391,8 +1391,8 @@ export const artifactsCommand: Extension = {
   name: 'Project Artifacts',
   description: 'Move or inspect the configured project AIWG artifact root',
   version: '1.0.0',
-  capabilities: ['cli', 'artifacts', 'relocation', 'configuration', 'index'],
-  keywords: ['artifacts', 'aiwg artifacts', 'move .aiwg', 'relocate .aiwg', 'rename .aiwg', 'artifact root', 'AIWG_ARTIFACTS_PATH'],
+  capabilities: ['cli', 'artifacts', 'relocation', 'repair', 'configuration', 'index'],
+  keywords: ['artifacts', 'aiwg artifacts', 'move .aiwg', 'relocate .aiwg', 'rename .aiwg', 'repair artifact root', 'external corpus', 'split root', 'artifact root', 'AIWG_ARTIFACTS_PATH'],
   category: 'index',
   platforms: {
     claude: 'full',
@@ -1404,10 +1404,10 @@ export const artifactsCommand: Extension = {
   },
   metadata: {
     type: 'skill',
-    triggerPhrases: ['move .aiwg', 'relocate .aiwg', 'rename .aiwg', 'move aiwg artifacts', 'artifact root'],
+    triggerPhrases: ['move .aiwg', 'relocate .aiwg', 'rename .aiwg', 'move aiwg artifacts', 'repair external corpus', 'externalize corpus', 'artifact root'],
     commandHint: {
       template: 'utility',
-      argumentHint: 'move --to <path> [--from <path>] [--dry-run]',
+      argumentHint: 'move|attach|repair [--to <path>] [--dry-run|--apply]',
       allowedTools: ['Read', 'Write', 'Bash'],
     },
   } satisfies SkillMetadata,

@@ -59,6 +59,10 @@ const { collectPackagedAgentInventory, diagnoseOversizedAgent } = await importIm
   import.meta.url,
   'agents/packaged-agent-inventory.js'
 );
+const { auditProjectArtifactHealth } = await importImpl(
+  import.meta.url,
+  'config/project-artifacts-health.mjs'
+);
 
 // AIWG_ROOT: env override > channel-manager resolved path > legacy edge path
 // getFrameworkRoot() resolves correctly for npm global installs, edge, and dev channels.
@@ -697,13 +701,26 @@ async function runDoctor() {
     check('Community Links', 'warn', err instanceof Error ? err.message : String(err));
   }
 
-  // 3. Check .aiwg directory in current project
+  // 3. Check the repository-local control plane and external artifact corpus.
   const projectAiwg = path.join(process.cwd(), '.aiwg');
   const hasProjectAiwg = await fileExists(projectAiwg);
   if (hasProjectAiwg) {
     check('Project .aiwg/', 'ok', 'Found in current directory');
   } else {
     check('Project .aiwg/', 'info', 'No .aiwg/ in current directory (not an AIWG project)');
+  }
+  try {
+    const artifactHealth = auditProjectArtifactHealth(process.cwd());
+    if (artifactHealth.external_configured) {
+      const detail = `${artifactHealth.classification}; local=${artifactHealth.local_control_root}; external=${artifactHealth.artifact_root}`;
+      check(
+        'External Artifact Corpus',
+        artifactHealth.severity === 'ok' ? 'ok' : artifactHealth.severity === 'error' ? 'error' : 'warn',
+        artifactHealth.action ? `${detail} — ${artifactHealth.action}` : detail,
+      );
+    }
+  } catch (error) {
+    check('External Artifact Corpus', 'error', `health audit failed: ${error.message}`);
   }
 
   // 4-5. Provider-aware agents + commands check (#1057).

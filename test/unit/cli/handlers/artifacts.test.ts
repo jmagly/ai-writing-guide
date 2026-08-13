@@ -24,6 +24,7 @@ describe('artifactsHandler', () => {
     expect(result.exitCode).toBe(0);
     expect(result.message).toContain('aiwg artifacts move --to <path>');
     expect(result.message).toContain('aiwg artifacts attach --to <existing-path>');
+    expect(result.message).toContain('aiwg artifacts repair --dry-run');
   });
 
   it('requires --to for move', async () => {

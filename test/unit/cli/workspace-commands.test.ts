@@ -64,6 +64,21 @@ describe('Workspace CLI Commands', () => {
       }
     });
 
+    it('reports external control-plane health in the verification probe', async () => {
+      const externalAiwg = path.join(testDir, 'external', '.aiwg');
+      await fs.mkdir(path.join(externalAiwg, 'frameworks'), { recursive: true });
+      await fs.writeFile(path.join(testDir, '.aiwg-location'), 'external/.aiwg\n');
+      await fs.writeFile(path.join(externalAiwg, 'AIWG.md'), '# AIWG\n');
+      await fs.writeFile(path.join(externalAiwg, 'aiwg.config'), '{}\n');
+      await fs.writeFile(path.join(externalAiwg, 'frameworks', 'registry.json'), '{"frameworks":{}}\n');
+
+      const { buildVerificationProbe } = await import('../../../tools/cli/workspace-status.mjs');
+      const output = await buildVerificationProbe(testDir);
+      expect(output.status).toBe('needs-repair');
+      expect(output.checks.artifact_health).toBe('legacy-missing-control-plane');
+      expect(output.verification.next_command).toBe('aiwg artifacts repair --dry-run');
+    });
+
     it('should detect legacy workspace structure', async () => {
       // Create legacy structure
       await fs.mkdir(path.join(aiwgDir, 'intake'), { recursive: true });

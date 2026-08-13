@@ -293,7 +293,19 @@ aiwg artifacts move --to ../aiwg-web-release-ops/corpus/.aiwg
 
 The command moves the configured artifact root, writes `.aiwg-location`,
 updates `.gitignore` for the local pointer, rebuilds the project index, and
-syncs the Fortemi Core static cache. For one-off sessions,
+syncs the Fortemi Core static cache. It retains the repository-local AIWG
+control plane while relocating corpus-heavy directories. Diagnose and safely
+repair legacy layouts with:
+
+```bash
+aiwg status --probe --json
+aiwg doctor
+aiwg artifacts repair --dry-run
+aiwg artifacts repair --apply
+```
+
+Repair never overwrites divergent content and removes only verified identical
+local corpus duplicates. For one-off sessions,
 `AIWG_ARTIFACTS_PATH` can still point at an absolute, project-relative, or
 `~/`-relative artifact directory and takes precedence over `.aiwg-location`.
 

@@ -3974,6 +3974,8 @@ Manage the configured project AIWG artifact root.
 ```bash
 aiwg artifacts move --to <path> [--from <path>] [--dry-run] [--no-reindex] [--no-sync]
 aiwg artifacts attach --to <existing-path> [--dry-run] [--no-reindex] [--no-sync]
+aiwg artifacts repair --dry-run
+aiwg artifacts repair --apply
 ```
 
 `move` relocates or renames the current artifact root, writes `.aiwg-location`
@@ -3983,6 +3985,13 @@ the source root; otherwise AIWG resolves it the same way runtime config does.
 `attach` adopts an already populated artifact root without moving or
 overwriting the local or external tree; it validates that `aiwg.config` exists,
 writes the same pointer, and rebuilds the external index.
+Both commands retain a minimal repository-local control plane (`AIWG.md`,
+`aiwg.config`, and `frameworks/registry.json`) while corpus-heavy directories
+live under the configured artifact root. `repair` audits legacy split-root
+workspaces, previews restoration of missing control files, and removes only
+byte-identical local corpus duplicates when `--apply` is explicit. Divergent
+files are never overwritten or removed automatically. The same classification
+is reported by `aiwg status --probe --json` and `aiwg doctor`.
 `AIWG_ARTIFACTS_PATH` still has highest precedence for per-call overrides.
 
 **Capabilities:** cli, index, artifacts, search, dependencies

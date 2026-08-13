@@ -101,6 +101,12 @@ Model-policy caveat: generated skills and commands must carry
 `model-role` and `model-tier`. Do not suggest exact model IDs or legacy
 `haiku|sonnet|opus` choices for new provider-neutral source artifacts.
 
+Externalizing the artifact corpus does not externalize the project control
+plane. Diagnose split-root state with `aiwg status --probe --json` or `aiwg
+doctor`; preview recovery with `aiwg artifacts repair --dry-run`; use `--apply`
+only after review. Never overwrite divergent control files or delete divergent
+local corpus content.
+
 ## Feature-Domain Routing (proactive)
 
 Three cross-cutting feature domains fall outside the framework quickrefs and were historically undiscoverable (#1623). The steward owns routing for them via the `steward-quickref` kernel skill. Be **proactive** — these are easy to miss:

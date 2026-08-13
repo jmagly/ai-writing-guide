@@ -25,6 +25,7 @@ import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { resolveProjectAiwgDir } from '../../src/config/project-artifacts-runtime.mjs';
+import { auditProjectArtifactHealth } from '../../src/config/project-artifacts-health.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -344,6 +345,7 @@ async function collectActiveOperations(projectRoot) {
 
 async function buildWorkspaceStatus(projectRoot) {
   const aiwgPath = resolveProjectAiwgDir(projectRoot);
+  const artifactHealth = auditProjectArtifactHealth(projectRoot);
   const result = {
     workspace: {
       path: aiwgPath,
@@ -361,8 +363,18 @@ async function buildWorkspaceStatus(projectRoot) {
     migration: {
       status: 'unknown',
       backupsAvailable: 0
-    }
+    },
+    artifactHealth,
   };
+
+  if (artifactHealth.severity !== 'ok') {
+    result.health.issues.push({
+      severity: artifactHealth.severity,
+      message: `External artifact corpus: ${artifactHealth.classification}.`,
+      action: artifactHealth.action,
+    });
+    result.health.overall = artifactHealth.severity;
+  }
 
   try {
     await fs.access(aiwgPath);
@@ -504,6 +516,7 @@ async function buildVerificationProbe(projectRoot) {
   const frameworkCount = workspace.frameworks.length;
   const providerCount = workspace.providerDeployments.length;
   const malformedConfig = workspace.health.issues.some((issue) => /could not be parsed/.test(issue.message));
+  const artifactNeedsRepair = workspace.artifactHealth.external_configured && workspace.artifactHealth.severity !== 'ok';
   const ready = workspace.workspace.exists && frameworkCount > 0 && providerCount > 0;
   const partial = workspace.workspace.exists && (frameworkCount > 0 || providerCount > 0 || malformedConfig);
 
@@ -511,24 +524,30 @@ async function buildVerificationProbe(projectRoot) {
     schema: 'aiwg.status.probe.v1',
     generated_at: new Date().toISOString(),
     project_root: path.resolve(projectRoot),
-    engaged: ready,
-    status: malformedConfig ? 'needs-repair' : ready ? 'ready' : partial ? 'partial' : 'not-configured',
+    engaged: ready && !artifactNeedsRepair,
+    status: malformedConfig || artifactNeedsRepair ? 'needs-repair' : ready ? 'ready' : partial ? 'partial' : 'not-configured',
     checks: {
       workspace_exists: workspace.workspace.exists,
       framework_count: frameworkCount,
       provider_deployment_count: providerCount,
       health: workspace.health.overall,
       malformed_config: malformedConfig,
+      artifact_health: workspace.artifactHealth.classification,
+      external_artifact_reachable: workspace.artifactHealth.external_reachable,
     },
     verification: {
       required: true,
-      action: ready
+      action: artifactNeedsRepair
+        ? workspace.artifactHealth.action
+        : ready
         ? 'AIWG workspace and provider deployment are detected.'
         : malformedConfig
           ? 'Repair the malformed AIWG config or registry, then run this probe again.'
         : 'Run the guided path, deploy one framework, then run this probe again.',
       command: 'aiwg status --probe --json',
-      next_command: ready ? null : malformedConfig ? 'aiwg doctor --project-local' : 'aiwg wizard --dry-run',
+      next_command: artifactNeedsRepair
+        ? 'aiwg artifacts repair --dry-run'
+        : ready ? null : malformedConfig ? 'aiwg doctor --project-local' : 'aiwg wizard --dry-run',
     },
     agent_response_guidance: {
       when_asked_if_aiwg_is_engaged:
