@@ -76,6 +76,7 @@ Usage:
   aiwg corpus frontmatter-backfill [--write] [--out PATH]
   aiwg corpus profile-edges [--out PATH]
   aiwg corpus profile-similar --entity PROF-P-x [--top K] | --predict-collabs [--threshold T] [--out PATH]
+  aiwg corpus retrieval-lab --queries PATH --concepts PATH [--expected-scheme-hash SHA256] [--limit K] [--latency-ceiling MS] [--json] [--out PATH]
   aiwg corpus vision-extract --slug SLUG [--images DIR] [--out DIR] [--start N] [--end N] [--provider codex|command] [--command TMPL] [--model M] [--retries N] [--title T] [--force] [--rasterize PDF] [--dpi N]
 
 radar-init scaffolds radar sidecars (dry-run unless --write; skips existing).
@@ -102,6 +103,7 @@ snapshot computes one-shot corpus snapshot metrics and renders full markdown, te
 frontmatter-backfill adds minimal ref_id/title/year/pdf_hash frontmatter to legacy analysis docs lacking it (dry-run unless --write; additive, skips docs that already have frontmatter).
 profile-edges builds the profile→REF edge graph (first-class adjacency; reconciled against the citation graph so only edges to existing REFs are kept).
 profile-similar embeds person profiles (text-embedding; opt-in @xenova/transformers) → nearest researchers (--entity) or collaboration link-prediction (--predict-collabs).
+retrieval-lab benchmarks current research-query and direct lexical baselines against vector, BM25, typed graph PPR, and RRF without changing production query behavior.
 vision-extract transcribes scanned page PNGs → per-page + combined Markdown via a provider-neutral vision adapter (codex | command template), resumable with retry/validation; --rasterize PDF first renders pages via pdftoppm.
 `;
 
@@ -389,6 +391,27 @@ export async function corpusMain(args: string[], cwd: string = process.cwd()): P
       if (!entity) throw new Error('profile-similar requires --entity <PROF-P-x> or --predict-collabs');
       const top = flagValue(rest, '--top') ? parseInt(flagValue(rest, '--top')!, 10) : 10;
       return emit(renderSimilar(entity, profileSimilar(emb, entity, top)), flagValue(rest, '--out'), root);
+    }
+    case 'retrieval-lab': {
+      const queries = flagValue(rest, '--queries');
+      const concepts = flagValue(rest, '--concepts');
+      if (!queries || !concepts) throw new Error('retrieval-lab requires --queries <jsonl> and --concepts <json>');
+      const expectedSchemeHash = flagValue(rest, '--expected-scheme-hash');
+      if (expectedSchemeHash && !/^[0-9a-f]{64}$/i.test(expectedSchemeHash)) throw new Error('retrieval-lab --expected-scheme-hash must be a SHA-256 hex digest');
+      const limit = flagValue(rest, '--limit');
+      const latencyCeiling = flagValue(rest, '--latency-ceiling');
+      if (limit && (!Number.isInteger(Number(limit)) || Number(limit) < 1)) throw new Error('retrieval-lab --limit must be a positive integer');
+      if (latencyCeiling && (!Number.isFinite(Number(latencyCeiling)) || Number(latencyCeiling) <= 0)) throw new Error('retrieval-lab --latency-ceiling must be a positive number');
+      const { runRetrievalLab, renderRetrievalLab } = await import('./retrieval-lab.js');
+      const report = await runRetrievalLab({
+        root,
+        queriesPath: path.resolve(root, queries),
+        conceptsPath: path.resolve(root, concepts),
+        expectedSchemeHash,
+        ...(limit ? { limit: Number(limit) } : {}),
+        ...(latencyCeiling ? { latencyCeilingMs: Number(latencyCeiling) } : {}),
+      });
+      return emit(hasFlag(rest, '--json') ? `${JSON.stringify(report, null, 2)}\n` : renderRetrievalLab(report), flagValue(rest, '--out'), root);
     }
     default:
       process.stderr.write(`Unknown corpus subcommand: ${sub}\n\n${HELP}`);

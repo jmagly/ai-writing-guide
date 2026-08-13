@@ -1418,10 +1418,10 @@ export const corpusCommand: Extension = {
   id: 'corpus',
   type: 'skill',
   name: 'Research Corpus Tools',
-  description: 'Research-corpus tools (radar-init, radar-status, radar-report)',
-  version: '1.0.0',
-  capabilities: ['cli', 'research', 'corpus', 'radar', 'freshness', 'profiles', 'discovery'],
-  keywords: ['corpus', 'radar', 'freshness', 'staleness', 'radar-init', 'radar-status', 'radar-report', 'profile-status', 'profile-generate', 'profile-metrics', 'profile-temporal', 'profile-communities', 'h-index', 'PageRank', 'CD-index', 'centrality', 'community detection', 'hot streak', 'funder-network', 'funder analytics', 'co-funding', 'novelty bias', 'curator-status', 'curator-init', 'discovery-log', 'PROF-S', 'source tracking', 'discovery provenance', 'stale profiles', 'hub authors', 'refresh cadence', 'GRADE trajectory'],
+  description: 'Research-corpus tools for freshness, profiles, provenance, and retrieval benchmarks',
+  version: '1.1.0',
+  capabilities: ['cli', 'research', 'corpus', 'radar', 'freshness', 'profiles', 'discovery', 'retrieval-benchmark'],
+  keywords: ['corpus', 'radar', 'freshness', 'staleness', 'radar-init', 'radar-status', 'radar-report', 'profile-status', 'profile-generate', 'profile-metrics', 'profile-temporal', 'profile-communities', 'h-index', 'PageRank', 'CD-index', 'centrality', 'community detection', 'hot streak', 'funder-network', 'funder analytics', 'co-funding', 'novelty bias', 'curator-status', 'curator-init', 'discovery-log', 'PROF-S', 'source tracking', 'discovery provenance', 'stale profiles', 'hub authors', 'refresh cadence', 'GRADE trajectory', 'retrieval-lab', 'BM25', 'vector retrieval', 'concept graph', 'PPR', 'RRF', 'source selection'],
   category: 'index',
   platforms: {
     claude: 'full',
@@ -1433,10 +1433,10 @@ export const corpusCommand: Extension = {
   },
   metadata: {
     type: 'skill',
-    triggerPhrases: ['radar', 'radar status', 'radar report', 'scaffold radar', 'stale radars', 'corpus freshness', 'stale profiles', 'profile status', 'curator yield', 'discovery source', 'log discovery'],
+    triggerPhrases: ['radar', 'radar status', 'radar report', 'scaffold radar', 'stale radars', 'corpus freshness', 'stale profiles', 'profile status', 'curator yield', 'discovery source', 'log discovery', 'benchmark corpus retrieval', 'hybrid retrieval lab'],
     commandHint: {
       template: 'utility',
-      argumentHint: '<radar-*|profile-*|curator-*|discovery-log|funder-network> [options]',
+      argumentHint: '<radar-*|profile-*|curator-*|discovery-log|funder-network|retrieval-lab> [options]',
       allowedTools: ['Read', 'Glob', 'Grep', 'Write'],
     },
   } satisfies SkillMetadata,

@@ -1,0 +1,35 @@
+{
+  "schema": "aiwg.concept-scheme/v1",
+  "id": "aiwg-retrieval-lab",
+  "concepts": [
+    {
+      "id": "context-budget",
+      "prefLabel": "Provider context budget",
+      "altLabels": ["token attribution"],
+      "related": ["memory-firewall"]
+    },
+    {
+      "id": "memory-firewall",
+      "prefLabel": "Persistent memory firewall",
+      "altLabels": ["long term memory quarantine"],
+      "related": ["context-budget", "security"]
+    },
+    {
+      "id": "security",
+      "prefLabel": "Security controls",
+      "narrower": ["memory-firewall"]
+    },
+    {
+      "id": "hybrid-retrieval",
+      "prefLabel": "Hybrid corpus retrieval",
+      "altLabels": ["dense lexical graph retrieval"],
+      "related": ["rank-fusion"]
+    },
+    {
+      "id": "rank-fusion",
+      "prefLabel": "Reciprocal rank fusion",
+      "altLabels": ["RRF"],
+      "broader": ["hybrid-retrieval"]
+    }
+  ]
+}

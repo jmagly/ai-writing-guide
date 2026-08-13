@@ -1,0 +1,3 @@
+{"schema":"aiwg.corpus-retrieval-query/v1","id":"provider-context-attribution","question":"Which source defines provider context token attribution by component?","expected_ids":["REF-101"],"expected_evidence":["token attribution"]}
+{"schema":"aiwg.corpus-retrieval-query/v1","id":"persistent-memory-quarantine","question":"Which source covers persistent memory poisoning quarantine review?","expected_ids":["REF-102"],"expected_evidence":["quarantine"]}
+{"schema":"aiwg.corpus-retrieval-query/v1","id":"hybrid-rank-fusion","question":"Which implementation combines lexical vector concept graph rank fusion?","expected_ids":["REF-103"],"expected_evidence":["RRF"]}
