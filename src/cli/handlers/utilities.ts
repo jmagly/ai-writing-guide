@@ -22,6 +22,11 @@ import { projectAiwgPath } from '../../config/project-artifacts.js';
 import {
   checkCollisions,
 } from '../../smiths/skillsmith/collision-detector.js';
+import {
+  renderUseDeploymentResult,
+  verifyConfiguredDeployments,
+  type DeploymentScope,
+} from '../services/deployment-verification.js';
 
 /**
  * Maps framework registry IDs (e.g. 'sdlc-complete') to `aiwg use` names (e.g. 'sdlc').
@@ -482,6 +487,28 @@ export const doctorHandler: CommandHandler = {
   aliases: ['-doctor', '--doctor'],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    if (ctx.args.includes('--deployment')) {
+      const providerIndex = ctx.args.indexOf('--provider');
+      const bundleIndex = ctx.args.indexOf('--bundle');
+      const scopeIndex = ctx.args.indexOf('--scope');
+      const scopeValue = scopeIndex >= 0 ? ctx.args[scopeIndex + 1] : undefined;
+      if (scopeValue && scopeValue !== 'project' && scopeValue !== 'user') {
+        return { exitCode: 2, message: `Invalid deployment verification scope: ${scopeValue}` };
+      }
+      const result = await verifyConfiguredDeployments(ctx.cwd || process.cwd(), {
+        provider: providerIndex >= 0 ? ctx.args[providerIndex + 1] : undefined,
+        bundle: bundleIndex >= 0 ? ctx.args[bundleIndex + 1] : undefined,
+        scope: scopeValue as DeploymentScope | undefined,
+      }, ctx.frameworkRoot);
+      return {
+        exitCode: result.exitCode,
+        message: ctx.args.includes('--json')
+          ? JSON.stringify(result, null, 2)
+          : renderUseDeploymentResult(result),
+        rawOutput: ctx.args.includes('--json'),
+      };
+    }
+
     // #1156 Phase 1 — `aiwg doctor --scope user` / `aiwg doctor --user`
     // validates the per-user registry (~/.aiwg/installed.json) without
     // running the project-scope diagnostics. Operators need this to verify
