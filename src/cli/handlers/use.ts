@@ -2647,11 +2647,17 @@ export class UseHandler implements CommandHandler {
 
       const runner = createScriptRunner(frameworkRoot);
       const addonBaseArgs = ['--deploy-commands', '--deploy-skills', '--deploy-rules'];
+      // An explicitly selected upstream addon must be self-contained in the
+      // project. Unlike a full framework deploy, its standard skills cannot be
+      // left index-only: the user asked to install this specific bundle and
+      // its supporting scripts must travel with the skill directory.
+      addonBaseArgs.push('--copy-all');
       addonBaseArgs.push(...modelDeployArgs);
       if (provider) addonBaseArgs.push('--provider', provider);
       if (target) addonBaseArgs.push('--target', target);
       // Forward --copy-all (#1219) so addon-only deploys also honor it.
-      if (remainingArgs.includes('--copy-all') || remainingArgs.includes('--copy-standard-skills')) {
+      if ((remainingArgs.includes('--copy-all') || remainingArgs.includes('--copy-standard-skills'))
+          && !addonBaseArgs.includes('--copy-all')) {
         addonBaseArgs.push('--copy-all');
       }
       if (dryRunAddon) addonBaseArgs.push('--dry-run');
@@ -2744,6 +2750,32 @@ export class UseHandler implements CommandHandler {
           exitCode: 1,
           message: `Failed to register CLI commands: ${error instanceof Error ? error.message : String(error)}`,
         };
+      }
+
+      // Persist the same lifecycle record frameworks and project-local bundles
+      // receive so status, refresh, doctor, and remove can account for this
+      // upstream addon and every provider artifact it actually deployed.
+      if (!dryRunAddon && config) {
+        try {
+          const manifestPath = path.join(addonSource, 'manifest.json');
+          const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8')) as {
+            version?: string;
+          };
+          // Provider rule aggregation may rename many source rules into one
+          // managed index. Record this addon's contributed artifact counts,
+          // matching framework registry semantics, rather than trying to
+          // attribute shared aggregate filenames after deployment.
+          const counts = await countBundleSourceArtifacts(addonSource);
+          const updated = updateInstalled(config, framework, provider, counts, {
+            version: manifest.version ?? (await getVersionInfo()).version,
+            source: 'bundled',
+            manifestHash: await hashManifest(manifestPath),
+          });
+          await writeAiwgConfig(projectDir, updated);
+          config = updated;
+        } catch (error) {
+          ui.warn(`Addon registry update failed for '${framework}': ${error instanceof Error ? error.message : String(error)}`);
+        }
       }
 
       // Profile picker for addons with memory topology and multiple templates
