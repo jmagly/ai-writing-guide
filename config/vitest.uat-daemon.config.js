@@ -14,7 +14,7 @@ import path from 'path';
  *   - No existing daemon process on the test socket paths
  */
 export default defineConfig({
-  root: path.resolve(__dirname, '..'),
+  root: path.resolve(import.meta.dirname, '..'),
   test: {
     include: ['test/uat/daemon-live-*.uat.mjs'],
     environment: 'node',
@@ -26,15 +26,13 @@ export default defineConfig({
     hookTimeout: 60000,    // 60s for beforeAll/afterAll (daemon start + stop)
     reporters: ['verbose'],
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true,  // Sequential — one daemon at a time to avoid socket conflicts
-      },
-    },
+    maxWorkers: 1,
+    fileParallelism: false, // Sequential — one daemon at a time to avoid socket conflicts
+    isolate: false,
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, '../src'),
+      '@': path.resolve(import.meta.dirname, '../src'),
     },
     extensions: ['.ts', '.mjs', '.js', '.json'],
   },

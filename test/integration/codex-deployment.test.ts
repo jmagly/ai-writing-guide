@@ -410,7 +410,7 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Codex Integration', () => {
       expect(config).toContain('agent-list');
     });
 
-    it.skipIf(!TSX_AVAILABLE)('does not duplicate MCP config on re-run', async () => {
+    it.skipIf(!TSX_AVAILABLE)('does not duplicate MCP config on re-run', { timeout: 15000 }, async () => {
       await fs.writeFile(
         path.join(TEST_CODEX_DIR, 'config.toml'),
         '# Config\n'
@@ -428,7 +428,7 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Codex Integration', () => {
 
       const matches = config.match(/\[mcp_servers\.aiwg\]/g);
       expect(matches?.length).toBe(1);
-    }, { timeout: 15000 });
+    });
   });
 
   describe('Dry Run', () => {

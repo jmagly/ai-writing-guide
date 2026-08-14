@@ -283,7 +283,7 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Cursor Integration', () => {
       expect(parsed.mcpServers.aiwg.args).toContain('serve');
     });
 
-    it.skipIf(!TSX_AVAILABLE)('does not duplicate MCP config on re-run', async () => {
+    it.skipIf(!TSX_AVAILABLE)('does not duplicate MCP config on re-run', { timeout: 15000 }, async () => {
       // Create initial config
       await fs.writeFile(
         path.join(TEST_CURSOR_DIR, 'mcp.json'),
@@ -303,7 +303,7 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Cursor Integration', () => {
       // Should have exactly one aiwg entry
       expect(Object.keys(parsed.mcpServers)).toContain('aiwg');
       expect(Object.keys(parsed.mcpServers).filter(k => k === 'aiwg').length).toBe(1);
-    }, { timeout: 15000 });
+    });
   });
 
   describe('Dry Run', () => {

@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 import path from 'path';
 
 export default defineConfig({
-  root: path.resolve(__dirname, '..'),
+  root: path.resolve(import.meta.dirname, '..'),
   test: {
     include: ['test/uat/fleet-sandbox-live.uat.ts'],
     environment: 'node',
@@ -14,6 +14,8 @@ export default defineConfig({
       junit: './test-results/fleet-sandbox-live.junit.xml',
     },
     pool: 'forks',
-    poolOptions: { forks: { singleFork: true } },
+    maxWorkers: 1,
+    fileParallelism: false,
+    isolate: false,
   },
 });

@@ -31,7 +31,7 @@ describe('External Ralph Loop Integration', () => {
   });
 
   describe('execute', () => {
-    it('should complete successfully on first iteration when task succeeds', async () => {
+    it('should complete successfully on first iteration when task succeeds', { timeout: 10000 }, async () => {
       const orchestrator = new Orchestrator(testDir);
 
       // Mock session launcher
@@ -81,9 +81,9 @@ describe('External Ralph Loop Integration', () => {
       // Check state was saved
       const finalState = orchestrator.stateManager.load();
       expect(finalState?.status).toBe('completed');
-    }, { timeout: 10000 });
+    });
 
-    it('should iterate multiple times when task is incomplete', async () => {
+    it('should iterate multiple times when task is incomplete', { timeout: 10000 }, async () => {
       const orchestrator = new Orchestrator(testDir);
       let callCount = 0;
 
@@ -150,9 +150,9 @@ describe('External Ralph Loop Integration', () => {
       expect(finalState?.filesModified).toContain('file1.ts');
       expect(finalState?.filesModified).toContain('file2.ts');
       expect(finalState?.filesModified).toContain('final.ts');
-    }, { timeout: 10000 });
+    });
 
-    it('should stop when max iterations reached', async () => {
+    it('should stop when max iterations reached', { timeout: 10000 }, async () => {
       const orchestrator = new Orchestrator(testDir);
 
       vi.spyOn(orchestrator.sessionLauncher, 'launch').mockResolvedValue({
@@ -199,9 +199,9 @@ describe('External Ralph Loop Integration', () => {
 
       const finalState = orchestrator.stateManager.load();
       expect(finalState?.status).toBe('limit_reached');
-    }, { timeout: 10000 });
+    });
 
-    it('should stop when shouldContinue is false', async () => {
+    it('should stop when shouldContinue is false', { timeout: 10000 }, async () => {
       const orchestrator = new Orchestrator(testDir);
 
       vi.spyOn(orchestrator.sessionLauncher, 'launch').mockResolvedValue({
@@ -248,9 +248,9 @@ describe('External Ralph Loop Integration', () => {
 
       const finalState = orchestrator.stateManager.load();
       expect(finalState?.status).toBe('failed');
-    }, { timeout: 10000 });
+    });
 
-    it('should handle session errors and continue', async () => {
+    it('should handle session errors and continue', { timeout: 10000 }, async () => {
       const orchestrator = new Orchestrator(testDir);
       let callCount = 0;
 
@@ -301,7 +301,7 @@ describe('External Ralph Loop Integration', () => {
       const finalState = orchestrator.stateManager.load();
       expect(finalState?.iterations[0].status).toBe('error');
       expect(finalState?.iterations[1].status).toBe('completed');
-    }, { timeout: 10000 });
+    });
   });
 
   describe('resume', () => {
@@ -310,7 +310,7 @@ describe('External Ralph Loop Integration', () => {
       await expect(orchestrator.resume()).rejects.toThrow('No external Ralph loop to resume');
     });
 
-    it('should resume from saved state', async () => {
+    it('should resume from saved state', { timeout: 10000 }, async () => {
       const orchestrator = new Orchestrator(testDir);
 
       // Create initial state
@@ -377,7 +377,7 @@ describe('External Ralph Loop Integration', () => {
       const finalState = orchestrator.stateManager.load();
       expect(finalState?.status).toBe('completed');
       expect(finalState?.iterations).toHaveLength(2);
-    }, { timeout: 10000 });
+    });
   });
 
   describe('getStatus', () => {
@@ -401,7 +401,7 @@ describe('External Ralph Loop Integration', () => {
   });
 
   describe('completion report', () => {
-    it('should generate completion report on success', async () => {
+    it('should generate completion report on success', { timeout: 10000 }, async () => {
       const orchestrator = new Orchestrator(testDir);
 
       vi.spyOn(orchestrator.sessionLauncher, 'launch').mockResolvedValue({
@@ -449,7 +449,7 @@ describe('External Ralph Loop Integration', () => {
       expect(report).toContain('Implement feature');
       expect(report).toContain('Tests pass');
       expect(report).toContain('SUCCESS');
-    }, { timeout: 10000 });
+    });
   });
 
   describe('snapshots integration', () => {
@@ -457,7 +457,7 @@ describe('External Ralph Loop Integration', () => {
     // where string paths were expected, causing:
     // "The path argument must be of type string. Received an instance of Object"
 
-    it('should capture pre/post snapshots without type errors when enableSnapshots is true', async () => {
+    it('should capture pre/post snapshots without type errors when enableSnapshots is true', { timeout: 15000 }, async () => {
       const orchestrator = new Orchestrator(testDir);
 
       // Initialize a git repo so snapshots can capture git state
@@ -530,7 +530,7 @@ describe('External Ralph Loop Integration', () => {
           expect(preSnapshot.git).toBeDefined();
         }
       }
-    }, { timeout: 15000 });
+    });
   });
 
   describe('abort', () => {
@@ -552,7 +552,7 @@ describe('External Ralph Loop Integration', () => {
     // pipeline: orchestrator → prompt generation → file write → real spawn →
     // stdout/stderr capture → output analysis via pattern matching → state update.
 
-    it('should spawn real process, capture output, and complete one-shot task', async () => {
+    it('should spawn real process, capture output, and complete one-shot task', { timeout: 30000 }, async () => {
       // Register stub provider so orchestrator.execute() uses it via createProvider('stub')
       const { registerStubProvider } = await import('../fixtures/stub-provider-adapter.mjs');
       registerStubProvider();
@@ -624,9 +624,9 @@ describe('External Ralph Loop Integration', () => {
       expect(existsSync(reportPath)).toBe(true);
       const report = readFileSync(reportPath, 'utf8');
       expect(report).toContain('Reply with OK');
-    }, { timeout: 30000 });
+    });
 
-    it('should handle non-zero exit from spawned process', async () => {
+    it('should handle non-zero exit from spawned process', { timeout: 30000 }, async () => {
       // Register stub provider with --stub-fail flag
       const { registerStubProvider } = await import('../fixtures/stub-provider-adapter.mjs');
       registerStubProvider(['--stub-fail']);
@@ -672,9 +672,9 @@ describe('External Ralph Loop Integration', () => {
         // Should NOT contain completion marker
         expect(stdout).not.toContain('ralph_external_completion');
       }
-    }, { timeout: 30000 });
+    });
 
-    it('should handle crash output from spawned process', async () => {
+    it('should handle crash output from spawned process', { timeout: 30000 }, async () => {
       // Register stub provider with --stub-crash flag
       const { registerStubProvider } = await import('../fixtures/stub-provider-adapter.mjs');
       registerStubProvider(['--stub-crash']);
@@ -713,6 +713,6 @@ describe('External Ralph Loop Integration', () => {
         const stderr = readFileSync(stderrPath, 'utf8');
         expect(stderr).toContain('unexpected termination');
       }
-    }, { timeout: 30000 });
+    });
   });
 });

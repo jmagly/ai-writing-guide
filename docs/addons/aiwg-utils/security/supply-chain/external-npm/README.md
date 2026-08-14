@@ -43,8 +43,8 @@ This directory tracks external npm package audit evidence for the current depend
 | `@types/js-yaml` | `4.0.9` | #1446, #1447 | no | complete | [report](types__js-yaml.md) |
 | `@types/node` | `22.19.2` | #1446, #1447 | no | complete | [report](types__node.md) |
 | `@types/semver` | `7.7.1` | #1446 | no | complete | [report](types__semver.md) |
-| `@vitest/coverage-v8` | `2.1.9` | #1446 | no | complete | [report](vitest__coverage-v8.md) |
-| `@vitest/ui` | `2.1.9` | #1446 | no | complete | [report](vitest__ui.md) |
+| `@vitest/coverage-v8` | `4.1.10` | #2055 | no | complete | [report](vitest__coverage-v8.md) |
+| `@vitest/ui` | `4.1.10` | #2055 | no | complete | [report](vitest__ui.md) |
 | `@xterm/headless` | `6.0.0` | #1446 | no | complete | [report](xterm__headless.md) |
 | `cli-table3` | `0.6.5` | #1446 | no | complete | [report](cli-table3.md) |
 | `graphology` | `0.26.0` | #1446 | no | complete | [report](graphology.md) |
@@ -53,7 +53,7 @@ This directory tracks external npm package audit evidence for the current depend
 | `graphology-traversal` | `0.3.1` | #1446 | no | complete | [report](graphology-traversal.md) |
 | `graphology-types` | `0.24.8` | #1446 | no | complete | [report](graphology-types.md) |
 | `simple-statistics` | `7.8.8` | #1446 | no | complete | [report](simple-statistics.md) |
-| `vitest` | `2.1.9` | #1446 | no | complete | [report](vitest.md) |
+| `vitest` | `4.1.10` | #2055 | no | complete | [report](vitest.md) |
 
 ## Evidence Utilities
 

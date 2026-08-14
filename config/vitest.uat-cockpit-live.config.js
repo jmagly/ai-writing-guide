@@ -11,7 +11,7 @@ import path from 'path';
  * http://127.0.0.1:8122. The suite skips with a clear reason when unreachable.
  */
 export default defineConfig({
-  root: path.resolve(__dirname, '..'),
+  root: path.resolve(import.meta.dirname, '..'),
   test: {
     include: ['test/uat/cockpit-live.uat.ts'],
     environment: 'node',
@@ -20,10 +20,12 @@ export default defineConfig({
     hookTimeout: 30_000,
     reporters: ['verbose'],
     pool: 'forks',
-    poolOptions: { forks: { singleFork: true } },
+    maxWorkers: 1,
+    fileParallelism: false,
+    isolate: false,
   },
   resolve: {
-    alias: { '@': path.resolve(__dirname, '../src') },
+    alias: { '@': path.resolve(import.meta.dirname, '../src') },
     extensions: ['.ts', '.mjs', '.js', '.json'],
   },
 });

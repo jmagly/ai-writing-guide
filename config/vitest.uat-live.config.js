@@ -14,7 +14,7 @@ import path from 'path';
  *   - codex:  OPENAI_API_KEY set, codex CLI installed
  */
 export default defineConfig({
-  root: path.resolve(__dirname, '..'),
+  root: path.resolve(import.meta.dirname, '..'),
   test: {
     include: ['test/uat/ralph-live-*.uat.ts'],
     environment: 'node',
@@ -26,15 +26,13 @@ export default defineConfig({
     hookTimeout: 30000,
     reporters: ['verbose'],
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true,  // Run live tests sequentially to avoid API rate limits
-      },
-    },
+    maxWorkers: 1,
+    fileParallelism: false, // Run live tests sequentially to avoid API rate limits
+    isolate: false,
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, '../src'),
+      '@': path.resolve(import.meta.dirname, '../src'),
     },
     extensions: ['.ts', '.js', '.json'],
   },

@@ -7,7 +7,7 @@ import path from 'path';
 //
 // Mirrors vitest.uat-daemon.config.js shape per the issue body.
 export default defineConfig({
-  root: path.resolve(__dirname, '..'),
+  root: path.resolve(import.meta.dirname, '..'),
   test: {
     include: [
       'test/integration/serve-sandbox-fake.test.ts',
@@ -22,11 +22,9 @@ export default defineConfig({
 
     // Single fork so multiple serve processes don't fight for sockets.
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
-    },
+    maxWorkers: 1,
+    fileParallelism: false,
+    isolate: false,
 
     globals: false,
     clearMocks: true,
@@ -39,7 +37,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, '../src'),
+      '@': path.resolve(import.meta.dirname, '../src'),
     },
     extensions: ['.ts', '.js', '.json'],
   },

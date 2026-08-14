@@ -2,7 +2,7 @@
  * Vitest config for the executor-v1 conformance test suite.
  *
  * Scoped to test/conformance/executor-v1/ only.
- * Runs in forks pool with singleFork: true to prevent socket conflicts
+ * Runs in one non-isolated fork to prevent socket conflicts
  * with the registry tests.
  *
  * Usage:
@@ -17,7 +17,7 @@ import { defineConfig } from 'vitest/config';
 import path from 'path';
 
 export default defineConfig({
-  root: path.resolve(__dirname, '..'),
+  root: path.resolve(import.meta.dirname, '..'),
   test: {
     include: [
       'test/conformance/executor-v1/**/*.test.mjs',
@@ -30,14 +30,12 @@ export default defineConfig({
     ],
     environment: 'node',
 
-    // forks pool + singleFork prevents socket-level conflicts with
+    // One non-isolated fork prevents socket-level conflicts with
     // the registry tests that may share port space
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
-    },
+    maxWorkers: 1,
+    fileParallelism: false,
+    isolate: false,
 
     // Conformance tests exercise I/O-bound fixture loading and can be slow
     // in live mode; use a generous timeout
@@ -55,7 +53,7 @@ export default defineConfig({
 
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, '../src'),
+      '@': path.resolve(import.meta.dirname, '../src'),
     },
     extensions: ['.mjs', '.js', '.ts', '.json'],
   },

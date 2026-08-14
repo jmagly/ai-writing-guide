@@ -15,7 +15,7 @@ import path from 'path';
  *     reachable, so this config is safe to run in any environment.
  */
 export default defineConfig({
-  root: path.resolve(__dirname, '..'),
+  root: path.resolve(import.meta.dirname, '..'),
   test: {
     include: ['test/uat/serve-sandbox-live.uat.mjs', 'test/uat/serve-sandbox-live.uat.ts'],
     environment: 'node',
@@ -27,15 +27,13 @@ export default defineConfig({
     hookTimeout: 60_000,
     reporters: ['verbose'],
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true, // Sequential — one serve at a time
-      },
-    },
+    maxWorkers: 1,
+    fileParallelism: false, // Sequential — one serve at a time
+    isolate: false,
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, '../src'),
+      '@': path.resolve(import.meta.dirname, '../src'),
     },
     extensions: ['.ts', '.mjs', '.js', '.json'],
   },

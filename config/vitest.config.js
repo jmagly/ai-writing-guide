@@ -6,7 +6,7 @@ import path from 'path';
 process.env.CHOKIDAR_USEPOLLING ??= '1';
 
 export default defineConfig({
-  root: path.resolve(__dirname, '..'),
+  root: path.resolve(import.meta.dirname, '..'),
   test: {
     // Test file patterns
     include: [
@@ -114,12 +114,7 @@ export default defineConfig({
 
     // Parallel execution for speed
     pool: 'threads',
-    poolOptions: {
-      threads: {
-        singleThread: false,
-        useAtomics: true
-      }
-    },
+    fileParallelism: true,
     maxWorkers: 8,
     minWorkers: 1,
 
@@ -133,9 +128,9 @@ export default defineConfig({
   // TypeScript support and path aliases
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, '../src'),
-      '@sdlc': path.resolve(__dirname, '../agentic/code/frameworks/sdlc-complete/src'),
-      '@global': path.resolve(__dirname, '../src')
+      '@': path.resolve(import.meta.dirname, '../src'),
+      '@sdlc': path.resolve(import.meta.dirname, '../agentic/code/frameworks/sdlc-complete/src'),
+      '@global': path.resolve(import.meta.dirname, '../src')
     },
     extensions: ['.ts', '.js', '.json']
   }

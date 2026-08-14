@@ -1,6 +1,6 @@
 # @vitest/ui External NPM Supply-Chain Audit
 
-Generated: 2026-05-23
+Generated: 2026-08-14
 
 ## Scope
 
@@ -8,9 +8,9 @@ Generated: 2026-05-23
 |---|---|
 | Package | `@vitest/ui` |
 | Canonical upstream repository | https://github.com/vitest-dev/vitest.git (packages/ui) |
-| Audited version/ref | `2.1.9` / `2.1.9` |
+| Audited version/ref | `4.1.10` / `4.1.10` |
 | npm registry signatures | 1 |
-| Dependency source summary | `@vitest/utils`, `sirv`, `tinyglobby` |
+| Dependency source summary | `@vitest/utils`, `fflate`, `flatted`, `sirv`, `tinyglobby` |
 | Optional dependency summary | (none) |
 | Peer dependency summary | `vitest` |
 | Provenance record path | `.aiwg/security/supply-chain/external-npm/vitest__ui.md` |
@@ -19,11 +19,11 @@ Generated: 2026-05-23
 
 | Manifest | Field | Spec | Lockfile Version | Integrity | Install Script | Optional Lock Entry | Tracking |
 |---|---|---:|---:|---|---|---|---|
-| `package.json` | `devDependencies` | `^2.1.0` | `2.1.9` | yes | no | no | #1446 |
+| `package.json` | `devDependencies` | `^4.1.10` | `4.1.10` | yes | no | no | #2055 |
 
 ## Lockfile Tarballs
 
-- package.json: https://registry.npmjs.org/@vitest/ui/-/ui-2.1.9.tgz
+- package.json: https://registry.npmjs.org/@vitest/ui/-/ui-4.1.10.tgz
 
 ## Lifecycle And Native/Binary Review
 
@@ -33,7 +33,7 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 
 | Script | Command |
 |---|---|
-| `build` | `rimraf dist && pnpm build:node && pnpm build:client` |
+| `build` | `premove dist && pnpm build:node && pnpm build:client` |
 
 ## Dependency Source Findings
 
@@ -42,9 +42,9 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 
 ## Release And Provenance Evidence
 
-- Registry metadata reviewed on 2026-05-23; npm dist signature count: 1.
+- Registry metadata reviewed on 2026-08-14; npm dist signature count: 1 and SLSA provenance attestation metadata is present.
 - Audited ref uses npm `gitHead` where exposed; otherwise this report records the exact lockfile version and repository metadata.
-- Trusted publishing/attestation evidence was not independently verified beyond npm registry signature metadata in this pass.
+- The registry exposes an npm attestation URL with an SLSA provenance v1 predicate; this pass did not independently validate the attestation statement.
 - Signed git tag verification was not established locally for this batch; deeper upstream review should verify tags only where upstream documents signed release tags.
 
 ## Findings
@@ -60,6 +60,6 @@ Consumer install-time lifecycle scripts are `preinstall`, `install`, and `postin
 
 ## Follow-Up
 
-- Track as review evidence for #1445, #1446, and/or #1447 according to the usage-context table.
+- Track as review evidence for #2055.
 - Open an AIWG child issue only if future verification finds a failing lockfile signature, unexpected lifecycle script, non-registry dependency source, or unverifiable private package provenance.
 - Upstream issue/PR draft: use `_upstream-issue-template.md` if requesting signed release tags, provenance documentation, or clearer lifecycle-script disclosure from the upstream maintainer.

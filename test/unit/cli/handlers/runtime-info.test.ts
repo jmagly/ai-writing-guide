@@ -21,7 +21,9 @@ const mockDiscovery = {
 };
 
 vi.mock('../../../../src/smiths/toolsmith/runtime-discovery.mjs', () => ({
-  RuntimeDiscovery: vi.fn(() => mockDiscovery),
+  RuntimeDiscovery: vi.fn(function RuntimeDiscoveryMock() {
+    return mockDiscovery;
+  }),
 }));
 
 describe('Runtime Info Command Handler', () => {
