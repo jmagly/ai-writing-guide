@@ -65,6 +65,13 @@ jobs:
             echo "::error::release tag '$REF_NAME' is invalid"
             exit 1
           fi
+
+          # workflow_dispatch checks out the default branch, while tag pushes
+          # may use a shallow checkout without the annotated tag object. Fetch
+          # the exact tag in both cases, verify its maintainer signature, and
+          # hash the manifest stored in that tag rather than the working tree.
+          git fetch --force origin "refs/tags/${REF_NAME}:refs/tags/${REF_NAME}"
+          AIWG_VERIFY_TAG_REF="refs/tags/${REF_NAME}" bash tools/ci/verify-signed-tag.sh
           # Dispatch the cross-repo deploy and FAIL LOUDLY on any non-2xx.
           # Prior implementation used `curl -s` without -f, which masked auth
           # failures — a revoked AIWG_IO_DISPATCH_TOKEN returned HTTP 401 with
@@ -76,12 +83,24 @@ jobs:
             exit 1
           fi
 
+          # Bind the cross-repo deployment to the exact setup manifest bytes
+          # from this signed release tag. aiwg.io verifies this digest before
+          # publishing and again from the public URL after deployment.
+          git show "${REF_NAME}:setup.aiwg.yaml" > /tmp/setup.aiwg.yaml
+          SETUP_SHA256=$(sha256sum /tmp/setup.aiwg.yaml | awk '{print $1}')
+          PAYLOAD=$(jq -n \
+            --arg ref "main" \
+            --arg version "${REF_NAME}" \
+            --arg source_tag "${REF_NAME}" \
+            --arg setup_sha256 "${SETUP_SHA256}" \
+            '{ref: $ref, inputs: {aiwg_version: $version, source_tag: $source_tag, setup_sha256: $setup_sha256}}')
+
           HTTP_STATUS=$(curl -sS -o /tmp/dispatch-body.txt -w "%{http_code}" \
             -X POST \
             -H "Authorization: token ${AIWG_IO_DISPATCH_TOKEN}" \
             -H "Content-Type: application/json" \
             "https://git.integrolabs.net/api/v1/repos/roctinam/aiwg.io/actions/workflows/deploy.yml/dispatches" \
-            -d "{\"ref\":\"main\",\"inputs\":{\"aiwg_version\":\"${REF_NAME}\",\"source_tag\":\"${REF_NAME}\"}}")
+            -d "${PAYLOAD}")
 
           echo "Dispatch HTTP status: ${HTTP_STATUS}"
           # Workflow-dispatch returns 204 No Content on success.
@@ -95,4 +114,4 @@ jobs:
             exit 1
           fi
 
-          echo "✓ aiwg.io deploy dispatched for ${REF_NAME}"
+          echo "✓ aiwg.io deploy dispatched for ${REF_NAME} (setup.aiwg.yaml ${SETUP_SHA256})"
