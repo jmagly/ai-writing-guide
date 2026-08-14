@@ -31,6 +31,7 @@ The canonical files are `items/` and `events/`. The `index/` directory is a cach
 
 ```bash
 aiwg issue init --prefix PROJECT
+aiwg issue plan --title "Improve setup" --body-file issue.md --json
 aiwg issue new --title "Fix import flow" --body-file issue.md
 aiwg issue list --status open --search import
 aiwg issue show PROJECT-0001 --comments last:10
@@ -38,6 +39,22 @@ aiwg issue comment PROJECT-0001 --body "Started"
 aiwg issue close PROJECT-0001 --reason "Done"
 aiwg issue index rebuild
 ```
+
+Every new local issue is policy-planned before its first write. Safe drafts
+remain one issue. Drafts that cross an enforced policy boundary are split into
+independently assessed issues with stable provenance markers, dependency order,
+and sibling links. Flagged drafts require the digest shown by `issue plan`:
+
+```bash
+aiwg issue new --title "..." --body-file issue.md \
+  --authorize-policy <reviewed-plan-digest>
+```
+
+Rejected drafts that cannot be separated produce suggestions and make no
+filesystem change. A partial multi-issue result includes the next segment and
+all stable markers; retrying the same draft reuses matching issues instead of
+duplicating them. The `issue-create` skill applies this same composer before
+Gitea, GitHub, Jira, Linear, and higher-level workflow writes.
 
 `aiwg issue list` can filter by status, label, type, priority, assignee, and
 search text. `issue-audit --provider local` and `address-issues --provider
