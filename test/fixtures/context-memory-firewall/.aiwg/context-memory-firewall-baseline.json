@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "aiwg.context-memory-firewall-baseline/v1",
+  "reviewedAt": "2026-01-01T00:00:00.000Z",
+  "files": {
+    ".aiwg/context/superseded.md": {
+      "digest": "sha256:bf891e4fb4377e049f86c38ab5587ea00b742f6ce4377e1aaaa53f2c838232cc",
+      "trust": "superseded",
+      "category": "project-local",
+      "providers": ["shared"]
+    },
+    ".aiwg/memory/changed.md": {
+      "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "trust": "user-authored",
+      "category": "project-local",
+      "providers": ["shared"]
+    },
+    ".claude/rules/safe.md": {
+      "digest": "sha256:49c76453358c30dd9cda42dbdc7775564265db54b1c900f934124349673ca580",
+      "trust": "generated",
+      "category": "rule",
+      "providers": ["claude"]
+    }
+  }
+}

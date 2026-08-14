@@ -1,0 +1,16 @@
+{
+  "managed": {
+    "safe.md": {
+      "hash": "sha256:49c76453358c30dd9cda42dbdc7775564265db54b1c900f934124349673ca580",
+      "source": "bundled",
+      "version": "1",
+      "frameworkSlug": "demo"
+    },
+    "stale.md": {
+      "hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "source": "bundled",
+      "version": "1",
+      "frameworkSlug": "demo"
+    }
+  }
+}

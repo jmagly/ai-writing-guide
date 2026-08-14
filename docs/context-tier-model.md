@@ -59,3 +59,8 @@ Generated provider context should prefer maps, anchors, and curated discovery ph
 - Preserve direct lookup through `aiwg discover` / `aiwg show`; do not require agents to enumerate provider directories from memory.
 
 Existing framework quickrefs such as `aiwg-utils-quickref`, `sdlc-quickref`, `research-quickref`, and `ops-quickref` are the model for Tier 2 content: small enough to keep loaded, specific enough to route, and explicit about when to load deeper material.
+
+Enforce these boundaries with the [provider context and persistent-memory
+firewall](security/context-memory-firewall.md). Its category totals make Tier 1
+growth visible while keeping Tier 3 skill and agent bodies in the separate
+potential-context inventory.

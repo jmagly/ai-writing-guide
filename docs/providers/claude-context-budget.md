@@ -133,6 +133,7 @@ Use:
 ```bash
 npm run lint:claude-context              # startup budget + per-artifact inventory
 npm run lint:claude-context -- --startup # startup budget only
+npm run lint:context-firewall            # cross-provider trust, drift, and memory gate
 ```
 
 The check reports the aggregate startup-context budget (memory files + deployed
@@ -148,6 +149,12 @@ It flags:
 
 `--strict` exits non-zero on per-artifact violations or when startup context is
 over budget.
+
+The context firewall complements this Claude-specific size check. It reports
+memory, rules, skill listings, agents, generated bridges, and project-local
+context independently; compares deployed bytes with packaged source bytes; and
+requires reviewed trust labels in strict mode. See the
+[context/memory firewall guide](../security/context-memory-firewall.md).
 
 For the live #1672 repro gate, use:
 

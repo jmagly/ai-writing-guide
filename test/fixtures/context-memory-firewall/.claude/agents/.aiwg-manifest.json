@@ -1,0 +1,10 @@
+{
+  "managed": {
+    "reviewer.md": {
+      "hash": "sha256:fb65b49ac6d068d87e7bf6c257dad73725f732df56f4d8a20069d0970e2f5fc4",
+      "source": "bundled",
+      "version": "1",
+      "frameworkSlug": "demo"
+    }
+  }
+}

@@ -90,6 +90,7 @@
     "lint:tarball": "node tools/lint/tarball-audit.mjs",
     "lint:fortemi-prebuilt-package": "node tools/lint/fortemi-prebuilt-package.mjs",
     "lint:audit-signatures": "node tools/lint/audit-signatures.mjs",
+    "lint:context-firewall": "node tools/security/context-memory-firewall.mjs",
     "lint:context-sizes": "node tools/lint/context-size-guard.mjs",
     "lint:agent-sizes": "node tools/lint/agent-def-sizes.mjs",
     "lint:claude-context": "node tools/lint/claude-context-inventory.mjs",

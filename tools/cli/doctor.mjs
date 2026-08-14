@@ -13,6 +13,7 @@ import { execFileSync, execSync } from 'child_process';
 import chalk from 'chalk';
 import { importImpl } from '../_resolve-impl.mjs';
 import { scanStartupContext } from '../lint/claude-context-inventory.mjs';
+import { scanContextMemoryFirewall } from '../security/context-memory-firewall.mjs';
 
 const { getFrameworkRoot, getVersionInfo } = await importImpl(
   import.meta.url,
@@ -112,13 +113,29 @@ const PROVIDER_AGENT_DIRS = {
 
 // Parse doctor-specific flags from process.argv (no commander dependency).
 function parseDoctorArgs(argv) {
-  const out = { provider: null, allProviders: false, noBudgetCheck: false };
+  const out = {
+    provider: null,
+    allProviders: false,
+    noBudgetCheck: false,
+    strictContext: false,
+    contextBaseline: '.aiwg/context-memory-firewall-baseline.json',
+    contextBudgetTokens: 200_000,
+  };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
     if (a === '--provider' && argv[i + 1]) { out.provider = argv[i + 1]; i += 1; continue; }
     if (a.startsWith('--provider=')) { out.provider = a.slice('--provider='.length); continue; }
     if (a === '--all-providers') { out.allProviders = true; continue; }
     if (a === '--no-budget-check') { out.noBudgetCheck = true; continue; }
+    if (a === '--strict-context') { out.strictContext = true; continue; }
+    if (a === '--context-baseline' && argv[i + 1]) { out.contextBaseline = argv[i + 1]; i += 1; continue; }
+    if (a.startsWith('--context-baseline=')) { out.contextBaseline = a.slice('--context-baseline='.length); continue; }
+    if (a === '--context-budget-tokens' && argv[i + 1]) {
+      out.contextBudgetTokens = Number(argv[i + 1]); i += 1; continue;
+    }
+    if (a.startsWith('--context-budget-tokens=')) {
+      out.contextBudgetTokens = Number(a.slice('--context-budget-tokens='.length)); continue;
+    }
   }
   return out;
 }
@@ -728,7 +745,14 @@ async function runDoctor() {
   //   --provider <name>  → just that one
   //   --all-providers    → every supported provider
   //   (default)          → auto-detect deployed providers via PROVIDER_AGENT_DIRS
-  const { provider: providerArg, allProviders, noBudgetCheck } = parseDoctorArgs(process.argv.slice(2));
+  const {
+    provider: providerArg,
+    allProviders,
+    noBudgetCheck,
+    strictContext,
+    contextBaseline,
+    contextBudgetTokens,
+  } = parseDoctorArgs(process.argv.slice(2));
   let providersToCheck = [];
   if (providerArg) {
     providersToCheck = [providerArg];
@@ -887,6 +911,50 @@ async function runDoctor() {
 
     if (provName === 'openhuman') {
       await checkOpenHumanHarnessTier2();
+    }
+  }
+
+  // Provider context and persistent-memory firewall (#2040). This complements
+  // per-provider listing/startup estimates with one cross-category inventory,
+  // deployment-manifest drift checks, reviewed digests, and poisoning labels.
+  // The default doctor is advisory; --strict-context promotes any violation or
+  // missing review baseline to an error and therefore a non-zero doctor exit.
+  if (!noBudgetCheck) {
+    try {
+      const supported = providersToCheck.filter((name) =>
+        ['claude', 'codex', 'copilot', 'cursor', 'factory', 'opencode', 'warp', 'windsurf', 'hermes', 'openhuman'].includes(name),
+      );
+      const firewall = await scanContextMemoryFirewall({
+        rootDir: process.cwd(),
+        packageRoot: AIWG_ROOT,
+        providers: supported,
+        baselinePath: contextBaseline,
+        budgetTokens: contextBudgetTokens,
+      });
+      const stale = firewall.trust.stale;
+      const quarantined = firewall.trust.quarantined;
+      const external = firewall.trust.external;
+      const changed = firewall.records.filter((record) => record.reviewStatus === 'changed-review-required').length;
+      const categorySummary = Object.entries(firewall.categories)
+        .map(([category, value]) => `${category}=${value.bytes.toLocaleString()}B`)
+        .join(', ');
+      const summary =
+        `${firewall.totals.files} file(s), ~${firewall.totals.approxTokens.toLocaleString()} / `
+        + `${firewall.budget.tokens.toLocaleString()} tokens; ${categorySummary}; `
+        + `stale=${stale}, quarantined=${quarantined}, external=${external}, changed=${changed}`;
+      const baselineMissing = !firewall.baseline.exists;
+      const unsafe = firewall.violations.length > 0 || baselineMissing;
+      if (unsafe) {
+        const status = strictContext ? 'error' : 'warn';
+        const baselineMessage = baselineMissing
+          ? ` Review baseline missing at ${firewall.baseline.path}; review output, then run \`npm run lint:context-firewall -- --write-baseline --confirm-reviewed\`.`
+          : '';
+        check('Context/memory firewall', status, `${summary}.${baselineMessage}`);
+      } else {
+        check('Context/memory firewall', 'ok', `${summary}; reviewed baseline ${firewall.baseline.path}`);
+      }
+    } catch (error) {
+      check('Context/memory firewall', strictContext ? 'error' : 'warn', `scan failed: ${error.message}`);
     }
   }
 

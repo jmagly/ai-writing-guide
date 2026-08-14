@@ -551,3 +551,33 @@ describe('tools/cli/doctor.mjs — startup-context budget (#1673)', () => {
     expect(fn).toContain('Startup Context');
   });
 });
+
+// ── Context and persistent-memory firewall (#2040) ────────────────────
+
+describe('tools/cli/doctor.mjs — context/memory firewall (#2040)', () => {
+  let content: string;
+  beforeEach(async () => {
+    const { readFileSync } = await import('fs');
+    content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
+  });
+
+  it('imports and invokes the cross-category firewall', () => {
+    expect(content).toContain('scanContextMemoryFirewall');
+    expect(content).toContain("from '../security/context-memory-firewall.mjs'");
+    expect(content).toContain('const firewall = await scanContextMemoryFirewall');
+  });
+
+  it('exposes strict, baseline, and provider-budget controls', () => {
+    expect(content).toContain("a === '--strict-context'");
+    expect(content).toContain("a === '--context-baseline'");
+    expect(content).toContain("a === '--context-budget-tokens'");
+    expect(content).toContain("strictContext ? 'error' : 'warn'");
+  });
+
+  it('reports all six context contributions and review states', () => {
+    expect(content).toContain('Object.entries(firewall.categories)');
+    expect(content).toContain('firewall.trust.stale');
+    expect(content).toContain('firewall.trust.quarantined');
+    expect(content).toContain("record.reviewStatus === 'changed-review-required'");
+  });
+});

@@ -209,6 +209,8 @@ Check installation health and diagnose issues.
 
 ```bash
 aiwg doctor [--provider <name>] [--all-providers] [--project-local] [--quiet]
+            [--strict-context] [--context-baseline <path>]
+            [--context-budget-tokens <n>]
 ```
 
 **Flags:**
@@ -217,6 +219,9 @@ aiwg doctor [--provider <name>] [--all-providers] [--project-local] [--quiet]
 - `--all-providers` — Enumerate every supported provider, including ones with nothing deployed.
 - `--project-local` — Show only the project-local artifacts section. Exit code reflects only project-local findings.
 - `--quiet` — Suppress informational subsections (counts, shadows). Show only failures.
+- `--strict-context` — Fail when the provider context/memory firewall finds a violation or lacks a reviewed baseline.
+- `--context-baseline <path>` — Read reviewed context digests and trust labels from this project-relative path (default `.aiwg/context-memory-firewall-baseline.json`).
+- `--context-budget-tokens <n>` — Override the portable 200K provider-context budget.
 
 **Capabilities:** cli, diagnostics, health-check
 **Platforms:** All
@@ -234,6 +239,7 @@ aiwg doctor [--provider <name>] [--all-providers] [--project-local] [--quiet]
 - MCP server availability
 - System dependencies (git, jq, etc.)
 - `memory.topology` contracts — runs `validateMemoryTopology()` against every installed framework/addon manifest; flags missing required fields, invalid `crossRefStyle` values (must be `at-mention | wikilink | markdown-link | yaml-ref`), namespaces not under `.aiwg/`, empty `derivedPages`, and wrong array shapes for `lintRules`/`ingestRequires` (per ADR-021)
+- **Provider context/memory firewall** — separately measures memory, rules, skills, agents, generated bridges, and project-local context; reports deployed/package drift, trust labels, changed reviewed files, and poisoning signals. See the [operator guide](../security/context-memory-firewall.md).
 - **Project-local artifacts** ([design](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/design-doctor-log-promote.md)) — per-type counts, manifest validation, active shadows (informational vs blocking), denylist violations, deploy-state drift (deployed file hash vs registered `artifactHashes`), provider deployment matrix. Section is suppressed entirely when no project-local content exists.
 
 **Doctor exits 0 when:** no validation errors, no denylist violations, no drift. Shadows alone do not fail doctor — they're informational by design.
