@@ -84,6 +84,8 @@
     "architecture/adr-agent-skills-portability-contract",
     "reports/agentskills-standard-audit-2026-07-25",
     "configuration/aiwg-config",
+    "context-tier-model",
+    "skills-budget-guide",
     "security/threat-assessment-policy",
     "security/context-memory-firewall",
     "security/repo-access-manifest",
@@ -899,6 +901,20 @@
       "title": "AIWG Project Config",
       "summary": "Project and multi-repository workspace configuration reference",
       "file": "configuration/aiwg-config.md",
+      "parent": "reference"
+    },
+    {
+      "id": "context-tier-model",
+      "title": "Context Tier Model",
+      "summary": "Keep standing provider context small with discoverable on-demand references",
+      "file": "context-tier-model.md",
+      "parent": "reference"
+    },
+    {
+      "id": "skills-budget-guide",
+      "title": "Skills Budget Guide",
+      "summary": "Diagnose and remediate provider skill-listing budget pressure",
+      "file": "skills-budget-guide.md",
       "parent": "reference"
     },
     {
