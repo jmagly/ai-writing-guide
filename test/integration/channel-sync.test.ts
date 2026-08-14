@@ -72,6 +72,7 @@ const {
   mockLoadConfig,
   mockRefreshAllPackages,
   mockRun,
+  mockReadAiwgConfig,
 } = vi.hoisted(() => ({
   mockSwitchToNext: vi.fn().mockResolvedValue(undefined),
   mockSwitchToNightly: vi.fn().mockResolvedValue(undefined),
@@ -79,6 +80,11 @@ const {
   mockLoadConfig: vi.fn().mockResolvedValue({ channel: 'stable' }),
   mockRefreshAllPackages: vi.fn().mockResolvedValue([]),
   mockRun: vi.fn().mockResolvedValue({ exitCode: 0 }),
+  mockReadAiwgConfig: vi.fn().mockResolvedValue({
+    providers: ['codex'],
+    installed: { sdlc: {} },
+    parallelism: {},
+  }),
 }));
 
 vi.mock('../../src/channel/manager.mjs', () => ({
@@ -95,7 +101,7 @@ vi.mock('../../src/packages/registry.js', () => ({
 }));
 
 vi.mock('../../src/config/aiwg-config.js', () => ({
-  readAiwgConfig: vi.fn().mockResolvedValue(null),
+  readAiwgConfig: mockReadAiwgConfig,
   hashManifest: vi.fn().mockResolvedValue(null),
 }));
 
@@ -168,7 +174,13 @@ describe('sync --dry-run', () => {
 });
 
 describe('sync --skip-update', () => {
-  beforeEach(() => { vi.clearAllMocks(); mockRun.mockResolvedValue({ exitCode: 0 }); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRun.mockResolvedValue({ exitCode: 0 });
+    mockReadAiwgConfig.mockResolvedValue({
+      providers: ['codex'], installed: { sdlc: {} }, parallelism: {},
+    });
+  });
 
   it('skips step 3 (update.mjs), runs steps 1, 2, 4, 5', async () => {
     await syncHandler.execute(makeCtx(['--skip-update']));

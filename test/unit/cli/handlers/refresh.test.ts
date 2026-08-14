@@ -95,6 +95,11 @@ function makeCtx(args: string[] = []): HandlerContext {
 
 beforeEach(() => {
   process.env.AIWG_TEST_PROCESS_PROVIDER = 'codex';
+  mockReadAiwgConfig.mockResolvedValue({
+    providers: ['codex'],
+    installed: { sdlc: {}, 'writing-quality': {} },
+    parallelism: {},
+  });
 });
 
 afterEach(() => {
@@ -239,11 +244,34 @@ describe('syncHandler.execute — --frameworks', () => {
     expect(deployTargets).toContain('research');
   });
 
-  it('calls deploy.mjs with "all" when no --frameworks flag', async () => {
+  it('re-deploys each installed item when no --frameworks flag', async () => {
     await syncHandler.execute(makeCtx());
     const deployCalls = mockRun.mock.calls.filter(([script]: [string]) => script === 'tools/cli/deploy.mjs');
-    expect(deployCalls.length).toBe(1);
-    expect(deployCalls[0][1][0]).toBe('all');
+    expect(deployCalls.map(([, args]: [string, string[]]) => args[0])).toEqual([
+      'sdlc',
+      'writing-quality',
+    ]);
+    expect(deployCalls.flatMap(([, args]: [string, string[]]) => args)).not.toContain('all');
+  });
+
+  it('--all preserves installed-only semantics instead of expanding aiwg use all', async () => {
+    await syncHandler.execute(makeCtx(['--all']));
+    const deployCalls = mockRun.mock.calls.filter(([script]: [string]) => script === 'tools/cli/deploy.mjs');
+    expect(deployCalls.map(([, args]: [string, string[]]) => args[0])).toEqual([
+      'sdlc',
+      'writing-quality',
+    ]);
+    expect(deployCalls.flatMap(([, args]: [string, string[]]) => args)).not.toContain('all');
+  });
+
+  it('--frameworks all also preserves installed-only semantics', async () => {
+    await syncHandler.execute(makeCtx(['--frameworks', 'all']));
+    const deployCalls = mockRun.mock.calls.filter(([script]: [string]) => script === 'tools/cli/deploy.mjs');
+    expect(deployCalls.map(([, args]: [string, string[]]) => args[0])).toEqual([
+      'sdlc',
+      'writing-quality',
+    ]);
+    expect(deployCalls.flatMap(([, args]: [string, string[]]) => args)).not.toContain('all');
   });
 });
 

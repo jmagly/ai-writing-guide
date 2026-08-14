@@ -174,7 +174,7 @@ export function collectModelDeployArgs(args: string[]): string[] {
 export const refreshHandler: CommandHandler = {
   id: 'refresh',
   name: 'Refresh',
-  description: 'Refresh AIWG to latest version and re-deploy all frameworks',
+  description: 'Refresh AIWG to latest version and re-deploy installed frameworks',
   category: 'maintenance',
   aliases: ['--refresh', 'sync', '--sync'],
 
@@ -258,13 +258,24 @@ export const refreshHandler: CommandHandler = {
       if (!quiet) ui.dim('  Skipping package update (--skip-update)');
     }
 
-    // Step 4: Re-deploy frameworks
-    const frameworks = frameworksArg ? frameworksArg.split(',') : undefined;
+    // Step 4: Re-deploy frameworks. Both the default form and --all mean
+    // "all installed", never the `aiwg use all` expansion meta-target. This
+    // preserves the operator's selected footprint and removal symmetry.
+    const refreshConfig = await readAiwgConfig(ctx.cwd);
+    const installedFrameworks = Object.keys(refreshConfig?.installed ?? {});
+    const requestedFrameworks = frameworksArg
+      ? frameworksArg.split(',').map(item => item.trim()).filter(Boolean)
+      : [];
+    const frameworks = !frameworksArg || requestedFrameworks.includes('all')
+      ? installedFrameworks
+      : requestedFrameworks;
     if (!quiet) ui.info(dryRun ? 'Would re-deploy frameworks...' : 'Re-deploying frameworks...');
 
     if (!dryRun) {
-      const deployTarget = frameworks || ['all'];
-      for (const fw of deployTarget) {
+      if (frameworks.length === 0 && !quiet) {
+        ui.dim('  No installed frameworks or addons to re-deploy');
+      }
+      for (const fw of frameworks) {
         const providerArgs = ['--provider', detectedProvider, ...modelDeployArgs];
         const useResult = await runner.run(
           'tools/cli/deploy.mjs',
@@ -278,9 +289,9 @@ export const refreshHandler: CommandHandler = {
         }
       }
     } else {
-      const targets = frameworks || ['all installed frameworks'];
       if (!quiet) {
-        for (const fw of targets) {
+        if (frameworks.length === 0) ui.dim('    No installed frameworks or addons');
+        for (const fw of frameworks) {
           ui.dim(`    Would re-deploy: ${fw}`);
         }
       }
@@ -431,7 +442,7 @@ export const refreshHandler: CommandHandler = {
       const output = JSON.stringify({
         status: dryRun ? 'dry-run' : 'refreshed',
         provider: detectedProvider,
-        frameworks: frameworks || ['all'],
+        frameworks,
         skipUpdate,
         channel: channel || undefined,
         staleAgentRemovals,
