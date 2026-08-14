@@ -8,14 +8,26 @@
  * @implements #423
  */
 
-import { describe, it, expect } from 'vitest';
+import { beforeAll, describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
 import { resolveProjectAiwgDir } from '../../../src/config/project-artifacts.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '../../..');
 const AIWG_DIR = resolveProjectAiwgDir(REPO_ROOT);
+
+function parseNpmPackJson(stdout: string) {
+  try {
+    return JSON.parse(stdout);
+  } catch {
+    const start = stdout.lastIndexOf('\n[');
+    if (start >= 0) return JSON.parse(stdout.slice(start + 1));
+    const first = stdout.indexOf('[');
+    if (first >= 0) return JSON.parse(stdout.slice(first));
+    throw new Error('no JSON array found in npm pack output');
+  }
+}
 
 describe('AIWG artifact root tracking and distribution (integration)', () => {
 
@@ -56,6 +68,21 @@ describe('AIWG artifact root tracking and distribution (integration)', () => {
   // ─────────────────────────────────────────────────────
 
   describe('npm pack exclusion', () => {
+    let packedFiles: Set<string>;
+
+    beforeAll(() => {
+      const output = execFileSync('npm', ['pack', '--dry-run', '--json'], {
+        cwd: REPO_ROOT,
+        encoding: 'utf-8',
+        maxBuffer: 64 * 1024 * 1024,
+        timeout: 120_000,
+      });
+      const pack = parseNpmPackJson(output);
+      packedFiles = new Set(
+        (pack?.[0]?.files ?? []).map((file: { path?: string }) => file.path ?? ''),
+      );
+    }, 120_000);
+
     it('should have a files allowlist in package.json', () => {
       const pkg = JSON.parse(
         fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf-8')
@@ -75,63 +102,26 @@ describe('AIWG artifact root tracking and distribution (integration)', () => {
     });
 
     it('should exclude .aiwg/ from npm pack dry-run', () => {
-      const output = execSync('npm pack --dry-run --json', {
-        cwd: REPO_ROOT,
-        encoding: 'utf-8',
-        timeout: 120_000,
-      });
-      function parseNpmPackJson(stdout: string) {
-        try {
-          return JSON.parse(stdout);
-        } catch {
-          const start = stdout.lastIndexOf('\n[');
-          if (start >= 0) return JSON.parse(stdout.slice(start + 1));
-          const first = stdout.indexOf('[');
-          if (first >= 0) return JSON.parse(stdout.slice(first));
-          throw new Error('no JSON array found in npm pack output');
-        }
-      }
-      const pack = parseNpmPackJson(output);
-      const aiwgFiles = (pack?.[0]?.files ?? [])
-        .map((file: { path?: string }) => file.path ?? '')
-        .filter((filePath: string) => filePath === '.aiwg' || filePath.startsWith('.aiwg/'));
+      const aiwgFiles = [...packedFiles]
+        .filter((filePath) => filePath === '.aiwg' || filePath.startsWith('.aiwg/'));
       expect(aiwgFiles, 'npm pack should include 0 .aiwg/ files').toHaveLength(0);
-    }, 120_000);
+    });
 
     it('should include doctor.mjs and its runtime lint import in npm pack dry-run', () => {
-      const output = execSync('npm pack --dry-run --json', {
-        cwd: REPO_ROOT,
-        encoding: 'utf-8',
-        timeout: 120_000,
-      });
-      function parseNpmPackJson(stdout: string) {
-        try {
-          return JSON.parse(stdout);
-        } catch {
-          const start = stdout.lastIndexOf('\n[');
-          if (start >= 0) return JSON.parse(stdout.slice(start + 1));
-          const first = stdout.indexOf('[');
-          if (first >= 0) return JSON.parse(stdout.slice(first));
-          throw new Error('no JSON array found in npm pack output');
-        }
-      }
-      const pack = parseNpmPackJson(output);
-      const files = new Set((pack?.[0]?.files ?? []).map((file: { path?: string }) => file.path ?? ''));
-
-      expect(files.has('tools/cli/doctor.mjs'), 'doctor.mjs must ship in npm package').toBe(true);
+      expect(packedFiles.has('tools/cli/doctor.mjs'), 'doctor.mjs must ship in npm package').toBe(true);
       expect(
-        files.has('tools/lint/claude-context-inventory.mjs'),
+        packedFiles.has('tools/lint/claude-context-inventory.mjs'),
         'doctor.mjs imports tools/lint/claude-context-inventory.mjs at runtime',
       ).toBe(true);
       expect(
-        files.has('tools/security/context-memory-firewall.mjs'),
+        packedFiles.has('tools/security/context-memory-firewall.mjs'),
         'the public context-firewall command must ship its packaged engine',
       ).toBe(true);
       expect(
-        files.has('tools/security/threat-assessment.mjs'),
+        packedFiles.has('tools/security/threat-assessment.mjs'),
         'the context-firewall engine imports threat-assessment.mjs at runtime',
       ).toBe(true);
-    }, 120_000);
+    });
   });
 
   // ─────────────────────────────────────────────────────
