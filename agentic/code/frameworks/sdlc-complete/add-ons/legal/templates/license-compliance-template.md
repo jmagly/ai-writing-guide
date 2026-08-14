@@ -1,3 +1,14 @@
+<!--
+SPDX-FileCopyrightText: 2024 Joe Magly
+SPDX-License-Identifier: MIT
+AIWG-License-Role: illustrative-policy-template
+
+The license names, SPDX identifiers, compatibility examples, and policy rows
+below are sample inputs for a generated compliance plan. They do not declare
+the license of AIWG, this template, or any AIWG dependency.
+-->
+<!-- AIWG-Illustrative-License-Data:start -->
+
 # License Compliance Template
 
 ## Cover Page
@@ -553,3 +564,5 @@ jobs:
 - Conduct quarterly audits to detect compliance drift over time
 - Escalate denylist detections immediately (within 24 hours)
 - Verify Automation Outputs entry is satisfied before signaling completion
+
+<!-- AIWG-Illustrative-License-Data:end -->

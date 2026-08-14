@@ -50,6 +50,12 @@ jobs:
         # than eval()/Function() code-generation wrappers.
         run: npm run lint:eval-imports
 
+      - name: Verify published license boundaries (#2083)
+        # Legal templates contain illustrative policy data. Require explicit
+        # SPDX file metadata so those examples cannot masquerade as the
+        # distribution license of the package that carries them.
+        run: npm run lint:package-license-boundary
+
       - name: Scan known affected package feed (#1353)
         # Reads the operator-maintained CSV feed from either the canonical
         # mounted path or AIWG_AFFECTED_PACKAGES_CSV. In CI, prefer a raw gist
