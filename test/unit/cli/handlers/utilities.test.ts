@@ -112,6 +112,7 @@ import {
   contributeStartHandler,
   validateMetadataHandler,
   doctorHandler,
+  contextFirewallHandler,
   updateHandler,
   utilityHandlers,
 } from '../../../../src/cli/handlers/utilities.js';
@@ -227,6 +228,49 @@ describe('Utility Command Handlers', () => {
     });
   });
 
+  describe('contextFirewallHandler', () => {
+    it('maps the default read-only scan to the packaged engine', async () => {
+      await contextFirewallHandler.execute(mockContext);
+
+      expect(mockRun).toHaveBeenCalledWith(
+        'tools/security/context-memory-firewall.mjs',
+        ['--package-root', mockContext.frameworkRoot],
+        { cwd: mockContext.cwd },
+      );
+    });
+
+    it('maps baseline planning without mutation', async () => {
+      mockContext.args = ['baseline', '--plan', '--output', '.aiwg/review.json', '--json'];
+      await contextFirewallHandler.execute(mockContext);
+
+      expect(mockRun).toHaveBeenCalledWith(
+        'tools/security/context-memory-firewall.mjs',
+        ['--package-root', mockContext.frameworkRoot, '--json', '--plan-baseline=.aiwg/review.json'],
+        { cwd: mockContext.cwd },
+      );
+    });
+
+    it('requires explicit confirmation before a baseline write', async () => {
+      mockContext.args = ['baseline', '--write'];
+      const result = await contextFirewallHandler.execute(mockContext);
+
+      expect(result.exitCode).toBe(2);
+      expect(result.message).toMatch(/requires --confirm-reviewed/);
+      expect(mockRun).not.toHaveBeenCalled();
+    });
+
+    it('maps a confirmed baseline write', async () => {
+      mockContext.args = ['baseline', '--write', '--confirm-reviewed'];
+      await contextFirewallHandler.execute(mockContext);
+
+      expect(mockRun).toHaveBeenCalledWith(
+        'tools/security/context-memory-firewall.mjs',
+        ['--package-root', mockContext.frameworkRoot, '--write-baseline', '--confirm-reviewed'],
+        { cwd: mockContext.cwd },
+      );
+    });
+  });
+
   describe('updateHandler', () => {
     it('should have correct metadata', () => {
       expect(updateHandler.id).toBe('update');
@@ -322,13 +366,14 @@ describe('Utility Command Handlers', () => {
 
   describe('utilityHandlers array', () => {
     it('should export all utility handlers', () => {
-      expect(utilityHandlers).toHaveLength(5);
+      expect(utilityHandlers).toHaveLength(6);
 
       const handlerIds = utilityHandlers.map(h => h.id);
       expect(handlerIds).toContain('prefill-cards');
       expect(handlerIds).toContain('contribute-start');
       expect(handlerIds).toContain('validate-metadata');
       expect(handlerIds).toContain('doctor');
+      expect(handlerIds).toContain('context-firewall');
       expect(handlerIds).toContain('update');
     });
 
@@ -356,7 +401,7 @@ describe('Utility Command Handlers', () => {
 
     it('maintenance handlers should have maintenance category', () => {
       const maintenanceCategories = utilityHandlers
-        .filter(h => ['doctor', 'update'].includes(h.id))
+        .filter(h => ['doctor', 'context-firewall', 'update'].includes(h.id))
         .map(h => h.category);
 
       maintenanceCategories.forEach(category => {

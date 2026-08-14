@@ -119,6 +119,27 @@ export const doctorCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const contextFirewallCommand: Extension = {
+  id: 'context-firewall',
+  type: 'skill',
+  name: 'Context Firewall',
+  description: 'Audit provider context and manage its reviewed digest baseline',
+  version: '1.0.0',
+  capabilities: ['cli', 'diagnostics', 'security', 'context-budget', 'memory-review'],
+  keywords: ['context', 'memory', 'firewall', 'baseline', 'poisoning', 'budget', 'trust'],
+  category: 'maintenance',
+  platforms: { claude: 'full', generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: {
+    type: 'skill',
+    triggerPhrases: ['audit context', 'context firewall', 'review memory baseline', 'context budget'],
+    commandHint: {
+      template: 'utility',
+      allowedTools: ['Read', 'Bash'],
+    },
+  } satisfies SkillMetadata,
+};
+
 export const updateCommand: Extension = {
   id: 'update',
   type: 'skill',
@@ -1594,7 +1615,7 @@ export const featuresCommand: Extension = {
   description: 'List, inspect, and (eventually) install AIWG\'s optional runtime features',
   version: '1.0.0',
   capabilities: ['cli', 'maintenance', 'install', 'optional-deps'],
-  keywords: ['features', 'optional', 'install', 'embeddings', 'sqlite', 'pty', 'webserver'],
+  keywords: ['features', 'optional', 'install', 'embeddings', 'sqlite', 'pty', 'webserver', 'graph', 'terminal'],
   category: 'maintenance',
   platforms: {
     claude: 'full',
@@ -3671,6 +3692,7 @@ export const commandDefinitions: Extension[] = [
   versionCommand,
   authCommand,
   doctorCommand,
+  contextFirewallCommand,
   updateCommand,
   refreshCommand,
   regenerateCommand,

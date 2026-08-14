@@ -768,7 +768,7 @@ async function requireEmbeddingIndex(cwd: string, graph: GraphType | undefined):
   if (!deps.available) {
     console.error(`Error: semantic search needs optional dependencies: ${deps.missing.join(', ')}`);
     console.error('Install them to enable semantic features:');
-    console.error('  npm install @xenova/transformers hnswlib-node');
+    console.error('  aiwg features install embeddings');
     return null;
   }
   const dir = resolveIndexDir(cwd, graph);
@@ -974,7 +974,7 @@ async function handleEmbed(args: string[]): Promise<void> {
   const deps = await checkEmbeddingDeps();
   if (!deps.available) {
     console.error(`Error: embedding needs optional dependencies: ${deps.missing.join(', ')}`);
-    console.error('  npm install @xenova/transformers hnswlib-node');
+    console.error('  aiwg features install embeddings');
     process.exit(1);
   }
   const index = loadGraphIndexFile<{ entries: Record<string, unknown> }>(cwd, 'metadata.json', graph);

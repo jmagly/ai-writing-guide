@@ -218,26 +218,32 @@ describe('createGraphBackend', () => {
   });
 
   it('creates or throws for graphology backend', async () => {
+    let available = true;
     try {
       await import('graphology');
-      // graphology is installed — should create successfully
+    } catch {
+      available = false;
+    }
+    if (available) {
       const backend = await createGraphBackend('graphology');
       expect(backend.nodeCount()).toBe(0);
-    } catch {
-      // graphology not installed — should throw helpful error
-      await expect(createGraphBackend('graphology')).rejects.toThrow(/graphology backend requires/);
+    } else {
+      await expect(createGraphBackend('graphology')).rejects.toThrow(/aiwg features install graph/);
     }
   });
 
   it('creates or throws for sqlite backend', async () => {
+    let available = true;
     try {
       require('better-sqlite3');
-      // better-sqlite3 is installed — should create successfully
+    } catch {
+      available = false;
+    }
+    if (available) {
       const backend = await createGraphBackend('sqlite');
       expect(backend.nodeCount()).toBe(0);
-    } catch {
-      // better-sqlite3 not installed — should throw helpful error
-      await expect(createGraphBackend('sqlite')).rejects.toThrow(/sqlite backend requires/);
+    } else {
+      await expect(createGraphBackend('sqlite')).rejects.toThrow(/aiwg features install sqlite/);
     }
   });
 

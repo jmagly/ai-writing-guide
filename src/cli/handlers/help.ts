@@ -111,6 +111,8 @@ function displayHelp(): void {
 
   helpGroup('VALIDATION', [
     ['validate-metadata [path]', 'Validate AIWG component metadata (defaults to agentic/code)'],
+    ['context-firewall [scan]', 'Audit provider context, trust, drift, poisoning signals, and budget'],
+    ['context-firewall baseline', 'Plan or explicitly write the reviewed context baseline'],
   ]);
 
   helpGroup('METRICS', [

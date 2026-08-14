@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -214,9 +214,17 @@ function budgetContribution(category, content, bytes, candidate) {
 }
 
 async function loadBaseline(baselinePath, rootDir) {
-  const absolute = path.isAbsolute(baselinePath) ? baselinePath : path.join(rootDir, baselinePath);
+  const absolute = path.resolve(rootDir, baselinePath);
+  if (!insideRoot(rootDir, absolute)) {
+    throw new Error(`Review baseline must stay within the project root: ${baselinePath}`);
+  }
   if (!(await exists(absolute))) {
     return { path: relPath(rootDir, absolute), absolute, exists: false, files: {} };
+  }
+  const real = await fs.realpath(absolute);
+  const realRoot = await fs.realpath(rootDir);
+  if (!insideRoot(realRoot, real)) {
+    throw new Error(`Review baseline resolves outside the project root: ${baselinePath}`);
   }
   const parsed = await readJson(absolute);
   if (parsed?.schemaVersion !== CONTEXT_FIREWALL_BASELINE_SCHEMA || !parsed.files || typeof parsed.files !== 'object') {
@@ -580,8 +588,32 @@ export function formatContextMemoryFirewall(result, options = {}) {
   }
   if (!result.baseline.exists) {
     lines.push('', 'After reviewing every listed file, create a baseline with:');
-    lines.push('  npm run lint:context-firewall -- --write-baseline --confirm-reviewed');
+    lines.push('  aiwg context-firewall baseline --plan');
   }
+  return lines.join('\n');
+}
+
+export function formatReviewBaselinePlan(result, outputPath) {
+  const destination = outputPath ?? '.aiwg/context-memory-firewall-baseline.json';
+  const lines = [
+    'Context/memory firewall baseline plan (no files changed)',
+    `Destination: ${destination}`,
+    `Records to approve: ${result.records.length}`,
+    '',
+    'Review every record:',
+  ];
+  for (const record of result.records) {
+    const findings = record.findings.length ? `; findings=${record.findings.join(',')}` : '';
+    lines.push(
+      `  - ${record.path}: ${record.trust}; ${record.reviewStatus}; ${record.digest ?? 'no digest'}${findings}`,
+    );
+  }
+  if (result.records.length === 0) lines.push('  - none');
+  lines.push('', 'After reviewing every record, write the baseline with:');
+  const output = destination === '.aiwg/context-memory-firewall-baseline.json'
+    ? ''
+    : ` --output ${JSON.stringify(destination)}`;
+  lines.push(`  aiwg context-firewall baseline --write --confirm-reviewed${output}`);
   return lines.join('\n');
 }
 
@@ -590,7 +622,10 @@ export async function writeReviewBaseline(result, outputPath) {
   if (unsafe.length > 0) {
     throw new Error(`Refusing to baseline ${unsafe.length} quarantined, stale, or external file(s)`);
   }
-  const absolute = path.isAbsolute(outputPath) ? outputPath : path.join(result.rootDir, outputPath);
+  const absolute = path.resolve(result.rootDir, outputPath);
+  if (!insideRoot(result.rootDir, absolute)) {
+    throw new Error(`Review baseline must stay within the project root: ${outputPath}`);
+  }
   const files = {};
   for (const record of result.records) {
     if (!record.digest) continue;
@@ -606,10 +641,44 @@ export async function writeReviewBaseline(result, outputPath) {
     reviewedAt: new Date().toISOString(),
     files,
   };
-  await fs.mkdir(path.dirname(absolute), { recursive: true });
-  const temporary = `${absolute}.tmp-${process.pid}`;
-  await fs.writeFile(temporary, `${JSON.stringify(baseline, null, 2)}\n`, { mode: 0o600 });
-  await fs.rename(temporary, absolute);
+  const parent = path.dirname(absolute);
+  const realRoot = await fs.realpath(result.rootDir);
+  let existingAncestor = parent;
+  while (!(await exists(existingAncestor))) {
+    const next = path.dirname(existingAncestor);
+    if (next === existingAncestor) {
+      throw new Error(`Could not resolve review baseline parent: ${outputPath}`);
+    }
+    existingAncestor = next;
+  }
+  const realAncestor = await fs.realpath(existingAncestor);
+  if (!insideRoot(realRoot, realAncestor)) {
+    throw new Error(`Review baseline parent resolves outside the project root: ${outputPath}`);
+  }
+  await fs.mkdir(parent, { recursive: true });
+  const realParent = await fs.realpath(parent);
+  if (!insideRoot(realRoot, realParent)) {
+    throw new Error(`Review baseline parent resolves outside the project root: ${outputPath}`);
+  }
+  try {
+    const existing = await fs.lstat(absolute);
+    if (existing.isSymbolicLink()) {
+      throw new Error(`Refusing to replace a symlinked review baseline: ${outputPath}`);
+    }
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+  }
+  const temporary = `${absolute}.tmp-${process.pid}-${randomUUID()}`;
+  try {
+    await fs.writeFile(temporary, `${JSON.stringify(baseline, null, 2)}\n`, {
+      flag: 'wx',
+      mode: 0o600,
+    });
+    await fs.rename(temporary, absolute);
+  } catch (error) {
+    await fs.rm(temporary, { force: true });
+    throw error;
+  }
   return absolute;
 }
 
@@ -637,6 +706,8 @@ function parseArgs(argv) {
     else if (arg === '--json') options.json = true;
     else if (arg === '--no-content-scan') options.contentScan = false;
     else if (arg === '--confirm-reviewed') options.confirmReviewed = true;
+    else if (arg === '--plan-baseline') options.planBaseline = true;
+    else if (arg.startsWith('--plan-baseline=')) options.planBaseline = arg.slice(16);
     else if (arg === '--write-baseline') options.writeBaseline = true;
     else if (arg.startsWith('--write-baseline=')) options.writeBaseline = arg.slice(17);
     else if (arg === '--help' || arg === '-h') options.help = true;
@@ -651,7 +722,7 @@ export async function main(argv = process.argv.slice(2)) {
     options = parseArgs(argv);
     if (options.help) {
       console.log([
-        'Usage: node tools/security/context-memory-firewall.mjs [options]',
+        'Internal engine for `aiwg context-firewall`; use the public CLI for operator workflows.',
         '  --root <path>              Project root (default: cwd)',
         '  --package-root <path>      Current AIWG package root (default: project root)',
         '  --provider <name>          Limit to a provider; repeatable',
@@ -660,6 +731,7 @@ export async function main(argv = process.argv.slice(2)) {
         '  --strict                   Fail on violations or a missing review baseline',
         '  --json                     Emit machine-readable JSON',
         '  --no-content-scan          Skip poisoning classification',
+        '  --plan-baseline[=<path>]   Show every record a baseline would approve',
         '  --write-baseline[=<path>]  Write reviewed digests (requires --confirm-reviewed)',
         '  --confirm-reviewed         Confirm every emitted file was reviewed',
       ].join('\n'));
@@ -670,16 +742,42 @@ export async function main(argv = process.argv.slice(2)) {
       providers: options.providers.length ? options.providers : undefined,
     };
     const result = await scanContextMemoryFirewall(scanOptions);
+    if (options.planBaseline) {
+      const destination = typeof options.planBaseline === 'string'
+        ? options.planBaseline
+        : options.baselinePath ?? '.aiwg/context-memory-firewall-baseline.json';
+      result.operation = {
+        kind: 'baseline-plan',
+        destination,
+        changed: false,
+        requiresConfirmation: true,
+        records: result.records.length,
+      };
+    }
     if (options.writeBaseline) {
       if (!options.confirmReviewed) throw new Error('--write-baseline requires --confirm-reviewed');
       const destination = typeof options.writeBaseline === 'string'
         ? options.writeBaseline
         : options.baselinePath ?? '.aiwg/context-memory-firewall-baseline.json';
       const written = await writeReviewBaseline(result, destination);
+      result.operation = {
+        kind: 'baseline-write',
+        destination: relPath(result.rootDir, written),
+        changed: true,
+        records: result.records.length,
+      };
+      result.baseline = { path: relPath(result.rootDir, written), exists: true };
+      result.warnings = result.warnings.filter((warning) => warning.code !== 'review-baseline-missing');
+      result.status = result.violations.length > 0 ? 'fail' : result.warnings.length > 0 ? 'warn' : 'pass';
       if (!options.json) console.log(`Wrote reviewed context baseline: ${written}`);
     }
     if (options.json) console.log(JSON.stringify(result, null, 2));
-    else console.log(formatContextMemoryFirewall(result, { limit: options.limit }));
+    else if (options.planBaseline) {
+      const destination = typeof options.planBaseline === 'string'
+        ? options.planBaseline
+        : options.baselinePath ?? '.aiwg/context-memory-firewall-baseline.json';
+      console.log(formatReviewBaselinePlan(result, destination));
+    } else console.log(formatContextMemoryFirewall(result, { limit: options.limit }));
     const missingBaseline = !result.baseline.exists && !options.writeBaseline;
     if (options.strict && (missingBaseline || result.violations.length > 0)) return 1;
     return 0;

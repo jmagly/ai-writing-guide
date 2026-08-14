@@ -11,7 +11,22 @@ export async function loadFeaturePackage(name: string): Promise<Record<string, u
     return await import(pathToFileURL(resolved).href) as Record<string, unknown>;
   } catch (featureError) {
     try {
-      return await (new Function('m', 'return import(m)'))(name) as Record<string, unknown>;
+      const resolved = createRequire(import.meta.url).resolve(name);
+      return await import(pathToFileURL(resolved).href) as Record<string, unknown>;
+    } catch {
+      throw featureError;
+    }
+  }
+}
+
+/** Synchronous counterpart for optional CommonJS packages used by constructors. */
+export function requireFeaturePackage(name: string): unknown {
+  const featureRequire = createRequire(path.join(getFeaturesRoot(), 'package.json'));
+  try {
+    return featureRequire(name);
+  } catch (featureError) {
+    try {
+      return createRequire(import.meta.url)(name);
     } catch {
       throw featureError;
     }

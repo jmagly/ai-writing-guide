@@ -18,6 +18,7 @@
 
 import { loadProfiles, loadCorpus } from '../corpus-views/ref-parser.js';
 import { checkEmbeddingDeps, DEFAULT_EMBEDDING_MODEL } from '../embedding-index.js';
+import { loadFeaturePackage } from '../../features/runtime.js';
 
 export interface ProfileEmbeddings {
   profIds: string[];
@@ -56,7 +57,7 @@ export async function buildProfileEmbeddings(
 ): Promise<ProfileEmbeddings> {
   const deps = await checkEmbeddingDeps();
   if (!deps.available) {
-    throw new Error(`profile embeddings need optional deps: ${deps.missing.join(', ')} (npm install @xenova/transformers)`);
+    throw new Error(`profile embeddings need optional deps: ${deps.missing.join(', ')}; run \`aiwg features install embeddings\``);
   }
   const titleByRef = new Map<string, string>();
   for (const r of loadCorpus(corpusRoot).records) titleByRef.set(r.refId, r.title);
@@ -77,7 +78,7 @@ export async function buildProfileEmbeddings(
     refs.push(new Set(p.corpusRefs));
   }
 
-  const transformersMod = await (new Function('m', 'return import(m)'))('@xenova/transformers');
+  const transformersMod: any = await loadFeaturePackage('@xenova/transformers');
   const embed = await transformersMod.pipeline('feature-extraction', model);
   const vectors: number[][] = [];
   for (const t of texts) {

@@ -454,7 +454,7 @@ async function checkStartupContextBudget(provName, label) {
       `${label} Startup Context`,
       'warn',
       `tight — ${headline}. Limited headroom for real work on standard Sonnet. ` +
-        `Run \`npm run lint:claude-context -- --startup\` for the breakdown (#1673).`,
+        `Run \`aiwg context-firewall scan --provider claude\` for the attributed breakdown (#1673).`,
     );
   } else {
     check(`${label} Startup Context`, 'ok', headline);
@@ -947,7 +947,7 @@ async function runDoctor() {
       if (unsafe) {
         const status = strictContext ? 'error' : 'warn';
         const baselineMessage = baselineMissing
-          ? ` Review baseline missing at ${firewall.baseline.path}; review output, then run \`npm run lint:context-firewall -- --write-baseline --confirm-reviewed\`.`
+          ? ` Review baseline missing at ${firewall.baseline.path}; run \`aiwg context-firewall baseline --plan\`, review every record, then use the confirmed write command it prints.`
           : '';
         check('Context/memory firewall', status, `${summary}.${baselineMessage}`);
       } else {

@@ -8,15 +8,15 @@ instruction-poisoning signals without printing source contents.
 Run the advisory scan from a project root:
 
 ```bash
-npm run lint:context-firewall
-node tools/cli/doctor.mjs --provider claude
+aiwg context-firewall scan
+aiwg doctor --provider claude
 ```
 
 Use strict mode in CI or before a sensitive run:
 
 ```bash
-npm run lint:context-firewall -- --strict
-node tools/cli/doctor.mjs --provider claude --strict-context
+aiwg context-firewall scan --strict
+aiwg doctor --provider claude --strict-context
 ```
 
 Strict mode exits non-zero for an over-budget context, stale deployment,
@@ -67,9 +67,15 @@ bodies.
 After reviewing every reported file, create the digest baseline explicitly:
 
 ```bash
-npm run lint:context-firewall -- --write-baseline --confirm-reviewed
+aiwg context-firewall baseline --plan
+aiwg context-firewall baseline --write --confirm-reviewed
 git add .aiwg/context-memory-firewall-baseline.json
 ```
+
+The plan is read-only and prints every record that would enter the baseline.
+Custom destinations use `--output <project-relative-path>`. The writer rejects
+absolute, parent-traversal, and symlink-resolved destinations outside the project
+root, and replaces the baseline atomically only after the explicit confirmation.
 
 The writer refuses to approve stale, quarantined, or external entries. Review a
 changed file, remove any injected instructions, then deliberately regenerate the

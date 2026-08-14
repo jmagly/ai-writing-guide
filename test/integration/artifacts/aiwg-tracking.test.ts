@@ -123,6 +123,14 @@ describe('AIWG artifact root tracking and distribution (integration)', () => {
         files.has('tools/lint/claude-context-inventory.mjs'),
         'doctor.mjs imports tools/lint/claude-context-inventory.mjs at runtime',
       ).toBe(true);
+      expect(
+        files.has('tools/security/context-memory-firewall.mjs'),
+        'the public context-firewall command must ship its packaged engine',
+      ).toBe(true);
+      expect(
+        files.has('tools/security/threat-assessment.mjs'),
+        'the context-firewall engine imports threat-assessment.mjs at runtime',
+      ).toBe(true);
     });
   });
 

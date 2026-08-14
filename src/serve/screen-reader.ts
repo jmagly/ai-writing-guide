@@ -11,18 +11,14 @@
  */
 
 import { EventEmitter } from 'events';
-import { createRequire } from 'module';
-
-// @xterm/headless is an optional dependency. Load it once at module level
-// using createRequire so we can import the CJS bundle from ESM.
-const _require = createRequire(import.meta.url);
+import { requireFeaturePackage } from '../features/runtime.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let XtermTerminal: new (opts: Record<string, unknown>) => import('@xterm/headless').Terminal;
 
 try {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const xterm = _require('@xterm/headless') as any;
+  const xterm = requireFeaturePackage('@xterm/headless') as any;
   XtermTerminal = xterm.Terminal;
 } catch {
   // Will be checked at construction time
@@ -76,7 +72,7 @@ export class ScreenReader {
   constructor(opts?: { rows?: number; cols?: number }) {
     if (!XtermTerminal) {
       throw new Error(
-        '@xterm/headless is required for ScreenReader. Install it: npm install @xterm/headless',
+        'Terminal screen parsing is unavailable; run `aiwg features install terminal`',
       );
     }
 

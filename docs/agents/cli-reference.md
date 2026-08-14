@@ -203,6 +203,30 @@ Node.js: v24.12.0
 
 ---
 
+### context-firewall
+
+Inventory every provider-facing context source, classify trust and drift, scan
+for poisoning signals without printing source bodies, and enforce a portable
+context budget.
+
+```bash
+aiwg context-firewall scan [--provider <name>] [--strict] [--json]
+aiwg context-firewall baseline --plan [--output <project-relative-path>]
+aiwg context-firewall baseline --write --confirm-reviewed [--output <path>]
+```
+
+`baseline` is read-only unless `--write` and `--confirm-reviewed` are both
+present. Plan mode prints every affected record before mutation. Baseline paths
+must remain within the project root, including after symlink resolution, and the
+write is atomic. Use `--budget-tokens <n>`, `--warn-ratio <n>`, `--limit <n>`,
+repeatable `--provider <name>`, or `--no-content-scan` as needed.
+
+**Capabilities:** cli, diagnostics, security, context-budget, memory-review
+**Platforms:** All
+**Tools:** Read, Write, Bash
+
+---
+
 ### doctor
 
 Check installation health and diagnose issues.
@@ -4080,10 +4104,10 @@ User-defined graph names cannot override built-in names (`project`, `codebase`, 
 
 ```bash
 # Graphology — community detection, shortest path, <50k nodes
-npm install graphology graphology-operators graphology-traversal
+aiwg features install graph
 
 # SQLite — persistent, incremental, SQL set ops, 5k–500k nodes
-npm install better-sqlite3
+aiwg features install sqlite
 ```
 
 Activate per-graph in `.aiwg/config.yaml`:
@@ -4100,7 +4124,7 @@ index:
 **Semantic embedding index**: Orthogonal to graph backends — adds dense vector search to any tier:
 
 ```bash
-npm install @xenova/transformers hnswlib-node
+aiwg features install embeddings
 ```
 
 ```yaml
@@ -4307,7 +4331,7 @@ aiwg index neighbors --graph kb --node retrieval.md --json
 
 ### index embed
 
-Build the semantic embedding index for a graph (so `--semantic`, `index similar`, and `index dedup-report` work). Requires the optional deps `@xenova/transformers` + `hnswlib-node` (`npm install @xenova/transformers hnswlib-node`) — semantic search is opt-in; without the deps the command prints install guidance and exits.
+Build the semantic embedding index for a graph (so `--semantic`, `index similar`, and `index dedup-report` work). Enable the optional runtime with `aiwg features install embeddings` first. Semantic search is opt-in; without the feature the command prints public CLI guidance and exits.
 
 ```bash
 aiwg index embed --graph papers              # embed the papers graph's metadata (title + summary)

@@ -6,7 +6,7 @@
  * dense vectors using a small local model and stores them in an HNSW index for
  * fast similarity queries.
  *
- * Install: npm install @xenova/transformers hnswlib-node
+ * Enable with: aiwg features install embeddings
  *
  * @implements #730
  * @source @src/artifacts/types.ts
@@ -16,6 +16,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { MetadataEntry } from './types.js';
+import { loadFeaturePackage } from '../features/runtime.js';
 
 /**
  * Default embedding model (all-MiniLM-L6-v2: ~22MB, 384 dims, ~5ms/embedding on CPU)
@@ -234,13 +235,13 @@ export async function checkEmbeddingDeps(): Promise<{ available: boolean; missin
   const missing: string[] = [];
 
   try {
-    await (new Function('m', 'return import(m)'))('@xenova/transformers');
+    await loadFeaturePackage('@xenova/transformers');
   } catch {
     missing.push('@xenova/transformers');
   }
 
   try {
-    await (new Function('m', 'return import(m)'))('hnswlib-node');
+    await loadFeaturePackage('hnswlib-node');
   } catch {
     missing.push('hnswlib-node');
   }
@@ -267,9 +268,9 @@ export async function buildEmbeddingIndex(
   model: string = DEFAULT_EMBEDDING_MODEL,
   options: BuildEmbeddingIndexOptions = {},
 ): Promise<number> {
-  const transformersMod = await (new Function('m', 'return import(m)'))('@xenova/transformers');
+  const transformersMod: any = await loadFeaturePackage('@xenova/transformers');
   const { pipeline } = transformersMod;
-  const hnswlib: any = await (new Function('m', 'return import(m)'))('hnswlib-node');
+  const hnswlib: any = await loadFeaturePackage('hnswlib-node');
   const HierarchicalNSW = hnswlib.HierarchicalNSW ?? hnswlib.default?.HierarchicalNSW;
 
   if (!HierarchicalNSW) {
@@ -353,9 +354,9 @@ export async function semanticQuery(
     throw new Error(`No embedding index found at ${indexDir}/embeddings/`);
   }
 
-  const transformersMod = await (new Function('m', 'return import(m)'))('@xenova/transformers');
+  const transformersMod: any = await loadFeaturePackage('@xenova/transformers');
   const { pipeline } = transformersMod;
-  const hnswlib: any = await (new Function('m', 'return import(m)'))('hnswlib-node');
+  const hnswlib: any = await loadFeaturePackage('hnswlib-node');
   const HierarchicalNSW = hnswlib.HierarchicalNSW ?? hnswlib.default?.HierarchicalNSW;
 
   if (!HierarchicalNSW) {
@@ -479,7 +480,7 @@ export async function dedupReport(
     throw new Error(`No embedding index found at ${indexDir}/embeddings/`);
   }
 
-  const hnswlib: any = await (new Function('m', 'return import(m)'))('hnswlib-node');
+  const hnswlib: any = await loadFeaturePackage('hnswlib-node');
   const HierarchicalNSW = hnswlib.HierarchicalNSW ?? hnswlib.default?.HierarchicalNSW;
   if (!HierarchicalNSW) {
     throw new Error('hnswlib-node: HierarchicalNSW not found in module exports');
