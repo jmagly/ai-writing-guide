@@ -37,17 +37,19 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 | Feature check | "does my provider support agent teams" | `aiwg steward capabilities --feature agent_teams` |
 | Routing lookup | "which providers support cron" | `aiwg steward find --capability cron` |
 | Model routing | "which model should this use" | `aiwg steward models`; then `aiwg models audit` or `aiwg models resolve` |
-| Install or repair AIWG | "get AIWG working in this project" | Follow the public `setup.aiwg.yaml` in the current provider, then verify status and doctor |
+| Install or repair AIWG | "get AIWG working in this project" | Follow the public `setup.aiwg.yaml`; use the self-verifying deployment result, with status and doctor only for audit or recovery |
 
 ## AIWG Installation Routing
 
 For an interactive new, existing, stale, broken, duplicate, or development-mode
 AIWG installation, follow
-`https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml` in the
+`https://aiwg.io/setup.aiwg.yaml` in the
 current supported provider. It is a `provider-orchestrated` manifest: inspect
-and explain before mutation, preserve existing work, deploy `all`, regenerate,
-and verify with `aiwg status --probe --json` plus `aiwg doctor`. Do not send it
-to deterministic `aiwg setup-run`.
+and explain before mutation, preserve existing work, then run one self-verifying
+`aiwg use all` deployment and evaluate its `aiwg.use.result.v1` response. Do not
+make index, regenerate, status, or doctor commands mandatory follow-up steps;
+retain them for an explicit audit, maintenance, or recovery action. Do not send
+this manifest to deterministic `aiwg setup-run`.
 
 Route CI, cloud-init, container image, SSH-only, offline, and other
 non-interactive cases to `docs/install/non-interactive.md`. Confirm ambiguous
