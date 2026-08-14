@@ -1237,7 +1237,7 @@ async function runDoctor() {
   // knows the install is degraded before they try to use it.
   const { spawnSync } = await import('node:child_process');
   const aiwgBin = process.env.AIWG_BIN || 'aiwg';
-  const probeCommand = (name, args, expectStdout = null) => {
+  const probeCommand = (name, args, expectStdout = null, validateStdout = null) => {
     try {
       const r = spawnSync(aiwgBin, args, {
         encoding: 'utf-8',
@@ -1253,6 +1253,10 @@ async function runDoctor() {
       if (expectStdout && !(r.stdout || '').includes(expectStdout)) {
         return { ok: false, detail: `stdout missing expected marker '${expectStdout}'` };
       }
+      if (validateStdout) {
+        const validation = validateStdout(r.stdout || '');
+        if (validation !== true) return { ok: false, detail: validation };
+      }
       return { ok: true };
     } catch (e) {
       return { ok: false, detail: e.message };
@@ -1262,8 +1266,22 @@ async function runDoctor() {
   const discoveryProbes = [
     {
       label: 'Discovery: aiwg discover',
-      args: ['discover', 'doctor', '--json', '--limit', '1'],
+      args: ['discover', 'aiwg doctor', '--json', '--limit', '10'],
       hint: 'aiwg discover is unavailable — agents may bypass index-driven lookup',
+      validateStdout: (stdout) => {
+        try {
+          const payload = JSON.parse(stdout);
+          if (!Array.isArray(payload.results) || payload.results.length === 0) {
+            return 'discover exited successfully but returned zero results for the known aiwg-doctor capability';
+          }
+          if (!payload.results.some((result) => result?.name === 'aiwg-doctor')) {
+            return 'discover did not return the known aiwg-doctor capability';
+          }
+          return true;
+        } catch (error) {
+          return `discover returned invalid JSON: ${error.message}`;
+        }
+      },
     },
     {
       label: 'Discovery: aiwg show',
@@ -1289,7 +1307,7 @@ async function runDoctor() {
 
   let discoverOk = false;
   for (const probe of discoveryProbes) {
-    const r = probeCommand(probe.label, probe.args);
+    const r = probeCommand(probe.label, probe.args, null, probe.validateStdout);
     if (probe.args[0] === 'discover') discoverOk = r.ok;
     if (r.ok) {
       check(probe.label, 'ok', `\`aiwg ${probe.args.join(' ')}\` succeeded`);

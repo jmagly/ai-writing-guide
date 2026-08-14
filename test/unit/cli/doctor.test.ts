@@ -65,6 +65,14 @@ describe('tools/cli/doctor.mjs — file', () => {
     expect(content).toContain("shell: process.platform === 'win32'");
     expect(content).toContain('spawn failed: ${r.error.code || r.error.message}');
   });
+
+  it('requires discovery to return the known aiwg-doctor capability', () => {
+    const content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
+
+    expect(content).toContain("args: ['discover', 'aiwg doctor', '--json', '--limit', '10']");
+    expect(content).toContain("result?.name === 'aiwg-doctor'");
+    expect(content).toContain('returned zero results for the known aiwg-doctor capability');
+  });
 });
 
 // ── Installation check logic ──────────────────────────────────

@@ -50,6 +50,7 @@ function installedEnv(): NodeJS.ProcessEnv {
     AIWG_RESOURCE_CACHE_ROOT: path.join(home, '.cache', 'aiwg-web'),
     AIWG_RESOURCE_TRUST_ROOT_FILE: trustRootFile,
     AIWG_RESOURCE_ALLOW_INSECURE_LOOPBACK_HTTP: '1',
+    AIWG_BIN: cliPath,
     AIWG_LOG_LEVEL: 'silent',
     NO_UPDATE_NOTIFIER: '1',
   };
@@ -281,6 +282,15 @@ describe('global install native lifecycle-script policy', () => {
     expect(payload).toHaveProperty('status');
     expect(payload).toHaveProperty('checks');
     expect(status.stderr).not.toContain('ERR_MODULE_NOT_FOUND');
+  });
+
+  it('doctor verifies a known capability instead of accepting an empty discovery result', async () => {
+    const doctor = await runInstalledCli(['doctor', '--provider', 'claude']);
+
+    expectCliSuccess(doctor);
+    expect(doctor.stdout).toContain('Discovery: aiwg discover');
+    expect(doctor.stdout).toContain('`aiwg discover aiwg doctor --json --limit 10` succeeded');
+    expect(doctor.stdout).toContain('prebuilt framework index present');
   });
 
   it('runs installed-CLI web discover/show and warm offline through legacy configuration', async () => {
