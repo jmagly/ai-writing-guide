@@ -64,6 +64,44 @@ describe('issues/cli', () => {
     expect(shown).toContain('body_path');
   });
 
+  it('plans drafts before writing and preserves the authorization no-write gate', async () => {
+    await main(['plan', '--title', 'Safe issue', '--body', 'Clarify the empty state.'], root);
+    const safePlan = JSON.parse(output.at(-1) ?? '{}');
+    expect(safePlan.disposition).toBe('single');
+    await expect(main([
+      'new', '--title', 'Provider instructions', '--body', 'Update AGENTS.md for the project.',
+    ], root)).rejects.toThrow(/requires explicit policy authorization/);
+    await expect(readFile(join(root, '.aiwg', 'issues', 'index', 'issues.index.json'), 'utf8'))
+      .rejects.toThrow();
+  });
+
+  it('creates linked local segments after digest-bound authorization', async () => {
+    const body = [
+      '## Goal', '', 'Improve setup.', '',
+      '## Acquisition', '', 'Run npm install -g aiwg during setup.', '',
+      '## Wiring', '', 'Update AGENTS.md for the configured provider.', '',
+      '## Acceptance', '', '- [ ] Both independently scoped changes are tracked.',
+    ].join('\n');
+    await main(['plan', '--title', 'Improve setup', '--body', body, '--label', 'priority:P1-high'], root);
+    const plan = JSON.parse(output.at(-1) ?? '{}');
+    expect(plan.disposition).toBe('split-authorization-required');
+
+    output = [];
+    await main([
+      'new', '--title', 'Improve setup', '--body', body,
+      '--authorize-policy', plan.digest,
+      '--label', 'priority:P1-high',
+    ], root);
+    const result = JSON.parse(output.at(-1) ?? '{}');
+    expect(result.status).toBe('created');
+    expect(result.created).toHaveLength(2);
+    const index = JSON.parse(await readFile(join(root, '.aiwg', 'issues', 'index', 'issues.index.json'), 'utf8'));
+    expect(index.issues).toHaveLength(2);
+    expect(index.issues.every((issue: { labels: string[] }) => issue.labels.includes('priority:P1-high'))).toBe(true);
+    const dependent = await readFile(join(root, '.aiwg', 'issues', 'items', `${result.created[1].id}.md`), 'utf8');
+    expect(dependent).toContain(`parent: ${result.created[0].id}`);
+  });
+
   it('rejects non-local providers', async () => {
     await expect(main(['list', '--provider', 'gitea'], root)).rejects.toThrow(/local issue storage only/);
   });

@@ -7,6 +7,15 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Policy-boundary-aware issue composition** - issue authoring now assesses
+  final drafts before tracker mutation, preserves safe drafts, gates flagged
+  drafts, and splits deterministically separable rejected drafts into linked
+  atomic issues. Stable segment markers and recovery envelopes prevent
+  duplicates after a partial multi-issue write; `aiwg issue plan` exposes the
+  same contract for local issue creation.
+
 ## [2026.8.8] - 2026-08-12 - "Managed project capability routing"
 
 ### Added

@@ -1206,6 +1206,31 @@ advanced cases, but the preferred user experience is the agent-led setup flow.
 
 ---
 
+### issue
+
+Policy-plan and manage the project-local issue store. External issue-authoring
+skills use the same composition contract before their tracker-specific write.
+
+```bash
+aiwg issue init [--prefix KEY] [--padding N]
+aiwg issue plan --title "..." [--body "..."|--body-file path] [--json]
+aiwg issue new --title "..." [--body-file path] [--authorize-policy DIGEST]
+aiwg issue list [--status open] [--label bug] [--json]
+aiwg issue show <KEY> [--comments last:10|all]
+aiwg issue comment <KEY> --body "..."
+aiwg issue close <KEY> [--reason "..."]
+```
+
+`plan` emits `aiwg.issue-composition-plan.v1`. Safe drafts have disposition
+`single`; flagged drafts require digest-bound authorization; separable drafts
+that would otherwise be rejected become ordered `split` segments; and
+non-separable rejected drafts return `blocked` without a write. Split segments
+retain labels, priority, provider scope, acceptance content, stable provenance
+markers, dependencies, and sibling links. Partial writes return the next
+segment and marker set so retry can reuse existing issues.
+
+---
+
 ### run
 
 Two routes, dispatched by the first argument:

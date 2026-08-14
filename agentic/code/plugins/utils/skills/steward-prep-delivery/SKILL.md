@@ -72,6 +72,12 @@ Help the user fill out the chosen template. Specifically:
 
 Before they click "Submit", confirm:
 
+0. **Issue draft policy composition**: before any issue write, invoke the
+   `issue-create` composer on the final title/body. Preserve safe drafts,
+   follow digest-bound authorization for flagged drafts, create all ordered
+   segments for separable policy conflicts, and make no write for blocked
+   drafts.
+
 1. **Delivery policy**: read `.aiwg/aiwg.config` `delivery.mode`. If `direct`, the fix will land with `Closes #N` in the commit (no PR). If `pr-required`, they'll need a feature branch. If `feature-branch`, branch only. Tell them what to expect.
 
 2. **No AI attribution**: if they're using an AI tool to help draft, the commit/PR must not include `Co-Authored-By: <AI>` lines or "Generated with" markers. This is the project's no-attribution rule, applied universally.

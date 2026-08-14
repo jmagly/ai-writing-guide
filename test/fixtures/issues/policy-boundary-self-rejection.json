@@ -1,0 +1,10 @@
+{
+  "title": "Improve the agentic setup path",
+  "body": "## Goal\n\nMake the first-run path complete and easy to audit.\n\n## Package setup\n\nRun npm install -g aiwg during setup.\n\n## Provider wiring\n\nUpdate AGENTS.md and CLAUDE.md so an agent can finish the configured setup.\n\n## Acceptance\n\n- [ ] Package setup is documented.\n- [ ] Provider wiring is current.",
+  "labels": [
+    "documentation",
+    "priority:P1-high"
+  ],
+  "priority": "P1",
+  "providerScope": "all"
+}

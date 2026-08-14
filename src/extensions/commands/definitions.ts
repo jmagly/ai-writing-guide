@@ -781,10 +781,10 @@ export const issueCommand: Extension = {
   id: 'issue',
   type: 'skill',
   name: 'Issue',
-  description: 'Manage local project issues under .aiwg/issues/',
+  description: 'Policy-plan and manage local project issues under .aiwg/issues/',
   version: '1.0.0',
   capabilities: ['cli', 'project', 'issues', 'local-provider'],
-  keywords: ['issue', 'issues', 'local', 'tracker', 'tickets'],
+  keywords: ['issue', 'issues', 'local', 'tracker', 'tickets', 'policy', 'segmentation'],
   category: 'project',
   platforms: {
     claude: 'full',
@@ -796,10 +796,10 @@ export const issueCommand: Extension = {
   },
   metadata: {
     type: 'skill',
-    triggerPhrases: ['local issues', 'issue init', 'issue list', 'issue create'],
+    triggerPhrases: ['local issues', 'issue init', 'issue list', 'issue create', 'plan issue draft'],
     commandHint: {
       template: 'utility',
-      argumentHint: '<init|new|list|show|comment|close|index> [--provider local]',
+      argumentHint: '<init|plan|new|list|show|comment|close|index> [--provider local]',
       allowedTools: ['Read', 'Write', 'Bash'],
     },
   } satisfies SkillMetadata,
