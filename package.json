@@ -146,6 +146,7 @@
     "!agentic/**/tsconfig.json",
     "prebuilt/",
     "docs/",
+    "!docs/.public/",
     "templates/",
     "man/",
     "apps/web/dist",
