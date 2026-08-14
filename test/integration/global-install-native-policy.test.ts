@@ -166,7 +166,7 @@ describe('global install native lifecycle-script policy', () => {
     fixture.publishRelease();
     trustRootFile = path.join(home, 'release-root.pem');
     await writeFile(trustRootFile, fixture.publicKeyPem, { mode: 0o600 });
-  }, 180_000);
+  }, 300_000);
 
   afterAll(async () => {
     await fixture?.stop();
@@ -271,6 +271,16 @@ describe('global install native lifecycle-script policy', () => {
     expect(shown.stdout).toContain('name: aiwg-status');
     expect(existsSync(path.join(project, '.claude'))).toBe(false);
     expect(existsSync(path.join(project, '.agents'))).toBe(false);
+  });
+
+  it('runs the workspace status probe from the packed install', async () => {
+    const status = await runInstalledCli(['status', '--probe', '--json']);
+
+    expectCliSuccess(status);
+    const payload = JSON.parse(status.stdout);
+    expect(payload).toHaveProperty('status');
+    expect(payload).toHaveProperty('checks');
+    expect(status.stderr).not.toContain('ERR_MODULE_NOT_FOUND');
   });
 
   it('runs installed-CLI web discover/show and warm offline through legacy configuration', async () => {

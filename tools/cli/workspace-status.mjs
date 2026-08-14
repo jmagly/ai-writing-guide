@@ -20,15 +20,20 @@
  */
 
 import fs from 'fs/promises';
+import { existsSync } from 'fs';
 import http from 'http';
 import os from 'os';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import { resolveProjectAiwgDir } from '../../src/config/project-artifacts-runtime.mjs';
-import { auditProjectArtifactHealth } from '../../src/config/project-artifacts-health.mjs';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const packageRoot = path.resolve(__dirname, '../..');
+const runtimeRoot = existsSync(path.join(packageRoot, 'src')) ? 'src' : 'dist/src';
+const [{ resolveProjectAiwgDir }, { auditProjectArtifactHealth }] = await Promise.all([
+  import(pathToFileURL(path.join(packageRoot, runtimeRoot, 'config/project-artifacts-runtime.mjs')).href),
+  import(pathToFileURL(path.join(packageRoot, runtimeRoot, 'config/project-artifacts-health.mjs')).href),
+]);
 
 // ===========================
 // CLI Helpers
