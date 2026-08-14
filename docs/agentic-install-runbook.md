@@ -120,7 +120,7 @@ aiwg use all --provider copilot
 aiwg use all --provider factory
 aiwg use all --provider opencode
 aiwg use all --provider warp
-aiwg use all --provider windsurf
+aiwg use all --provider devin
 aiwg use all --provider hermes
 aiwg use all --provider openclaw
 aiwg use all --provider openhuman
@@ -191,7 +191,7 @@ Provider notes:
 | Factory | Start Factory from the project root | Ask for the AIWG first action |
 | OpenCode | Open OpenCode in the project root | Ask for one AIWG route |
 | Warp | Start Warp in the project root | Ask the session to route through AIWG |
-| Windsurf | Open the project in Windsurf | Ask Cascade to verify AIWG status |
+| Devin Desktop | Open the project in Devin Desktop | Ask Devin to verify AIWG status |
 | Hermes | Open a Hermes chat attached to the project | Ask for the AIWG route |
 | OpenClaw | Open OpenClaw with the workspace | Ask for one AIWG capability and verify deployment |
 

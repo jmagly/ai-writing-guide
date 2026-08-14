@@ -2,7 +2,7 @@ import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import { loadGraphIndexFile } from '../../artifacts/index-reader.js';
-import type { ArtifactIndex } from '../../artifacts/types.js';
+import type { ArtifactIndex, IndexStats } from '../../artifacts/types.js';
 import { readAiwgConfig, type DeployedArtifactCounts } from '../../config/aiwg-config.js';
 import { readUserRegistry } from '../../config/user-registry.js';
 import {
@@ -50,9 +50,17 @@ export interface ProviderDeploymentVerification {
   outcome: DeploymentOutcome;
   restartRequired: boolean;
   restartAction: string | null;
+  restartReason: string | null;
   counts: DeployedArtifactCounts & { behaviors: number };
   phases: DeploymentPhaseResult[];
   findings: DeploymentVerificationFinding[];
+}
+
+export interface DiscoveryInventory {
+  graph: 'framework';
+  totalArtifacts: number;
+  byType: Record<string, number>;
+  builtAt: string;
 }
 
 export interface UseDeploymentResult {
@@ -68,6 +76,7 @@ export interface UseDeploymentResult {
   findings: DeploymentVerificationFinding[];
   outcome: DeploymentOutcome;
   restartRequired: boolean;
+  discovery: DiscoveryInventory | null;
   exitClassification: DeploymentExitClassification;
   exitCode: number;
 }
@@ -84,17 +93,75 @@ export interface VerifyProviderDeploymentOptions {
   deploymentMessage?: string;
 }
 
-const RESTART_ACTIONS: Readonly<Record<string, string>> = {
-  claude: 'Restart Claude Code so the running session reloads deployed agents and skills.',
-  codex: 'Restart or reopen Codex in this workspace so it reloads deployed agents and skills.',
-  copilot: 'Reload the VS Code window so Copilot reloads workspace agents and instructions.',
-  cursor: 'Reload the Cursor workspace so it reloads agents and rules.',
-  factory: 'Restart the Factory droid runtime so it reloads deployed droids.',
-  opencode: 'Restart the OpenCode session so it reloads deployed agents.',
-  openclaw: 'Restart OpenClaw so it reloads its home-directory registry.',
-  warp: 'Open a fresh Warp tab so it reloads project context.',
-  windsurf: 'Reload the Windsurf workspace so it reparses project context.',
+const RESTART_NOTICES: Readonly<Record<string, { action: string; reason: string }>> = {
+  claude: {
+    action: 'Restart Claude Code so the running session reloads deployed agents and skills.',
+    reason: 'Claude Code reads its agent and skill registries when a session starts.',
+  },
+  codex: {
+    action: 'Restart or reopen Codex in this workspace so it reloads deployed agents and skills.',
+    reason: 'Codex scans project agent and skill registries when a session starts.',
+  },
+  copilot: {
+    action: 'Reload the VS Code window so Copilot reloads workspace agents and instructions.',
+    reason: 'Copilot caches workspace agent definitions until the VS Code window reloads.',
+  },
+  cursor: {
+    action: 'Reload the Cursor workspace so it reloads agents and rules.',
+    reason: 'Cursor reads workspace agents and rules when the workspace opens.',
+  },
+  factory: {
+    action: 'Restart the Factory droid runtime so it reloads deployed droids.',
+    reason: 'Factory loads its droid registry when the runtime starts.',
+  },
+  opencode: {
+    action: 'Restart the OpenCode session so it reloads deployed agents.',
+    reason: 'OpenCode scans its agent directory when the session starts.',
+  },
+  openclaw: {
+    action: 'Restart OpenClaw so it reloads its home-directory registry.',
+    reason: 'OpenClaw loads its home-directory registry when the process starts.',
+  },
+  warp: {
+    action: 'Open a fresh Warp tab so it reloads project context.',
+    reason: 'Warp reads project context when a tab starts.',
+  },
+  windsurf: {
+    action: 'Reload Devin Desktop so it reparses project context.',
+    reason: 'Devin Desktop reads the Windsurf-compatible project context when the workspace opens.',
+  },
 };
+
+const INVENTORY_TYPE_ORDER = [
+  'agent',
+  'skill',
+  'command',
+  'rule',
+  'behavior',
+  'template',
+  'flow',
+  'runbook',
+  'schema',
+] as const;
+
+export function normalizeFrameworkDiscoveryInventory(stats: IndexStats): DiscoveryInventory {
+  const byType: Record<string, number> = {};
+  for (const type of INVENTORY_TYPE_ORDER) byType[type] = Number(stats.byType[type] ?? 0);
+  for (const type of Object.keys(stats.byType).sort()) {
+    if (!(type in byType)) byType[type] = Number(stats.byType[type] ?? 0);
+  }
+  return {
+    graph: 'framework',
+    totalArtifacts: stats.totalArtifacts,
+    byType,
+    builtAt: stats.builtAt,
+  };
+}
+
+function frameworkDiscoveryInventory(frameworkRoot: string): DiscoveryInventory | null {
+  const stats = loadGraphIndexFile<IndexStats>(frameworkRoot, 'stats.json', 'framework');
+  return stats ? normalizeFrameworkDiscoveryInventory(stats) : null;
+}
 
 const BUNDLE_INDEX_TOKENS: Readonly<Record<string, string[]>> = {
   all: [],
@@ -250,7 +317,9 @@ export async function verifyProviderDeployment(
   const definition = getProviderDefinition(normalized);
   const findings: DeploymentVerificationFinding[] = [];
   const counts = emptyCounts();
-  const restartAction = RESTART_ACTIONS[normalized] ?? null;
+  const restartNotice = RESTART_NOTICES[normalized] ?? null;
+  const restartAction = restartNotice?.action ?? null;
+  const restartReason = restartNotice?.reason ?? null;
   const restartRequired = restartAction !== null;
 
   if (!definition) {
@@ -320,10 +389,16 @@ export async function verifyProviderDeployment(
   const projectLocalBundles = options.requestedBundles.filter((bundle) =>
     scopedRegistry?.installed[bundle]?.source === 'project-local');
   const frameworkBundles = options.requestedBundles.filter((bundle) => !projectLocalBundles.includes(bundle));
-  const indexesToVerify: Array<{ index: ArtifactIndex | null; graph: 'framework' | 'project' | 'user'; bundles: string[] }> = [];
+  const indexesToVerify: Array<{
+    index: ArtifactIndex | null;
+    stats?: IndexStats | null;
+    graph: 'framework' | 'project' | 'user';
+    bundles: string[];
+  }> = [];
   if (frameworkBundles.length > 0) {
     indexesToVerify.push({
       index: loadGraphIndexFile<ArtifactIndex>(options.frameworkRoot, 'metadata.json', 'framework'),
+      stats: loadGraphIndexFile<IndexStats>(options.frameworkRoot, 'stats.json', 'framework'),
       graph: 'framework',
       bundles: frameworkBundles,
     });
@@ -337,7 +412,7 @@ export async function verifyProviderDeployment(
     });
   }
 
-  for (const { index, graph, bundles } of indexesToVerify) {
+  for (const { index, stats, graph, bundles } of indexesToVerify) {
     if (!index || !index.entries || Object.keys(index.entries).length === 0) {
       findings.push(finding(
         normalized,
@@ -347,6 +422,32 @@ export async function verifyProviderDeployment(
         `Run aiwg index build --graph ${graph}, then re-run the same aiwg use command.`,
       ));
       continue;
+    }
+
+    if (graph === 'framework') {
+      if (!stats || !stats.byType || !Number.isSafeInteger(stats.totalArtifacts)) {
+        findings.push(finding(
+          normalized,
+          'index-stats-unreadable:framework',
+          'blocking',
+          'The framework discovery inventory is missing or unreadable.',
+          'Run aiwg index build --graph framework, then re-run the same aiwg use command.',
+        ));
+      } else {
+        const counts = Object.values(stats.byType);
+        const validCounts = counts.every((count) => Number.isSafeInteger(count) && count >= 0);
+        const countedTotal = counts.reduce((sum, count) => sum + count, 0);
+        if (!validCounts || stats.totalArtifacts < 0 || countedTotal !== stats.totalArtifacts) {
+          findings.push(finding(
+            normalized,
+            'index-stats-invalid:framework',
+            'blocking',
+            'The framework discovery inventory contains invalid or inconsistent counts.',
+            'Run aiwg index build --graph framework, then re-run the same aiwg use command.',
+            { totalArtifacts: stats.totalArtifacts, countedTotal },
+          ));
+        }
+      }
     }
 
     const entryPaths = Object.keys(index.entries);
@@ -465,6 +566,7 @@ export async function verifyProviderDeployment(
     outcome,
     restartRequired,
     restartAction,
+    restartReason,
     counts,
     phases,
     findings,
@@ -481,7 +583,8 @@ export function buildDryRunUseResult(options: {
 }): UseDeploymentResult {
   const providers = options.providers.map((provider) => {
     const normalized = normalizeProviderDefinitionId(provider) ?? provider;
-    const restartAction = RESTART_ACTIONS[normalized] ?? null;
+    const restartNotice = RESTART_NOTICES[normalized] ?? null;
+    const restartAction = restartNotice?.action ?? null;
     const phases: DeploymentPhaseResult[] = [
       phase('resolve', 'planned', true, `Would resolve ${options.projectRoot}, ${normalized}, ${options.scope} scope.`),
       phase('deploy', 'planned', true, 'Would deploy the requested managed artifact surface.'),
@@ -496,6 +599,7 @@ export function buildDryRunUseResult(options: {
       outcome: 'planned' as const,
       restartRequired: restartAction !== null,
       restartAction,
+      restartReason: restartNotice?.reason ?? null,
       counts: emptyCounts(),
       phases,
       findings: [],
@@ -514,6 +618,7 @@ export function buildDryRunUseResult(options: {
     findings: [],
     outcome: 'planned',
     restartRequired: providers.some((provider) => provider.restartRequired),
+    discovery: frameworkDiscoveryInventory(options.frameworkRoot),
     exitClassification: 'preview',
     exitCode: 0,
   };
@@ -566,6 +671,7 @@ export function aggregateUseDeploymentResult(options: {
     findings,
     outcome,
     restartRequired,
+    discovery: frameworkDiscoveryInventory(options.frameworkRoot),
     exitClassification: hasFailed ? 'failure' : hasDegraded ? 'degraded' : 'success',
     exitCode: hasFailed ? 1 : 0,
   };
@@ -601,6 +707,7 @@ export async function verifyConfiguredDeployments(
       outcome: 'failed',
       restartRequired: false,
       restartAction: null,
+      restartReason: null,
       counts: emptyCounts(),
       phases: [phase('verify', 'failed', true, 'No installed provider deployment could be resolved.')],
       findings: [finding(fallback, 'deployment-not-configured', 'blocking', 'No installed provider deployment could be resolved.', 'Run aiwg use all --provider <provider>.')],
@@ -648,31 +755,141 @@ export async function buildDeploymentStatusProbe(
   };
 }
 
-export function renderUseDeploymentResult(result: UseDeploymentResult): string {
+export interface RenderUseDeploymentOptions {
+  verbose?: boolean;
+  width?: number;
+  version?: { version: string; repository: string };
+  nextSteps?: string[];
+}
+
+const DEPLOYED_COUNT_LABELS: Readonly<Record<keyof ProviderDeploymentVerification['counts'], string>> = {
+  agents: 'Agents',
+  commands: 'Commands',
+  skills: 'Skills',
+  rules: 'Rules',
+  behaviors: 'Behaviors',
+};
+
+function displayProvider(provider: string): string {
+  const definition = getProviderDefinition(provider);
+  return definition ? `${definition.displayName} (${provider})` : provider;
+}
+
+function wrapTokens(tokens: string[], width: number, indent = '    '): string[] {
+  if (tokens.length === 0) return [`${indent}None`];
+  const max = Math.max(24, width - indent.length);
+  const lines: string[] = [];
+  let line = '';
+  for (const token of tokens) {
+    const candidate = line ? `${line}  ·  ${token}` : token;
+    if (line && candidate.length > max) {
+      lines.push(indent + line);
+      line = token;
+    } else {
+      line = candidate;
+    }
+  }
+  if (line) lines.push(indent + line);
+  return lines;
+}
+
+function wrapParagraph(text: string, width: number, indent = '    '): string[] {
+  const max = Math.max(24, width - indent.length);
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let line = '';
+  for (const word of words) {
+    const candidate = line ? `${line} ${word}` : word;
+    if (line && candidate.length > max) {
+      lines.push(indent + line);
+      line = word;
+    } else {
+      line = candidate;
+    }
+  }
+  if (line) lines.push(indent + line);
+  return lines;
+}
+
+function outcomeHeading(result: UseDeploymentResult): string {
+  if (result.outcome === 'ready') return 'AIWG ready';
+  if (result.outcome === 'ready-restart-required') return 'AIWG ready — provider reload required';
+  if (result.outcome === 'degraded') return 'AIWG ready with advisories';
+  return 'AIWG needs repair';
+}
+
+export function renderUseDeploymentResult(
+  result: UseDeploymentResult,
+  options: RenderUseDeploymentOptions = {},
+): string {
   if (result.dryRun) {
     const providers = result.providers.map((provider) => provider.provider).join(', ');
     return `Deployment preview: ${result.requestedBundles.join(', ')} for ${providers}\nNo files were changed and no verification pass is claimed.`;
   }
 
-  const lines = [
-    '',
-    `AIWG deployment outcome: ${result.outcome}`,
-    `Project: ${result.projectRoot}`,
-    `Scope: ${result.scope}`,
-  ];
+  const width = Math.max(60, Math.min(160, Math.floor(options.width ?? 100)));
+  const lines = ['', outcomeHeading(result)];
   for (const provider of result.providers) {
-    lines.push(`Provider ${provider.provider}: ${provider.outcome}`);
-    for (const item of provider.findings.filter((candidate) => candidate.severity !== 'info')) {
-      lines.push(`  ${item.severity === 'blocking' ? 'BLOCKING' : 'ADVISORY'}: ${item.message}`);
-      if (item.remediation) lines.push(`    Fix: ${item.remediation}`);
-    }
-    if (provider.restartRequired && provider.restartAction) {
-      lines.push(`  Restart required: ${provider.restartAction}`);
+    lines.push('', `Deployed to ${displayProvider(provider.provider)}`);
+    lines.push(...wrapTokens(
+      Object.entries(DEPLOYED_COUNT_LABELS).map(([type, label]) =>
+        `${label} ${provider.counts[type as keyof typeof provider.counts].toLocaleString('en-US')}`),
+      width,
+    ));
+  }
+
+  lines.push('', 'Indexed for discovery');
+  if (result.discovery) {
+    lines.push(`    ${result.discovery.totalArtifacts.toLocaleString('en-US')} artifacts · ${result.discovery.graph} graph`);
+    lines.push(...wrapTokens(
+      Object.entries(result.discovery.byType).map(([type, count]) =>
+        `${type} ${count.toLocaleString('en-US')}`),
+      width,
+    ));
+  } else {
+    lines.push('    Unavailable — the framework index could not be read.');
+  }
+
+  const visibleFindings = result.findings.filter((candidate) => candidate.severity !== 'info');
+  if (visibleFindings.length > 0) {
+    lines.push('', result.outcome === 'failed' ? 'Blocking findings' : 'Advisories');
+    for (const item of visibleFindings) {
+      lines.push(...wrapParagraph(`${item.provider}: ${item.message}`, width));
+      if (item.remediation) lines.push(...wrapParagraph(`Fix: ${item.remediation}`, width, '      '));
     }
   }
-  if (result.outcome === 'ready') lines.push('AIWG is ready for this project.');
-  else if (result.outcome === 'ready-restart-required') lines.push('AIWG is verified on disk; reload the provider before expecting the current session to see new assets.');
-  else if (result.outcome === 'degraded') lines.push('AIWG core deployment is usable with the advisories shown above.');
-  else lines.push('AIWG deployment is not ready; blocking findings must be repaired.');
+
+  if (options.verbose) {
+    lines.push('', 'Verification details');
+    for (const provider of result.providers) {
+      for (const item of provider.phases) {
+        lines.push(...wrapParagraph(`${provider.provider}/${item.id}: ${item.state} — ${item.summary}`, width));
+      }
+      if (provider.restartReason) {
+        lines.push(...wrapParagraph(`${provider.provider} reload rationale: ${provider.restartReason}`, width));
+      }
+    }
+    if (result.discovery) {
+      lines.push(...wrapParagraph(`Framework index built: ${result.discovery.builtAt}`, width));
+    }
+  }
+
+  const restartActions = result.providers
+    .filter((provider) => provider.restartRequired && provider.restartAction)
+    .map((provider) => provider.restartAction as string);
+  const next = options.nextSteps?.length
+    ? options.nextSteps
+    : result.outcome === 'failed'
+      ? ['Repair the blocking findings above, then run the same aiwg use command again.']
+      : restartActions.length > 0
+        ? [...restartActions, 'Ask your AI tool to verify AIWG and recommend one useful next action.']
+        : ['Ask your AI tool to verify AIWG and recommend one useful next action.'];
+  lines.push('', 'Next');
+  for (const step of next) lines.push(...wrapParagraph(step, width));
+
+  if (options.version) {
+    lines.push('', ...wrapParagraph(`AIWG v${options.version.version} · ${options.version.repository}`, width, '  '));
+  }
+
   return lines.join('\n');
 }

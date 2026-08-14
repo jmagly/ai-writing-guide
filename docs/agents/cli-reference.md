@@ -511,10 +511,14 @@ being falsely described as pinned.
 - `--no-utils` - Skip aiwg-utils addon installation (frameworks only)
 - `--force` - Overwrite existing deployments
 - `--dry-run` - Preview without making changes
+- `--verbose` / `-v` - Include deployment phase details, framework-index build
+  time, registry diagnostics, and the provider-specific reload rationale. The
+  default report stays compact for terminals, logs, and agent transcripts.
 - `--json` - Emit one versioned `aiwg.use.result.v1` result document. The
   document remains valid JSON on non-zero failure and includes per-provider
-  phases, artifact counts, findings, restart actions, aggregate outcome, and
-  exit classification.
+  phases, deployed artifact counts, the complete authoritative framework-index
+  inventory, findings, restart actions, aggregate outcome, and exit
+  classification.
 - `--ci-hooks-enabled` - Also deploy CI workflow files to `.github/workflows/` and/or `.gitea/workflows/` (opt-in; detects forge from `.git/config`). Review deployed files before committing.
 - `--harness-agents <list>` - OpenHuman only: emit selected native `spawn_subagent` TOML agents with a comma-separated list (for example `test-engineer,security-auditor`). Without this flag, OpenHuman deploys kernel skills/rules only.
 - `--no-harness-agents` - OpenHuman only: explicitly skip native TOML harness agents and deploy only kernel skills/rules.
@@ -595,6 +599,20 @@ records; then reports one stable outcome:
 `aiwg status --probe --json` projects the same result into the stable status
 probe envelope. Standalone index and context commands remain targeted repair
 tools; a successful `aiwg use` does not require users to invoke them manually.
+
+The human completion report deliberately distinguishes two inventories:
+
+- **Deployed to `<provider>`** counts the managed files copied into that
+  provider's load paths.
+- **Indexed for discovery** reports `totalArtifacts` and every `byType` entry
+  from `aiwg index stats --graph framework --json`. Core types (`agent`,
+  `skill`, `command`, `rule`, `behavior`, `template`, `flow`, `runbook`, and
+  `schema`) remain visible at zero, while newly introduced index types appear
+  automatically.
+
+Warnings, failures, and remediation remain visible in the default report.
+Successful phase-by-phase diagnostics and the explanation for a provider
+reload are shown with `--verbose`.
 
 **Shorthand values:** `opus`, `sonnet`, `haiku`, `inherit` — resolved per provider to full model IDs
 

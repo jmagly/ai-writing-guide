@@ -70,6 +70,7 @@ import {
 } from '../workspace-signals.js';
 import {
   getProviderArtifactPathStrings,
+  getProviderDefinition,
   getProviderKernelSkillPath,
   normalizeProviderDefinitionId,
   type ProviderArtifactPathStrings,
@@ -715,7 +716,7 @@ const NEXT_STEPS: Record<string, string[]> = {
   'warp/sdlc': agenticNextSteps('Open Warp:         Start a Warp session in this project root.'),
   'copilot/sdlc': agenticNextSteps('Open VS Code:      Open this workspace and use Copilot Chat.'),
   'codex/sdlc': agenticNextSteps('Open Codex:        Restart Codex in this project root.'),
-  'windsurf/sdlc': agenticNextSteps('Open Windsurf:     Open this project in Windsurf and ask Cascade for AIWG status.'),
+  'windsurf/sdlc': agenticNextSteps('Open Devin Desktop: Open this project in Devin Desktop and ask Devin for AIWG status.'),
   'openclaw/sdlc': agenticNextSteps('Start OpenClaw:    Open OpenClaw with this project workspace.'),
   'openclaw/marketing': agenticNextSteps('Start OpenClaw:    Open OpenClaw with this project workspace.'),
   'openclaw/all': agenticNextSteps('Start OpenClaw:    Open OpenClaw with this project workspace.'),
@@ -731,10 +732,6 @@ export function nextStepsFor(framework: Framework, provider: string = 'claude'):
     : '/aiwg-regenerate';
   const steps = NEXT_STEPS[providerKey] ?? NEXT_STEPS[framework] ?? NEXT_STEPS.sdlc;
   return steps.map((step) => step.replace('{{aiwg-regenerate}}', regenerateInvocation));
-}
-
-function printNextSteps(framework: Framework, provider: string = 'claude'): void {
-  ui.section('Next steps:', nextStepsFor(framework, provider));
 }
 
 /**
@@ -772,8 +769,8 @@ const SESSION_RELOAD_NOTICE: Record<string, { action: string; rationale: string;
     rationale: 'Warp aggregates context from WARP.md when a new tab spawns; existing tabs keep the prior version.',
   },
   windsurf: {
-    action: 'Restart Windsurf or reload the workspace so the aggregated AGENTS.md is re-parsed.',
-    rationale: 'Windsurf reads AGENTS.md once per workspace session.',
+    action: 'Restart Devin Desktop or reload the workspace so the aggregated AGENTS.md is re-parsed.',
+    rationale: 'Devin Desktop reads the Windsurf-compatible AGENTS.md once per workspace session.',
   },
   factory: {
     action: 'Restart your Factory droid runtime to pick up new entries in .factory/droids/.',
@@ -882,21 +879,6 @@ async function countDeployedArtifacts(
     rules: await countRules(paths.rules),
     behaviors: await countDirs(paths.behaviors),
   };
-}
-
-async function countDiscoverableSkills(aiwgRoot: string): Promise<number | null> {
-  try {
-    const { loadGraphIndexFile } = await import('../../artifacts/index-reader.js');
-    const index = loadGraphIndexFile<{ entries?: Record<string, { type?: string }> }>(
-      aiwgRoot,
-      'metadata.json',
-      'framework',
-    );
-    if (!index?.entries) return null;
-    return Object.values(index.entries).filter(entry => entry.type === 'skill').length;
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -2312,7 +2294,25 @@ export class UseHandler implements CommandHandler {
     if (json) {
       return { exitCode: result.exitCode, message: JSON.stringify(result, null, 2), rawOutput: true };
     }
-    const rendered = renderUseDeploymentResult(result);
+    const verbose = coreArgs.includes('--verbose') || coreArgs.includes('-v');
+    const versionInfo = await getVersionInfo().catch(() => null);
+    const widthFromEnvironment = Number(process.env.COLUMNS);
+    const width = Number.isFinite(process.stdout.columns) && process.stdout.columns > 0
+      ? process.stdout.columns
+      : Number.isFinite(widthFromEnvironment) && widthFromEnvironment > 0
+        ? widthFromEnvironment
+        : 100;
+    const canonicalProvider = result.providers[0]?.provider ?? 'claude';
+    const rendered = renderUseDeploymentResult(result, {
+      verbose,
+      width,
+      version: versionInfo
+        ? { version: versionInfo.version, repository: versionInfo.repoUrl || 'aiwg.io' }
+        : undefined,
+      nextSteps: verbose && result.outcome !== 'failed' && VALID_FRAMEWORKS.includes(requestedBundle as Framework)
+        ? nextStepsFor(requestedBundle as Framework, canonicalProvider)
+        : undefined,
+    });
     return {
       exitCode: result.exitCode,
       message: [coreResult.message, rendered].filter(Boolean).join('\n'),
@@ -3228,8 +3228,9 @@ export class UseHandler implements CommandHandler {
       const installLabel = framework === 'all'
         ? 'Installing complete AIWG surface'
         : `Installing ${framework} framework`;
+      const providerLabel = getProviderDefinition(provider)?.displayName ?? provider;
       ui.blank();
-      console.log(`  ${ui.brandMark()} ${ui.bold(installLabel)}  ${ui.dimText(`for ${provider === 'claude' ? 'Claude Code' : provider}`)}`);
+      console.log(`  ${ui.brandMark()} ${ui.bold(installLabel)}  ${ui.dimText(`for ${providerLabel}`)}`);
       ui.blank();
     }
     const runner = createScriptRunner(ctx.frameworkRoot);
@@ -3467,6 +3468,7 @@ export class UseHandler implements CommandHandler {
         behaviorsPath: paths.behaviors,
         provider,
         cwd: target,
+        quiet: !verbose,
       });
 
       if (verbose) console.log('Extension registration complete');
@@ -3486,7 +3488,6 @@ export class UseHandler implements CommandHandler {
     // (e.g., test fixtures, deploy from npm install rather than the
     // source repo). buildIndex() calls `process.exit(1)` on missing
     // scan dirs which would short-circuit our catch.
-    let discoverableSkillCount: number | null = null;
     if (!dryRun) {
       // Build the framework graph against $AIWG_ROOT, not the project's
       // target dir (#1217). The framework source is user-global at
@@ -3518,9 +3519,8 @@ export class UseHandler implements CommandHandler {
           // regardless of build cwd.
           await buildIndex(aiwgRootForIndex, { graph: 'framework', explicit: false });
           console.log = origLog;
-          discoverableSkillCount = await countDiscoverableSkills(aiwgRootForIndex);
           const indexElapsedSec = ((Date.now() - indexStart) / 1000).toFixed(1);
-          ui.success(`Capability index ready (${indexElapsedSec}s) — agents can search the installed capability set.`);
+          ui.success(`Capability index ready (${indexElapsedSec}s).`);
         } catch (error) {
           console.log = origLog;
           ui.warn(
@@ -3533,37 +3533,13 @@ export class UseHandler implements CommandHandler {
       }
     }
 
-    // Show completion summary and next steps (default mode only)
+    // Collect deployment counts for registry persistence and the final
+    // orchestrated report. Presentation happens once, after verification, so
+    // users do not see a second competing summary.
     let counts = { agents: 0, commands: 0, skills: 0, rules: 0, behaviors: 0 };
     if (quiet) {
-      // Count deployed artifacts
       const paths = getProviderPaths(provider);
       counts = await countDeployedArtifacts(target, paths, provider);
-      if (counts.agents > 0) ui.deployCount('Agents', counts.agents);
-      if (counts.commands > 0) ui.deployCount('Commands', counts.commands);
-      if (counts.skills > 0) ui.deployCount('Skills', counts.skills);
-      if (discoverableSkillCount !== null) ui.deployCount('Discoverable skills', discoverableSkillCount);
-      if (counts.rules > 0) ui.deployCount('Rules', counts.rules);
-      if (counts.behaviors > 0) ui.deployCount('Behaviors', counts.behaviors);
-      ui.blank();
-      printNextSteps(framework as Framework, provider);
-
-      // #1240: warn the operator that the running session can't see the newly
-      // deployed agents until reloaded. Skipping this notice is what produced
-      // the "Agent type 'software-implementer' not found" symptom on a stale
-      // Claude Code session.
-      ui.blank();
-      printSessionReloadNotice(provider);
-
-      // Append version confirmation line (#719)
-      try {
-        const versionInfo = await getVersionInfo();
-        ui.blank();
-        const repoStamp = versionInfo.repoUrl || 'aiwg.io';
-        ui.dim(`  AIWG v${versionInfo.version} — ${repoStamp}`);
-      } catch {
-        // Graceful fallback: omit version line if versionInfo unavailable
-      }
     }
 
     // Deploy CI workflow files when --ci-hooks-enabled is set (#661)

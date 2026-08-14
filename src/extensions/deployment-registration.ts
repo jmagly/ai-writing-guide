@@ -39,6 +39,8 @@ export interface RegistrationOptions {
   provider: string;
   /** Working directory for relative path resolution */
   cwd?: string;
+  /** Suppress scan-by-scan registry diagnostics for compact CLI output. */
+  quiet?: boolean;
 }
 
 /**
@@ -529,7 +531,7 @@ export async function registerDeployedExtensions(
   registry: ExtensionRegistry,
   options: RegistrationOptions
 ): Promise<void> {
-  const { agentsPath, skillsPath, behaviorsPath, provider, cwd } = options;
+  const { agentsPath, skillsPath, behaviorsPath, provider, cwd, quiet = false } = options;
 
   // Scan and register agents
   if (agentsPath) {
@@ -537,7 +539,7 @@ export async function registerDeployedExtensions(
     for (const agent of agents) {
       registry.register(agent);
     }
-    console.log(`Registered ${agents.length} agents from ${agentsPath}`);
+    if (!quiet) console.log(`Registered ${agents.length} agents from ${agentsPath}`);
   }
 
   // Scan and register skills
@@ -552,7 +554,7 @@ export async function registerDeployedExtensions(
       total += skills.length;
       perPath.push(`${skills.length} from ${pathToScan}`);
     }
-    console.log(`Registered ${total} skills (${perPath.join(', ')})`);
+    if (!quiet) console.log(`Registered ${total} skills (${perPath.join(', ')})`);
   }
 
   // Scan and register behaviors (#609)
@@ -561,7 +563,7 @@ export async function registerDeployedExtensions(
     for (const behavior of behaviors) {
       registry.register(behavior);
     }
-    if (behaviors.length > 0) {
+    if (!quiet && behaviors.length > 0) {
       console.log(`Registered ${behaviors.length} behaviors from ${behaviorsPath}`);
     }
   }

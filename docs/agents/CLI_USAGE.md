@@ -97,13 +97,17 @@ aiwg use all --provider codex
 **Options:**
 
 - `--provider <name>`: Target platform (`claude`, `codex`, `copilot`, `cursor`,
-  `factory`, `opencode`, `warp`, `windsurf`, `openclaw`, `hermes`, or
-  `openhuman`)
+  `devin`, `factory`, `opencode`, `warp`, `openclaw`, `hermes`, or
+  `openhuman`). The deprecated `windsurf` selector remains an alias for Devin
+  Desktop's `.windsurf/` compatibility paths.
 - `--no-utils`: Skip aiwg-utils addon
 - `--force`: Overwrite existing deployments
 - `--dry-run`: Preview all phases without writing files or claiming readiness
+- `--verbose` / `-v`: Include deployment phases, registry diagnostics, index
+  build time, and provider reload rationale
 - `--json`: Emit one `aiwg.use.result.v1` document; valid JSON is preserved on
-  both success and non-zero failure
+  both success and non-zero failure. The document separates per-provider
+  deployed counts from the complete framework discovery inventory.
 
 `all` includes the complete deployable end-user surface but intentionally
 excludes contributor-only development bundles and non-deployable packages.
@@ -113,6 +117,10 @@ context, verifies artifacts and provider wiring, and reports one of `ready`,
 reload action when present. Standalone `aiwg index build`, `aiwg regenerate`,
 `aiwg doctor --deployment`, and `aiwg status --probe --json` remain available
 for targeted repair and diagnostics.
+
+The default completion report is intentionally compact. **Deployed to** counts
+files copied into provider load paths; **Indexed for discovery** reports the
+authoritative framework `totalArtifacts` and every indexed artifact type.
 
 ### wizard
 

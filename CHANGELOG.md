@@ -27,6 +27,15 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   `aiwg.use.result.v1` envelope. `aiwg doctor --deployment` and
   `aiwg status --probe --json` reuse the same verification primitives.
 
+### Changed
+
+- **Focused `aiwg use` completion report** - the default human-readable result
+  now presents one compact summary that separates artifacts copied to each
+  provider from the authoritative framework inventory indexed for discovery.
+  All index artifact types are included, required core types have explicit zero
+  counts, provider reload rationale moves to `--verbose`, and registry scan
+  chatter is suppressed outside verbose diagnostics.
+
 ### Fixed
 
 - **Deployment false-success and false-failure handling** - required artifact,

@@ -46,6 +46,57 @@ function runUse(projectRoot: string, homeRoot: string, providerArgs: string[]) {
   };
 }
 
+function runUseHuman(projectRoot: string, homeRoot: string, providerArgs: string[], width = 80) {
+  const result = spawnSync(process.execPath, [
+    BIN,
+    'use', 'sdlc',
+    ...providerArgs,
+    '--target', projectRoot,
+    '--no-utils',
+    '--no-project-local',
+    '--copy-all',
+  ], {
+    cwd: REPO_ROOT,
+    encoding: 'utf8',
+    timeout: 60_000,
+    env: {
+      ...process.env,
+      HOME: homeRoot,
+      USERPROFILE: homeRoot,
+      XDG_CACHE_HOME: path.join(homeRoot, '.cache'),
+      XDG_CONFIG_HOME: path.join(homeRoot, '.config'),
+      XDG_DATA_HOME: path.join(homeRoot, '.local', 'share'),
+      NO_UPDATE_NOTIFIER: '1',
+      NO_COLOR: '1',
+      COLUMNS: String(width),
+    },
+  });
+  return {
+    exitCode: result.status ?? 1,
+    stdout: result.stdout ?? '',
+    stderr: result.stderr ?? '',
+  };
+}
+
+function runFrameworkIndexStats(homeRoot: string) {
+  const result = spawnSync(process.execPath, [BIN, 'index', 'stats', '--graph', 'framework', '--json'], {
+    cwd: REPO_ROOT,
+    encoding: 'utf8',
+    timeout: 30_000,
+    env: {
+      ...process.env,
+      HOME: homeRoot,
+      USERPROFILE: homeRoot,
+      XDG_CACHE_HOME: path.join(homeRoot, '.cache'),
+      XDG_CONFIG_HOME: path.join(homeRoot, '.config'),
+      XDG_DATA_HOME: path.join(homeRoot, '.local', 'share'),
+      NO_UPDATE_NOTIFIER: '1',
+    },
+  });
+  expect(result.status, result.stderr || result.stdout).toBe(0);
+  return JSON.parse(result.stdout || '{}');
+}
+
 afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
@@ -77,10 +128,45 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
         exitClassification: 'success',
         exitCode: 0,
       });
+      expect(result.payload.discovery.byType).toEqual(expect.objectContaining({
+        agent: expect.any(Number),
+        skill: expect.any(Number),
+        command: expect.any(Number),
+        rule: expect.any(Number),
+        behavior: expect.any(Number),
+        template: expect.any(Number),
+        flow: expect.any(Number),
+        runbook: expect.any(Number),
+        schema: expect.any(Number),
+      }));
       expect(result.payload.findings.filter((item: { severity: string }) => item.severity === 'blocking')).toHaveLength(0);
+    }
+    const stats = runFrameworkIndexStats(homeRoot);
+    for (const result of [first, repeated]) {
+      expect(result.payload.discovery).toMatchObject({
+        graph: 'framework',
+        totalArtifacts: stats.totalArtifacts,
+      });
+      expect(result.payload.discovery.byType).toMatchObject(stats.byType);
     }
     expect(existsSync(path.join(projectRoot, '.agents', 'skills'))).toBe(true);
     expect(existsSync(path.join(projectRoot, 'AGENTS.md'))).toBe(true);
+  }, 20_000);
+
+  it('keeps default non-TTY output compact, colorless, and free of registry chatter', () => {
+    const projectRoot = isolatedRoot('aiwg-use-output-codex-project-');
+    const homeRoot = isolatedRoot('aiwg-use-output-codex-home-');
+    const result = runUseHuman(projectRoot, homeRoot, ['--provider', 'codex'], 80);
+
+    expect(result.exitCode, result.stderr || result.stdout).toBe(0);
+    expect(result.stderr).toBe('');
+    expect(result.stdout).toContain('AIWG ready — provider reload required');
+    expect(result.stdout).toContain('Deployed to OpenAI Codex (codex)');
+    expect(result.stdout).toContain('Indexed for discovery');
+    expect(result.stdout).not.toContain('Registered ');
+    expect(result.stdout).not.toContain('reload rationale');
+    expect(result.stdout).not.toMatch(/\x1b\[/);
+    expect(result.stdout.split('\n').every((line) => line.length <= 80)).toBe(true);
   });
 
   it('verifies a native-skills provider deployment', () => {

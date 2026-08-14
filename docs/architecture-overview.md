@@ -292,7 +292,7 @@ flowchart LR
   CLI --> CP[".github/agents/<br/>.github/skills/<br/>.github/instructions/"]
   CLI --> CR[".cursor/agents/<br/>.cursor/skills/<br/>.cursor/rules/"]
   CLI --> WP[".warp/agents/<br/>.warp/skills/<br/>+ WARP.md aggregate"]
-  CLI --> WS[".windsurf/agents/<br/>.windsurf/skills/<br/>+ AGENTS.md"]
+  CLI --> WS["Devin Desktop<br/>.windsurf/agents/<br/>.windsurf/skills/<br/>+ AGENTS.md"]
   CLI --> FA[".factory/droids/<br/>.factory/skills/<br/>.factory/rules/"]
   CLI --> OC[".opencode/agent/<br/>.opencode/skill/<br/>.opencode/rule/"]
   CLI --> HE[".hermes.md + AGENTS.md<br/>~/.hermes/skills/<br/>MCP optional"]
@@ -314,7 +314,7 @@ Switching platforms doesn't require redoing your team's agent/skill/rule investm
 
 ## 8. Session reload after `aiwg use`
 
-Every AI platform caches its agent/skill registry at session start. After `aiwg use`, a running session retains its old registry until the right invalidation step runs — and the right step is different per platform. `aiwg use` prints the correct step in its post-deploy "Session reload required" section so operators don't have to guess.
+Every AI platform caches its agent/skill registry at session start. After `aiwg use`, a running session retains its old registry until the right invalidation step runs — and the right step is different per platform. `aiwg use` prints the correct action in the compact `Next` section so operators do not have to guess; `--verbose` also explains why that provider needs the reload.
 
 ```mermaid
 flowchart TB
@@ -331,7 +331,7 @@ flowchart TB
 
   RELOAD -->|Warp| TAB[Open a fresh Warp tab<br/>WARP.md re-read on tab start]
 
-  RELOAD -->|Windsurf| WORK[Reload the workspace<br/>AGENTS.md re-parsed]
+  RELOAD -->|Devin Desktop| WORK[Reload the workspace<br/>AGENTS.md re-parsed]
 
   RELOAD -->|Hermes| HCMD["/reload-skills<br/>/reload-mcp<br/>no restart needed"]
 
