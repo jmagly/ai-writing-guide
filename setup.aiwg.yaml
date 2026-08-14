@@ -122,38 +122,32 @@ spec:
         - repair-or-install
       instruction: >-
         From PROJECT_DIR, run the selected healthy AIWG executable to deploy the
-        preferred complete system with aiwg use all --provider PROVIDER. Preserve
-        project-authored files and report every conflict instead of forcing an
-        overwrite. This is a project-local deployment unless the user explicitly
-        requested and approved user or global scope. For a monorepo, confirm whether
-        PROJECT_DIR is the repository root or an intentionally isolated package before
-        writing provider files. Never initialize Git or create a new project structure
-        unless the user explicitly requested it.
-      on_fail: diagnose-install
-    - id: build-and-regenerate
-      type: agentic
-      depends_on:
-        - deploy-complete-system
-      instruction: >-
-        From PROJECT_DIR, build the capability indices with aiwg index build --all,
-        then run aiwg regenerate --provider PROVIDER. Use the existing-project
-        preflight/apply route when the project has not yet been normalized and the
-        command indicates that it is needed. Preview changes, preserve operator and
-        project-authored instructions, and never use --force without separately
-        explaining the conflict and obtaining approval.
+        preferred complete system with aiwg use all --provider PROVIDER --json. This
+        one command deploys the selected surface, refreshes capability indices,
+        regenerates canonical project context and provider adapters, verifies the
+        resulting disk state, and returns aiwg.use.result.v1. Preserve project-authored
+        files and report every conflict instead of forcing an overwrite. This is a
+        project-local deployment unless the user explicitly requested and approved
+        user or global scope. For a monorepo, confirm whether PROJECT_DIR is the
+        repository root or an intentionally isolated package before writing provider
+        files. Never initialize Git or create a new project structure unless the user
+        explicitly requested it.
       on_fail: diagnose-install
     - id: verify-engagement
       type: agentic
       depends_on:
-        - build-and-regenerate
+        - deploy-complete-system
       instruction: >-
-        Run aiwg status --probe --json and aiwg doctor from PROJECT_DIR. Verify the
-        intended project root, PROVIDER, the complete all deployment, fresh indices,
-        WORKSPACE.md and AIWG.md, and the provider adapter. Also verify that the
-        current agent can read the generated bootstrap and discover an AIWG
-        capability. Report each check as pass, repaired, warning, or blocked, with a
-        concrete next action for any non-pass result. When multiple providers were
-        selected, repeat provider adapter and discovery verification for each provider.
+        Read the aiwg.use.result.v1 response from the deployment command. Confirm that
+        its project root, provider, scope, requested bundle, phase results, findings,
+        final state, and restart requirement match the approved plan. A ready,
+        ready-restart-required, or advisory-only degraded result completes ordinary
+        setup; do not make index, regenerate, status, or doctor commands mandatory
+        follow-up steps. Run aiwg status --probe --json or aiwg doctor only when the
+        result requests that recovery action or the user asks for an independent
+        audit. Also verify that the current agent can read the generated bootstrap and
+        discover an AIWG capability. When multiple providers were selected, inspect
+        the per-provider evidence for every provider.
       on_fail: diagnose-install
     - id: session-handoff
       type: agentic
@@ -184,8 +178,8 @@ spec:
   briefing:
     success: >-
       AIWG is installed or repaired, the complete system is deployed for the selected
-      provider, project context is regenerated, indices are built, and engagement is
-      verified.
+      provider, and the one-command result verifies its artifacts, indices, project
+      context, provider adapter, and restart requirement.
     next_steps:
       - Ask the agent what AIWG can help with in this project.
       - Run aiwg status --probe --json whenever you want evidence that AIWG is engaged.

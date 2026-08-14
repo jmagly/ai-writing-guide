@@ -21,10 +21,22 @@ agents, CI, and web-backed installations.
 
 ```text
 Install or repair AIWG for this project by following
-https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml
+https://aiwg.io/setup.aiwg.yaml
 Explain the plan before changing anything, preserve my existing work, and ask
 me only for choices you cannot safely determine.
 ```
+
+The equivalent manual path is three steps:
+
+```bash
+npm install --global aiwg
+cd /path/to/your/project
+aiwg use all --provider <provider>
+```
+
+The final command deploys, refreshes indices and project context, verifies the
+provider wiring, and reports one result. Standalone index, regenerate, status,
+and doctor commands remain advanced maintenance and recovery tools.
 
 [![npm version](https://img.shields.io/npm/v/%40aiwg%2Fcli/latest?label=%40aiwg%2Fcli&color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/@aiwg/cli)
 [![npm downloads](https://img.shields.io/npm/dm/%40aiwg%2Fcli?color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/@aiwg/cli)
@@ -221,7 +233,7 @@ offline operation is required.
 
 For a first installation, an uncertain environment, or a machine with an old
 or broken AIWG setup, use the full `aiwg` package and the
-[agentic installer manifest](https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml).
+[agentic installer manifest](https://aiwg.io/setup.aiwg.yaml).
 The flow detects development checkouts and preserves development mode unless
 the user explicitly approves switching to the published package.
 

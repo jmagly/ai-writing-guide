@@ -46,7 +46,7 @@ If AIWG is not installed at all, install it once:
 
 ```text
 Install or repair AIWG for this project by following
-https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml
+https://aiwg.io/setup.aiwg.yaml
 ```
 
 After that, the user-side commands you might run by hand are limited to:

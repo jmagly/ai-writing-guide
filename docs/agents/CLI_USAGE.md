@@ -101,13 +101,18 @@ aiwg use all --provider codex
   `openhuman`)
 - `--no-utils`: Skip aiwg-utils addon
 - `--force`: Overwrite existing deployments
+- `--dry-run`: Preview all phases without writing files or claiming readiness
+- `--json`: Emit one `aiwg.use.result.v1` document; valid JSON is preserved on
+  both success and non-zero failure
 
 `all` includes the complete deployable end-user surface but intentionally
 excludes contributor-only development bundles and non-deployable packages.
-After deployment, restart the provider and invoke `aiwg-regenerate` in the
-agent conversation so its project context hooks into `WORKSPACE.md` and
-`AIWG.md`. Regeneration should preview changes and preserve project-authored
-instructions.
+The command now deploys, refreshes the capability index, generates canonical
+context, verifies artifacts and provider wiring, and reports one of `ready`,
+`ready-restart-required`, `degraded`, or `failed`. Follow the reported provider
+reload action when present. Standalone `aiwg index build`, `aiwg regenerate`,
+`aiwg doctor --deployment`, and `aiwg status --probe --json` remain available
+for targeted repair and diagnostics.
 
 ### wizard
 

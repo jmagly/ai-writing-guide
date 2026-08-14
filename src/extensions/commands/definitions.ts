@@ -114,6 +114,7 @@ export const doctorCommand: Extension = {
     triggerPhrases: ['doctor', 'check health', 'diagnose', 'troubleshoot installation'],
     commandHint: {
       template: 'utility',
+      argumentHint: '[--deployment] [--provider <p>] [--bundle <id>] [--scope project|user] [--json]',
       allowedTools: ['Read', 'Bash'],
     },
   } satisfies SkillMetadata,
@@ -309,14 +310,15 @@ export const useCommand: Extension = {
     triggerPhrases: ['use framework', 'deploy framework', 'install framework', 'use sdlc', 'use addon'],
     commandHint: {
       template: 'orchestration',
-      argumentHint: '<framework|addon> [--provider <p>] [--prefix <dir>] [--profile <name>] [--harness-agents <list>]',
+      argumentHint: '<framework|addon> [--provider <p>] [--scope project|user] [--dry-run] [--json]',
       allowedTools: ['Read', 'Write', 'Bash', 'Glob'],
       executionSteps: [
         'Validate framework name',
         'Check dependencies',
         'Deploy framework files',
-        'Register in framework registry',
-        'Deploy platform-specific adaptations',
+        'Register installed state and deploy platform-specific adaptations',
+        'Refresh the applicable capability index and canonical context',
+        'Verify required invariants and report readiness or repair findings',
       ],
     },
   } satisfies SkillMetadata,
@@ -781,10 +783,10 @@ export const issueCommand: Extension = {
   id: 'issue',
   type: 'skill',
   name: 'Issue',
-  description: 'Manage local project issues under .aiwg/issues/',
+  description: 'Policy-plan and manage local project issues under .aiwg/issues/',
   version: '1.0.0',
   capabilities: ['cli', 'project', 'issues', 'local-provider'],
-  keywords: ['issue', 'issues', 'local', 'tracker', 'tickets'],
+  keywords: ['issue', 'issues', 'local', 'tracker', 'tickets', 'policy', 'segmentation'],
   category: 'project',
   platforms: {
     claude: 'full',
@@ -796,10 +798,10 @@ export const issueCommand: Extension = {
   },
   metadata: {
     type: 'skill',
-    triggerPhrases: ['local issues', 'issue init', 'issue list', 'issue create'],
+    triggerPhrases: ['local issues', 'issue init', 'issue list', 'issue create', 'plan issue draft'],
     commandHint: {
       template: 'utility',
-      argumentHint: '<init|new|list|show|comment|close|index> [--provider local]',
+      argumentHint: '<init|plan|new|list|show|comment|close|index> [--provider local]',
       allowedTools: ['Read', 'Write', 'Bash'],
     },
   } satisfies SkillMetadata,

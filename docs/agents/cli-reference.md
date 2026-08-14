@@ -511,6 +511,10 @@ being falsely described as pinned.
 - `--no-utils` - Skip aiwg-utils addon installation (frameworks only)
 - `--force` - Overwrite existing deployments
 - `--dry-run` - Preview without making changes
+- `--json` - Emit one versioned `aiwg.use.result.v1` result document. The
+  document remains valid JSON on non-zero failure and includes per-provider
+  phases, artifact counts, findings, restart actions, aggregate outcome, and
+  exit classification.
 - `--ci-hooks-enabled` - Also deploy CI workflow files to `.github/workflows/` and/or `.gitea/workflows/` (opt-in; detects forge from `.git/config`). Review deployed files before committing.
 - `--harness-agents <list>` - OpenHuman only: emit selected native `spawn_subagent` TOML agents with a comma-separated list (for example `test-engineer,security-auditor`). Without this flag, OpenHuman deploys kernel skills/rules only.
 - `--no-harness-agents` - OpenHuman only: explicitly skip native TOML harness agents and deploy only kernel skills/rules.
@@ -571,6 +575,26 @@ aiwg use sdlc --ci-hooks-enabled --dry-run
 ```
 
 **Model override precedence:** CLI flags > project `models.json` > user `~/.config/aiwg/models.json` > AIWG defaults
+
+**Completion contract:** `aiwg use` is a composed convenience workflow. It
+resolves the selected project, provider, and scope; deploys managed artifacts;
+refreshes the applicable capability index; generates canonical context and
+provider wiring; verifies the resulting filesystem and installed-state
+records; then reports one stable outcome:
+
+| Outcome | Meaning | Exit |
+| --- | --- | --- |
+| `planned` | Dry-run only; no readiness claim and no writes | 0 |
+| `ready` | Required deployment invariants passed | 0 |
+| `ready-restart-required` | Verified on disk; reload the provider before the current session can see new assets | 0 |
+| `degraded` | Core deployment is usable with explicit advisory limitations | 0 |
+| `failed` | At least one required deploy, index, context, registry, or wiring invariant failed | non-zero |
+
+`aiwg doctor --deployment [--provider <name>] [--bundle <id>]
+[--scope project|user] [--json]` reruns the same verifier without redeploying.
+`aiwg status --probe --json` projects the same result into the stable status
+probe envelope. Standalone index and context commands remain targeted repair
+tools; a successful `aiwg use` does not require users to invoke them manually.
 
 **Shorthand values:** `opus`, `sonnet`, `haiku`, `inherit` — resolved per provider to full model IDs
 
@@ -1203,6 +1227,31 @@ advanced cases, but the preferred user experience is the agent-led setup flow.
 
 **Capabilities:** cli, project, config, setup, issues, delivery-policy
 **Tools:** Read, Write, Bash
+
+---
+
+### issue
+
+Policy-plan and manage the project-local issue store. External issue-authoring
+skills use the same composition contract before their tracker-specific write.
+
+```bash
+aiwg issue init [--prefix KEY] [--padding N]
+aiwg issue plan --title "..." [--body "..."|--body-file path] [--json]
+aiwg issue new --title "..." [--body-file path] [--authorize-policy DIGEST]
+aiwg issue list [--status open] [--label bug] [--json]
+aiwg issue show <KEY> [--comments last:10|all]
+aiwg issue comment <KEY> --body "..."
+aiwg issue close <KEY> [--reason "..."]
+```
+
+`plan` emits `aiwg.issue-composition-plan.v1`. Safe drafts have disposition
+`single`; flagged drafts require digest-bound authorization; separable drafts
+that would otherwise be rejected become ordered `split` segments; and
+non-separable rejected drafts return `blocked` without a write. Split segments
+retain labels, priority, provider scope, acceptance content, stable provenance
+markers, dependencies, and sibling links. Partial writes return the next
+segment and marker set so retry can reuse existing issues.
 
 ---
 

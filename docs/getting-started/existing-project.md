@@ -1,6 +1,6 @@
 # Bringing AIWG into an Existing Project
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is installed and the self-verifying `aiwg use all` flow has connected your provider to this project.
 
 You already have a codebase. Maybe it's yours, maybe you inherited it. Either way, you want an AI assistant that actually understands what's in there — not one that has to be reminded every session what the project does and how it's structured.
 
@@ -12,7 +12,7 @@ This guide gets AIWG loaded and oriented in under ten minutes.
 
 ```text
 Install or repair AIWG for this project by following
-https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml
+https://aiwg.io/setup.aiwg.yaml
 Explain the plan before changing anything, preserve my existing work, and ask
 me only for choices you cannot safely determine.
 ```
@@ -46,13 +46,12 @@ the guided conversation. You should not have to map repo policy fields by hand.
 
 ```bash
 aiwg use all --provider <provider>
-aiwg index build --all
-aiwg regenerate --provider <provider>
 ```
 
-This installs the complete system, builds its capability indices, and connects
-the provider to `WORKSPACE.md` and `AIWG.md`. Most providers can use it in the
-current session; restart only if the status check shows cached context.
+This installs the complete system, refreshes its capability indices, connects
+the provider to `WORKSPACE.md` and `AIWG.md`, and verifies the resulting disk
+state. Most providers can use it in the current session; restart only when the
+command reports `ready-restart-required`.
 
 ---
 
