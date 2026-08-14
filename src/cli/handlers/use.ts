@@ -79,6 +79,10 @@ import {
 // execute() per framework/provider) don't re-emit the warning each pass.
 // Reset is not needed: a single CLI process is one user invocation.
 let projectIsolationChecked = false;
+// Non-zero only while the outer `aiwg use --json` orchestration wrapper is
+// collecting child-process output. The CLI is single-command-per-process;
+// recursive provider expansion shares this guard intentionally.
+let machineReadableUseDepth = 0;
 // Context-pipeline: emits WORKSPACE.md + AIWG.md + provider adapters last.
 // for non-Claude providers per ADR-1 (.aiwg/architecture/adr-agents-md-aggregation.md).
 // Distinct from agentsmith (which creates subagent personas).
@@ -88,6 +92,16 @@ import {
 } from '../../smiths/context-pipeline/index.js';
 import type { Platform } from '../../agents/types.js';
 import { verifyModelWrapperDeployment } from '../../models/wrapper-deployment.js';
+import { loadGraphIndexFile } from '../../artifacts/index-reader.js';
+import type { ArtifactIndex } from '../../artifacts/types.js';
+import {
+  aggregateUseDeploymentResult,
+  buildDryRunUseResult,
+  renderUseDeploymentResult,
+  verifyProviderDeployment,
+  type DeploymentScope,
+  type UseDeploymentResult,
+} from '../services/deployment-verification.js';
 
 /**
  * Valid framework identifiers
@@ -651,12 +665,14 @@ async function runPreDeployCollisionCheck(opts: {
   });
 
   const report = formatCollisionReport(results, { verbose });
-  if (report) {
+  if (report && machineReadableUseDepth === 0) {
     process.stderr.write(report + '\n');
   }
 
   if (hasBlockingCollisions(results) && !force) {
-    process.stderr.write('\nDeployment blocked. Use --force to override.\n');
+    if (machineReadableUseDepth === 0) {
+      process.stderr.write('\nDeployment blocked. Use --force to override.\n');
+    }
     return false;
   }
 
@@ -1313,7 +1329,7 @@ async function deployProjectLocalBundles(opts: {
   const upstream = await buildUpstreamRegistry({ frameworkRoot });
   const shadowResult = await resolveShadows(targetBundles, upstream);
   const report = formatShadowReport(shadowResult);
-  if (report) {
+  if (report && machineReadableUseDepth === 0) {
     process.stderr.write(report + '\n');
   }
 
@@ -1954,6 +1970,51 @@ async function generateGlobalProjectContext(opts: {
   });
 }
 
+async function ensurePostDeployPhases(opts: {
+  frameworkRoot: string;
+  projectPath: string;
+  provider: string;
+  args: string[];
+  invocationStartedAt: string;
+}): Promise<void> {
+  const currentIndex = loadGraphIndexFile<ArtifactIndex>(opts.frameworkRoot, 'metadata.json', 'framework');
+  const builtAt = currentIndex ? Date.parse(currentIndex.builtAt) : Number.NaN;
+  const startedAt = Date.parse(opts.invocationStartedAt);
+  if (!Number.isFinite(builtAt) || builtAt + 2_000 < startedAt) {
+    try {
+      const { buildIndex } = await import('../../artifacts/index-builder.js');
+      await buildIndex(opts.frameworkRoot, { graph: 'framework', explicit: false });
+    } catch {
+      // The shared verifier reports the index failure with stable remediation.
+    }
+  }
+
+  if (opts.args.includes('--no-context-files')) return;
+  const paths = getProviderPaths(opts.provider);
+  const sections = await discoverDeployedArtifacts(opts.projectPath, {
+    agents: paths.agents,
+    rules: paths.rules,
+    skills: paths.skills,
+    behaviors: paths.behaviors,
+  });
+  try {
+    await generateContextFiles({
+      provider: opts.provider as Platform,
+      projectPath: opts.projectPath,
+      sections,
+      detectExistingFiles: true,
+      force: opts.args.includes('--force-context-files'),
+      skip: {
+        workspaceMd: opts.args.includes('--no-workspace-md'),
+        aiwgMd: opts.args.includes('--no-aiwg-md'),
+        agentsMd: opts.args.includes('--no-agents-md'),
+      },
+    });
+  } catch {
+    // The shared verifier reports context or provider-wiring failures.
+  }
+}
+
 async function deploySourceDirectory(opts: {
   ctx: HandlerContext;
   frameworkRoot: string;
@@ -2122,8 +2183,146 @@ export class UseHandler implements CommandHandler {
   description = 'Deploy AIWG framework to project or user scope';
   category = 'framework' as const;
   aliases: string[] = [];
+  private orchestrationDepth = 0;
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    const requestedBundle = firstUsePositional(ctx.args)
+      ?? (ctx.args[0] === '--profile' ? 'all' : undefined);
+    const bypassOrchestration = this.orchestrationDepth > 0
+      || !requestedBundle
+      || requestedBundle === 'cockpit'
+      || ctx.args.includes('--workspace-signals');
+    if (bypassOrchestration) return this.executeCore(ctx);
+
+    this.orchestrationDepth += 1;
+    try {
+      return await this.executeOrchestrated(ctx, requestedBundle);
+    } finally {
+      this.orchestrationDepth -= 1;
+    }
+  }
+
+  private async executeOrchestrated(
+    ctx: HandlerContext,
+    requestedBundle: string,
+  ): Promise<HandlerResult> {
+    const startedAt = new Date().toISOString();
+    const json = ctx.args.includes('--json');
+    const coreArgs = ctx.args.filter((arg) => arg !== '--json');
+    const remainingArgs = removeFirstPositional(coreArgs);
+    const projectDir = getProjectDir(ctx, remainingArgs);
+    const frameworkRoot = ctx.frameworkRoot || await getFrameworkRoot();
+    const config = await readAiwgConfig(projectDir);
+    const requestedProviders = configuredGlobalProviders(remainingArgs, config);
+    const providers: string[] = [];
+    for (const requestedProvider of requestedProviders) {
+      const local = await resolveProjectLocalProviderAdapter(projectDir, requestedProvider);
+      const builtIn = local.requestedProvider
+        ? local.provider
+        : resolveBuiltInProviderForUse(local.provider).provider;
+      if (!providers.includes(builtIn)) providers.push(builtIn);
+    }
+    const dryRun = remainingArgs.includes('--dry-run');
+    const requestedScope: DeploymentScope = remainingArgs.includes('--global')
+      ? 'user'
+      : detectScope(remainingArgs);
+    const contextOptOut = [
+      '--no-context-files',
+      '--no-workspace-md',
+      '--no-aiwg-md',
+      '--no-agents-md',
+    ].some((flag) => remainingArgs.includes(flag));
+
+    const originalConsole = {
+      log: console.log,
+      info: console.info,
+      warn: console.warn,
+      error: console.error,
+    };
+    if (json) {
+      machineReadableUseDepth += 1;
+      console.log = () => {};
+      console.info = () => {};
+      console.warn = () => {};
+      console.error = () => {};
+    }
+
+    let coreResult: HandlerResult;
+    try {
+      coreResult = await this.executeCore({ ...ctx, args: coreArgs });
+    } finally {
+      if (json) {
+        machineReadableUseDepth -= 1;
+        console.log = originalConsole.log;
+        console.info = originalConsole.info;
+        console.warn = originalConsole.warn;
+        console.error = originalConsole.error;
+      }
+    }
+
+    let result: UseDeploymentResult;
+    if (dryRun && coreResult.exitCode === 0) {
+      result = buildDryRunUseResult({
+        projectRoot: projectDir,
+        frameworkRoot,
+        providers,
+        scope: requestedScope,
+        requestedBundles: [requestedBundle],
+        contextOptOut,
+      });
+    } else {
+      if (coreResult.exitCode === 0 && !dryRun && !VALID_FRAMEWORKS.includes(requestedBundle as Framework)) {
+        for (const provider of providers) {
+          await ensurePostDeployPhases({
+            frameworkRoot,
+            projectPath: projectDir,
+            provider,
+            args: remainingArgs,
+            invocationStartedAt: startedAt,
+          });
+        }
+      }
+      const providerResults = [];
+      for (const provider of providers) {
+        const effectiveScope: DeploymentScope = provider === 'openclaw' || provider === 'openhuman'
+          ? 'user'
+          : requestedScope;
+        providerResults.push(await verifyProviderDeployment({
+          projectRoot: projectDir,
+          frameworkRoot,
+          provider,
+          scope: effectiveScope,
+          requestedBundles: [requestedBundle],
+          contextOptOut,
+          invocationStartedAt: dryRun ? undefined : startedAt,
+          deploymentExitCode: coreResult.exitCode,
+          deploymentMessage: coreResult.message,
+        }));
+      }
+      result = aggregateUseDeploymentResult({
+        projectRoot: projectDir,
+        frameworkRoot,
+        scope: requestedScope,
+        requestedBundles: [requestedBundle],
+        providers: providerResults,
+      });
+      if (dryRun) {
+        result.dryRun = true;
+        result.exitClassification = 'failure';
+      }
+    }
+
+    if (json) {
+      return { exitCode: result.exitCode, message: JSON.stringify(result, null, 2), rawOutput: true };
+    }
+    const rendered = renderUseDeploymentResult(result);
+    return {
+      exitCode: result.exitCode,
+      message: [coreResult.message, rendered].filter(Boolean).join('\n'),
+    };
+  }
+
+  private async executeCore(ctx: HandlerContext): Promise<HandlerResult> {
     const explicitTarget = firstUsePositional(ctx.args);
 
     if (ctx.args.includes('--workspace-signals')) {
@@ -2378,7 +2577,7 @@ export class UseHandler implements CommandHandler {
       const verbose = remainingArgs.includes('--verbose') || remainingArgs.includes('-v');
       const force = remainingArgs.includes('--force');
       const copyAll = remainingArgs.includes('--copy-all') || remainingArgs.includes('--copy-standard-skills');
-      const quiet = !verbose && !dryRun;
+      const quiet = machineReadableUseDepth > 0 || (!verbose && !dryRun);
 
       ui.blank();
       ui.header(`  Workspace-aware deployment (${plan.profile})`);
@@ -2452,7 +2651,7 @@ export class UseHandler implements CommandHandler {
             target,
             dryRun,
             verbose,
-            quiet: !verbose && !dryRun,
+            quiet: machineReadableUseDepth > 0 || (!verbose && !dryRun),
             modelArgs: modelDeployArgs,
           });
           if (plResult.failed > 0) {
@@ -2914,8 +3113,9 @@ export class UseHandler implements CommandHandler {
     const deployFilteredArgs = removeFlagWithOptionalValue(filteredArgs, '--harness-agents');
 
     // Pass --quiet to suppress deploy-agents.mjs header/footer in default mode (#460)
-    // Dry-run must not capture output — its purpose is to show what would happen
-    if (!verbose && !dryRun) deployFilteredArgs.push('--quiet');
+    // Human dry-run remains verbose; machine-readable dry-run captures the
+    // preview so stdout stays a single JSON document.
+    if (machineReadableUseDepth > 0 || (!verbose && !dryRun)) deployFilteredArgs.push('--quiet');
 
     // Extract provider and target from remainingArgs to pass to addon deployments
     // Config-first resolution (#621): explicit --provider overrides config, config overrides default 'claude'
@@ -3022,7 +3222,7 @@ export class UseHandler implements CommandHandler {
     }
 
     // Deploy main framework
-    const quiet = !verbose && !dryRun;
+    const quiet = machineReadableUseDepth > 0 || (!verbose && !dryRun);
     const captureOpts = quiet ? { capture: true } : {};
     if (quiet) {
       const installLabel = framework === 'all'
