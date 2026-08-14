@@ -660,11 +660,10 @@ export async function startExecutorServer(shim, opts) {
   const { port, bind, token } = opts;
 
   // ── Dynamic imports for optional deps ──────────────────────────────────────
-  // eslint-disable-next-line no-new-func
   let honoMod, nodeMod;
   try {
-    honoMod = await (new Function('m', 'return import(m)'))('hono');
-    nodeMod = await (new Function('m', 'return import(m)'))('@hono/node-server');
+    honoMod = await import('hono');
+    nodeMod = await import('@hono/node-server');
   } catch {
     throw new Error(
       'local-executor requires hono + @hono/node-server. ' +
@@ -785,7 +784,7 @@ export async function startExecutorServer(shim, opts) {
   // Attempt to get a ws package
   let wsMod;
   try {
-    wsMod = await (new Function('m', 'return import(m)'))('ws');
+    wsMod = await import('ws');
   } catch {
     wsMod = null;
   }

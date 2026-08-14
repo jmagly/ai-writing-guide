@@ -138,7 +138,11 @@ class FortemiNoteStore implements NoteStore {
 
 async function initStore(): Promise<{ store: NoteStore; isFortemi: boolean }> {
   try {
-    const mod = await (new Function('m', 'return import(m)'))('@fortemi/react');
+    // Keep Fortemi optional while using the platform-native module loader.
+    // Vite must leave this runtime specifier unresolved for deployments that
+    // provide the integration through an import map or equivalent host setup.
+    const fortemiReactSpecifier = '@fortemi/react';
+    const mod = await import(/* @vite-ignore */ fortemiReactSpecifier);
     return { store: new FortemiNoteStore(mod), isFortemi: true };
   } catch {
     return { store: new LocalNoteStore(), isFortemi: false };

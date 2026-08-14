@@ -87,6 +87,7 @@
     "cockpit:up": "bash apps/cockpit/scripts/cockpit-up.sh",
     "lint:schemas": "node tools/scripts/lint-schemas.mjs",
     "lint:dep-sources": "node tools/lint/dep-source.mjs",
+    "lint:eval-imports": "node tools/lint/eval-import-shim.mjs",
     "lint:affected-packages": "node tools/lint/affected-packages.mjs",
     "lint:tarball": "node tools/lint/tarball-audit.mjs",
     "lint:fortemi-prebuilt-package": "node tools/lint/fortemi-prebuilt-package.mjs",

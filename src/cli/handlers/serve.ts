@@ -1739,7 +1739,8 @@ export async function startServer(opts: {
   const webDistDir = path.join(opts.frameworkRoot, 'apps', 'web', 'dist');
   if (existsSync(webDistDir)) {
     try {
-      const { serveStatic } = await (new Function('m', 'return import(m)'))('@hono/node-server/serve-static');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { serveStatic } = await loadFeaturePackage('@hono/node-server/serve-static') as any;
       app.use('/*', serveStatic({ root: webDistDir }));
     } catch {
       // serve-static import failed — fall through to placeholder below
@@ -1853,7 +1854,7 @@ export const serveHandler: CommandHandler = {
     if (open) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const openMod: any = await (new Function('m', 'return import(m)'))('open');
+        const openMod: any = await loadFeaturePackage('open');
         const openBrowser = openMod.default ?? openMod;
         await openBrowser(url);
       } catch {

@@ -45,6 +45,11 @@ jobs:
         # docs/contributing/dependency-sources.md.
         run: npm run lint:dep-sources
 
+      - name: Reject eval-backed module import shims (#2082)
+        # Optional integrations stay lazy, but must use native import() rather
+        # than eval()/Function() code-generation wrappers.
+        run: npm run lint:eval-imports
+
       - name: Scan known affected package feed (#1353)
         # Reads the operator-maintained CSV feed from either the canonical
         # mounted path or AIWG_AFFECTED_PACKAGES_CSV. In CI, prefer a raw gist

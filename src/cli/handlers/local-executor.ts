@@ -20,6 +20,7 @@
 import path from 'path';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { randomUUID } from 'crypto';
+import { pathToFileURL } from 'node:url';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { projectAiwgPath } from '../../config/project-artifacts.js';
 
@@ -151,9 +152,9 @@ export const localExecutorServeHandler: CommandHandler = {
     let DaemonSupervisor: any;
 
     try {
-      const shimMod = await (new Function('m', 'return import(m)'))(
-        path.join(ctx.frameworkRoot, 'tools', 'ralph-external', 'executor-shim.mjs')
-      );
+      const shimMod = await import(pathToFileURL(
+        path.join(ctx.frameworkRoot, 'tools', 'ralph-external', 'executor-shim.mjs'),
+      ).href);
       ExecutorShim      = shimMod.ExecutorShim;
       startExecutorServer = shimMod.startExecutorServer;
     } catch (err) {
@@ -164,9 +165,9 @@ export const localExecutorServeHandler: CommandHandler = {
     }
 
     try {
-      const dsMod = await (new Function('m', 'return import(m)'))(
-        path.join(ctx.frameworkRoot, 'tools', 'ralph-external', 'daemon-supervisor.mjs')
-      );
+      const dsMod = await import(pathToFileURL(
+        path.join(ctx.frameworkRoot, 'tools', 'ralph-external', 'daemon-supervisor.mjs'),
+      ).href);
       DaemonSupervisor = dsMod.DaemonSupervisor;
     } catch (err) {
       return {
@@ -179,9 +180,9 @@ export const localExecutorServeHandler: CommandHandler = {
     // requires it. Try loading from ralph-external/orchestrator.mjs.
     let agentSupervisorInstance: unknown = null;
     try {
-      const orchMod = await (new Function('m', 'return import(m)'))(
-        path.join(ctx.frameworkRoot, 'tools', 'ralph-external', 'orchestrator.mjs')
-      );
+      const orchMod = await import(pathToFileURL(
+        path.join(ctx.frameworkRoot, 'tools', 'ralph-external', 'orchestrator.mjs'),
+      ).href);
       const OrchClass = orchMod.Orchestrator ?? orchMod.default;
       if (OrchClass) {
         const orch = new OrchClass({ maxConcurrent: opts.maxConcurrency });
