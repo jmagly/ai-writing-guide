@@ -152,6 +152,12 @@ Example: jmagly#108–#112 → roctinam #1264–#1268 sweep (May 2026).
 
 ## Filing
 
+Before any MCP, CLI, API, or web-UI write, route the final title/body through
+`issue-create` policy composition. Use the returned segment bodies exactly;
+obtain digest-bound authorization when requested, and make no write for a
+`blocked` plan. This prevents authoring an issue that the address workflow will
+reject under the same project policy.
+
 ```bash
 aiwg run skill issue-create -- "<title>" --provider gitea --labels "bug"
 ```

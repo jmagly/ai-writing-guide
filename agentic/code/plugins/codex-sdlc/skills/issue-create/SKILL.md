@@ -3,6 +3,11 @@ namespace: aiwg
 name: issue-create
 platforms: [all]
 description: Create a new ticket/issue with configurable backend (Gitea, GitHub, Jira, Linear, or local files)
+script:
+  entrypoint: scripts/compose.mjs
+  runtime: node
+  cwd: project-root
+  argsHint: plan --title <title> [--body <text>|--body-file <path>] [--labels a,b]
 commandHint:
   argumentHint: <title> [description] [--provider NAME --labels "label1,label2" --assignee USER --check-regression]
   allowedTools: Read, Write, Glob, Bash, mcp__gitea__create_issue
@@ -51,8 +56,12 @@ Given a ticket title and optional description:
 1. **Resolve the target member and authorization**, then load its `.aiwg/aiwg.config`
 2. **Validate configuration** and authenticate with provider
 3. **Check for regressions** (if bug report with `--check-regression`)
-4. **Create ticket** using appropriate backend (MCP, CLI, or local file)
-5. **Return ticket reference** (issue number, URL, or file path)
+4. **Compose and assess the final draft before any write**; split it at enforced
+   policy boundaries when possible
+5. **Create only approved ticket segment(s)** using the appropriate backend
+   (MCP, CLI, or local file), then cross-link split siblings
+6. **Return ticket reference(s)** and deterministic recovery state if a
+   multi-ticket write stops partway through
 
 ## Parameters
 
@@ -265,7 +274,43 @@ fi
 - If validation fails, report error and suggest fix
 - Optionally fall back to `local` provider with warning
 
-### Step 5: Create Issue (Provider-Specific)
+### Step 5: Policy-Boundary Composition (Required Before Every Write)
+
+After regression metadata, labels, priority, and acceptance criteria are final,
+run the same threat policy that `address-issues` will apply later:
+
+```bash
+aiwg run skill issue-create -- plan \
+  --title "$TITLE" \
+  --body-file "$DRAFT_BODY_FILE" \
+  --labels "$LABELS" \
+  --project-root "$TARGET_REPO"
+```
+
+The returned `aiwg.issue-composition-plan.v1` envelope is authoritative for the
+write step:
+
+- `single`: create the one draft unchanged.
+- `authorization-required`: do not write until the issue-specific policy
+  authorization is recorded for the returned digest.
+- `split`: create every segment in order, using its exact title, body, labels,
+  priority, provider scope, and provenance marker.
+- `split-authorization-required`: obtain authorization for the digest, then
+  create every independently assessed segment in order.
+- `blocked`: make no tracker mutation. Report `blockingRule` and the suggested
+  human-editable segments.
+
+Never delete the `aiwg-policy-segment` marker. Before retrying a partial split,
+search the target tracker for every marker in the recovery envelope and reuse
+existing matches. After all segments exist, replace `{{AIWG_RELATED_ISSUES}}`
+with sibling links and the declared dependency. This is what prevents a retry
+from duplicating the first issue after a later write fails.
+
+This preflight is mandatory for Gitea MCP, `tea`, GitHub CLI/API, Jira, Linear,
+and local-file routes. Higher-level flows that author issues must call this
+skill or the same composer; they may not jump directly to a tracker create API.
+
+### Step 6: Create Issue (Provider-Specific)
 
 #### Gitea
 
@@ -507,7 +552,7 @@ Status: open
 Priority: medium
 ```
 
-### Step 6: Attach Regression Report (if applicable)
+### Step 7: Attach Regression Report (if applicable)
 
 If regression check was run and regression detected:
 
@@ -522,7 +567,7 @@ if [ -f /tmp/regression-results.md ]; then
 fi
 ```
 
-### Step 7: Return Issue Reference
+### Step 8: Return Issue Reference
 
 **Output format** (consistent across providers):
 

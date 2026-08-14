@@ -9,6 +9,10 @@
  */
 
 import { readFile, writeFile } from 'fs/promises';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { getFrameworkRoot } from '../channel/manager.mjs';
+import { readAiwgConfig } from '../config/aiwg-config.js';
 import {
   LocalIssueProviderCore,
   buildExternalIssueSnapshotFromLocal,
@@ -44,7 +48,11 @@ export async function main(args: string[], cwd = process.cwd()): Promise<void> {
       return;
     case 'new':
     case 'create':
-      await handleNew(issues, parsed);
+      await handleNew(issues, parsed, cwd);
+      return;
+    case 'plan':
+    case 'draft-plan':
+      await handlePlan(parsed, cwd);
       return;
     case 'list':
     case 'ls':
@@ -86,11 +94,28 @@ async function handleInit(issues: LocalIssueProviderCore, args: ParsedArgs): Pro
   printJsonOrText(args, config, `Initialized local issues with prefix ${config.issue_key.prefix}`);
 }
 
-async function handleNew(issues: LocalIssueProviderCore, args: ParsedArgs): Promise<void> {
+interface IssueCompositionModule {
+  planIssueDraft(draft: Record<string, unknown>, options?: Record<string, unknown>): Record<string, any>;
+  executeIssuePlan(
+    plan: Record<string, any>,
+    adapter: Record<string, unknown>,
+    options?: Record<string, unknown>,
+  ): Promise<Record<string, any>>;
+}
+
+async function loadIssueComposer(): Promise<IssueCompositionModule> {
+  const frameworkRoot = await getFrameworkRoot();
+  const modulePath = path.join(frameworkRoot, 'tools', 'issues', 'policy-boundary-composer.mjs');
+  return import(pathToFileURL(modulePath).href) as Promise<IssueCompositionModule>;
+}
+
+async function buildIssuePlan(args: ParsedArgs, cwd: string): Promise<Record<string, any>> {
   const title = stringFlag(args, 'title') ?? args.positional[1];
-  if (!title) throw new Error('Usage: aiwg issue new --title <title> [--body <text>|--body-file <path>]');
+  if (!title) throw new Error('Usage: aiwg issue plan --title <title> [--body <text>|--body-file <path>]');
   const body = await readBody(args);
-  const issue = await issues.createIssue({
+  const config = await readAiwgConfig(cwd);
+  const composer = await loadIssueComposer();
+  return composer.planIssueDraft({
     title,
     body,
     type: stringFlag(args, 'type') as never,
@@ -98,8 +123,78 @@ async function handleNew(issues: LocalIssueProviderCore, args: ParsedArgs): Prom
     labels: csvFlag(args, 'label'),
     assignees: csvFlag(args, 'assignee'),
     author: stringFlag(args, 'author'),
-  });
-  printJsonOrText(args, issue, `Created ${issue.fields.id}: ${issue.fields.title}`);
+  }, { threatAssessment: config?.security?.threatAssessment });
+}
+
+async function handlePlan(args: ParsedArgs, cwd: string): Promise<void> {
+  const plan = await buildIssuePlan(args, cwd);
+  console.log(JSON.stringify(plan, null, 2));
+}
+
+async function handleNew(issues: LocalIssueProviderCore, args: ParsedArgs, cwd: string): Promise<void> {
+  const plan = await buildIssuePlan(args, cwd);
+  if (plan.disposition === 'blocked') {
+    throw new Error(`Issue draft rejected by ${plan.blockingRule}; no issue was written. Run aiwg issue plan to inspect suggested segments.`);
+  }
+  const authorizationDigest = stringFlag(args, 'authorize-policy');
+  if (plan.authorizationRequired && authorizationDigest !== plan.digest) {
+    throw new Error(`Issue draft requires explicit policy authorization. Review 'aiwg issue plan', then pass --authorize-policy ${plan.digest}. No issue was written.`);
+  }
+
+  const composer = await loadIssueComposer();
+  const records = new Map<string, Awaited<ReturnType<LocalIssueProviderCore['createIssue']>>>();
+  const adapter = {
+    async findByMarker(marker: string) {
+      const listed = await issues.listIssues({ limit: 10_000 });
+      for (const entry of listed.issues) {
+        const record = await issues.getIssue(entry.id, { body: true, comments: 0 });
+        if (record.body.includes(marker)) {
+          records.set(record.fields.id, record);
+          return { id: record.fields.id, reference: record.fields.id, body: record.body };
+        }
+      }
+      return null;
+    },
+    async create(draft: Record<string, any>) {
+      const record = await issues.createIssue({
+        title: draft.title,
+        body: draft.body,
+        type: stringFlag(args, 'type') as never,
+        priority: stringFlag(args, 'priority') as never,
+        labels: draft.labels,
+        assignees: draft.assignees,
+        author: stringFlag(args, 'author'),
+      });
+      records.set(record.fields.id, record);
+      return { id: record.fields.id, reference: record.fields.id, body: record.body };
+    },
+    async update(issue: { id: string }, patch: { body: string }) {
+      const record = records.get(issue.id) ?? await issues.getIssue(issue.id, { body: true, comments: 0 });
+      const references = [...patch.body.matchAll(/(?:Depends on|Related):\s+([A-Z][A-Z0-9_-]*-\d+)/g)]
+        .map((match) => match[1])
+        .filter((reference) => reference !== issue.id);
+      await issues.updateIssueFields(issue.id, {
+        links: {
+          ...record.fields.links,
+          related: [...new Set([...record.fields.links.related, ...references])],
+          parent: patch.body.match(/Depends on:\s+([A-Z][A-Z0-9_-]*-\d+)/)?.[1] ?? record.fields.links.parent,
+        },
+      });
+      await issues.commentIssue(issue.id, patch.body.slice(patch.body.indexOf('## Related')), {
+        author: stringFlag(args, 'author') ?? 'aiwg',
+      });
+    },
+  };
+  const result = await composer.executeIssuePlan(plan, adapter, { authorizationDigest });
+  if (result.status !== 'created') {
+    throw new Error(`Issue creation ${result.status}: ${result.error ?? 'review the recovery envelope'}\n${JSON.stringify(result.recovery ?? result, null, 2)}`);
+  }
+  if (args.flags.has('json') || result.created.length > 1) {
+    console.log(JSON.stringify(result, null, 2));
+  } else {
+    const issue = result.created[0];
+    console.log(`Created ${issue.reference}: ${plan.segments[0].title}`);
+  }
 }
 
 async function handleList(issues: LocalIssueProviderCore, args: ParsedArgs): Promise<void> {
@@ -327,7 +422,8 @@ function csvFlag(args: ParsedArgs, name: string): string[] {
 function printUsage(): void {
   console.log(`Usage:
   aiwg issue init [--prefix KEY] [--padding N]
-  aiwg issue new --title "..." [--body "..."] [--body-file path]
+  aiwg issue plan --title "..." [--body "..."] [--body-file path] [--json]
+  aiwg issue new --title "..." [--body "..."] [--body-file path] [--authorize-policy DIGEST]
   aiwg issue list [--status open] [--label bug] [--search text] [--limit 20] [--json]
   aiwg issue show <KEY> [--comments last:10|all]
   aiwg issue import --from gitea|github --snapshot-file path [--json]

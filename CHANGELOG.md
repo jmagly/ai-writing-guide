@@ -9,6 +9,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Policy-boundary-aware issue composition** - issue authoring now assesses
+  final drafts before tracker mutation, preserves safe drafts, gates flagged
+  drafts, and splits deterministically separable rejected drafts into linked
+  atomic issues. Stable segment markers and recovery envelopes prevent
+  duplicates after a partial multi-issue write; `aiwg issue plan` exposes the
+  same contract for local issue creation.
 - **Self-verifying deployment workflow** - `aiwg use` now composes deployment,
   capability indexing, canonical context generation, and scoped verification
   into one command. Human output reports a stable readiness outcome and
