@@ -15,7 +15,7 @@
  * | codex      | .codex/agents/           | AGENTS.md            | ✅ Full       |
  * | opencode   | .opencode/agent/         | AGENTS.md            | ✅ Full       |
  * | warp       | .warp/agents/            | WARP.md              | ✅ Full       |
- * | windsurf   | .windsurf/agents/        | .windsurfrules       | 🧪 Experimental |
+ * | windsurf   | .windsurf/agents/        | .windsurfrules       | ✅ Devin Desktop compatibility adapter |
  * | copilot    | .github/agents/          | copilot-instructions | ✅ Full       |
  * | hermes     | ~/.hermes/skills/        | AGENTS.md            | optional MCP sidecar |
  * | openclaw   | ~/.openclaw/agents/      | AGENTS.md            | ✅ Full       |

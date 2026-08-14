@@ -239,7 +239,7 @@ aiwg doctor [--provider <name>] [--all-providers] [--project-local] [--quiet]
 
 **Flags:**
 
-- `--provider <name>` — Inspect a specific provider's deployment paths (claude, factory, codex, copilot, cursor, opencode, warp, windsurf, openclaw, openhuman, hermes). Defaults to auto-detect across deployed providers.
+- `--provider <name>` — Inspect a specific provider's deployment paths (claude, factory, codex, copilot, cursor, opencode, warp, devin, openclaw, openhuman, hermes). Defaults to auto-detect across deployed providers.
 - `--all-providers` — Enumerate every supported provider, including ones with nothing deployed.
 - `--project-local` — Show only the project-local artifacts section. Exit code reflects only project-local findings.
 - `--quiet` — Suppress informational subsections (counts, shadows). Show only failures.
@@ -485,7 +485,7 @@ aiwg use <framework|addon>
 
 **Options:**
 
-- `--provider <name>` - Target platform (claude, copilot, factory, cursor, windsurf, warp, codex, opencode, hermes, openclaw, openhuman, local)
+- `--provider <name>` - Target platform (claude, copilot, factory, cursor, devin, warp, codex, opencode, hermes, openclaw, openhuman, local)
 - `--scope user` / `--user` - Additively deploy to the project and mirror the
   artifacts into the provider's user-level discovery paths.
 - `--global` - Install framework and kernel assets into provider user-level
@@ -621,7 +621,7 @@ tools; a successful `aiwg use` does not require users to invoke them manually.
 | GitHub Copilot | `copilot`       | `.github/agents/`, `.github/copilot-rules/`, `.github/skills/`                                                        | —         |
 | Factory AI     | `factory`       | `.factory/droids/`, `.factory/commands/`, `.factory/skills/`, `.factory/rules/`                                       | —         |
 | Cursor         | `cursor`        | `.cursor/agents/`, `.cursor/commands/`, `.cursor/skills/`, `.cursor/rules/`                                           | —         |
-| Windsurf       | `windsurf`      | `AGENTS.md` (aggregated), `.windsurf/workflows/`, `.windsurf/skills/`, `.windsurf/rules/`                             | —         |
+| Devin Desktop  | `devin`         | `AGENTS.md` (aggregated), `.windsurf/workflows/`, `.windsurf/skills/`, `.windsurf/rules/`                             | —         |
 | Warp Terminal  | `warp`          | `.warp/agents/`, `.warp/commands/`, `.warp/skills/`, `.warp/rules/`, `WARP.md` (aggregated)                           | —         |
 | OpenAI/Codex   | `codex`         | `.codex/agents/`, `~/.codex/prompts/`, `.agents/skills/`, `.codex/rules/`                                             | —         |
 | OpenCode       | `opencode`      | `.opencode/agent/`, `.opencode/commands/`, `.opencode/skill/`, `.opencode/rule/`                                      | —         |
@@ -639,7 +639,7 @@ On first run after the commands-to-skills migration, `aiwg use` detects an exist
 - **Codex**: Prompts deploy to `~/.codex/prompts/`; skills deploy to the
   project `.agents/skills/` discovery surface. The provider ID is `codex`, not
   `openai`.
-- **Windsurf**: Agents aggregated into `AGENTS.md` at project root; no separate agent files
+- **Devin Desktop**: Agents aggregate into `AGENTS.md`; the adapter intentionally retains `.windsurf/` paths. `windsurf` is a deprecated selector alias.
 - **Warp**: Agents and commands also aggregated into `WARP.md` for single-file context loading
 - **OpenHuman**: Kernel skills and rule bodies are user-global; the default deploy emits no markdown persona copies. Project context is rendered into `AGENTS.md`, and curated native TOML agents are opt-in with `--harness-agents`.
 - **Hermes**: Not a spawnable CLI — access via `ollama run hermes3` or MCP sidecar; deploy sets up skills and a lean AGENTS.md
@@ -1648,7 +1648,7 @@ aiwg mcp inject --all [--dry-run]
 
 - `--provider <name>` - Target provider: `claude` (`claude-code`),
   `cursor`, `factory` (`factory-ai`), `codex` (`openai`), `opencode`,
-  `windsurf` (`devin-desktop`), or `warp`
+  `windsurf` (`devin`, `devin-desktop`), or `warp`
 - `--all` - Inject into all providers that have been configured before
 - `--profile <name>` - Resolve server set from a named MCP profile (see `mcp profile`)
 - `--ephemeral` - Write a standalone temp config without modifying the
@@ -5391,8 +5391,8 @@ aiwg use sdlc --provider copilot
 # Cursor
 aiwg use sdlc --provider cursor
 
-# Windsurf
-aiwg use sdlc --provider windsurf
+# Devin Desktop (uses .windsurf/ compatibility paths)
+aiwg use sdlc --provider devin
 
 # Warp Terminal
 aiwg use sdlc --provider warp

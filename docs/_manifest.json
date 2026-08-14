@@ -664,8 +664,8 @@
     },
     {
       "id": "integrations/windsurf-quickstart",
-      "title": "Windsurf",
-      "summary": "Setup for Windsurf",
+      "title": "Devin Desktop",
+      "summary": "Setup for Devin Desktop using the Windsurf compatibility adapter",
       "file": "integrations/windsurf-quickstart.md",
       "parent": "integrations"
     },

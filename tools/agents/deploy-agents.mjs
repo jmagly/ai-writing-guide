@@ -20,7 +20,7 @@
  *   --rules-only             Deploy only rules (skip agents)
  *   --dry-run                Show what would be deployed without writing
  *   --force                  Overwrite existing files
- *   --provider <name>        Target provider: claude (default), openai, codex, cursor, opencode, copilot, factory, warp, windsurf, hermes, or openclaw
+ *   --provider <name>        Target provider: claude (default), openai, codex, cursor, opencode, copilot, factory, warp, devin, hermes, or openclaw
  *   --model <name>            Override model for all tiers (blanket)
  *   --reasoning-model <name> Override model for reasoning tasks
  *   --coding-model <name>    Override model for coding tasks
@@ -49,7 +49,8 @@
  *   copilot   - GitHub Copilot - .github/agents/, .github/commands/, .github/skills/, .github/copilot-rules/
  *   cursor    - Cursor IDE - .cursor/agents/, .cursor/commands/, .cursor/skills/, .cursor/rules/
  *   warp      - Warp Terminal - .warp/agents/, .warp/commands/, .warp/skills/, .warp/rules/ + WARP.md
- *   windsurf  - Windsurf - .windsurf/agents/, .windsurf/workflows/, .windsurf/skills/, .windsurf/rules/
+ *   devin     - Devin Desktop - .windsurf/agents/, .windsurf/workflows/, .windsurf/skills/, .windsurf/rules/
+ *   windsurf  - Deprecated alias for devin
  *   openclaw  - OpenClaw - ~/.openclaw/agents/, ~/.openclaw/commands/, ~/.openclaw/skills/, ~/.openclaw/rules/, ~/.openclaw/behaviors/
  *
  * Defaults:
@@ -103,6 +104,7 @@ function getDeployVersion(srcRoot) {
 
 const PROVIDER_ALIASES = {
   'openai': 'codex',
+  'devin': 'windsurf',
   'devin-desktop': 'windsurf',
   'devin-local': 'windsurf',
   'cascade': 'windsurf',
@@ -111,15 +113,9 @@ const PROVIDER_ALIASES = {
 const AVAILABLE_PROVIDERS = ['claude', 'factory', 'codex', 'opencode', 'copilot', 'cursor', 'warp', 'windsurf', 'hermes', 'openclaw', 'openhuman'];
 
 const UNSUPPORTED_PROVIDER_HINTS = {
-  devin: [
-    'Devin Desktop is supported through the Windsurf compatibility adapter:',
-    '  aiwg use sdlc --provider windsurf',
-    '  aiwg use sdlc --provider devin-desktop',
-    'Devin CLI has distinct rules/skills surfaces and is recorded as future-provider metadata; AIWG does not emit .devin/ provider output yet.',
-  ],
   'devin-cli': [
     'Devin CLI has distinct rules/skills surfaces and is not a deployable AIWG provider yet.',
-    'Use --provider windsurf or --provider devin-desktop for Devin Desktop/Windsurf local IDE deployments.',
+    'Use --provider devin for Devin Desktop deployments.',
   ],
 };
 
@@ -531,7 +527,7 @@ Providers (all deploy agents, commands, skills, and rules):
               Paths: .cursor/agents/, .cursor/commands/, .cursor/skills/, .cursor/rules/
   warp      - Warp Terminal
               Paths: .warp/agents/, .warp/commands/, .warp/skills/, .warp/rules/ + WARP.md
-  windsurf  - Windsurf
+  devin     - Devin Desktop (preferred; aliases: devin-desktop, windsurf)
               Paths: .windsurf/agents/, .windsurf/workflows/, .windsurf/skills/, .windsurf/rules/
   hermes    - Hermes Agent (MCP-based integration)
               Skills: ~/.hermes/skills/ (user-global) | Agents: AGENTS.md (lean routing guide)
@@ -865,7 +861,10 @@ export async function main() {
     srcRoot,
     target: cfg.target,
     mode: cfg.mode,
-    provider: cfg.provider,
+    // Provider aliases are selectors, not artifact identities. Passing the
+    // canonical id keeps generated frontmatter byte-identical for devin,
+    // devin-desktop, and the deprecated windsurf selector.
+    provider: resolveProvider(cfg.provider),
     dryRun: cfg.dryRun,
     force: cfg.force,
     reasoningModel: cfg.reasoningModel,

@@ -441,7 +441,7 @@ aiwg use sdlc --provider warp          # Warp Terminal
 aiwg use sdlc --provider factory       # Factory AI
 aiwg use sdlc --provider opencode      # OpenCode
 aiwg use sdlc --provider openai        # OpenAI/Codex
-aiwg use sdlc --provider windsurf      # Windsurf
+aiwg use sdlc --provider devin         # Devin Desktop
 ```
 
 Each platform receives agents, commands, skills, and rules adapted to its conventions automatically. Write once, deploy everywhere.
@@ -504,7 +504,7 @@ Full reference: `@docs/agents/cli-reference.md`
 | Long-running tasks | Babysit the terminal | External Al runs 6-8+ hours autonomously |
 | Citation integrity | Can hallucinate | Retrieval-first (0% hallucination rate) |
 | Standards compliance | None | FAIR, OAIS, PROV, GRADE, MCP, NIST, MITRE ATT&CK |
-| Platform support | Single platform | 8 platforms (Claude Code, Copilot, Cursor, Warp, Factory, OpenCode, Codex, Windsurf) |
+| Platform support | Single platform | Multi-platform (Claude Code, Copilot, Cursor, Warp, Factory, OpenCode, Codex, Devin Desktop, and more) |
 | Reproducibility | Non-deterministic | Strict mode (temperature=0), checkpoints, validation |
 | Context beyond window | Lost | RLM recursive decomposition (10M+ tokens) |
 
@@ -518,7 +518,7 @@ Full reference: `@docs/agents/cli-reference.md`
 | Cost control | Token limits | Phase gates prevent runaway |
 | Auditability | Limited provenance | Full W3C PROV chain of custody |
 | Reproducibility | Non-deterministic | Checkpointing, execution logs |
-| Cross-platform | Single environment | 8 platforms (Claude, Cursor, Copilot, Warp, Factory, OpenCode, Codex, Windsurf) |
+| Cross-platform | Single environment | Claude, Cursor, Copilot, Warp, Factory, OpenCode, Codex, Devin Desktop, and more |
 | Long-running tasks | Token limit = hard stop | External Al with crash recovery (hours to days) |
 | Scheduled agents | Not supported | Cron-based recurring tasks with completion criteria |
 

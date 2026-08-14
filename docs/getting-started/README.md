@@ -69,7 +69,7 @@ and common repair paths.
 
 **Ask The Steward To Route You** — You want AIWG to choose a path for your goal. Ask the steward in chat for one recommendation; the agent verifies it against AIWG's capability index before answering.
 
-**Provider Handoff** — You know whether you are using Claude Code, Codex, Cursor, Copilot, Factory, OpenCode, Warp, Windsurf, Hermes, or OpenClaw, and need the short handoff from local deployment to that tool.
+**Provider Handoff** — You know whether you are using Claude Code, Codex, Cursor, Copilot, Factory, OpenCode, Warp, Devin Desktop, Hermes, or OpenClaw, and need the short handoff from local deployment to that tool.
 
 **Scope And Recovery** — You may have run AIWG from the wrong folder, or you need to understand project-scoped setup versus global/user-scoped setup.
 

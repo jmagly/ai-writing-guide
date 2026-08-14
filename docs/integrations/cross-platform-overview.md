@@ -15,7 +15,7 @@ AIWG works across multiple AI platforms. **One command deploys everything.**
 | Cursor | `aiwg use sdlc --provider cursor` | .cursor/rules/ (MDC) |
 | OpenCode | `aiwg use sdlc --provider opencode` | AGENTS.md |
 | Warp Terminal | `aiwg use sdlc --provider warp` | WARP.md |
-| Windsurf | `aiwg use sdlc --provider windsurf` | AGENTS.md |
+| Devin Desktop | `aiwg use sdlc --provider devin` | AGENTS.md |
 | OpenClaw | `aiwg use sdlc --provider openclaw` | - |
 
 ---
@@ -43,7 +43,7 @@ All artifact types deploy automatically in each platform's native format:
 | Cursor | conventional | conventional | native | native | - |
 | OpenCode | native | native | conventional | conventional | - |
 | Warp Terminal | aggregated | conventional | native | aggregated | - |
-| Windsurf | aggregated | native | native | native | - |
+| Devin Desktop | aggregated | native | native | native | - |
 | OpenClaw | native | native | native | native | native |
 
 **Legend**:
@@ -80,7 +80,7 @@ Most providers follow `.<provider>/<type>/`:
 | **OpenAI/Codex** | Commands → `~/.codex/prompts/`<br>Skills → `~/.codex/skills/` (home directory)<br>AGENTS.md is free-form Markdown (no YAML frontmatter or structured directives)<br>Rust CLI is current product; TypeScript CLI is legacy<br>Uses Responses API exclusively (`wire_api = "chat"` removed) |
 | **GitHub Copilot** | Agents use `.agent.md` format<br>Commands → `.github/prompts/*.prompt.md`<br>Rules → `.github/instructions/*.instructions.md` (with `applyTo` globs)<br>MCP → `.vscode/mcp.json` |
 | **Warp Terminal** | Skills natively discovered at `.warp/skills/`; agents and rules aggregated into `WARP.md`; `AGENTS.md` also supported (preferred by Warp, but `WARP.md` takes priority); `.warp/workflows/` for legacy YAML workflows |
-| **Windsurf** | Agents aggregated to `AGENTS.md`<br>Commands → `.windsurf/workflows/`<br>Rules → `.windsurf/rules/*.md` (with trigger frontmatter)<br>Skills → `.windsurf/skills/` (native since v1.13.6) |
+| **Devin Desktop** | Agents aggregated to `AGENTS.md`<br>Commands → `.windsurf/workflows/`<br>Rules → `.windsurf/rules/*.md` (with trigger frontmatter)<br>Skills → `.windsurf/skills/`<br>Legacy selector: `windsurf` |
 | **Cursor** | Rules use `.mdc` extension (MDC format) with frontmatter (`description`, `globs`, `alwaysApply`)<br>Skills use native `.cursor/skills/*/SKILL.md` format (2.4+)<br>Also supports `AGENTS.md` with directory inheritance<br>Legacy `.cursorrules` still generated for backward compatibility<br>Cloud Agents support MCP for remote AIWG access |
 | **OpenClaw** | All artifacts deploy to home directory (`~/.openclaw/`)<br>First provider to support behaviors (`~/.openclaw/behaviors/`) |
 
@@ -135,7 +135,7 @@ See [Al Guide](../ralph-guide.md) for full documentation.
 | Cursor | [Setup Guide](cursor-quickstart.md) |
 | OpenCode | [Setup Guide](opencode-quickstart.md) |
 | Warp Terminal | [Setup Guide](warp-terminal-quickstart.md) |
-| Windsurf | [Setup Guide](windsurf-quickstart.md) |
+| Devin Desktop | [Setup Guide](windsurf-quickstart.md) |
 | OpenClaw | [Setup Guide](openclaw-quickstart.md) |
 
 ---

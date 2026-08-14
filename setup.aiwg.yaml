@@ -36,6 +36,7 @@ spec:
         - opencode
         - openhuman
         - warp
+        - devin
         - windsurf
   steps:
     - id: explain-and-confirm

@@ -64,7 +64,7 @@ aiwg use all --provider cursor
 | **OpenCode** | ✅ Tested & Validated | AGENTS.md |
 | **Cursor** | ✅ Tested & Validated | Native rules format, AGENTS.md |
 | **OpenAI/Codex** | ✅ Tested & Validated | Native prompts format, AGENTS.md |
-| **Windsurf** | 🟡 Experimental | Should work, not validated |
+| **Devin Desktop** | ✅ Supported | Uses the tested `.windsurf/` compatibility adapter; select with `devin` |
 
 ## Operating Systems
 

@@ -454,7 +454,7 @@ User intent → AIWG CLI → Deploy agents + rules + templates → AI platform
                 ▼                                                ▼
          "aiwg use all --provider X"                  Claude Code / Copilot /
                 │                                     Cursor / Warp / Factory /
-                ▼                                     OpenCode / Codex / Windsurf
+                ▼                                  OpenCode / Codex / Devin Desktop
          ┌──────────────┐
          │ 188 Agents   │  Specialized AI personas with domain expertise
          │ 50 Commands  │  CLI + slash commands for workflow automation
@@ -542,7 +542,7 @@ The orchestration pattern: **Primary Author → Parallel Reviewers → Synthesiz
 - **128 workflow skills** — natural language triggers for regression testing, forensics, voice profiles, quality gates, and CI/CD integration
 - **35 enforcement rules** — anti-laziness detection, token security, citation integrity, executable feedback, failure mitigation across 6 LLM archetypes
 - **334 artifact templates** — progressive disclosure templates for requirements, architecture, testing, security, deployment, and more
-- **8 platform support** — deploy to Claude Code, Copilot, Cursor, Warp, Factory AI, OpenCode, Codex, and Windsurf
+- **Multi-platform support** — deploy to Claude Code, Copilot, Cursor, Warp, Factory AI, OpenCode, Codex, Devin Desktop, OpenClaw, Hermes, and OpenHuman
 - **8 core frameworks + training marketplace package** — SDLC, Digital Forensics, Marketing Operations, Research Management, Media Curation, Ops Infrastructure, Knowledge Base, Security Engineering, plus [`aiwg-training`](https://github.com/jmagly/aiwg-training) for fine-tuning dataset curation (corpus-to-dataset pipeline with DPO/KTO/ORPO/SimPO export)
 - **32 addons** — compound memory, line memory, llm-wiki (Obsidian-native knowledge base), RLM recursive decomposition, fleet operations, browser control, testing quality, and more
 - **40 Claude Code plugins** — the complete framework and addon catalog is installable independently from the AIWG marketplace
@@ -648,7 +648,7 @@ aiwg use all --provider cursor         # Cursor
 aiwg use all --provider factory        # Factory AI
 aiwg use all --provider opencode       # OpenCode
 aiwg use all --provider warp           # Warp Terminal
-aiwg use all --provider windsurf       # Windsurf
+aiwg use all --provider devin          # Devin Desktop
 aiwg use all --provider openclaw       # OpenClaw
 aiwg use all --provider hermes         # Hermes
 aiwg use all --provider openhuman      # OpenHuman
@@ -1390,7 +1390,12 @@ All 8 platforms receive agents, commands, skills, and rules. Deployment adapts t
 | **Cursor** | Tested | `.cursor/agents/` | `.cursor/commands/` | `.cursor/skills/` | `.cursor/rules/` | `--provider cursor` |
 | **OpenCode** | Tested | `.opencode/agent/` | `.opencode/commands/` | `.opencode/skill/` | `.opencode/rule/` | `--provider opencode` |
 | **OpenAI/Codex** | Tested | `.codex/agents/` | `~/.codex/prompts/` | `.agents/skills/` | `.codex/rules/` | `--provider codex` |
-| **Windsurf** | Experimental | AGENTS.md | `.windsurf/workflows/` | `.windsurf/skills/` | `.windsurf/rules/` | `--provider windsurf` |
+| **Devin Desktop** | Tested compatibility adapter | AGENTS.md | `.windsurf/workflows/` | `.windsurf/skills/` | `.windsurf/rules/` | `--provider devin` |
+
+The legacy `--provider windsurf` selector remains supported and writes the
+same `.windsurf/` compatibility paths, but new commands should use `devin`.
+`devin-cli` is a distinct product surface and is not currently a deployable
+AIWG provider.
 
 ---
 

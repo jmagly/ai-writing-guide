@@ -859,11 +859,13 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
   },
   {
     id: 'windsurf',
-    aliases: ['devin-desktop', 'devin-local', 'cascade'],
+    displayName: 'Devin Desktop',
+    status: 'stable',
+    aliases: ['devin', 'devin-desktop', 'devin-local', 'cascade'],
     builtIn: true,
     surfaces: {
-      primary: 'windsurf',
-      compatibility: ['devin-desktop', 'devin-local', 'cascade'],
+      primary: 'devin',
+      compatibility: ['devin-desktop', 'windsurf', 'devin-local', 'cascade'],
       precedence: ['.devin/rules/', '.windsurf/rules/', 'AGENTS.md', '.windsurfrules'],
       related: [
         {
@@ -871,7 +873,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
           displayName: 'Devin Desktop',
           relationship: 'same-provider',
           deployable: true,
-          aliases: ['windsurf', 'cascade'],
+          aliases: ['devin', 'windsurf', 'cascade'],
           paths: {
             rules: ['.devin/rules/*.md', '.windsurf/rules/*.md'],
             skills: [],
@@ -879,7 +881,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
             legacy: ['.windsurfrules'],
           },
           notes: [
-            'Devin Desktop is the renamed Windsurf local IDE surface; --provider windsurf remains the deployable compatibility id.',
+            'Devin Desktop is the current product name; --provider devin is preferred and --provider windsurf remains a deprecated compatibility id.',
             '.devin/rules is preferred by Devin Desktop, but AIWG keeps .devin/ as ignored local provider output and currently emits the compatibility surface through .windsurf/ plus AGENTS.md.',
           ],
         },

@@ -70,7 +70,7 @@ const MCP_INJECTION_DEFINITIONS = [
   },
   {
     id: 'windsurf',
-    aliases: ['devin-desktop'],
+    aliases: ['devin', 'devin-desktop', 'devin-local', 'cascade'],
     mcp: {
       providerId: 'windsurf',
       includeInSupportedProviders: true,

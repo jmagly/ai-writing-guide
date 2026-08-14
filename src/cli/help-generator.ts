@@ -100,7 +100,8 @@ export function generateHelp(registry: ExtensionRegistry): string {
   lines.push('  cursor                Cursor IDE');
   lines.push('  opencode              OpenCode');
   lines.push('  warp                  Warp Terminal');
-  lines.push('  windsurf              Windsurf');
+  lines.push('  devin                 Devin Desktop');
+  lines.push('  windsurf              Deprecated alias for devin');
   lines.push('');
 
   // Examples

@@ -323,9 +323,9 @@ providers:
     aggregated_output: true
 
   windsurf:
-    display_name: Windsurf
-    status: experimental
-    # Windsurf is an IDE extension requiring VS Code host — daemon not supported
+    display_name: Devin Desktop
+    status: stable
+    # Devin Desktop uses the Windsurf compatibility surface and requires a VS Code host — daemon not supported
     daemon_tier: unsupported
     daemon_pty_adapter: false
     artifact_paths:

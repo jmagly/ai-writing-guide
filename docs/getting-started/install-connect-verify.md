@@ -88,7 +88,7 @@ aiwg use all --provider <provider>
 | Factory | `factory` |
 | OpenCode | `opencode` |
 | Warp | `warp` |
-| Windsurf | `windsurf` |
+| Devin Desktop | `devin` |
 | OpenClaw | `openclaw` |
 | Hermes | `hermes` |
 | OpenHuman | `openhuman` |

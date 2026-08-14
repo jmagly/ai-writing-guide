@@ -29,7 +29,7 @@ The provider-specific part is where you open the AI session and which deployed f
 | Factory | `--provider factory` | Project root | `.factory/` and shared context files | Ask for the AIWG first action and verify with the probe. |
 | OpenCode | `--provider opencode` | Project root | `.opencode/` and `AGENTS.md` | Ask for one AIWG route, then inspect the recommended capability. |
 | Warp | `--provider warp` | Warp session in the project root | `WARP.md` / `.warp/` | Ask the session to route through AIWG, then verify with the probe. |
-| Windsurf | `--provider windsurf` | Project root in Windsurf | `.windsurf/` | Ask for an AIWG next action and one fallback. |
+| Devin Desktop | `--provider devin` | Project root in Devin Desktop | `.windsurf/` compatibility paths | Ask for an AIWG next action and one fallback. |
 | Hermes | `--provider hermes` | Hermes workspace attached to the project | Hermes context plus `AGENTS.md` | Use the provider's AIWG route, then verify project state. |
 | OpenClaw | `--provider openclaw` | Project root / OpenClaw workspace | OpenClaw skill and rule paths | Ask for one AIWG capability and verify the deployed project. |
 

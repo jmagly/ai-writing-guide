@@ -9,6 +9,11 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Devin Desktop provider selector** - `devin` is now the preferred selector
+  for the existing Windsurf-compatible deployment adapter. `devin-desktop`
+  remains equivalent, `windsurf` remains a deprecated compatibility selector,
+  and the distinct `devin-cli` surface is still rejected explicitly.
+
 - **Policy-boundary-aware issue composition** - issue authoring now assesses
   final drafts before tracker mutation, preserves safe drafts, gates flagged
   drafts, and splits deterministically separable rejected drafts into linked

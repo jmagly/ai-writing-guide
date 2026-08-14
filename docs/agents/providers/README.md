@@ -32,4 +32,4 @@ or command interface so it can connect AIWG to the current project.
 | `aiwg.agent-reference.provider.opencode` | OpenCode | [Operational reference](opencode.md) |
 | `aiwg.agent-reference.provider.openhuman` | OpenHuman | [Operational reference](openhuman.md) |
 | `aiwg.agent-reference.provider.warp` | Warp | [Operational reference](warp.md) |
-| `aiwg.agent-reference.provider.windsurf` | Windsurf | [Operational reference](windsurf.md) |
+| `aiwg.agent-reference.provider.windsurf` | Devin Desktop (`devin`; Windsurf compatibility adapter) | [Operational reference](windsurf.md) |

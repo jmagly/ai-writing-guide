@@ -107,35 +107,26 @@ describe('aiwg use project-local provider bundles (#1717)', () => {
     expect(state.run.mock.calls[0][1]).not.toContain('my-provider');
   });
 
-  it('resolves Devin Desktop aliases to the Windsurf deploy adapter', async () => {
-    const result = await useHandler.execute({
-      cwd: projectDir,
-      frameworkRoot,
-      rawArgs: ['use', 'sdlc', '--provider', 'devin-desktop', '--target', projectDir, '--dry-run', '--no-utils', '--no-project-local'],
-      args: ['sdlc', '--provider', 'devin-desktop', '--target', projectDir, '--dry-run', '--no-utils', '--no-project-local'],
-    });
+  it.each(['devin', 'devin-desktop', 'windsurf'])('resolves %s to the same Windsurf deploy adapter', async (selector) => {
+    const args = ['sdlc', '--provider', selector, '--target', projectDir, '--dry-run', '--no-utils', '--no-project-local'];
+    const result = await useHandler.execute({ cwd: projectDir, frameworkRoot, rawArgs: ['use', ...args], args });
 
     expect(result.exitCode).toBe(0);
-    expect(state.run).toHaveBeenCalledWith(
-      'tools/agents/deploy-agents.mjs',
-      expect.arrayContaining(['--provider', 'windsurf']),
-      {},
-    );
-    expect(state.run.mock.calls[0][1]).not.toContain('devin-desktop');
+    expect(state.run).toHaveBeenCalledWith('tools/agents/deploy-agents.mjs', expect.arrayContaining(['--provider', 'windsurf']), {});
+    if (selector !== 'windsurf') expect(state.run.mock.calls[0][1]).not.toContain(selector);
   });
 
-  it('rejects bare Devin provider ids with Windsurf guidance', async () => {
+  it('rejects Devin CLI without conflating it with Devin Desktop', async () => {
     const result = await useHandler.execute({
       cwd: projectDir,
       frameworkRoot,
-      rawArgs: ['use', 'sdlc', '--provider', 'devin', '--target', projectDir, '--dry-run', '--no-utils', '--no-project-local'],
-      args: ['sdlc', '--provider', 'devin', '--target', projectDir, '--dry-run', '--no-utils', '--no-project-local'],
+      rawArgs: ['use', 'sdlc', '--provider', 'devin-cli', '--target', projectDir, '--dry-run', '--no-utils', '--no-project-local'],
+      args: ['sdlc', '--provider', 'devin-cli', '--target', projectDir, '--dry-run', '--no-utils', '--no-project-local'],
     });
 
     expect(result.exitCode).toBe(1);
-    expect(result.message).toContain('Unsupported provider: devin');
-    expect(result.message).toContain('aiwg use sdlc --provider windsurf');
-    expect(result.message).toContain('does not emit .devin/ provider output yet');
+    expect(result.message).toContain('Unsupported provider: devin-cli');
+    expect(result.message).toContain('Use --provider devin for Devin Desktop');
     expect(state.run).not.toHaveBeenCalled();
   });
 

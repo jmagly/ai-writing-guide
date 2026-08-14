@@ -22,6 +22,7 @@ test('first-party installation guidance uses the canonical aiwg.io manifest', as
 
 test('beginner surfaces keep the three-step self-verifying install contract', async () => {
   const manifest = await readFile('setup.aiwg.yaml', 'utf8');
+  assert.match(manifest, /choices:\n(?:\s+- .+\n)*\s+- devin\n/);
   assert.match(manifest, /aiwg use all --provider PROVIDER --json/);
   assert.doesNotMatch(manifest, /id: build-and-regenerate/);
   assert.match(manifest, /do not make index, regenerate, status, or doctor commands mandatory/);

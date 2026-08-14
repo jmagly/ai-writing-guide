@@ -1475,15 +1475,12 @@ function resolveBuiltInProviderForUse(provider: string): { provider: string; req
 
 function unsupportedProviderMessage(provider: string): string | null {
   const normalized = provider.trim().toLowerCase();
-  if (normalized === 'devin' || normalized === 'devin-cli') {
+  if (normalized === 'devin-cli') {
     return [
       `Unsupported provider: ${provider}`,
       '',
-      'Devin Desktop is supported through the Windsurf compatibility adapter:',
-      '  aiwg use sdlc --provider windsurf',
-      '  aiwg use sdlc --provider devin-desktop',
-      '',
-      'Devin CLI has distinct rules/skills surfaces and is recorded as future-provider metadata; AIWG does not emit .devin/ provider output yet.',
+      'Devin CLI has distinct rules/skills surfaces and is not a deployable AIWG provider yet.',
+      'Use --provider devin for Devin Desktop deployments.',
     ].join('\n');
   }
   return null;
@@ -3154,6 +3151,9 @@ export class UseHandler implements CommandHandler {
       : unsupportedProviderMessage(requestedProvider);
     if (unsupportedMessage) {
       return { exitCode: 1, message: unsupportedMessage };
+    }
+    if (requestedProvider.trim().toLowerCase() === 'windsurf') {
+      ui.warn("Provider id 'windsurf' is deprecated; use '--provider devin' for Devin Desktop. Existing .windsurf/ output paths remain supported.");
     }
     const provider = builtInProviderResolution.provider;
     const providerDeployArgs = builtInProviderResolution.requestedProvider
