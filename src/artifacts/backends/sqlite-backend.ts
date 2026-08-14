@@ -6,7 +6,7 @@
  * (INTERSECT/EXCEPT/UNION), recursive CTE traversal, and cross-graph
  * federation via ATTACH DATABASE.
  *
- * Install: npm install better-sqlite3 @types/better-sqlite3
+ * Enable with: aiwg features install sqlite
  *
  * @implements #729
  * @source @src/artifacts/graph-backend.ts
@@ -16,6 +16,7 @@
 import type { GraphBackend } from '../graph-backend.js';
 import type { DependencyGraph, TypedEdge } from '../types.js';
 import { normalizeEdges } from '../types.js';
+import { requireFeaturePackage } from '../../features/runtime.js';
 
 /**
  * SQLite-backed graph with persistent storage and native SQL operations.
@@ -34,13 +35,11 @@ export class SqliteGraphBackend implements GraphBackend {
    */
   constructor(dbPath: string = ':memory:') {
     try {
-      // Dynamic require so missing package gives a clear error
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const Database = require('better-sqlite3');
+      const Database = requireFeaturePackage('better-sqlite3') as new (path: string) => any;
       this.db = new Database(dbPath);
     } catch {
       throw new Error(
-        'sqlite backend requires: npm install better-sqlite3 @types/better-sqlite3'
+        'sqlite backend is unavailable; run `aiwg features install sqlite`'
       );
     }
 

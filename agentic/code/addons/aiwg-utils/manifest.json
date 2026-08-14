@@ -131,7 +131,8 @@
     "customize-rebuild",
     "customize-status",
     "customize-upstream-sync",
-    "customize-contribute-back"
+    "customize-contribute-back",
+    "context-firewall"
   ],
   "rules": [
     "no-time-estimates",

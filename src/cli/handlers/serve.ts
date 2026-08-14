@@ -11,7 +11,6 @@
 
 import path from 'path';
 import { existsSync, readFileSync } from 'fs';
-import { spawnSync } from 'child_process';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { createPtyWsHandler, registry as ptyRegistry } from '../../serve/pty-bridge.js';
 import { telemetryStore, createEvent } from '../../serve/telemetry.js';
@@ -38,6 +37,7 @@ import {
 } from '../../a2a/webhook.js';
 import { AiwgError, EXIT_CODES } from '../errors.js';
 import { projectAiwgPath } from '../../config/project-artifacts.js';
+import { loadFeaturePackage } from '../../features/runtime.js';
 
 // A2A push-notification state — module-scoped so the test harness can
 // monkey-patch them in if needed. One process serves one set of secrets.
@@ -223,10 +223,9 @@ async function setupWebSockets(httpServer: any, readOnly: boolean): Promise<void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let wsMod: any;
   try {
-    // @ts-expect-error — ws lacks bundled types; we use the runtime constructor only
-    wsMod = await import('ws');
+    wsMod = await loadFeaturePackage('ws');
   } catch {
-    console.warn('[serve] ws package not available — WebSocket routes disabled. Install with: npm install ws');
+    console.warn('[serve] WebSocket routes disabled — run `aiwg features install webserver` to enable them.');
     return;
   }
 
@@ -513,42 +512,18 @@ export async function startServer(opts: {
     // import path raises ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING (#1277).
     // hono is an optionalDependency; tsc may not find its types under
     // `npm ci --omit=optional` (e.g. metadata-validation workflow). The
-    // try/catch + auto-install fallback below handles that at runtime.
+    // try/catch below emits the managed feature-install route at runtime.
     // @ts-ignore — optional dep; may not be installed at typecheck time
-    honoMod = await import('hono');
+    honoMod = await loadFeaturePackage('hono');
     // @ts-ignore — optional dep; may not be installed at typecheck time
-    nodeMod = await import('@hono/node-server');
+    nodeMod = await loadFeaturePackage('@hono/node-server');
   } catch {
-    // Auto-install optional serve dependencies on first use
-    console.log('Installing serve dependencies (hono, @hono/node-server, ws)...');
-    const result = spawnSync(
-      'npm',
-      ['install', '--save-optional', 'hono', '@hono/node-server', 'ws'],
-      { stdio: 'inherit' },
-    );
-    if (result.status !== 0) {
-      throw new AiwgError({
-        code: 'ERR_SERVE_DEPS_INSTALL_FAILED',
-        message: 'Failed to install serve dependencies (hono, @hono/node-server, ws)',
-        hint: 'Install manually: npm install hono @hono/node-server ws',
-        exitCode: EXIT_CODES.GENERAL,
-      });
-    }
-    // Retry imports after install
-    try {
-      // @ts-ignore — optional dep; may not be installed at typecheck time
-      honoMod = await import('hono');
-      // @ts-ignore — optional dep; may not be installed at typecheck time
-      nodeMod = await import('@hono/node-server');
-    } catch (err) {
-      throw new AiwgError({
-        code: 'ERR_SERVE_DEPS_LOAD_FAILED',
-        message: 'Serve dependencies installed but could not be loaded',
-        hint: 'Try: npm install hono @hono/node-server ws',
-        exitCode: EXIT_CODES.GENERAL,
-        cause: err,
-      });
-    }
+    throw new AiwgError({
+      code: 'ERR_SERVE_DEPS_MISSING',
+      message: 'The optional webserver feature is not available',
+      hint: 'Run `aiwg features install webserver`, then retry `aiwg serve`.',
+      exitCode: EXIT_CODES.GENERAL,
+    });
   }
 
   const { Hono } = honoMod;

@@ -29,6 +29,7 @@ import {
   contributeStartHandler,
   validateMetadataHandler,
   doctorHandler,
+  contextFirewallHandler,
   updateHandler,
   utilityHandlers,
 } from './utilities.js';
@@ -147,6 +148,7 @@ export {
   versionHandler,
   authHandler,
   doctorHandler,
+  contextFirewallHandler,
   updateHandler,
   refreshHandler,
   regenerateHandler,
@@ -323,6 +325,7 @@ export const allHandlers: CommandHandler[] = [
   versionHandler,
   authHandler,
   doctorHandler,
+  contextFirewallHandler,
   updateHandler,
   refreshHandler,
   regenerateHandler,

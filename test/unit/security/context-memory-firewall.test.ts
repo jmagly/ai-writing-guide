@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, readFile, symlink, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, mkdir, readFile, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -146,5 +146,47 @@ describe('context/memory firewall', () => {
     await expect(writeReviewBaseline(result, '.aiwg/unsafe-baseline.json')).rejects.toThrow(
       'Refusing to baseline',
     );
+  });
+
+  it('refuses baseline reads and writes outside the project root', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aiwg-context-firewall-contained-'));
+    const outside = await mkdtemp(join(tmpdir(), 'aiwg-context-firewall-escape-'));
+    await write(root, 'WORKSPACE.md', '# Reviewed context\n');
+
+    await expect(scanContextMemoryFirewall({
+      rootDir: root,
+      packageRoot: root,
+      providers: ['claude'],
+      baselinePath: join(outside, 'baseline.json'),
+    })).rejects.toThrow('must stay within the project root');
+
+    const result = await scanContextMemoryFirewall({
+      rootDir: root,
+      packageRoot: root,
+      providers: ['claude'],
+      contentScan: false,
+    });
+    await expect(writeReviewBaseline(result, join(outside, 'baseline.json'))).rejects.toThrow(
+      'must stay within the project root',
+    );
+  });
+
+  it('refuses a baseline destination whose parent symlink leaves the project', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aiwg-context-firewall-symlink-root-'));
+    const outside = await mkdtemp(join(tmpdir(), 'aiwg-context-firewall-symlink-outside-'));
+    await write(root, 'WORKSPACE.md', '# Reviewed context\n');
+    await mkdir(join(root, '.aiwg'), { recursive: true });
+    await symlink(outside, join(root, '.aiwg', 'escaped'));
+    const result = await scanContextMemoryFirewall({
+      rootDir: root,
+      packageRoot: root,
+      providers: ['claude'],
+      contentScan: false,
+    });
+
+    await expect(writeReviewBaseline(result, '.aiwg/escaped/new/baseline.json')).rejects.toThrow(
+      'parent resolves outside the project root',
+    );
+    await expect(access(join(outside, 'new'))).rejects.toThrow();
   });
 });

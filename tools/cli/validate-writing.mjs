@@ -16,7 +16,7 @@ try {
   const module = await importImpl(import.meta.url, 'writing/validation-engine.js');
   WritingValidationEngine = module.WritingValidationEngine;
 } catch (error) {
-  console.error('Error: Could not load validation engine. Run `npm run build` first.');
+  console.error('Error: Could not load the validation engine. Run `aiwg doctor` to diagnose or repair the installation.');
   process.exit(1);
 }
 

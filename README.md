@@ -109,6 +109,8 @@ work without them. Enable only the capability you need:
 ```bash
 aiwg features install pty         # builds node-pty for local interactive terminals
 aiwg features install embeddings  # builds hnswlib-node for dense semantic search
+aiwg features install graph       # enables the Graphology artifact backend
+aiwg features install terminal    # enables auditable headless PTY screen parsing
 aiwg doctor                       # verifies the native entry points actually load
 ```
 
@@ -1396,7 +1398,7 @@ All 8 platforms receive agents, commands, skills, and rules. Deployment adapts t
 
 | Category | Commands | Description |
 |----------|----------|-------------|
-| **Maintenance** | `help`, `version`, `doctor`, `update` | Installation health, updates, diagnostics |
+| **Maintenance** | `help`, `version`, `doctor`, `context-firewall`, `update` | Installation health, context safety, updates, diagnostics |
 | **Framework** | `use`, `list`, `remove` | Deploy, inspect, and remove frameworks |
 | **Project** | `new` | Scaffold new project with AIWG structure |
 | **Workspace** | `status`, `migrate-workspace`, `rollback-workspace` | Workspace health and migration |
@@ -1427,6 +1429,7 @@ aiwg use sdlc --provider copilot # Deploy to GitHub Copilot
 aiwg new my-project              # Scaffold new project
 aiwg status                      # Workspace health
 aiwg doctor                      # Installation diagnostics
+aiwg context-firewall scan       # Provider context, trust, drift, and budget audit
 
 # Iterative execution (Agent Loop)
 aiwg ralph "Fix all tests" --completion "npm test passes"

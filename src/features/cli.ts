@@ -35,9 +35,7 @@ export async function main(args: string[]): Promise<void> {
     case 'remove':
       console.error(`Error: \`aiwg features ${subcommand}\` not yet implemented (#1219 Cycle 3).`);
       console.error('');
-      console.error('To install manually for now:');
-      console.error('  cd <aiwg install root>');
-      console.error('  npm install <packages>     # see `aiwg features info <name>` for the package list');
+      console.error('No files were changed. Feature removal must use a future AIWG CLI release.');
       process.exit(1);
       break;
 

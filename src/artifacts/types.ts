@@ -554,8 +554,8 @@ export interface GraphConfig {
   /**
    * Graph storage backend for this graph.
    * - 'json' (default): zero-dep adjacency list
-   * - 'graphology': rich traversal, community detection (requires npm install graphology)
-   * - 'sqlite': persistent on-disk, SQL set operations (requires npm install better-sqlite3)
+   * - 'graphology': rich traversal, community detection (`aiwg features install graph`)
+   * - 'sqlite': persistent on-disk, SQL set operations (`aiwg features install sqlite`)
    *
    * @implements #727
    */
@@ -563,7 +563,7 @@ export interface GraphConfig {
 
   /**
    * Optional embedding index configuration for semantic similarity queries.
-   * Requires: npm install @xenova/transformers hnswlib-node
+   * Enable with: aiwg features install embeddings
    *
    * @implements #730
    */

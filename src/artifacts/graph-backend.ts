@@ -109,7 +109,7 @@ export async function createGraphBackend(type: GraphBackendType = 'json'): Promi
         return GraphologyBackend.create();
       } catch {
         throw new Error(
-          'graphology backend requires: npm install graphology graphology-types graphology-operators graphology-traversal'
+          'graphology backend is unavailable; run `aiwg features install graph`'
         );
       }
     }
@@ -119,7 +119,7 @@ export async function createGraphBackend(type: GraphBackendType = 'json'): Promi
         return new SqliteGraphBackend();
       } catch {
         throw new Error(
-          'sqlite backend requires: npm install better-sqlite3 @types/better-sqlite3'
+          'sqlite backend is unavailable; run `aiwg features install sqlite`'
         );
       }
     }

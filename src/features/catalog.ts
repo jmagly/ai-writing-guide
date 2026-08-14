@@ -88,6 +88,32 @@ export const FEATURE_CATALOG: FeatureDefinition[] = [
     ],
     cost: '~3 MB — pure JS, no native deps',
   },
+  {
+    name: 'graph',
+    description: 'Graphology backend for rich artifact traversal and graph operators',
+    packages: ['graphology', 'graphology-operators', 'graphology-traversal'],
+    packageSpecs: {
+      graphology: '0.26.0',
+      'graphology-operators': '1.6.0',
+      'graphology-traversal': '0.3.0',
+    },
+    enables: [
+      'index.graphBackend: graphology',
+      'in-memory attributed graph traversal and operator workflows',
+    ],
+    cost: '~2 MB — pure JS, no native deps',
+  },
+  {
+    name: 'terminal',
+    description: 'Headless terminal state parsing for PTY orchestration and auditing',
+    packages: ['@xterm/headless'],
+    packageSpecs: { '@xterm/headless': '6.0.0' },
+    enables: [
+      'structured screen-state parsing for PTY orchestrators',
+      'auditable terminal snapshots without a browser DOM',
+    ],
+    cost: '~1 MB — pure JS, no native deps',
+  },
 ];
 
 /** Native packages require a successful runtime load, not just package files. */

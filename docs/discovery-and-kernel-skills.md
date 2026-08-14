@@ -10,7 +10,7 @@ AIWG ships **480+ skills** across its frameworks. Agentic platforms (Claude Code
 
 Starting in 2026.5.0, AIWG splits its skill surface into two tiers, with discovery + on-demand fetch closing the loop:
 
-- **Kernel skills** — always-loaded into the platform's flat skill listing. 24 kernel skills total: 9 quickrefs (one per installed framework + utils), the `aiwg-language-map` for addons + extensions, the `steward-quickref` feature-domain routing anchor (expansion/persona/project, #1623), and 13 self-maintenance ops.
+- **Kernel skills** — always-loaded into the platform's flat skill listing. 25 kernel skills total: 9 quickrefs (one per installed framework + utils), the `aiwg-language-map` for addons + extensions, the `steward-quickref` feature-domain routing anchor (expansion/persona/project, #1623), and 14 self-maintenance ops, including the plan-first context firewall.
 - **Standard skills** — the other ~460 skills. Stay at `$AIWG_ROOT` and are **not copied per-project** by default (#1217). Reachable via `aiwg discover` (find) and `aiwg show` (fetch).
 - **Project quickref** — an optional, generated kernel skill synthesized from
   discovered project-local bundles. Operators can curate managed discovery with
@@ -99,14 +99,14 @@ You may skip the discover query only when: the user named a specific skill (`/fl
 
 ```mermaid
 flowchart TB
-  subgraph KERNEL["Kernel tier — 24 skills, always loaded"]
+  subgraph KERNEL["Kernel tier — 25 skills, always loaded"]
     direction LR
     K1[9 framework quickrefs<br/>sdlc / research / forensics /<br/>marketing / media-curator /<br/>security-eng / knowledge-base /<br/>ops / aiwg-utils-quickref]
     K2[2 routing maps<br/>aiwg-language-map / steward-quickref]
-    K3[13 self-maintenance ops<br/>steward / doctor / refresh / status / help / use /<br/>regenerate router + 3 branches / issue / PR / mission]
+    K3[14 self-maintenance ops<br/>steward / doctor / refresh / status / help / use /<br/>regenerate router + 3 branches / issue / PR / mission / context firewall]
   end
 
-  subgraph STANDARD["Standard tier — ~456 skills, read from $AIWG_ROOT"]
+  subgraph STANDARD["Standard tier — ~455 skills, read from $AIWG_ROOT"]
     direction LR
     S1[SDLC workflows<br/>intake-wizard, sdlc-accelerate,<br/>flow-deploy-to-production,<br/>address-issues, ...]
     S2[Domain skills<br/>media-curator, research-,<br/>forensics-, marketing-, ...]
@@ -154,7 +154,7 @@ Source of truth ($AIWG_ROOT/agentic/code/...)
 │  ┌────────────────────────────┐
 ├─►│ KERNEL skills              │  copied per-project to platform-native skills dir
 │  │ kernel: true in frontmatter│  always-loaded into agent context
-│  │ (24 skills today)          │  budget-bound; keep tight
+│  │ (25 skills today)          │  budget-bound; keep tight
 │  └────────────────────────────┘
 │
 └─►┌────────────────────────────┐
@@ -537,7 +537,7 @@ The platform's Skill tool can only invoke kernel-listed skills directly. For eve
 
 ## Recovery when discovery itself breaks
 
-The 10 self-maintenance ops kernel skills exist precisely for this case. If `aiwg discover` errors out:
+The 14 self-maintenance ops kernel skills exist precisely for this case. If `aiwg discover` errors out:
 
 1. **`aiwg-doctor`** — diagnose what's broken (missing `$AIWG_ROOT`, corrupted index, version mismatch, etc.)
 2. **`aiwg-status`** — see what's currently deployed
