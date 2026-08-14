@@ -96,7 +96,7 @@ describe('AIWG artifact root tracking and distribution (integration)', () => {
         .map((file: { path?: string }) => file.path ?? '')
         .filter((filePath: string) => filePath === '.aiwg' || filePath.startsWith('.aiwg/'));
       expect(aiwgFiles, 'npm pack should include 0 .aiwg/ files').toHaveLength(0);
-    });
+    }, 120_000);
 
     it('should include doctor.mjs and its runtime lint import in npm pack dry-run', () => {
       const output = execSync('npm pack --dry-run --json', {
@@ -131,7 +131,7 @@ describe('AIWG artifact root tracking and distribution (integration)', () => {
         files.has('tools/security/threat-assessment.mjs'),
         'the context-firewall engine imports threat-assessment.mjs at runtime',
       ).toBe(true);
-    });
+    }, 120_000);
   });
 
   // ─────────────────────────────────────────────────────

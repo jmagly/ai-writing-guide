@@ -314,8 +314,11 @@ export async function verifyProviderDeployment(
   findings.push(...await collectRegistryFindings(options, normalized, counts));
 
   const projectConfig = await readAiwgConfig(options.projectRoot);
+  const scopedRegistry = options.scope === 'user'
+    ? await readUserRegistry()
+    : projectConfig;
   const projectLocalBundles = options.requestedBundles.filter((bundle) =>
-    projectConfig?.installed[bundle]?.source === 'project-local');
+    scopedRegistry?.installed[bundle]?.source === 'project-local');
   const frameworkBundles = options.requestedBundles.filter((bundle) => !projectLocalBundles.includes(bundle));
   const indexesToVerify: Array<{ index: ArtifactIndex | null; graph: 'framework' | 'project' | 'user'; bundles: string[] }> = [];
   if (frameworkBundles.length > 0) {
@@ -611,27 +614,34 @@ export async function buildDeploymentStatusProbe(
   frameworkRoot = process.env.AIWG_ROOT || projectRoot,
 ): Promise<Record<string, unknown>> {
   const result = await verifyConfiguredDeployments(projectRoot, {}, frameworkRoot);
+  const notConfigured = result.requestedBundles.length === 0
+    && result.findings.length > 0
+    && result.findings.every((item) => item.id === 'deployment-not-configured');
   const engaged = result.outcome === 'ready' || result.outcome === 'ready-restart-required' || result.outcome === 'degraded';
   return {
     schema: 'aiwg.status.probe.v1',
     generated_at: result.generatedAt,
     project_root: result.projectRoot,
     engaged,
-    status: result.outcome === 'failed' ? 'needs-repair' : result.outcome,
+    status: notConfigured ? 'not-configured' : result.outcome === 'failed' ? 'needs-repair' : result.outcome,
     checks: {
       workspace_exists: await exists(path.join(projectRoot, '.aiwg')),
       framework_count: result.requestedBundles.length,
-      provider_deployment_count: result.providers.length,
-      health: result.outcome === 'failed' ? 'error' : result.outcome === 'degraded' ? 'warning' : 'healthy',
+      provider_deployment_count: notConfigured ? 0 : result.providers.length,
+      health: notConfigured ? 'not-configured' : result.outcome === 'failed' ? 'error' : result.outcome === 'degraded' ? 'warning' : 'healthy',
       malformed_config: result.findings.some((item) => item.id.includes('registry')),
-      artifact_health: result.outcome,
+      artifact_health: notConfigured ? 'not-configured' : result.outcome,
       external_artifact_reachable: true,
     },
     verification: {
       required: true,
-      action: engaged ? 'AIWG deployment is verified on disk.' : 'Repair the blocking deployment findings, then run this probe again.',
+      action: engaged
+        ? 'AIWG deployment is verified on disk.'
+        : notConfigured
+          ? 'Choose a provider and bundle to configure AIWG for this project.'
+          : 'Repair the blocking deployment findings, then run this probe again.',
       command: 'aiwg status --probe --json',
-      next_command: engaged ? null : 'aiwg doctor --deployment',
+      next_command: engaged ? null : notConfigured ? 'aiwg wizard --dry-run' : 'aiwg doctor --deployment',
     },
     provider_deployments: result.providers,
     deployment_verification: result,

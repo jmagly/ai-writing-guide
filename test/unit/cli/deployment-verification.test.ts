@@ -196,4 +196,28 @@ describe.sequential('deployment verification contract (#2069)', () => {
       status: 'ready-restart-required',
     });
   });
+
+  it('reports an unconfigured workspace as diagnostic state rather than deployment failure', async () => {
+    const projectRoot = await tempRoot('aiwg-deploy-unconfigured-');
+    const frameworkRoot = await tempRoot('aiwg-deploy-framework-');
+    await mkdir(path.join(projectRoot, '.aiwg'), { recursive: true });
+    await writeFile(path.join(projectRoot, '.aiwg', 'aiwg.config'), JSON.stringify({
+      version: '1.0',
+      project: { name: 'legacy-project' },
+      providers: ['claude'],
+    }));
+
+    const probe = await buildDeploymentStatusProbe(projectRoot, frameworkRoot);
+    expect(probe).toMatchObject({
+      schema: 'aiwg.status.probe.v1',
+      engaged: false,
+      status: 'not-configured',
+      checks: {
+        provider_deployment_count: 0,
+        health: 'not-configured',
+        artifact_health: 'not-configured',
+      },
+      verification: { next_command: 'aiwg wizard --dry-run' },
+    });
+  });
 });
