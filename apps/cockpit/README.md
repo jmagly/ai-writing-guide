@@ -13,7 +13,7 @@ supported provider first:
 
 ```text
 Install or repair AIWG for this project by following
-https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml
+https://aiwg.io/setup.aiwg.yaml
 Explain the plan before changing anything, preserve my existing work, and ask
 me only for choices you cannot safely determine.
 ```
@@ -21,8 +21,6 @@ me only for choices you cannot safely determine.
 ```bash
 npm i -g aiwg        # install the base AIWG CLI
 aiwg use all --provider <provider>
-aiwg index build --all
-aiwg regenerate --provider <provider>
 aiwg use cockpit     # install the opt-in Cockpit package, version-locked to AIWG
 aiwg cockpit         # launch the local Bridge + web UI
 ```
@@ -47,7 +45,7 @@ end-to-end verification, paste this into a supported AI provider:
 
 ```text
 Install or repair AIWG Cockpit and Agentic Sandbox by following
-https://raw.githubusercontent.com/jmagly/agentic-sandbox/main/setup.aiwg.yaml
+https://aiwg.io/agentic-sandbox/setup.aiwg.yaml
 Install the required prerequisites, explain the plan before changing anything,
 preserve my existing work, and ask me about the isolation, network, storage,
 and access choices you cannot safely determine.
@@ -64,8 +62,6 @@ version to the installed AIWG version.
 ```bash
 npm i -g aiwg
 aiwg use all --provider <provider>
-aiwg index build --all
-aiwg regenerate --provider <provider>
 aiwg use cockpit
 aiwg cockpit --status
 aiwg cockpit

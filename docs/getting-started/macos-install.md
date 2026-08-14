@@ -134,11 +134,11 @@ Deploy AIWG from the project root:
 ```bash
 cd /path/to/your/project
 aiwg use all --provider <provider>
-aiwg index build --all
-aiwg regenerate --provider <provider>
-aiwg status --probe --json
-aiwg doctor
 ```
+
+`aiwg use` performs the index, context, and readiness checks itself. Use
+`aiwg status --probe --json` for an explicit audit or `aiwg doctor` when the
+result identifies a recovery step.
 
 If `npm install -g aiwg` succeeds but `aiwg` is not found, check npm's global
 binary directory:

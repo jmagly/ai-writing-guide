@@ -35,7 +35,7 @@ open:
 
 ```text
 Install or repair AIWG for this project by following
-https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml
+https://aiwg.io/setup.aiwg.yaml
 Explain the plan before changing anything, preserve my existing work, and ask
 me only for choices you cannot safely determine.
 ```
@@ -43,10 +43,8 @@ me only for choices you cannot safely determine.
 The provider performs the preferred sequence:
 
 1. install AIWG;
-2. deploy `all` for the provider you use;
-3. build the capability indices;
-4. invoke `aiwg-regenerate` so AIWG is tailored and hooked into the project;
-5. verify engagement.
+2. change into the intended project root; and
+3. run one self-verifying `aiwg use all --provider <provider>` deployment.
 
 Follow [Install, Connect, and Verify](install-connect-verify.md) when you need
 the manual fallback, provider-name table, or restricted/headless guidance.
@@ -86,21 +84,11 @@ project-scoped setup and name your provider:
 aiwg use all --provider <provider>
 ```
 
-This installs the complete deployable end-user surface. A narrower command such
-as `aiwg use sdlc --provider <provider>` is an advanced choice for users who
-deliberately want only one framework.
-
-Build the indices, then ask the current provider to run `aiwg-regenerate` for
-this existing project and preserve project-authored instructions:
-
-```bash
-aiwg index build --all
-aiwg regenerate --provider <provider>
-```
-
-After regeneration, ask “Is AIWG active in this project?” so the agent reads
-the status probe and explains the result. Restart the provider only if that
-verification shows it is still using cached startup instructions.
+This installs the complete deployable end-user surface, refreshes indices and
+project context, checks the provider wiring, and reports one readiness result.
+A narrower command such as `aiwg use sdlc --provider <provider>` is an advanced
+choice for users who deliberately want only one framework. Restart the provider
+only when the result explicitly reports `ready-restart-required`.
 
 If you want an agent or steward to handle the whole setup from prerequisites to
 provider handoff, use the [Agentic Install Runbook](../agentic-install-runbook.md).

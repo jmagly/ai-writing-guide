@@ -1,6 +1,6 @@
 # Just Try It
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is installed and `aiwg use all` has completed for your provider.
 
 You don't want to read documentation. You want to see something happen. That's fine.
 
@@ -14,8 +14,6 @@ Install AIWG and deploy it to your project:
 npm install -g aiwg
 cd /path/to/any/project     # or make an empty folder
 aiwg use all --provider <provider>
-aiwg index build --all
-aiwg regenerate --provider <provider>
 ```
 
 That's it—ask the current agent whether AIWG is active. Most providers can use
@@ -60,8 +58,6 @@ Make a folder, drop in one or two files, and run:
 mkdir my-test && cd my-test
 echo "console.log('hello')" > index.js
 aiwg use all --provider <provider>
-aiwg index build --all
-aiwg regenerate --provider <provider>
 ```
 
 Then (this is a brand-new folder, so nothing to reconcile — just ask):
@@ -77,9 +73,10 @@ It will answer as one. That's what AIWG does.
 ## What you just installed
 
 `aiwg use all --provider <provider>` copied the complete agent, command, skill,
-and rule surface into the provider's native locations. Regeneration connected
-that provider to `WORKSPACE.md` and `AIWG.md`; the index makes those
-capabilities discoverable without loading the entire corpus.
+and rule surface into the provider's native locations, built the capability
+index, connected the provider to `WORKSPACE.md` and `AIWG.md`, and verified the
+result. It reports whether the workspace is ready now or needs a provider
+restart.
 
 On an **existing project**, or to pull in the latest AIWG on a project you set up earlier, run `/aiwg-regenerate` inside the tool: it re-tailors that context to your actual codebase and preserves any edits you've made.
 

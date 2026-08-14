@@ -1,6 +1,6 @@
 # Setting Up a Team
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is installed and `aiwg use all` has completed for your provider.
 
 Different people on your team use different AI tools. One person uses Claude Code, another uses Cursor, another uses GitHub Copilot. Without AIWG, they all have different agents, different rules, different commands — and no shared context.
 
@@ -36,9 +36,10 @@ aiwg use all --provider claude
 aiwg use all --provider cursor
 aiwg use all --provider copilot
 aiwg use all --provider warp
-aiwg index build --all
-aiwg regenerate --provider claude
 ```
+
+Each `aiwg use` invocation builds the shared capability index, connects that
+provider to the project context, and verifies the deployment before returning.
 
 Then commit the results:
 
