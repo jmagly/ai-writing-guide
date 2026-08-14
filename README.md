@@ -2018,7 +2018,10 @@ AIWG is optimized for token efficiency. Rules deploy as a consolidated index (~2
 
 ## License
 
-**MIT License** — Free to use, modify, and distribute. See [LICENSE](LICENSE).
+AIWG-authored code is available under the **MIT License**. See [LICENSE](LICENSE).
+Runtime dependencies retain their own licenses; see
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the reviewed Fortemi and
+Bytecask AGPL boundary, source links, and inspection instructions.
 
 **Important:** This framework does not provide legal, security, or financial advice. All generated content should be reviewed before use. See [Terms of Use](docs/terms.md) for full disclaimers.
 

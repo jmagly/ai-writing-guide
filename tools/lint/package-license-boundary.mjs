@@ -59,6 +59,23 @@ const packagedFiles = new Set(result?.[0]?.files?.map((entry) => entry.path) ?? 
 if (!packagedFiles.has('LICENSE')) {
   fail('npm tarball does not contain the authoritative root LICENSE');
 }
+if (!packagedFiles.has('THIRD_PARTY_NOTICES.md')) {
+  fail('npm tarball does not contain THIRD_PARTY_NOTICES.md');
+}
+
+const notices = readFileSync(path.join(repoRoot, 'THIRD_PARTY_NOTICES.md'), 'utf8');
+for (const expected of [
+  '@fortemi/core@2026.7.15',
+  '@bytecask/core@2026.7.5',
+  'AGPL-3.0-only',
+  'github.com/Fortemi/fortemi-react/tree/5cab4ea2d3d4bb985ea0d38f8bcb1ea790b32cf7/',
+  'github.com/jmagly/bytecask/tree/bef7ba9590e74f8bfcd724e65928f2f84a5667d4/',
+]) {
+  if (!notices.includes(expected)) fail(`THIRD_PARTY_NOTICES.md is missing ${expected}`);
+}
+if (packageJson.dependencies?.['@fortemi/core'] !== '2026.7.15') {
+  fail('@fortemi/core must remain an exact production dependency at the reviewed version');
+}
 
 const illustrativeTemplates = [...packagedFiles]
   .filter((file) => illustrativeTemplatePattern.test(file))
@@ -87,5 +104,5 @@ for (const file of illustrativeTemplates) {
 
 console.log(
   `✓ Package license boundary: ${expectedLicense} metadata + root LICENSE; ` +
-  `${illustrativeTemplates.length} illustrative template(s) explicitly classified`,
+  `third-party AGPL source notice; ${illustrativeTemplates.length} illustrative template(s) explicitly classified`,
 );

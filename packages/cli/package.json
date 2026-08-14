@@ -24,6 +24,7 @@
   },
   "files": [
     "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
     "bin/",
     "agentic/code/providers/",
     "dist/src/",

@@ -112,6 +112,7 @@
     "test:integration:serve:flake-gate": "node tools/scripts/integration-flake-gate.mjs"
   },
   "files": [
+    "THIRD_PARTY_NOTICES.md",
     "bin/",
     "dist/src/",
     "!dist/**/*.d.ts",

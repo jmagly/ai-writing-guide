@@ -205,6 +205,7 @@ describe('@aiwg/cli packaged web distribution', () => {
     const installed = JSON.parse(await readFile(path.join(installRoot, 'package.json'), 'utf8'));
     const sourceReadme = await readFile(path.join(PROJECT_ROOT, 'packages', 'cli', 'README.md'), 'utf8');
     const installedReadme = await readFile(path.join(installRoot, 'README.md'), 'utf8');
+    const installedNotices = await readFile(path.join(installRoot, 'THIRD_PARTY_NOTICES.md'), 'utf8');
     const paths = packMetadata.files.map((file) => file.path);
 
     expect(packMetadata.name).toBe('@aiwg/cli');
@@ -232,6 +233,10 @@ describe('@aiwg/cli packaged web distribution', () => {
     )).toBe(true);
     expect(paths).toContain('bin/aiwg.mjs');
     expect(paths).toContain('LICENSE');
+    expect(paths).toContain('THIRD_PARTY_NOTICES.md');
+    expect(installedNotices).toContain('@fortemi/core@2026.7.15');
+    expect(installedNotices).toContain('@bytecask/core@2026.7.5');
+    expect(installedNotices).toContain('AGPL-3.0-only');
     expect(paths).toContain('dist/src/api/index.js');
     expect(paths).toContain('dist/src/api/index.d.ts');
     expect(paths).toContain('dist/src/resources/index.js');

@@ -258,9 +258,11 @@ untrusted.
 
 ### What it proves
 
-The signed SBOM discloses what AIWG ships at release time: the exact
-direct + transitive npm deps, their versions, and any non-npm components
-syft detected in the tree. The SBOM bytes are signed with the same
+The signed SBOM discloses the installed release graph observed by CI: the
+exact direct + transitive npm deps, their versions, and any non-npm components
+syft detected in the release workspace. npm dependency packages are fetched as
+separate archives during installation; they are not copied into the `aiwg`
+tarball merely because they appear in this SBOM. The SBOM bytes are signed with the same
 keyless OIDC identity that signed the tarball (Verification 3), so the
 SBOM can be trusted to the same extent and via the same chain as the
 tarball itself.
@@ -306,6 +308,12 @@ jq '.components | length' aiwg-X.Y.Z.cdx.json
 # Component names + versions, sorted
 jq -r '.components[] | "\(.name)@\(.version)"' aiwg-X.Y.Z.cdx.json | sort
 ```
+
+The `aiwg` and `@aiwg/cli` package archives also ship
+`THIRD_PARTY_NOTICES.md`. It identifies the reviewed AGPL-licensed Fortemi and
+Bytecask runtime dependencies, immutable source references, and commands for
+checking the versions npm actually resolved. The detailed boundary decision is
+in [`adr-fortemi-agpl-runtime-boundary.md`](../architecture/adr-fortemi-agpl-runtime-boundary.md).
 
 ### Feeding into an SCA scanner
 

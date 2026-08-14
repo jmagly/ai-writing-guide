@@ -1098,7 +1098,10 @@ opening a public issue.
 
 ## License
 
-MIT. See the
+AIWG-authored code is MIT licensed. See the
 [AIWG license](https://github.com/jmagly/aiwg/blob/main/LICENSE).
 
-The package includes its own copy of `LICENSE` in every published tarball.
+Runtime dependencies retain their own licenses. Every published tarball
+includes `LICENSE` and `THIRD_PARTY_NOTICES.md`; the latter identifies the
+reviewed Fortemi and Bytecask AGPL boundary, corresponding source links, and
+commands for inspecting the versions npm resolved.
