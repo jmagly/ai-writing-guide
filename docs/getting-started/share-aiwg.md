@@ -1,6 +1,6 @@
 # Share AIWG
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is installed and `aiwg use all` has completed for your provider.
 
 Use this page when you need repo-owned source copy for pointing someone to the beginner path.
 
@@ -18,16 +18,16 @@ Validation baseline: test this copy against AIWG version 2026.5. While the copy 
 If AIWG feels confusing, start here:
 https://docs.aiwg.io/getting-started/start-here.html
 
-The path is: describe your goal, preview the wizard, deploy one focused path, then verify with aiwg status --probe --json.
+The path is: install AIWG, enter your project, then run one self-verifying `aiwg use all --provider <provider>` command.
 ```
 
 ## Community Reply
 
 ```text
-For a first AIWG session, do not start with the full catalog. Open the Start Here guide, run the wizard preview from your project folder, then ask AIWG to recommend one path and one fallback for your situation.
+For a first AIWG session, open the Start Here guide and follow the three-step install path. The final `aiwg use` command deploys, indexes, connects, and verifies the complete system.
 
 Start Here: https://docs.aiwg.io/getting-started/start-here.html
-Verification: aiwg status --probe --json
+Optional audit: aiwg status --probe --json
 ```
 
 ## Screenshot Checklist

@@ -1,6 +1,6 @@
 # Starting a New Project
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is installed and the self-verifying `aiwg use all` flow has connected your provider to this project.
 
 You have an idea. You want to build something. AIWG runs a structured intake conversation, generates the foundation documents your project needs, then assigns AI agents to carry the work forward.
 
@@ -12,7 +12,7 @@ This is the full setup — requirements, architecture, test strategy, security b
 
 ```text
 Install or repair AIWG for this project by following
-https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml
+https://aiwg.io/setup.aiwg.yaml
 Explain the plan before changing anything, preserve my existing work, and ask
 me only for choices you cannot safely determine.
 ```
@@ -32,12 +32,11 @@ git init
 
 ```bash
 aiwg use all --provider <provider>
-aiwg index build --all
-aiwg regenerate --provider <provider>
 ```
 
-The agentic installer performs these commands for you. They are shown here as
-the manual fallback.
+The agentic installer performs this for you. The command deploys the complete
+system, refreshes its indices and project context, verifies the provider
+adapter, and reports one readiness result.
 
 ---
 

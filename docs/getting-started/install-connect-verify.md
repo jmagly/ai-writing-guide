@@ -1,7 +1,7 @@
 # Install, Connect, and Verify AIWG
 
 > Need secure long-running agents? Use the [AIWG Cockpit + Agentic Sandbox
-> installer](https://raw.githubusercontent.com/jmagly/agentic-sandbox/main/setup.aiwg.yaml).
+> installer](https://aiwg.io/agentic-sandbox/setup.aiwg.yaml).
 > It audits the host, installs approved container or VM prerequisites, connects
 > Cockpit to the self-hosted executor, and verifies the control and audit path.
 
@@ -25,7 +25,7 @@ Paste this prompt into a supported provider:
 
 ```text
 Install or repair AIWG for this project by following
-https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml
+https://aiwg.io/setup.aiwg.yaml
 Explain the plan before changing anything, preserve my existing work, and ask
 me only for choices you cannot safely determine.
 ```
@@ -56,11 +56,18 @@ not use an unfamiliar administrator or `sudo` command copied from the web; use
 the [macOS install guide](macos-install.md) or ask your agent for a safe
 platform-specific installation path.
 
-After installation, use the terminal to move into the project root. If you do
-not know how, tell the agent which folder contains your project and ask for the
-exact safe command.
+## 2. Change into the project root
 
-## 2. Deploy the complete AIWG system for your provider
+Use the terminal to move into the folder you want AIWG to configure:
+
+```bash
+cd /path/to/your/project
+```
+
+If you do not know the path, tell the agent which folder contains your project
+and ask for the exact safe command.
+
+## 3. Deploy and verify the complete AIWG system
 
 The **provider** is the AI tool you will use with AIWG. The preferred default is
 `all`, which installs AIWG's complete set of frameworks and supporting
@@ -92,49 +99,15 @@ For example, a Codex user types:
 aiwg use all --provider codex
 ```
 
-This is a direct-touch bootstrap command: it installs the complete AIWG
-framework/addon surface and writes the provider-facing files the AI session
-needs. Before accepting an unexpected file location or permission request, stop
-and ask the agent to explain what will be written and whether it stays inside
-the project.
+This one command installs the complete framework/addon surface, refreshes its
+capability indices, generates canonical project context and provider adapters,
+then verifies the result. It reports `ready`, `ready-restart-required`,
+`degraded`, or `failed` with the exact next action. Do not run index,
+regenerate, status, or doctor as extra required setup steps.
 
-## 3. Build the indices and connect the first agent session
-
-In the terminal, build the project indices:
-
-```bash
-aiwg index build --all
-```
-
-Every project requires one agent-session connection after its first deployment.
-Open or reopen the provider in the project root, then invoke the deployed
-`aiwg-regenerate` skill in that session:
-
-```text
-/aiwg-regenerate   # Slash-command platforms
-$aiwg-regenerate   # OpenAI Codex
-```
-
-If your provider uses neither prefix, ask the agent directly:
-
-```text
-Run aiwg-regenerate for this project. Preserve project-authored instructions,
-connect this agent session to WORKSPACE.md and AIWG.md, and verify that AIWG is
-active before starting project work.
-```
-
-This session-side step is required even though deployment has already written
-provider files: it normalizes the project context and makes the current agent
-verify the connection it will rely on. Subsequent regeneration usually works
-without a restart; reload only if verification shows cached startup
-instructions. `aiwg-regenerate` should preserve instructions you or your team
-wrote. Ask to see a preview if the agent proposes replacing existing content.
-Legacy “full injection” is an advanced compatibility mode and is not the normal
-first-run choice.
-
-## 4. Verify engagement
-
-Ask:
+Before accepting an unexpected file location or permission request, stop and
+ask the agent to explain what will be written and whether it stays inside the
+project. After a successful result, ask:
 
 ```text
 Is AIWG active in this project? Run or read the status probe and report the
@@ -142,7 +115,8 @@ engaged state, project root, deployed provider files, installed frameworks and
 addons, and the next action.
 ```
 
-The agent should explain the result in ordinary language. Success means:
+The agent can read the same deployment evidence and explain it in ordinary
+language. Success means:
 
 - the reported project folder is the one you intended;
 - the provider name matches the AI tool you opened;
@@ -157,10 +131,12 @@ below or ask the agent to explain the mismatch first.
 
 - Wrong project: stop and reopen the provider from the intended project root.
 - Missing provider files: rerun the `all` deployment with the correct provider.
-- Provider ignores new files after indexing and regeneration: reload or restart
-  the provider, then rerun the status probe.
-- Regeneration reports conflicts: review the proposed resolution; do not
+- Provider reports `ready-restart-required`: reload or restart it once, then
+  continue in the project.
+- Context generation reports conflicts: review the proposed resolution; do not
   overwrite project-authored instructions blindly.
 
-Advanced flags and machine-readable contracts live in the
-[agent reference corpus](https://github.com/jmagly/aiwg/tree/main/docs/agents/).
+The standalone index, regenerate, status-probe, and doctor commands are still
+supported for independent audits and recovery. Advanced flags and their
+machine-readable contracts live in the [agent reference
+corpus](https://github.com/jmagly/aiwg/tree/main/docs/agents/).

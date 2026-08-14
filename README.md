@@ -12,24 +12,23 @@ The simplest setup is to paste this into a supported AI provider:
 
 ```text
 Install or repair AIWG for this project by following
-https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml
+https://aiwg.io/setup.aiwg.yaml
 Explain the plan before changing anything, preserve my existing work, and ask
 me only for choices you cannot safely determine.
 ```
 
 The installer detects old, broken, duplicate, and development-mode installs,
 then guides you through repair or update. It deploys the preferred complete
-system with `aiwg use all`, builds the indices, regenerates the project context,
-and verifies engagement. Most providers can continue in the same session. It
-asks you to restart only when the provider is demonstrably caching old startup
-instructions.
+system with one self-verifying `aiwg use all` command. That command refreshes
+the indices, regenerates project context, verifies the resulting deployment,
+and reports whether a provider reload is actually required.
 
 For secure long-running agents, install AIWG Cockpit with a self-hosted Agentic
 Sandbox executor you control and audit:
 
 ```text
 Install or repair AIWG Cockpit and Agentic Sandbox by following
-https://raw.githubusercontent.com/jmagly/agentic-sandbox/main/setup.aiwg.yaml
+https://aiwg.io/agentic-sandbox/setup.aiwg.yaml
 Install the required prerequisites, explain the plan before changing anything,
 preserve my existing work, and ask me about the isolation, network, storage,
 and access choices you cannot safely determine.
@@ -45,13 +44,14 @@ If you prefer to install manually:
 npm i -g aiwg
 cd /path/to/your/project
 aiwg use all --provider <provider>
-aiwg index build --all
-aiwg regenerate --provider <provider>
-aiwg status --probe --json
 ```
 
 Replace `<provider>` with your AI tool's name, such as `claude`, `codex`,
 `copilot`, or `cursor`.
+
+The final command deploys, indexes, connects, verifies, and reports one outcome.
+The standalone index, regenerate, status, and doctor commands remain available
+for advanced maintenance and troubleshooting; they are not extra install steps.
 
 For the complete beginner path and provider-name table, see
 [Install, Connect, and Verify](docs/getting-started/install-connect-verify.md).
