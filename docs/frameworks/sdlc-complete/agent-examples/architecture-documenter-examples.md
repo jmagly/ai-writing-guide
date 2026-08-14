@@ -393,7 +393,7 @@ Use PostgreSQL 15 (AWS RDS) as the primary database.
 ## References
 - [PostgreSQL vs. MongoDB](https://example.com/comparison)
 - [AWS RDS PostgreSQL Pricing](https://aws.amazon.com/rds/postgresql/pricing/)
-- [Team Expertise Assessment](./team-skills.md)
+- Team Expertise Assessment (project-local reference)
 
 ## Related Decisions
 - ADR-002: API Gateway selection

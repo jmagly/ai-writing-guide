@@ -1,4 +1,4 @@
-# ADR: Fortemi AGPL runtime boundary
+# Decision record: Fortemi AGPL runtime boundary
 
 - Status: accepted for transparent disclosure; legal conclusion unresolved
 - Date: 2026-08-14
@@ -46,7 +46,7 @@ The AGPL network clause is conditional. Ordinary local CLI execution is not inhe
 
 1. Preserve Fortemi as a production dependency and keep existing discovery and shard capabilities.
 2. Do not describe the installed AIWG/Fortemi runtime as unconditionally MIT-only. “MIT” continues to describe AIWG-authored code and the AIWG package's license field; dependency licenses remain independently applicable, and the combined-work question is explicitly unresolved.
-3. Ship [`THIRD_PARTY_NOTICES.md`](../../THIRD_PARTY_NOTICES.md) in both npm packages. It names the reviewed licenses, versions, immutable source commits, release tags, registry integrity values, entry points, and inspection commands.
+3. Ship [`THIRD_PARTY_NOTICES.md`](https://github.com/jmagly/aiwg/blob/main/THIRD_PARTY_NOTICES.md) in both npm packages. It names the reviewed licenses, versions, immutable source commits, release tags, registry integrity values, entry points, and inspection commands.
 4. Continue signed SBOM publication, but describe it accurately as the installed release graph observed by CI rather than files embedded in the AIWG tarball.
 5. Keep the exact Fortemi pin. Do not reclassify a runtime import as development-only or hide either dependency from metadata/SBOM output.
 6. Seek a capability-preserving resolution before making a stronger licensing claim. Preferred order:

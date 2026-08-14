@@ -313,7 +313,7 @@ The `aiwg` and `@aiwg/cli` package archives also ship
 `THIRD_PARTY_NOTICES.md`. It identifies the reviewed AGPL-licensed Fortemi and
 Bytecask runtime dependencies, immutable source references, and commands for
 checking the versions npm actually resolved. The detailed boundary decision is
-in [`adr-fortemi-agpl-runtime-boundary.md`](../architecture/adr-fortemi-agpl-runtime-boundary.md).
+in [`fortemi-agpl-runtime-boundary.md`](../contributing/fortemi-agpl-runtime-boundary.md).
 
 ### Feeding into an SCA scanner
 

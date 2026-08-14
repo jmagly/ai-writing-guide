@@ -8,6 +8,7 @@
     "testing-requirements",
     "publishing-blog-posts",
     "release-plan-sidecars",
-    "socket-post-publish-audit"
+    "socket-post-publish-audit",
+    "fortemi-agpl-runtime-boundary"
   ]
 }
