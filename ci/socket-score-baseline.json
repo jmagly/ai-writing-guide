@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "source": "Socket package analysis",
+  "capturedFrom": "https://socket.dev/npm/package/aiwg/overview/2026.8.8",
+  "capturedOn": "2026-08-14",
+  "policy": {
+    "materialScoreDrop": 0.1,
+    "blockingSeverities": ["high", "critical"],
+    "reviewOwner": "AIWG maintainers",
+    "reviewExpiresOn": "2026-11-14"
+  },
+  "packages": {
+    "aiwg": {
+      "version": "2026.8.8",
+      "scores": {
+        "supplyChain": 0.57,
+        "quality": 1,
+        "maintenance": 0.95,
+        "vulnerability": 1,
+        "license": 0.7
+      }
+    },
+    "@aiwg/cli": {
+      "version": "2026.8.8",
+      "scores": {
+        "supplyChain": 0.57,
+        "quality": 1,
+        "maintenance": 0.95,
+        "vulnerability": 1,
+        "license": 1
+      }
+    }
+  },
+  "reviewedCapabilityAlerts": [
+    {
+      "package": "*",
+      "depth": "direct",
+      "type": "shellAccess",
+      "classification": "required-capability",
+      "rationale": "AIWG is an orchestration CLI whose documented workflows intentionally invoke local tools after user approval.",
+      "owner": "AIWG maintainers",
+      "reviewedOn": "2026-08-14",
+      "expiresOn": "2026-11-14",
+      "revalidateWhen": "Shell execution boundaries, approval gates, or command dispatch code changes."
+    },
+    {
+      "package": "*",
+      "depth": "direct",
+      "type": "filesystemAccess",
+      "classification": "required-capability",
+      "rationale": "AIWG installs and manages project-owned workflow, agent, skill, and context files.",
+      "owner": "AIWG maintainers",
+      "reviewedOn": "2026-08-14",
+      "expiresOn": "2026-11-14",
+      "revalidateWhen": "Install roots, path validation, or write authorization behavior changes."
+    },
+    {
+      "package": "*",
+      "depth": "direct",
+      "type": "networkAccess",
+      "classification": "required-capability",
+      "rationale": "AIWG retrieves explicitly selected public resources and serves opt-in local integrations.",
+      "owner": "AIWG maintainers",
+      "reviewedOn": "2026-08-14",
+      "expiresOn": "2026-11-14",
+      "revalidateWhen": "Remote origins, transport policy, or network-facing commands change."
+    },
+    {
+      "package": "*",
+      "depth": "direct",
+      "type": "envVars",
+      "classification": "required-capability",
+      "rationale": "The CLI reads documented environment configuration while secret values remain excluded from reports and logs.",
+      "owner": "AIWG maintainers",
+      "reviewedOn": "2026-08-14",
+      "expiresOn": "2026-11-14",
+      "revalidateWhen": "Environment-variable handling or redaction policy changes."
+    },
+    {
+      "package": "*",
+      "depth": "direct",
+      "type": "urlAccess",
+      "classification": "required-capability",
+      "rationale": "Public, versioned web resources are a supported AIWG distribution channel.",
+      "owner": "AIWG maintainers",
+      "reviewedOn": "2026-08-14",
+      "expiresOn": "2026-11-14",
+      "revalidateWhen": "Resource URL allowlisting or release distribution changes."
+    }
+  ]
+}

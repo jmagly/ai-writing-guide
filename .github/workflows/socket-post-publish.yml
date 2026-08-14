@@ -1,0 +1,82 @@
+name: Socket post-publish evidence
+
+on:
+  workflow_run:
+    workflows: ['Publish to npmjs.org (OIDC + provenance)']
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Published AIWG version to audit
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: socket-post-publish-${{ github.event.workflow_run.head_sha || inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb
+    timeout-minutes: 15
+    steps:
+      - name: Checkout audited release source
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Resolve published version
+        id: release
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          VERSION="${INPUT_VERSION:-$(node -p "require('./package.json').version")}" 
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build published dependency inventory
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          AUDIT_ROOT="$RUNNER_TEMP/aiwg-socket-audit"
+          mkdir -p "$AUDIT_ROOT"
+          npm install --prefix "$AUDIT_ROOT" --package-lock-only --ignore-scripts --no-audit --no-fund \
+            "aiwg@$VERSION" "@aiwg/cli@$VERSION"
+          echo "dependency_lock=$AUDIT_ROOT/package-lock.json" >> "$GITHUB_ENV"
+
+      - name: Query Socket and evaluate baseline
+        id: socket
+        continue-on-error: true
+        env:
+          SOCKET_API_TOKEN: ${{ secrets.SOCKET_API_TOKEN }}
+          SOCKET_ORG_SLUG: ${{ vars.SOCKET_ORG_SLUG }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          node tools/release/socket-post-publish-audit.mjs \
+            --version "$VERSION" \
+            --dependency-lock "$dependency_lock" \
+            --output-dir test-results/socket-post-publish
+
+      - name: Upload Socket evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: socket-post-publish-${{ steps.release.outputs.version }}
+          path: test-results/socket-post-publish/
+          if-no-files-found: error
+
+      - name: Enforce audit result
+        if: always()
+        env:
+          AUDIT_OUTCOME: ${{ steps.socket.outcome }}
+        run: |
+          if [ "$AUDIT_OUTCOME" != "success" ]; then
+            echo "Socket evidence is failing or unavailable; inspect the uploaded report."
+            exit 1
+          fi

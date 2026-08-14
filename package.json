@@ -32,6 +32,7 @@
     "docs:discoverability:audit": "node tools/docs/audit-discoverability.mjs",
     "docs:collect:dry": "node tools/manifest/collect-component-docs.mjs --dry-run",
     "release:fortemi-index": "tsx tools/release/build-fortemi-core-indices.mjs",
+    "audit:socket-release": "node tools/release/socket-post-publish-audit.mjs",
     "prepack": "npm run release:fortemi-index",
     "test:release-discovery": "vitest run --config config/vitest.config.js test/integration/artifacts/discover-fortemi-corpus.test.ts",
     "security:threat-assess": "node tools/security/assess-forge-content.mjs",

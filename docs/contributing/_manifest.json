@@ -7,6 +7,7 @@
     "maintainer-review-guide",
     "testing-requirements",
     "publishing-blog-posts",
-    "release-plan-sidecars"
+    "release-plan-sidecars",
+    "socket-post-publish-audit"
   ]
 }
