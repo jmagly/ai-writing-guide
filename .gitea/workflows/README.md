@@ -114,6 +114,13 @@ result other than `success: true`. If purge credentials are not configured, the
 deployment records an explicit degraded-CDN notice and allows origin deployment
 to complete. Rollbacks use this same deployment workflow and scoped purge path.
 
+Account-level cache configuration is owned separately by
+`cloudflare-zone-policy.yml`. It uses the same vault-backed zone route to set
+Browser Cache TTL to **Respect Existing Headers**, then reads the setting back
+and fails unless the value is `0`. Site repositories retain responsibility for
+their origin headers and public verification; they do not duplicate or broaden
+the shared zone credential.
+
 After a successful purge, the workflow fetches a deployment-specific marker
 from the public site and requires its contents to match the deployed commit. It
 also requires the response to carry both `Cache-Control` and `ETag` validators,

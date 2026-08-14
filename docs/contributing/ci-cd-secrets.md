@@ -30,6 +30,7 @@ issued by the CI system and is still used by PR-comment workflows.
 | `.gitea/workflows/notify-site.yml`         | `ci/vault-fetch.notify-site.spec`         | `AIWG_IO_DISPATCH_TOKEN`  |
 | `.gitea/workflows/docsite-deploy.yml`      | `ci/vault-fetch.docsite-deploy.spec`      | `DOCSITE_DEPLOY_KEY_FILE` |
 | `.gitea/workflows/docsite-deploy.yml`      | `ci/vault-fetch.docsite-cloudflare.spec`  | `CLOUDFLARE_API_TOKEN`   |
+| `.gitea/workflows/cloudflare-zone-policy.yml` | `ci/vault-fetch.docsite-cloudflare.spec` | `CLOUDFLARE_API_TOKEN`   |
 
 The specs contain only `*_VAULT_PATH` and `*_VAULT_FIELD` placeholders. Concrete
 vault paths, metadata paths, hostnames, and fields are stored as private Gitea

@@ -1,0 +1,67 @@
+# Cloudflare Zone Policy
+#
+# Owns account-level settings shared by aiwg.io and docs.aiwg.io. The API token
+# remains in vault and is fetched through AIWG's existing least-privilege CI
+# AppRole; sibling site repositories verify the resulting public policy.
+
+name: Cloudflare Zone Policy
+
+env:
+  VAULT_ADDR: ${{ vars.VAULT_ADDR }}
+  CLOUDFLARE_API_TOKEN_VAULT_PATH: ${{ vars.CLOUDFLARE_API_TOKEN_VAULT_PATH }}
+  CLOUDFLARE_API_TOKEN_VAULT_FIELD: ${{ vars.CLOUDFLARE_API_TOKEN_VAULT_FIELD }}
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.gitea/workflows/cloudflare-zone-policy.yml'
+      - 'ci/vault-fetch.docsite-cloudflare.spec'
+      - 'tools/deploy/configure-cloudflare-zone-policy.mjs'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Why the zone policy is being reconciled'
+        required: false
+        type: string
+        default: 'Manual zone-policy reconciliation'
+
+permissions:
+  contents: read
+
+jobs:
+  reconcile:
+    name: Reconcile Browser Cache TTL
+    if: ${{ secrets.VAULT_CI_ROLE_ID != '' && secrets.VAULT_CI_SECRET_ID != '' }}
+    runs-on: ubuntu-latest
+    container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout AIWG
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Install secret-fetch dependencies
+        run: |
+          set -euo pipefail
+          sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources
+          apt-get update
+          apt-get install -y --no-install-recommends curl jq
+
+      - name: Fetch shared Cloudflare zone token from vault
+        env:
+          VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
+          VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
+        run: bash ci/vault-fetch.sh --spec ci/vault-fetch.docsite-cloudflare.spec
+
+      - name: Reconcile Browser Cache TTL
+        env:
+          CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}
+        run: node tools/deploy/configure-cloudflare-zone-policy.mjs
+
+      - name: Remove fetched material
+        if: always()
+        run: bash ci/vault-fetch.sh --cleanup
