@@ -191,14 +191,15 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
     expect(existsSync(skillsDir)).toBe(true);
   });
 
-  it('reports native and discoverable skill counts separately', () => {
+  it('reports deployed and indexed skill counts in separate sections', () => {
     const result = runAiwg(fullUseAllArgs(projectDir), projectDir);
     expect(result.exitCode, `aiwg use all failed (exit ${result.exitCode}):\nstdout: ${result.stdout}\nstderr: ${result.stderr}`).toBe(0);
 
     expect(result.stdout).toMatch(/Installing complete AIWG surface/);
-    expect(result.stdout).toMatch(/Skills\s+\d+ deployed/);
-    expect(result.stdout).toMatch(/Discoverable skills\s+\d+ deployed/);
-  });
+    expect(result.stdout).toMatch(/Deployed to Claude Code \(claude\)[\s\S]*\bSkills \d+\b/);
+    expect(result.stdout).toMatch(/Indexed for discovery[\s\S]*\bskill \d+\b/);
+    expect(result.stdout).not.toMatch(/Discoverable skills\s+\d+ deployed/);
+  }, 30_000);
 
   it('deploys more skills than the old hardcoded 4-addon set would produce', async () => {
     const result = runAiwg(fullUseAllArgs(projectDir), projectDir);
@@ -317,11 +318,11 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
       const gitignore = await fs.readFile(path.join(projectDir, '.gitignore'), 'utf-8');
       expect(gitignore).toContain('.codex/');
       expect(gitignore).toContain('.agents/');
-      expect(result.stdout).toMatch(/Skills\s+[1-9]\d*\s+deployed/);
+      expect(result.stdout).toMatch(/Deployed to OpenAI Codex \(codex\)[\s\S]*\bSkills [1-9]\d*\b/);
     } finally {
       rmSync(homeDir, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   it('writes complete RULES-ONDEMAND indexes for Claude and Codex after real aiwg use all (#1784)', async () => {
     for (const provider of ['claude', 'codex']) {
