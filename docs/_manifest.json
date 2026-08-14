@@ -85,6 +85,7 @@
     "reports/agentskills-standard-audit-2026-07-25",
     "configuration/aiwg-config",
     "security/threat-assessment-policy",
+    "security/context-memory-firewall",
     "security/repo-access-manifest",
     "fortemi-core-prebuilt-indices",
     "user-level-indices",
@@ -905,6 +906,13 @@
       "title": "Threat-Assessment Policy",
       "summary": "Configure deterministic threat assessment across forge and delivery surfaces",
       "file": "security/threat-assessment-policy.md",
+      "parent": "reference"
+    },
+    {
+      "id": "security/context-memory-firewall",
+      "title": "Context and Memory Firewall",
+      "summary": "Audit provider context budgets, deployment drift, and persistent-memory trust",
+      "file": "security/context-memory-firewall.md",
       "parent": "reference"
     },
     {
