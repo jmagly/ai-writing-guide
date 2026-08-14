@@ -21,8 +21,11 @@ model-tier: economy
 When the target is AIWG itself and the user supplies the public
 `setup.aiwg.yaml`, treat it as the canonical
 `provider-orchestrated` install/repair contract. Follow its inspection,
-approval, preservation, deployment, regeneration, and verification stages in
-the current provider session. Do not pass it to deterministic `aiwg setup-run`.
+approval, preservation, deployment, and structured-result verification stages
+in the current provider session. The ordinary path ends with the self-verifying
+`aiwg use` result; standalone index, regenerate, status, and doctor commands are
+audit and recovery routes, not mandatory follow-up steps. Do not pass the
+manifest to deterministic `aiwg setup-run`.
 
 Before mutation, classify the scenario: new or existing project; healthy,
 stale, broken, duplicate, or development-mode AIWG; project-local or approved

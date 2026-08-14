@@ -70,7 +70,7 @@ AIWG CLI output is verbose. Preserve context:
 
 | Intent | First route |
 |---|---|
-| Install or repair AIWG from zero to verified engagement | Follow `https://raw.githubusercontent.com/jmagly/aiwg/main/setup.aiwg.yaml` in the current provider; inspect and plan before mutation, then verify with `aiwg status --probe --json` and `aiwg doctor` |
+| Install or repair AIWG from zero to verified engagement | Follow `https://aiwg.io/setup.aiwg.yaml` in the current provider; inspect and plan before mutation, then evaluate the self-verifying `aiwg use` result; reserve status and doctor for audit or recovery |
 | CI, container image, cloud-init, SSH-only, offline, or non-interactive setup | `docs/install/non-interactive.md`; do not force the conversational manifest through `setup-run` |
 | Provider native/emulated support | `aiwg steward capabilities` or `aiwg steward find --capability <feature>`; source: `agentic/code/providers/capability-matrix.yaml` |
 | Model routing, model catalog provenance, token/cost escalation | `aiwg steward models`; then `aiwg models sources --json`, `aiwg models refresh --json`, `aiwg models audit --provider <provider>`, or `aiwg models resolve --provider <provider>` |
