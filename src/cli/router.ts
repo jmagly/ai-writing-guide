@@ -227,7 +227,9 @@ export async function run(
 
     // Output message if present
     if (result.message) {
-      if (result.exitCode !== 0) {
+      if (result.rawOutput) {
+        process.stdout.write(result.message.endsWith('\n') ? result.message : `${result.message}\n`);
+      } else if (result.exitCode !== 0) {
         ui.error(result.message);
       } else {
         ui.info(result.message);

@@ -13,6 +13,7 @@ import { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { createScriptRunner } from './script-runner.js';
 import { getFrameworkRoot } from '../../channel/manager.mjs';
 import { maybePrintCommunityFooter } from '../../community/footer.js';
+import { buildDeploymentStatusProbe } from '../services/deployment-verification.js';
 
 /**
  * Handler for workspace status command
@@ -33,6 +34,16 @@ export const statusHandler: CommandHandler = {
   aliases: ['-status', '--status'],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    if (ctx.args.includes('--probe')) {
+      const projectRoot = ctx.args.find((arg) => !arg.startsWith('-')) ?? ctx.cwd ?? process.cwd();
+      const probe = await buildDeploymentStatusProbe(projectRoot, ctx.frameworkRoot);
+      return {
+        exitCode: probe.status === 'needs-repair' ? 1 : 0,
+        message: JSON.stringify(probe, null, 2),
+        rawOutput: true,
+      };
+    }
+
     const frameworkRoot = await getFrameworkRoot();
     const runner = createScriptRunner(frameworkRoot);
 

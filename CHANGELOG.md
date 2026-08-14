@@ -7,6 +7,23 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Self-verifying deployment workflow** - `aiwg use` now composes deployment,
+  capability indexing, canonical context generation, and scoped verification
+  into one command. Human output reports a stable readiness outcome and
+  provider reload action; `--json` emits the versioned
+  `aiwg.use.result.v1` envelope. `aiwg doctor --deployment` and
+  `aiwg status --probe --json` reuse the same verification primitives.
+
+### Fixed
+
+- **Deployment false-success and false-failure handling** - required artifact,
+  registry, index, context, and provider-wiring failures produce a non-zero
+  result, advisory-only limitations remain usable, repeated installs are
+  idempotent, and machine-readable failures remain valid JSON without a
+  presentation prefix.
+
 ## [2026.8.8] - 2026-08-12 - "Managed project capability routing"
 
 ### Added

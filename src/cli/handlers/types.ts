@@ -18,6 +18,9 @@ export interface HandlerResult {
   /** Output message (optional) */
   message?: string;
 
+  /** Emit message verbatim to stdout, including for non-zero machine-readable results. */
+  rawOutput?: boolean;
+
   /** Error details (optional) */
   error?: Error;
 }
