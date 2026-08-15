@@ -32,6 +32,11 @@ function readJson(root, relativePath) {
   return JSON.parse(readFileSync(resolve(root, relativePath), 'utf8'));
 }
 
+function versionMajor(version) {
+  const match = String(version ?? '').match(/\d+/);
+  return match ? Number.parseInt(match[0], 10) : null;
+}
+
 export function checkVersionLockstep(
   root = REPO_ROOT,
   { allowPrereleaseMismatch = false } = {},
@@ -41,6 +46,8 @@ export function checkVersionLockstep(
   const cli = readJson(root, 'packages/cli/package.json');
   const cockpit = readJson(root, 'apps/cockpit/package.json');
   const cockpitLock = readJson(root, 'apps/cockpit/package-lock.json');
+  const cockpitWeb = readJson(root, 'apps/cockpit/web/package.json');
+  const cockpitWebLock = readJson(root, 'apps/cockpit/web/package-lock.json');
   const marketplace = JSON.parse(
     readFileSync(resolve(root, '.claude-plugin/marketplace.json'), 'utf8'),
   );
@@ -53,6 +60,29 @@ export function checkVersionLockstep(
   const cockpitVersion = cockpit?.version;
   const cockpitLockVersion = cockpitLock?.version;
   const cockpitLockRootVersion = cockpitLock?.packages?.['']?.version;
+  const rootVitest = pkg?.devDependencies?.vitest;
+  const cockpitVitestSurfaces = [
+    {
+      label: 'apps/cockpit/web/package.json devDependencies.vitest',
+      value: cockpitWeb?.devDependencies?.vitest,
+    },
+    {
+      label: 'apps/cockpit/package-lock.json packages["web"].devDependencies.vitest',
+      value: cockpitLock?.packages?.web?.devDependencies?.vitest,
+    },
+    {
+      label: 'apps/cockpit/package-lock.json Vitest resolution',
+      value: cockpitLock?.packages?.['node_modules/vitest']?.version,
+    },
+    {
+      label: 'apps/cockpit/web/package-lock.json root devDependencies.vitest',
+      value: cockpitWebLock?.packages?.['']?.devDependencies?.vitest,
+    },
+    {
+      label: 'apps/cockpit/web/package-lock.json Vitest resolution',
+      value: cockpitWebLock?.packages?.['node_modules/vitest']?.version,
+    },
+  ];
   const localMarketplacePlugins = (marketplace?.plugins ?? []).filter((plugin) => (
     typeof plugin?.source === 'string' && plugin.source.startsWith('./agentic/code/plugins/')
   ));
@@ -104,6 +134,26 @@ export function checkVersionLockstep(
       ok: false,
       message: 'FAIL: apps/cockpit/package-lock.json packages[""].version missing',
     };
+  }
+
+  const expectedVitestMajor = versionMajor(rootVitest);
+  if (expectedVitestMajor === null) {
+    return {
+      ok: false,
+      message: 'FAIL: package.json devDependencies.vitest is missing or invalid',
+    };
+  }
+
+  for (const surface of cockpitVitestSurfaces) {
+    if (versionMajor(surface.value) !== expectedVitestMajor) {
+      return {
+        ok: false,
+        message:
+          `FAIL: ${surface.label} (${surface.value ?? 'missing'}) does not match ` +
+          `Vitest major ${expectedVitestMajor} from package.json (${rootVitest}).`,
+        fix: 'Fix: regenerate both Cockpit lockfiles after aligning the web Vitest dependency.',
+      };
+    }
   }
 
   if (cliVersion !== pkgVersion) {
