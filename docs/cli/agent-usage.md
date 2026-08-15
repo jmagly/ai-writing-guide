@@ -307,10 +307,15 @@ Maintainer checkouts can already relocate the project AIWG artifact directory
 with the project pointer file written by the CLI:
 
 ```bash
+aiwg artifacts path
+aiwg artifacts path --json
 aiwg artifacts move --to ../aiwg-web-release-ops/corpus/.aiwg
 ```
 
-The command moves the configured artifact root, writes `.aiwg-location`,
+The `path` command prints the effective absolute artifact root so scripts and
+agent workflows do not accidentally write payloads into a split-root project's
+local control plane. The `move` command moves the configured artifact root,
+writes `.aiwg-location`,
 updates `.gitignore` for the local pointer, rebuilds the project index, and
 syncs the Fortemi Core static cache. It retains the repository-local AIWG
 control plane while relocating corpus-heavy directories. Diagnose and safely

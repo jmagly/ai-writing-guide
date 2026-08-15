@@ -294,7 +294,7 @@ flowchart LR
   SOURCE --> CLI
 
   CLI --> CC[".claude/agents/<br/>.claude/skills/<br/>.claude/rules/"]
-  CLI --> CX[".codex/agents/<br/>~/.codex/skills/<br/>~/.codex/prompts/"]
+  CLI --> CX[".codex/agents/<br/>.agents/skills/<br/>~/.codex/prompts/"]
   CLI --> CP[".github/agents/<br/>.github/skills/<br/>.github/instructions/"]
   CLI --> CR[".cursor/agents/<br/>.cursor/skills/<br/>.cursor/rules/"]
   CLI --> WP[".warp/agents/<br/>.warp/skills/<br/>+ WARP.md aggregate"]

@@ -2,12 +2,14 @@ import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { getProjectDir } from '../../config/aiwg-config.js';
 import { moveProjectArtifacts } from '../../artifacts/move.js';
 import { repairProjectArtifacts } from '../../artifacts/repair.js';
+import { resolveProjectAiwgDir } from '../../config/project-artifacts.js';
 
 function usage(): string {
   return [
     'aiwg artifacts — Manage the project AIWG artifact root',
     '',
     'Usage:',
+    '  aiwg artifacts path [--json]',
     '  aiwg artifacts move --to <path> [--from <path>] [--dry-run] [--no-reindex] [--no-sync]',
     '  aiwg artifacts attach --to <existing-path> [--dry-run] [--no-reindex] [--no-sync]',
     '  aiwg artifacts repair --dry-run',
@@ -39,8 +41,25 @@ export const artifactsHandler: CommandHandler = {
     if (action === 'help' || ctx.args.includes('--help') || ctx.args.includes('-h')) {
       return { exitCode: 0, message: usage() };
     }
-    if (action !== 'move' && action !== 'attach' && action !== 'repair') {
+    if (action !== 'path' && action !== 'move' && action !== 'attach' && action !== 'repair') {
       return { exitCode: 1, message: `Unknown artifacts action: ${action}\n\n${usage()}` };
+    }
+
+    if (action === 'path') {
+      const projectDir = getProjectDir(ctx, ctx.args);
+      const artifactRoot = resolveProjectAiwgDir(projectDir);
+      if (ctx.args.includes('--json')) {
+        return {
+          exitCode: 0,
+          message: JSON.stringify({
+            schema: 'aiwg.artifacts.path.v1',
+            project_root: projectDir,
+            artifact_root: artifactRoot,
+          }, null, 2),
+          rawOutput: true,
+        };
+      }
+      return { exitCode: 0, message: artifactRoot, rawOutput: true };
     }
 
     if (action === 'repair') {

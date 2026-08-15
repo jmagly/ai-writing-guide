@@ -198,22 +198,33 @@ describe('kernel deployment conformance', () => {
     ).sort()).toEqual(EXPECTED_KERNEL);
   });
 
-  it('repairs an oversized Codex deployment while preserving operator-owned skills', () => {
-    const first = deploy('codex', { copyAll: true, suffix: 'repair' });
-    const root = PROVIDERS[1].root(first.project, first.home);
-    const operator = join(root, 'operator-owned-fixture');
-    mkdirSync(operator, { recursive: true });
-    writeFileSync(join(operator, 'SKILL.md'), '---\nname: operator-owned-fixture\ndescription: operator-owned skill\n---\noperator\n');
+  for (const provider of PROVIDERS) {
+    it(`${provider.id} repairs a full-copy deployment while preserving operator-owned skills`, () => {
+      const first = deploy(provider.id, { copyAll: true, suffix: 'repair' });
+      const kernelRoot = provider.root(first.project, first.home);
+      const standardRoot = provider.standardRoot(first.project, first.home);
+      const operator = join(kernelRoot, 'operator-owned-fixture');
+      mkdirSync(operator, { recursive: true });
+      writeFileSync(join(operator, 'SKILL.md'), '---\nname: operator-owned-fixture\ndescription: operator-owned skill\n---\noperator\n');
+      expect(existsSync(join(standardRoot, 'voice-apply', 'SKILL.md'))).toBe(true);
 
-    const repaired = deploy('codex', { suffix: 'repair' });
-    const repairedRoot = PROVIDERS[1].root(repaired.project, repaired.home);
-    const stats = codexListingStats(repairedRoot);
+      const repaired = deploy(provider.id, { suffix: 'repair' });
+      const repairedKernelRoot = provider.root(repaired.project, repaired.home);
+      const repairedStandardRoot = provider.standardRoot(repaired.project, repaired.home);
 
-    expect(existsSync(join(repairedRoot, 'voice-apply'))).toBe(false);
-    expect(existsSync(operator)).toBe(true);
-    expect(stats.count).toBe(EXPECTED_KERNEL.length + 1);
-    expect(stats.totalChars).toBeLessThanOrEqual(CODEX_LISTING_CHAR_CAP);
-  });
+      expect(existsSync(join(repairedStandardRoot, 'voice-apply'))).toBe(false);
+      expect(existsSync(operator)).toBe(true);
+      expect(skillDirs(repairedKernelRoot).map(dir => dir.split('/').at(-1)!).filter(name =>
+        EXPECTED_KERNEL.includes(name)
+      ).sort()).toEqual(EXPECTED_KERNEL);
+
+      if (provider.id === 'codex') {
+        const stats = codexListingStats(repairedKernelRoot);
+        expect(stats.count).toBe(EXPECTED_KERNEL.length + 1);
+        expect(stats.totalChars).toBeLessThanOrEqual(CODEX_LISTING_CHAR_CAP);
+      }
+    });
+  }
 
   it('moves managed skills cleanly across kernel and standard tiers', async () => {
     const root = join(TEST_ROOT, 'tier-transition');

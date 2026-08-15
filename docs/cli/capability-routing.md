@@ -296,11 +296,13 @@ The kernel + standard split applies uniformly. All 11 providers honor the `--cop
 | Hermes | `~/.hermes/skills/` | `~/.hermes/.aiwg/skills/` | — |
 | OpenCode | `.opencode/skill/` | `.opencode/.aiwg/skill/` | `.agents/skills/` |
 | OpenClaw | `~/.openclaw/skills/aiwg/` | `~/.openclaw/.aiwg/skills/` | `.agents/skills/` |
-| Codex | `~/.codex/skills/` | `~/.codex/skills/` (filtered) | `.agents/skills/` |
+| Codex | `.agents/skills/` | `.agents/skills/` (with `--copy-all`) | `.agents/skills/` |
 
 **Notes on the asymmetric providers:**
 
-- **Codex** writes to `~/.codex/skills/` (home-dir, single tier). The deploy script filters by `kernel: true` by default, so only kernel skills land. Pass `--copy-all` to write the full set.
+- **Codex** writes to project `.agents/skills/`, filtering by `kernel: true` by
+  default. Pass `--copy-all` to add the standard tier there. AIWG-managed
+  entries in legacy `~/.codex/skills/` are pruned to avoid duplicate discovery.
 - **OpenCode** uses singular `.opencode/skill/` (platform convention). Cross-agent dump at `.agents/skills/` honors the same env-var filter.
 - **OpenClaw** is user-scope only — pass `--scope user`, not `--target`. Kernel skills nest under `aiwg/` namespace at `~/.openclaw/skills/aiwg/` to avoid collisions with non-AIWG ClaWHub installs.
 

@@ -4075,11 +4075,16 @@ aiwg index <subcommand> [options]
 Manage the configured project AIWG artifact root.
 
 ```bash
+aiwg artifacts path [--json]
 aiwg artifacts move --to <path> [--from <path>] [--dry-run] [--no-reindex] [--no-sync]
 aiwg artifacts attach --to <existing-path> [--dry-run] [--no-reindex] [--no-sync]
 aiwg artifacts repair --dry-run
 aiwg artifacts repair --apply
 ```
+
+`path` prints the resolved absolute artifact root for scripts and agent
+workflows; `--json` returns the stable `aiwg.artifacts.path.v1` envelope. It
+honors artifact-root environment overrides and `.aiwg-location`.
 
 `move` relocates or renames the current artifact root, writes `.aiwg-location`
 in the project root, updates `.gitignore` so the pointer remains local,

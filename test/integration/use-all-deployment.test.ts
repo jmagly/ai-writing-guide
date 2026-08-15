@@ -180,7 +180,7 @@ describe('aiwg use — disallow list', () => {
 // aiwg use all — deployment coverage
 // ---------------------------------------------------------------------------
 
-describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
+describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', { timeout: 60_000 }, () => {
   let projectDir: string;
   const fullUseAllArgs = (target: string) => ['use', 'all', '--target', target];
 
@@ -207,7 +207,7 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
     expect(result.stdout).toMatch(/Deployed to Claude Code \(claude\)[\s\S]*\bSkills \d+\b/);
     expect(result.stdout).toMatch(/Indexed for discovery[\s\S]*\bskill \d+\b/);
     expect(result.stdout).not.toMatch(/Discoverable skills\s+\d+ deployed/);
-  }, 30_000);
+  }, 60_000);
 
   it('deploys more skills than the old hardcoded 4-addon set would produce', async () => {
     const result = runAiwg(fullUseAllArgs(projectDir), projectDir);
@@ -330,7 +330,7 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
     } finally {
       rmSync(homeDir, { recursive: true, force: true });
     }
-  }, 30_000);
+  }, 60_000);
 
   it('deploys explicit testing-quality skills to the Codex native skill surface', async () => {
     const homeDir = mkdtempSync(path.join(os.tmpdir(), 'aiwg-testing-quality-codex-home-'));

@@ -100,7 +100,7 @@ AIWG command and skill exposure is provider-specific. Do not assume one provider
 | OpenCode | `.opencode/skill/<name>/SKILL.md` for kernel skills; `.opencode/.aiwg/skill/` for indexed standard tier | `.opencode/command/*.md` | Generate command wrappers for selected operator workflows so command picker behavior stays deterministic. |
 | Factory AI | `.factory/skills/<name>/SKILL.md` | `.factory/commands/*.md` plus skill slash invocation | Mirror selected operator workflows; keep skills canonical. |
 | GitHub Copilot | `.github/skills/<name>/SKILL.md` | `.github/prompts/*.prompt.md` | Dual-write prompt wrappers for selected operator workflows because Copilot exposes prompt files through its command/prompt picker. |
-| Codex | `~/.codex/skills/` and `.agents/skills/` compatibility paths | `~/.codex/prompts/` for user-visible prompts | Generate prompt wrappers for operator visibility; skill execution still routes through the indexed corpus. |
+| Codex | `.agents/skills/` project path; legacy AIWG entries in `~/.codex/skills/` are pruned | `~/.codex/prompts/` for user-visible prompts | Generate prompt wrappers for operator visibility; skill execution still routes through the indexed corpus. |
 
 ### Mirrored-Command Policy
 

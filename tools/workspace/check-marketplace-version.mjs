@@ -2,7 +2,7 @@
 /**
  * Verify release version metadata matches package.json version.
  *
- * PUW-038 (#1139): package-lock.json, separately published packages, and the
+ * PUW-038 (#1139): package lockfiles, separately published packages, and the
  * marketplace manifest's top-level version must move in lockstep
  * with package.json on every release; otherwise installs and plugin surfaces
  * can report stale versions while npm ships the new one.
@@ -39,6 +39,8 @@ export function checkVersionLockstep(
   const pkg = readJson(root, 'package.json');
   const lock = readJson(root, 'package-lock.json');
   const cli = readJson(root, 'packages/cli/package.json');
+  const cockpit = readJson(root, 'apps/cockpit/package.json');
+  const cockpitLock = readJson(root, 'apps/cockpit/package-lock.json');
   const marketplace = JSON.parse(
     readFileSync(resolve(root, '.claude-plugin/marketplace.json'), 'utf8'),
   );
@@ -48,6 +50,9 @@ export function checkVersionLockstep(
   const lockRootVersion = lock?.packages?.['']?.version;
   const marketplaceVersion = marketplace?.version ?? marketplace?.metadata?.version;
   const cliVersion = cli?.version;
+  const cockpitVersion = cockpit?.version;
+  const cockpitLockVersion = cockpitLock?.version;
+  const cockpitLockRootVersion = cockpitLock?.packages?.['']?.version;
 
   if (!pkgVersion) {
     return {
@@ -77,6 +82,24 @@ export function checkVersionLockstep(
     return {
       ok: false,
       message: 'FAIL: packages/cli/package.json has no version field',
+    };
+  }
+  if (!cockpitVersion) {
+    return {
+      ok: false,
+      message: 'FAIL: apps/cockpit/package.json has no version field',
+    };
+  }
+  if (!cockpitLockVersion) {
+    return {
+      ok: false,
+      message: 'FAIL: apps/cockpit/package-lock.json has no top-level version field',
+    };
+  }
+  if (!cockpitLockRootVersion) {
+    return {
+      ok: false,
+      message: 'FAIL: apps/cockpit/package-lock.json packages[""].version missing',
     };
   }
 
@@ -110,6 +133,38 @@ export function checkVersionLockstep(
     };
   }
 
+  if (cockpitVersion !== pkgVersion) {
+    return {
+      ok: false,
+      message:
+        `FAIL: @aiwg/cockpit version (${cockpitVersion}) does not match ` +
+        `package.json (${pkgVersion}).`,
+      fix: `Fix: update apps/cockpit/package.json version to ${pkgVersion}.`,
+    };
+  }
+
+  if (cockpitLockVersion !== cockpitVersion) {
+    return {
+      ok: false,
+      message:
+        `FAIL: apps/cockpit/package-lock.json version (${cockpitLockVersion}) does not match ` +
+        `@aiwg/cockpit (${cockpitVersion}).`,
+      fix: `Fix: update apps/cockpit/package-lock.json version to ${cockpitVersion}.`,
+    };
+  }
+
+  if (cockpitLockRootVersion !== cockpitVersion) {
+    return {
+      ok: false,
+      message:
+        `FAIL: apps/cockpit/package-lock.json packages[""].version (${cockpitLockRootVersion}) ` +
+        `does not match @aiwg/cockpit (${cockpitVersion}).`,
+      fix:
+        `Fix: update apps/cockpit/package-lock.json packages[""].version ` +
+        `to ${cockpitVersion}.`,
+    };
+  }
+
   const exactMatch = pkgVersion === marketplaceVersion;
   const stableMatch = strip(pkgVersion) === strip(marketplaceVersion);
 
@@ -117,7 +172,7 @@ export function checkVersionLockstep(
     return {
       ok: true,
       message:
-        `OK package-lock.json, @aiwg/cli, and marketplace version ` +
+        `OK package lockfiles, @aiwg/cli, @aiwg/cockpit, and marketplace version ` +
         `(${marketplaceVersion}) match package.json (${pkgVersion})`,
     };
   }

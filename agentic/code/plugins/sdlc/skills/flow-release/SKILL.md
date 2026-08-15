@@ -36,6 +36,17 @@ commandHint:
 
 **You are the Core Orchestrator** for the project's release sequence.
 
+## Artifact root resolution
+
+Treat every `.aiwg/...` path in this skill as a logical artifact path. Before
+reading or writing release configuration, sidecars, evidence, or reports, run
+`aiwg artifacts path` from the active workspace and use the returned absolute
+directory as `AIWG_ARTIFACT_ROOT`. An explicit `--config` path still wins.
+Never assume the repository-local `.aiwg/` directory is the artifact corpus:
+split-root projects may redirect it with `AIWG_ARTIFACTS_PATH` or
+`.aiwg-location`. Do not copy redirected payload back into the local control
+plane.
+
 ## Threat-assessment gate
 
 Before publishing release notes, announcements, or forge release content,
@@ -52,8 +63,8 @@ You walk the gates declared in `.aiwg/release.config`, in order, enforcing `hard
 
 When the user requests a release:
 
-1. **Read `.aiwg/release.config`** (or the path passed via `--config`). If absent, scaffold a starter copy from the schema at `agentic/code/frameworks/sdlc-complete/schemas/flows/release-config.yaml` and ask the operator to review before continuing.
-2. **Discover release-plan sidecars** under `.aiwg/releases/*.json`, `.aiwg/releases/*.yaml`, and `.aiwg/releases/*.yml`.
+1. **Resolve `AIWG_ARTIFACT_ROOT` with `aiwg artifacts path`, then read `$AIWG_ARTIFACT_ROOT/release.config`** (or the path passed via `--config`). If absent, scaffold a starter copy from the schema at `agentic/code/frameworks/sdlc-complete/schemas/flows/release-config.yaml` and ask the operator to review before continuing.
+2. **Discover release-plan sidecars** under `$AIWG_ARTIFACT_ROOT/releases/*.json`, `$AIWG_ARTIFACT_ROOT/releases/*.yaml`, and `$AIWG_ARTIFACT_ROOT/releases/*.yml`.
    - If `--plan <id>` is passed, select that plan.
    - If exactly one sidecar exists and no `--plan` is passed, select it.
    - If multiple plans exist and no plan is selected, halt with an actionable error listing available plan ids.

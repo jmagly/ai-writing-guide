@@ -60,15 +60,18 @@ This deploys to:
 - `.codex/agents/` — Project-local agent definitions
 - `.codex/rules/` — Project-local context rules
 - `~/.codex/prompts/` — User-level command prompts
-- `~/.codex/skills/` — User-level AIWG skills
+- `.agents/skills/` — Project-local AIWG kernel and quickref skills
 - `AGENTS.md` — Project context file
 
-> **Note:** Codex uses a split deployment model. Agents and rules are project-local (`.codex/`), while commands and skills are deployed to the user's home directory (`~/.codex/`) to be available across all projects.
+> **Note:** Codex uses a split deployment model. Agents, rules, and skills are
+> project-local, while command prompts remain user-level under `~/.codex/`.
+> AIWG prunes its own legacy entries from `~/.codex/skills/` to prevent duplicate
+> discovery.
 
 ### 3. Deploy commands and skills separately (optional)
 
 ```bash
-# Skills only (user-level)
+# Skills only (project-level)
 aiwg -deploy-skills --provider codex
 
 # Commands/prompts only (user-level)
@@ -89,6 +92,8 @@ aiwg -deploy-commands --provider codex
 
 ```text
 your-project/
+├── .agents/
+│   └── skills/          # AIWG kernel and quickrefs; --copy-all adds standard skills
 ├── .codex/
 │   ├── agents/          # SDLC agents (Requirements Analyst, etc.)
 │   └── rules/           # Context rules (token security, citation policy, etc.)
@@ -100,7 +105,6 @@ your-project/
 ├── config.toml          # Configuration (copy template)
 ├── auth.json            # Stored auth credentials (ChatGPT login tokens)
 ├── history.jsonl        # Conversation history
-├── skills/              # AIWG skills (voice profiles, project awareness, etc.)
 ├── prompts/             # AIWG commands as prompts (/project-status, /security-gate, etc.)
 └── plugins/             # Installed plugins
 ```
@@ -108,8 +112,8 @@ your-project/
 ### Skills Loading
 
 Codex loads skills from two locations:
-- `~/.codex/skills/` — User-level skills (AIWG deploys here)
-- `.agents/skills/` — Project-local skills in any git repo
+- `.agents/skills/` — Project-local skills; AIWG's canonical deployment target
+- `~/.codex/skills/` — User-level skills; deprecated as an AIWG deployment target
 
 Use the built-in `$skill-creator` to bootstrap new skills.
 
@@ -134,7 +138,11 @@ When the budget is exceeded, Codex degrades in three stages:
 
 #### Why this hits AIWG users
 
-`aiwg use sdlc --provider codex` deploys ~480 skill files to `~/.codex/skills/`. Adding `media-curator`, `forensics-complete`, `research-complete` (or `aiwg use all`) pushes the total well past what fits in 2% of a 200k-context model. Combined with Codex's built-in `.system/` skills and any installed plugins, the warning is expected at full deployment on smaller-context models.
+By default, `aiwg use ... --provider codex` deploys the canonical 25-skill
+kernel/quickref inventory to `.agents/skills/`; the remaining skills stay
+index-discoverable through `aiwg discover` and `aiwg show`. The listing budget
+is normally exceeded only after an explicit `--copy-all`, or when unrelated
+user/plugin skills also consume the cap.
 
 #### What you can do
 
@@ -148,9 +156,11 @@ The 2% ceiling is hardcoded — there is no env var, CLI flag, or config knob to
    ```
    Repeat for every skill you do not actively use. This is Codex's first-class lever (`codex-rs/core-skills/src/config_rules.rs`).
 
-2. **Deploy fewer frameworks to Codex.** Prefer `aiwg use sdlc --provider codex` over `aiwg use all --provider codex`. Add other frameworks only if you actively use them in Codex sessions.
+2. **Keep the default copy profile.** Avoid `--copy-all` unless standard skills
+   must be visible natively; they remain available through the AIWG index.
 
-3. **Remove unused skill directories** under `~/.codex/skills/<name>/` for skills you will never invoke. Re-run `aiwg use` later to restore.
+3. **Remove unused operator-owned skill directories** from the applicable
+   Codex skill root. Re-run `aiwg use` to repair AIWG-managed entries.
 
 4. **Use a larger-context model.** 2% of 1M is 20k tokens versus 4k on a 200k-context model — the budget scales linearly with the configured context window.
 
@@ -597,10 +607,10 @@ See [Al Guide](../ralph-guide.md) for full documentation.
 /aiwg-regenerate
 ```
 
-**Skills not loading?** Check both skill locations:
+**Skills not loading?** Check the canonical project location and any optional user skills:
 ```bash
-ls ~/.codex/skills/
 ls .agents/skills/    # Project-local
+ls ~/.codex/skills/   # Optional user-owned skills; AIWG does not deploy here
 ```
 Restart Codex after installing new skills.
 
@@ -618,7 +628,7 @@ Restart Codex after installing new skills.
 
 **Verify installation:**
 ```bash
-ls ~/.codex/skills/
+ls .agents/skills/
 ls ~/.codex/prompts/
 ls .codex/agents/
 ls .codex/rules/

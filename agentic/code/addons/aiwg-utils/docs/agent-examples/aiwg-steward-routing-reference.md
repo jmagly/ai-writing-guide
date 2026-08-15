@@ -172,7 +172,7 @@ copied by default):
 | windsurf | `.windsurf/skills/` |
 | openclaw | `~/.openclaw/skills/aiwg/` |
 | hermes | `~/.hermes/skills/` |
-| codex | `.codex/skills/` |
+| codex | `.agents/skills/` |
 
 **Legacy `.aiwg/` mirrors**: in rc.10 → rc.13 the deployer copied standard skills to
 `<provider>/.aiwg/skills/`. Starting in rc.14 those copies are skipped and any existing

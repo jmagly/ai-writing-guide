@@ -8,7 +8,7 @@
 
 ## The Elevator Pitch
 
-AIWG is a deployment tool and support utility for AI context. At its core, `aiwg use` copies markdown and YAML source files into the specific paths each AI platform looks in — `.claude/agents/`, `~/.codex/skills/`, `.cursor/rules/`, `.github/prompts/`, and seven more — so one source of truth works across 11 platforms. Around that core, AIWG ships utilities for things the base platforms do not handle on their own: persistent artifact memory, background orchestration, autonomous loops, artifact indexing, cost telemetry, and health diagnostics. Most utilities are opt-in; the deployment layer works standalone as plain text.
+AIWG is a deployment tool and support utility for AI context. At its core, `aiwg use` copies markdown and YAML source files into the specific paths each AI platform looks in — `.claude/agents/`, `.agents/skills/` for Codex, `.cursor/rules/`, `.github/prompts/`, and seven more — so one source of truth works across 11 platforms. Around that core, AIWG ships utilities for things the base platforms do not handle on their own: persistent artifact memory, background orchestration, autonomous loops, artifact indexing, cost telemetry, and health diagnostics. Most utilities are opt-in; the deployment layer works standalone as plain text.
 
 The compounding story matters more than any single file. Hundreds of small artifacts — each a readable, editable `.md` file — snap together into multi-agent workflows (SDLC, forensics, marketing, research) that would otherwise take a bespoke agent platform to build. AIWG implements patterns from cognitive science, multi-agent systems, and software engineering as file conventions and deployment rules, not as a runtime you depend on.
 

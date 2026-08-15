@@ -479,8 +479,8 @@ User intent → AIWG CLI → Deploy agents + rules + templates → AI platform
 flowchart LR
   subgraph Source["AIWG framework source"]
     direction TB
-    KERN[16 kernel skills<br/>~15-25k tokens]
-    STD[~385 standard skills<br/>read from $AIWG_ROOT]
+    KERN[25 kernel skills<br/>within provider listing budgets]
+    STD[~455 standard skills<br/>read from $AIWG_ROOT]
     AGENT[200+ agents]
     RULES[60+ rules]
     TPL[100+ templates]
@@ -1205,7 +1205,7 @@ aiwg validate-metadata
 
 ### Capability Discovery — `aiwg discover` + `aiwg show`
 
-The headline operator surface for finding and reading AIWG capabilities. Most AIWG skills (~385 of 400) are **not loaded into your platform's flat skill listing** — they stay at `$AIWG_ROOT` and are reached on demand through `aiwg discover` (find) and `aiwg show` (fetch). The kernel set on disk is small on purpose: 9 framework quickrefs + 6 self-maintenance ops = 15 skills, well under every supported platform's skill-listing budget.
+The headline operator surface for finding and reading AIWG capabilities. Most AIWG skills (~455 of 480+) are **not loaded into your platform's flat skill listing** — they stay at `$AIWG_ROOT` and are reached on demand through `aiwg discover` (find) and `aiwg show` (fetch). The kernel set on disk is small on purpose: 9 framework quickrefs + 16 self-maintenance and discovery skills = 25 skills, within supported provider listing budgets.
 
 ```bash
 # Find a skill by capability
@@ -1226,7 +1226,7 @@ aiwg show rule no-attribution
 aiwg show metadata aiwg:skill:6f1477d99813ca8d --json
 ```
 
-The kernel quickrefs ship **curated, validated discovery phrases per capability domain** — phrases tested against the live scorer to surface the right top-3 candidates. The 6 self-maintenance ops (`steward`, `aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, `use`) stay loaded so the agent retains repair surfaces even when discovery itself is broken. See [`docs/discovery-and-kernel-skills.md`](docs/discovery-and-kernel-skills.md) for the full best-practices guide, ASCII flow diagrams, and verification steps.
+The kernel quickrefs ship **curated, validated discovery phrases per capability domain** — phrases tested against the live scorer to surface the right top-3 candidates. The self-maintenance and discovery set (including `steward`, `aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, and `use`) stays loaded so the agent retains repair surfaces even when discovery itself is broken. See [`docs/discovery-and-kernel-skills.md`](docs/discovery-and-kernel-skills.md) for the full best-practices guide, ASCII flow diagrams, and verification steps.
 
 ### Artifact Index — `aiwg index`
 

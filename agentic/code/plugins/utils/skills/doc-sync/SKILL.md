@@ -41,6 +41,14 @@ Options:
   git changed files if no last-run record exists
 - `--parallel N`: cap concurrent auditors; default `2`, maximum `4`
 
+## Artifact root resolution
+
+Treat every `.aiwg/...` path below as a logical artifact path. Before reading
+or writing sync state, working evidence, or reports, run `aiwg artifacts path`
+from the active workspace and use the returned absolute directory as
+`AIWG_ARTIFACT_ROOT`. Never write these payloads to a literal project-local
+`.aiwg/` when `AIWG_ARTIFACTS_PATH` or `.aiwg-location` redirects the corpus.
+
 ## Context Budget Rules
 
 - Start with `git status --short`, `git diff --name-only`, and
@@ -51,7 +59,7 @@ Options:
   bodies.
 - Dispatch auditors only for domains implicated by the scoped files.
 - Each auditor returns at most 10 findings and 600 words to the parent context.
-  Detailed evidence goes under `.aiwg/working/doc-sync/`.
+  Detailed evidence goes under `$AIWG_ARTIFACT_ROOT/working/doc-sync/`.
 - Do not preload other skills into auditor agents.
 - For combined doc-sync, blog, and commit requests, keep blog/release coverage
   as one scoped lane and return a handoff summary for `commit-and-push`.
@@ -63,11 +71,11 @@ Options:
 3. Select relevant lanes only: CLI/API docs, provider docs, skill/agent catalogs,
    README/changelog/release/blog material, or config/schema docs.
 4. Run bounded auditors for selected lanes only.
-5. Write `.aiwg/reports/doc-sync-{timestamp}.md` with scope, findings,
+5. Write `$AIWG_ARTIFACT_ROOT/reports/doc-sync-{timestamp}.md` with scope, findings,
    auto-fixable items, human-review items, and changed files.
 6. If not `--dry-run`, apply high-confidence fixes only.
 7. Validate modified files with targeted checks.
-8. Record `.aiwg/reports/doc-sync-last-run.json`.
+8. Record `$AIWG_ARTIFACT_ROOT/reports/doc-sync-last-run.json`.
 9. Return report path, files changed, validation commands, and remaining review
    items.
 

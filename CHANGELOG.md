@@ -58,6 +58,29 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Fixed
 
+- **Provider skill copy-profile repair** - Codex component deployments now
+  reconcile stale AIWG-managed standard skills against the global kernel
+  inventory, restoring the intended 25-skill kernel/quickref surface while
+  preserving operator-owned skills. Cross-provider conformance now verifies
+  kernel-only, explicit full-copy, and full-copy repair behavior for every
+  supported provider, and Codex documentation reflects the project-local copy
+  profile (#2095, #2097).
+
+- **Split-root workflow safety** - `aiwg artifacts path` now exposes the
+  effective project artifact corpus to scripts in plain-text and stable JSON
+  forms. Release and documentation-sync skills resolve configuration, evidence,
+  reports, and state through that path so redirected payload cannot drift back
+  into the repository-local control plane (#2099).
+
+- **Canonical documentation synchronization** - refreshed canonical component
+  sources that had fallen behind their collected public documentation, keeping
+  future documentation collection deterministic (#2098).
+
+- **Cockpit release version lockstep** - release metadata validation now checks
+  the Cockpit manifest plus both lockfile version fields, preventing an
+  independently published package from retaining the previous CalVer while the
+  root release advances (#2096).
+
 - **Web build dependency advisories** - advanced Vite to `6.4.3` and refreshed
   its locked Babel, Nano ID, and PostCSS toolchain dependencies, clearing the
   web workspace's npm audit findings without changing the production bundle.

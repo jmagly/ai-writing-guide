@@ -34,6 +34,14 @@ Options:
 - `--guidance "text"`: use operator guidance for ambiguous cases
 - `--no-commit`: do not commit
 
+## Artifact root resolution
+
+Treat every `.aiwg/...` path below as a logical artifact path. Before reading
+or writing sync state, working evidence, or reports, run `aiwg artifacts path`
+from the active workspace and use the returned absolute directory as
+`AIWG_ARTIFACT_ROOT`. Never write these payloads to a literal project-local
+`.aiwg/` when `AIWG_ARTIFACTS_PATH` or `.aiwg-location` redirects the corpus.
+
 ## Context Budget Rules
 
 - Start with `git status --short` and `git diff --name-only`; do not read broad
@@ -45,7 +53,7 @@ Options:
 - Dispatch subagents only after scope is known. Use at most `min(--parallel, 4)`
   auditors, and prefer `2` for broad or release requests.
 - Each auditor must return at most 10 findings and 600 words. It should write
-  detailed evidence to `.aiwg/working/doc-sync/` and return only the path plus a
+  detailed evidence to `$AIWG_ARTIFACT_ROOT/working/doc-sync/` and return only the path plus a
   summary.
 - Do not preload other skills into subagents. If another capability is needed,
   invoke it after this skill finishes or in an isolated follow-up.
@@ -70,8 +78,8 @@ Options:
    - direction
    - max 10 findings
    - max 600-word return summary
-   - instruction to store detailed notes under `.aiwg/working/doc-sync/`
-5. Merge summaries into `.aiwg/reports/doc-sync-audit-{date}.md` with:
+   - instruction to store detailed notes under `$AIWG_ARTIFACT_ROOT/working/doc-sync/`
+5. Merge summaries into `$AIWG_ARTIFACT_ROOT/reports/doc-sync-audit-{date}.md` with:
    - scope
    - findings by severity
    - auto-fixable vs human-required items
@@ -81,7 +89,7 @@ Options:
    - markdown link/anchor checks where available
    - `npm run lint:claude-context` if Claude-facing skills or agents changed
    - project-specific build/test checks only when source changed
-8. Record `.aiwg/.last-doc-sync`.
+8. Record `$AIWG_ARTIFACT_ROOT/.last-doc-sync`.
 9. Commit only when requested by the surrounding workflow and not blocked by
    `--no-commit`; otherwise leave a concise final summary.
 

@@ -237,7 +237,7 @@ When the user reports "Agent type not found" for an agent that clearly exists on
 | Provider | What to do | Why |
 |---|---|---|
 | **Claude Code** | Close and reopen the session | `.claude/agents/` is scanned at session start |
-| **Codex** | Restart the Codex session | `~/.codex/skills/` and `.codex/agents/` are scanned on startup |
+| **Codex** | Restart the Codex session | `.agents/skills/` and `.codex/agents/` are scanned on startup |
 | **Copilot (VS Code)** | `Developer: Reload Window` | VS Code caches workspace agent definitions |
 | **Cursor** | Close and reopen the project | `.cursor/agents/` and `.cursor/rules/` load on workspace open |
 | **Warp** | Open a fresh Warp tab | WARP.md is re-read on tab start |
