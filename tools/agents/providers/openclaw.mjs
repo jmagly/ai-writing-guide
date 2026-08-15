@@ -209,10 +209,13 @@ function deploySkills(skillDirs, opts) {
     ? skillDirs
     : skillDirs.filter(d => isKernelSkill(d));
   if (crossAgentSkills.length > 0) {
-    const crossAgentDir = path.join(process.cwd(), '.agents', 'skills');
+    // Honor the deployment target selected by `aiwg use --target`. Provider
+    // subprocesses execute from AIWG_ROOT so process.cwd() would otherwise
+    // mutate the framework checkout during isolated/project-targeted deploys.
+    const crossAgentDir = path.join(opts.target || process.cwd(), '.agents', 'skills');
     ensureDir(crossAgentDir, opts.dryRun);
     if (!opts.dryRun) {
-      console.log(`Deploying cross-agent skills to ${path.relative(process.cwd(), crossAgentDir)}...`);
+      console.log(`Deploying cross-agent skills to ${path.relative(opts.target || process.cwd(), crossAgentDir)}...`);
     } else {
       console.log(`[dry-run] Would deploy cross-agent skills to .agents/skills/`);
     }

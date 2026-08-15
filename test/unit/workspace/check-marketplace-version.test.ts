@@ -16,6 +16,8 @@ function makeRepo({
   lockVersion = packageVersion,
   lockRootVersion = packageVersion,
   marketplaceVersion = packageVersion,
+  marketplacePluginVersion = packageVersion,
+  pluginManifestVersion = packageVersion,
   cliVersion = packageVersion,
   cockpitVersion = packageVersion,
   cockpitLockVersion = cockpitVersion,
@@ -25,6 +27,8 @@ function makeRepo({
   lockVersion?: string;
   lockRootVersion?: string;
   marketplaceVersion?: string;
+  marketplacePluginVersion?: string;
+  pluginManifestVersion?: string;
   cliVersion?: string;
   cockpitVersion?: string;
   cockpitLockVersion?: string;
@@ -34,6 +38,7 @@ function makeRepo({
   mkdirSync(join(tempRoot, '.claude-plugin'), { recursive: true });
   mkdirSync(join(tempRoot, 'packages', 'cli'), { recursive: true });
   mkdirSync(join(tempRoot, 'apps', 'cockpit'), { recursive: true });
+  mkdirSync(join(tempRoot, 'agentic', 'code', 'plugins', 'sdlc', '.claude-plugin'), { recursive: true });
 
   writeJson(join(tempRoot, 'package.json'), {
     name: 'aiwg',
@@ -52,6 +57,15 @@ function makeRepo({
   });
   writeJson(join(tempRoot, '.claude-plugin', 'marketplace.json'), {
     version: marketplaceVersion,
+    plugins: [{
+      name: 'sdlc',
+      version: marketplacePluginVersion,
+      source: './agentic/code/plugins/sdlc',
+    }],
+  });
+  writeJson(join(tempRoot, 'agentic', 'code', 'plugins', 'sdlc', '.claude-plugin', 'plugin.json'), {
+    name: 'sdlc',
+    version: pluginManifestVersion,
   });
   writeJson(join(tempRoot, 'packages', 'cli', 'package.json'), {
     name: '@aiwg/cli',
@@ -129,6 +143,26 @@ describe('checkVersionLockstep', () => {
 
     expect(result.ok).toBe(false);
     expect(result.message).toContain('marketplace version');
+    expect(result.message).toContain('2026.5.6');
+  });
+
+  it('fails when a local marketplace plugin version drifts', () => {
+    const root = makeRepo({ marketplacePluginVersion: '2026.5.6' });
+
+    const result = checkVersionLockstep(root);
+
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain('local marketplace plugin sdlc version');
+    expect(result.message).toContain('2026.5.6');
+  });
+
+  it('fails when a local plugin manifest version drifts', () => {
+    const root = makeRepo({ pluginManifestVersion: '2026.5.6' });
+
+    const result = checkVersionLockstep(root);
+
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain('local plugin manifest sdlc version');
     expect(result.message).toContain('2026.5.6');
   });
 

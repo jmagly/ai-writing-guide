@@ -7,6 +7,25 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.10] - 2026-08-15 - "Deterministic release packaging"
+
+### Fixed
+
+- **Clean-checkout release packaging** - the global-install regression now
+  materializes the gitignored Fortemi Core release index before creating its
+  lifecycle-script-free tarball, then protects the pack operation with the
+  shared build lock. Tag publication no longer depends on an earlier test or
+  workflow step having populated generated package content (#2100).
+
+- **Release-runner deployment verification** - provider copy-profile tests use
+  a bounded three-minute subprocess budget so valid full-copy verification is
+  not killed at 60 seconds when hosted release runners are under load (#2100).
+
+- **OpenClaw target isolation** - the cross-agent compatibility mirror now
+  honors the explicit deployment target instead of the provider subprocess's
+  working directory, preventing isolated or test deployments from repopulating
+  the AIWG checkout with the full copied skill set (#2100).
+
 ## [2026.8.9] - 2026-08-15 - "Prompt-first docs and verified setup"
 
 ### Added
@@ -3009,7 +3028,8 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
 - New unit tests: 7 for `aiwg skill-lint` rubric (perfect/stub/no-triggers/agent-only/broken-YAML fixtures + threshold modes). Behavior-loader and concierge integration tests updated for canonical metadata.* shape.
 - `.agents/` deployment directory is now gitignored, mirroring `.claude/` and `.codex/` (#949). 395 generated files removed from the index; regenerable via `aiwg use`.
 
-[Unreleased]: https://github.com/jmagly/aiwg/compare/v2026.8.9...HEAD
+[Unreleased]: https://github.com/jmagly/aiwg/compare/v2026.8.10...HEAD
+[2026.8.10]: https://github.com/jmagly/aiwg/compare/v2026.8.9...v2026.8.10
 [2026.6.2]: https://github.com/jmagly/aiwg/compare/v2026.6.1...v2026.6.2
 [2026.6.1]: https://github.com/jmagly/aiwg/compare/v2026.6.0...v2026.6.1
 [2026.6.0]: https://github.com/jmagly/aiwg/compare/v2026.5.13...v2026.6.0

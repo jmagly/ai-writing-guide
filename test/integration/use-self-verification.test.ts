@@ -27,7 +27,7 @@ function runUse(projectRoot: string, homeRoot: string, providerArgs: string[]) {
   ], {
     cwd: REPO_ROOT,
     encoding: 'utf8',
-    timeout: 60_000,
+    timeout: 180_000,
     env: {
       ...process.env,
       HOME: homeRoot,
@@ -58,7 +58,7 @@ function runUseHuman(projectRoot: string, homeRoot: string, providerArgs: string
   ], {
     cwd: REPO_ROOT,
     encoding: 'utf8',
-    timeout: 60_000,
+    timeout: 180_000,
     env: {
       ...process.env,
       HOME: homeRoot,
@@ -184,6 +184,8 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
   it('reports the home-scope OpenClaw context limitation as degraded, not failed', () => {
     const projectRoot = isolatedRoot('aiwg-use-verify-openclaw-project-');
     const homeRoot = isolatedRoot('aiwg-use-verify-openclaw-home-');
+    const repoSkillsRoot = path.join(REPO_ROOT, '.agents', 'skills');
+    const repoSkillsBefore = existsSync(repoSkillsRoot) ? readdirSync(repoSkillsRoot).sort() : [];
     const result = runUse(projectRoot, homeRoot, ['--provider', 'openclaw']);
 
     expect(result.exitCode, result.stderr || result.stdout).toBe(0);
@@ -194,6 +196,8 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
     ]));
     expect(result.payload.findings.some((item: { severity: string }) => item.severity === 'blocking')).toBe(false);
     expect(existsSync(path.join(homeRoot, '.openclaw', 'skills'))).toBe(true);
+    expect(readdirSync(path.join(projectRoot, '.agents', 'skills')).length).toBeGreaterThan(0);
+    expect(existsSync(repoSkillsRoot) ? readdirSync(repoSkillsRoot).sort() : []).toEqual(repoSkillsBefore);
   });
 
   it('verifies every provider and computes one deterministic multi-provider outcome', () => {

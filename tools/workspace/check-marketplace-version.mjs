@@ -53,6 +53,9 @@ export function checkVersionLockstep(
   const cockpitVersion = cockpit?.version;
   const cockpitLockVersion = cockpitLock?.version;
   const cockpitLockRootVersion = cockpitLock?.packages?.['']?.version;
+  const localMarketplacePlugins = (marketplace?.plugins ?? []).filter((plugin) => (
+    typeof plugin?.source === 'string' && plugin.source.startsWith('./agentic/code/plugins/')
+  ));
 
   if (!pkgVersion) {
     return {
@@ -165,6 +168,30 @@ export function checkVersionLockstep(
     };
   }
 
+  for (const plugin of localMarketplacePlugins) {
+    if (plugin.version !== pkgVersion) {
+      return {
+        ok: false,
+        message:
+          `FAIL: local marketplace plugin ${plugin.name} version (${plugin.version ?? 'missing'}) ` +
+          `does not match package.json (${pkgVersion}).`,
+        fix: `Fix: update ${plugin.name} in .claude-plugin/marketplace.json to ${pkgVersion}.`,
+      };
+    }
+
+    const pluginManifest = readJson(root, `${plugin.source}/.claude-plugin/plugin.json`);
+    if (pluginManifest?.version !== pkgVersion) {
+      return {
+        ok: false,
+        message:
+          `FAIL: local plugin manifest ${plugin.name} version ` +
+          `(${pluginManifest?.version ?? 'missing'}) does not match package.json (${pkgVersion}).`,
+        fix:
+          `Fix: update ${plugin.source}/.claude-plugin/plugin.json version to ${pkgVersion}.`,
+      };
+    }
+  }
+
   const exactMatch = pkgVersion === marketplaceVersion;
   const stableMatch = strip(pkgVersion) === strip(marketplaceVersion);
 
@@ -172,7 +199,8 @@ export function checkVersionLockstep(
     return {
       ok: true,
       message:
-        `OK package lockfiles, @aiwg/cli, @aiwg/cockpit, and marketplace version ` +
+        `OK package lockfiles, @aiwg/cli, @aiwg/cockpit, marketplace, and ` +
+        `${localMarketplacePlugins.length} local plugin version(s) ` +
         `(${marketplaceVersion}) match package.json (${pkgVersion})`,
     };
   }
