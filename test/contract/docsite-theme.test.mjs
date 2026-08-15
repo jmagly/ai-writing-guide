@@ -40,6 +40,10 @@ describe('docs.aiwg.io open-kit theme contract', () => {
     expect(theme).toContain('--yellow: #ffcf33');
     expect(theme).toContain('--coral: #ff6f59');
     expect(theme).toContain('--mint: #65d6a6');
+    expect(theme).toContain('width: min(calc(100% - 0.75rem), 92rem)');
+    expect(theme).toContain('.section.doc .content-box > :not(.box-title)');
+    expect(theme).toContain('overflow-wrap: anywhere');
+    expect(theme).toMatch(/@media \(max-width: 960px\)[\s\S]*?\.layout \{\s*grid-template-columns: minmax\(0, 1fr\)/);
     expect(shell).not.toContain('consoleInput');
     expect(shell).not.toContain('terminal.js');
   });

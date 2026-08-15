@@ -282,8 +282,18 @@ body {
 .section.doc {
   display: grid;
   gap: 2rem;
-  width: min(100%, 92rem);
+  width: min(calc(100% - 0.75rem), 92rem);
+  min-width: 0;
   margin-inline: auto;
+}
+
+.section.doc > *,
+.section.doc .doc-grid,
+.section.doc .doc-grid > *,
+.section.doc .layer-stack,
+.section.doc .layer {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .section.doc > header {
@@ -330,6 +340,14 @@ body {
   box-shadow: 5px 5px 0 var(--ink);
 }
 
+.section.doc .content-box > :not(.box-title) {
+  margin-inline: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.section.doc .content-box > :last-child {
+  margin-bottom: clamp(1rem, 2.5vw, 1.5rem);
+}
+
 .section.doc .box-title {
   border-bottom: 2px solid var(--ink);
   color: var(--ink);
@@ -343,6 +361,7 @@ body {
 
 .section.doc .doc-grid > article,
 .section.doc .card {
+  padding: clamp(1rem, 2.5vw, 1.75rem);
   border: var(--line) solid var(--ink);
   border-radius: 0;
   background: var(--white);
@@ -370,10 +389,18 @@ body {
 .section.doc .layer {
   border-color: var(--ink);
   background: var(--paper);
+  overflow-wrap: anywhere;
 }
 
 .section.doc .layer-title {
   font-weight: 900;
+}
+
+.section.doc .layer-desc,
+.section.doc .layer-detail {
+  max-width: 75ch;
+  margin-inline: auto;
+  overflow-wrap: anywhere;
 }
 
 .section.doc .spec-table {
@@ -624,6 +651,10 @@ body {
     position: relative;
   }
 
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .site-links {
     display: none;
   }
@@ -640,7 +671,11 @@ body {
   }
 
   .canvas {
-    padding: 1.35rem 0.8rem 2rem;
+    padding: 1.35rem 1rem 2rem;
+  }
+
+  .section.doc {
+    width: calc(100% - 0.35rem);
   }
 
   .doc-content {
