@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "aiwg.provenance.record.v1",
+  "entity": [
+    {
+      "id": "urn:aiwg:artifact:docs/research/asset-authenticity-and-provenance.md",
+      "type": "research-report"
+    },
+    {
+      "id": "urn:aiwg:artifact:docs/architecture/adr-cross-asset-attestation-envelope.md",
+      "type": "architecture-decision"
+    },
+    {
+      "id": "urn:aiwg:artifact:schemas/security/aiwg-artifact-attestation.v1.schema.json",
+      "type": "schema"
+    },
+    {
+      "id": "urn:aiwg:artifact:schemas/security/aiwg-artifact-provenance.v1.schema.json",
+      "type": "schema"
+    },
+    {
+      "id": "urn:aiwg:artifact:test/fixtures/security/artifact-attestation-v1.json",
+      "type": "test-vector-collection"
+    },
+    {
+      "id": "urn:aiwg:artifact:test/unit/security/artifact-attestation.test.ts",
+      "type": "conformance-test"
+    }
+  ],
+  "activity": {
+    "id": "urn:aiwg:activity:research:asset-authenticity-contract:1",
+    "type": "research-and-architecture",
+    "started_at": "2026-08-14T21:13:00-04:00",
+    "ended_at": "2026-08-14T22:00:00-04:00"
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "version": "gpt-5"
+  },
+  "relationships": {
+    "wasGeneratedBy": [
+      "urn:aiwg:artifact:docs/research/asset-authenticity-and-provenance.md",
+      "urn:aiwg:artifact:docs/architecture/adr-cross-asset-attestation-envelope.md",
+      "urn:aiwg:artifact:schemas/security/aiwg-artifact-attestation.v1.schema.json",
+      "urn:aiwg:artifact:schemas/security/aiwg-artifact-provenance.v1.schema.json",
+      "urn:aiwg:artifact:test/fixtures/security/artifact-attestation-v1.json",
+      "urn:aiwg:artifact:test/unit/security/artifact-attestation.test.ts"
+    ],
+    "wasAssociatedWith": "urn:aiwg:agent:codex",
+    "wasDerivedFrom": [
+      {
+        "source": "urn:ietf:rfc:8785",
+        "derivation_type": "conforms_to"
+      },
+      {
+        "source": "urn:w3c:recommendation:prov-dm:20130430",
+        "derivation_type": "conforms_to"
+      },
+      {
+        "source": "urn:cncf:specification:in-toto-attestation:v1",
+        "derivation_type": "conforms_to"
+      },
+      {
+        "source": "urn:ssl:specification:dsse:v1",
+        "derivation_type": "conforms_to"
+      },
+      {
+        "source": "urn:cncf:specification:tuf:1.0.35",
+        "derivation_type": "derives_from"
+      }
+    ]
+  }
+}

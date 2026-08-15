@@ -1,10 +1,27 @@
 # AIWG Supply-Chain Overview
 
-What AIWG signs, what each signature proves, and what attackers each control is designed to catch.
+What AIWG signs today, what each signature proves, and how the accepted
+cross-asset authenticity contract extends those controls without replacing
+them.
 
 This is the umbrella reference. For step-by-step verification of a specific release, see [`docs/releases/verifying.md`](../releases/verifying.md). For applying the same pattern to your own npm package, see [`adopting-this-pattern.md`](adopting-this-pattern.md).
 
-## The four signed artifacts
+## Cross-asset authenticity direction
+
+Issue [#2068](https://git.integrolabs.net/roctinam/aiwg/issues/2068) accepts a
+common DSSE + in-toto attestation contract for setup manifests, flows, agents,
+skills, bundles, schemas, web resources, marketplace/Fortemi objects, and
+provider-generated outputs. The design adds exact-byte subject digests,
+publisher/delegation policy, expiry, revocation, monotonic freshness, and
+derivation evidence while preserving the release controls below.
+
+This is a contract and phased roadmap, not a claim that all listed assets are
+already signed. See the [research and threat
+model](../research/asset-authenticity-and-provenance.md), [architecture
+decision](../architecture/adr-cross-asset-attestation-envelope.md), and [v1
+schema](https://github.com/jmagly/aiwg/blob/main/schemas/security/aiwg-artifact-attestation.v1.schema.json).
+
+## The four signed release artifacts
 
 Every AIWG release from v2026.5.3 forward carries four independent signatures, each anchored in a different chain of trust:
 
@@ -164,8 +181,9 @@ Full walkthrough including expected-output samples and failure-mode diagnostics:
 - [`docs/releases/verifying.md`](../releases/verifying.md) — step-by-step verification per release
 - [`docs/security/adopting-this-pattern.md`](adopting-this-pattern.md) — apply this pattern to your own package
 - [`SECURITY.md`](https://github.com/jmagly/aiwg/blob/main/SECURITY.md) — maintainer key, disclosure channel
-- [`.aiwg/architecture/adr-publish-time-evidence.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-publish-time-evidence.md) — design rationale
-- [`.aiwg/architecture/adr-tarball-cosign-signing.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-tarball-cosign-signing.md) — cosign integration
-- [`.aiwg/architecture/adr-npmjs-org-via-github-actions.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-npmjs-org-via-github-actions.md) — npm OIDC publish
-- [`.aiwg/architecture/adr-signed-tag-verify.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-signed-tag-verify.md) — signed-tag gate
+- [Cross-asset attestation ADR](../architecture/adr-cross-asset-attestation-envelope.md) — common asset contract and migration boundary
+- [#1288](https://git.integrolabs.net/roctinam/aiwg/issues/1288) — publish-time evidence rationale
+- [#1287](https://git.integrolabs.net/roctinam/aiwg/issues/1287) — Cosign tarball integration
+- [#1283](https://git.integrolabs.net/roctinam/aiwg/issues/1283) — npm OIDC publish
+- [#1299](https://git.integrolabs.net/roctinam/aiwg/issues/1299) — signed-tag gate
 - [#1278](https://git.integrolabs.net/roctinam/aiwg/issues/1278) — Mini Shai-Hulud hardening epic

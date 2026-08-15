@@ -43,6 +43,8 @@
     "getting-started/prerequisites",
     "install",
     "security/supply-chain-hardening",
+    "research/asset-authenticity-and-provenance",
+    "architecture/adr-cross-asset-attestation-envelope",
     "install/web-backed-resources",
     "install/non-interactive",
     "quickstart",
@@ -922,6 +924,20 @@
       "title": "Threat-Assessment Policy",
       "summary": "Configure deterministic threat assessment across forge and delivery surfaces",
       "file": "security/threat-assessment-policy.md",
+      "parent": "reference"
+    },
+    {
+      "id": "research/asset-authenticity-and-provenance",
+      "title": "Cross-Asset Authenticity",
+      "summary": "Threat model, trust matrix, signed-envelope contract, and rollout plan for every AIWG asset class",
+      "file": "research/asset-authenticity-and-provenance.md",
+      "parent": "reference"
+    },
+    {
+      "id": "architecture/adr-cross-asset-attestation-envelope",
+      "title": "Cross-Asset Attestation Decision",
+      "summary": "DSSE and in-toto architecture decision for common AIWG artifact verification",
+      "file": "architecture/adr-cross-asset-attestation-envelope.md",
       "parent": "reference"
     },
     {
