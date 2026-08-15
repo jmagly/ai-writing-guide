@@ -649,8 +649,8 @@ Available tickets:
 - ISSUE-002: Add dark mode (in_progress)
 - ISSUE-003: Fix navigation bug (closed)
 
-List all tickets: /issue-list
-Create new ticket: /issue-create "title"
+List all tickets: discover and load `issue-list`.
+Create a new ticket: discover and load `issue-create`.
 ```
 
 ### Invalid Status
@@ -782,6 +782,6 @@ Cannot update ticket.
 ## References
 
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/config/issueing-config.md - Configuration schema
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/commands/issue-create.md - Create ticket command
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/commands/issue-list.md - List tickets command
+- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/issue-create/SKILL.md - Create ticket skill
+- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/issue-list/SKILL.md - List tickets skill
 - @CLAUDE.md - User ticketing configuration

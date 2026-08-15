@@ -133,6 +133,27 @@ describe('plugin repository layout', () => {
     }
   });
 
+  it('keeps testing-quality addon manifests in lockstep with shipped skill directories', async () => {
+    for (const relRoot of [
+      'agentic/code/plugins/testing-quality',
+      'agentic/code/addons/testing-quality',
+    ]) {
+      const root = join(REPO_ROOT, relRoot);
+      const manifest = JSON.parse(await readFile(join(root, 'manifest.json'), 'utf8'));
+      expect(manifest.skills, relRoot).toEqual([
+        'tdd-enforce',
+        'mutation-test',
+        'flaky-detect',
+        'flaky-fix',
+        'generate-factory',
+        'test-sync',
+      ]);
+      for (const skill of manifest.skills) {
+        await readFile(join(root, 'skills', skill, 'SKILL.md'), 'utf8');
+      }
+    }
+  });
+
   it('does not retain checkout-only self references in standalone plugin payloads', async () => {
     const legacyRoots: Record<string, string[]> = {
       'agent-loop': ['agentic/code/addons/agent-loop/', 'agentic/code/addons/ralph/'],

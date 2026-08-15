@@ -126,26 +126,26 @@ Given a ticket title and optional description:
 
 ### Step 1: Parse Parameters
 
-Extract from command invocation:
+Extract from the user's request or from composed skill arguments:
 
 ```bash
-# Basic usage
-/issue-create "Implement user auth"
+# Basic request
+Create an issue titled "Implement user auth"
 
 # With description
-/issue-create "Fix navigation bug" "Nav menu not showing on mobile devices"
+Create an issue titled "Fix navigation bug" with the body "Nav menu not showing on mobile devices"
 
 # With labels
-/issue-create "Add dark mode" "Implement theme toggle" --labels "feature,ui"
+Create an issue titled "Add dark mode" with labels "feature,ui"
 
 # With assignee
-/issue-create "Security audit" "Run penetration test" --assignee "security-team" --priority high
+Create an issue titled "Security audit", assign security-team, and mark it high priority
 
 # Bug report with regression check
-/issue-create "Login broken after deployment" "Users can't login" --labels "bug,critical" --check-regression
+Create a bug issue titled "Login broken after deployment" and check whether it is a regression
 
 # Override provider
-/issue-create "Local task" "Quick reminder" --provider local
+Create a local issue titled "Local task" with the body "Quick reminder"
 ```
 
 **Parameter extraction**:
@@ -588,18 +588,18 @@ fi
 ## Next Steps
 
 - View ticket: {url-or-command}
-- Update status: `/issue-update {ticket-id} --status in_progress`
-- Add comment: `/issue-update {ticket-id} --comment "Working on implementation"`
-- List tickets: `issue-list`
+- To update status, discover and load `issue-update`.
+- To add a comment, discover and load `issue-update`.
+- To list tickets, discover and load `issue-list`.
 ```
 
 ## Examples
 
 ### Example 1: Create Feature Request (Gitea)
 
-**Command**:
+**Request**:
 ```bash
-/issue-create "Add dark mode" "Implement theme toggle for light/dark mode preferences" --labels "feature,ui" --priority high
+Create a high-priority feature issue titled "Add dark mode" with body "Implement theme toggle for light/dark mode preferences" and labels "feature,ui".
 ```
 
 **Config** (`.aiwg/config.yaml`):
@@ -626,16 +626,16 @@ View at: https://git.integrolabs.net/roctinam/ai-writing-guide/issues/42
 ## Next Steps
 
 - View ticket: https://git.integrolabs.net/roctinam/ai-writing-guide/issues/42
-- Update status: `/issue-update ISSUE-42 --status in_progress`
-- Add comment: `/issue-update ISSUE-42 --comment "Started implementation"`
-- List tickets: `/issue-list --label feature`
+- Update status by loading `issue-update` for ISSUE-42.
+- Add comments through `issue-update`.
+- List feature tickets by loading `issue-list`.
 ```
 
 ### Example 2: Create Bug Report with Regression Check (Local)
 
-**Command**:
+**Request**:
 ```bash
-/issue-create "Login broken after deployment" "Users unable to authenticate since v2.1.4 deployment" --labels "bug,critical" --check-regression
+Create a critical bug issue titled "Login broken after deployment" with body "Users unable to authenticate since v2.1.4 deployment" and run the regression check.
 ```
 
 **Output**:
@@ -663,16 +663,16 @@ File: .aiwg/issues/ISSUE-003.md
 
 - View ticket: cat .aiwg/issues/ISSUE-003.md
 - View regression details: cat .aiwg/issues/ISSUE-003-regression-report.md
-- Update status: `/issue-update ISSUE-003 --status in_progress`
-- Run regression analysis: `/regression-check --baseline v2.1.3 --format detailed`
-- List regression issues: `/issue-list --label regression-confirmed`
+- Update status by loading `issue-update` for ISSUE-003.
+- Run regression analysis through the regression-check capability.
+- List regression issues by loading `issue-list`.
 ```
 
 ### Example 3: Create Task with Assignee (GitHub)
 
-**Command**:
+**Request**:
 ```bash
-/issue-create "Security audit" "Run penetration test on authentication endpoints" --assignee security-team --labels "security,high-priority" --milestone "Q1-2026"
+Create an issue titled "Security audit" with body "Run penetration test on authentication endpoints", assign security-team, add labels "security,high-priority", and set milestone "Q1-2026".
 ```
 
 **Config** (`CLAUDE.md`):
@@ -700,16 +700,16 @@ View at: https://github.com/jmagly/aiwg/issues/128
 ## Next Steps
 
 - View ticket: gh issue view 128
-- Update status: `/issue-update 128 --status in_progress`
-- Add comment: `/issue-update 128 --comment "Starting audit tomorrow"`
-- List tickets: `/issue-list --label security`
+- Update status by loading `issue-update` for #128.
+- Add comments through `issue-update`.
+- List security tickets by loading `issue-list`.
 ```
 
 ### Example 4: Bug Report with Auto-Detected Regression Check
 
-**Command**:
+**Request**:
 ```bash
-/issue-create "Payment calculation incorrect" "Discount not applying for orders > $1000" --labels "bug,payments"
+Create a payments bug issue titled "Payment calculation incorrect" with body "Discount not applying for orders > $1000".
 ```
 
 **Output**:
@@ -829,12 +829,15 @@ Use `regression-check` manually after issue creation to verify.
 ```
 ❌ Issue title is required.
 
-Usage: /issue-create <title> [description] [options]
+Usage: discover and load the skill, then compose the issue request:
+
+aiwg discover "issue create"
+aiwg show skill issue-create
 
 Examples:
-- /issue-create "Implement user auth"
-- /issue-create "Fix bug" "Nav menu broken on mobile"
-- /issue-create "Add feature" "Dark mode toggle" --labels "feature,ui"
+- Create an issue titled "Implement user auth"
+- Create a bug issue titled "Fix bug" with body "Nav menu broken on mobile"
+- Create a feature issue titled "Add feature" with labels "feature,ui"
 ```
 
 ### Provider-Specific Errors
@@ -859,7 +862,7 @@ Error: gh: command not found
 - Install GitHub CLI: brew install gh (or platform equivalent)
 - Authenticate: gh auth login
 
-Or use local provider: /issue-create "title" --provider local
+Or ask for a local issue explicitly after loading the `issue-create` skill.
 ```
 
 **Jira API Error**:
@@ -903,37 +906,37 @@ Cannot create ticket.
 **Requirements Phase**:
 ```bash
 # Create tickets from use cases
-/issue-create "Implement UC-001: User Login" "See @.aiwg/requirements/use-cases/UC-001-login.md" --labels "requirement,feature"
+Create an issue titled "Implement UC-001: User Login" referencing @.aiwg/requirements/use-cases/UC-001-login.md with labels "requirement,feature"
 ```
 
 **Architecture Phase**:
 ```bash
 # Create tickets from ADR decisions
-/issue-create "Implement ADR-003: Use PostgreSQL" "Migrate from SQLite to PostgreSQL per @.aiwg/architecture/adrs/003-use-postgresql.md" --labels "architecture,database"
+Create an issue titled "Implement ADR-003: Use PostgreSQL" referencing @.aiwg/architecture/adrs/003-use-postgresql.md with labels "architecture,database"
 ```
 
 **Testing Phase**:
 ```bash
 # Create tickets from test failures with regression check
-/issue-create "Fix failing test: auth.test.ts" "Test failure in authentication module" --priority high --labels "bug,testing" --check-regression
+Create a high-priority bug issue titled "Fix failing test: auth.test.ts" and run the regression check
 ```
 
 **Security Review**:
 ```bash
 # Create tickets from security audit findings
-/issue-create "Fix SQL injection vulnerability" "Parameterize queries in auth module" --priority critical --labels "security,vulnerability"
+Create a critical security issue titled "Fix SQL injection vulnerability" with labels "security,vulnerability"
 ```
 
 **Retrospectives**:
 ```bash
 # Create tickets from retro action items
-/issue-create "Improve CI/CD pipeline" "Reduce build time from 10min to 5min" --labels "process-improvement,devops"
+Create an issue titled "Improve CI/CD pipeline" with labels "process-improvement,devops"
 ```
 
 **Regression Detection**:
 ```bash
 # Create issue from detected regression
-/issue-create "Performance regression in API" "p99 latency increased from 200ms to 450ms" --labels "bug,performance,regression" --check-regression
+Create a regression issue titled "Performance regression in API" and include p99 latency evidence
 ```
 
 ## References

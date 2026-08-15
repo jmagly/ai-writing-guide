@@ -1,0 +1,91 @@
+# AIWG's public reference implementation of the release-plan v1 schema.
+# The active project copy is .aiwg/releases/aiwg-npm.yaml.
+version: 1
+id: aiwg-npm
+name: AIWG npm package release
+target:
+  type: package
+  name: aiwg
+  package: aiwg
+delivery:
+  mode: tag-only
+  overrides_project_default: true
+  notes: Release publication is driven by signed tags and release workflows, overriding the repository's direct delivery default.
+build:
+  commands:
+    - id: check-versions
+      run: npm run check:versions
+      expect_exit: 0
+    - id: typecheck
+      run: npm run typecheck
+      expect_exit: 0
+    - id: build
+      run: npm run build
+      expect_exit: 0
+    - id: docs-collect-dry
+      run: npm run docs:collect:dry
+      expect_exit: 0
+    - id: docs-audience-audit
+      run: npm run docs:audience:audit
+      expect_exit: 0
+    - id: unit-and-uat
+      run: npm run test:ci
+      expect_exit: 0
+validation_gates:
+  - id: metadata
+    run: npm run validate-metadata
+    expect_exit: 0
+  - id: release-discovery
+    run: npm run ci:fortemi-index
+    expect_exit: 0
+publish_targets:
+  - type: npm
+    package: aiwg
+    dist_tags:
+      stable: latest
+      rc: next
+      beta: next
+      alpha: next
+      nightly: nightly
+  - type: npm
+    package: "@aiwg/cockpit"
+    dist_tags:
+      stable: latest
+      rc: next
+      beta: next
+      alpha: next
+      nightly: nightly
+  - type: npm
+    package: "@aiwg/cli"
+    dist_tags:
+      stable: latest
+      rc: next
+      beta: next
+      alpha: next
+      nightly: nightly
+  - type: gitea-release
+    remote: origin
+    owner: roctinam
+    repo: aiwg
+artifacts:
+  required:
+    - CHANGELOG.md
+    - docs/releases/v{version}-announcement.md
+signing:
+  tags:
+    required: true
+    key: 401584AAA3376B898FB34427839584D0E25E5126
+  release_assets:
+    required: true
+sbom:
+  required: true
+provenance:
+  required: true
+docs:
+  changelog_required: true
+  release_notes_required: true
+  announcement_required_for_channels: [stable]
+post_release_verification:
+  - id: publication-proof
+    run: aiwg show skill release-publication-verify
+    expect_exit: 0

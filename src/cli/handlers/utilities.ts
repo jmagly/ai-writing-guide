@@ -467,6 +467,25 @@ async function runUserScopeDoctor(verbose: boolean): Promise<HandlerResult> {
   };
 }
 
+const DOCTOR_HELP = `aiwg doctor — check AIWG installation health
+
+Usage:
+  aiwg doctor [options]
+  aiwg -doctor [options]
+  aiwg --doctor [options]
+
+Options:
+  --deployment          Verify configured provider deployments
+  --provider <name>     Limit deployment verification to one provider
+  --bundle <name>       Limit deployment verification to one bundle
+  --scope <scope>       Verification scope: project or user
+  --user                Alias for --scope user
+  --project-local       Include project-local artifact diagnostics
+  --json                Emit machine-readable deployment verification output
+  --verbose, -v         Include verbose diagnostics
+  --help, -h            Show this help
+`;
+
 /**
  * Handler for doctor command
  *
@@ -487,6 +506,10 @@ export const doctorHandler: CommandHandler = {
   aliases: ['-doctor', '--doctor'],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    if (ctx.args.includes('--help') || ctx.args.includes('-h')) {
+      return { exitCode: 0, message: DOCTOR_HELP, rawOutput: true };
+    }
+
     if (ctx.args.includes('--deployment')) {
       const providerIndex = ctx.args.indexOf('--provider');
       const bundleIndex = ctx.args.indexOf('--bundle');

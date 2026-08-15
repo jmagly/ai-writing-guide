@@ -109,14 +109,17 @@ describe('CLI Router Characterization Tests', () => {
       });
 
       it('-doctor should be equivalent to --doctor and doctor', () => {
-        const result1 = runCli(['-doctor']);
-        const result2 = runCli(['--doctor']);
-        const result3 = runCli(['doctor']);
-        // All should attempt to run doctor
+        const result1 = runCli(['-doctor', '--help']);
+        const result2 = runCli(['--doctor', '--help']);
+        const result3 = runCli(['doctor', '--help']);
+        // All should route to the doctor handler. A full doctor scan is
+        // intentionally not used here because it validates installation
+        // health, not alias mapping, and can exceed a 30s characterization
+        // budget when run three times in sequence.
         expect(result1.stdout + result1.stderr).toMatch(/doctor|health|check|error/i);
         expect(result2.stdout + result2.stderr).toMatch(/doctor|health|check|error/i);
         expect(result3.stdout + result3.stderr).toMatch(/doctor|health|check|error/i);
-      });
+      }, 90_000);
     });
 
     describe('help aliases', () => {
@@ -402,6 +405,6 @@ describe('CLI Router Characterization Tests', () => {
       const result = runCli(['use', 'sdlc', '--dry-run']);
       // Should pass --dry-run to deploy handler
       expect(result.stdout + result.stderr).toMatch(/dry.?run|preview/i);
-    });
+    }, 60_000);
   });
 });

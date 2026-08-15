@@ -30,7 +30,7 @@ Identify what the user needs and route to the right capability:
 | Architecture question | Architecture Designer agent |
 | Test execution | Test Engineer agent or `/ralph` loop |
 | Project status | `/project-status` command |
-| Issue management | `/issue-list`, `/issue-create`, etc. |
+| Issue management | Discover and load `issue-list`, `issue-create`, or the matching issue skill |
 | Security concern | Security Architect agent |
 | Deployment | `/flow-deploy-to-production` |
 | `teach:` / `remember that` / `note that` | Teach mode — persist to memory (see §5) |

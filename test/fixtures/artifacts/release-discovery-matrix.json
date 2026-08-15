@@ -232,6 +232,36 @@
       "expected_top_path": "agentic/code/frameworks/sdlc-complete/commands/address-issues.md"
     },
     {
+      "id": "issue-create-skill",
+      "domain": "sdlc",
+      "phrase": "issue create",
+      "type_filter": ["skill"],
+      "expected_path": "agentic/code/frameworks/sdlc-complete/skills/issue-create/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 1,
+      "expected_top_path": "agentic/code/frameworks/sdlc-complete/skills/issue-create/SKILL.md"
+    },
+    {
+      "id": "aiwg-issue-filing",
+      "domain": "aiwg-utils",
+      "phrase": "file an AIWG issue",
+      "type_filter": ["skill"],
+      "expected_path": "agentic/code/addons/aiwg-utils/skills/aiwg-issue/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 1,
+      "expected_top_path": "agentic/code/addons/aiwg-utils/skills/aiwg-issue/SKILL.md"
+    },
+    {
+      "id": "steward-setup-repair",
+      "domain": "aiwg-utils",
+      "phrase": "steward repair AIWG setup",
+      "type_filter": ["skill"],
+      "expected_path": "agentic/code/addons/aiwg-utils/skills/steward/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 1,
+      "expected_top_path": "agentic/code/addons/aiwg-utils/skills/steward/SKILL.md"
+    },
+    {
       "id": "project-intake-template",
       "domain": "template",
       "phrase": "project intake template",

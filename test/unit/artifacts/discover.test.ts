@@ -321,6 +321,73 @@ deprecated_names: [al]
     }
   });
 
+  it('does not match short one-word aliases inside longer words', async () => {
+    writeSkill(
+      'ralph',
+      'agent-loop',
+      `---
+name: ralph
+description: Execute an iterative task loop until completion
+aliases: [al, agent-loop]
+deprecated_names: [al]
+---
+
+# Agent Loop
+`,
+    );
+    writeSkill(
+      'steward',
+      'aiwg-utils',
+      `---
+name: steward
+description: Diagnose and repair stale AIWG setup and provider files
+triggers:
+  - "AIWG setup is stale or broken"
+  - "steward repair AIWG setup"
+---
+
+# Steward
+`,
+    );
+
+    const setupSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const setupErrSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
+    setupSpy.mockRestore();
+    setupErrSpy.mockRestore();
+
+    const captured: string[] = [];
+    const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) =>
+      captured.push(args.join(' ')),
+    );
+    await discoverCapability(cwd, {
+      phrase: 'AIWG setup is stale or broken',
+      graph: 'framework',
+      json: true,
+      backend: 'local',
+      limit: 3,
+    });
+    logSpy.mockRestore();
+
+    const parsed = JSON.parse(captured.join('\n'));
+    expect(parsed.results[0]?.path).toContain('/steward/SKILL.md');
+    expect(parsed.results[0]?.ranking.matches).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: 'trigger',
+          match: 'exact',
+          value: 'aiwg setup is stale or broken',
+        }),
+      ]),
+    );
+    expect(
+      parsed.results.some((result: { path: string; ranking: { matches: { value?: string }[] } }) =>
+        result.path.includes('/ralph/SKILL.md') &&
+        result.ranking.matches.some((match) => match.value === 'al'),
+      ),
+    ).toBe(false);
+  });
+
   it('emits a stable schema with path/type/score/triggers/capability', async () => {
     writeSkill(
       'skill-create-intake',

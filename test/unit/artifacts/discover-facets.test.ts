@@ -37,6 +37,7 @@ const candidates: MetadataEntry[] = [
   entry({ path: 'agentic/code/agents/personas/aiwg-writer.md', name: 'aiwg-writer', type: 'agent' }),
   entry({ path: 'agentic/code/addons/aiwg-utils/skills/scaffold-extension/SKILL.md', name: 'scaffold-extension' }),
   entry({ path: 'agentic/code/addons/aiwg-utils/skills/new-project/SKILL.md', name: 'new-project' }),
+  entry({ path: 'agentic/code/addons/aiwg-utils/skills/aiwg-issue/SKILL.md', name: 'aiwg-issue' }),
   entry({ path: 'agentic/code/addons/aiwg-utils/skills/unrelated-thing/SKILL.md', name: 'unrelated-thing' }),
 ];
 
@@ -73,10 +74,30 @@ describe('applyFacetFusion (#1623 U3)', async () => {
     expect(fused.some((r) => r.entry.name === 'new-project')).toBe(true);
   });
 
+  it('does not treat an AIWG issue filing request as project scaffolding', async () => {
+    const fused = await applyFacetFusion([], candidates, 'file an AIWG issue');
+    expect(fused.some((r) => r.entry.name === 'new-project')).toBe(false);
+    expect(
+      diagnoseFacetActivations('file an AIWG issue').some(
+        (item) => item.label === 'Project creation (aiwg new + project-local bundles)',
+      ),
+    ).toBe(false);
+  });
+
+  it('does not treat AIWG setup repair as project scaffolding', async () => {
+    const fused = await applyFacetFusion([], candidates, 'AIWG setup is stale or broken');
+    expect(fused.some((r) => r.entry.name === 'new-project')).toBe(false);
+    expect(
+      diagnoseFacetActivations('AIWG setup is stale or broken').some(
+        (item) => item.label === 'Project creation (aiwg new + project-local bundles)',
+      ),
+    ).toBe(false);
+  });
+
   it('is a no-op for a phrase that activates no facet (no regression)', async () => {
     const scored = [
       { entry: candidates[0], score: 0.8 },
-      { entry: candidates[5], score: 0.4 },
+      { entry: candidates[6], score: 0.4 },
     ];
     const fused = await applyFacetFusion(scored, candidates, 'deploy to production');
     expect(fused).toHaveLength(2);
@@ -115,7 +136,7 @@ describe('applyFacetFusion (#1623 U3)', async () => {
       expect(Math.round(r.score * 100) / 100).toBeLessThanOrEqual(1.0);
     }
     // A base-only entry's score is never perturbed by the fusion.
-    const base = [{ entry: candidates[5], score: 0.42 }]; // unrelated-thing
+    const base = [{ entry: candidates[6], score: 0.42 }]; // unrelated-thing
     const fused2 = await applyFacetFusion(base, candidates, 'persona');
     expect(fused2.find((r) => r.entry.name === 'unrelated-thing')!.score).toBe(0.42);
   });

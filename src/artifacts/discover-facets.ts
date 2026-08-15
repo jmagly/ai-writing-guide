@@ -275,7 +275,7 @@ function facetActivation(
         matchedIntent: raw,
       };
     }
-    if (p.includes(intent) || intent.includes(p)) {
+    if (p.includes(intent) || (pTokens.length > 1 && intent.includes(p))) {
       if (FLOOR_STRONG > best) {
         best = FLOOR_STRONG;
         matchedIntent = raw;
@@ -285,7 +285,7 @@ function facetActivation(
     const iTokens = intent.split(' ').filter(Boolean);
     if (iTokens.length > 1 && pTokens.length > 0) {
       const hits = iTokens.filter((t) => pTokens.includes(t)).length;
-      if (hits >= Math.ceil(iTokens.length / 2) && FLOOR_OVERLAP > best) {
+      if (hits >= 2 && hits >= Math.ceil(iTokens.length / 2) && FLOOR_OVERLAP > best) {
         best = FLOOR_OVERLAP;
         matchedIntent = raw;
       }

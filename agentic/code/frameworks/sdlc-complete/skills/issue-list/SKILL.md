@@ -832,9 +832,9 @@ Filters applied:
 - Assignee: johndoe
 
 Try:
-- Remove filters: /issue-list
-- Change status: /issue-list --status all
-- Create ticket: /issue-create "title"
+- Remove filters by loading `issue-list` without filters.
+- Change status filter by loading `issue-list` with status all.
+- Create a ticket by loading `issue-create`.
 ```
 
 ### Provider Error
@@ -926,6 +926,6 @@ Example: /issue-list --status in_progress
 ## References
 
 - @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/config/issueing-config.md - Configuration schema
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/commands/issue-create.md - Create ticket command
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/commands/issue-update.md - Update ticket command
+- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/issue-create/SKILL.md - Create ticket skill
+- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/issue-update/SKILL.md - Update ticket skill
 - @CLAUDE.md - User ticketing configuration

@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.9] - 2026-08-15 - "Prompt-first docs and verified setup"
+
 ### Added
 
 - **Cross-asset authenticity research contract** - accepted a DSSE + in-toto
@@ -35,6 +37,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Changed
 
+- **Release configuration reference implementation** - synchronized AIWG's
+  active project release config and `aiwg-npm` sidecar with the current v1
+  schemas and pre-tag CI command set. Public schema-validated examples now ship
+  with the repository, so clean-clone CI cannot silently skip the dogfood
+  configuration when the private project artifact corpus is detached.
+
 - **Prompt-first public documentation** - advanced capability discovery,
   orchestration, and automation commands now live in the agent/script-oriented
   `docs/cli/` corpus. Public user pages preserve only installation and repair
@@ -49,6 +57,10 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   chatter is suppressed outside verbose diagnostics.
 
 ### Fixed
+
+- **Web build dependency advisories** - advanced Vite to `6.4.3` and refreshed
+  its locked Babel, Nano ID, and PostCSS toolchain dependencies, clearing the
+  web workspace's npm audit findings without changing the production bundle.
 
 - **Deployment false-success and false-failure handling** - required artifact,
   registry, index, context, and provider-wiring failures produce a non-zero
@@ -2974,7 +2986,7 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
 - New unit tests: 7 for `aiwg skill-lint` rubric (perfect/stub/no-triggers/agent-only/broken-YAML fixtures + threshold modes). Behavior-loader and concierge integration tests updated for canonical metadata.* shape.
 - `.agents/` deployment directory is now gitignored, mirroring `.claude/` and `.codex/` (#949). 395 generated files removed from the index; regenerable via `aiwg use`.
 
-[Unreleased]: https://github.com/jmagly/aiwg/compare/v2026.6.2...HEAD
+[Unreleased]: https://github.com/jmagly/aiwg/compare/v2026.8.9...HEAD
 [2026.6.2]: https://github.com/jmagly/aiwg/compare/v2026.6.1...v2026.6.2
 [2026.6.1]: https://github.com/jmagly/aiwg/compare/v2026.6.0...v2026.6.1
 [2026.6.0]: https://github.com/jmagly/aiwg/compare/v2026.5.13...v2026.6.0

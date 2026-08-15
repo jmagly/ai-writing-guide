@@ -39,6 +39,42 @@ The steward default dispatch is Tier 1. Follow this path for detail:
 
 ---
 
+## Setup Repair and Cleanup Routing
+
+The steward is the primary route when AIWG setup, deployment, provider bridges,
+or discovery look stale or broken. Do not start with manual cleanup in provider
+directories; first ask AIWG to diagnose and preview the repair.
+
+| User intent | Route | Notes |
+| --- | --- | --- |
+| Get AIWG working in a project | Public `setup.aiwg.yaml` via the active provider | Provider-orchestrated, inspect-first, self-verifying install path. |
+| Check whether AIWG is engaged | `aiwg status --probe --json` | Report engaged state, root, provider files, frameworks/addons, and next action. |
+| Diagnose broken/stale setup | `aiwg doctor` | Use with `status --probe`; include output in any correction issue. |
+| Preview stale provider cleanup | `aiwg refresh --dry-run` | Shows provider-file cleanup and redeploy changes before mutation. |
+| Apply general repair | `aiwg refresh` | Preferred maintenance path when the project is already configured. |
+| Re-deploy one provider | `aiwg use all --provider <provider>` or `aiwg refresh --provider <provider>` | Use when one provider bridge is stale or has missing kernel files. |
+| Regenerate bootstrap/context files | `aiwg regenerate` | Use when `AGENTS.md`, `AIWG.md`, `CLAUDE.md`, `WARP.md`, or provider bridges are stale. |
+| Repair stale discover results | `aiwg index build --graph framework --force` then `aiwg index sync --backend fortemi-core --graph framework` | Verify with the original `aiwg discover "<need>"` phrase after sync. |
+| Clean up stale project issues | `aiwg discover "audit open issues"` → `issue-audit` | Use for stale, duplicate, malformed, or close/update recommendations. |
+| Process issue work | `aiwg discover "address issues"` → `address-issues` | Use for implementation or issue-processing workflows. |
+| File an AIWG product issue | `aiwg discover "file an AIWG issue"` → `aiwg-issue` | Use for AIWG setup bugs, broken routes, missing IDs, docs gaps, or product changes. |
+
+Provider-facing repair commands usually require a provider reload before the
+agent can see new kernel skills, commands, or bridge text. Tell the user when a
+reload is required.
+
+If the same route stays broken after refresh/regenerate/index rebuild, file an
+AIWG correction issue with:
+
+- AIWG version and install path
+- provider and project root
+- requested route and expected target
+- observed route or error
+- reproduction command
+- relevant `status --probe --json`, `doctor`, and discover output
+
+---
+
 ## Issue Workflow Routing
 
 When a user asks to start using issues themselves, set up a project issue workflow, use

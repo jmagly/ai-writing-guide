@@ -119,6 +119,21 @@ function graphScope(graph: GraphType): ProvenancedEntry['indexScope'] {
   return 'custom';
 }
 
+function containsTokenSequence(haystack: string[], needle: string[]): boolean {
+  if (needle.length === 0 || haystack.length < needle.length) return false;
+  for (let i = 0; i <= haystack.length - needle.length; i++) {
+    let matched = true;
+    for (let j = 0; j < needle.length; j++) {
+      if (haystack[i + j] !== needle[j]) {
+        matched = false;
+        break;
+      }
+    }
+    if (matched) return true;
+  }
+  return false;
+}
+
 function withIndexProvenance(entry: MetadataEntry, graph: GraphType): ProvenancedEntry {
   return { ...entry, indexGraph: graph, indexScope: graphScope(graph) };
 }
@@ -450,12 +465,10 @@ function scoreEntryDetailed(
         });
         return finish(1.0008, 1.0008);
       } else if (
-        trigger.includes(lower) ||
-        lower.includes(trigger) ||
-        trigger.includes(rawLower) ||
-        rawLower.includes(trigger)
+        containsTokenSequence(triggerTokens, tokens) ||
+        containsTokenSequence(tokens, triggerTokens)
       ) {
-        const triggerInsideQuery = lower.includes(trigger) || rawLower.includes(trigger);
+        const triggerInsideQuery = containsTokenSequence(tokens, triggerTokens);
         const containedCoverage = triggerInsideQuery
           ? queryCoverage
           : triggerTokens.length > 0
