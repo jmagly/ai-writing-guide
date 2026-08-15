@@ -6,9 +6,9 @@ description: Define, generate, deploy, and validate a project-specific always-vi
 # Project Quickrefs
 
 A project quickref is a short orientation artifact for critical local
-processes. It tells an agent which project workflow takes precedence and how to
-retrieve the authoritative skill, agent, command, or rule with `aiwg discover`
-and `aiwg show`. It does not copy full workflow bodies into startup context.
+processes. It tells an agent which project workflow takes precedence and gives
+it the stable IDs needed to search for and load the authoritative skill, agent,
+command, or rule. It does not copy full workflow bodies into startup context.
 
 ## Managed discovery and operator input
 
@@ -117,5 +117,6 @@ critical routing decisions, not with the size of every workflow.
 
 Managed generation caps the quickref at 50 bundle/curated entries and selects
 at most eight supported `skill`, `agent`, `command`, or `rule` show hints per
-bundle. The complete inventory remains available through `aiwg discover` and
-`aiwg show`; truncation is reported as a generation diagnostic.
+bundle. The complete inventory remains available through the agent's indexed
+capability search and asset loader; truncation is reported as a generation
+diagnostic.

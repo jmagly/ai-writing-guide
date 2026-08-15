@@ -187,5 +187,5 @@ Al keeps iterating — fix, test, fix again — until the criterion is met or it
 - `/project-status` — Where are we, what's next
 - `/project-health-check` — Overall project health metrics
 - `/flow-gate-check <phase>` — Can we move forward?
-- `@docs/agents/cli-reference.md` — All 53 commands
+- `@docs/cli/reference.md` — All 53 commands
 - `@docs/getting-started/flow-and-gate-process.md` — How intake, flows, gates, and sdlc-accelerate fit together

@@ -49,7 +49,7 @@ flowchart LR
   subgraph SESS["AI session (Claude / Codex / Hermes / etc.)"]
     direction TB
     NATIVE[Platform-native loader<br/>reads provider dir]
-    DISC([Optional: aiwg discover<br/>+ aiwg show])
+    DISC([Optional: capability search<br/>+ verified asset load])
   end
 
   classDef optional stroke-dasharray: 5 5,fill:#fef9e7
@@ -182,10 +182,13 @@ Not everything loads at once — that would overwhelm the AI's context window. A
 
 **Loaded on demand** (full details):
 - Individual agent expertise profiles
-- Lower-tier rule bodies (MEDIUM/LOW) — indexed in `RULES-ONDEMAND.md` for file-based providers, or in the provider's aggregated `AGENTS.md`/`WARP.md` bridge, and fetched with `aiwg show rule <name>`
+- Lower-tier rule bodies (MEDIUM/LOW) — indexed in `RULES-ONDEMAND.md` for file-based providers, or in the provider's aggregated `AGENTS.md`/`WARP.md` bridge, and loaded by the agent from their stable asset IDs
 - Architecture and requirements documents
 
-On-demand loading happens two ways: `.aiwg/` documents load through `@`-mentions (when the AI sees `@.aiwg/architecture/sad.md` in a conversation, it loads that document); rule bodies below the always-on tier load via `aiwg show rule <name>` from the generated file or aggregated bridge index.
+On-demand loading happens two ways: `.aiwg/` documents load through
+`@`-mentions (when the AI sees `@.aiwg/architecture/sad.md` in a conversation,
+it loads that document); rule bodies below the always-on tier load from the
+generated file or aggregated bridge index using their stable asset IDs.
 
 ## 4. Hooks and Flows
 
@@ -386,7 +389,7 @@ flowchart TB
   subgraph FULL["Full — discovery + utilities"]
     direction TB
     F1["aiwg use all"]
-    F2[Agents query aiwg discover<br/>for non-kernel skills]
+    F2[Agents search by goal<br/>for non-kernel skills]
     F3[Optional utilities: ralph,<br/>mc, daemon, mcp, schedule]
     F4[Cross-session memory,<br/>background orchestration]
   end

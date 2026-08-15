@@ -199,7 +199,7 @@ describe('routing documentation regressions', () => {
   });
 
   it('cli-reference.md carries the skill-first reading guide (#1480)', () => {
-    const ref = read('docs/agents/cli-reference.md');
+    const ref = read('docs/cli/reference.md');
     expect(ref).toContain('skill-first');
     expect(ref).toContain('augment');
     // distinguishes the two categories and routes paired commands through the skill
@@ -241,7 +241,7 @@ describe('routing documentation regressions', () => {
   it('documents provider-neutral corpus ingest and credential references (#1508)', () => {
     const migration = read('docs/storage/migration.md');
     const fortemi = read('docs/storage/backends/fortemi.md');
-    const cli = read('docs/agents/cli-reference.md');
+    const cli = read('docs/cli/reference.md');
 
     for (const doc of [migration, fortemi, cli]) {
       expect(doc).toContain('aiwg storage import-corpus');
@@ -256,7 +256,7 @@ describe('routing documentation regressions', () => {
   });
 
   it('CLI reference documents Fortemi Core graph traversal backend flags', () => {
-    const ref = read('docs/agents/cli-reference.md');
+    const ref = read('docs/cli/reference.md');
 
     expect(ref).toContain(
       'aiwg index query "static retrieval evidence" --fulltext --graph project --json',

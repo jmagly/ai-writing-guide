@@ -11,7 +11,7 @@
  * @depends @src/writing/prompt-optimizer.ts
  * @depends @src/cli/config-loader.ts
  * @depends @src/cli/watch-service.ts
- * @cli @docs/CLI_USAGE.md - workflow command
+ * @cli @docs/cli/agent-usage.md - workflow command
  */
 
 import { readFile, writeFile, copyFile } from 'fs/promises';

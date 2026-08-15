@@ -332,7 +332,7 @@ See [Al Guide](../ralph-guide.md) for full documentation including `--provider` 
 - [Cross-Platform Overview](cross-platform-overview.md) - Compare platform differences
 - [Intake Guide](../intake-guide.md) - Start your first project
 - [SDLC Framework](https://github.com/jmagly/aiwg/blob/main/agentic/code/frameworks/sdlc-complete/README.md) - Complete framework reference
-- [Commands Reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md) - All 40 AIWG commands
+- [Commands Reference](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md) - All 40 AIWG commands
 
 ---
 

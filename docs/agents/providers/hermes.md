@@ -646,7 +646,7 @@ Hermes hosts plugins at `plugins/` (kanban, memory, observability, disk-cleanup,
 ## Related Resources
 
 - [Hermes Agent documentation](https://hermes-agent.nousresearch.com/docs)
-- [AIWG MCP server reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md#mcp)
+- [AIWG MCP server reference](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md#mcp)
 - [Local models guide](../models/local-models.md)
 - [agentskills.io skill standard](https://agentskills.io)
 - Integration plan: `.aiwg/planning/hermes-aiwg-integration-plan.md`

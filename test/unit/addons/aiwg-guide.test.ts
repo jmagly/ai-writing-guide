@@ -81,7 +81,7 @@ describe('aiwg-guide skill (#616)', () => {
   describe('contextual help mode', () => {
     it('should define prioritized documentation sources', async () => {
       const content = await readFile(SKILL_FILE, 'utf-8');
-      expect(content).toContain('docs/cli-reference.md');
+      expect(content).toContain('docs/cli/reference.md');
       expect(content).toContain('docs/extensions/');
       expect(content).toContain('capability-matrix');
     });

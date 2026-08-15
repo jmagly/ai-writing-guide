@@ -134,4 +134,4 @@ aiwg -install-addon gdpr-compliance
 
 - [Workspace Tools](https://github.com/jmagly/aiwg/blob/main/tools/workspace/README.md) — Component documentation
 - [Migration Guide](https://github.com/jmagly/aiwg/blob/main/tools/workspace/MIGRATION_GUIDE.md) — Legacy to framework-scoped migration
-- [Plugin Health](https://github.com/jmagly/aiwg/blob/main/docs/agents/CLI_USAGE.md#status-command) — `aiwg -status` usage
+- [Plugin Health](https://github.com/jmagly/aiwg/blob/main/docs/cli/agent-usage.md#status-command) — `aiwg -status` usage

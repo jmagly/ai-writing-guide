@@ -249,9 +249,10 @@ Install when your repository manages live streaming or media pipeline infrastruc
 
 Install when the same maintenance workflow must run against repositories where the operator may be collaborator, maintainer, or admin:
 
-```bash
-aiwg use ops --ext repo-maintainer
-aiwg discover "repo maintainer role-aware"
+```text
+Enable the AIWG Ops `repo-maintainer` extension for this project, then find and
+load its role-aware repository-maintenance capability. Preview deployment
+changes and verify the selected stable asset ID before using it.
 ```
 
 ### What repo-maintainer Adds

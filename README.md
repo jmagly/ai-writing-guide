@@ -185,7 +185,7 @@ user-global bootstrap:
 The trade-off is real: when the same agent set loads into every session, context from one project can bleed into reasoning about another. Research (REF-720, *Lost in Multi-Turn Conversation*, MSR/Salesforce 2025) measured a 39% capability drop when this happens. The non-blocking project-isolation warning surfaces the trade-off at deploy time so the scope choice is informed. Neither scope is wrong; pick the one that fits the workflow.
 
 See the [Agentic Install Runbook](docs/agentic-install-runbook.md) for the
-zero-to-running setup path, and `https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md` (under `aiwg use` →
+zero-to-running setup path, and `https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md` (under `aiwg use` →
 "Scope models") for the per-provider details and the global-install rough-edge
 inventory.
 

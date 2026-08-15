@@ -657,7 +657,7 @@ All development documentation, organized by topic.
 
 | Document | Description |
 |----------|-------------|
-| @docs/agents/cli-reference.md | 67+ CLI commands with usage |
+| @docs/cli/reference.md | 67+ CLI commands with usage |
 | @docs/commands/DEVELOPMENT_GUIDE.md | Advanced command development, testing, optimization |
 | @docs/commands/subagents-and-commands-guide.md | Subagent patterns for command implementations |
 | @docs/development/skill-inventory.md | Catalog of available skills |
@@ -689,6 +689,6 @@ All development documentation, organized by topic.
 - @docs/development/devkit-overview.md - Development Kit overview
 - @docs/development/file-placement-guide.md - Source vs deployment locations
 - @docs/smithing/README.md - On-demand asset creation
-- @docs/agents/cli-reference.md - Complete CLI command reference
+- @docs/cli/reference.md - Complete CLI command reference
 - @docs/development/companion-cli-skill-inventory.md - Companion CLI skill inventory
 - @src/extensions/types.ts - Core type definitions

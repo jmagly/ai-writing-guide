@@ -266,5 +266,5 @@ Run these checks to confirm the integration is working:
 
 - [Windsurf Quick Start](windsurf-quickstart.md) — base provider deployment (prerequisite)
 - [Hermes MCP Sidecar Guide](hermes-quickstart.md) — reference architecture this guide follows
-- [AIWG MCP server reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md#mcp)
+- [AIWG MCP server reference](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md#mcp)
 - [Windsurf Documentation](https://windsurf.ai/docs)

@@ -297,4 +297,4 @@ alias crx='aiwg session --provider codex --profile'  # crx dev, crx ops
 
 - [Codex Per-Profile Runtime Homes](./codex-profiles.md) — OAuth isolation for Codex
 - [MCP Server Registry](./README.md) — Registering and managing servers
-- [CLI Reference: mcp profile](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md#mcp-profile) — Full command reference
+- [CLI Reference: mcp profile](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md#mcp-profile) — Full command reference

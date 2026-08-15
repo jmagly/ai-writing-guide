@@ -35,6 +35,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Changed
 
+- **Prompt-first public documentation** - advanced capability discovery,
+  orchestration, and automation commands now live in the agent/script-oriented
+  `docs/cli/` corpus. Public user pages preserve only installation and repair
+  commands; generated site content replaces agent-owned command procedures with
+  natural-language prompts and stable asset IDs (#1937).
+
 - **Focused `aiwg use` completion report** - the default human-readable result
   now presents one compact summary that separates artifacts copied to each
   provider from the authoritative framework inventory indexed for discovery.

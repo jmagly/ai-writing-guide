@@ -7,7 +7,7 @@
  * @see https://modelcontextprotocol.io/specification/2025-11-25
  * @architecture @.aiwg/architecture/software-architecture-doc.md - Section 2.1 CLI Layer
  * @reference @docs/references/REF-066-mcp-specification-2025.md
- * @cli @docs/CLI_USAGE.md - mcp serve command
+ * @cli @docs/cli/agent-usage.md - mcp serve command
  * @frameworks @agentic/code/frameworks/sdlc-complete/
  * @frameworks @agentic/code/frameworks/media-marketing-kit/
  */

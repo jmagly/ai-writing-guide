@@ -940,7 +940,7 @@ export function loadUserGraphConfigs(cwd: string, diagnostics?: GraphConfigWarni
   if (fromDeprecatedYaml && !yamlIndexDeprecationWarned) {
     yamlIndexDeprecationWarned = true;
     process.stderr.write(
-      '[aiwg index] note: index.graphs in .aiwg/config.yaml is deprecated — move the index block into .aiwg/aiwg.config (see docs/cli-reference.md, #1491).\n',
+      '[aiwg index] note: index.graphs in .aiwg/config.yaml is deprecated — move the index block into .aiwg/aiwg.config (see docs/cli/reference.md, #1491).\n',
     );
   }
 

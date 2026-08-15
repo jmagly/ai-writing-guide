@@ -386,7 +386,7 @@ parent issue #1569.
 
 ## See also
 
-- [CLI reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md#skills)
+- [CLI reference](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md#skills)
 - [SKILL.md quality rubric](quality-rubric.md)
 - [Agent Skills adoption audit](../reports/agentskills-standard-audit-2026-07-25.md)
 - [Agent Skills portability ADR](../architecture/adr-agent-skills-portability-contract.md)

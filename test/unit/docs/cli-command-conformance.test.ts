@@ -12,7 +12,7 @@ const OPERATIONAL_DOCS = [
 
 const SCHEDULER_CLAIM_DOCS = [
   ...OPERATIONAL_DOCS,
-  'docs/agents/cli-reference.md',
+  'docs/cli/reference.md',
 ];
 
 function advertisedTopLevelCommands(markdown: string): Set<string> {

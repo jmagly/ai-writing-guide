@@ -101,10 +101,11 @@ still contain the tarball.
 
 After deploying the security-engineering framework, use:
 
-```bash
-aiwg use security-engineering
-aiwg discover "npm supply-chain audit"
-aiwg discover "npm release-age gate"
+```text
+Use AIWG's security-engineering capabilities to audit this npm project's
+supply chain. Start with assets `npm-supply-chain-audit` and
+`npm-release-age-gate`, explain the proposed controls, and ask before changing
+package or CI configuration.
 ```
 
 The focused skills help an AI assistant perform this same audit against

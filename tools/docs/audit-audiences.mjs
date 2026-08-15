@@ -3,6 +3,15 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  actionableAdvancedCommands,
+  extractCommands,
+  isAgentOrCliReference,
+  isContributor,
+  isHistorical,
+  isPublicUserDocument,
+  rewritePublicUserCommands,
+} from './public-command-policy.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const docs = path.join(root, 'docs');
@@ -25,46 +34,57 @@ async function markdownFiles(directory) {
 }
 
 const files = await markdownFiles(docs);
-const historical = (relative) =>
-  relative.startsWith('releases/') || relative.startsWith('blog/');
-const agentReference = (relative) => relative.startsWith('agents/');
-const commandPattern = /\baiwg\s+([a-z][a-z-]*(?:\s+skill)?)/g;
 const commandRoot = (command) => command.split(/\s+/)[0];
 const rows = [];
 
 for (const filename of files) {
   const relative = path.relative(docs, filename).split(path.sep).join('/');
   const content = await readFile(filename, 'utf8');
-  const commands = [...content.matchAll(commandPattern)].map((match) => match[1]);
+  const commands = extractCommands(content);
   const agentOwned = commands.filter((command) =>
     policy.agentOwnedCommands.some((owned) => command === owned || command.startsWith(`${owned} `)));
   const operatorCommands = commands.filter((command) =>
     !policy.directTouchCommands.includes(commandRoot(command)));
+  const publicUser = isPublicUserDocument(relative, content);
+  const publicRewrite = publicUser
+    ? rewritePublicUserCommands(content, policy.directTouchCommands)
+    : { content, changed: false };
+  const publishedCommands = extractCommands(publicRewrite.content);
+  const publishedAdvancedCommands = publishedCommands.filter((command) =>
+    !policy.directTouchCommands.includes(commandRoot(command)));
+  const publishedActionableAdvanced = publicUser
+    ? actionableAdvancedCommands(publicRewrite.content, policy.directTouchCommands)
+    : [];
+  const publishedDiscoveryMentions = publicUser
+    ? (publicRewrite.content.match(/\baiwg[\t ]+(?:discover|show)\b/gu) || []).length
+    : 0;
   rows.push({
     path: relative,
-    classification: agentReference(relative)
+    classification: isAgentOrCliReference(relative, content)
       ? 'agent-operator'
-      : historical(relative)
+      : isHistorical(relative)
         ? 'historical'
-        : relative.startsWith('development/') || relative.startsWith('contributing/')
+        : isContributor(relative)
           ? 'contributor-maintainer'
           : 'public-user',
     commandMentions: commands.length,
     agentOwnedMentions: agentOwned.length,
     directTouchMentions: commands.length - operatorCommands.length,
     operatorGuidanceMentions: operatorCommands.length,
-    publicOperatorNoticeRequired:
-      operatorCommands.length > 0
-      && !agentReference(relative)
-      && !historical(relative)
-      && !relative.startsWith('development/')
-      && !relative.startsWith('contributing/'),
+    sourceActionableAdvancedMentions: publicUser
+      ? actionableAdvancedCommands(content, policy.directTouchCommands).length
+      : 0,
+    publishedCommandMentions: publishedCommands.length,
+    publishedAdvancedCommandMentions: publicUser ? publishedAdvancedCommands.length : 0,
+    publishedActionableAdvancedMentions: publishedActionableAdvanced.length,
+    publishedDiscoveryMentions,
+    publicOperatorNoticeRequired: publicRewrite.changed,
   });
 }
 
 const core = new Set(policy.coreJourneys);
 const coreRows = rows.filter((row) => core.has(row.path));
-const coreJourneyCommandMentions = coreRows.reduce((sum, row) => sum + row.commandMentions, 0);
+const coreJourneyCommandMentions = coreRows.reduce((sum, row) => sum + row.publishedCommandMentions, 0);
 const siteConfig = JSON.parse(await readFile(path.join(docs, 'config.json'), 'utf8'));
 const docsManifest = JSON.parse(await readFile(path.join(docs, '_manifest.json'), 'utf8'));
 const homepageCommandChecklistItems = (siteConfig.welcome?.checklist || [])
@@ -107,7 +127,11 @@ const summary = {
     publicCommandPages: rows.filter((row) =>
       row.classification === 'public-user' && row.commandMentions > 0).length,
     publicOperatorGuidancePages: rows.filter((row) => row.publicOperatorNoticeRequired).length,
-    publicUnclassifiedCommandPages: 0,
+    publicSourceAdvancedCommandPages: rows.filter((row) => row.sourceActionableAdvancedMentions > 0).length,
+    publicPublishedAdvancedCommandPages: rows.filter((row) => row.publishedActionableAdvancedMentions > 0).length,
+    publicPublishedAdvancedCommandMentions: rows.reduce((sum, row) => sum + row.publishedAdvancedCommandMentions, 0),
+    publicPublishedDiscoveryMentions: rows.reduce((sum, row) => sum + row.publishedDiscoveryMentions, 0),
+    publicUnclassifiedCommandPages: rows.filter((row) => row.publishedActionableAdvancedMentions > 0).length,
     onboardingSurfaces: onboardingSurfaces.length,
     onboardingNeedsReview: onboardingSurfaces.filter((row) => row.classification === 'specialized-needs-review').length,
   },

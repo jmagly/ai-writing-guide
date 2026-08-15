@@ -283,7 +283,7 @@ describe('kernel deployment conformance', () => {
     for (const doc of [
       'docs/architecture-overview.md',
       'docs/how-it-works.md',
-      'docs/discovery-and-kernel-skills.md',
+      'docs/cli/capability-routing.md',
     ]) {
       const content = readFileSync(join(REPO_ROOT, doc), 'utf8');
       expect(content, doc).toContain(`${EXPECTED_KERNEL.length} kernel skills`);

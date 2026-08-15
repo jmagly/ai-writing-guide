@@ -1949,7 +1949,7 @@ async function runDoctor() {
   try {
     const { index, source } = await readIndexConfig(process.cwd());
     if (source === 'config.yaml') {
-      check('index-config', 'warn', 'index config still in .aiwg/config.yaml — migrate the index block into .aiwg/aiwg.config (#1491; see docs/cli-reference.md)');
+      check('index-config', 'warn', 'index config still in .aiwg/config.yaml — migrate the index block into .aiwg/aiwg.config (#1491; see docs/cli/reference.md)');
     }
     if (index) {
       const errs = validateIndexConfig(index);

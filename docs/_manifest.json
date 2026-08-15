@@ -42,6 +42,8 @@
     "overview/executive-brief",
     "getting-started/prerequisites",
     "install",
+    "cli",
+    "cli/install-and-repair",
     "security/supply-chain-hardening",
     "research/asset-authenticity-and-provenance",
     "architecture/adr-cross-asset-attestation-envelope",

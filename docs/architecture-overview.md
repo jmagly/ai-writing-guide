@@ -53,7 +53,7 @@ flowchart LR
   subgraph SESS["AI session (Claude / Codex / Hermes / etc.)"]
     direction TB
     NATIVE[Platform-native loader<br/>reads provider dir]
-    DISC([Optional: aiwg discover<br/>+ aiwg show])
+    DISC([Optional: capability search<br/>+ verified asset load])
   end
 
   classDef optional stroke-dasharray: 5 5,fill:#fef9e7
@@ -92,8 +92,8 @@ flowchart TB
 
   AGENT -->|Always sees| KERNEL
   AGENT -.->|Optionally queries| INDEX[(aiwg index<br/>artifact index)]
-  INDEX -.->|aiwg discover phrase| STANDARD
-  STANDARD -.->|aiwg show name| AGENT
+  INDEX -.->|goal in plain language| STANDARD
+  STANDARD -.->|stable asset ID| AGENT
 
   classDef optional stroke-dasharray: 5 5,fill:#fef9e7
   class INDEX optional
@@ -106,9 +106,15 @@ See [`docs/discovery-and-kernel-skills.md`](discovery-and-kernel-skills.md) for 
 
 ---
 
-## 3. The discover → show flow (the optional layer)
+## 3. Capability retrieval (the optional layer)
 
-When the kernel skills don't directly answer a user request, the agent reaches into the standard tier via two RPC-style commands: `aiwg discover "<intent>"` ranks all 400+ artifacts by capability, then `aiwg show <type> <name>` fetches the body. This flow is optional — agents can work entirely from the kernel surface for many requests — but when it's needed, the cost is bounded and the answer comes from the indexed ranking, not from a literal-string grep.
+When the kernel skills do not directly answer a request, the agent searches the
+standard tier using the user's goal, selects a stable asset ID, and loads the
+authoritative asset body. This flow is optional—agents can work entirely from
+the kernel surface for many requests—but when it is needed, the cost is bounded
+and the answer comes from the indexed ranking rather than a literal-string
+filesystem search. Exact CLI contracts live in the
+[agent and automation reference](cli/README.md).
 
 ```mermaid
 sequenceDiagram
@@ -119,12 +125,12 @@ sequenceDiagram
   participant FS as $AIWG_ROOT<br/>(framework source)
 
   User->>Agent: "deploy this to production"
-  Note over Agent: Kernel skill aiwg-utils-quickref<br/>doesn't match. Run discover.
-  Agent->>CLI: aiwg discover "deploy production"
+  Note over Agent: Kernel quickref does not match.<br/>Search installed capabilities.
+  Agent->>CLI: Search for "deploy production"
   CLI->>Index: rank artifacts by capability + triggers
   Index-->>CLI: top 3 results with paths + scores
   CLI-->>Agent: flow-deploy-to-production [0.51]<br/>+ 2 alternatives
-  Agent->>CLI: aiwg show skill flow-deploy-to-production
+  Agent->>CLI: Load asset flow-deploy-to-production
   CLI->>FS: read SKILL.md
   FS-->>CLI: full skill body
   CLI-->>Agent: SKILL.md content (instructions)
@@ -168,7 +174,7 @@ flowchart TB
   subgraph FULL["Full — discovery + utilities"]
     direction TB
     F1["aiwg use all"]
-    F2[Agents query aiwg discover<br/>for non-kernel skills]
+    F2[Agents search by goal<br/>for non-kernel skills]
     F3[Optional utilities: ralph,<br/>mc, daemon, mcp, schedule]
     F4[Cross-session memory,<br/>background orchestration]
   end
@@ -370,5 +376,5 @@ All three sets share the 1-8 numbering. Generated images drop at `docs/architect
 - [`docs/how-it-works.md`](how-it-works.md) — the prose walkthrough of these same concepts
 - [`docs/discovery-and-kernel-skills.md`](discovery-and-kernel-skills.md) — kernel/standard model in depth, verification steps
 - [`docs/integrations/hermes-quickstart.md`](integrations/hermes-quickstart.md) — Hermes integration, capabilities catalog
-- [`https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md`](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md) — complete CLI command reference
+- [`https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md`](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md) — complete CLI command reference
 - [`.claude/rules/skill-discovery.md`](../agentic/code/addons/aiwg-utils/rules/skill-discovery.md) — the discover-first protocol (Rule 1.5)

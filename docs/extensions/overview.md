@@ -639,4 +639,4 @@ Existing formats automatically migrate to unified schema:
 - [Graph Backends](graph-backends.md) - Artifact index graph storage tiers and configuration
 - @src/extensions/types.ts - Source code
 - @.aiwg/architecture/unified-extension-schema.md - Full specification
-- @docs/agents/cli-reference.md - CLI command reference
+- @docs/cli/reference.md - CLI command reference

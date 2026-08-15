@@ -4,7 +4,8 @@
 
 Use this recipe when you can describe the work but do not know the AIWG name for it.
 
-You stay in the chat. The agent does the AIWG lookups for you — you do not need to learn `aiwg discover` or `aiwg show` to use this. They are tools the agent invokes on your behalf.
+You stay in the chat. The agent searches and loads AIWG capabilities for you;
+you do not need to learn the underlying CLI protocol.
 
 ## How AIWG Is Meant To Be Used
 
@@ -33,12 +34,10 @@ candidates, then recommend one first action and one fallback.
 
 ## What The Agent Does Behind The Scenes
 
-You do not type these. They are the agent's job:
-
-- `aiwg discover "<phrase>"` — search the installed capability index for skills, agents, commands, rules, flows, runbooks, templates, and behaviors that match the goal.
-- `aiwg show skill <name>` or `aiwg show agent <name>` — fetch the body of the top match so the agent can read its capabilities before recommending it.
-
-If the agent prints these commands and tells *you* to run them, ask it to run them itself.
+The agent searches the installed capability index, selects a stable asset ID,
+loads the authoritative asset body, and checks its instructions before making
+a recommendation. Those are agent operations. If the agent prints internal
+commands and asks *you* to run them, ask it to complete the lookup itself.
 
 ## You Should See
 

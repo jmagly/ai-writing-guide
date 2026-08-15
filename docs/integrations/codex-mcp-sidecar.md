@@ -250,4 +250,4 @@ Key fields:
 
 - [OpenAI Codex Quick Start](codex-quickstart.md) — Basic AIWG + Codex integration
 - [Hermes MCP Sidecar](hermes-quickstart.md) — Reference sidecar implementation
-- [AIWG MCP server reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md#mcp)
+- [AIWG MCP server reference](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md#mcp)
