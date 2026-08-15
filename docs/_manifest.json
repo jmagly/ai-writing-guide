@@ -576,6 +576,21 @@
       "parent": "install"
     },
     {
+      "id": "cli",
+      "title": "CLI",
+      "summary": "Direct-user install and repair commands, with agent and automation references",
+      "file": "cli/README.md",
+      "collapsed": true,
+      "parent": "getting-started"
+    },
+    {
+      "id": "cli/install-and-repair",
+      "title": "Install and Repair Commands",
+      "summary": "The intentionally small direct-user CLI surface",
+      "file": "cli/install-and-repair.md",
+      "parent": "cli"
+    },
+    {
       "id": "security/supply-chain-hardening",
       "title": "npm Supply-Chain Hardening",
       "summary": "Harden npm projects against install-time malware and publish-path abuse",
