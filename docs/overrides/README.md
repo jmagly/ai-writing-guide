@@ -9,6 +9,7 @@ stylesheet.
 | --- | --- |
 | `index.html` | Accessible application shell and AIWG site navigation |
 | `open-kit.css` | Additive design-token and component overrides loaded after Pagenary's `styles.css` |
+| `code-copy.js` | Progressive copy controls for standalone SEO snapshots that do not load Pagenary's application runtime |
 
 The previous terminal-console theme is preserved as `aiwg-terminal` in the
 [Pagenary Styles catalog](https://github.com/jmagly/pagenary-styles). Its
@@ -22,10 +23,12 @@ search, sharing, and export behavior. AIWG only supplies the shell and an
 additive stylesheet. New Pagenary components therefore inherit usable base
 styles even before an AIWG-specific treatment is added.
 
-`tools/docs/write-blog-static-pages.mjs` also links `open-kit.css` from every
-standalone SEO snapshot after Pagenary builds it. Keep that post-build step in
-both validation and deployment workflows so no-JavaScript and crawler routes
-receive the same visual system.
+`tools/docs/write-blog-static-pages.mjs` also links `open-kit.css` and the
+standalone `code-copy.js` enhancement from every SEO snapshot after Pagenary
+builds it. Keep that post-build step in both validation and deployment
+workflows so direct and crawler-discovered routes receive the same visual
+system and copy affordance. The underlying code stays selectable when
+JavaScript is unavailable.
 
 When upgrading Pagenary:
 

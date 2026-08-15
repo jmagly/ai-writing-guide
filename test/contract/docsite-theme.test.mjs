@@ -7,6 +7,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const overrides = join(root, 'docs', 'overrides');
 const shell = readFileSync(join(overrides, 'index.html'), 'utf8');
 const theme = readFileSync(join(overrides, 'open-kit.css'), 'utf8');
+const copyControl = readFileSync(join(overrides, 'code-copy.js'), 'utf8');
 const config = JSON.parse(readFileSync(join(root, 'docs', 'config.json'), 'utf8'));
 const blogWriter = readFileSync(join(root, 'tools', 'docs', 'write-blog-static-pages.mjs'), 'utf8');
 
@@ -43,6 +44,12 @@ describe('docs.aiwg.io open-kit theme contract', () => {
     expect(theme).toContain('width: min(calc(100% - 0.75rem), 92rem)');
     expect(theme).toContain('.section.doc .content-box > :not(.box-title)');
     expect(theme).toContain('overflow-wrap: anywhere');
+    expect(theme).toContain('.doc-content pre.has-code-copy');
+    expect(theme).toContain('white-space: pre-wrap');
+    expect(theme).toMatch(/\.code-copy \{[\s\S]*?opacity: 1/);
+    expect(copyControl).toContain("navigator.clipboard.writeText(text)");
+    expect(copyControl).toContain("document.execCommand('copy')");
+    expect(copyControl).toContain("label.setAttribute('aria-live', 'polite')");
     expect(theme).toMatch(/@media \(max-width: 960px\)[\s\S]*?\.layout \{\s*grid-template-columns: minmax\(0, 1fr\)/);
     expect(shell).not.toContain('consoleInput');
     expect(shell).not.toContain('terminal.js');
@@ -55,6 +62,7 @@ describe('docs.aiwg.io open-kit theme contract', () => {
     expect(config.theme.accent).toBe('#0068ff');
     expect(config.navPosition).toBe('left');
     expect(config.navCollapse).toBe('instant');
+    expect(config.codeCopy).toBe(true);
   });
 
   it('carries the same visual system into generated blog routes', () => {
@@ -62,6 +70,8 @@ describe('docs.aiwg.io open-kit theme contract', () => {
     expect(blogWriter).toContain('--yellow: #ffcf33');
     expect(blogWriter).toContain('AIWG <span>/ BLOG</span>');
     expect(blogWriter).toContain("join(distRoot, 'open-kit.css')");
+    expect(blogWriter).toContain("join(distRoot, 'code-copy.js')");
+    expect(blogWriter).toContain("join(repoRoot, 'docs', 'overrides', 'code-copy.js')");
     expect(blogWriter).toContain('linked open-kit.css');
     expect(blogWriter).not.toContain('color-scheme: dark');
   });

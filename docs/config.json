@@ -20,6 +20,7 @@
   },
   "navPosition": "left",
   "navCollapse": "instant",
+  "codeCopy": true,
   "welcome": {
     "eyebrow": "AIWG",
     "headline": "Deploy a Virtual Organization",

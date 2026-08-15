@@ -488,6 +488,10 @@ body {
   box-shadow: 4px 4px 0 var(--mint);
 }
 
+.doc-content pre.has-code-copy {
+  padding-block-start: 3.2rem;
+}
+
 .doc-content code {
   border-radius: 0;
   color: var(--ink);
@@ -497,14 +501,36 @@ body {
 .doc-content pre code {
   color: inherit;
   background: transparent;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .code-copy {
+  top: 0.7rem;
+  inset-inline-end: 0.7rem;
+  min-width: 4.7rem;
+  min-height: 2rem;
+  justify-content: center;
   border: 2px solid var(--white);
   border-radius: 0;
   color: var(--white);
   background: var(--ink);
   font-weight: 800;
+  opacity: 1;
+}
+
+.code-copy:hover,
+.code-copy:focus-visible {
+  border-color: var(--yellow);
+  color: var(--ink);
+  background: var(--yellow);
+}
+
+.code-copy.is-copied {
+  border-color: var(--mint);
+  color: var(--ink);
+  background: var(--mint);
 }
 
 .doc-content table {

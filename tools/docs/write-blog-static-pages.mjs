@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const distRoot = resolve(process.argv[2] || 'dist/aiwg-docs');
 const indexPath = join(distRoot, 'blog', 'index.json');
 const siteUrl = 'https://docs.aiwg.io';
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -30,11 +32,26 @@ function htmlFiles(directory) {
 
 function injectOpenKitTheme(path) {
   const themePath = join(distRoot, 'open-kit.css');
-  const href = relative(dirname(path), themePath).replaceAll('\\', '/');
-  const html = readFileSync(path, 'utf8');
-  if (html.includes('open-kit.css')) return false;
-  if (!html.includes('</head>')) throw new Error(`Cannot theme snapshot without </head>: ${path}`);
-  writeFileSync(path, html.replace('</head>', `  <link rel="stylesheet" href="${href}">\n</head>`));
+  const copyPath = join(distRoot, 'code-copy.js');
+  const themeHref = relative(dirname(path), themePath).replaceAll('\\', '/');
+  const copySrc = relative(dirname(path), copyPath).replaceAll('\\', '/');
+  const original = readFileSync(path, 'utf8');
+  let html = original;
+
+  if (!html.includes('open-kit.css')) {
+    if (!html.includes('</head>')) throw new Error(`Cannot theme snapshot without </head>: ${path}`);
+    html = html.replace('</head>', `  <link rel="stylesheet" href="${themeHref}">\n</head>`);
+  }
+  if (!/<body[^>]*data-code-copy(?:[\s=>])/.test(html)) {
+    html = html.replace(/<body(?=[\s>])/, '<body data-code-copy');
+  }
+  if (!html.includes('code-copy.js')) {
+    if (!html.includes('</body>')) throw new Error(`Cannot enhance snapshot without </body>: ${path}`);
+    html = html.replace('</body>', `  <script src="${copySrc}" defer></script>\n</body>`);
+  }
+
+  if (html === original) return false;
+  writeFileSync(path, html);
   return true;
 }
 
@@ -145,7 +162,11 @@ for (const post of posts) {
 }
 
 const snapshots = htmlFiles(join(distRoot, 'pages'));
+write(
+  join(distRoot, 'code-copy.js'),
+  readFileSync(join(repoRoot, 'docs', 'overrides', 'code-copy.js'), 'utf8'),
+);
 const themedSnapshots = snapshots.filter(injectOpenKitTheme).length;
 
 console.log(`[docs-blog] wrote ${posts.length} static blog route(s) under ${join(distRoot, 'blog')}`);
-console.log(`[docs-theme] linked open-kit.css from ${themedSnapshots} standalone page snapshot(s)`);
+console.log(`[docs-theme] linked open-kit.css and code-copy.js from ${themedSnapshots} standalone page snapshot(s)`);
