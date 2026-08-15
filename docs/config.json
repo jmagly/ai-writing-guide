@@ -6,8 +6,20 @@
   "brandSub": "Docs",
   "tagline": "Modular AI workflows for every team",
   "copyright": "AIWG Project",
-  "theme": "dark",
-  "navPosition": "right",
+  "theme": {
+    "colorScheme": "light",
+    "surface": "#e8edf0",
+    "ink": "#17212b",
+    "muted": "#465564",
+    "accent": "#0068ff",
+    "gridLine": "rgba(23, 33, 43, 0.24)",
+    "highlightBg": "rgba(255, 207, 51, 0.55)",
+    "highlightBorder": "#17212b",
+    "fontBody": "Arial, Helvetica, sans-serif",
+    "fontMono": "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+  },
+  "navPosition": "left",
+  "navCollapse": "instant",
   "welcome": {
     "eyebrow": "AIWG",
     "headline": "Deploy a Virtual Organization",

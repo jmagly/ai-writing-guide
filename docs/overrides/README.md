@@ -1,43 +1,46 @@
-# Docs theme overrides (Pagenary)
+# AIWG open-kit docs theme
 
-AIWG's documentation site is built with the [Pagenary](https://www.npmjs.com/package/@pagenary/publisher)
-static publisher, but AIWG **heavily re-skins** it into a terminal-console
-aesthetic. These three files are the override surface:
+AIWG documentation is published with
+[Pagenary](https://www.npmjs.com/package/@pagenary/publisher). This directory
+adds the AIWG open-kit visual identity without replacing Pagenary's component
+stylesheet.
 
-| File | Replaces / augments | Purpose |
-|------|---------------------|---------|
-| `index.html` | Pagenary's root shell | Custom app shell, header/footer, brand mark |
-| `styles.css` | Pagenary's stylesheet **entirely** | Full terminal theme; theme vars (`--ink`, `--surface`, `--grid-line`, `--accent`, `--muted`, `--font-mono`) |
-| `terminal.js` | — (additive) | Wraps rendered sections in the `.log-entry` console pattern |
+| File | Role |
+| --- | --- |
+| `index.html` | Accessible application shell and AIWG site navigation |
+| `open-kit.css` | Additive design-token and component overrides loaded after Pagenary's `styles.css` |
 
-## Drift risk — read before upgrading Pagenary
+The previous terminal-console theme is preserved as `aiwg-terminal` in the
+[Pagenary Styles catalog](https://github.com/jmagly/pagenary-styles). Its
+manifest records the originating commit and SHA-256 hashes for every archived
+file.
 
-Because `styles.css` **replaces** Pagenary's stylesheet rather than layering on
-top of it, **any Pagenary UI component we don't explicitly re-style arrives
-unstyled.** Unstyled components fall back to raw markup — e.g. an icon button
-whose glyph is a bare text character, or a popover that renders inline in the
-content flow instead of overlaying it.
+## Upgrade contract
 
-When bumping `@pagenary/publisher`, audit the built site for new or renamed
-components and re-adapt them here. Pagenary component classes are namespaced
-`.doc-*` (e.g. `.doc-content`, `.doc-fortemi-*`, `.doc-summary`, `.doc-meta`).
+Pagenary owns `styles.css`, `app.js`, and all `.doc-*`, `.pe-*`, navigation,
+search, sharing, and export behavior. AIWG only supplies the shell and an
+additive stylesheet. New Pagenary components therefore inherit usable base
+styles even before an AIWG-specific treatment is added.
 
-### Components AIWG has re-styled
+`tools/docs/write-blog-static-pages.mjs` also links `open-kit.css` from every
+standalone SEO snapshot after Pagenary builds it. Keep that post-build step in
+both validation and deployment workflows so no-JavaScript and crawler routes
+receive the same visual system.
 
-| Component | Classes | Notes |
-|-----------|---------|-------|
-| Fortemi page-metadata control | `.doc-fortemi-button`, `.doc-fortemi-tools`, `.doc-fortemi-panel`, `.doc-fortemi-chip`, `.doc-fortemi-row`, `.doc-fortemi-link` | Circular info icon (top-right of content) + anchored popover panel. **Only appears on sections that have Fortemi corpus metadata** — this is Pagenary behavior, not a bug, and is why the control is absent on some pages. See the "Fortemi" block in `styles.css`. |
+When upgrading Pagenary:
 
-If a Pagenary upgrade renames any `.doc-fortemi-*` class, the control reverts to
-a bare inline "i" until re-adapted.
+1. Build the `aiwg-docs` tenant.
+2. Verify the shell IDs consumed by `app.js`: `app`, `nav`, `year`,
+   `mobileMenuToggle`, `commandToggle`, `commandPalette`, `commandInput`,
+   `commandList`, `shareBtn`, and `exportBtn`.
+3. Check keyboard search, mobile navigation, sharing, export, code copy,
+   Fortemi metadata, docs maps, and blog pages.
+4. Run `test/contract/docsite-theme.test.mjs` and the docsite build workflow.
 
-## Building / previewing locally
+## Build locally
 
 ```bash
-# Build the aiwg-docs tenant (registry at repo root: tenants.json → dist/aiwg-docs)
-node node_modules/@pagenary/publisher/bin/pagenary.mjs build aiwg-docs --registry tenants.json
-
-# Serve it (routes by /{tenant}/)
-node node_modules/@pagenary/publisher/bin/pagenary.mjs serve --registry tenants.json
-# → http://localhost:5173/aiwg-docs/
+node tools/docs/build-public-source.mjs
+npx pagenary build:tenants aiwg-docs
+node tools/docs/write-blog-static-pages.mjs dist/aiwg-docs
 ```

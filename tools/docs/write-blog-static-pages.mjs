@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
 
 const distRoot = resolve(process.argv[2] || 'dist/aiwg-docs');
 const indexPath = join(distRoot, 'blog', 'index.json');
@@ -20,6 +20,24 @@ function write(path, content) {
   writeFileSync(path, content);
 }
 
+function htmlFiles(directory) {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) return htmlFiles(path);
+    return entry.isFile() && entry.name.endsWith('.html') ? [path] : [];
+  });
+}
+
+function injectOpenKitTheme(path) {
+  const themePath = join(distRoot, 'open-kit.css');
+  const href = relative(dirname(path), themePath).replaceAll('\\', '/');
+  const html = readFileSync(path, 'utf8');
+  if (html.includes('open-kit.css')) return false;
+  if (!html.includes('</head>')) throw new Error(`Cannot theme snapshot without </head>: ${path}`);
+  writeFileSync(path, html.replace('</head>', `  <link rel="stylesheet" href="${href}">\n</head>`));
+  return true;
+}
+
 function pageShell({ title, description, canonical, body }) {
   return `<!doctype html>
 <html lang="en">
@@ -30,25 +48,46 @@ function pageShell({ title, description, canonical, body }) {
   <meta name="description" content="${escapeHtml(description)}">
   <link rel="canonical" href="${escapeHtml(canonical)}">
   <style>
-    :root { color-scheme: dark; --bg: #050712; --panel: #0b1220; --text: #e5edf8; --muted: #9fb2c8; --accent: #66e3ff; --line: rgba(255,255,255,.14); }
+    :root { color-scheme: light; --ink: #17212b; --paper: #e8edf0; --white: #fff; --blue: #0068ff; --yellow: #ffcf33; --coral: #ff6f59; --mint: #65d6a6; --muted: #465564; --line: 3px; }
     * { box-sizing: border-box; }
-    body { margin: 0; background: radial-gradient(circle at top left, rgba(102,227,255,.14), transparent 32rem), var(--bg); color: var(--text); font: 16px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    main { width: min(980px, calc(100vw - 2rem)); margin: 0 auto; padding: 4rem 0; }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .eyebrow { color: var(--accent); font-size: .78rem; letter-spacing: .16em; text-transform: uppercase; }
-    h1 { margin: .5rem 0 1rem; font-size: clamp(2.25rem, 7vw, 4.5rem); line-height: .95; letter-spacing: -.05em; }
-    .lead { color: var(--muted); max-width: 62ch; font-size: 1.08rem; }
-    .posts { display: grid; gap: 1rem; margin-top: 2rem; }
-    article { border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 86%, transparent); border-radius: 1rem; padding: 1.25rem; }
-    article h2 { margin: .35rem 0 .5rem; font-size: clamp(1.25rem, 4vw, 2rem); line-height: 1.08; }
-    .meta { color: var(--muted); font-size: .9rem; }
+    html { background: var(--paper); color: var(--ink); font-family: Arial, Helvetica, sans-serif; line-height: 1.5; }
+    body { margin: 0; }
+    a { color: inherit; }
+    a:focus-visible { outline: 4px solid var(--blue); outline-offset: 3px; }
+    .site-nav { position: sticky; top: 0; z-index: 10; display: flex; gap: 1rem; align-items: center; padding: 1rem max(4vw, 1rem); border-bottom: var(--line) solid var(--ink); background: rgb(232 237 240 / 96%); }
+    .logo { font-size: 1.35rem; font-weight: 950; text-decoration: none; }
+    .logo span { padding: .14rem .38rem; background: var(--yellow); }
+    .site-links { display: flex; gap: 1rem; margin-left: auto; }
+    .site-links a { font-weight: 800; text-decoration: none; }
+    .site-links a:hover { text-decoration: underline; text-decoration-thickness: 3px; }
+    main { width: min(1100px, calc(100vw - 2rem)); margin: 0 auto; padding: clamp(3rem, 8vw, 7rem) 0; }
+    .eyebrow, .meta { color: var(--blue); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+    h1 { max-width: 10ch; margin: .65rem 0 1.25rem; font-size: clamp(3.5rem, 10vw, 7.5rem); line-height: .84; letter-spacing: -.065em; }
+    .lead { max-width: 62ch; color: var(--muted); font-size: 1.15rem; }
+    .posts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.35rem; margin-top: 3rem; }
+    article { min-height: 230px; padding: 1.35rem; border: var(--line) solid var(--ink); border-top: 14px solid var(--coral); background: var(--white); box-shadow: 6px 6px 0 var(--ink); }
+    article:nth-child(4n + 2) { border-top-color: var(--mint); }
+    article:nth-child(4n + 3) { border-top-color: var(--yellow); }
+    article:nth-child(4n) { border-top-color: var(--blue); }
+    article h2 { margin: .55rem 0 .75rem; font-size: clamp(1.4rem, 3vw, 2.2rem); line-height: 1; letter-spacing: -.04em; }
+    article h2 a { color: var(--ink); text-decoration-thickness: 3px; }
     .summary { color: var(--muted); margin-bottom: 0; }
-    .back { display: inline-block; margin-bottom: 2rem; color: var(--muted); }
+    .back { display: inline-block; margin-bottom: 2rem; color: var(--blue); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 850; }
+    .site-footer { display: flex; justify-content: space-between; gap: 1rem; padding: 2rem max(4vw, 1rem); border-top: var(--line) solid var(--ink); background: var(--yellow); font-weight: 800; }
+    @media (max-width: 700px) { .posts { grid-template-columns: 1fr; } .site-nav { align-items: flex-start; flex-direction: column; } .site-links { width: 100%; margin-left: 0; overflow-x: auto; } h1 { font-size: clamp(3.2rem, 18vw, 5rem); } .site-footer { flex-direction: column; } }
   </style>
 </head>
 <body>
+<header class="site-nav">
+  <a class="logo" href="https://aiwg.io/">AIWG <span>/ BLOG</span></a>
+  <nav class="site-links" aria-label="AIWG sites">
+    <a href="/">Docs</a>
+    <a href="https://aiwg.io/install/">Install</a>
+    <a href="https://github.com/jmagly/aiwg">GitHub</a>
+  </nav>
+</header>
 ${body}
+<footer class="site-footer"><span>AIWG · MIT licensed</span><span>Open tools for durable AI work.</span></footer>
 </body>
 </html>
 `;
@@ -105,4 +144,8 @@ for (const post of posts) {
 `);
 }
 
+const snapshots = htmlFiles(join(distRoot, 'pages'));
+const themedSnapshots = snapshots.filter(injectOpenKitTheme).length;
+
 console.log(`[docs-blog] wrote ${posts.length} static blog route(s) under ${join(distRoot, 'blog')}`);
+console.log(`[docs-theme] linked open-kit.css from ${themedSnapshots} standalone page snapshot(s)`);
