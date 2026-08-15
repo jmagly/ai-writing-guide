@@ -13,8 +13,10 @@ export {
   expandProjectArtifactPath,
   parseProjectArtifactLocation,
   projectAiwgPath,
+  projectControlPath,
   readProjectArtifactLocation,
   resolveProjectAiwgDir,
+  resolveProjectControlDir,
 } from './project-artifacts-runtime.mjs';
 export type { ProjectArtifactEnv } from './project-artifacts-runtime.mjs';
 export {

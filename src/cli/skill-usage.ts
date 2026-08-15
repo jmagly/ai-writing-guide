@@ -6,7 +6,11 @@ import path from 'path';
 import os from 'os';
 import type { AiwgConfig, SkillUsageConfig } from '../config/aiwg-config.js';
 import { readAiwgConfig } from '../config/aiwg-config.js';
-import { PROJECT_AIWG_LOCATION_FILE, projectAiwgPath } from '../config/project-artifacts.js';
+import {
+  PROJECT_AIWG_LOCATION_FILE,
+  projectAiwgPath,
+  projectControlPath,
+} from '../config/project-artifacts.js';
 
 export type SkillUsageScope = 'project' | 'global';
 export type SkillUsageSource = 'cli' | 'transcript';
@@ -676,7 +680,7 @@ async function findProjectRoot(startDir: string): Promise<string | null> {
     if (
       existsSync(path.join(current, '.aiwg')) ||
       existsSync(path.join(current, PROJECT_AIWG_LOCATION_FILE)) ||
-      existsSync(projectAiwgPath(current, 'aiwg.config'))
+      existsSync(projectControlPath(current, 'aiwg.config'))
     ) {
       return current;
     }

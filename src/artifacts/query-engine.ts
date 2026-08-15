@@ -33,11 +33,11 @@ import {
   type AiwgFortemiRecord,
 } from './browser-export.js';
 import { loadProviderModelMetadata } from '../models/provider-models.js';
+import { projectAiwgPath, projectControlPath } from '../config/project-artifacts.js';
 import {
   operationalStateQueryProjection,
   type OperationalStateQueryProjection,
 } from './operational-state.js';
-import { projectAiwgPath } from '../config/project-artifacts.js';
 import type {
   ResourceSource,
   VerifiedWebRelease,
@@ -889,7 +889,7 @@ const DEFAULT_CAPABILITY_GRAPHS: GraphType[] = ['project', 'user', 'framework'];
 
 function projectAllowsUserIndices(cwd: string): boolean {
   try {
-    const configPath = projectAiwgPath(cwd, 'aiwg.config');
+    const configPath = projectControlPath(cwd, 'aiwg.config');
     if (!fs.existsSync(configPath)) return true;
     const parsed = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as Record<string, unknown>;
     const index = parsed.index as Record<string, unknown> | undefined;

@@ -63,6 +63,22 @@ export function resolveProjectAiwgDir(projectDir, env = process.env) {
   return resolve(projectDir, DEFAULT_PROJECT_AIWG_DIR);
 }
 
+/**
+ * Resolve the repository-local AIWG control plane.
+ *
+ * `.aiwg-location` and the artifact path environment variables relocate the
+ * potentially large artifact corpus. They do not relocate the small control
+ * plane required to open and operate the repository while that corpus is
+ * offline.
+ */
+export function resolveProjectControlDir(projectDir) {
+  return resolve(projectDir, DEFAULT_PROJECT_AIWG_DIR);
+}
+
 export function projectAiwgPath(projectDir, ...segments) {
   return join(resolveProjectAiwgDir(projectDir), ...segments);
+}
+
+export function projectControlPath(projectDir, ...segments) {
+  return join(resolveProjectControlDir(projectDir), ...segments);
 }

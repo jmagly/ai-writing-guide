@@ -11,7 +11,7 @@
 
 import { readFile, writeFile, mkdir, access, readdir, rename, unlink } from 'fs/promises';
 import { createHash, randomBytes } from 'crypto';
-import { resolve, join, isAbsolute } from 'path';
+import { resolve, join, dirname, isAbsolute } from 'path';
 import type { ProjectLocalType } from '../extensions/manifest.js';
 import { normalizeNamedCaptures } from '../artifacts/index-builder.js';
 import {
@@ -25,7 +25,11 @@ import {
   validateAuthorization,
   type AuthorizationConfig,
 } from '../policy/authorization.js';
-import { projectAiwgPath, resolveProjectAiwgDir } from './project-artifacts.js';
+import {
+  projectAiwgPath,
+  projectControlPath,
+  resolveProjectAiwgDir,
+} from './project-artifacts.js';
 import {
   defaultThreatAssessmentConfig,
   validateThreatAssessmentConfig,
@@ -1378,11 +1382,11 @@ export function emptyConfig(providers: string[] = ['claude']): AiwgConfig {
 /**
  * Resolve path to the project-level AIWG config.
  *
- * Defaults to `<project>/.aiwg/aiwg.config`; honors `AIWG_ARTIFACTS_PATH` so
- * projects can rename or relocate the AIWG artifact directory.
+ * The config is part of the repository-local control plane. Relocating the
+ * artifact corpus does not relocate this path.
  */
 export function getConfigPath(projectDir: string): string {
-  return projectAiwgPath(projectDir, CONFIG_FILENAME);
+  return projectControlPath(projectDir, CONFIG_FILENAME);
 }
 
 /**
@@ -1410,11 +1414,19 @@ export function getProjectDir(
  * Returns null if the file does not exist.
  */
 export async function readAiwgConfig(projectDir: string): Promise<AiwgConfig | null> {
-  const filePath = getConfigPath(projectDir);
+  const localPath = getConfigPath(projectDir);
+  const artifactPath = projectAiwgPath(projectDir, CONFIG_FILENAME);
+  let filePath = localPath;
   try {
-    await access(filePath);
+    await access(localPath);
   } catch {
-    return null;
+    if (artifactPath === localPath) return null;
+    try {
+      await access(artifactPath);
+      filePath = artifactPath;
+    } catch {
+      return null;
+    }
   }
 
   const content = await readFile(filePath, 'utf-8');
@@ -1451,32 +1463,49 @@ export async function readAiwgConfig(projectDir: string): Promise<AiwgConfig | n
 }
 
 /**
- * Write aiwg.config, creating the resolved AIWG artifact directory if needed.
+ * Write aiwg.config to the repository-local control plane. When a reachable
+ * external corpus also carries the compatibility control copy, keep it in
+ * sync so split-root health remains deterministic.
  */
 export async function writeAiwgConfig(projectDir: string, config: AiwgConfig): Promise<void> {
   const threatAssessmentErrors = validateThreatAssessmentConfig(config.security?.threatAssessment);
   if (threatAssessmentErrors.length > 0) {
     throw new Error(`Invalid .aiwg/aiwg.config:\n${threatAssessmentErrors.join('\n')}`);
   }
-  const dir = resolveProjectAiwgDir(projectDir);
-  await mkdir(dir, { recursive: true });
-  const filePath = join(dir, CONFIG_FILENAME);
-  // Atomic write: emit to a temp sibling, fsync-ish via rename. Prevents a
-  // crash or kill mid-write from corrupting the config file. Rename is
-  // atomic on POSIX and on NTFS when both paths are on the same volume.
-  // The random suffix avoids collisions if two concurrent writers run.
-  const tmpPath = `${filePath}.${randomBytes(6).toString('hex')}.tmp`;
-  try {
-    await writeFile(tmpPath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
-    await rename(tmpPath, filePath);
-  } catch (err) {
-    // Best-effort cleanup of the temp file on failure, ignoring ENOENT.
+  const localPath = getConfigPath(projectDir);
+  const artifactDir = resolveProjectAiwgDir(projectDir);
+  const artifactPath = join(artifactDir, CONFIG_FILENAME);
+  const content = JSON.stringify(config, null, 2) + '\n';
+
+  const writeAtomic = async (filePath: string): Promise<void> => {
+    await mkdir(dirname(filePath), { recursive: true });
+    // Atomic write: emit to a temp sibling, fsync-ish via rename. Prevents a
+    // crash or kill mid-write from corrupting the config file. Rename is
+    // atomic on POSIX and on NTFS when both paths are on the same volume.
+    // The random suffix avoids collisions if two concurrent writers run.
+    const tmpPath = `${filePath}.${randomBytes(6).toString('hex')}.tmp`;
     try {
-      await unlink(tmpPath);
-    } catch {
-      /* ignore */
+      await writeFile(tmpPath, content, 'utf-8');
+      await rename(tmpPath, filePath);
+    } catch (err) {
+      // Best-effort cleanup of the temp file on failure, ignoring ENOENT.
+      try {
+        await unlink(tmpPath);
+      } catch {
+        /* ignore */
+      }
+      throw err;
     }
-    throw err;
+  };
+
+  await writeAtomic(localPath);
+  if (artifactPath !== localPath) {
+    try {
+      await access(artifactDir);
+      await writeAtomic(artifactPath);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    }
   }
 }
 

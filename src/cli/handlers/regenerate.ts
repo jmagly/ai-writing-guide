@@ -37,7 +37,7 @@ import {
 import type { Platform } from '../../agents/types.js';
 import { resolveActiveProvider } from '../provider-resolution.js';
 import { getProviderContextDiscoveryPathStrings } from '../../providers/provider-definitions.js';
-import { projectAiwgPath } from '../../config/project-artifacts.js';
+import { projectControlPath } from '../../config/project-artifacts.js';
 import { selectRegenerateBranch } from '../regenerate-selector.js';
 
 async function handleRegenerate(args: string[], cwd: string): Promise<void> {
@@ -206,7 +206,7 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
 
   if (legacy) {
     if (skipWorkspaceMd) console.log('  Note: --no-workspace-md is implicit in legacy mode.');
-    const normalizedPath = projectAiwgPath(target, 'AIWG.md');
+    const normalizedPath = projectControlPath(target, 'AIWG.md');
     let existing = '';
     try { existing = await fs.readFile(normalizedPath, 'utf8'); }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
@@ -243,7 +243,7 @@ async function handleRegenerate(args: string[], cwd: string): Promise<void> {
     console.log('');
     console.log(`  Would regenerate:`);
     if (!skipWorkspaceMd) console.log(`    - ${path.join(target, 'WORKSPACE.md')} (managed graph; operator section preserved)`);
-    console.log(`    - ${projectAiwgPath(target, 'AIWG.md')}`);
+    console.log(`    - ${projectControlPath(target, 'AIWG.md')}`);
     if (!skipAiwgMd) console.log(`    - ${aiwgMd}`);
     if (provider === 'claude') {
       console.log(`    - ${claudeMd} (managed @WORKSPACE.md then @AIWG.md hook; operator content preserved)`);

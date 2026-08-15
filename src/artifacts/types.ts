@@ -18,6 +18,7 @@ import type { StateTransferProjection } from './state-transfer.js';
 import {
   DEFAULT_PROJECT_AIWG_DIR,
   projectAiwgPath,
+  projectControlPath,
   resolveProjectAiwgDir,
 } from '../config/project-artifacts.js';
 
@@ -899,7 +900,7 @@ export function loadUserGraphConfigs(cwd: string, diagnostics?: GraphConfigWarni
 
   // (a) Canonical: .aiwg/aiwg.config (JSON).
   try {
-    const aiwgConfigPath = projectAiwgPath(cwd, 'aiwg.config');
+    const aiwgConfigPath = projectControlPath(cwd, 'aiwg.config');
     if (fs.existsSync(aiwgConfigPath)) {
       const parsed = JSON.parse(fs.readFileSync(aiwgConfigPath, 'utf-8')) as Record<string, unknown>;
       const idx = parsed.index as Record<string, unknown> | undefined;
