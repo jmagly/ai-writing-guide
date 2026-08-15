@@ -325,6 +325,22 @@ Structured diagnostics report the metadata kind, cache/revalidation outcome,
 and recovery action. They intentionally omit release URLs and credentials so
 operators can enable them in automation without disclosing access tokens.
 
+### Cross-asset attestation migration
+
+The accepted [cross-asset authenticity
+contract](../research/asset-authenticity-and-provenance.md) will add adjacent
+DSSE/in-toto sidecars for remotely consumed setup YAML, agentic flows, bundles,
+and indices. The first public paths are designed as:
+
+- `https://aiwg.io/setup.aiwg.yaml.aiwg-attestation.json`
+- `https://aiwg.io/agentic.yaml.aiwg-attestation.json`
+
+The current Ed25519-signed channel and release manifests remain mandatory
+during migration. A future inspection UI may show the YAML and verification
+details in place, but rendering or copying from the website is never itself
+proof. Only a local verifier may report `verified`; unsigned, expired, revoked,
+stale, mismatched, and policy-exempt assets remain distinct outcomes.
+
 ## Research Basis
 
 The web-backed resource beta is grounded in public AIWG reference notes:
@@ -344,6 +360,9 @@ The web-backed resource beta is grounded in public AIWG reference notes:
   [REF-074](../references/REF-074-signing-is-not-enough-provenance-graph.md),
   and [REF-075](../references/REF-075-supply-chain-poisoning-agent-skills.md):
   supply-chain trust boundaries that signatures alone do not close.
+- [Cross-asset authenticity and provenance](../research/asset-authenticity-and-provenance.md):
+  DSSE/in-toto envelope, asset matrix, publisher lifecycle, verifier states,
+  and phased enforcement plan.
 
 The induction tracker for #1855 is
 [Web Resource Distribution Acquisition Status](../references/acquisition-status-web-resource-distribution.md).

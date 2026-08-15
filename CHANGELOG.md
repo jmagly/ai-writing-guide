@@ -9,6 +9,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Cross-asset authenticity research contract** - accepted a DSSE + in-toto
+  Statement envelope for every first-party AIWG asset class, exact-byte digest
+  and canonical-payload rules, publisher delegation/rotation/revocation and
+  freshness policy, stable verifier outcomes, JSON Schemas, adversarial
+  conformance vectors, and a phased implementation/runbook roadmap (#2068).
+
 - **Devin Desktop provider selector** - `devin` is now the preferred selector
   for the existing Windsurf-compatible deployment adapter. `devin-desktop`
   remains equivalent, `windsurf` remains a deprecated compatibility selector,

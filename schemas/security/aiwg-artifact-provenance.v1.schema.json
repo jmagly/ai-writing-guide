@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/security/aiwg-artifact-provenance.v1.schema.json",
+  "title": "AIWG artifact provenance in-toto Statement v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["_type", "subject", "predicateType", "predicate"],
+  "properties": {
+    "_type": {
+      "const": "https://in-toto.io/Statement/v1"
+    },
+    "subject": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/resourceDescriptor" }
+    },
+    "predicateType": {
+      "const": "https://aiwg.io/attestations/artifact-provenance/v1"
+    },
+    "predicate": {
+      "$ref": "#/$defs/predicate"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nonEmpty": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resourceDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "digest"],
+      "properties": {
+        "name": { "$ref": "#/$defs/nonEmpty" },
+        "uri": { "type": "string", "format": "uri-reference" },
+        "mediaType": { "$ref": "#/$defs/nonEmpty" },
+        "digest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sha256"],
+          "properties": {
+            "sha256": { "$ref": "#/$defs/sha256" }
+          }
+        }
+      }
+    },
+    "assetType": {
+      "oneOf": [
+        {
+          "enum": [
+            "setup-manifest",
+            "agentic-flow",
+            "agent",
+            "skill",
+            "command",
+            "rule",
+            "behavior",
+            "tool",
+            "mcp-server",
+            "hook",
+            "workflow",
+            "profile",
+            "persona",
+            "theme",
+            "media",
+            "reference",
+            "template",
+            "documentation",
+            "framework",
+            "addon",
+            "extension",
+            "plugin",
+            "schema",
+            "package",
+            "release-manifest",
+            "sbom",
+            "web-resource",
+            "index",
+            "fortemi-shard",
+            "fortemi-receipt",
+            "marketplace-envelope",
+            "marketplace-catalog",
+            "generated-provider-artifact",
+            "project-artifact",
+            "site-deployment"
+          ]
+        },
+        {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        }
+      ]
+    },
+    "publisher": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "namespace"],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmpty" },
+        "namespace": { "$ref": "#/$defs/nonEmpty" },
+        "role": { "$ref": "#/$defs/nonEmpty" }
+      }
+    },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "channel", "sequence"],
+      "properties": {
+        "version": { "$ref": "#/$defs/nonEmpty" },
+        "channel": { "$ref": "#/$defs/nonEmpty" },
+        "sequence": { "type": "integer", "minimum": 1 },
+        "sourceUri": { "type": "string", "format": "uri" },
+        "collection": { "$ref": "#/$defs/resourceDescriptor" },
+        "supersedes": { "$ref": "#/$defs/resourceDescriptor" }
+      }
+    },
+    "material": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uri", "digest"],
+      "properties": {
+        "uri": { "type": "string", "format": "uri-reference" },
+        "digest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sha256"],
+          "properties": {
+            "sha256": { "$ref": "#/$defs/sha256" }
+          }
+        }
+      }
+    },
+    "derivation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["builder", "materials"],
+      "properties": {
+        "builder": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id"],
+          "properties": {
+            "id": { "$ref": "#/$defs/nonEmpty" },
+            "version": { "$ref": "#/$defs/nonEmpty" }
+          }
+        },
+        "transformation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "version"],
+          "properties": {
+            "id": { "$ref": "#/$defs/nonEmpty" },
+            "version": { "$ref": "#/$defs/nonEmpty" },
+            "provider": { "$ref": "#/$defs/nonEmpty" }
+          }
+        },
+        "materials": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/material" }
+        },
+        "reproducible": { "type": "boolean" },
+        "invocationId": { "$ref": "#/$defs/nonEmpty" }
+      }
+    },
+    "provenanceGraph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["standard", "uri", "sha256"],
+      "properties": {
+        "standard": { "const": "W3C-PROV" },
+        "uri": { "type": "string", "format": "uri-reference" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "predicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "assetType", "publisher", "publication", "issuedAt"],
+      "properties": {
+        "schemaVersion": { "const": "aiwg.artifact-provenance.v1" },
+        "assetType": { "$ref": "#/$defs/assetType" },
+        "publisher": { "$ref": "#/$defs/publisher" },
+        "publication": { "$ref": "#/$defs/publication" },
+        "issuedAt": { "type": "string", "format": "date-time" },
+        "notBefore": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "derivation": { "$ref": "#/$defs/derivation" },
+        "provenanceGraph": { "$ref": "#/$defs/provenanceGraph" },
+        "dependencies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/resourceDescriptor" }
+        }
+      }
+    }
+  }
+}
