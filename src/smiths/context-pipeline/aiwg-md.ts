@@ -17,7 +17,7 @@
 
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
-import { projectAiwgPath } from '../../config/project-artifacts.js';
+import { projectControlPath } from '../../config/project-artifacts.js';
 import { buildParallelismSection, replaceOrAppendParallelismBlock } from './parallelism-section.js';
 import { buildContextFinalizationBlock, replaceOrAppendFinalizationBlock } from './finalization.js';
 import {
@@ -94,7 +94,7 @@ export async function buildAiwgMdContent(
   }
 
   // Fallback stub.
-  const normalizedPath = projectAiwgPath(projectPath, 'AIWG.md');
+  const normalizedPath = projectControlPath(projectPath, 'AIWG.md');
   const normalizedRelative = path.relative(projectPath, normalizedPath).replace(/\\/g, '/');
   const normalizedLink = normalizedRelative.startsWith('.') ? normalizedRelative : `./${normalizedRelative}`;
   const stub = [

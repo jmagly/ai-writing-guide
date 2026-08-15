@@ -113,12 +113,12 @@ describe('aiwg-config', () => {
       expect(p).toBe(resolve('/some/project', '.aiwg', 'aiwg.config'));
     });
 
-    it('honors AIWG_ARTIFACTS_PATH for renamed or external project corpus directories', () => {
+    it('keeps the config in the local control plane when the corpus is external', () => {
       const previous = process.env.AIWG_ARTIFACTS_PATH;
       process.env.AIWG_ARTIFACTS_PATH = '../aiwg-web-release-ops/corpus/.aiwg';
       try {
         const p = getConfigPath('/some/project');
-        expect(p).toBe(resolve('/some/project', '../aiwg-web-release-ops/corpus/.aiwg', 'aiwg.config'));
+        expect(p).toBe(resolve('/some/project', '.aiwg', 'aiwg.config'));
       } finally {
         if (previous === undefined) {
           delete process.env.AIWG_ARTIFACTS_PATH;
@@ -188,14 +188,15 @@ describe('aiwg-config', () => {
       expect(read?.externalLinks).toEqual(cfg.externalLinks);
     });
 
-    it('reads and writes aiwg.config from AIWG_ARTIFACTS_PATH', async () => {
+    it('writes the local control config and mirrors an existing external control copy', async () => {
       const externalAiwgDir = join(tmpDir, 'renamed-aiwg-corpus');
+      mkdirSync(externalAiwgDir, { recursive: true });
       const previous = process.env.AIWG_ARTIFACTS_PATH;
       process.env.AIWG_ARTIFACTS_PATH = externalAiwgDir;
       try {
         await writeAiwgConfig(tmpDir, emptyConfig(['codex']));
         expect(existsSync(join(externalAiwgDir, 'aiwg.config'))).toBe(true);
-        expect(existsSync(join(tmpDir, '.aiwg', 'aiwg.config'))).toBe(false);
+        expect(existsSync(join(tmpDir, '.aiwg', 'aiwg.config'))).toBe(true);
 
         const read = await readAiwgConfig(tmpDir);
         expect(read?.providers).toEqual(['codex']);
@@ -205,6 +206,20 @@ describe('aiwg-config', () => {
         } else {
           process.env.AIWG_ARTIFACTS_PATH = previous;
         }
+      }
+    });
+
+    it('falls back to a legacy external config when the local control copy is missing', async () => {
+      const externalAiwgDir = join(tmpDir, 'legacy-external-aiwg');
+      mkdirSync(externalAiwgDir, { recursive: true });
+      writeFileSync(join(externalAiwgDir, 'aiwg.config'), JSON.stringify(emptyConfig(['codex'])));
+      const previous = process.env.AIWG_ARTIFACTS_PATH;
+      process.env.AIWG_ARTIFACTS_PATH = externalAiwgDir;
+      try {
+        expect((await readAiwgConfig(tmpDir))?.providers).toEqual(['codex']);
+      } finally {
+        if (previous === undefined) delete process.env.AIWG_ARTIFACTS_PATH;
+        else process.env.AIWG_ARTIFACTS_PATH = previous;
       }
     });
 

@@ -18,7 +18,12 @@ import {
   listProviderDefinitions,
   type ProviderContextContract,
 } from '../../providers/provider-definitions.js';
-import { projectAiwgPath, resolveProjectAiwgDir } from '../../config/project-artifacts.js';
+import { readAiwgConfig } from '../../config/aiwg-config.js';
+import {
+  projectAiwgPath,
+  projectControlPath,
+  resolveProjectAiwgDir,
+} from '../../config/project-artifacts.js';
 
 export const WORKSPACE_MANAGED_START = '<!-- AIWG:workspace-context:start -->';
 export const WORKSPACE_MANAGED_END = '<!-- AIWG:workspace-context:end -->';
@@ -397,8 +402,8 @@ function providerForPath(relativePath: string): string | null {
   return null;
 }
 
-function projectArtifactMarkdownPath(projectPath: string, ...segments: string[]): string {
-  const rel = path.relative(projectPath, projectAiwgPath(projectPath, ...segments)).replace(/\\/g, '/');
+function projectControlMarkdownPath(projectPath: string, ...segments: string[]): string {
+  const rel = path.relative(projectPath, projectControlPath(projectPath, ...segments)).replace(/\\/g, '/');
   if (rel === '') return '.';
   return rel.startsWith('.') ? rel : `./${rel}`;
 }
@@ -406,13 +411,14 @@ function projectArtifactMarkdownPath(projectPath: string, ...segments: string[])
 function workspaceLinks(projectPath: string, providerFiles: string[] = []): string[] {
   const links = new Set<string>([
     '[AIWG framework context](./AIWG.md)',
-    `[AIWG project configuration](${projectArtifactMarkdownPath(projectPath, 'aiwg.config')})`,
+    `[AIWG project configuration](${projectControlMarkdownPath(projectPath, 'aiwg.config')})`,
   ]);
   if (providerFiles.length > 0) {
     for (const file of providerFiles) links.add(`[Provider-specific context](./${file.replace(/\\/g, '/')})`);
   }
-  // The quickref source is linked, not copied into each provider directory.
-  links.add(`[Project-local quickref](${projectArtifactMarkdownPath(projectPath, 'quickref.json')}) (when configured)`);
+  // Keep the logical project path portable in committed context. Runtime
+  // quickref readers follow `.aiwg-location` to the external corpus.
+  links.add('[Project-local quickref](.aiwg/quickref.json) (when configured)');
   return [...links];
 }
 
@@ -807,14 +813,11 @@ function providerMigrationContent(source: WorkspaceContextSource): string {
 }
 
 async function configuredProviders(projectPath: string): Promise<string[]> {
-  const config = await readOptional(projectAiwgPath(projectPath, 'aiwg.config'));
-  if (config) {
-    try {
-      const parsed = JSON.parse(config) as { providers?: unknown };
-      if (Array.isArray(parsed.providers)) return parsed.providers.filter((provider): provider is string => typeof provider === 'string');
-    } catch {
-      // Audit/migration reports malformed provider config through the normal CLI path.
-    }
+  try {
+    const config = await readAiwgConfig(projectPath);
+    if (config) return config.providers.filter((provider): provider is string => typeof provider === 'string');
+  } catch {
+    // Audit/migration reports malformed provider config through the normal CLI path.
   }
   return ['claude'];
 }
@@ -901,7 +904,7 @@ async function stageMigrationWrites(
     writes.set(configPath, `${JSON.stringify(config, null, 2)}\n`);
   }
   if (options.includeGeneratedContext) {
-    const normalizedPath = projectOutputPath(projectPath, projectAiwgPath(projectPath, 'AIWG.md'));
+    const normalizedPath = projectOutputPath(projectPath, projectControlPath(projectPath, 'AIWG.md'));
     const existingNormalized = await readOptional(path.join(projectPath, normalizedPath)) ?? '';
     writes.set(normalizedPath, await buildNormalizedAiwgMd(projectPath, existingNormalized));
     const stagedClaude = writes.has('CLAUDE.md')

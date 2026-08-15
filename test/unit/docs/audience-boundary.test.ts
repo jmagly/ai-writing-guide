@@ -7,7 +7,7 @@ const root = path.resolve(import.meta.dirname, '../../..');
 const docs = path.join(root, 'docs');
 
 describe('documentation audience boundary', () => {
-  it('keeps agent references indexed with stable metadata', () => {
+  it('keeps agent and CLI references indexed with stable metadata', () => {
     const agentRoot = path.join(docs, 'agents');
     const markdownFiles = (directory: string): string[] =>
       readdirSync(directory).flatMap((entry) => {
@@ -22,6 +22,22 @@ describe('documentation audience boundary', () => {
     expect(files).toContain(path.join(agentRoot, 'providers', 'README.md'));
     for (const file of files) {
       const content = readFileSync(file, 'utf8');
+      expect(content).toMatch(/^---\n[\s\S]*audience: agent-operator/m);
+      expect(content).toMatch(/^publication: agent-reference(?:-redirect)?$/m);
+      expect(content).toMatch(/^stable_id: aiwg\.agent-reference\./m);
+    }
+
+    const cliRoot = path.join(docs, 'cli');
+    for (const entry of [
+      'reference.md',
+      'agent-usage.md',
+      'discovery-and-retrieval.md',
+      'capability-routing.md',
+      'web-backed-resources.md',
+      'non-interactive.md',
+      'regenerate.md',
+    ]) {
+      const content = readFileSync(path.join(cliRoot, entry), 'utf8');
       expect(content).toMatch(/^---\n[\s\S]*audience: agent-operator/m);
       expect(content).toMatch(/^publication: agent-reference$/m);
       expect(content).toMatch(/^stable_id: aiwg\.agent-reference\./m);
@@ -39,13 +55,17 @@ describe('documentation audience boundary', () => {
     }
   });
 
-  it('excludes the agent corpus from the public build source', () => {
+  it('publishes user CLI landing pages without exact agent references', () => {
     const output = path.join(root, 'dist', 'test-public-docs-source');
     execFileSync(process.execPath, ['tools/docs/build-public-source.mjs', output], {
       cwd: root,
       stdio: 'pipe',
     });
     expect(existsSync(path.join(output, 'agents'))).toBe(false);
+    expect(existsSync(path.join(output, 'cli', 'README.md'))).toBe(true);
+    expect(existsSync(path.join(output, 'cli', 'install-and-repair.md'))).toBe(true);
+    expect(existsSync(path.join(output, 'cli', 'reference.md'))).toBe(false);
+    expect(existsSync(path.join(output, 'cli', 'agent-usage.md'))).toBe(false);
     const manifest = JSON.parse(readFileSync(path.join(output, '_manifest.json'), 'utf8'));
     expect(manifest.order.some((entry: string) => entry === 'agents' || entry.startsWith('agents/'))).toBe(false);
   });
@@ -60,6 +80,7 @@ describe('documentation audience boundary', () => {
     expect(index).toContain('https://releases.aiwg.io/resources/<version>/manifest.json');
     expect(index).toContain('https://releases.aiwg.io/resources/<version>/bundles/reference.tar.zst');
     expect(index).toContain('docs/agents/');
+    expect(index).toContain('docs/cli/');
     expect(index).toContain('verify the signed manifest and bundle digest');
     expect(index).not.toContain('/raw/docs/agents/');
   });
@@ -74,6 +95,9 @@ describe('documentation audience boundary', () => {
     expect(audit.totals.onboardingNeedsReview).toBe(0);
     expect(audit.totals.publicCommandPages).toBeGreaterThan(0);
     expect(audit.totals.publicOperatorGuidancePages).toBeGreaterThan(0);
+    expect(audit.totals.publicPublishedAdvancedCommandPages).toBe(0);
+    expect(audit.totals.publicPublishedAdvancedCommandMentions).toBe(0);
+    expect(audit.totals.publicPublishedDiscoveryMentions).toBe(0);
     expect(audit.totals.publicUnclassifiedCommandPages).toBe(0);
     expect(audit.beforeAfter.current.homepageCommandChecklistItems).toBe(0);
     expect(audit.beforeAfter.current.publicCliNavigationEntries).toBe(0);
@@ -98,7 +122,7 @@ describe('documentation audience boundary', () => {
     )) {
       const staged = readFileSync(path.join(output, row.path), 'utf8');
       expect(staged).toContain('<!-- aiwg-public-operator-guidance -->');
-      expect(staged).toContain('describe the outcome you want');
+      expect(staged).toContain('Describe the outcome you want');
     }
   });
 });

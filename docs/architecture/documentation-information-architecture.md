@@ -9,7 +9,7 @@ not remove it from the product.
 | Audience | Reader need | Owner | Publication target |
 |---|---|---|---|
 | End user | Goals, conversational asks, choices, approvals, outcomes, verification | Product documentation | `docs.aiwg.io` |
-| Agent/operator | CLI contracts, flags, structured output, automation, diagnostics, recovery | Runtime and capability owners | installed package and `releases.aiwg.io` |
+| Agent/operator | CLI contracts, flags, structured output, automation, diagnostics, recovery | Runtime and capability owners | `docs/cli/`, installed package, and `releases.aiwg.io` |
 | Contributor/maintainer | Authoring, architecture, testing, and release operations | Maintainers | explicitly classified development/contributor surfaces |
 
 Within every audience, use the Diátaxis task types—tutorial, how-to, reference,
@@ -30,8 +30,10 @@ experience. It defines necessary terms, identifies where each action occurs,
 explains the effect and approval boundary, and gives an observable success and
 recovery condition.
 
-Commands appear in public docs only when they are on the direct-touch allowlist
-or are clearly marked as an operator/recovery escape hatch.
+Executable commands appear in public user docs only when they are on the
+direct-touch install and recovery allowlist. During public-site staging,
+advanced executable blocks are replaced by contextual natural-language prompts;
+the exact source contracts remain in `docs/cli/` for agents and scripts.
 
 ## Direct-touch command allowlist
 
@@ -40,10 +42,12 @@ or are clearly marked as an operator/recovery escape hatch.
 | `npm install -g aiwg` | Bootstrap before an AI agent can use AIWG |
 | `aiwg wizard` | Optional guided bootstrap when the agent cannot run setup |
 | `aiwg use all --provider <provider>` | Preferred complete provider bootstrap |
-| `aiwg new` | Explicit new-project bootstrap escape hatch |
 | `aiwg status` | Independent verification or broken-agent diagnosis |
 | `aiwg doctor` | Exceptional recovery |
 | `aiwg refresh` | Exceptional repair/update of deployed context |
+| `aiwg version` | Confirm the installed CLI version |
+| `aiwg features` | Repair an optional installation feature |
+| `aiwg update` / `aiwg uninstall` | Explicit installation lifecycle actions |
 
 After bootstrap, `aiwg-regenerate` is invoked through the provider so the agent
 can select and apply the correct context migration. Discovery, `show`, indexing,
@@ -52,7 +56,8 @@ agent/operator surfaces.
 
 ## Publication metadata
 
-Agent-reference documents live under `docs/agents/` and declare:
+CLI references live under `docs/cli/`; other agent references live under
+`docs/agents/`. Both declare:
 
 ```yaml
 audience: agent-operator

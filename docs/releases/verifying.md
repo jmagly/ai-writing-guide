@@ -369,6 +369,21 @@ GitHub-as-OIDC-issuer or npmjs.org-as-registry. It is the cryptographic
 anchor that makes the other two trustworthy even if a registry or OIDC
 provider is itself attacked.
 
+## Future common asset attestation
+
+The four release checks above remain the supported release-verification
+baseline. The accepted [cross-asset authenticity
+contract](../research/asset-authenticity-and-provenance.md) will additionally
+project the same artifact digest, immutable source, builder, publisher, and
+freshness claims into a DSSE-signed in-toto Statement. Existing Cosign bundles
+are supported verification material for that envelope; they are not replaced.
+
+Until the separately tracked verifier and publisher phases ship, the presence
+of the schema or a sidecar filename must not be presented as a verified release.
+See the [architecture
+decision](../architecture/adr-cross-asset-attestation-envelope.md) for the
+migration and failure-state contract.
+
 ## What if a verification fails
 
 1. **Stop the install.** Do not proceed with `npm install` or `git
@@ -416,11 +431,12 @@ at `$(npm root -g)/aiwg/` or wherever your global npm prefix points).
 - [#1287](https://git.integrolabs.net/roctinam/aiwg/issues/1287) — tarball Sigstore signing (A8, Wave 5)
 - [#1288](https://git.integrolabs.net/roctinam/aiwg/issues/1288) — publish-time evidence: tarball audit + audit signatures + SBOM (A11/A12/A13, Wave 6)
 - [`SECURITY.md`](https://github.com/jmagly/aiwg/blob/main/SECURITY.md) — maintainer key fingerprint(s), private reporting channel
-- [`.aiwg/architecture/adr-npmjs-org-via-github-actions.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-npmjs-org-via-github-actions.md) — A5 ADR
-- [`.aiwg/architecture/adr-signed-tag-verify.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-signed-tag-verify.md) — A9 ADR
-- [`.aiwg/architecture/adr-gitea-release-compensating-controls.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-gitea-release-compensating-controls.md) — A10 ADR
-- [`.aiwg/architecture/adr-tarball-cosign-signing.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-tarball-cosign-signing.md) — A8 ADR
-- [`.aiwg/architecture/adr-publish-time-evidence.md`](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-publish-time-evidence.md) — A11+A12+A13 ADR
+- [Cross-asset attestation ADR](../architecture/adr-cross-asset-attestation-envelope.md) — common envelope and compatibility decision
+- [#1283](https://git.integrolabs.net/roctinam/aiwg/issues/1283) — A5 npm OIDC decision history
+- [#1299](https://git.integrolabs.net/roctinam/aiwg/issues/1299) — A9 signed-tag decision history
+- [#1286](https://git.integrolabs.net/roctinam/aiwg/issues/1286) — A10 Gitea controls decision history
+- [#1287](https://git.integrolabs.net/roctinam/aiwg/issues/1287) — A8 Cosign decision history
+- [#1288](https://git.integrolabs.net/roctinam/aiwg/issues/1288) — A11+A12+A13 evidence decision history
 - [CycloneDX specification](https://cyclonedx.org/specification/overview/)
 - [syft](https://github.com/anchore/syft)
 - [npm Trusted Publishers documentation](https://docs.npmjs.com/trusted-publishers)

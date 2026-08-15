@@ -6,8 +6,9 @@ reader and task, not deleted by raw count.
 
 | Surface | Baseline classification | Destination/action |
 |---|---|---|
-| `docs/agents/CLI_USAGE.md` | Agent/operator reference | Moved to `docs/agents/CLI_USAGE.md` |
-| `docs/agents/cli-reference.md` | Agent/operator reference | Moved to `docs/agents/cli-reference.md` |
+| `docs/agents/CLI_USAGE.md` | Compatibility pointer | Canonical guide moved to `docs/cli/agent-usage.md` |
+| `docs/agents/cli-reference.md` | Compatibility pointer | Canonical reference moved to `docs/cli/reference.md` |
+| `docs/discovery-and-kernel-skills.md` | Compatibility pointer | Canonical routing guide moved to `docs/cli/capability-routing.md` |
 | Discovery and kernel procedures | Agent-internal | Indexed agent reference; public pages describe the conversational result |
 | Welcome/homepage | End-user orientation | Lead with conversation, expected behavior, approval, and result |
 | Start-here and quickstart | End-user tutorial | Lead with asks; retain bootstrap escape hatch |
@@ -37,14 +38,13 @@ records whether the page contains the preferred `use all --provider` and
 without treating every specialized tutorial as a duplicate install guide.
 
 The inventory also records every Markdown page containing an `aiwg` command,
-the number of direct-touch mentions, and the number of agent/operator
-mentions. During public-source staging, any non-historical public page that
-retains a command outside the direct-touch allowlist receives a visible
-execution notice: those commands are agent/operator detail, and conversational
-users should state the outcome they want. This makes retained exceptions
-explicit instead of relying on readers to infer the audience. Historical
-release notes, contributor documentation, and the source files themselves are
-not mechanically rewritten.
+the number of direct-touch mentions, and the number of agent/operator mentions.
+During public-source staging, advanced executable blocks on non-historical user
+pages are replaced with a contextual natural-language prompt and a visible
+agent-run notice. Exact syntax remains in the installed source corpus and the
+dedicated `docs/cli/` area for agents and scripts. Historical release notes,
+contributor documentation, and the source files themselves are not
+mechanically rewritten.
 
 ## Before and after
 

@@ -130,7 +130,7 @@ Each regenerate command should detect the active vendor to include only relevant
 
 **Command format:** Natural language
 
-**Agent format:** Skills in `~/.codex/skills/`
+**Agent format:** Project skills in `.agents/skills/`; optional user skills in `~/.codex/skills/`
 
 **Features:**
 - OpenAI Codex integration

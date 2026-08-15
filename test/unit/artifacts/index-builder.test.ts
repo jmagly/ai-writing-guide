@@ -75,11 +75,12 @@ index:
     expect(loaded).toEqual([]);
   });
 
-  it('should load user-defined graphs from the configured artifact root', () => {
+  it('should load user-defined graphs from the local control config when the corpus is external', () => {
     const artifactRoot = path.join(tmpDir, 'private-corpus', '.aiwg');
     fs.mkdirSync(artifactRoot, { recursive: true });
+    fs.mkdirSync(path.join(tmpDir, '.aiwg'), { recursive: true });
     fs.writeFileSync(path.join(tmpDir, '.aiwg-location'), 'private-corpus/.aiwg\n');
-    fs.writeFileSync(path.join(artifactRoot, 'aiwg.config'), JSON.stringify({
+    fs.writeFileSync(path.join(tmpDir, '.aiwg', 'aiwg.config'), JSON.stringify({
       index: {
         graphs: {
           references: {

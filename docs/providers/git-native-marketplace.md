@@ -179,6 +179,13 @@ trust scope. Current verification rejects a revoked signing key even when the
 package signature predates discovery of the compromise. Existing locks still
 identify bytes, but their trust result changes according to current policy.
 
+The accepted [cross-asset authenticity
+contract](../research/asset-authenticity-and-provenance.md) preserves these
+marketplace controls. Its migration bridge signs the closed marketplace
+envelope as an in-toto subject and links the Fortemi shard, receipt, inventory,
+and immutable Git material digests. Both the current marketplace signature and
+the cross-asset attestation must verify during the compatibility window.
+
 ## Command summary
 
 ```text

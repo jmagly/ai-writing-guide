@@ -16,17 +16,29 @@ function makeRepo({
   lockVersion = packageVersion,
   lockRootVersion = packageVersion,
   marketplaceVersion = packageVersion,
+  marketplacePluginVersion = packageVersion,
+  pluginManifestVersion = packageVersion,
   cliVersion = packageVersion,
+  cockpitVersion = packageVersion,
+  cockpitLockVersion = cockpitVersion,
+  cockpitLockRootVersion = cockpitVersion,
 }: {
   packageVersion?: string;
   lockVersion?: string;
   lockRootVersion?: string;
   marketplaceVersion?: string;
+  marketplacePluginVersion?: string;
+  pluginManifestVersion?: string;
   cliVersion?: string;
+  cockpitVersion?: string;
+  cockpitLockVersion?: string;
+  cockpitLockRootVersion?: string;
 } = {}) {
   tempRoot = mkdtempSync(join(tmpdir(), 'aiwg-version-lockstep-'));
   mkdirSync(join(tempRoot, '.claude-plugin'), { recursive: true });
   mkdirSync(join(tempRoot, 'packages', 'cli'), { recursive: true });
+  mkdirSync(join(tempRoot, 'apps', 'cockpit'), { recursive: true });
+  mkdirSync(join(tempRoot, 'agentic', 'code', 'plugins', 'sdlc', '.claude-plugin'), { recursive: true });
 
   writeJson(join(tempRoot, 'package.json'), {
     name: 'aiwg',
@@ -45,10 +57,34 @@ function makeRepo({
   });
   writeJson(join(tempRoot, '.claude-plugin', 'marketplace.json'), {
     version: marketplaceVersion,
+    plugins: [{
+      name: 'sdlc',
+      version: marketplacePluginVersion,
+      source: './agentic/code/plugins/sdlc',
+    }],
+  });
+  writeJson(join(tempRoot, 'agentic', 'code', 'plugins', 'sdlc', '.claude-plugin', 'plugin.json'), {
+    name: 'sdlc',
+    version: pluginManifestVersion,
   });
   writeJson(join(tempRoot, 'packages', 'cli', 'package.json'), {
     name: '@aiwg/cli',
     version: cliVersion,
+  });
+  writeJson(join(tempRoot, 'apps', 'cockpit', 'package.json'), {
+    name: '@aiwg/cockpit',
+    version: cockpitVersion,
+  });
+  writeJson(join(tempRoot, 'apps', 'cockpit', 'package-lock.json'), {
+    name: '@aiwg/cockpit',
+    version: cockpitLockVersion,
+    lockfileVersion: 3,
+    packages: {
+      '': {
+        name: '@aiwg/cockpit',
+        version: cockpitLockRootVersion,
+      },
+    },
   });
 
   return tempRoot;
@@ -110,6 +146,26 @@ describe('checkVersionLockstep', () => {
     expect(result.message).toContain('2026.5.6');
   });
 
+  it('fails when a local marketplace plugin version drifts', () => {
+    const root = makeRepo({ marketplacePluginVersion: '2026.5.6' });
+
+    const result = checkVersionLockstep(root);
+
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain('local marketplace plugin sdlc version');
+    expect(result.message).toContain('2026.5.6');
+  });
+
+  it('fails when a local plugin manifest version drifts', () => {
+    const root = makeRepo({ pluginManifestVersion: '2026.5.6' });
+
+    const result = checkVersionLockstep(root);
+
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain('local plugin manifest sdlc version');
+    expect(result.message).toContain('2026.5.6');
+  });
+
   it('fails when @aiwg/cli CalVer drifts from the main package', () => {
     const root = makeRepo({ cliVersion: '2026.5.6' });
 
@@ -117,6 +173,36 @@ describe('checkVersionLockstep', () => {
 
     expect(result.ok).toBe(false);
     expect(result.message).toContain('@aiwg/cli version');
+    expect(result.message).toContain('2026.5.6');
+  });
+
+  it('fails when @aiwg/cockpit CalVer drifts from the main package', () => {
+    const root = makeRepo({ cockpitVersion: '2026.5.6' });
+
+    const result = checkVersionLockstep(root);
+
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain('@aiwg/cockpit version');
+    expect(result.message).toContain('2026.5.6');
+  });
+
+  it('fails when the Cockpit lockfile top-level version drifts', () => {
+    const root = makeRepo({ cockpitLockVersion: '2026.5.6' });
+
+    const result = checkVersionLockstep(root);
+
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain('apps/cockpit/package-lock.json version');
+    expect(result.message).toContain('2026.5.6');
+  });
+
+  it('fails when the Cockpit lockfile root package version drifts', () => {
+    const root = makeRepo({ cockpitLockRootVersion: '2026.5.6' });
+
+    const result = checkVersionLockstep(root);
+
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain('apps/cockpit/package-lock.json packages[""].version');
     expect(result.message).toContain('2026.5.6');
   });
 

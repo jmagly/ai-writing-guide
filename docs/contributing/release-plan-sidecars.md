@@ -56,6 +56,12 @@ A sidecar can define:
 - post-release verification commands
 - delivery override behavior
 
-See `.aiwg/releases/aiwg-npm.yaml` for an AIWG package-release example covering
-build commands, publish targets, signing/SBOM/provenance expectations, and
-post-release verification.
+The shipped, schema-validated reference examples are:
+
+- `agentic/code/frameworks/sdlc-complete/schemas/flows/examples/aiwg.release.config.yaml`
+- `agentic/code/frameworks/sdlc-complete/schemas/flows/examples/aiwg-npm.release-plan.yaml`
+
+AIWG keeps its attached operational copies at `.aiwg/release.config` and
+`.aiwg/releases/aiwg-npm.yaml`. The public examples keep clean clones and CI
+validating the exact configuration shape even when the project artifact corpus
+is attached through `.aiwg-location`.

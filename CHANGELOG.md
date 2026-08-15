@@ -7,7 +7,34 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.10] - 2026-08-15 - "Deterministic release packaging"
+
+### Fixed
+
+- **Clean-checkout release packaging** - the global-install regression now
+  materializes the gitignored Fortemi Core release index before creating its
+  lifecycle-script-free tarball, then protects the pack operation with the
+  shared build lock. Tag publication no longer depends on an earlier test or
+  workflow step having populated generated package content (#2100).
+
+- **Release-runner deployment verification** - provider copy-profile tests use
+  a bounded three-minute subprocess budget so valid full-copy verification is
+  not killed at 60 seconds when hosted release runners are under load (#2100).
+
+- **OpenClaw target isolation** - the cross-agent compatibility mirror now
+  honors the explicit deployment target instead of the provider subprocess's
+  working directory, preventing isolated or test deployments from repopulating
+  the AIWG checkout with the full copied skill set (#2100).
+
+## [2026.8.9] - 2026-08-15 - "Prompt-first docs and verified setup"
+
 ### Added
+
+- **Cross-asset authenticity research contract** - accepted a DSSE + in-toto
+  Statement envelope for every first-party AIWG asset class, exact-byte digest
+  and canonical-payload rules, publisher delegation/rotation/revocation and
+  freshness policy, stable verifier outcomes, JSON Schemas, adversarial
+  conformance vectors, and a phased implementation/runbook roadmap (#2068).
 
 - **Devin Desktop provider selector** - `devin` is now the preferred selector
   for the existing Windsurf-compatible deployment adapter. `devin-desktop`
@@ -29,6 +56,18 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Changed
 
+- **Release configuration reference implementation** - synchronized AIWG's
+  active project release config and `aiwg-npm` sidecar with the current v1
+  schemas and pre-tag CI command set. Public schema-validated examples now ship
+  with the repository, so clean-clone CI cannot silently skip the dogfood
+  configuration when the private project artifact corpus is detached.
+
+- **Prompt-first public documentation** - advanced capability discovery,
+  orchestration, and automation commands now live in the agent/script-oriented
+  `docs/cli/` corpus. Public user pages preserve only installation and repair
+  commands; generated site content replaces agent-owned command procedures with
+  natural-language prompts and stable asset IDs (#1937).
+
 - **Focused `aiwg use` completion report** - the default human-readable result
   now presents one compact summary that separates artifacts copied to each
   provider from the authoritative framework inventory indexed for discovery.
@@ -37,6 +76,33 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   chatter is suppressed outside verbose diagnostics.
 
 ### Fixed
+
+- **Provider skill copy-profile repair** - Codex component deployments now
+  reconcile stale AIWG-managed standard skills against the global kernel
+  inventory, restoring the intended 25-skill kernel/quickref surface while
+  preserving operator-owned skills. Cross-provider conformance now verifies
+  kernel-only, explicit full-copy, and full-copy repair behavior for every
+  supported provider, and Codex documentation reflects the project-local copy
+  profile (#2095, #2097).
+
+- **Split-root workflow safety** - `aiwg artifacts path` now exposes the
+  effective project artifact corpus to scripts in plain-text and stable JSON
+  forms. Release and documentation-sync skills resolve configuration, evidence,
+  reports, and state through that path so redirected payload cannot drift back
+  into the repository-local control plane (#2099).
+
+- **Canonical documentation synchronization** - refreshed canonical component
+  sources that had fallen behind their collected public documentation, keeping
+  future documentation collection deterministic (#2098).
+
+- **Cockpit release version lockstep** - release metadata validation now checks
+  the Cockpit manifest plus both lockfile version fields, preventing an
+  independently published package from retaining the previous CalVer while the
+  root release advances (#2096).
+
+- **Web build dependency advisories** - advanced Vite to `6.4.3` and refreshed
+  its locked Babel, Nano ID, and PostCSS toolchain dependencies, clearing the
+  web workspace's npm audit findings without changing the production bundle.
 
 - **Deployment false-success and false-failure handling** - required artifact,
   registry, index, context, and provider-wiring failures produce a non-zero
@@ -2962,7 +3028,8 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
 - New unit tests: 7 for `aiwg skill-lint` rubric (perfect/stub/no-triggers/agent-only/broken-YAML fixtures + threshold modes). Behavior-loader and concierge integration tests updated for canonical metadata.* shape.
 - `.agents/` deployment directory is now gitignored, mirroring `.claude/` and `.codex/` (#949). 395 generated files removed from the index; regenerable via `aiwg use`.
 
-[Unreleased]: https://github.com/jmagly/aiwg/compare/v2026.6.2...HEAD
+[Unreleased]: https://github.com/jmagly/aiwg/compare/v2026.8.10...HEAD
+[2026.8.10]: https://github.com/jmagly/aiwg/compare/v2026.8.9...v2026.8.10
 [2026.6.2]: https://github.com/jmagly/aiwg/compare/v2026.6.1...v2026.6.2
 [2026.6.1]: https://github.com/jmagly/aiwg/compare/v2026.6.0...v2026.6.1
 [2026.6.0]: https://github.com/jmagly/aiwg/compare/v2026.5.13...v2026.6.0

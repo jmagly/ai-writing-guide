@@ -87,17 +87,12 @@ describe('aiwg config show --project (#999)', () => {
     const artifactRoot = join(tmp, 'private-corpus');
     process.env.AIWG_ARTIFACTS_PATH = artifactRoot;
     mkdirSync(artifactRoot, { recursive: true });
-    writeFileSync(join(artifactRoot, 'aiwg.config'), JSON.stringify({
-      version: '1',
-      providers: ['claude'],
-      installed: {},
-      scripts: {},
-    }));
+    writeConfig(tmp, {});
 
     await main(['show', '--project', '--target', tmp]);
 
     const out = logs.join('\n');
-    expect(out).toContain(`Project config: ${join(artifactRoot, 'aiwg.config')}`);
+    expect(out).toContain(`Project config: ${join(tmp, '.aiwg', 'aiwg.config')}`);
     expect(out).toContain(`Artifact root:  ${artifactRoot}`);
   });
 

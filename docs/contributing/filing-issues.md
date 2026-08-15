@@ -123,7 +123,9 @@ Example sweep: jmagly#108–#112 → roctinam #1264–#1268 (May 2026). Closed #
 Three paths, all valid:
 
 ```bash
-# 1. Via the issue-create skill (handles Gitea, GitHub, Jira, Linear, local files)
+# 1. Via discovery, then the issue-create skill (handles Gitea, GitHub, Jira, Linear, local files)
+aiwg discover "issue create" --type skill
+aiwg show skill issue-create
 aiwg run skill issue-create -- "<title>" --provider gitea --labels "bug"
 
 # 2. Via the Gitea MCP server (when available)
@@ -159,7 +161,7 @@ mcp__git-gitea__issue_write method=create owner=roctinam repo=aiwg title='<title
 | Find existing skills/issues for a topic | `aiwg discover "<keywords>"` |
 | Bundle discover + tracker search | `aiwg run skill steward-prep-delivery -- "<terms>"` |
 | Fetch a skill body | `aiwg show skill aiwg-issue` |
-| File a new issue (skill-mediated) | `aiwg run skill issue-create -- "<title>"` |
+| File a new issue (skill-mediated) | `aiwg discover "issue create" --type skill`, then `aiwg show skill issue-create` |
 | Read the full kernel skill | `aiwg show skill aiwg-issue` |
 
 ## Related

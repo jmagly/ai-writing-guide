@@ -33,11 +33,11 @@ import {
   type AiwgFortemiRecord,
 } from './browser-export.js';
 import { loadProviderModelMetadata } from '../models/provider-models.js';
+import { projectAiwgPath, projectControlPath } from '../config/project-artifacts.js';
 import {
   operationalStateQueryProjection,
   type OperationalStateQueryProjection,
 } from './operational-state.js';
-import { projectAiwgPath } from '../config/project-artifacts.js';
 import type {
   ResourceSource,
   VerifiedWebRelease,
@@ -117,6 +117,21 @@ function graphScope(graph: GraphType): ProvenancedEntry['indexScope'] {
   if (graph === 'framework') return 'packaged';
   if (graph === 'codebase' || graph === 'source') return 'codebase';
   return 'custom';
+}
+
+function containsTokenSequence(haystack: string[], needle: string[]): boolean {
+  if (needle.length === 0 || haystack.length < needle.length) return false;
+  for (let i = 0; i <= haystack.length - needle.length; i++) {
+    let matched = true;
+    for (let j = 0; j < needle.length; j++) {
+      if (haystack[i + j] !== needle[j]) {
+        matched = false;
+        break;
+      }
+    }
+    if (matched) return true;
+  }
+  return false;
 }
 
 function withIndexProvenance(entry: MetadataEntry, graph: GraphType): ProvenancedEntry {
@@ -450,12 +465,10 @@ function scoreEntryDetailed(
         });
         return finish(1.0008, 1.0008);
       } else if (
-        trigger.includes(lower) ||
-        lower.includes(trigger) ||
-        trigger.includes(rawLower) ||
-        rawLower.includes(trigger)
+        containsTokenSequence(triggerTokens, tokens) ||
+        containsTokenSequence(tokens, triggerTokens)
       ) {
-        const triggerInsideQuery = lower.includes(trigger) || rawLower.includes(trigger);
+        const triggerInsideQuery = containsTokenSequence(tokens, triggerTokens);
         const containedCoverage = triggerInsideQuery
           ? queryCoverage
           : triggerTokens.length > 0
@@ -889,7 +902,7 @@ const DEFAULT_CAPABILITY_GRAPHS: GraphType[] = ['project', 'user', 'framework'];
 
 function projectAllowsUserIndices(cwd: string): boolean {
   try {
-    const configPath = projectAiwgPath(cwd, 'aiwg.config');
+    const configPath = projectControlPath(cwd, 'aiwg.config');
     if (!fs.existsSync(configPath)) return true;
     const parsed = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as Record<string, unknown>;
     const index = parsed.index as Record<string, unknown> | undefined;

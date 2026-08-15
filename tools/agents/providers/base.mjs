@@ -44,6 +44,48 @@ export function ensureDir(d, dryRun = false) {
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
 }
 
+const PROJECT_ARTIFACT_ENV_KEYS = [
+  'AIWG_ARTIFACTS_PATH',
+  'AIWG_PROJECT_ARTIFACTS_PATH',
+  'AIWG_PROJECT_AIWG_DIR',
+];
+
+function expandProjectArtifactPath(value, projectDir) {
+  const trimmed = value.trim();
+  if (trimmed === '~') return os.homedir();
+  if (trimmed.startsWith('~/')) return path.resolve(os.homedir(), trimmed.slice(2));
+  return path.isAbsolute(trimmed) ? trimmed : path.resolve(projectDir, trimmed);
+}
+
+function parseProjectArtifactLocation(contents) {
+  for (const rawLine of contents.split(/\r?\n/)) {
+    let line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+    if (line.startsWith('export ')) line = line.slice('export '.length).trim();
+    const assignment = line.match(/^AIWG_ARTIFACTS_PATH\s*=\s*(.+)$/);
+    if (assignment) line = assignment[1].trim();
+    if ((line.startsWith('"') && line.endsWith('"')) || (line.startsWith("'") && line.endsWith("'"))) {
+      line = line.slice(1, -1);
+    }
+    return line || null;
+  }
+  return null;
+}
+
+/** Resolve the artifact corpus root used for framework-generated workspace data. */
+export function resolveFrameworkWorkspaceRoot(projectDir, env = process.env) {
+  for (const key of PROJECT_ARTIFACT_ENV_KEYS) {
+    const value = env[key];
+    if (typeof value === 'string' && value.trim()) return expandProjectArtifactPath(value, projectDir);
+  }
+  const pointer = path.join(projectDir, '.aiwg-location');
+  if (fs.existsSync(pointer)) {
+    const configured = parseProjectArtifactLocation(fs.readFileSync(pointer, 'utf8'));
+    if (configured) return expandProjectArtifactPath(configured, projectDir);
+  }
+  return path.join(projectDir, '.aiwg');
+}
+
 /**
  * List markdown files in a directory (non-recursive)
  */
@@ -1441,7 +1483,7 @@ export function deploySkillDir(skillDir, destDir, opts) {
  * Creates .aiwg/frameworks/{framework-id}/ directories
  */
 export function initializeFrameworkWorkspace(target, mode, dryRun, srcRoot = null) {
-  const aiwgBase = path.join(target, '.aiwg');
+  const aiwgBase = resolveFrameworkWorkspaceRoot(target);
   const frameworksDir = path.join(aiwgBase, 'frameworks');
   const sharedDir = path.join(aiwgBase, 'shared');
 
@@ -1498,7 +1540,7 @@ export function initializeFrameworkWorkspace(target, mode, dryRun, srcRoot = nul
       }
       for (const entry of fw.memoryCreates || []) {
         if (entry && typeof entry.path === 'string') {
-          console.log(`[dry-run]   ${path.join(target, entry.path)}${entry.path.endsWith('/') ? '/' : ''}`);
+          console.log(`[dry-run]   ${path.join(aiwgBase, entry.path.slice('.aiwg/'.length))}${entry.path.endsWith('/') ? '/' : ''}`);
         }
       }
     }
@@ -1515,7 +1557,7 @@ export function initializeFrameworkWorkspace(target, mode, dryRun, srcRoot = nul
     for (const subdir of fw.subdirs) {
       ensureDir(path.join(fwBase, subdir));
     }
-    initializeMemoryCreates(target, fw.path, fw.memoryCreates);
+    initializeMemoryCreates(aiwgBase, fw.path, fw.memoryCreates);
   }
 
   // Initialize registry.json if it doesn't exist
@@ -1536,12 +1578,12 @@ export function initializeFrameworkWorkspace(target, mode, dryRun, srcRoot = nul
 }
 
 
-function initializeMemoryCreates(target, frameworkPath, creates) {
+function initializeMemoryCreates(aiwgBase, frameworkPath, creates) {
   for (const entry of creates || []) {
     if (!entry || typeof entry.path !== 'string') continue;
     if (!entry.path.startsWith('.aiwg/')) continue;
 
-    const targetPath = path.join(target, entry.path);
+    const targetPath = path.join(aiwgBase, entry.path.slice('.aiwg/'.length));
     const isDirectory = entry.path.endsWith('/') || path.extname(entry.path) === '';
     if (isDirectory) {
       ensureDir(targetPath);

@@ -216,4 +216,4 @@ Only expand beyond the minimal config after Part 4 is working reliably.
 
 - [OpenCode Quick Start](opencode-quickstart.md) — Basic AIWG + OpenCode integration
 - [Hermes MCP Sidecar](hermes-quickstart.md) — Reference sidecar implementation
-- [AIWG MCP server reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md#mcp)
+- [AIWG MCP server reference](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md#mcp)

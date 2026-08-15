@@ -275,7 +275,7 @@ The MCP sidecar adds minimal overhead — AIWG runs as a local process. For late
 - [Daemon Guide](daemon-guide.md) — Running AIWG as a background daemon
 - [Messaging Guide](messaging-guide.md) — Chat platform integration
 - [Al Guide](ralph-guide.md) — Iterative task execution
-- [CLI Reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md) — All 50 AIWG commands
+- [CLI Reference](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md) — All 50 AIWG commands
 - [OpenClaw Skills Docs](https://docs.openclaw.ai/tools/skills) — OpenClaw skill system
 - [ClawHub](https://docs.openclaw.ai/tools/clawhub) — OpenClaw skill registry
 - `.aiwg/planning/openclaw-aiwg-integration-plan.md` — Full integration plan

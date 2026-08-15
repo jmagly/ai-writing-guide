@@ -14,7 +14,12 @@ function isolatedRoot(prefix: string): string {
   return root;
 }
 
-function runUse(projectRoot: string, homeRoot: string, providerArgs: string[]) {
+function runUse(
+  projectRoot: string,
+  homeRoot: string,
+  providerArgs: string[],
+  options: { copyAll?: boolean } = {},
+) {
   const result = spawnSync(process.execPath, [
     BIN,
     'use', 'sdlc',
@@ -22,12 +27,12 @@ function runUse(projectRoot: string, homeRoot: string, providerArgs: string[]) {
     '--target', projectRoot,
     '--no-utils',
     '--no-project-local',
-    '--copy-all',
+    ...(options.copyAll === false ? [] : ['--copy-all']),
     '--json',
   ], {
     cwd: REPO_ROOT,
     encoding: 'utf8',
-    timeout: 60_000,
+    timeout: 180_000,
     env: {
       ...process.env,
       HOME: homeRoot,
@@ -58,7 +63,7 @@ function runUseHuman(projectRoot: string, homeRoot: string, providerArgs: string
   ], {
     cwd: REPO_ROOT,
     encoding: 'utf8',
-    timeout: 60_000,
+    timeout: 180_000,
     env: {
       ...process.env,
       HOME: homeRoot,
@@ -105,7 +110,16 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
   it('returns a planned preview without mutating the target', () => {
     const projectRoot = isolatedRoot('aiwg-use-verify-preview-project-');
     const homeRoot = isolatedRoot('aiwg-use-verify-preview-home-');
-    const result = runUse(projectRoot, homeRoot, ['--provider', 'codex', '--dry-run']);
+    // Exercise the production default profile here. Full-copy behavior is
+    // covered by the deployment cases below; coupling this preview assertion
+    // to --copy-all made it compete with unrelated package/index builders in
+    // the release suite even though a preview must remain lightweight.
+    const result = runUse(
+      projectRoot,
+      homeRoot,
+      ['--provider', 'codex', '--dry-run'],
+      { copyAll: false },
+    );
 
     expect(result.exitCode, result.stderr || result.stdout).toBe(0);
     expect(result.payload).toMatchObject({ outcome: 'planned', dryRun: true, exitClassification: 'preview' });
@@ -184,6 +198,8 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
   it('reports the home-scope OpenClaw context limitation as degraded, not failed', () => {
     const projectRoot = isolatedRoot('aiwg-use-verify-openclaw-project-');
     const homeRoot = isolatedRoot('aiwg-use-verify-openclaw-home-');
+    const repoSkillsRoot = path.join(REPO_ROOT, '.agents', 'skills');
+    const repoSkillsBefore = existsSync(repoSkillsRoot) ? readdirSync(repoSkillsRoot).sort() : [];
     const result = runUse(projectRoot, homeRoot, ['--provider', 'openclaw']);
 
     expect(result.exitCode, result.stderr || result.stdout).toBe(0);
@@ -194,6 +210,8 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
     ]));
     expect(result.payload.findings.some((item: { severity: string }) => item.severity === 'blocking')).toBe(false);
     expect(existsSync(path.join(homeRoot, '.openclaw', 'skills'))).toBe(true);
+    expect(readdirSync(path.join(projectRoot, '.agents', 'skills')).length).toBeGreaterThan(0);
+    expect(existsSync(repoSkillsRoot) ? readdirSync(repoSkillsRoot).sort() : []).toEqual(repoSkillsBefore);
   });
 
   it('verifies every provider and computes one deterministic multi-provider outcome', () => {

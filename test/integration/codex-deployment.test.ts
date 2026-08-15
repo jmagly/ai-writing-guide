@@ -357,6 +357,32 @@ describe.skipIf(!GIT_INIT_AVAILABLE)('Codex Integration', () => {
       }
     });
 
+    it('prunes stale managed standard skills during a component-scoped kernel deployment', async () => {
+      const skillsDir = path.join(TEST_PROJECT_DIR, '.agents', 'skills');
+      const staleDir = path.join(skillsDir, 'eval-agent');
+      await fs.mkdir(staleDir, { recursive: true });
+      await fs.writeFile(path.join(staleDir, 'SKILL.md'), '---\nname: eval-agent\ndescription: stale\n---\n');
+      await fs.writeFile(path.join(staleDir, '.aiwg-managed'), 'aiwg\n');
+
+      execFileSync(process.execPath, [
+        path.join(REPO_ROOT, 'tools/skills/deploy-skills-codex.mjs'),
+        '--source', path.join(REPO_ROOT, 'agentic', 'code', 'addons', 'aiwg-utils'),
+        '--target', skillsDir,
+      ], {
+        cwd: TEST_PROJECT_DIR,
+        env: {
+          ...process.env,
+          HOME: TEST_HOME_DIR,
+          USERPROFILE: TEST_HOME_DIR,
+          AIWG_ROOT: REPO_ROOT,
+        },
+        encoding: 'utf-8',
+      });
+
+      await expect(fs.access(staleDir)).rejects.toThrow();
+      await expect(fs.access(path.join(skillsDir, 'aiwg-doctor', 'SKILL.md'))).resolves.toBeUndefined();
+    });
+
     it('preserves skill model intent as explicit unsupported policy, not a native pin', async () => {
       runScript('tools/agents/deploy-agents.mjs', [
         '--provider', 'codex',

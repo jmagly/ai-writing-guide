@@ -586,7 +586,7 @@ claude --add-dir ~/.aiwg-global
 ## References
 
 - @.aiwg/ - AIWG state directory structure
-- @docs/agents/cli-reference.md - CLI commands and flags
+- @docs/cli/reference.md - CLI commands and flags
 - @docs/ralph-guide.md - Agent loop persistence patterns
 - @CLAUDE.md - Multi-platform instructions
 - @agentic/code/frameworks/sdlc-complete/docs/orchestrator-architecture.md - Phase progression

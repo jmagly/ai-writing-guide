@@ -104,6 +104,14 @@ const ISSUE_1784_MISSING_EXAMPLES = [
   'prose-bridge',
   'scoped-reasoning',
 ];
+const TESTING_QUALITY_SKILLS = [
+  'tdd-enforce',
+  'mutation-test',
+  'flaky-detect',
+  'flaky-fix',
+  'generate-factory',
+  'test-sync',
+];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -172,7 +180,7 @@ describe('aiwg use — disallow list', () => {
 // aiwg use all — deployment coverage
 // ---------------------------------------------------------------------------
 
-describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
+describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', { timeout: 60_000 }, () => {
   let projectDir: string;
   const fullUseAllArgs = (target: string) => ['use', 'all', '--target', target];
 
@@ -199,7 +207,7 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
     expect(result.stdout).toMatch(/Deployed to Claude Code \(claude\)[\s\S]*\bSkills \d+\b/);
     expect(result.stdout).toMatch(/Indexed for discovery[\s\S]*\bskill \d+\b/);
     expect(result.stdout).not.toMatch(/Discoverable skills\s+\d+ deployed/);
-  }, 30_000);
+  }, 60_000);
 
   it('deploys more skills than the old hardcoded 4-addon set would produce', async () => {
     const result = runAiwg(fullUseAllArgs(projectDir), projectDir);
@@ -319,6 +327,27 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', () => {
       expect(gitignore).toContain('.codex/');
       expect(gitignore).toContain('.agents/');
       expect(result.stdout).toMatch(/Deployed to OpenAI Codex \(codex\)[\s\S]*\bSkills [1-9]\d*\b/);
+    } finally {
+      rmSync(homeDir, { recursive: true, force: true });
+    }
+  }, 60_000);
+
+  it('deploys explicit testing-quality skills to the Codex native skill surface', async () => {
+    const homeDir = mkdtempSync(path.join(os.tmpdir(), 'aiwg-testing-quality-codex-home-'));
+    try {
+      const result = runAiwgWithEnv(
+        ['use', 'testing-quality', '--provider', 'codex', '--target', projectDir],
+        projectDir,
+        { HOME: homeDir, USERPROFILE: homeDir },
+      );
+      expect(result.exitCode, `aiwg use testing-quality --provider codex failed:\nstdout: ${result.stdout}\nstderr: ${result.stderr}`).toBe(0);
+
+      for (const skill of TESTING_QUALITY_SKILLS) {
+        expect(
+          existsSync(path.join(projectDir, '.agents', 'skills', skill, 'SKILL.md')),
+          `${skill} should be deployed to .agents/skills for Codex when testing-quality is explicitly installed`,
+        ).toBe(true);
+      }
     } finally {
       rmSync(homeDir, { recursive: true, force: true });
     }

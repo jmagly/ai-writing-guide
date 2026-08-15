@@ -10,7 +10,7 @@ import { access, copyFile, mkdir, readFile, rename } from 'node:fs/promises';
 import { isAbsolute, join, relative, resolve } from 'node:path';
 import { load as loadYaml } from 'js-yaml';
 import type { AiwgConfig, WorkspaceRepoAction } from '../config/aiwg-config.js';
-import { projectAiwgPath } from '../config/project-artifacts.js';
+import { projectAiwgPath, projectControlPath } from '../config/project-artifacts.js';
 
 export type AuthorizationEffect = 'allow' | 'deny';
 export type AuthorizationSubjectKind = 'user' | 'group' | 'service' | 'workload';
@@ -450,7 +450,7 @@ export async function archiveLegacyPermissionManifests(projectDir: string): Prom
 }
 
 export async function backupConfig(projectDir: string): Promise<string> {
-  const source = projectAiwgPath(projectDir, 'aiwg.config');
+  const source = projectControlPath(projectDir, 'aiwg.config');
   const backupDir = projectAiwgPath(projectDir, 'backups');
   await mkdir(backupDir, { recursive: true });
   const content = await readFile(source);

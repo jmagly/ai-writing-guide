@@ -4,6 +4,18 @@ name: aiwg-issue
 platforms: [all]
 kernel: true
 description: AIWG project issue filing only — templates, environment capture, duplicate detection, and import flow for AIWG tracker reports; not for general issue audits or address-issues processing
+triggers:
+  - file an AIWG issue
+  - report an AIWG bug
+  - import this AIWG issue from GitHub
+  - I want to file an issue
+  - How do I report a bug?
+  - Help me write up a bug report
+  - What template should I use?
+  - Should I file a new issue or comment on an existing one?
+  - Import this report from GitHub
+  - Import this report from Discord
+  - Import this report from email
 ---
 
 # Filing AIWG Issues
@@ -152,13 +164,16 @@ Example: jmagly#108–#112 → roctinam #1264–#1268 sweep (May 2026).
 
 ## Filing
 
-Before any MCP, CLI, API, or web-UI write, route the final title/body through
-`issue-create` policy composition. Use the returned segment bodies exactly;
+Before any MCP, CLI, API, or web-UI write, discover and load the
+`issue-create` skill, then route the final title/body through its policy
+composition. Use the returned segment bodies exactly;
 obtain digest-bound authorization when requested, and make no write for a
 `blocked` plan. This prevents authoring an issue that the address workflow will
 reject under the same project policy.
 
 ```bash
+aiwg discover "issue create" --type skill
+aiwg show skill issue-create
 aiwg run skill issue-create -- "<title>" --provider gitea --labels "bug"
 ```
 

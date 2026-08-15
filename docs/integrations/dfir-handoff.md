@@ -14,9 +14,10 @@ Use this guide when a security conversation becomes incident readiness or an act
 
 ## Readiness Path
 
-```bash
-aiwg use security-engineering
-aiwg discover "DFIR readiness"
+```text
+Use AIWG asset `dfir-readiness` to prepare this project for a defensible
+incident-response handoff. Explain the evidence and custody expectations and
+ask before changing project policy or storage.
 ```
 
 The readiness record belongs under:
@@ -47,12 +48,11 @@ aiwg use dfir
 
 Then route by task:
 
-```bash
-aiwg discover "forensic triage"
-aiwg discover "evidence preservation"
-aiwg discover "extract iocs"
-aiwg discover "build forensic timeline"
-aiwg discover "forensic report"
+```text
+Route this incident through the appropriate AIWG forensic assets. Consider
+`forensics-triage`, `evidence-preservation`, `forensics-ioc`,
+`forensics-timeline`, and `forensics-report`; select only what the evidence and
+scope require, preserve chain of custody, and explain each transition.
 ```
 
 ## Workspace Split

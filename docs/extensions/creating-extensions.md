@@ -1020,5 +1020,5 @@ See:
 
 - [Extension System Overview](overview.md)
 - [Extension Types Reference](extension-types.md)
-- @docs/agents/cli-reference.md - CLI commands
+- @docs/cli/reference.md - CLI commands
 - @src/extensions/types.ts - Type definitions

@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/security/aiwg-artifact-attestation.v1.schema.json",
+  "title": "AIWG cross-asset DSSE attestation envelope v1",
+  "description": "Transport wrapper for a DSSE-signed in-toto Statement. Security decisions come from the authenticated payload and verifier policy, never from outer fields.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mediaType", "envelope"],
+  "properties": {
+    "mediaType": {
+      "const": "application/vnd.aiwg.artifact-attestation.v1+json"
+    },
+    "envelope": {
+      "$ref": "#/$defs/dsseEnvelope"
+    },
+    "verificationMaterial": {
+      "oneOf": [
+        { "$ref": "#/$defs/detachedMaterial" },
+        { "$ref": "#/$defs/sigstoreMaterial" },
+        { "$ref": "#/$defs/publicKeyMaterial" }
+      ]
+    }
+  },
+  "$defs": {
+    "base64": {
+      "type": "string",
+      "minLength": 4,
+      "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "dsseEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["payloadType", "payload", "signatures"],
+      "properties": {
+        "payloadType": {
+          "const": "application/vnd.in-toto+json"
+        },
+        "payload": {
+          "$ref": "#/$defs/base64",
+          "contentEncoding": "base64",
+          "contentMediaType": "application/vnd.in-toto+json"
+        },
+        "signatures": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["sig"],
+            "properties": {
+              "keyid": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "sig": {
+                "$ref": "#/$defs/base64"
+              }
+            }
+          }
+        }
+      }
+    },
+    "detachedMaterial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "mediaType", "uri", "sha256", "bytes"],
+      "properties": {
+        "kind": { "const": "detached" },
+        "mediaType": { "type": "string", "minLength": 1 },
+        "uri": { "type": "string", "format": "uri" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "sigstoreMaterial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "mediaType", "bundle"],
+      "properties": {
+        "kind": { "const": "sigstore-bundle" },
+        "mediaType": {
+          "type": "string",
+          "pattern": "^application/vnd\\.dev\\.sigstore\\.bundle\\.v[0-9]+(?:\\.[0-9]+)?\\+json$"
+        },
+        "bundle": { "type": "object" }
+      }
+    },
+    "publicKeyMaterial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "algorithm", "publicKey"],
+      "properties": {
+        "kind": { "const": "public-key" },
+        "algorithm": {
+          "enum": ["ed25519", "ecdsa-p256-sha256", "rsa-pss-sha256"]
+        },
+        "publicKey": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

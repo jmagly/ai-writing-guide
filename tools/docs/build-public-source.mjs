@@ -3,13 +3,18 @@
 import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  isContributor,
+  isHistorical,
+  isPublicUserDocument,
+  rewritePublicUserCommands,
+} from './public-command-policy.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const docs = path.join(root, 'docs');
 const outputArg = process.argv[2] || 'dist/public-docs-source';
 const output = path.resolve(root, outputArg);
 const policy = JSON.parse(await readFile(path.join(docs, 'public-docs.json'), 'utf8'));
-const commandPattern = /\baiwg\s+([a-z][a-z-]*(?:\s+skill)?)/g;
 
 async function markdownFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -19,10 +24,6 @@ async function markdownFiles(directory) {
     return entry.isFile() && entry.name.endsWith('.md') ? [filename] : [];
   }));
   return nested.flat();
-}
-
-function commandRoot(command) {
-  return command.split(/\s+/)[0];
 }
 
 function insertAfterTitle(content, notice) {
@@ -54,30 +55,28 @@ for (const entry of await readdir(stagedReleases, { withFileTypes: true })) {
   const filename = path.join(stagedReleases, entry.name);
   const content = await readFile(filename, 'utf8');
   const rewritten = content
-    .replaceAll('../cli-reference.md', 'https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md')
-    .replaceAll('../CLI_USAGE.md', 'https://github.com/jmagly/aiwg/blob/main/docs/agents/CLI_USAGE.md');
+    .replaceAll('../cli-reference.md', 'https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md')
+    .replaceAll('../CLI_USAGE.md', 'https://github.com/jmagly/aiwg/blob/main/docs/cli/agent-usage.md');
   if (rewritten !== content) await writeFile(filename, rewritten, 'utf8');
 }
 
-// Public pages may retain non-bootstrap commands only as explicitly identified
-// agent/operator detail. Mark those staged pages with the interaction contract
-// rather than silently presenting commands as routine end-user steps. Source
-// release notes/blog history and contributor surfaces remain byte-accurate.
+// The source tree is also the installed agent/reference corpus, so it retains
+// exact implementation examples. The public user build replaces executable
+// advanced CLI blocks with natural-language agent prompts. Historical and
+// contributor material remains byte-accurate, and dedicated CLI references are
+// kept out of the end-user publication.
 for (const filename of await markdownFiles(output)) {
   const relative = path.relative(output, filename).split(path.sep).join('/');
-  if (
-    relative.startsWith('releases/')
-    || relative.startsWith('blog/')
-    || relative.startsWith('development/')
-    || relative.startsWith('contributing/')
-  ) continue;
+  if (isHistorical(relative) || isContributor(relative)) continue;
   const content = await readFile(filename, 'utf8');
-  const commands = [...content.matchAll(commandPattern)].map((match) => match[1]);
-  const hasOperatorCommand = commands.some((command) =>
-    !policy.directTouchCommands.includes(commandRoot(command)));
-  if (!hasOperatorCommand || content.includes(policy.operatorNotice.marker)) continue;
+  if (!isPublicUserDocument(relative, content)) continue;
+  const rewritten = rewritePublicUserCommands(content, policy.directTouchCommands);
+  if (!rewritten.changed) continue;
   const notice = `${policy.operatorNotice.marker}\n${policy.operatorNotice.text}`;
-  await writeFile(filename, insertAfterTitle(content, notice), 'utf8');
+  const withNotice = rewritten.content.includes(policy.operatorNotice.marker)
+    ? rewritten.content
+    : insertAfterTitle(rewritten.content, notice);
+  await writeFile(filename, withNotice, 'utf8');
 }
 
 const manifestPath = path.join(output, '_manifest.json');

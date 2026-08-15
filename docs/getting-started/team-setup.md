@@ -142,7 +142,7 @@ You can run AIWG audits as part of CI — security gates, test coverage checks, 
   run: npx aiwg security-gate
 ```
 
-See the [security gate reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md#security-gate) for configuration.
+See the [security gate reference](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md#security-gate) for configuration.
 
 ---
 

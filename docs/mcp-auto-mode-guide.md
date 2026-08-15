@@ -740,7 +740,7 @@ Benefit: Can continue 50% longer before context limit
 
 ## References
 
-- @docs/agents/cli-reference.md - MCP command reference
+- @docs/cli/reference.md - MCP command reference
 - @agentic/code/frameworks/sdlc-complete/docs/mcp-integration.md - MCP integration patterns
 - @~/.config/claude/mcp-servers.json - Server configuration
 - Issue #285 - MCP auto-mode verification

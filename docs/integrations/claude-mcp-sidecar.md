@@ -169,4 +169,4 @@ Claude Code calls `template-render` to generate the document and `artifact-write
 
 - [Claude Code Quick Start](claude-code-quickstart.md) — Basic AIWG + Claude Code integration
 - [Hermes MCP Sidecar](hermes-quickstart.md) — Reference sidecar implementation
-- [AIWG MCP server reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md#mcp)
+- [AIWG MCP server reference](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md#mcp)

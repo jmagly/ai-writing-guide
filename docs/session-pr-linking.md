@@ -357,7 +357,7 @@ If `--from-pr` flag is not recognized:
 ## References
 
 - @.claude/skills/pr-review.md - AIWG PR review skill definition
-- @docs/agents/cli-reference.md - Full CLI command reference
+- @docs/cli/reference.md - Full CLI command reference
 - @docs/ralph-guide.md - Al iterative workflow integration
 - @CLAUDE.md - Git and commit conventions
 

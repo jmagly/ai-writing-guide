@@ -107,6 +107,18 @@ function expectCliSuccess(result: CliResult): void {
 describe('global install native lifecycle-script policy', () => {
   beforeAll(async () => {
     tempRoot = await mkdtemp(path.join(os.tmpdir(), 'aiwg-global-install-'));
+    // Release indices are generated artifacts and are intentionally ignored by
+    // git. A clean tag checkout therefore has no package fallback until the
+    // release build materializes it. Build it explicitly before using
+    // --ignore-scripts so this test exercises the packed artifact without
+    // relying on another test or workflow step to have run first.
+    const materialize = spawnSync(
+      process.platform === 'win32' ? 'npm.cmd' : 'npm',
+      ['run', 'release:fortemi-index'],
+      { cwd: PROJECT_ROOT, encoding: 'utf8', timeout: 180_000 },
+    );
+    if (materialize.status !== 0) throw new Error(materialize.stderr || materialize.stdout);
+
     const releasePackLock = await acquireDirectoryLock(
       path.join(PROJECT_ROOT, 'prebuilt', 'fortemi-core', '.framework-build.lock'),
     );

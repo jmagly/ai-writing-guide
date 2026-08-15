@@ -572,7 +572,7 @@ When updating research tools to use page ranges:
 ## References
 
 - @.claude/rules/research-metadata.md - Research metadata requirements
-- @docs/agents/cli-reference.md - AIWG CLI commands
+- @docs/cli/reference.md - AIWG CLI commands
 - @.aiwg/research/docs/grade-assessment-guide.md - GRADE methodology
 - Claude Code v2.1.30 Release Notes - PDF page range feature
 

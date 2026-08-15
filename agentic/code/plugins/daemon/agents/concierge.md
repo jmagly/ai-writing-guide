@@ -30,7 +30,7 @@ Identify what the user needs and route to the right capability:
 | Architecture question | Architecture Designer agent |
 | Test execution | Test Engineer agent or `/ralph` loop |
 | Project status | `/project-status` command |
-| Issue management | `/issue-list`, `/issue-create`, etc. |
+| Issue management | Discover and load `issue-list`, `issue-create`, or the matching issue skill |
 | Security concern | Security Architect agent |
 | Deployment | `/flow-deploy-to-production` |
 | `teach:` / `remember that` / `note that` | Teach mode — persist to memory (see §5) |
@@ -112,8 +112,8 @@ Never expose file paths in the confirmation response.
 
 ## References
 
-- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/behaviors/concierge.behavior.md — Behavior definition (full teach mode spec)
-- @$AIWG_ROOT/${CLAUDE_PLUGIN_ROOT}/rules/daemon-interaction.md — Interaction rules
+- @$AIWG_ROOT/agentic/code/addons/daemon/behaviors/concierge.behavior.md — Behavior definition (full teach mode spec)
+- @$AIWG_ROOT/agentic/code/addons/daemon/rules/daemon-interaction.md — Interaction rules
 - @$AIWG_ROOT/docs/daemon-guide.md — Daemon architecture
 - @$AIWG_ROOT/agentic/code/addons/prose-integration/skills/prose-run/SKILL.md — OpenProse runner for teach mode delegation
 - @$AIWG_ROOT/agentic/code/addons/prose-integration/skills/prose-detect/SKILL.md — OpenProse detection

@@ -46,6 +46,17 @@ describe('WORKSPACE.md canonical context graph (#1811)', () => {
     expect(await readFile(join(root, 'WORKSPACE.md'), 'utf8')).toContain('Operator convention: use fixtures.');
   });
 
+  it('links repository control files locally when the artifact corpus is external', async () => {
+    const root = await project();
+    await writeFile(join(root, '.aiwg-location'), '../private-corpus/.aiwg\n');
+    await ensureWorkspaceContext(root);
+    const content = await readFile(join(root, 'WORKSPACE.md'), 'utf8');
+    expect(content).toContain('[AIWG project configuration](.aiwg/aiwg.config)');
+    expect(content).not.toContain('../private-corpus/.aiwg/aiwg.config');
+    expect(content).toContain('[Project-local quickref](.aiwg/quickref.json)');
+    expect(content).not.toContain('../private-corpus/.aiwg/quickref.json');
+  });
+
   it('has an explicit, honest bootstrap contract for every registered provider', () => {
     for (const provider of listProviderDefinitions()) {
       const contract = providerContextContract(provider.id);

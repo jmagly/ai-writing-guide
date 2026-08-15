@@ -234,9 +234,9 @@ Common health-check outcomes:
 
 ## What Not To Teach As The Default
 
-Do not make normal users memorize `aiwg discover`, `aiwg show`, agent-loop
-commands, or framework-specific direct commands as the post-install path. Those
-remain available to agents and advanced operators, but the expected onboarding
+Do not make normal users memorize capability-search, asset-loading, agent-loop,
+or framework-specific commands as the post-install path. Those implementation
+surfaces remain available to agents and automation, but the expected onboarding
 flow is platform-first and steward-first.
 
 ## Related Guides

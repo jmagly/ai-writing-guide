@@ -115,7 +115,7 @@ describe('initHandler', () => {
       expect(normalized).toContain('aiwg discover');
     });
 
-    it('honors AIWG_ARTIFACTS_PATH for config and normalized context output', async () => {
+    it('keeps control files local while honoring AIWG_ARTIFACTS_PATH for the corpus', async () => {
       const { initHandler } = await import('../../../../src/cli/handlers/init.js');
       const previousArtifactsPath = process.env['AIWG_ARTIFACTS_PATH'];
       const externalRoot = makeTmpDir();
@@ -131,13 +131,11 @@ describe('initHandler', () => {
         expect(cfg).not.toBeNull();
         expect(cfg!.providers).toEqual(['claude']);
 
-        expect(existsSync(join(artifactDir, 'aiwg.config'))).toBe(true);
-        const normalizedPath = join(artifactDir, 'AIWG.md');
+        const normalizedPath = join(tmpDir, '.aiwg', 'AIWG.md');
         expect(existsSync(normalizedPath)).toBe(true);
-        expect(readFileSync(normalizedPath, 'utf8')).toContain(`Normalized project context: \`${normalizedPath}\``);
+        expect(readFileSync(normalizedPath, 'utf8')).toContain('Normalized project context: `.aiwg/AIWG.md`');
 
-        expect(existsSync(join(tmpDir, '.aiwg', 'aiwg.config'))).toBe(false);
-        expect(existsSync(join(tmpDir, '.aiwg', 'AIWG.md'))).toBe(false);
+        expect(existsSync(join(tmpDir, '.aiwg', 'aiwg.config'))).toBe(true);
       } finally {
         if (previousArtifactsPath === undefined) delete process.env['AIWG_ARTIFACTS_PATH'];
         else process.env['AIWG_ARTIFACTS_PATH'] = previousArtifactsPath;
@@ -145,7 +143,7 @@ describe('initHandler', () => {
       }
     });
 
-    it('honors .aiwg-location for config and normalized context output', async () => {
+    it('keeps control files local when .aiwg-location relocates the corpus', async () => {
       const { initHandler } = await import('../../../../src/cli/handlers/init.js');
       const previousEnv = clearArtifactEnv();
       const externalRoot = makeTmpDir();
@@ -161,13 +159,11 @@ describe('initHandler', () => {
         expect(cfg).not.toBeNull();
         expect(cfg!.providers).toEqual(['claude']);
 
-        expect(existsSync(join(artifactDir, 'aiwg.config'))).toBe(true);
-        const normalizedPath = join(artifactDir, 'AIWG.md');
+        const normalizedPath = join(tmpDir, '.aiwg', 'AIWG.md');
         expect(existsSync(normalizedPath)).toBe(true);
-        expect(readFileSync(normalizedPath, 'utf8')).toContain(`Normalized project context: \`${normalizedPath}\``);
+        expect(readFileSync(normalizedPath, 'utf8')).toContain('Normalized project context: `.aiwg/AIWG.md`');
 
-        expect(existsSync(join(tmpDir, '.aiwg', 'aiwg.config'))).toBe(false);
-        expect(existsSync(join(tmpDir, '.aiwg', 'AIWG.md'))).toBe(false);
+        expect(existsSync(join(tmpDir, '.aiwg', 'aiwg.config'))).toBe(true);
       } finally {
         restoreArtifactEnv(previousEnv);
         rmSync(externalRoot, { recursive: true, force: true });

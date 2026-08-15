@@ -4,7 +4,10 @@
 # `.aiwg/release.config` in each project; the skill reads it to know which
 # gates to run, in what order, and what hard-stops vs warn-only.
 #
-# The AIWG repo's own release.config is the reference implementation.
+# The shipped AIWG reference implementation lives at
+# `schemas/flows/examples/aiwg.release.config.yaml`. AIWG's active project
+# copy is `.aiwg/release.config` (which may resolve to an external artifact
+# root through `.aiwg-location`).
 
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "https://aiwg.io/schemas/release-config/v1"

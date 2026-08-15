@@ -34,6 +34,25 @@ You MUST run `aiwg discover` when any of the following is true:
 
 **Deployed commands are discoverable.** Commands AIWG deploys to your provider's command directory (`.opencode/command/*.md`, `.claude/commands/*.md`, `~/.codex/prompts/*.md`, …) are indexed: `aiwg discover "<name>"` returns them and `aiwg show command <name>` fetches the body. If a deployed command isn't surfacing, the framework capability index may be unbuilt — `aiwg discover` rebuilds it from `$AIWG_ROOT` automatically (a stale "no matches" is a bug, not a signal that the command is absent).
 
+### If discovery or deployed files look stale
+
+Treat stale discovery results, missing managed provider files, duplicate
+provider files, or broken bootstrap context as an AIWG setup issue. Route through
+the steward first:
+
+```bash
+aiwg discover "steward repair AIWG setup" --type skill
+aiwg show skill steward
+aiwg status --probe --json
+aiwg doctor
+aiwg refresh --dry-run
+```
+
+Then apply the narrowest repair: `aiwg refresh`, `aiwg use all --provider
+<provider>`, `aiwg regenerate`, or an index rebuild/sync followed by the
+original `aiwg discover "<need>"` query. Reload the provider session after
+provider-facing files change.
+
 You MAY skip discover only when:
 
 - The user named a specific skill/command (e.g. `/flow-deploy-to-production`)

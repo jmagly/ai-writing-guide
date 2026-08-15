@@ -1,0 +1,132 @@
+{
+  "schemaVersion": "aiwg.artifact-attestation.vectors.v1",
+  "description": "Protocol oracle for issue #2068. Signatures are test markers; production cryptographic verification is intentionally out of scope.",
+  "base": {
+    "now": "2026-08-14T12:00:00Z",
+    "artifactName": "setup.aiwg.yaml",
+    "artifactBytesBase64": "YXBpVmVyc2lvbjogYWl3Zy5pby92MQpraW5kOiBTZXR1cE1hbmlmZXN0Cg==",
+    "materialBytesBase64": "Z2l0LXRyZWU6MDEyMzQ1Njc4OWFiY2RlZgo=",
+    "trustedSequence": 41,
+    "signerKnown": true,
+    "signatureValid": true,
+    "verificationMaterialAvailable": true,
+    "expectedPaeSha256": "577d4353e45defe630747e7ad4f23f3a247d5e816706e3c6bacf9ed7dec94422",
+    "attestation": {
+      "mediaType": "application/vnd.aiwg.artifact-attestation.v1+json",
+      "envelope": {
+        "payloadType": "application/vnd.in-toto+json",
+        "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCJwcmVkaWNhdGUiOnsiYXNzZXRUeXBlIjoic2V0dXAtbWFuaWZlc3QiLCJkZXJpdmF0aW9uIjp7ImJ1aWxkZXIiOnsiaWQiOiJodHRwczovL2dpdGh1Yi5jb20vam1hZ2x5L2Fpd2cvLmdpdGh1Yi93b3JrZmxvd3MvcmVsZWFzZS55bWwifSwibWF0ZXJpYWxzIjpbeyJkaWdlc3QiOnsic2hhMjU2IjoiNzY1MjA3NThiYTA3YzgzNDQ5MWY2ZmNhNGY1YzQxZTEwZWQyNzhhZjdlMTEyMTZhYzgzYjRhZGZmMTdmYTNiYyJ9LCJ1cmkiOiJnaXQraHR0cHM6Ly9naXRodWIuY29tL2ptYWdseS9haXdnQHJlZnMvdGFncy92MjAyNi44LjgifV19LCJleHBpcmVzQXQiOiIyMDI2LTA5LTE0VDAwOjAwOjAwWiIsImlzc3VlZEF0IjoiMjAyNi0wOC0xNFQwMDowMDowMFoiLCJwdWJsaWNhdGlvbiI6eyJjaGFubmVsIjoic3RhYmxlIiwic2VxdWVuY2UiOjQyLCJ2ZXJzaW9uIjoiMjAyNi44LjgifSwicHVibGlzaGVyIjp7ImlkIjoiaHR0cHM6Ly9naXRodWIuY29tL2ptYWdseS9haXdnLy5naXRodWIvd29ya2Zsb3dzL3JlbGVhc2UueW1sQHJlZnMvdGFncy92MjAyNi44LjgiLCJuYW1lc3BhY2UiOiJhaXdnLmlvIiwicm9sZSI6InJlbGVhc2UifSwic2NoZW1hVmVyc2lvbiI6ImFpd2cuYXJ0aWZhY3QtcHJvdmVuYW5jZS52MSJ9LCJwcmVkaWNhdGVUeXBlIjoiaHR0cHM6Ly9haXdnLmlvL2F0dGVzdGF0aW9ucy9hcnRpZmFjdC1wcm92ZW5hbmNlL3YxIiwic3ViamVjdCI6W3siZGlnZXN0Ijp7InNoYTI1NiI6ImE0ZTg0ODRjMjQ3ZTIzZDlhYmZiNzczNGVmMjRkMzA4NjM1Nzc4MGE2NTRlYzA4MWJlYzAyNDFiMWVhODhjNjcifSwibmFtZSI6InNldHVwLmFpd2cueWFtbCJ9XX0=",
+        "signatures": [
+          {
+            "keyid": "aiwg-release-test-key",
+            "sig": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+          }
+        ]
+      },
+      "verificationMaterial": {
+        "kind": "public-key",
+        "algorithm": "ed25519",
+        "publicKey": "test-only-public-key"
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "verified-lf-exact-bytes",
+      "expectedStatus": "verified"
+    },
+    {
+      "id": "tampered-artifact-content",
+      "artifactBytesBase64": "YXBpVmVyc2lvbjogYWl3Zy5pby92MQpraW5kOiBTZXR1cE1hbmlmZXN0CnJ1bjogdW5leHBlY3RlZAo=",
+      "expectedStatus": "mismatched"
+    },
+    {
+      "id": "line-endings-lf-to-crlf",
+      "artifactBytesBase64": "YXBpVmVyc2lvbjogYWl3Zy5pby92MQ0Ka2luZDogU2V0dXBNYW5pZmVzdA0K",
+      "expectedStatus": "mismatched"
+    },
+    {
+      "id": "payload-reserialized-noncanonical",
+      "payloadSerialization": "pretty-json",
+      "expectedStatus": "mismatched"
+    },
+    {
+      "id": "mix-and-match-valid-envelope-wrong-subject",
+      "subjectDigestOverride": "50484485b2026a3999cb46ff87be68c7d48650b9b5e8332ccb859999b8dfc15f",
+      "expectedStatus": "mismatched"
+    },
+    {
+      "id": "replay-older-channel-sequence",
+      "trustedSequence": 43,
+      "expectedStatus": "stale"
+    },
+    {
+      "id": "freeze-expired-attestation",
+      "now": "2026-09-15T00:00:00Z",
+      "expectedStatus": "expired"
+    },
+    {
+      "id": "unknown-signer",
+      "signerKnown": false,
+      "expectedStatus": "unknown-signer"
+    },
+    {
+      "id": "revoked-key",
+      "revokedAt": "2026-08-14T06:00:00Z",
+      "expectedStatus": "revoked"
+    },
+    {
+      "id": "compromised-key-retroactive-window",
+      "compromisedFrom": "2026-08-01T00:00:00Z",
+      "expectedStatus": "revoked"
+    },
+    {
+      "id": "subdependency-substitution",
+      "materialBytesBase64": "ZGVwZW5kZW5jeTp2Mgo=",
+      "expectedStatus": "mismatched"
+    },
+    {
+      "id": "altered-generated-provider-output",
+      "artifactBytesBase64": "cHJvdmlkZXI6IGNvZGV4CnNvdXJjZTogbW9kaWZpZWQK",
+      "subjectDigestOverride": "57510f81752c60f899f330f23f60a3bbbd4abb80ce1329a868e8f7d07dd38938",
+      "expectedStatus": "mismatched"
+    },
+    {
+      "id": "offline-complete-portable-evidence",
+      "offline": true,
+      "expectedStatus": "verified"
+    },
+    {
+      "id": "offline-missing-verification-material",
+      "offline": true,
+      "verificationMaterialAvailable": false,
+      "expectedStatus": "offline-evidence-missing"
+    },
+    {
+      "id": "unsigned-required-asset",
+      "signaturesPresent": false,
+      "expectedStatus": "unsigned"
+    },
+    {
+      "id": "unsigned-explicit-policy-exemption",
+      "signaturesPresent": false,
+      "policyExempt": true,
+      "expectedStatus": "policy-exempt"
+    },
+    {
+      "id": "cryptographic-signature-mismatch",
+      "signatureValid": false,
+      "expectedStatus": "mismatched"
+    },
+    {
+      "id": "malformed-envelope-or-predicate",
+      "malformed": true,
+      "expectedStatus": "malformed"
+    },
+    {
+      "id": "valid-evidence-outside-delegated-scope",
+      "policyDenied": true,
+      "expectedStatus": "policy-denied"
+    }
+  ]
+}

@@ -275,7 +275,7 @@ rather than merely printed.
 Agents do not need to memorize the remaining command surface. AIWG discovery
 finds the relevant skill, and the skill supplies the right CLI step. Operators
 who need the complete syntax and examples can use the
-[AIWG CLI reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md).
+[AIWG CLI reference](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md).
 
 ## How It Works
 
@@ -466,7 +466,7 @@ This README therefore documents the operating model, package boundary, trust
 model, and troubleshooting path instead of duplicating every command and flag.
 The complete operator reference is maintained at:
 
-**[AIWG CLI Reference — every command and example](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md)**
+**[AIWG CLI Reference — every command and example](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md)**
 
 Keeping the command catalog in one canonical location prevents package
 documentation from drifting as the runtime grows.
@@ -520,7 +520,7 @@ security guidance.
 Do not routinely call `aiwg help` and place the full output in the model
 context. If a skill exists, use it. If a maintainer or operator needs an
 unfamiliar command, link to the canonical
-[CLI reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md) or retrieve only
+[CLI reference](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md) or retrieve only
 the relevant section.
 
 ## Using AIWG from a Web-Connected Chat
@@ -1076,7 +1076,7 @@ Package invariants include:
 
 ## Documentation
 
-- [Complete AIWG CLI reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/cli-reference.md)
+- [Complete AIWG CLI reference](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md)
 - [AIWG documentation](https://docs.aiwg.io/)
 - [AIWG project README](https://github.com/jmagly/aiwg#readme)
 - [Web-backed resources guide](https://github.com/jmagly/aiwg/blob/main/docs/install/web-backed-resources.md)

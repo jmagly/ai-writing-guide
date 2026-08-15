@@ -23,8 +23,9 @@ Immutable signed release manifest:
 Immutable reference bundle:
 `https://releases.aiwg.io/resources/<version>/bundles/reference.tar.zst`
 
-The corpus is stored at `docs/agents/` inside that bundle. The manifest records
-the bundle filename, byte size, SHA-256 digest, and the `docs` source path.
+The corpus is stored at `docs/agents/` and `docs/cli/` inside that bundle. The
+manifest records the bundle filename, byte size, SHA-256 digest, and the `docs`
+source path.
 Agents must verify the signed manifest and bundle digest before using the
 contents; they must not construct an unsigned per-file URL.
 
@@ -49,9 +50,9 @@ recovery details that do not belong in the conversational user journey.
 
 | Stable ID | Document | Purpose |
 |---|---|---|
-| `aiwg.agent-reference.cli` | [CLI reference](cli-reference.md) | Commands, flags, and examples |
-| `aiwg.agent-reference.cli-usage` | [CLI usage guide](CLI_USAGE.md) | Operational workflows and command sequencing |
-| `aiwg.agent-reference.discovery` | [Discovery and retrieval](discovery-and-retrieval.md) | Deterministic `discover`/`show` contract |
+| `aiwg.agent-reference.cli` | [CLI reference](../cli/reference.md) | Commands, flags, and examples |
+| `aiwg.agent-reference.cli-usage` | [CLI usage guide](../cli/agent-usage.md) | Operational workflows and command sequencing |
+| `aiwg.agent-reference.discovery` | [Discovery and retrieval](../cli/discovery-and-retrieval.md) | Deterministic capability search and asset-loading contract |
 | `aiwg.agent-reference.onboarding` | [Agent-run onboarding](onboarding.md) | Setup, verification, recovery, and reporting |
 | `aiwg.agent-reference.node-installation` | [Node toolchain installation](node-toolchain-installation.md) | Safe OS-specific Node/npm preflight and setup |
 | `aiwg.agent-reference.provider.*` | [Provider operational references](providers/README.md) | Provider-specific deployment, configuration, diagnostics, and recovery |

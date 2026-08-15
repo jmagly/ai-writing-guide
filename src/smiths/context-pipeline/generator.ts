@@ -33,7 +33,7 @@ import {
   ensureWorkspaceContext,
   registerProviderContext,
 } from './workspace-context.js';
-import { projectAiwgPath } from '../../config/project-artifacts.js';
+import { projectControlPath } from '../../config/project-artifacts.js';
 
 const SECTION_TITLES: Record<IndexedArtifactType, string> = {
   agents: 'Agents',
@@ -171,7 +171,7 @@ export async function buildAgentsMd(opts: ContextPipelineOptions): Promise<{
   parts.push('');
   parts.push('See [AIWG.md](./AIWG.md) for the full AIWG framework context');
   parts.push('(active frameworks, addons, agents, behaviors, rules).');
-  const configRelative = path.relative(opts.projectPath, projectAiwgPath(opts.projectPath, 'aiwg.config')).replace(/\\/g, '/');
+  const configRelative = path.relative(opts.projectPath, projectControlPath(opts.projectPath, 'aiwg.config')).replace(/\\/g, '/');
   const configLink = configRelative.startsWith('.') ? configRelative : `./${configRelative}`;
   parts.push(`Tracker and delivery source of truth: [${configRelative}](${configLink}).`);
   parts.push('');

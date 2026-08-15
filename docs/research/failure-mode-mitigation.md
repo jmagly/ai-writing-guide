@@ -168,7 +168,7 @@ aiwg ralph "Fix all failing tests" --completion "npm test passes"
 5. **Check completion criteria**
 6. Repeat or finish
 
-**Location**: `@docs/agents/cli-reference.md#ralph-commands`
+**Location**: `@docs/cli/reference.md#ralph-commands`
 
 #### 2.2 Verification Loops
 
@@ -726,7 +726,7 @@ Example:
 - @docs/references/REF-058-rlam-reproducibility.md - Reproducibility constraints
 - @docs/references/REF-005-millers-law-cognitive-limits.md - 7±2 principle
 - @src/extensions/capability-index.ts - Capability-based dispatch implementation
-- @docs/agents/cli-reference.md#ralph-commands - Al command reference
+- @docs/cli/reference.md#ralph-commands - Al command reference
 
 ---
 

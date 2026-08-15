@@ -9,6 +9,13 @@ triggers:
   - "help me choose the right AIWG framework or skill"
   - "ask for one recommended path and one fallback"
   - "aiwg steward"
+  - "steward repair AIWG setup"
+  - "repair AIWG setup"
+  - "AIWG setup is stale or broken"
+  - "refresh provider files"
+  - "clean up stale AIWG files"
+  - "fix AIWG discovery"
+  - "clean up AIWG issues"
 ---
 
 # steward
@@ -26,6 +33,9 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 - "which model should this use" → model policy route
 - "model catalog or routing" → `aiwg steward models`
 - "install or repair AIWG" → public provider-orchestrated setup manifest
+- "AIWG setup is stale/broken" → steward repair ladder
+- "refresh provider files" → status/doctor, dry-run refresh, then provider redeploy
+- "clean up AIWG issues" → discover `issue-audit`, `aiwg-issue`, or `address-issues`
 
 ## Trigger Patterns Reference
 
@@ -38,6 +48,9 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 | Routing lookup | "which providers support cron" | `aiwg steward find --capability cron` |
 | Model routing | "which model should this use" | `aiwg steward models`; then `aiwg models audit` or `aiwg models resolve` |
 | Install or repair AIWG | "get AIWG working in this project" | Follow the public `setup.aiwg.yaml`; use the self-verifying deployment result, with status and doctor only for audit or recovery |
+| Stale provider files | "Codex says skills are missing" | `aiwg status --probe --json`, `aiwg doctor`, `aiwg refresh --dry-run`, then `aiwg use all --provider <provider>` or `aiwg refresh --provider <provider>` |
+| Stale discovery | "discover cannot find a known skill" | Rebuild and sync the framework index, then re-run discovery |
+| Issue cleanup | "clean up stale issues" | Discover first: `issue-audit` for backlog cleanup, `address-issues` for implementation, `aiwg-issue` for AIWG product issues |
 
 ## AIWG Installation Routing
 
@@ -55,6 +68,77 @@ Route CI, cloud-init, container image, SSH-only, offline, and other
 non-interactive cases to `docs/install/non-interactive.md`. Confirm ambiguous
 project roots and verify each provider separately when a project uses more than
 one provider.
+
+## Setup Troubleshooting and Cleanup Routing
+
+The steward is the primary route when an AIWG setup looks stale, broken, partly
+deployed, duplicated, or confused by old provider files. Agents should not start
+by grepping `.claude/`, `.codex/`, `.agents/`, `.cursor/`, `.warp/`, or other
+provider directories. Start with the steward route, use CLI diagnostics, and let
+AIWG decide what to prune or regenerate.
+
+Use this recovery ladder:
+
+1. Discover and load the route if it is not already loaded:
+
+   ```bash
+   aiwg discover "steward repair AIWG setup" --type skill
+   aiwg show skill steward
+   ```
+
+2. Establish the actual workspace state:
+
+   ```bash
+   aiwg status --probe --json
+   aiwg doctor
+   aiwg runtime-info
+   ```
+
+3. Preview cleanup before changing files:
+
+   ```bash
+   aiwg refresh --dry-run
+   ```
+
+4. Apply the smallest repair that matches the diagnosis:
+
+   ```bash
+   # Re-deploy and prune stale files for the active provider set.
+   aiwg refresh
+
+   # Re-deploy the complete default surface for one provider.
+   aiwg use all --provider <provider>
+
+   # Rebuild generated bootstrap/context files when AGENTS.md, AIWG.md,
+   # CLAUDE.md, WARP.md, or other provider bridges are stale.
+   aiwg regenerate
+   ```
+
+5. If discovery itself is stale after source edits or a failed deploy, rebuild
+   the index and verify the route:
+
+   ```bash
+   aiwg index build --graph framework --force
+   aiwg index sync --backend fortemi-core --graph framework
+   aiwg discover "<original user need>"
+   ```
+
+6. Reload the provider session when `aiwg use`, `aiwg refresh`, or
+   `aiwg regenerate` changes provider-facing files.
+
+For issue cleanup, route through discovery instead of assuming a command:
+
+- AIWG product bug or feature request: `aiwg discover "file an AIWG issue"` →
+  `aiwg-issue`
+- Backlog hygiene, stale issues, duplicates, or close/update recommendations:
+  `aiwg discover "audit open issues"` → `issue-audit`
+- Implement or process issue work: `aiwg discover "address issues"` →
+  `address-issues`
+
+When a broken or stale route is confirmed, file an AIWG correction issue with
+the requested route, observed route, command output, AIWG version, provider, and
+reproduction command. Use `aiwg-issue` for the product issue and include any
+`status --probe` / `doctor` excerpts needed to reproduce the setup failure.
 
 ## Behavior
 

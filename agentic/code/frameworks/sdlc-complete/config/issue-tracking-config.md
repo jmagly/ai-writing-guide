@@ -216,16 +216,20 @@ issue_tracking:
     token_file: ~/.config/gitea/token
 ```
 
-Commands will automatically use Gitea:
+Issue skills will automatically use Gitea after discovery:
 
 ```bash
-/issue-create "Implement user auth" "Need login/logout functionality"
+aiwg discover "issue create" --type skill
+aiwg show skill issue-create
+aiwg run skill issue-create -- plan --title "Implement user auth" --body "Need login/logout functionality"
 # → Creates issue on Gitea
 
-/issue-list
+aiwg discover "issue list" --type skill
+aiwg show skill issue-list
 # → Lists issues from Gitea
 
-/issue-update ISSUE-001 --status in_progress --comment "Started implementation"
+aiwg discover "issue update" --type skill
+aiwg show skill issue-update
 # → Updates issue on Gitea
 ```
 
@@ -239,16 +243,20 @@ Add to project `CLAUDE.md`:
 - **Provider**: local
 ```
 
-Commands will use local files:
+Issue skills will use local files:
 
 ```bash
-/issue-create "Fix navigation bug" "Nav menu not showing on mobile"
+aiwg discover "issue create" --type skill
+aiwg show skill issue-create
+aiwg run skill issue-create -- plan --title "Fix navigation bug" --body "Nav menu not showing on mobile"
 # → Creates .aiwg/issues/ISSUE-001.md
 
-/issue-list
+aiwg discover "issue list" --type skill
+aiwg show skill issue-list
 # → Lists files from .aiwg/issues/
 
-/issue-update ISSUE-001 --status closed --comment "Fixed in commit abc123"
+aiwg discover "issue update" --type skill
+aiwg show skill issue-update
 # → Updates .aiwg/issues/ISSUE-001.md
 ```
 
@@ -264,16 +272,20 @@ Add to project `CLAUDE.md`:
 - **Repo**: ai-writing-guide
 ```
 
-Commands will use GitHub:
+Issue skills will use GitHub:
 
 ```bash
-/issue-create "Add dark mode" "Implement dark mode theme toggle"
+aiwg discover "issue create" --type skill
+aiwg show skill issue-create
+aiwg run skill issue-create -- plan --title "Add dark mode" --body "Implement dark mode theme toggle"
 # → Creates GitHub issue
 
-/issue-list --label feature
+aiwg discover "issue list" --type skill
+aiwg show skill issue-list
 # → Lists GitHub issues with 'feature' label
 
-/issue-update 42 --status closed --comment "Merged in PR #43"
+aiwg discover "issue update" --type skill
+aiwg show skill issue-update
 # → Closes GitHub issue #42
 ```
 
@@ -366,7 +378,7 @@ aiwg ticket-migrate --from github --to jira
 
 ## References
 
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/commands/issue-create.md - Create ticket command
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/commands/issue-update.md - Update ticket command
-- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/commands/issue-list.md - List tickets command
+- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/issue-create/SKILL.md - Create ticket skill
+- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/issue-update/SKILL.md - Update ticket skill
+- @$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/issue-list/SKILL.md - List tickets skill
 - @~/.config/gitea/token - Gitea authentication token (user-specific)

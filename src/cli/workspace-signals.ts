@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { projectAiwgPath } from '../config/project-artifacts.js';
+import { projectAiwgPath, projectControlPath } from '../config/project-artifacts.js';
 
 export type WorkspaceBundleType = 'framework' | 'addon' | 'extension';
 
@@ -165,7 +165,7 @@ export async function resolveWorkspaceSignalPlan(
   let profile = opts.profile;
   let profileSource: WorkspaceSignalPlan['profileSource'] = profile ? 'flag' : 'auto';
 
-  const config = await readJsonIfPresent(projectAiwgPath(projectDir, 'aiwg.config'));
+  const config = await readJsonIfPresent(projectControlPath(projectDir, 'aiwg.config'));
   const configHints = extractConfigHints(config);
   if (!profile && configHints.profile) {
     profile = configHints.profile;

@@ -1,0 +1,142 @@
+# AIWG's public reference implementation of the release-config v1 schema.
+# The active project copy is .aiwg/release.config.
+version: 1
+
+project:
+  name: aiwg
+  display_name: AIWG
+  repo_url: https://git.integrolabs.net/roctinam/aiwg
+  mirror_url: https://github.com/jmagly/aiwg
+  npm_package: aiwg
+
+version_policy:
+  format: calver
+  pattern: YYYY.M.PATCH
+  tag_prefix: v
+  channels:
+    stable:
+      tag_format: "v{YYYY}.{M}.{PATCH}"
+      require_announcement: true
+      require_changelog: true
+      require_uat: true
+    rc:
+      tag_format: "v{YYYY}.{M}.{PATCH}-rc.{N}"
+      require_announcement: false
+      require_changelog: true
+      require_uat: false
+    beta:
+      tag_format: "v{YYYY}.{M}.{PATCH}-beta.{N}"
+      require_announcement: false
+      require_changelog: false
+      require_uat: false
+    alpha:
+      tag_format: "v{YYYY}.{M}.{PATCH}-alpha.{N}"
+      require_announcement: false
+      require_changelog: false
+      require_uat: false
+    nightly:
+      tag_format: "v{YYYYMMDD}-nightly.{N}"
+      require_announcement: false
+      require_changelog: false
+      require_uat: false
+
+gates:
+  - name: local-build-test
+    hard_stop: true
+    steps:
+      - id: check-versions
+        run: npm run check:versions
+        expect_exit: 0
+      - id: typecheck
+        run: npm run typecheck
+        expect_exit: 0
+      - id: build
+        run: npm run build
+        expect_exit: 0
+      - id: docs-collect-dry
+        run: npm run docs:collect:dry
+        expect_exit: 0
+      - id: docs-audience-audit
+        run: npm run docs:audience:audit
+        expect_exit: 0
+      - id: unit-and-uat
+        run: npm run test:ci
+        expect_exit: 0
+      - id: release-discovery
+        run: npm run ci:fortemi-index
+        expect_exit: 0
+
+  - name: ci-green
+    hard_stop: true
+    tracker: gitea
+    owner: roctinam
+    repo: aiwg
+    timeout_seconds: 1200
+    poll_interval_seconds: 30
+    required_workflows: [ci.yml, docsite-build.yml, metadata-validation.yml]
+
+  - name: doc-sync
+    hard_stop: true
+    invoke_skill: doc-sync
+    args:
+      direction: code-to-docs
+      dry_run_first: true
+      guidance: |
+        Verify that public docs, package docs, and agentic source documentation
+        describe the release contents accurately. Keep human-facing docs
+        prompt-first; keep advanced CLI details in docs/cli/.
+
+  - name: changelog-and-announcement
+    hard_stop: true
+    required_for_channels: [stable]
+    artifacts:
+      - path: CHANGELOG.md
+        section_pattern: "^## [{version}]"
+        must_exist: true
+      - path: "docs/releases/v{version}-announcement.md"
+        must_exist: true
+
+  - name: readme-freshness
+    hard_stop: false
+    required_for_channels: [stable]
+    review_diff:
+      path: README.md
+      since_tag: latest-stable
+      prompt: "Has README.md been reviewed for user-visible changes shipping in this release?"
+
+  - name: release
+    hard_stop: true
+    steps:
+      - id: cut-signed-tag
+        run: tools/release/cut-tag.sh {version}
+        expect_exit: 0
+      - id: push-gitea
+        run: git push origin main --tags
+        expect_exit: 0
+      - id: push-github-mirror
+        run: git push github main --tags
+        expect_exit: 0
+        skip_when_flag: --no-mirror
+
+  - name: post-release
+    hard_stop: false
+    actions:
+      - update_release_entry: gitea
+      - update_release_entry: github
+        skip_when_flag: --no-mirror
+      - close_imported_issues_with_thanks: true
+
+policy:
+  no_ai_attribution: true
+  ci_green_before_done: true
+  preserve_pre_release_announcements: false
+  thank_external_reporters: true
+
+publication_verify:
+  release_assets: [SHA256SUMS, "aiwg-*.tgz"]
+  checksums:
+    manifest: SHA256SUMS
+    must_cover: ["aiwg-*.tgz"]
+  installer:
+    url: https://github.com/jmagly/aiwg/releases/download/{tag}/install.sh
+    dry_run: sh install.sh --dry-run

@@ -150,6 +150,25 @@ You MUST run `aiwg discover` when any of the following is true:
 
 **Deployed commands are discoverable.** Commands AIWG deploys to your provider's command directory (`.opencode/command/*.md`, `.claude/commands/*.md`, `~/.codex/prompts/*.md`, …) are indexed: `aiwg discover "<name>"` returns them and `aiwg show command <name>` fetches the body. If a deployed command isn't surfacing, the framework capability index may be unbuilt — `aiwg discover` rebuilds it from `$AIWG_ROOT` automatically (a stale "no matches" is a bug, not a signal that the command is absent).
 
+### If discovery or deployed files look stale
+
+Treat stale discovery results, missing managed provider files, duplicate
+provider files, or broken bootstrap context as an AIWG setup issue. Route through
+the steward first:
+
+```bash
+aiwg discover "steward repair AIWG setup" --type skill
+aiwg show skill steward
+aiwg status --probe --json
+aiwg doctor
+aiwg refresh --dry-run
+```
+
+Then apply the narrowest repair: `aiwg refresh`, `aiwg use all --provider
+<provider>`, `aiwg regenerate`, or an index rebuild/sync followed by the
+original `aiwg discover "<need>"` query. Reload the provider session after
+provider-facing files change.
+
 You MAY skip discover only when:
 
 - The user named a specific skill/command (e.g. `/flow-deploy-to-production`)
@@ -198,7 +217,9 @@ The full discover-first rule (with detection heuristics, recovery procedure, and
 
 ## AIWG Self-Maintenance
 
-AIWG maintains itself using its own CLI. Agents should use CLI commands — not manual file operations — for all installation and deployment tasks.
+AIWG maintains itself using its own CLI. Agents should use the steward route and
+CLI commands — not manual provider-directory cleanup — for installation,
+deployment, stale-file repair, and discovery troubleshooting.
 
 ### When to Self-Maintain
 
@@ -206,7 +227,14 @@ AIWG maintains itself using its own CLI. Agents should use CLI commands — not 
 |---------|--------|
 | Start of long orchestration session | `aiwg refresh --dry-run` → refresh if needed |
 | User asks "is AIWG up to date?" | `aiwg refresh --dry-run` → report + offer refresh |
-| `aiwg doctor` shows errors | `aiwg refresh` or invoke AIWG Steward |
+| AIWG setup looks stale, broken, duplicated, or partly deployed | Invoke/load AIWG Steward → `aiwg status --probe --json` + `aiwg doctor` → `aiwg refresh --dry-run` |
+| `aiwg doctor` shows errors | Invoke AIWG Steward, then `aiwg refresh` / `aiwg use all --provider <p>` / `aiwg regenerate` as diagnosed |
+| A known skill/command is not discoverable | Invoke AIWG Steward → rebuild/sync index → retry `aiwg discover` |
+| Provider files contain stale or missing managed skills/commands | `aiwg refresh --dry-run` → `aiwg refresh --provider <p>` or `aiwg use all --provider <p>` |
+| Generated bootstrap files are stale | `aiwg regenerate` → reload provider session |
+| User asks to clean up stale issues | `aiwg discover "audit open issues"` → `issue-audit` |
+| User asks to fix/address issues | `aiwg discover "address issues"` → `address-issues` |
+| User asks to file an AIWG product/setup issue | `aiwg discover "file an AIWG issue"` → `aiwg-issue` |
 | Deploying to a new provider | `aiwg use <framework> --provider <p>` |
 | User adds/removes a framework | `aiwg use` / `aiwg remove` |
 | Long parallel orchestration needed | `aiwg mc start` + `aiwg mc dispatch` |
@@ -215,10 +243,42 @@ AIWG maintains itself using its own CLI. Agents should use CLI commands — not 
 
 ### Self-Maintenance Agent
 
-For complex maintenance tasks, delegate to the **AIWG Steward** agent:
+For complex maintenance and all unclear setup/repair tasks, route to the
+**AIWG Steward** first. It owns provider capability routing, installation
+repair, stale-file cleanup, and discovery-index troubleshooting.
+
 - Health check + repair: `@aiwg-steward: run full health check`
 - Version sync: `@aiwg-steward: ensure latest version deployed`
 - Provider migration: `@aiwg-steward: deploy all frameworks to copilot`
+- Stale provider cleanup: `@aiwg-steward: diagnose and clean stale provider files`
+- Discovery repair: `@aiwg-steward: repair stale AIWG discovery results`
+
+If steward is not loaded natively, discover and show it:
+
+```bash
+aiwg discover "steward repair AIWG setup" --type skill
+aiwg show skill steward
+```
+
+Standard recovery ladder:
+
+```bash
+aiwg status --probe --json
+aiwg doctor
+aiwg refresh --dry-run
+aiwg refresh
+```
+
+Use narrower commands when diagnosis calls for them:
+
+```bash
+aiwg use all --provider <provider>
+aiwg regenerate
+aiwg index build --graph framework --force
+aiwg index sync --backend fortemi-core --graph framework
+```
+
+Reload the provider session after any command changes provider-facing files.
 
 ### Background Orchestration (Mission Control)
 

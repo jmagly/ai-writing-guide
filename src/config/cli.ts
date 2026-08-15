@@ -22,7 +22,7 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import { UserConfig } from './user-config.js';
 import { AiwgError, EXIT_CODES } from '../cli/errors.js';
-import { projectAiwgPath, resolveProjectAiwgDir } from './project-artifacts.js';
+import { projectControlPath, resolveProjectAiwgDir } from './project-artifacts.js';
 
 const _scriptDir = path.dirname(fileURLToPath(import.meta.url));
 
@@ -471,7 +471,7 @@ async function handleProjectValidate(args: string[]): Promise<void> {
       : resolveIssueLabels(undefined, 'local').diagnostics;
   const diagnostics = [...indexErrors, ...externalLinkErrors, ...labelDiagnostics];
 
-  console.log(`Project config: ${projectAiwgPath(projectDir, 'aiwg.config')}`);
+  console.log(`Project config: ${projectControlPath(projectDir, 'aiwg.config')}`);
   console.log(`Artifact root:  ${resolveProjectAiwgDir(projectDir)}\n`);
   if (diagnostics.length === 0) {
     console.log('✓ Project config valid');
@@ -688,7 +688,7 @@ For project-level config: aiwg config show --project [--json]
   }
 
   // Human-readable view
-  console.log(`Project config: ${projectAiwgPath(projectDir, 'aiwg.config')}`);
+  console.log(`Project config: ${projectControlPath(projectDir, 'aiwg.config')}`);
   console.log(`Artifact root:  ${resolveProjectAiwgDir(projectDir)}\n`);
   console.log(`Schema version: ${cfg.version}`);
   console.log(`Providers:      ${cfg.providers.join(', ') || '(none)'}`);

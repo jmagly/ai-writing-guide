@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "baseline": {
     "issue": 1937,
     "capturedFrom": "git HEAD at issue intake",
@@ -12,7 +12,15 @@
   "exclude": [
     "agents",
     "CLI_USAGE.md",
-    "cli-reference.md"
+    "cli-reference.md",
+    "discovery-and-kernel-skills.md",
+    "cli/reference.md",
+    "cli/agent-usage.md",
+    "cli/discovery-and-retrieval.md",
+    "cli/capability-routing.md",
+    "cli/web-backed-resources.md",
+    "cli/non-interactive.md",
+    "cli/regenerate.md"
   ],
   "coreJourneys": [
     "welcome.md",
@@ -31,18 +39,45 @@
     "index",
     "ralph",
     "mc",
-    "run skill"
+    "run skill",
+    "daemon",
+    "serve",
+    "session",
+    "sessions",
+    "storage",
+    "mcp",
+    "catalog",
+    "schedule",
+    "task",
+    "research",
+    "steward",
+    "config",
+    "regenerate",
+    "new",
+    "new-bundle",
+    "promote",
+    "remove",
+    "add-agent",
+    "add-command",
+    "add-skill",
+    "add-template",
+    "scaffold-addon",
+    "scaffold-extension",
+    "scaffold-framework"
   ],
   "directTouchCommands": [
     "wizard",
     "use",
-    "new",
     "status",
     "doctor",
-    "refresh"
+    "refresh",
+    "version",
+    "features",
+    "update",
+    "uninstall"
   ],
   "operatorNotice": {
     "marker": "<!-- aiwg-public-operator-guidance -->",
-    "text": "> **Execution note:** Commands on this page beyond installation and bootstrap are operational detail for your agent or an advanced operator. If you are working through an agent, describe the outcome you want; the agent should explain material changes, request any needed approval, and report evidence when it finishes."
+    "text": "> **Agent-run procedure:** Describe the outcome you want in your agent conversation. The agent should select and load the appropriate AIWG assets, explain material changes, request any needed approval, and report verification evidence. Exact CLI syntax is reserved for agents and scripts in the [CLI area](https://github.com/jmagly/aiwg/tree/main/docs/cli)."
   }
 }

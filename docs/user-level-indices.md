@@ -113,11 +113,13 @@ JSON results include provenance:
 }
 ```
 
-Use explicit graph selection when reproducibility requires a single source:
+When reproducibility requires a single source, name the intended graph and
+asset ID in the agent conversation:
 
-```bash
-aiwg discover "custom review" --graph user --json
-aiwg show skill custom-review --graph project --json
+```text
+Find the `custom-review` asset in my user-level AIWG graph, compare it with any
+project-level asset of the same ID, and tell me which source you selected
+before using it.
 ```
 
 ## Project Opt-Out

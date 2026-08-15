@@ -1,0 +1,16 @@
+{
+  "default": "README",
+  "order": [
+    "README",
+    "install-and-repair"
+  ],
+  "exclude": [
+    "reference",
+    "agent-usage",
+    "discovery-and-retrieval",
+    "capability-routing",
+    "web-backed-resources",
+    "non-interactive",
+    "regenerate"
+  ]
+}
