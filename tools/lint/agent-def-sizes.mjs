@@ -2,9 +2,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { transformAgent } from '../agents/providers/codex.mjs';
+import { addManagedMarker } from '../agents/providers/base.mjs';
 
 export const AGENT_DEF_CEILING_BYTES = 16 * 1024;
 export const STEWARD_AGENT_TARGET_BYTES = 12 * 1024;
+export const PACKAGED_CODEX_AGENT_TARGET_BYTES = 12 * 1024;
 
 export const DEPLOYED_AGENT_DIRS = [
   '.claude/agents',
@@ -29,12 +32,35 @@ export const STEWARD_AGENT_TARGET_PATHS = [
   '.github/agents/aiwg-steward.yaml',
 ];
 
-const AGENT_FILE_RE = /\.(?:agent\.md|soul\.md|md)$/;
+export const PACKAGED_CODEX_AGENT_TARGET_PATHS = [
+  'agentic/code/frameworks/forensics-complete/agents/log-analyst.md',
+  'agentic/code/frameworks/research-complete/agents/quality-agent.md',
+  'agentic/code/frameworks/sdlc-complete/agents/ai-ml-engineer.md',
+];
+
+const PACKAGED_AGENT_ROOTS = [
+  ['agentic/code/frameworks', false],
+  ['agentic/code/addons', false],
+  ['agentic/code/plugins', false],
+  ['agentic/code/agents', true],
+];
+
+const AGENT_FILE_RE = /\.(?:agent\.md|soul\.md|md|toml)$/;
+const PACKAGED_AGENT_EXCLUDES = new Set([
+  'README.md',
+  'manifest.md',
+  'agent-template.md',
+  'openai-compat.md',
+  'factory-compat.md',
+  'windsurf-compat.md',
+  'DEVELOPMENT_GUIDE.md',
+]);
 
 export function agentIdFromFilename(filename) {
   return filename
     .replace(/\.agent\.md$/, '')
     .replace(/\.soul\.md$/, '')
+    .replace(/\.toml$/, '')
     .replace(/\.md$/, '');
 }
 
@@ -54,6 +80,113 @@ async function listAgentFiles(rootDir, relDir) {
   return entries
     .filter((entry) => entry.isFile() && AGENT_FILE_RE.test(entry.name))
     .map((entry) => path.join(dir, entry.name));
+}
+
+async function listPackagedAgentSources(rootDir, relDir, allMarkdownFiles) {
+  const dir = path.join(rootDir, relDir);
+  const stat = await maybeStat(dir);
+  if (!stat?.isDirectory()) return [];
+
+  if (!allMarkdownFiles) {
+    const files = [];
+    const bundles = await fs.readdir(dir, { withFileTypes: true });
+    for (const bundle of bundles) {
+      if (!bundle.isDirectory()) continue;
+      const agentsDir = path.join(dir, bundle.name, 'agents');
+      const agentsStat = await maybeStat(agentsDir);
+      if (!agentsStat?.isDirectory()) continue;
+      const entries = await fs.readdir(agentsDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (
+          entry.isFile()
+          && entry.name.endsWith('.md')
+          && !entry.name.endsWith('.soul.md')
+          && !PACKAGED_AGENT_EXCLUDES.has(entry.name)
+        ) {
+          files.push(path.join(agentsDir, entry.name));
+        }
+      }
+    }
+    return files;
+  }
+
+  const files = [];
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const absolute = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...await listPackagedAgentSources(
+        rootDir,
+        path.relative(rootDir, absolute),
+        allMarkdownFiles,
+      ));
+      continue;
+    }
+    if (
+      !entry.isFile()
+      || !entry.name.endsWith('.md')
+      || entry.name.endsWith('.soul.md')
+      || PACKAGED_AGENT_EXCLUDES.has(entry.name)
+    ) continue;
+    files.push(absolute);
+  }
+  return files;
+}
+
+export async function scanPackagedCodexAgentDefSizes(options = {}) {
+  const rootDir = options.rootDir ?? process.cwd();
+  const ceilingBytes = options.ceilingBytes ?? AGENT_DEF_CEILING_BYTES;
+  const targetBytes = options.targetBytes ?? PACKAGED_CODEX_AGENT_TARGET_BYTES;
+  const targetPaths = new Set(options.targetPaths ?? PACKAGED_CODEX_AGENT_TARGET_PATHS);
+  const sourceRoots = options.sourceRoots ?? PACKAGED_AGENT_ROOTS;
+  const scanned = [];
+  const violations = [];
+  const renderFailures = [];
+  const targetScanned = [];
+  const targetViolations = [];
+
+  for (const [relDir, allMarkdownFiles] of sourceRoots) {
+    const files = await listPackagedAgentSources(rootDir, relDir, allMarkdownFiles);
+    for (const filePath of files) {
+      const relPath = path.relative(rootDir, filePath);
+      try {
+        const source = await fs.readFile(filePath, 'utf8');
+        const rendered = addManagedMarker(
+          transformAgent(filePath, source, {}),
+          'lint',
+          'bundled',
+          'line-comment',
+        );
+        const record = {
+          agentId: agentIdFromFilename(path.basename(filePath)),
+          path: relPath,
+          renderedPath: relPath.replace(/\.md$/, '.toml'),
+          size: Buffer.byteLength(rendered),
+        };
+        scanned.push(record);
+        if (record.size > ceilingBytes) violations.push(record);
+        if (targetPaths.has(relPath)) {
+          targetScanned.push(record);
+          if (record.size > targetBytes) targetViolations.push(record);
+        }
+      } catch (error) {
+        renderFailures.push({
+          path: relPath,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  }
+
+  return {
+    ceilingBytes,
+    targetBytes,
+    scanned,
+    violations,
+    renderFailures,
+    targetScanned,
+    targetViolations,
+  };
 }
 
 export async function scanDeployedAgentDefSizes(options = {}) {
@@ -155,6 +288,36 @@ export function formatAgentDefSizeReport(result) {
     lines.push('');
     lines.push('Keep aiwg-steward as a Tier-1 routing core and move detailed tables to steward-quickref or the routing reference catalog.');
   }
+  if (result.packagedCodex) {
+    const packaged = result.packagedCodex;
+    lines.push('');
+    lines.push(`Rendered ${packaged.scanned.length} packaged Codex agent definition(s); ceiling ${formatKb(packaged.ceilingBytes)}.`);
+    if (packaged.violations.length > 0) {
+      lines.push('');
+      lines.push('Oversized packaged Codex definitions:');
+      for (const item of packaged.violations.sort((a, b) => b.size - a.size)) {
+        lines.push(`  - ${item.renderedPath} (${formatKb(item.size)})`);
+      }
+    }
+    if (packaged.renderFailures.length > 0) {
+      lines.push('');
+      lines.push('Packaged Codex render failures:');
+      for (const item of packaged.renderFailures) {
+        lines.push(`  - ${item.path}: ${item.error}`);
+      }
+    }
+    if (packaged.targetScanned.length > 0) {
+      lines.push('');
+      lines.push(`Checked ${packaged.targetScanned.length} regression target(s); headroom target ${formatKb(packaged.targetBytes)}.`);
+    }
+    if (packaged.targetViolations.length > 0) {
+      lines.push('');
+      lines.push('Packaged Codex regression targets over the headroom target:');
+      for (const item of packaged.targetViolations.sort((a, b) => b.size - a.size)) {
+        lines.push(`  - ${item.renderedPath} (${formatKb(item.size)})`);
+      }
+    }
+  }
   return lines.join('\n');
 }
 
@@ -174,8 +337,15 @@ export async function main(argv = process.argv.slice(2)) {
   }
 
   const result = await scanDeployedAgentDefSizes({ rootDir });
+  result.packagedCodex = await scanPackagedCodexAgentDefSizes({ rootDir });
   const report = formatAgentDefSizeReport(result);
-  if (result.violations.length > 0 || result.stewardTargetViolations.length > 0) {
+  if (
+    result.violations.length > 0
+    || result.stewardTargetViolations.length > 0
+    || result.packagedCodex.violations.length > 0
+    || result.packagedCodex.renderFailures.length > 0
+    || result.packagedCodex.targetViolations.length > 0
+  ) {
     console.error(report);
     return 1;
   }

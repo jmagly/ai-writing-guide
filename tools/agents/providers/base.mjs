@@ -180,8 +180,11 @@ const MANIFEST_FILENAME = '.aiwg-manifest.json';
  *
  * Idempotent — skips if either form of the marker is already present.
  */
-export function addManagedMarker(content, version, source) {
+export function addManagedMarker(content, version, source, style = 'markdown') {
   if (MANAGED_MARKER_RE.test(content)) return content;
+  if (style === 'line-comment') {
+    return `# aiwg:managed v${version} ${source}\n${content}`;
+  }
   // Frontmatter present → inject as YAML comment after the opening `---\n`.
   if (content.startsWith('---\n')) {
     return content.replace(
@@ -680,9 +683,18 @@ export function deployFiles(files, destDir, opts, transformFn) {
       transformedContent = injectPlatformInContent(transformedContent, platformName);
     }
 
-    // Add managed marker for .md / .mdc files (#749; .mdc for Cursor native rules)
+    // Add managed marker for provider artifacts (#749). TOML accepts `#`
+    // comments, which lets doctor attribute transformed Codex agents even
+    // though their YAML frontmatter is removed during serialization.
     if (base.endsWith('.md') || base.endsWith('.mdc')) {
       transformedContent = addManagedMarker(transformedContent, deployVersion, deploySource);
+    } else if (base.endsWith('.toml')) {
+      transformedContent = addManagedMarker(
+        transformedContent,
+        deployVersion,
+        deploySource,
+        'line-comment',
+      );
     }
 
     // Compute content hash for sidecar comparison

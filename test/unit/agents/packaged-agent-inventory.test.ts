@@ -84,4 +84,33 @@ describe('packaged agent inventory', () => {
       ceiling,
     )).toBe('unmanaged-local');
   });
+
+  it('attributes oversized Codex TOML to the current package by instruction fingerprint', async () => {
+    const agents = join(root, 'agentic/code/frameworks/sdlc-complete/agents');
+    mkdirSync(agents, { recursive: true });
+    const body = 'Keep this canonical body below the raw source ceiling.\n'.repeat(40).trim();
+    writeFileSync(join(agents, 'escaped.md'), [
+      '---',
+      'name: escaped',
+      'description: Escaping can grow rendered TOML',
+      '---',
+      '',
+      body,
+      '',
+    ].join('\n'));
+    const inventory = await collectPackagedAgentInventory(root);
+    const deployed = [
+      'name = "escaped"',
+      'description = "Escaping can grow rendered TOML"',
+      `developer_instructions = ${JSON.stringify(body)}`,
+      '',
+    ].join('\n');
+
+    expect(diagnoseOversizedAgent(
+      'escaped.toml',
+      deployed,
+      inventory,
+      16 * 1024,
+    )).toBe('current-package');
+  });
 });

@@ -1,9 +1,11 @@
 import { promises as fs } from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 
 export interface PackagedAgentSource {
   path: string;
   size: number;
+  instructionHash: string;
 }
 
 export type PackagedAgentInventory = Map<string, PackagedAgentSource[]>;
@@ -26,6 +28,31 @@ export function normalizeAgentArtifactName(filename: string): string {
 export function parseManagedArtifactMarker(content: string): ManagedArtifactMarker | null {
   const match = MANAGED_MARKER_RE.exec(content);
   return match ? { version: match[1], source: match[2] } : null;
+}
+
+/** Extract the developer-instruction body from a canonical Markdown agent. */
+export function extractAgentInstructionBody(content: string): string {
+  if (!content.startsWith('---')) return content.trim();
+  const withoutFrontmatter = content.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '');
+  return withoutFrontmatter.trim();
+}
+
+function instructionHash(content: string): string {
+  return createHash('sha256').update(content).digest('hex');
+}
+
+function extractDeployedInstructions(filename: string, content: string): string | null {
+  if (!filename.toLowerCase().endsWith('.toml')) {
+    return extractAgentInstructionBody(content);
+  }
+  const match = content.match(/^developer_instructions\s*=\s*(.+)$/m);
+  if (!match) return null;
+  try {
+    const value = JSON.parse(match[1]);
+    return typeof value === 'string' ? value.trim() : null;
+  } catch {
+    return null;
+  }
 }
 
 async function collectAgentSources(
@@ -51,8 +78,12 @@ async function collectAgentSources(
     if (!allMarkdownFiles && path.basename(rootDir) !== 'agents') return;
 
     let stat;
+    let content;
     try {
-      stat = await fs.stat(absolute);
+      [stat, content] = await Promise.all([
+        fs.stat(absolute),
+        fs.readFile(absolute, 'utf8'),
+      ]);
     } catch {
       return;
     }
@@ -61,6 +92,7 @@ async function collectAgentSources(
     sources.push({
       path: path.relative(frameworkRoot, absolute),
       size: stat.size,
+      instructionHash: instructionHash(extractAgentInstructionBody(content)),
     });
     inventory.set(name, sources);
   }));
@@ -96,6 +128,14 @@ export function diagnoseOversizedAgent(
 ): OversizedAgentDiagnosis {
   const packaged = inventory.get(normalizeAgentArtifactName(filename)) ?? [];
   if (packaged.some((source) => source.size > ceilingBytes)) return 'current-package';
+
+  const deployedInstructions = extractDeployedInstructions(filename, content);
+  if (
+    deployedInstructions !== null
+    && packaged.some((source) => source.instructionHash === instructionHash(deployedInstructions))
+  ) {
+    return 'current-package';
+  }
 
   const marker = parseManagedArtifactMarker(content);
   if (marker?.source === 'bundled') return 'stale-deployment';
