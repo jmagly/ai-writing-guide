@@ -81,6 +81,12 @@ export async function buildCliPackage({ outputDir = defaultOutputDir } = {}) {
     path.join(outputDir, 'agentic', 'code', 'providers'),
     { recursive: true },
   );
+  await mkdir(path.join(outputDir, 'schemas'), { recursive: true });
+  await cp(
+    path.join(repoRoot, 'schemas', 'security'),
+    path.join(outputDir, 'schemas', 'security'),
+    { recursive: true },
+  );
   await mkdir(path.join(outputDir, 'tools', 'agents'), { recursive: true });
   await mkdir(path.join(outputDir, 'tools', 'commands'), { recursive: true });
   await mkdir(path.join(outputDir, 'tools', 'plugin'), { recursive: true });

@@ -102,6 +102,20 @@ function attestation(releaseKey: ReturnType<typeof keyPair>, overrides: Record<s
   };
 }
 
+function signedPayloadAttestation(releaseKey: ReturnType<typeof keyPair>, payload: Buffer) {
+  return {
+    mediaType: 'application/vnd.aiwg.artifact-attestation.v1+json',
+    envelope: {
+      payloadType: 'application/vnd.in-toto+json',
+      payload: payload.toString('base64url'),
+      signatures: [{
+        sig: sign(null, dssePae('application/vnd.in-toto+json', payload), releaseKey.privateKey).toString('base64url'),
+      }],
+    },
+    verificationMaterial: { kind: 'public-key', algorithm: 'ed25519', publicKey: 'transport-only' },
+  };
+}
+
 describe('cross-asset verification contract (#2087)', () => {
   it('publishes closed schemas and the complete stable status map', () => {
     const ajv = new Ajv2020({ strict: false, allErrors: true });
@@ -154,6 +168,40 @@ describe('cross-asset verification contract (#2087)', () => {
     const revokedRootBytes = encodeRoot(fixture.root, fixture.rootKey);
     const revokedState = bootstrapTrustRoot(revokedRootBytes, sha256(revokedRootBytes), NOW).state;
     expect((await verifyArtifact({ ...base, artifactBytes: ARTIFACT, rootBytes: revokedRootBytes, state: revokedState })).status).toBe('revoked');
+  });
+
+  it('returns stable expired, malformed, and policy-denied verifier outcomes', async () => {
+    const fixture = unsignedRoot();
+    const rootBytes = encodeRoot(fixture.root, fixture.rootKey);
+    const state = bootstrapTrustRoot(rootBytes, sha256(rootBytes), NOW).state;
+    const base = { artifactBytes: ARTIFACT, artifactName: ARTIFACT_NAME, rootBytes, state, now: NOW };
+
+    const expired = await verifyArtifact({
+      ...base,
+      attestation: attestation(fixture.releaseKey, { expiresAt: '2026-08-16T11:30:00.000Z' }),
+    });
+    expect(expired.status).toBe('expired');
+    expect(expired.exitCode).toBe(23);
+    expect(expired.diagnostics[0]?.code).toBe('ATTESTATION_TIME_WINDOW');
+
+    const malformed = await verifyArtifact({
+      ...base,
+      attestation: signedPayloadAttestation(fixture.releaseKey, Buffer.from('not-json')),
+    });
+    expect(malformed.status).toBe('malformed');
+    expect(malformed.exitCode).toBe(27);
+    expect(malformed.identities).toEqual(['release-1']);
+    expect(malformed.diagnostics[0]?.code).toBe('MALFORMED_SIGNED_PAYLOAD');
+
+    const denied = await verifyArtifact({
+      ...base,
+      attestation: attestation(fixture.releaseKey),
+      expectedScope: { assetType: 'documentation', namespace: 'aiwg.io', channel: 'stable' },
+    });
+    expect(denied.status).toBe('policy-denied');
+    expect(denied.exitCode).toBe(29);
+    expect(denied.identities).toEqual(['release-1']);
+    expect(denied.diagnostics[0]?.code).toBe('EXPECTED_SCOPE_MISMATCH');
   });
 
   it('rejects fast-forward, same-sequence mix-and-match, freeze, and clock rollback', async () => {
@@ -249,5 +297,28 @@ describe('trust-root lifecycle (#2088)', () => {
     expect(verifyRootTransition(currentBytes, nextBytes, state, NOW).state.rootVersion).toBe(2);
     next.root.signed.version = 4;
     expect(() => verifyRootTransition(currentBytes, encodeRoot(next.root, newRootKey), state, NOW)).toThrow(/exactly the next/);
+  });
+
+  it('rejects root updates that lack either old or new threshold approval', () => {
+    const current = unsignedRoot();
+    const currentBytes = encodeRoot(current.root, current.rootKey);
+    const state = bootstrapTrustRoot(currentBytes, sha256(currentBytes), NOW).state;
+    const newRootKey = keyPair();
+    const next = unsignedRoot(2, newRootKey, current.releaseKey);
+    next.root.signed.identities[0].id = 'root-2';
+    next.root.signed.root.keyIds = ['root-2'];
+    const payload = trustRootSigningBytes(next.root);
+
+    next.root.signatures = [
+      { identityId: 'root-2', sig: sign(null, payload, newRootKey.privateKey).toString('base64') },
+    ];
+    expect(() => verifyRootTransition(currentBytes, Buffer.from(`${JSON.stringify(next.root, null, 2)}\n`), state, NOW))
+      .toThrow(/both old and new independent signature thresholds/);
+
+    next.root.signatures = [
+      { identityId: 'old-root', sig: sign(null, payload, current.rootKey.privateKey).toString('base64') },
+    ];
+    expect(() => verifyRootTransition(currentBytes, Buffer.from(`${JSON.stringify(next.root, null, 2)}\n`), state, NOW))
+      .toThrow(/both old and new independent signature thresholds/);
   });
 });

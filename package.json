@@ -35,6 +35,7 @@
     "audit:socket-release": "node tools/release/socket-post-publish-audit.mjs",
     "prepack": "npm run release:fortemi-index",
     "test:release-discovery": "vitest run --config config/vitest.config.js test/integration/artifacts/discover-fortemi-corpus.test.ts",
+    "test:security:artifact-verification": "vitest run --config config/vitest.config.js test/unit/security/artifact-attestation.test.ts test/unit/security/artifact-verifier.test.ts test/unit/security/artifact-sigstore-profile.test.ts test/integration/artifact-verification-cli.test.ts",
     "security:threat-assess": "node tools/security/assess-forge-content.mjs",
     "benchmark:threat-assessment": "node tools/security/evaluate-threat-policy.mjs",
     "ci:fortemi-index": "npm run lint:discovery-coverage && npm run test:release-discovery && npm run lint:fortemi-prebuilt-package",

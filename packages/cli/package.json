@@ -27,6 +27,7 @@
     "THIRD_PARTY_NOTICES.md",
     "bin/",
     "agentic/code/providers/",
+    "schemas/security/",
     "dist/src/",
     "!dist/**/*.d.ts",
     "!dist/**/*.map",

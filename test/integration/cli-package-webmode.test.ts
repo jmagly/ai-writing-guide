@@ -126,6 +126,17 @@ async function listFixtureEntries(directory: string): Promise<string[]> {
   return (await readdir(directory)).filter((entry) => entry.startsWith('bt6-fixture-')).sort();
 }
 
+async function listRelativeFiles(directory: string, relative = ''): Promise<string[]> {
+  const entries = await readdir(path.join(directory, relative), { withFileTypes: true });
+  const files = await Promise.all(entries.map(async (entry) => {
+    const entryRelative = path.join(relative, entry.name);
+    return entry.isDirectory()
+      ? listRelativeFiles(directory, entryRelative)
+      : [entryRelative];
+  }));
+  return files.flat().sort();
+}
+
 function sha256(value: Buffer): string {
   return createHash('sha256').update(value).digest('hex');
 }
@@ -258,6 +269,47 @@ describe('@aiwg/cli packaged web distribution', () => {
     expect(installedReadme).not.toContain('## CLI Guide');
     expect(installedReadme).toContain('## Security Model');
     expect(installedReadme).toContain('## Installation Troubleshooting');
+  });
+
+  it('ships every security schema and parses each installed copy', async () => {
+    const sourceRoot = path.join(PROJECT_ROOT, 'schemas', 'security');
+    const sourceSchemas = (await listRelativeFiles(sourceRoot))
+      .filter((relative) => relative.endsWith('.schema.json'));
+    const packedPaths = new Set(packMetadata.files.map((file) => file.path));
+
+    expect(sourceSchemas.length).toBeGreaterThan(0);
+    for (const relative of sourceSchemas) {
+      const packagePath = path.posix.join('schemas/security', ...relative.split(path.sep));
+      expect(packedPaths.has(packagePath), `${packagePath} must ship in @aiwg/cli`).toBe(true);
+
+      const source = JSON.parse(await readFile(path.join(sourceRoot, relative), 'utf8'));
+      const installed = JSON.parse(await readFile(path.join(installRoot, packagePath), 'utf8'));
+      expect(installed).toEqual(source);
+    }
+  });
+
+  it('routes verify help through the installed CLI', async () => {
+    const help = await runCli(['verify', '--help']);
+    expect(help.code, help.stderr).toBe(0);
+    expect(help.stdout).toContain('aiwg verify');
+    expect(help.stdout).toContain('Verify cross-asset provenance');
+  });
+
+  it('executes the packaged verifier and preserves its stable malformed contract', async () => {
+    const verified = await runCli([
+      'verify', 'missing-artifact.bin',
+      '--policy', 'missing-root.json',
+      '--offline', '--json',
+    ]);
+    expect(verified.code).toBe(27);
+    expect(verified.stderr).toBe('');
+    expect(JSON.parse(verified.stdout)).toMatchObject({
+      schemaVersion: 'aiwg.verify.result.v1',
+      status: 'malformed',
+      exitCode: 27,
+      artifact: { name: 'missing-artifact.bin' },
+      diagnostics: [{ code: 'CLI_INPUT_ERROR' }],
+    });
   });
 
   it('defaults to signed stable web discover and show without flags or a bundled corpus', async () => {

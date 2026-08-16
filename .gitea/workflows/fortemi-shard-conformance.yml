@@ -33,10 +33,19 @@ concurrency:
 jobs:
   producer-consumer-receipt:
     name: Published Core receipts → full-v1 clean PGlite and Fortemi
-    runs-on: matric-builder
+    # Select the registered Docker-capable environment rather than a singleton host.
+    runs-on: docker
     timeout-minutes: 30
 
     steps:
+      - name: Verify runner capabilities
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e "const major = Number(process.versions.node.split('.')[0]); if (major < 20) throw new Error('Node 20 or newer is required')"
+          git --version
+          docker info >/dev/null
+
       - name: Clean checkout AIWG exact revision
         shell: bash
         run: |

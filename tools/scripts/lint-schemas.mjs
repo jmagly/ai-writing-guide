@@ -3,8 +3,10 @@
  * lint-schemas.mjs
  *
  * Validates:
- *   1. schemas/executor-v1.json is a valid draft-2020-12 JSON Schema (meta-schema check)
- *   2. Each fixture in test/conformance/executor-v1/fixtures/ validates against
+ *   1. Every versioned .schema.json file below schemas/ declares a unique, non-empty $id,
+ *      uses a supported draft, and compiles with that draft's Ajv implementation.
+ *   2. schemas/executor-v1.json is a valid draft-2020-12 JSON Schema (meta-schema check)
+ *   3. Each fixture in test/conformance/executor-v1/fixtures/ validates against
  *      schemas/executor-v1.json — specifically the per-message-type refs declared in
  *      the fixture's `_schema_refs` or `_validates_as` fields.
  *
@@ -103,6 +105,7 @@ if (formatsModule) {
 // ── Paths ──────────────────────────────────────────────────────────────────
 
 const SCHEMA_PATH = join(projectRoot, 'schemas', 'executor-v1.json');
+const SCHEMAS_DIR = join(projectRoot, 'schemas');
 const FIXTURES_DIR = join(projectRoot, 'test', 'conformance', 'executor-v1', 'fixtures');
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -115,6 +118,29 @@ function loadJson(filePath) {
   } catch (err) {
     throw new Error(`JSON parse error in ${filePath}: ${err.message}`);
   }
+}
+
+/** Recursively collect schema source files in deterministic order. */
+function collectSchemaFiles(directory) {
+  const files = [];
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const entryPath = join(directory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...collectSchemaFiles(entryPath));
+    } else if (entry.isFile() && entry.name.endsWith('.schema.json')) {
+      files.push(entryPath);
+    }
+  }
+  return files.sort();
+}
+
+function createSchemaCompiler(Constructor) {
+  const compiler = new Constructor({ strict: false, allErrors: true });
+  if (formatsModule) {
+    const addFormatsFn = formatsModule.default ?? formatsModule;
+    if (typeof addFormatsFn === 'function') addFormatsFn(compiler);
+  }
+  return compiler;
 }
 
 /** Collect every object in a deep structure that has a _validates_as key. */
@@ -160,7 +186,90 @@ function resolveRef(schema, ref) {
   return current ?? null;
 }
 
-// ── Step 1: validate the schema file itself ───────────────────────────────
+// ── Step 1: compile every versioned schema with its declared draft ────────
+
+const require = createRequire(import.meta.url);
+const AjvDraft7Module = require(join(projectRoot, 'node_modules', 'ajv', 'dist', 'ajv.js'));
+const AjvDraft7Constructor = AjvDraft7Module.Ajv ?? AjvDraft7Module.default ?? AjvDraft7Module;
+const schemaAjv2020 = createSchemaCompiler(AjvConstructor);
+const schemaAjvDraft7 = createSchemaCompiler(AjvDraft7Constructor);
+const supportedDrafts = new Map([
+  ['https://json-schema.org/draft/2020-12/schema', { name: '2020-12', compiler: schemaAjv2020 }],
+  ['https://json-schema.org/draft/2020-12/schema#', { name: '2020-12', compiler: schemaAjv2020 }],
+  ['http://json-schema.org/draft-07/schema#', { name: 'draft-07', compiler: schemaAjvDraft7 }],
+  ['https://json-schema.org/draft-07/schema#', { name: 'draft-07', compiler: schemaAjvDraft7 }],
+]);
+
+const schemaFiles = collectSchemaFiles(SCHEMAS_DIR);
+const schemaRecords = [];
+const schemaIds = new Map();
+let schemaErrors = 0;
+console.log(`\n[lint-schemas] Compiling ${schemaFiles.length} versioned schema(s) …`);
+
+for (const filePath of schemaFiles) {
+  const relativePath = filePath.slice(projectRoot.length + 1);
+  let schema;
+  try {
+    schema = loadJson(filePath);
+  } catch (err) {
+    console.error(`  ERROR: ${err.message}`);
+    schemaErrors++;
+    continue;
+  }
+
+  const id = typeof schema.$id === 'string' ? schema.$id.trim() : '';
+  if (!id) {
+    console.error(`  ERROR: ${relativePath} must declare a non-empty $id`);
+    schemaErrors++;
+    continue;
+  }
+  if (schemaIds.has(id)) {
+    console.error(`  ERROR: ${relativePath} duplicates $id "${id}" from ${schemaIds.get(id)}`);
+    schemaErrors++;
+    continue;
+  }
+  schemaIds.set(id, relativePath);
+
+  const draft = supportedDrafts.get(schema.$schema);
+  if (!draft) {
+    console.error(`  ERROR: ${relativePath} declares unsupported draft "${schema.$schema ?? '<missing>'}"`);
+    schemaErrors++;
+    continue;
+  }
+  schemaRecords.push({ filePath, relativePath, id, schema, ...draft });
+}
+
+const registeredSchemas = new Set();
+for (const record of schemaRecords) {
+  try {
+    record.compiler.addSchema(record.schema, record.id);
+    registeredSchemas.add(record.filePath);
+  } catch (err) {
+    console.error(`  ERROR: ${record.relativePath} failed ${record.name} registration: ${err.message}`);
+    schemaErrors++;
+  }
+}
+
+let compiledSchemas = 0;
+for (const record of schemaRecords) {
+  if (!registeredSchemas.has(record.filePath)) continue;
+  try {
+    if (!record.compiler.getSchema(record.id)) {
+      throw new Error(`Ajv did not return a validator for $id "${record.id}"`);
+    }
+    compiledSchemas++;
+  } catch (err) {
+    console.error(`  ERROR: ${record.relativePath} failed ${record.name} compilation: ${err.message}`);
+    schemaErrors++;
+  }
+}
+if (compiledSchemas === schemaFiles.length) {
+  console.log(`  ✓ All ${compiledSchemas} versioned schemas compiled with unique $id values`);
+} else {
+  console.log(`  Compiled ${compiledSchemas}/${schemaFiles.length} versioned schemas`);
+}
+
+// ── Step 2: validate the executor schema file itself ──────────────────────
 
 let errors = 0;
 let warnings = 0;
@@ -220,7 +329,7 @@ if (errors === 0) {
   console.log(`  ✓ All ${defNames.length} $defs compile without errors`);
 }
 
-// ── Step 2: validate fixtures ─────────────────────────────────────────────
+// ── Step 3: validate fixtures ─────────────────────────────────────────────
 
 if (!existsSync(FIXTURES_DIR)) {
   console.warn(`\n[lint-schemas] WARN: fixtures dir not found at ${FIXTURES_DIR}. Skipping fixture validation.`);
@@ -303,6 +412,7 @@ if (!existsSync(FIXTURES_DIR)) {
 
 // ── Summary ────────────────────────────────────────────────────────────────
 
+errors += schemaErrors;
 console.log('\n' + '─'.repeat(60));
 if (errors > 0) {
   console.error(`[lint-schemas] FAILED — ${errors} error(s), ${warnings} warning(s)`);
