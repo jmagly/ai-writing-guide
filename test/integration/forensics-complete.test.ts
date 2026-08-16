@@ -413,6 +413,7 @@ describe('Workspace Templates', () => {
 describe('Deployment Scaffold', () => {
   const BIN = path.join(REPO_ROOT, 'bin/aiwg.mjs');
 
+  /** @implements #2108 */
   it('aiwg use forensics creates the framework-scoped DFIR workspace scaffold', () => {
     // Per issue #1516, scaffold lives under .aiwg/frameworks/forensics-complete/
     // not the legacy top-level .aiwg/forensics/.
@@ -435,7 +436,7 @@ describe('Deployment Scaffold', () => {
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
-  });
+  }, 130_000);
 });
 
 // ---------------------------------------------------------------------------

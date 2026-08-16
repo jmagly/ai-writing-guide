@@ -39,17 +39,37 @@ echo ""
 if command -v aiwg >/dev/null 2>&1; then
   DISCOVER_TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/steward-prep-discover.XXXXXX")"
   DISCOVER_JSON="${DISCOVER_TMP_DIR}/discover.json"
+  DISCOVER_PID=""
   cleanup_discover_tmp() {
     if [ -n "${DISCOVER_TMP_DIR:-}" ] && [ -d "${DISCOVER_TMP_DIR}" ]; then
       rm -rf -- "${DISCOVER_TMP_DIR}"
     fi
   }
+  terminate_discover() {
+    if [ -n "${DISCOVER_PID:-}" ] && kill -0 "${DISCOVER_PID}" 2>/dev/null; then
+      kill "${DISCOVER_PID}" 2>/dev/null || true
+      wait "${DISCOVER_PID}" 2>/dev/null || true
+    fi
+    DISCOVER_PID=""
+  }
+  handle_discover_signal() {
+    local exit_code="$1"
+    trap - HUP INT TERM
+    terminate_discover
+    cleanup_discover_tmp
+    exit "${exit_code}"
+  }
   trap cleanup_discover_tmp EXIT
-  trap 'cleanup_discover_tmp; exit 129' HUP
-  trap 'cleanup_discover_tmp; exit 130' INT
-  trap 'cleanup_discover_tmp; exit 143' TERM
+  trap 'handle_discover_signal 129' HUP
+  trap 'handle_discover_signal 130' INT
+  trap 'handle_discover_signal 143' TERM
 
-  if aiwg discover "${QUERY}" --limit 5 --json >"${DISCOVER_JSON}" 2>/dev/null; then
+  # Keep ownership of the discovery child so signal cleanup does not depend on
+  # the caller creating and signalling a separate process group. @implements #2107
+  aiwg discover "${QUERY}" --limit 5 --json >"${DISCOVER_JSON}" 2>/dev/null &
+  DISCOVER_PID=$!
+  if wait "${DISCOVER_PID}"; then
+    DISCOVER_PID=""
     python3 - "${DISCOVER_JSON}" <<'PY' 2>/dev/null || echo "  (python3 not available to parse output)"
 import json
 import sys
@@ -73,6 +93,7 @@ except Exception as e:
     print(f'  (parse error: {e})')
 PY
   else
+    DISCOVER_PID=""
     echo "  (aiwg discover failed — local index may not be built)"
   fi
 else

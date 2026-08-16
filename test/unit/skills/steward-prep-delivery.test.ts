@@ -30,7 +30,7 @@ beforeEach(async () => {
       'query="${2:-}"',
       'case "${AIWG_FAKE_MODE:-success}" in',
       '  fail) exit 77 ;;',
-      '  sleep) sleep 30 ;;',
+      '  sleep) exec sleep 30 ;;',
       'esac',
       'sleep 0.02',
       'printf \'{"results":[{"score":0.91,"type":"skill","name":"candidate-%s","capability":"capability for %s"}]}\\n\' "$query" "$query"',
@@ -110,6 +110,7 @@ describe('steward-prep-delivery duplicate helper', () => {
     expect(tempEntries.filter((entry) => entry.startsWith('steward-prep-discover.'))).toEqual([]);
   });
 
+  /** @implements #2107 */
   it('cleans the discovery temp dir on signal exit', async () => {
     const env = {
       ...process.env,
@@ -123,7 +124,6 @@ describe('steward-prep-delivery duplicate helper', () => {
 
     const child = spawn('bash', [helperPath, 'sleeping-query'], {
       cwd: tempRoot,
-      detached: true,
       env,
       stdio: 'ignore',
     });
@@ -135,21 +135,23 @@ describe('steward-prep-delivery duplicate helper', () => {
         await delay(20);
       }
 
-      const exit = await new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve) => {
+      const exitPromise = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve) => {
         child.once('close', (code, signal) => resolve({ code, signal }));
-        process.kill(-child.pid!, 'SIGTERM');
       });
+      child.kill('SIGTERM');
+      const exit = await Promise.race([
+        exitPromise,
+        delay(5_000).then(() => {
+          throw new Error('helper did not exit within 5 seconds of SIGTERM');
+        }),
+      ]);
 
       expect(exit.code === 143 || exit.signal === 'SIGTERM').toBe(true);
 
       const tempEntries = await fs.readdir(tempRoot);
       expect(tempEntries.filter((entry) => entry.startsWith('steward-prep-discover.'))).toEqual([]);
     } finally {
-      try {
-        process.kill(-child.pid!, 'SIGKILL');
-      } catch {
-        // Process group is already gone.
-      }
+      child.kill('SIGKILL');
     }
   });
 });
