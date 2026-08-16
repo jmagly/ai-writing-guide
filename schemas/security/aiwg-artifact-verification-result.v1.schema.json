@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/security/aiwg-artifact-verification-result.v1.schema.json",
+  "title": "AIWG cross-asset verification result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "exitCode", "artifact", "identities", "diagnostics"],
+  "properties": {
+    "schemaVersion": { "const": "aiwg.verify.result.v1" },
+    "status": { "enum": ["verified", "policy-exempt", "unsigned", "unknown-signer", "expired", "revoked", "stale", "mismatched", "malformed", "offline-evidence-missing", "policy-denied"] },
+    "exitCode": { "enum": [0, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29] },
+    "artifact": {
+      "type": "object", "additionalProperties": false, "required": ["name", "sha256"],
+      "properties": { "name": { "type": "string", "minLength": 1 }, "sha256": { "$ref": "#/$defs/sha256" } }
+    },
+    "policy": { "type": "string", "minLength": 1 },
+    "identities": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "rootVersion": { "type": "integer", "minimum": 1 },
+    "freshness": {
+      "type": "object", "additionalProperties": false, "required": ["namespace", "channel", "sequence", "version"],
+      "properties": {
+        "namespace": { "type": "string", "minLength": 1 }, "channel": { "type": "string", "minLength": 1 },
+        "sequence": { "type": "integer", "minimum": 1 }, "version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "diagnostics": {
+      "type": "array", "minItems": 1,
+      "items": { "type": "object", "additionalProperties": false, "required": ["code", "message"], "properties": { "code": { "type": "string", "minLength": 1 }, "message": { "type": "string", "minLength": 1 } } }
+    },
+    "nextState": { "$ref": "aiwg-artifact-trust-state.v1.schema.json" }
+  },
+  "oneOf": [
+    { "properties": { "status": { "const": "verified" }, "exitCode": { "const": 0 } } },
+    { "properties": { "status": { "const": "policy-exempt" }, "exitCode": { "const": 20 } } },
+    { "properties": { "status": { "const": "unsigned" }, "exitCode": { "const": 21 } } },
+    { "properties": { "status": { "const": "unknown-signer" }, "exitCode": { "const": 22 } } },
+    { "properties": { "status": { "const": "expired" }, "exitCode": { "const": 23 } } },
+    { "properties": { "status": { "const": "revoked" }, "exitCode": { "const": 24 } } },
+    { "properties": { "status": { "const": "stale" }, "exitCode": { "const": 25 } } },
+    { "properties": { "status": { "const": "mismatched" }, "exitCode": { "const": 26 } } },
+    { "properties": { "status": { "const": "malformed" }, "exitCode": { "const": 27 } } },
+    { "properties": { "status": { "const": "offline-evidence-missing" }, "exitCode": { "const": 28 } } },
+    { "properties": { "status": { "const": "policy-denied" }, "exitCode": { "const": 29 } } }
+  ],
+  "$defs": { "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+}

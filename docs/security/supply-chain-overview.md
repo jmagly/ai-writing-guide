@@ -6,7 +6,7 @@ them.
 
 This is the umbrella reference. For step-by-step verification of a specific release, see [`docs/releases/verifying.md`](../releases/verifying.md). For applying the same pattern to your own npm package, see [`adopting-this-pattern.md`](adopting-this-pattern.md).
 
-## Cross-asset authenticity direction
+## Cross-asset authenticity
 
 Issue [#2068](https://git.integrolabs.net/roctinam/aiwg/issues/2068) accepts a
 common DSSE + in-toto attestation contract for setup manifests, flows, agents,
@@ -15,8 +15,10 @@ provider-generated outputs. The design adds exact-byte subject digests,
 publisher/delegation policy, expiry, revocation, monotonic freshness, and
 derivation evidence while preserving the release controls below.
 
-This is a contract and phased roadmap, not a claim that all listed assets are
-already signed. See the [research and threat
+The common verifier and versioned trust-root lifecycle are implemented by
+`aiwg verify`; producer adoption remains phased, so this is not a claim that
+all listed assets are already signed. See the [verification guide](artifact-verification.md),
+[operations runbook](artifact-trust-operations.md), [research and threat
 model](../research/asset-authenticity-and-provenance.md), [architecture
 decision](../architecture/adr-cross-asset-attestation-envelope.md), and [v1
 schema](https://github.com/jmagly/aiwg/blob/main/schemas/security/aiwg-artifact-attestation.v1.schema.json).

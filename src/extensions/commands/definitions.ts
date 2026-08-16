@@ -2593,6 +2593,25 @@ export const evidenceCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const artifactVerifyCommand: Extension = {
+  id: 'verify',
+  type: 'command',
+  name: 'Artifact Verification',
+  description: 'Verify cross-asset DSSE provenance and manage versioned trust roots',
+  version: '1.0.0',
+  capabilities: ['cli', 'security', 'dsse', 'sigstore', 'provenance', 'trust-policy'],
+  keywords: ['verify', 'artifact', 'attestation', 'dsse', 'sigstore', 'trust-root', 'revocation'],
+  category: 'utility',
+  platforms: { claude: 'full', generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: {
+    type: 'command',
+    template: 'utility',
+    argumentHint: '<artifact> --attestation <path> --policy <root.json> [--offline] [--json] | trust <bootstrap|update|status>',
+    allowedTools: ['Read', 'Bash'],
+  } satisfies CommandMetadata,
+};
+
 export const costReportCommand: Extension = {
   id: 'cost-report',
   type: 'skill',
@@ -3791,6 +3810,7 @@ export const commandDefinitions: Extension[] = [
 
   // Metrics (4)
   evidenceCommand,
+  artifactVerifyCommand,
   costReportCommand,
   costHistoryCommand,
   metricsTokensCommand,

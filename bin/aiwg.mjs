@@ -124,6 +124,8 @@ const FAST_HELP_TEXT = `
 
   VALIDATION
     validate-metadata [path]     Validate AIWG component metadata (defaults to agentic/code)
+    verify <artifact>            Verify DSSE provenance using an explicit versioned trust root
+    verify trust <action>        Bootstrap, update, or inspect artifact trust state
     context-firewall [scan]      Audit provider context, trust, drift, poisoning signals, and budget
     context-firewall baseline    Plan or explicitly write the reviewed context baseline
 

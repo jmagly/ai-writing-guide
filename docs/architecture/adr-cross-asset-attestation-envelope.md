@@ -1,6 +1,6 @@
 # ADR: Cross-asset attestation envelope
 
-- Status: Accepted
+- Status: Implemented
 - Date: 2026-08-14
 - Issue: [#2068](https://git.integrolabs.net/roctinam/aiwg/issues/2068)
 - Decision owners: AIWG maintainers

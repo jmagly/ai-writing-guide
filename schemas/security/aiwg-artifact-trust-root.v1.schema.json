@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/security/aiwg-artifact-trust-root.v1.schema.json",
+  "title": "AIWG versioned artifact trust root v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mediaType", "signed", "signatures"],
+  "properties": {
+    "mediaType": { "const": "application/vnd.aiwg.artifact-trust-root.v1+json" },
+    "signed": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "version", "issuedAt", "expiresAt", "identities", "sigstoreProfiles", "root", "delegations", "revocations", "policy"],
+      "properties": {
+        "schemaVersion": { "const": "aiwg.artifact-trust-root.v1" },
+        "version": { "type": "integer", "minimum": 1 }, "issuedAt": { "type": "string", "format": "date-time" }, "expiresAt": { "type": "string", "format": "date-time" },
+        "identities": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/identity" } },
+        "sigstoreProfiles": { "type": "array", "items": { "$ref": "#/$defs/sigstoreProfile" } },
+        "root": { "$ref": "#/$defs/role" },
+        "delegations": { "type": "array", "items": { "$ref": "#/$defs/delegation" } },
+        "revocations": { "type": "array", "items": { "$ref": "#/$defs/revocation" } },
+        "policy": {
+          "type": "object", "additionalProperties": false, "required": ["name", "requireMaterialDigests", "maxFreezeSeconds", "allowPolicyExempt"],
+          "properties": { "name": { "$ref": "#/$defs/nonEmpty" }, "requireMaterialDigests": { "type": "boolean" }, "maxFreezeSeconds": { "type": "integer", "minimum": 0 }, "allowPolicyExempt": { "type": "array", "items": { "$ref": "#/$defs/scope" } } }
+        }
+      }
+    },
+    "signatures": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/signature" } }
+  },
+  "$defs": {
+    "nonEmpty": { "type": "string", "minLength": 1 },
+    "stringSet": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
+    "scope": { "type": "object", "additionalProperties": false, "required": ["assetTypes", "namespaces", "channels"], "properties": { "assetTypes": { "$ref": "#/$defs/stringSet" }, "namespaces": { "$ref": "#/$defs/stringSet" }, "channels": { "$ref": "#/$defs/stringSet" } } },
+    "role": { "type": "object", "additionalProperties": false, "required": ["keyIds", "threshold", "scope"], "properties": { "keyIds": { "$ref": "#/$defs/stringSet" }, "threshold": { "type": "integer", "minimum": 1 }, "scope": { "$ref": "#/$defs/scope" } } },
+    "delegation": { "type": "object", "additionalProperties": false, "required": ["id", "parent", "keyIds", "threshold", "scope"], "properties": { "id": { "$ref": "#/$defs/nonEmpty" }, "parent": { "$ref": "#/$defs/nonEmpty" }, "keyIds": { "$ref": "#/$defs/stringSet" }, "threshold": { "type": "integer", "minimum": 1 }, "scope": { "$ref": "#/$defs/scope" }, "notBefore": { "type": "string", "format": "date-time" }, "expiresAt": { "type": "string", "format": "date-time" } } },
+    "identity": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["id", "independenceGroup", "kind", "algorithm", "publicKey"], "properties": { "id": { "$ref": "#/$defs/nonEmpty" }, "independenceGroup": { "$ref": "#/$defs/nonEmpty" }, "kind": { "const": "public-key" }, "algorithm": { "enum": ["ed25519", "ecdsa-p256-sha256", "rsa-pss-sha256"] }, "publicKey": { "$ref": "#/$defs/nonEmpty" } } },
+        { "type": "object", "additionalProperties": false, "required": ["id", "independenceGroup", "kind", "profile", "subjectAlternativeName"], "properties": { "id": { "$ref": "#/$defs/nonEmpty" }, "independenceGroup": { "$ref": "#/$defs/nonEmpty" }, "kind": { "const": "sigstore" }, "profile": { "$ref": "#/$defs/nonEmpty" }, "subjectAlternativeName": { "$ref": "#/$defs/nonEmpty" }, "issuer": { "$ref": "#/$defs/nonEmpty" } } }
+      ]
+    },
+    "sigstoreProfile": { "type": "object", "additionalProperties": false, "required": ["id", "trustedRoot", "tlogThreshold", "ctlogThreshold", "timestampThreshold"], "properties": { "id": { "$ref": "#/$defs/nonEmpty" }, "trustedRoot": { "type": "object" }, "tlogThreshold": { "type": "integer", "minimum": 0 }, "ctlogThreshold": { "type": "integer", "minimum": 0 }, "timestampThreshold": { "type": "integer", "minimum": 0 } } },
+    "revocation": { "type": "object", "additionalProperties": false, "required": ["identityId", "effectiveAt", "scope", "reason"], "properties": { "identityId": { "$ref": "#/$defs/nonEmpty" }, "effectiveAt": { "type": "string", "format": "date-time" }, "compromisedFrom": { "type": "string", "format": "date-time" }, "compromisedUntil": { "type": "string", "format": "date-time" }, "scope": { "$ref": "#/$defs/scope" }, "reason": { "$ref": "#/$defs/nonEmpty" } } },
+    "signature": { "type": "object", "additionalProperties": false, "required": ["sig"], "properties": { "identityId": { "$ref": "#/$defs/nonEmpty" }, "sig": { "$ref": "#/$defs/nonEmpty" } } }
+  }
+}

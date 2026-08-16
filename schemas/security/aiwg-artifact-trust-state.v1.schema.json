@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/security/aiwg-artifact-trust-state.v1.schema.json",
+  "title": "AIWG persisted artifact trust state v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "rootVersion", "rootSha256", "trustedTime", "channels"],
+  "properties": {
+    "schemaVersion": { "const": "aiwg.artifact-trust-state.v1" },
+    "rootVersion": { "type": "integer", "minimum": 1 },
+    "rootSha256": { "$ref": "#/$defs/sha256" },
+    "trustedTime": { "type": "string", "format": "date-time" },
+    "channels": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object", "additionalProperties": false,
+        "required": ["namespace", "channel", "sequence", "artifactSha256", "version", "verifiedAt"],
+        "properties": {
+          "namespace": { "$ref": "#/$defs/nonEmpty" }, "channel": { "$ref": "#/$defs/nonEmpty" },
+          "sequence": { "type": "integer", "minimum": 1 }, "artifactSha256": { "$ref": "#/$defs/sha256" },
+          "version": { "$ref": "#/$defs/nonEmpty" }, "verifiedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "nonEmpty": { "type": "string", "minLength": 1 }
+  }
+}
