@@ -25,6 +25,7 @@ on:
       - 'schemas/artifacts/aiwg-fortemi-full-v1-consumer-receipt.v1.schema.json'
       - 'tools/ci/verify-aiwg-fortemi-shard-receipt.mjs'
       - '.gitea/workflows/fortemi-shard-conformance.yml'
+  workflow_dispatch:
 
 concurrency:
   group: fortemi-shard-${{ gitea.head_ref || gitea.ref }}
@@ -33,17 +34,24 @@ concurrency:
 jobs:
   producer-consumer-receipt:
     name: Published Core receipts → full-v1 clean PGlite and Fortemi
-    # Use the purpose-built host and fail fast unless it exposes every required capability.
-    runs-on: matric-builder
+    # Use the shared Node job image and the host Docker socket. The preflight
+    # installs only the distro-packaged CLI when the image does not include it.
+    runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
-      - name: Verify runner capabilities
+      - name: Prepare and verify runner capabilities
         shell: bash
         run: |
           set -euo pipefail
           node -e "const major = Number(process.versions.node.split('.')[0]); if (major < 20) throw new Error('Node 20 or newer is required')"
           git --version
+          if ! command -v docker >/dev/null 2>&1; then
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update -qq
+            apt-get install -y --no-install-recommends docker.io >/dev/null
+          fi
+          docker version --format 'client={{.Client.Version}} server={{.Server.Version}}'
           docker info >/dev/null
 
       - name: Clean checkout AIWG exact revision
@@ -87,27 +95,64 @@ jobs:
           test -z "$(git -C /tmp/aiwg-fortemi-consumer status --porcelain)"
 
       - name: Build pinned Fortemi test database
-        run: docker build -f /tmp/aiwg-fortemi-consumer/build/Dockerfile.testdb -t aiwg-fortemi-testdb:local /tmp/aiwg-fortemi-consumer
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_IMAGE="aiwg-fortemi-testdb:${GITHUB_RUN_ID}"
+          echo "DB_IMAGE=${DB_IMAGE}" >> "$GITHUB_ENV"
+          docker build \
+            -f /tmp/aiwg-fortemi-consumer/build/Dockerfile.testdb \
+            -t "$DB_IMAGE" \
+            /tmp/aiwg-fortemi-consumer
 
       - name: Start isolated Fortemi test database
         shell: bash
         run: |
           set -euo pipefail
           DB_CONTAINER="aiwg-fortemi-${GITHUB_RUN_ID}"
-          DB_PORT=$((17332 + (GITHUB_RUN_ID % 1000)))
           DB_USER=matric
-          DB_PASSWORD="aiwg-fortemi-${GITHUB_RUN_ID}-${DB_PORT}"
+          DB_PASSWORD="aiwg-fortemi-${GITHUB_RUN_ID}"
           DB_NAME=matric_test
+
+          # Gitea's ubuntu-latest label runs this job in a container with the
+          # host Docker socket mounted. Attach the database to the same network
+          # and use its container IP. A host-backed runner instead uses an
+          # automatically allocated loopback port.
+          JOB_NETWORK=''
+          if [ -n "${HOSTNAME:-}" ] && docker inspect "$HOSTNAME" >/dev/null 2>&1; then
+            JOB_NETWORK="$(docker inspect \
+              --format '{{range $name, $_ := .NetworkSettings.Networks}}{{$name}}{{"\n"}}{{end}}' \
+              "$HOSTNAME" | head -n 1)"
+          fi
+
+          if [ -n "$JOB_NETWORK" ]; then
+            docker run -d --name "$DB_CONTAINER" \
+              --network "$JOB_NETWORK" \
+              -e POSTGRES_USER="$DB_USER" \
+              -e POSTGRES_PASSWORD="$DB_PASSWORD" \
+              -e POSTGRES_DB="$DB_NAME" \
+              "$DB_IMAGE"
+            DB_HOST="$(docker inspect \
+              --format "{{with index .NetworkSettings.Networks \"${JOB_NETWORK}\"}}{{.IPAddress}}{{end}}" \
+              "$DB_CONTAINER")"
+            DB_PORT=5432
+          else
+            docker run -d --name "$DB_CONTAINER" \
+              -p 127.0.0.1::5432 \
+              -e POSTGRES_USER="$DB_USER" \
+              -e POSTGRES_PASSWORD="$DB_PASSWORD" \
+              -e POSTGRES_DB="$DB_NAME" \
+              "$DB_IMAGE"
+            DB_HOST=127.0.0.1
+            DB_PORT="$(docker port "$DB_CONTAINER" 5432/tcp | awk -F: 'END { print $NF }')"
+          fi
+
+          test -n "$DB_HOST"
+          test -n "$DB_PORT"
           echo "DB_CONTAINER=${DB_CONTAINER}" >> "$GITHUB_ENV"
           echo "DB_USER=${DB_USER}" >> "$GITHUB_ENV"
           echo "DB_NAME=${DB_NAME}" >> "$GITHUB_ENV"
-          echo "DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}" >> "$GITHUB_ENV"
-          docker run -d --name "$DB_CONTAINER" \
-            -p "${DB_PORT}:5432" \
-            -e POSTGRES_USER="$DB_USER" \
-            -e POSTGRES_PASSWORD="$DB_PASSWORD" \
-            -e POSTGRES_DB="$DB_NAME" \
-            aiwg-fortemi-testdb:local
+          echo "DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}" >> "$GITHUB_ENV"
           # The image entrypoint starts a temporary Unix-socket server while it
           # initializes extensions. Require the final TCP listener so tests
           # cannot race the handoff between bootstrap and the production server.
@@ -141,4 +186,7 @@ jobs:
         run: |
           if [ -n "${DB_CONTAINER:-}" ]; then
             docker rm -f "$DB_CONTAINER" >/dev/null 2>&1 || true
+          fi
+          if [ -n "${DB_IMAGE:-}" ]; then
+            docker image rm -f "$DB_IMAGE" >/dev/null 2>&1 || true
           fi
