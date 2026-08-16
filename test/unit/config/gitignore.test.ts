@@ -6,9 +6,11 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtemp, rm, readFile, writeFile } from 'fs/promises';
+import { mkdtemp, rm, readFile, writeFile, mkdir } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import {
   AIWG_RUNTIME_PATTERNS,
   CLAUDE_SESSION_PATTERNS,
@@ -17,6 +19,8 @@ import {
   checkGitignore,
   appendGitignore,
 } from '../../../src/config/gitignore.js';
+
+const execFileAsync = promisify(execFile);
 
 describe('gitignore patterns', () => {
   it('should include AIWG runtime and private disclosure custody patterns', () => {
@@ -48,6 +52,7 @@ describe('gitignore patterns', () => {
   });
 });
 
+/** @implements #2106 */
 describe('checkGitignore', () => {
   let tempDir: string;
 
@@ -113,6 +118,49 @@ describe('checkGitignore', () => {
     expect(result.missingRuntime).toHaveLength(0);
     expect(result.missingSession).toEqual(CLAUDE_SESSION_PATTERNS);
     expect(result.missingProvider).toEqual(PROVIDER_CONVENTIONAL_PATTERNS);
+  });
+
+  it('uses Git resolved ignores for deny-by-default .aiwg worktrees', async () => {
+    await execFileAsync('git', ['init', '--quiet'], { cwd: tempDir });
+    await writeFile(join(tempDir, '.gitignore'), [
+      '.aiwg/*',
+      '!.aiwg/architecture/',
+      '!.aiwg/architecture/**',
+      '!.aiwg/aiwg.config',
+      '',
+    ].join('\n'), 'utf-8');
+
+    const result = await checkGitignore(tempDir);
+    expect(result.missingRuntime).toHaveLength(0);
+  });
+
+  it('honours a negation that makes a runtime directory trackable', async () => {
+    await execFileAsync('git', ['init', '--quiet'], { cwd: tempDir });
+    await writeFile(join(tempDir, '.gitignore'), '.aiwg/*\n!.aiwg/working/\n', 'utf-8');
+
+    const result = await checkGitignore(tempDir);
+    expect(result.missingRuntime).toContain('.aiwg/working/');
+    expect(result.missingRuntime).not.toContain('.aiwg/ralph/');
+  });
+
+  it('honours .git/info/exclude', async () => {
+    await execFileAsync('git', ['init', '--quiet'], { cwd: tempDir });
+    await writeFile(join(tempDir, '.gitignore'), '', 'utf-8');
+    await writeFile(join(tempDir, '.git', 'info', 'exclude'), `${AIWG_RUNTIME_PATTERNS.join('\n')}\n`, 'utf-8');
+
+    const result = await checkGitignore(tempDir);
+    expect(result.missingRuntime).toHaveLength(0);
+  });
+
+  it('honours core.excludesFile', async () => {
+    await execFileAsync('git', ['init', '--quiet'], { cwd: tempDir });
+    await writeFile(join(tempDir, '.gitignore'), '', 'utf-8');
+    const excludesPath = join(tempDir, 'operator-excludes');
+    await writeFile(excludesPath, `${AIWG_RUNTIME_PATTERNS.join('\n')}\n`, 'utf-8');
+    await execFileAsync('git', ['config', 'core.excludesFile', excludesPath], { cwd: tempDir });
+
+    const result = await checkGitignore(tempDir);
+    expect(result.missingRuntime).toHaveLength(0);
   });
 });
 
@@ -189,5 +237,18 @@ describe('appendGitignore', () => {
     expect(lines).not.toContain('.aiwg/');
     expect(lines).not.toContain('.aiwg');
     expect(result.added).not.toContain('.aiwg/');
+  });
+
+  it('does not append redundant entries already covered by Git', async () => {
+    await execFileAsync('git', ['init', '--quiet'], { cwd: tempDir });
+    await mkdir(join(tempDir, '.aiwg'), { recursive: true });
+    const original = '.aiwg/*\n!.aiwg/aiwg.config\n';
+    await writeFile(join(tempDir, '.gitignore'), original, 'utf-8');
+
+    const result = await appendGitignore(tempDir, AIWG_RUNTIME_PATTERNS);
+
+    expect(result.added).toHaveLength(0);
+    expect(result.alreadyPresent).toEqual(AIWG_RUNTIME_PATTERNS);
+    expect(await readFile(join(tempDir, '.gitignore'), 'utf-8')).toBe(original);
   });
 });

@@ -10,6 +10,11 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+
+const execFileAsync = promisify(execFile);
+const GITIGNORE_PROBE_BASENAME = '.aiwg-ignore-probe';
 
 // ===========================
 // Recommended Patterns
@@ -88,6 +93,69 @@ export interface GitignoreAppendResult {
 // Core Functions
 // ===========================
 
+function isTextuallyCovered(pattern: string, lines: string[]): boolean {
+  if (lines.includes(pattern)) return true;
+  if (lines.includes(pattern.replace(/\/$/, ''))) return true;
+
+  const parts = pattern.split('/').filter(Boolean);
+  for (let i = 1; i < parts.length; i++) {
+    const parent = parts.slice(0, i).join('/') + '/';
+    if (lines.includes(parent) || lines.includes(parent.replace(/\/$/, ''))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function probePath(pattern: string): string {
+  return pattern.endsWith('/') ? `${pattern}${GITIGNORE_PROBE_BASENAME}` : pattern;
+}
+
+async function isGitWorktree(projectRoot: string): Promise<boolean> {
+  try {
+    const { stdout } = await execFileAsync('git', ['rev-parse', '--is-inside-work-tree'], {
+      cwd: projectRoot,
+      windowsHide: true,
+    });
+    return stdout.trim() === 'true';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Resolve effective ignore coverage through Git when possible. This honors
+ * negations, .git/info/exclude, and core.excludesFile. A textual fallback keeps
+ * the helper deterministic outside Git worktrees or when Git is unavailable.
+ *
+ * @implements #2106
+ */
+async function resolveCoveredPatterns(
+  projectRoot: string,
+  patterns: string[],
+  lines: string[],
+): Promise<Set<string>> {
+  if (!(await isGitWorktree(projectRoot))) {
+    return new Set(patterns.filter(pattern => isTextuallyCovered(pattern, lines)));
+  }
+
+  const covered = await Promise.all(patterns.map(async pattern => {
+    try {
+      await execFileAsync('git', ['check-ignore', '--quiet', '--', probePath(pattern)], {
+        cwd: projectRoot,
+        windowsHide: true,
+      });
+      return true;
+    } catch (error) {
+      const code = (error as { code?: number | string }).code;
+      if (code === 1) return false;
+      return isTextuallyCovered(pattern, lines);
+    }
+  }));
+
+  return new Set(patterns.filter((_, index) => covered[index]));
+}
+
 /**
  * Check which recommended patterns are missing from the project's .gitignore.
  */
@@ -106,25 +174,10 @@ export async function checkGitignore(projectRoot: string): Promise<GitignoreChec
 
   const lines = content.split('\n').map(l => l.trim());
 
-  const isCovered = (pattern: string): boolean => {
-    // Exact match
-    if (lines.includes(pattern)) return true;
-    // Pattern without trailing slash is also sufficient
-    if (lines.includes(pattern.replace(/\/$/, ''))) return true;
-    // Parent directory is ignored (covers all children)
-    const parts = pattern.split('/').filter(Boolean);
-    for (let i = 1; i < parts.length; i++) {
-      const parent = parts.slice(0, i).join('/') + '/';
-      if (lines.includes(parent) || lines.includes(parent.replace(/\/$/, ''))) {
-        return true;
-      }
-    }
-    return false;
-  };
-
-  const missingRuntime = AIWG_RUNTIME_PATTERNS.filter(p => !isCovered(p));
-  const missingSession = CLAUDE_SESSION_PATTERNS.filter(p => !isCovered(p));
-  const missingProvider = PROVIDER_CONVENTIONAL_PATTERNS.filter(p => !isCovered(p));
+  const covered = await resolveCoveredPatterns(projectRoot, ALL_RECOMMENDED_PATTERNS, lines);
+  const missingRuntime = AIWG_RUNTIME_PATTERNS.filter(p => !covered.has(p));
+  const missingSession = CLAUDE_SESSION_PATTERNS.filter(p => !covered.has(p));
+  const missingProvider = PROVIDER_CONVENTIONAL_PATTERNS.filter(p => !covered.has(p));
   const missing = [...missingRuntime, ...missingSession, ...missingProvider];
 
   return { exists, missing, missingRuntime, missingSession, missingProvider };
@@ -151,12 +204,13 @@ export async function appendGitignore(
   }
 
   const existingLines = existing.split('\n').map(l => l.trim());
+  const covered = await resolveCoveredPatterns(projectRoot, patterns, existingLines);
 
   const toAdd: string[] = [];
   const alreadyPresent: string[] = [];
 
   for (const pattern of patterns) {
-    if (existingLines.includes(pattern) || existingLines.includes(pattern.replace(/\/$/, ''))) {
+    if (covered.has(pattern)) {
       alreadyPresent.push(pattern);
     } else {
       toAdd.push(pattern);
