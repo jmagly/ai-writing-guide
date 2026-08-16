@@ -33,8 +33,8 @@ concurrency:
 jobs:
   producer-consumer-receipt:
     name: Published Core receipts → full-v1 clean PGlite and Fortemi
-    # Select the registered Docker-capable environment rather than a singleton host.
-    runs-on: docker
+    # Use the alternate host runner; fail fast unless it exposes every required capability.
+    runs-on: teroknor
     timeout-minutes: 30
 
     steps:
