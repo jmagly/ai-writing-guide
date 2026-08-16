@@ -1,0 +1,39 @@
+{
+  "id": "monitorability-red-team",
+  "type": "addon",
+  "name": "Monitorability Red Team",
+  "version": "1.0.0",
+  "description": "Synthetic local red-team fixtures for measuring multi-agent monitorability limits and evidence blind spots.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": ["security", "monitorability", "red-team", "sandbox", "research-backed"],
+  "entry": {
+    "commands": "commands/",
+    "skills": "skills/",
+    "fixtures": "fixtures/",
+    "evidence": "evidence/"
+  },
+  "skills": ["monitorability-red-team"],
+  "cli_commands": {
+    "namespace": "monitorability-red-team",
+    "description": "Evaluate synthetic local monitorability fixtures and label observation limits",
+    "entry": "commands/",
+    "subcommands": {
+      "run": {
+        "file": "monitorability-red-team.mjs",
+        "description": "Run a synthetic monitorability suite without network or provider access"
+      }
+    }
+  },
+  "dependencies": {
+    "required": ["security-engineering"],
+    "optional": ["agentic-sandbox", "aiwg-evals"]
+  },
+  "researchFoundation": {
+    "issue": "#2045",
+    "source": "research-papers@e0dd2f37 proposal 9"
+  }
+}

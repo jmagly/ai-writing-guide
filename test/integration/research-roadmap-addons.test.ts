@@ -14,6 +14,7 @@ describe('research-roadmap experimental addons', () => {
     ['century-readiness', 'century-readiness', ['review']],
     ['long-context-bench', 'context-bench', ['run']],
     ['premortem-v2', 'premortem-v2', ['run']],
+    ['monitorability-red-team', 'monitorability-red-team', ['run']],
   ])('loads %s CLI contribution with executable local modules', async (id, namespace, subcommands) => {
     const contribution = await loadCliCommandsContribution(addon(id));
     expect(contribution?.manifest.namespace).toBe(namespace);
@@ -144,5 +145,64 @@ describe('research-roadmap experimental addons', () => {
     expect(evidence.subject.id).toBe('#2046');
     expect(evidence.diverse_failure_generation.mode_count).toBe(report.diverse_failure_generation.mode_count);
     expect(evidence.bounded_deep_dive_selection.selected_count).toBe(report.bounded_deep_dive_selection.selected_count);
+  });
+
+  it('labels synthetic monitorability limits and blocks an unlabeled miss', async () => {
+    const module = await import('../../agentic/code/addons/monitorability-red-team/commands/monitorability-red-team.mjs');
+    const fixture = await json(path.join(addon('monitorability-red-team'), 'fixtures', 'synthetic-monitorability.json'));
+    const invalid = await json(path.join(addon('monitorability-red-team'), 'fixtures', 'unlabeled-monitor-limit.json'));
+    const evidence = await json(path.join(addon('monitorability-red-team'), 'evidence', 'synthetic-monitorability-report.json'));
+    const report = module.evaluateMonitorabilitySuite(fixture);
+    const blocked = module.evaluateMonitorabilitySuite(invalid);
+
+    expect(report.mode).toBe('synthetic-local-only');
+    expect(report.safety).toEqual(expect.objectContaining({
+      synthetic_only: true,
+      network: 'forbidden',
+      provider_calls: 'forbidden',
+      external_secrets: 'forbidden',
+      redaction_applied: true,
+    }));
+    expect(report.coverage.carrier_classes).toEqual(['semantic', 'unicode-tag']);
+    expect(report.coverage.observability_labels).toEqual(expect.arrayContaining([
+      'content-blind', 'tool-blind', 'state-blind', 'evidence-incomplete',
+    ]));
+    expect(report.coverage.defenses).toEqual(expect.arrayContaining([
+      'paraphrase-normalization', 'unicode-normalization',
+    ]));
+    expect(report.coverage.topology_evidence).toContainEqual(expect.objectContaining({
+      name: 'same-family-self-monitoring', state: 'captured',
+    }));
+    expect(report.coverage.topology_evidence).toContainEqual(expect.objectContaining({
+      name: 'cross-vendor', state: 'NOT RUN', reason: expect.any(String),
+    }));
+    expect(report.activity_evidence.captured).toBeGreaterThan(0);
+    expect(report.activity_evidence.not_run).toBeGreaterThan(0);
+    expect(report.integrity).toEqual(expect.objectContaining({
+      positive_cases: 2,
+      negative_cases: 2,
+      silent_acceptance_count: 0,
+      unmet_expectation_count: 0,
+    }));
+    expect(report.gate).toEqual({state: 'PASS', allowed: true, reasons: []});
+    expect(evidence).toEqual(report);
+
+    expect(blocked.integrity.silent_acceptance_count).toBe(1);
+    expect(blocked.gate).toEqual(expect.objectContaining({
+      state: 'BLOCKED',
+      allowed: false,
+      reasons: expect.arrayContaining([expect.stringContaining('unlabeled monitor limits')]),
+    }));
+
+    expect(() => module.evaluateMonitorabilitySuite({
+      ...fixture,
+      safety: {...fixture.safety, network: 'allowed'},
+    })).toThrow('forbid network and provider calls');
+    expect(() => module.evaluateMonitorabilitySuite({
+      ...fixture,
+      scenarios: fixture.scenarios.map((scenario: Record<string, unknown>, index: number) => index === 0
+        ? {...scenario, provenance: {source: 'inline-synthetic', external_reference: true}}
+        : scenario),
+    })).toThrow('no external reference');
   });
 });
