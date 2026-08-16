@@ -53,5 +53,5 @@ describe('mixed agent and skill addon deployment', () => {
       skills: 1,
       rules: 1,
     });
-  });
+  }, 180_000);
 });

@@ -7,6 +7,43 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.11] - 2026-08-15 - "Reliable refresh and discovery"
+
+### Fixed
+
+- **Multi-bundle refresh preservation** - `aiwg refresh --all` now routes every
+  selected installed bundle through the active package's verified deployment
+  handler. Cleanup preserves artifacts owned by desired bundles on the provider
+  being refreshed, deployment failures stop the cleanup pass, and a real
+  four-bundle regression retains all 124 deployed Claude agents (#2102,
+  GitHub #143).
+
+- **Fresh and repeated discovery availability** - `aiwg use` now rebuilds the
+  framework graph and synchronizes its Fortemi Core export as one post-deploy
+  operation. Packaged prebuilt fallback validation checks the manifest, schema,
+  backend, graph, checksums, and item count at the actual packaged path, so
+  fresh and repeated deployments leave default discover/show usable without a
+  manual sync (#2103, GitHub #142).
+
+- **Codex dispatch-budget enforcement** - packaged Codex provider bundles now
+  retain bounded dispatch metadata, keeping the kernel and quick-reference
+  surface within the provider's model-visible context budget (#2099).
+
+- **Cockpit test dependency alignment** - the nested Cockpit web package and
+  both lockfiles now use the repository's Vitest 4 line, restoring deterministic
+  contributor and release validation (GitHub PR #140).
+
+- **Loaded-runner integration budgets** - doctor retains non-empty
+  known-capability validation with a bounded 30-second discovery probe, while
+  deployment integrations receive explicit three-minute outer budgets that can
+  no longer expire before their already-bounded subprocesses (#2104).
+
+### Changed
+
+- **Release preview isolation** - the default deployment-preview regression now
+  owns its temporary workspace and environment, preventing unrelated local
+  provider state from changing release-gate results.
+
 ## [2026.8.10] - 2026-08-15 - "Deterministic release packaging"
 
 ### Fixed

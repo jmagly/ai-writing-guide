@@ -427,7 +427,7 @@ describe('project-local deploy integration (#1046)', () => {
       'SKILL.md',
     );
     expect(existsSync(projectQuickref), 'aiwg use must refresh the project quickref kernel skill').toBe(true);
-  });
+  }, 180_000);
 
   it('PL-CODEX (#766): aiwg use deploys project-local addon skills to .agents/skills and records deployed counts', () => {
     const aiwgBin = path.join(REPO_ROOT, 'bin/aiwg.mjs');

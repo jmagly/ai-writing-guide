@@ -1241,7 +1241,11 @@ async function runDoctor() {
     try {
       const r = spawnSync(aiwgBin, args, {
         encoding: 'utf-8',
-        timeout: 10_000,
+        // Framework discovery can legitimately take longer than ten seconds
+        // while the release suite is concurrently packing and rebuilding
+        // provider indices. Keep the probe bounded, but align it with the
+        // integration runner budget so doctor does not report a false outage.
+        timeout: 30_000,
         shell: process.platform === 'win32',
       });
       if (r.error || r.status !== 0) {
