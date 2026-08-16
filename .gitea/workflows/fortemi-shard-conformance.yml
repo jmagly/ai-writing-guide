@@ -35,7 +35,7 @@ jobs:
   producer-consumer-receipt:
     name: Published Core receipts → full-v1 clean PGlite and Fortemi
     # Use the shared Node job image and the host Docker socket. The preflight
-    # installs only the distro-packaged CLI when the image does not include it.
+    # provides the Docker CLI and pinned Rust toolchain when the image omits them.
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -53,6 +53,23 @@ jobs:
           fi
           docker version --format 'client={{.Client.Version}} server={{.Server.Version}}'
           docker info >/dev/null
+
+          export RUSTUP_HOME=/opt/aiwg-rustup
+          export CARGO_HOME=/opt/aiwg-cargo
+          RUSTUP_INIT=/tmp/rustup-init
+          RUSTUP_INIT_SHA256=4acc9acc76d5079515b46346a485974457b5a79893cfb01112423c89aeb5aa10
+          curl --fail --silent --show-error --location \
+            https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init \
+            --output "$RUSTUP_INIT"
+          echo "${RUSTUP_INIT_SHA256}  ${RUSTUP_INIT}" | sha256sum --check --strict
+          chmod 0755 "$RUSTUP_INIT"
+          "$RUSTUP_INIT" -y --profile minimal --default-toolchain 1.97.1 --no-modify-path
+          export PATH="${CARGO_HOME}/bin:${PATH}"
+          rustc --version | grep -F 'rustc 1.97.1 '
+          cargo --version | grep -F 'cargo 1.97.1 '
+          echo "RUSTUP_HOME=${RUSTUP_HOME}" >> "$GITHUB_ENV"
+          echo "CARGO_HOME=${CARGO_HOME}" >> "$GITHUB_ENV"
+          echo "${CARGO_HOME}/bin" >> "$GITHUB_PATH"
 
       - name: Clean checkout AIWG exact revision
         shell: bash

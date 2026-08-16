@@ -16,6 +16,10 @@ describe('Fortemi shard conformance workflow', () => {
     expect(workflow).toContain("apt-get install -y --no-install-recommends docker.io")
     expect(workflow).toContain("docker version --format 'client={{.Client.Version}} server={{.Server.Version}}'")
     expect(workflow).toContain('docker info >/dev/null')
+    expect(workflow).toContain('RUSTUP_INIT_SHA256=4acc9acc76d5079515b46346a485974457b5a79893cfb01112423c89aeb5aa10')
+    expect(workflow).toContain('--default-toolchain 1.97.1')
+    expect(workflow).toContain("rustc --version | grep -F 'rustc 1.97.1 '")
+    expect(workflow).toContain("cargo --version | grep -F 'cargo 1.97.1 '")
   })
 
   it('supports both container-backed and host-backed Docker topology', () => {
