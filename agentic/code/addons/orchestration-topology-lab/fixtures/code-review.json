@@ -1,0 +1,27 @@
+{
+  "task_family": "code-review-with-regression-evidence",
+  "integrity_state": "verified",
+  "topologies": [
+    {
+      "name": "single-agent",
+      "budget_usd": 0.6,
+      "runs": [
+        {"duration_ms": 860, "coordination_ms": 0, "claims": 12, "contradictions": 0, "synthesis_failed": false, "cost_usd": 0.38, "quality_score": 0.82, "outcome": "accepted", "activity_evidence": {"state": "captured", "quality_score": 0.91}}
+      ]
+    },
+    {
+      "name": "bounded-parallel",
+      "budget_usd": 0.8,
+      "runs": [
+        {"duration_ms": 710, "coordination_ms": 145, "claims": 15, "contradictions": 1, "synthesis_failed": false, "delegations_expected": 3, "delegations_correct": 3, "cost_usd": 0.57, "quality_score": 0.9, "outcome": "accepted", "activity_evidence": {"state": "captured", "quality_score": 0.94}}
+      ]
+    },
+    {
+      "name": "planner-worker",
+      "budget_usd": 0.9,
+      "runs": [
+        {"duration_ms": 990, "coordination_ms": 270, "claims": 14, "contradictions": 2, "synthesis_failed": false, "delegations_expected": 2, "delegations_correct": 1, "cost_usd": 0.69, "quality_score": 0.76, "outcome": "rejected", "activity_evidence": {"state": "captured", "quality_score": 0.85}}
+      ]
+    }
+  ]
+}

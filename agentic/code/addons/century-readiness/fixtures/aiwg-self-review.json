@@ -1,0 +1,24 @@
+{
+  "project": "AIWG",
+  "review_horizon": "multi-decade obligations with century-scale replacement awareness",
+  "dimensions": {
+    "obligation_horizon": {"status": "partial", "evidence": "Release, provenance, and roadmap artifacts", "finding": "Retention horizons are documented per artifact class but not yet summarized in one durable obligation register.", "action": "Create a reviewed obligation-horizon index."},
+    "stable_core": {"status": "ready", "evidence": "Provider-neutral artifact corpus and deterministic CLI contracts", "finding": "Core artifacts are portable and provider adapters remain replaceable."},
+    "pace_layers": {"status": "partial", "evidence": "Core, framework, addon, and provider-adapter package boundaries", "finding": "Package layers change at different rates, but their supported change cadences are not yet stated as policy.", "action": "Document change cadence and compatibility expectations for each pace layer."},
+    "dependency_inventory": {"status": "partial", "evidence": "package-lock.json, provider registry, release evidence", "finding": "Software dependencies are inventoried; institutional and hosted-service dependencies need explicit ownership.", "action": "Add non-software dependencies to the inventory."},
+    "replacement_points": {"status": "ready", "evidence": "Provider registry, storage adapters, web resource resolver", "finding": "Models, providers, stores, formats, and index engines expose explicit replacement seams."},
+    "stewardship": {"status": "gap", "evidence": "Repository ownership and CODEOWNERS-equivalent project policy", "finding": "Long-horizon successor stewardship and key-custody transfer are not rehearsed.", "action": "Document and rehearse successor stewardship."},
+    "degradation": {"status": "partial", "evidence": "Offline fallback, NOT RUN states, provider degradation metadata", "finding": "Most optional services degrade explicitly; hosted discovery and signing-loss modes need a consolidated runbook.", "action": "Unify degraded-mode recovery evidence."},
+    "audit_evidence": {"status": "ready", "evidence": "Signed commits, release evidence, provenance exports, activity logs", "finding": "Auditable evidence is available with integrity state and provenance."},
+    "meaning_preservation": {"status": "partial", "evidence": "ADRs, issue links, research references, schemas", "finding": "Decision context is strong, but meaning-package minimum fields are not yet enforced across every artifact type.", "action": "Define and lint a minimum meaning package."}
+  },
+  "dependencies": [
+    {"name": "provider APIs", "category": "provider", "replacement_point": "provider registry and adapters", "steward": "AIWG maintainers", "rehearsal_candidate": true, "rehearsal_cadence": "annual"},
+    {"name": "OpenPGP signing", "category": "cryptography", "replacement_point": "release and commit signing policy", "steward": "release custodian", "rehearsal_candidate": true, "rehearsal_cadence": "annual"},
+    {"name": "Fortemi Core index", "category": "index", "replacement_point": "artifact index adapters and full-v1 export", "steward": "artifact-index maintainer", "rehearsal_candidate": true, "rehearsal_cadence": "per major format change"},
+    {"name": "Markdown and JSON artifacts", "category": "format", "replacement_point": "schemas and converters", "steward": "documentation maintainers", "rehearsal_candidate": true, "rehearsal_cadence": "biennial"}
+  ],
+  "related_reviews": [
+    {"name": "Agentic Sandbox release evidence", "state": "not_run", "reason": "No authorized local Agentic Sandbox release-evidence package was attached to this AIWG repository review."}
+  ]
+}

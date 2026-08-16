@@ -1,0 +1,38 @@
+{
+  "id": "orchestration-topology-lab",
+  "type": "addon",
+  "name": "Orchestration Topology Lab",
+  "version": "1.0.0",
+  "description": "Evidence-based comparison of single-agent, bounded-parallel, and planner-worker orchestration topologies.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": ["orchestration", "topology", "eval", "coordination", "research-backed"],
+  "entry": {
+    "commands": "commands/",
+    "skills": "skills/",
+    "fixtures": "fixtures/"
+  },
+  "skills": ["topology-lab"],
+  "cli_commands": {
+    "namespace": "topology-lab",
+    "description": "Compare orchestration topologies from trusted evaluation observations",
+    "entry": "commands/",
+    "subcommands": {
+      "run": {
+        "file": "topology-lab.mjs",
+        "description": "Evaluate one task family across supported topology variants"
+      }
+    }
+  },
+  "dependencies": {
+    "required": ["aiwg-evals"],
+    "optional": ["rlm", "agent-loop"]
+  },
+  "researchFoundation": {
+    "issue": "#2042",
+    "source": "research-papers@e0dd2f37 proposal 6"
+  }
+}

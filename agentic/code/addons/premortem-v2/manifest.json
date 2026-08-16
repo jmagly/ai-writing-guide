@@ -1,0 +1,25 @@
+{
+  "id": "premortem-v2",
+  "type": "addon",
+  "name": "Premortem v2",
+  "version": "1.0.0",
+  "description": "Diversity-first premortems with bounded deep dives, blind verification, and explicit provenance labels.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": ["premortem", "risk", "verification", "provenance", "research-backed"],
+  "entry": {"commands": "commands/", "skills": "skills/", "fixtures": "fixtures/", "evidence": "evidence/"},
+  "skills": ["premortem-v2"],
+  "cli_commands": {
+    "namespace": "premortem-v2",
+    "description": "Run diversity-first premortems with blind plausibility and impact verification",
+    "entry": "commands/",
+    "subcommands": {
+      "run": {"file": "premortem-v2.mjs", "description": "Generate, select, and independently verify a bounded risk set"}
+    }
+  },
+  "dependencies": {"required": [], "optional": ["research-complete", "sdlc-complete"]},
+  "researchFoundation": {"issue": "#2047", "source": "research-papers@e0dd2f37 proposal 11"}
+}

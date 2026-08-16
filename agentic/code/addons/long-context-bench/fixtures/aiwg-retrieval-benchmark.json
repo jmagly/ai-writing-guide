@@ -1,0 +1,25 @@
+{
+  "task_family": "AIWG capability discovery and exact policy recovery",
+  "tasks": [
+    {
+      "id": "discover-address-issues-and-recover-close-gate",
+      "real_aiwg_task": true,
+      "observations": [
+        {"strategy": "compressed-skim-exact-recovery", "quality_score": 0.84, "exact_recovery_failures": 1, "latency_ms": 410, "memory_mb": 84, "operational_constraints": ["requires exact-source sidecar", "provider cannot enforce attention-mask savings"]},
+        {"strategy": "summary-compaction", "quality_score": 0.73, "exact_recovery_failures": 2, "latency_ms": 220, "memory_mb": 62, "operational_constraints": ["summary can omit closure conditions"]},
+        {"strategy": "direct-retrieval", "quality_score": 0.93, "exact_recovery_failures": 0, "latency_ms": 360, "memory_mb": 76, "operational_constraints": ["requires indexed exact source"]},
+        {"strategy": "provider-context", "quality_score": 0.88, "exact_recovery_failures": 0, "latency_ms": 180, "memory_mb": 128, "operational_constraints": ["provider context budget cap"]}
+      ]
+    },
+    {
+      "id": "recover-provider-copy-profile-contract",
+      "real_aiwg_task": true,
+      "observations": [
+        {"strategy": "compressed-skim-exact-recovery", "quality_score": 0.86, "exact_recovery_failures": 0, "latency_ms": 430, "memory_mb": 88, "operational_constraints": ["requires exact-source sidecar", "provider cannot enforce attention-mask savings"]},
+        {"strategy": "summary-compaction", "quality_score": 0.77, "exact_recovery_failures": 1, "latency_ms": 230, "memory_mb": 64, "operational_constraints": ["summary can collapse provider distinctions"]},
+        {"strategy": "direct-retrieval", "quality_score": 0.92, "exact_recovery_failures": 0, "latency_ms": 370, "memory_mb": 78, "operational_constraints": ["requires indexed exact source"]},
+        {"strategy": "provider-context", "quality_score": 0.87, "exact_recovery_failures": 0, "latency_ms": 190, "memory_mb": 132, "operational_constraints": ["provider context budget cap"]}
+      ]
+    }
+  ]
+}

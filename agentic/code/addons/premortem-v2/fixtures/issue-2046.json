@@ -1,0 +1,84 @@
+{
+  "subject": {
+    "id": "#2046",
+    "title": "Long-context compression benchmark",
+    "scope": "Benchmark compressed skim plus exact recovery before any product integration"
+  },
+  "deep_dive_count": 5,
+  "failure_modes": [
+    {
+      "id": "quality-masking",
+      "category": "measurement",
+      "failure": "Aggregate quality hides exact-recovery regressions on rare tasks.",
+      "hypothetical_narrative": "A high mean score makes the candidate look safe while one release-critical locator is unrecoverable.",
+      "selection_score": 0.96,
+      "selection_rationale": "Directly threatens the integration gate and can be detected with per-task failure counts.",
+      "mitigation": "Retain per-task exact-recovery failures and block integration on any regression against the best baseline.",
+      "blind_verification": {"plausibility": 0.88, "impact": 0.95, "disposition": "retain"}
+    },
+    {
+      "id": "fixture-overfit",
+      "category": "evaluation-design",
+      "failure": "The compression strategy is tuned to synthetic fixtures rather than real AIWG work.",
+      "hypothetical_narrative": "A benchmark passes because its tasks resemble the implementation's hand-written examples.",
+      "selection_score": 0.91,
+      "selection_rationale": "Affects external validity and is mitigated by required real AIWG tasks.",
+      "mitigation": "Require labeled real AIWG tasks and preserve fixture provenance.",
+      "blind_verification": {"plausibility": 0.82, "impact": 0.86, "disposition": "retain"}
+    },
+    {
+      "id": "baseline-omission",
+      "category": "comparison",
+      "failure": "A weak or inconvenient baseline is omitted from the report.",
+      "hypothetical_narrative": "The candidate appears best only after the strongest provider-context result disappears.",
+      "selection_score": 0.89,
+      "selection_rationale": "Selective reporting invalidates the conclusion even when the candidate numbers are correct.",
+      "mitigation": "Require all named baselines and preserve weak and failed results.",
+      "blind_verification": {"plausibility": 0.78, "impact": 0.92, "disposition": "retain"}
+    },
+    {
+      "id": "runtime-cost",
+      "category": "operations",
+      "failure": "Exact recovery improves quality but creates unacceptable latency or memory use.",
+      "hypothetical_narrative": "An interactive workflow stalls as recovery repeatedly scans a large source corpus.",
+      "selection_score": 0.84,
+      "selection_rationale": "Operational regressions can make a quality win unusable and are measurable in the benchmark.",
+      "mitigation": "Report latency, memory, and operational constraints beside quality.",
+      "blind_verification": {"plausibility": 0.8, "impact": 0.79, "disposition": "retain"}
+    },
+    {
+      "id": "premature-integration",
+      "category": "governance",
+      "failure": "Benchmark output is treated as automatic authorization for product integration.",
+      "hypothetical_narrative": "A blocked experiment is shipped because its report is mistaken for a release approval.",
+      "selection_score": 0.82,
+      "selection_rationale": "Separates experimental evidence from the product decision and limits blast radius.",
+      "mitigation": "Emit a distinct integration state and require separate product review.",
+      "blind_verification": {"plausibility": 0.7, "impact": 0.9, "disposition": "retain"}
+    },
+    {
+      "id": "provider-drift",
+      "category": "environment",
+      "failure": "Provider behavior changes after the benchmark snapshot.",
+      "hypothetical_narrative": "A provider update alters retrieval behavior and makes the preserved ranking stale.",
+      "selection_score": 0.65,
+      "selection_rationale": "Important for future reruns but less immediate than benchmark validity failures.",
+      "mitigation": "Record provider versions and rerun before adoption.",
+      "blind_verification": {"plausibility": 0.67, "impact": 0.63, "disposition": "watch"}
+    }
+  ],
+  "citations": [
+    {
+      "id": "research-proposal-10",
+      "claim": "Compression should be benchmarked against summary, retrieval, and provider-context baselines.",
+      "status": "verified",
+      "locator": "research-papers@e0dd2f37 proposal 10"
+    },
+    {
+      "id": "decision-science-threshold",
+      "claim": "A universal five-risk deep-dive threshold is decision-science optimal.",
+      "status": "unresolved",
+      "risk": "No induced source currently supports a universal optimum; the 3-7 bound is a workflow constraint, not an empirical law."
+    }
+  ]
+}

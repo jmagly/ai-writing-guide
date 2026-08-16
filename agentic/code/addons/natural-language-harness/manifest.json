@@ -1,0 +1,27 @@
+{
+  "id": "natural-language-harness",
+  "type": "addon",
+  "name": "Natural-Language Harness Runtime",
+  "version": "1.0.0",
+  "description": "Inspectable NLAH.md policy documents mapped to deterministic AIWG mechanisms and ablation reports.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": ["harness", "workflow", "ablation", "policy", "research-backed"],
+  "entry": {"commands": "commands/", "skills": "skills/", "fixtures": "fixtures/"},
+  "skills": ["natural-language-harness"],
+  "cli_commands": {
+    "namespace": "harness",
+    "description": "Validate, plan, and ablate inspectable NLAH.md harness documents",
+    "entry": "commands/",
+    "subcommands": {
+      "validate": {"file": "nlah.mjs", "description": "Validate an NLAH.md document and its deterministic execution map"},
+      "plan": {"file": "nlah.mjs", "description": "Render the deterministic execution plan without executing it"},
+      "ablate": {"file": "nlah.mjs", "description": "Remove one named module and report the resulting plan delta"}
+    }
+  },
+  "dependencies": {"required": [], "optional": ["aiwg-evals", "aiwg-utils"]},
+  "researchFoundation": {"issue": "#2043", "source": "research-papers@e0dd2f37 proposal 7"}
+}

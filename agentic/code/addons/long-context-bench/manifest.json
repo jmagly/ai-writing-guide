@@ -1,0 +1,25 @@
+{
+  "id": "long-context-bench",
+  "type": "addon",
+  "name": "Long-Context Compression Benchmark",
+  "version": "1.0.0",
+  "description": "Benchmark-only comparison of compressed skim plus exact recovery against current context baselines.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": ["context", "compression", "benchmark", "retrieval", "rlm", "research-backed"],
+  "entry": {"commands": "commands/", "skills": "skills/", "fixtures": "fixtures/", "evidence": "evidence/"},
+  "skills": ["long-context-bench"],
+  "cli_commands": {
+    "namespace": "context-bench",
+    "description": "Benchmark context strategies without enabling product integration",
+    "entry": "commands/",
+    "subcommands": {
+      "run": {"file": "context-bench.mjs", "description": "Compare compressed context against required AIWG baselines"}
+    }
+  },
+  "dependencies": {"required": [], "optional": ["rlm", "context-curator"]},
+  "researchFoundation": {"issue": "#2046", "source": "research-papers@e0dd2f37 proposal 10"}
+}

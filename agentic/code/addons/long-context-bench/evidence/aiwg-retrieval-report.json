@@ -1,0 +1,25 @@
+{
+  "schema_version": "1",
+  "task_family": "AIWG capability discovery and exact policy recovery",
+  "real_aiwg_tasks": [
+    "discover-address-issues-and-recover-close-gate",
+    "recover-provider-copy-profile-contract"
+  ],
+  "strategies": [
+    {"strategy": "compressed-skim-exact-recovery", "mean_quality": 0.85, "exact_recovery_failures": 1, "mean_latency_ms": 420, "mean_memory_mb": 86},
+    {"strategy": "summary-compaction", "mean_quality": 0.75, "exact_recovery_failures": 3, "mean_latency_ms": 225, "mean_memory_mb": 63},
+    {"strategy": "direct-retrieval", "mean_quality": 0.925, "exact_recovery_failures": 0, "mean_latency_ms": 365, "mean_memory_mb": 77},
+    {"strategy": "provider-context", "mean_quality": 0.875, "exact_recovery_failures": 0, "mean_latency_ms": 185, "mean_memory_mb": 130}
+  ],
+  "product_integration": {
+    "state": "BLOCKED",
+    "allowed": false,
+    "reason": "The compressed candidate has lower quality and more exact-recovery failures than direct retrieval."
+  },
+  "failed_or_weak_results": [
+    {"strategy": "compressed-skim-exact-recovery", "reason": ["quality below strongest baseline", "more exact-recovery failures than best baseline"]},
+    {"strategy": "summary-compaction", "reason": ["quality below strongest baseline", "more exact-recovery failures than best baseline"]},
+    {"strategy": "provider-context", "reason": ["quality below strongest baseline"]}
+  ],
+  "evidence_policy": "All weak and failed results are retained; no strategy is omitted from the report."
+}

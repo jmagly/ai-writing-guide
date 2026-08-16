@@ -1,0 +1,30 @@
+{
+  "task_family": "research-synthesis-with-citation-check",
+  "integrity_state": "verified",
+  "topologies": [
+    {
+      "name": "single-agent",
+      "budget_usd": 1.0,
+      "runs": [
+        {"duration_ms": 1200, "coordination_ms": 0, "claims": 20, "contradictions": 1, "synthesis_failed": false, "cost_usd": 0.42, "quality_score": 0.78, "outcome": "accepted", "activity_evidence": {"state": "captured", "quality_score": 0.9}},
+        {"duration_ms": 1260, "coordination_ms": 0, "claims": 18, "contradictions": 1, "synthesis_failed": false, "cost_usd": 0.44, "quality_score": 0.8, "outcome": "accepted", "activity_evidence": {"state": "captured", "quality_score": 0.92}}
+      ]
+    },
+    {
+      "name": "bounded-parallel",
+      "budget_usd": 1.3,
+      "runs": [
+        {"duration_ms": 980, "coordination_ms": 190, "claims": 22, "contradictions": 1, "synthesis_failed": false, "delegations_expected": 4, "delegations_correct": 4, "cost_usd": 0.61, "quality_score": 0.91, "outcome": "accepted", "activity_evidence": {"state": "captured", "quality_score": 0.95}},
+        {"duration_ms": 1010, "coordination_ms": 205, "claims": 23, "contradictions": 1, "synthesis_failed": false, "delegations_expected": 4, "delegations_correct": 3, "cost_usd": 0.63, "quality_score": 0.89, "outcome": "accepted", "activity_evidence": {"state": "captured", "quality_score": 0.94}}
+      ]
+    },
+    {
+      "name": "planner-worker",
+      "budget_usd": 1.5,
+      "runs": [
+        {"duration_ms": 1370, "coordination_ms": 330, "claims": 21, "contradictions": 2, "synthesis_failed": false, "delegations_expected": 3, "delegations_correct": 2, "cost_usd": 0.7, "quality_score": 0.84, "outcome": "accepted", "activity_evidence": {"state": "not_run", "reason": "planner trace unavailable in fixture runner"}},
+        {"duration_ms": 1420, "coordination_ms": 360, "claims": 19, "contradictions": 2, "synthesis_failed": true, "delegations_expected": 3, "delegations_correct": 2, "cost_usd": 0.73, "quality_score": 0.72, "outcome": "rejected", "activity_evidence": {"state": "not_run", "reason": "planner trace unavailable in fixture runner"}}
+      ]
+    }
+  ]
+}

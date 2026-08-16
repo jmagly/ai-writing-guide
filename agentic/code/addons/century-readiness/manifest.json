@@ -1,0 +1,25 @@
+{
+  "id": "century-readiness",
+  "type": "addon",
+  "name": "Century-Scale Readiness Review",
+  "version": "1.0.0",
+  "description": "Long-horizon readiness reviews for stable cores, replacement paths, stewardship, degradation, evidence, and meaning preservation.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": ["readiness", "stewardship", "migration", "durability", "research-backed"],
+  "entry": {"commands": "commands/", "skills": "skills/", "fixtures": "fixtures/", "templates": "templates/"},
+  "skills": ["century-readiness-review"],
+  "cli_commands": {
+    "namespace": "century-readiness",
+    "description": "Review long-horizon obligations, dependencies, replacement paths, and meaning packages",
+    "entry": "commands/",
+    "subcommands": {
+      "review": {"file": "century-review.mjs", "description": "Generate an actionable century-scale readiness report"}
+    }
+  },
+  "dependencies": {"required": [], "optional": ["sdlc-complete", "ops-complete", "research-complete", "security-engineering"]},
+  "researchFoundation": {"issue": "#2044", "source": "research-papers@e0dd2f37 proposal 8"}
+}

@@ -1,0 +1,79 @@
+{
+  "schema_version": "1",
+  "subject": {
+    "id": "#2046",
+    "title": "Long-context compression benchmark"
+  },
+  "stage_order": [
+    "diverse_failure_generation",
+    "bounded_deep_dive_selection",
+    "blind_verification"
+  ],
+  "diverse_failure_generation": {
+    "mode_count": 6,
+    "categories": [
+      "comparison",
+      "environment",
+      "evaluation-design",
+      "governance",
+      "measurement",
+      "operations"
+    ],
+    "mode_ids": [
+      "quality-masking",
+      "fixture-overfit",
+      "baseline-omission",
+      "runtime-cost",
+      "premature-integration",
+      "provider-drift"
+    ]
+  },
+  "bounded_deep_dive_selection": {
+    "cap": {"minimum": 3, "maximum": 7},
+    "selected_count": 5,
+    "selected": [
+      {
+        "id": "quality-masking",
+        "selection_rationale": "Directly threatens the integration gate and can be detected with per-task failure counts.",
+        "narrative_label": "HYPOTHETICAL"
+      },
+      {
+        "id": "fixture-overfit",
+        "selection_rationale": "Affects external validity and is mitigated by required real AIWG tasks.",
+        "narrative_label": "HYPOTHETICAL"
+      },
+      {
+        "id": "baseline-omission",
+        "selection_rationale": "Selective reporting invalidates the conclusion even when the candidate numbers are correct.",
+        "narrative_label": "HYPOTHETICAL"
+      },
+      {
+        "id": "runtime-cost",
+        "selection_rationale": "Operational regressions can make a quality win unusable and are measurable in the benchmark.",
+        "narrative_label": "HYPOTHETICAL"
+      },
+      {
+        "id": "premature-integration",
+        "selection_rationale": "Separates experimental evidence from the product decision and limits blast radius.",
+        "narrative_label": "HYPOTHETICAL"
+      }
+    ]
+  },
+  "blind_verification": [
+    {"risk_id": "quality-masking", "plausibility": 0.88, "impact": 0.95},
+    {"risk_id": "fixture-overfit", "plausibility": 0.82, "impact": 0.86},
+    {"risk_id": "baseline-omission", "plausibility": 0.78, "impact": 0.92},
+    {"risk_id": "runtime-cost", "plausibility": 0.8, "impact": 0.79},
+    {"risk_id": "premature-integration", "plausibility": 0.7, "impact": 0.9}
+  ],
+  "provenance": {
+    "narrative_policy": "All vivid failure narratives are hypothetical scenarios, not evidence.",
+    "verified_citation": "research-papers@e0dd2f37 proposal 10",
+    "unresolved_citation_risks": [
+      {
+        "citation_id": "decision-science-threshold",
+        "risk": "No induced source currently supports a universal optimum; the 3-7 bound is a workflow constraint, not an empirical law."
+      }
+    ]
+  }
+}
