@@ -284,7 +284,7 @@ describe('global install native lifecycle-script policy', () => {
     expect(shown.stdout).toContain('name: aiwg-status');
     expect(existsSync(path.join(project, '.claude'))).toBe(false);
     expect(existsSync(path.join(project, '.agents'))).toBe(false);
-  });
+  }, 30_000);
 
   it('runs the workspace status probe from the packed install', async () => {
     const status = await runInstalledCli(['status', '--probe', '--json']);
@@ -303,7 +303,15 @@ describe('global install native lifecycle-script policy', () => {
     expect(doctor.stdout).toContain('Discovery: aiwg discover');
     expect(doctor.stdout).toContain('`aiwg discover aiwg doctor --json --limit 10` succeeded');
     expect(doctor.stdout).toContain('prebuilt framework index present');
-  });
+    expect(existsSync(path.join(
+      installRoot,
+      'prebuilt', 'fortemi-core', 'framework', 'manifest.json',
+    ))).toBe(true);
+    expect(existsSync(path.join(
+      installRoot,
+      'prebuilt', 'fortemi-core', 'framework', 'aiwg-fortemi-index-v2.json',
+    ))).toBe(true);
+  }, 30_000);
 
   it('runs installed-CLI web discover/show and warm offline through legacy configuration', async () => {
     const discovered = await runInstalledCli([

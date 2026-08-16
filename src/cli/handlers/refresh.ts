@@ -17,6 +17,7 @@ import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { createScriptRunner } from './script-runner.js';
+import { createUseHandler } from './use.js';
 import { getFrameworkRoot } from '../../channel/manager.mjs';
 import { refreshAllPackages } from '../../packages/registry.js';
 import { resolveActiveProvider } from '../provider-resolution.js';
@@ -89,7 +90,7 @@ function isOlderManagedVersion(deployedVersion: string, currentVersion: string):
 export async function pruneStaleManagedAgentFiles(options: {
   projectRoot: string;
   frameworkRoot: string;
-  /** @deprecated Cleanup is intentionally global; provider only scopes redeployment. */
+  /** Provider successfully refreshed in this invocation. */
   provider?: string;
   currentVersion?: string;
   dryRun?: boolean;
@@ -121,7 +122,14 @@ export async function pruneStaleManagedAgentFiles(options: {
 
       const artifactName = normalizeAgentArtifactName(entry.name);
       const missingFromCurrentPackage = !desired.has(artifactName);
-      const fromOlderPackage = currentVersion !== null && isOlderManagedVersion(marker.version, currentVersion);
+      // Addons have independent manifest versions. Comparing their managed
+      // marker to the top-level package version makes a successful refresh
+      // delete freshly restored addon agents. Version-based cleanup remains
+      // valid for other provider trees that were not refreshed, while the
+      // active provider removes only artifacts absent from current sources.
+      const fromOlderPackage = provider !== options.provider
+        && currentVersion !== null
+        && isOlderManagedVersion(marker.version, currentVersion);
       if (!missingFromCurrentPackage && !fromOlderPackage) continue;
 
       const relFile = path.relative(options.projectRoot, file);
@@ -190,6 +198,7 @@ export const refreshHandler: CommandHandler = {
 
     const frameworkRoot = await getFrameworkRoot();
     const runner = createScriptRunner(frameworkRoot);
+    const activeUseHandler = createUseHandler();
 
     if (!quiet) {
       ui.blank();
@@ -220,6 +229,7 @@ export const refreshHandler: CommandHandler = {
 
     // Step 2.5: Refresh remote packages (always, unless --packages-only skips npm)
     if (!quiet) ui.info(dryRun ? 'Would refresh remote packages...' : 'Refreshing remote packages...');
+    const deploymentFailures: string[] = [];
     if (!dryRun) {
       try {
         const refreshed = await refreshAllPackages();
@@ -276,15 +286,28 @@ export const refreshHandler: CommandHandler = {
         ui.dim('  No installed frameworks or addons to re-deploy');
       }
       for (const fw of frameworks) {
-        const providerArgs = ['--provider', detectedProvider, ...modelDeployArgs];
-        const useResult = await runner.run(
-          'tools/cli/deploy.mjs',
-          [fw, ...providerArgs],
-          { capture: quiet }
-        );
+        // Invoke the active installation's handler directly. The historical
+        // deploy.mjs bridge shells out to the first `aiwg` on PATH, which can
+        // be a different version/root and therefore cannot safely refresh
+        // addons installed by this package (#143/#2102).
+        const useResult = await activeUseHandler.execute({
+          ...ctx,
+          cwd: ctx.cwd,
+          frameworkRoot,
+          args: [
+            fw,
+            '--provider', detectedProvider,
+            '--target', ctx.cwd,
+            '--yes',
+            '--json',
+            ...modelDeployArgs,
+          ],
+          rawArgs: ['use', fw],
+        });
         if (useResult.exitCode === 0) {
           if (!quiet) ui.success(`Deployed: ${fw}`);
         } else {
+          deploymentFailures.push(fw);
           if (!quiet) ui.warn(`Deploy issue: ${fw} (exit ${useResult.exitCode})`);
         }
       }
@@ -298,11 +321,10 @@ export const refreshHandler: CommandHandler = {
     }
 
     // Step 4.25: Report planned project-local deploys (#1035).
-    // The actual deploy is performed by `aiwg use` underneath via deploy.mjs;
-    // this block surfaces what *would* happen during dry-run and what was
-    // covered during a real refresh.
+    // The active use handler performs the actual project-local deploy during
+    // framework refresh; this block surfaces dry-run and completion details.
     try {
-      const plDiscovery = await discoverProjectLocalBundles(process.cwd());
+      const plDiscovery = await discoverProjectLocalBundles(ctx.cwd);
       const plCount = plDiscovery.bundles.length;
       if (plCount > 0) {
         if (dryRun) {
@@ -326,11 +348,12 @@ export const refreshHandler: CommandHandler = {
     // Step 4.5: Stale deployment check (#621, #1460, #1799)
     if (!quiet) ui.info('Checking for stale deployments...');
     let staleAgentRemovals: ProviderStaleAgentRemoval[] = [];
-    if (!dryRun) {
+    if (!dryRun && deploymentFailures.length === 0) {
       try {
         staleAgentRemovals = await pruneStaleManagedAgentFiles({
           projectRoot: ctx.cwd,
           frameworkRoot,
+          provider: detectedProvider,
         });
         if (staleAgentRemovals.length > 0 && !quiet) {
           const total = staleAgentRemovals.reduce((sum, item) => sum + item.paths.length, 0);
@@ -446,10 +469,17 @@ export const refreshHandler: CommandHandler = {
         skipUpdate,
         channel: channel || undefined,
         staleAgentRemovals,
+        deploymentFailures,
       });
       console.log(output);
     }
 
-    return { exitCode: dryRun ? 0 : 0 };
+    if (deploymentFailures.length > 0) {
+      return {
+        exitCode: 1,
+        message: `Failed to re-deploy installed bundle(s): ${deploymentFailures.join(', ')}`,
+      };
+    }
+    return { exitCode: 0 };
   },
 };

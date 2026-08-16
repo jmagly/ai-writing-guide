@@ -72,6 +72,7 @@ const {
   mockLoadConfig,
   mockRefreshAllPackages,
   mockRun,
+  mockUseExecute,
   mockReadAiwgConfig,
 } = vi.hoisted(() => ({
   mockSwitchToNext: vi.fn().mockResolvedValue(undefined),
@@ -80,6 +81,7 @@ const {
   mockLoadConfig: vi.fn().mockResolvedValue({ channel: 'stable' }),
   mockRefreshAllPackages: vi.fn().mockResolvedValue([]),
   mockRun: vi.fn().mockResolvedValue({ exitCode: 0 }),
+  mockUseExecute: vi.fn().mockResolvedValue({ exitCode: 0 }),
   mockReadAiwgConfig: vi.fn().mockResolvedValue({
     providers: ['codex'],
     installed: { sdlc: {} },
@@ -109,6 +111,10 @@ vi.mock('../../src/cli/handlers/script-runner.js', () => ({
   createScriptRunner: vi.fn(() => ({ run: mockRun })),
 }));
 
+vi.mock('../../src/cli/handlers/use.js', () => ({
+  createUseHandler: vi.fn(() => ({ execute: mockUseExecute })),
+}));
+
 vi.mock('../../src/cli/ui.js', () => ({
   blank: vi.fn(), rule: vi.fn(), info: vi.fn(), success: vi.fn(),
   warn: vi.fn(), dim: vi.fn(), bold: vi.fn((s: string) => s),
@@ -124,6 +130,10 @@ import { refreshHandler as syncHandler } from '../../src/cli/handlers/refresh.js
 function makeCtx(args: string[] = []) {
   return { args, rawArgs: args, cwd: '/mock', frameworkRoot: '/mock/root' };
 }
+
+beforeEach(() => {
+  mockUseExecute.mockResolvedValue({ exitCode: 0 });
+});
 
 describe('sync --channel next', () => {
   beforeEach(() => { vi.clearAllMocks(); mockRun.mockResolvedValue({ exitCode: 0 }); });
@@ -168,7 +178,7 @@ describe('sync --dry-run', () => {
     expect(result.exitCode).toBe(0);
     const calls = mockRun.mock.calls.map(([s]: [string]) => s);
     expect(calls).not.toContain('tools/cli/update.mjs');
-    expect(calls).not.toContain('tools/cli/deploy.mjs');
+    expect(mockUseExecute).not.toHaveBeenCalled();
     expect(calls).not.toContain('tools/cli/doctor.mjs');
   });
 });
@@ -188,7 +198,7 @@ describe('sync --skip-update', () => {
     expect(calls).not.toContain('tools/cli/update.mjs');
     expect(calls).toContain('tools/cli/runtime-info.mjs');
     expect(calls).toContain('tools/cli/version.mjs');
-    expect(calls).toContain('tools/cli/deploy.mjs');
+    expect(mockUseExecute).toHaveBeenCalled();
     expect(calls).toContain('tools/cli/doctor.mjs');
   });
 });
@@ -202,7 +212,7 @@ describe('sync --packages-only', () => {
     expect(mockRefreshAllPackages).toHaveBeenCalled();
     const calls = mockRun.mock.calls.map(([s]: [string]) => s);
     expect(calls).not.toContain('tools/cli/update.mjs');
-    expect(calls).not.toContain('tools/cli/deploy.mjs');
+    expect(mockUseExecute).not.toHaveBeenCalled();
     expect(calls).not.toContain('tools/cli/doctor.mjs');
   });
 });
@@ -210,31 +220,23 @@ describe('sync --packages-only', () => {
 describe('sync --frameworks sdlc', () => {
   beforeEach(() => { vi.clearAllMocks(); mockRun.mockResolvedValue({ exitCode: 0 }); });
 
-  it('deploy.mjs called with sdlc, not all', async () => {
+  it('active use handler called with sdlc, not all', async () => {
     await syncHandler.execute(makeCtx(['--frameworks', 'sdlc']));
-    const deployCalls = mockRun.mock.calls.filter(([s]: [string]) => s === 'tools/cli/deploy.mjs');
-    expect(deployCalls.length).toBe(1);
-    expect(deployCalls[0][1][0]).toBe('sdlc');
+    expect(mockUseExecute).toHaveBeenCalledTimes(1);
+    expect(mockUseExecute.mock.calls[0][0].args[0]).toBe('sdlc');
   });
 });
 
 // ── Missing script path: must exit 1 with name, not 254 silently ─
 
-describe('missing script path produces exit 1 (regression: silent 254)', () => {
+describe('active use deployment failure propagates', () => {
   beforeEach(() => { vi.clearAllMocks(); });
 
-  it('deploy.mjs ENOENT → warns and continues (no silent 254)', async () => {
-    mockRun.mockImplementation(async (script: string) => {
-      if (script === 'tools/cli/deploy.mjs') {
-        return { exitCode: 1, message: 'Script error: spawn ENOENT' };
-      }
-      return { exitCode: 0 };
-    });
-
-    // Should NOT throw; should warn and continue
-    const result = await syncHandler.execute(makeCtx());
-    // sync itself returns 0 (errors are warnings)
-    expect(result.exitCode).toBe(0);
+  it('returns exit 1 when deployment verification fails', async () => {
+    mockRun.mockResolvedValue({ exitCode: 0 });
+    mockUseExecute.mockResolvedValue({ exitCode: 1, message: 'artifact count loss' });
+    const result = await syncHandler.execute(makeCtx(['--frameworks', 'sdlc']));
+    expect(result.exitCode).toBe(1);
   });
 });
 

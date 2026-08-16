@@ -13,8 +13,9 @@ import type { HandlerContext } from '../../../../src/cli/handlers/types.js';
 
 // ── Mocks ────────────────────────────────────────────────────
 
-const { mockRun, mockRefreshAllPackages, mockReadAiwgConfig, mockHashManifest } = vi.hoisted(() => ({
+const { mockRun, mockUseExecute, mockRefreshAllPackages, mockReadAiwgConfig, mockHashManifest } = vi.hoisted(() => ({
   mockRun: vi.fn().mockResolvedValue({ exitCode: 0 }),
+  mockUseExecute: vi.fn().mockResolvedValue({ exitCode: 0 }),
   mockRefreshAllPackages: vi.fn().mockResolvedValue([]),
   mockReadAiwgConfig: vi.fn().mockResolvedValue(null),
   mockHashManifest: vi.fn().mockResolvedValue(null),
@@ -22,6 +23,10 @@ const { mockRun, mockRefreshAllPackages, mockReadAiwgConfig, mockHashManifest } 
 
 vi.mock('../../../../src/cli/handlers/script-runner.js', () => ({
   createScriptRunner: vi.fn(() => ({ run: mockRun })),
+}));
+
+vi.mock('../../../../src/cli/handlers/use.js', () => ({
+  createUseHandler: vi.fn(() => ({ execute: mockUseExecute })),
 }));
 
 vi.mock('../../../../src/channel/manager.mjs', () => ({
@@ -95,6 +100,7 @@ function makeCtx(args: string[] = []): HandlerContext {
 
 beforeEach(() => {
   process.env.AIWG_TEST_PROCESS_PROVIDER = 'codex';
+  mockUseExecute.mockResolvedValue({ exitCode: 0 });
   mockReadAiwgConfig.mockResolvedValue({
     providers: ['codex'],
     installed: { sdlc: {}, 'writing-quality': {} },
@@ -138,7 +144,7 @@ describe('syncHandler.execute — default run (no flags)', () => {
     expect(calls).toContain('tools/cli/runtime-info.mjs');
     expect(calls).toContain('tools/cli/version.mjs');
     expect(calls).toContain('tools/cli/update.mjs');
-    expect(calls).toContain('tools/cli/deploy.mjs');
+    expect(mockUseExecute).toHaveBeenCalled();
     expect(calls).toContain('tools/cli/doctor.mjs');
   });
 
@@ -161,7 +167,7 @@ describe('syncHandler.execute — --dry-run', () => {
     expect(calls).toContain('tools/cli/version.mjs');
     // destructive scripts must not run in dry-run
     expect(calls).not.toContain('tools/cli/update.mjs');
-    expect(calls).not.toContain('tools/cli/deploy.mjs');
+    expect(mockUseExecute).not.toHaveBeenCalled();
     expect(calls).not.toContain('tools/cli/doctor.mjs');
   });
 
@@ -179,7 +185,7 @@ describe('syncHandler.execute — --skip-update', () => {
     const calls = mockRun.mock.calls.map(([script]: [string]) => script);
     expect(calls).not.toContain('tools/cli/update.mjs');
     // but deploy and doctor still run
-    expect(calls).toContain('tools/cli/deploy.mjs');
+    expect(mockUseExecute).toHaveBeenCalled();
     expect(calls).toContain('tools/cli/doctor.mjs');
   });
 });
@@ -194,7 +200,7 @@ describe('syncHandler.execute — --packages-only', () => {
 
     const calls = mockRun.mock.calls.map(([script]: [string]) => script);
     expect(calls).not.toContain('tools/cli/update.mjs');
-    expect(calls).not.toContain('tools/cli/deploy.mjs');
+    expect(mockUseExecute).not.toHaveBeenCalled();
     expect(calls).not.toContain('tools/cli/doctor.mjs');
   });
 });
@@ -221,11 +227,10 @@ describe('syncHandler.execute — --channel', () => {
 describe('syncHandler.execute — --provider', () => {
   beforeEach(() => { vi.clearAllMocks(); mockRun.mockResolvedValue({ exitCode: 0 }); });
 
-  it('passes --provider copilot to deploy.mjs', async () => {
+  it('passes --provider copilot to the active use handler', async () => {
     await syncHandler.execute(makeCtx(['--provider', 'copilot']));
-    const deployCalls = mockRun.mock.calls.filter(([script]: [string]) => script === 'tools/cli/deploy.mjs');
-    expect(deployCalls.length).toBeGreaterThan(0);
-    const deployArgs = deployCalls[0][1];
+    expect(mockUseExecute).toHaveBeenCalled();
+    const deployArgs = mockUseExecute.mock.calls[0][0].args;
     expect(deployArgs).toContain('--provider');
     expect(deployArgs).toContain('copilot');
   });
@@ -234,44 +239,39 @@ describe('syncHandler.execute — --provider', () => {
 describe('syncHandler.execute — --frameworks', () => {
   beforeEach(() => { vi.clearAllMocks(); mockRun.mockResolvedValue({ exitCode: 0 }); });
 
-  it('calls deploy.mjs once per framework when --frameworks sdlc,research', async () => {
+  it('calls the active use handler once per framework when --frameworks sdlc,research', async () => {
     await syncHandler.execute(makeCtx(['--frameworks', 'sdlc,research']));
-    const deployCalls = mockRun.mock.calls.filter(([script]: [string]) => script === 'tools/cli/deploy.mjs');
-    // Should deploy sdlc and research separately
-    expect(deployCalls.length).toBe(2);
-    const deployTargets = deployCalls.map(([, args]: [string, string[]]) => args[0]);
+    expect(mockUseExecute).toHaveBeenCalledTimes(2);
+    const deployTargets = mockUseExecute.mock.calls.map(([useCtx]) => useCtx.args[0]);
     expect(deployTargets).toContain('sdlc');
     expect(deployTargets).toContain('research');
   });
 
   it('re-deploys each installed item when no --frameworks flag', async () => {
     await syncHandler.execute(makeCtx());
-    const deployCalls = mockRun.mock.calls.filter(([script]: [string]) => script === 'tools/cli/deploy.mjs');
-    expect(deployCalls.map(([, args]: [string, string[]]) => args[0])).toEqual([
+    expect(mockUseExecute.mock.calls.map(([useCtx]) => useCtx.args[0])).toEqual([
       'sdlc',
       'writing-quality',
     ]);
-    expect(deployCalls.flatMap(([, args]: [string, string[]]) => args)).not.toContain('all');
+    expect(mockUseExecute.mock.calls.flatMap(([useCtx]) => useCtx.args)).not.toContain('all');
   });
 
   it('--all preserves installed-only semantics instead of expanding aiwg use all', async () => {
     await syncHandler.execute(makeCtx(['--all']));
-    const deployCalls = mockRun.mock.calls.filter(([script]: [string]) => script === 'tools/cli/deploy.mjs');
-    expect(deployCalls.map(([, args]: [string, string[]]) => args[0])).toEqual([
+    expect(mockUseExecute.mock.calls.map(([useCtx]) => useCtx.args[0])).toEqual([
       'sdlc',
       'writing-quality',
     ]);
-    expect(deployCalls.flatMap(([, args]: [string, string[]]) => args)).not.toContain('all');
+    expect(mockUseExecute.mock.calls.flatMap(([useCtx]) => useCtx.args)).not.toContain('all');
   });
 
   it('--frameworks all also preserves installed-only semantics', async () => {
     await syncHandler.execute(makeCtx(['--frameworks', 'all']));
-    const deployCalls = mockRun.mock.calls.filter(([script]: [string]) => script === 'tools/cli/deploy.mjs');
-    expect(deployCalls.map(([, args]: [string, string[]]) => args[0])).toEqual([
+    expect(mockUseExecute.mock.calls.map(([useCtx]) => useCtx.args[0])).toEqual([
       'sdlc',
       'writing-quality',
     ]);
-    expect(deployCalls.flatMap(([, args]: [string, string[]]) => args)).not.toContain('all');
+    expect(mockUseExecute.mock.calls.flatMap(([useCtx]) => useCtx.args)).not.toContain('all');
   });
 });
 
@@ -297,18 +297,16 @@ describe('syncHandler.execute — --quiet', () => {
   });
 });
 
-describe('syncHandler.execute — missing deploy.mjs resilience', () => {
+describe('syncHandler.execute — deployment resilience', () => {
   beforeEach(() => { vi.clearAllMocks(); });
 
-  it('warns and continues when deploy.mjs returns non-zero (not silent exit 254)', async () => {
-    mockRun.mockImplementation(async (script: string) => {
-      if (script === 'tools/cli/deploy.mjs') return { exitCode: 1 };
-      return { exitCode: 0 };
-    });
+  it('returns non-zero when the active use handler detects artifact loss', async () => {
+    mockRun.mockResolvedValue({ exitCode: 0 });
+    mockUseExecute.mockResolvedValue({ exitCode: 1, message: 'deployment verification failed' });
 
     const result = await syncHandler.execute(makeCtx());
-    // sync should complete, not crash
-    expect(result.exitCode).toBe(0);
+    expect(result.exitCode).toBe(1);
+    expect(result.message).toContain('sdlc');
   });
 
   it('warns and continues when update.mjs returns non-zero', async () => {
@@ -374,6 +372,36 @@ describe('syncHandler.execute — stale deployment detection', () => {
 });
 
 describe('refreshHandler stale AIWG-managed agent cleanup (#1460)', () => {
+  it('preserves desired addon-version agents for the provider just refreshed', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'aiwg-refresh-addon-version-'));
+    try {
+      const frameworkRoot = join(root, 'framework-root');
+      const projectRoot = join(root, 'project');
+      mkdirSync(join(frameworkRoot, 'agentic/code/addons/rlm/agents'), { recursive: true });
+      mkdirSync(join(projectRoot, '.claude/agents'), { recursive: true });
+      writeFileSync(join(frameworkRoot, 'package.json'), '{"version":"2026.8.10"}\n');
+      writeFileSync(
+        join(frameworkRoot, 'agentic/code/addons/rlm/agents/rlm-agent.md'),
+        '---\nname: RLM Agent\n---\n',
+      );
+      writeFileSync(
+        join(projectRoot, '.claude/agents/rlm-agent.md'),
+        '---\n# aiwg:managed v1.4.0 bundled\nname: RLM Agent\n---\n',
+      );
+
+      const removed = await pruneStaleManagedAgentFiles({
+        projectRoot,
+        frameworkRoot,
+        provider: 'claude',
+      });
+
+      expect(removed).toEqual([]);
+      expect(existsSync(join(projectRoot, '.claude/agents/rlm-agent.md'))).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('removes bundled managed agent files that no longer exist in current sources', async () => {
     const root = mkdtempSync(join(tmpdir(), 'aiwg-refresh-orphan-'));
     try {

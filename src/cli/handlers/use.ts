@@ -1968,6 +1968,23 @@ async function ensurePostDeployPhases(opts: {
     }
   }
 
+  // The Fortemi export is the default discovery backend. Rebuilding only the
+  // source graph makes any existing export stale, so every successful use
+  // must leave the shared cache synchronized (#142/#2103). This also
+  // materializes a fresh-install cache without requiring a manual index sync.
+  try {
+    const {
+      getFortemiCoreSyncStatus,
+      syncFortemiCoreIndex,
+    } = await import('../../artifacts/fortemi-core-sync.js');
+    const status = getFortemiCoreSyncStatus(opts.frameworkRoot, 'framework');
+    if (!status.built || status.stale) {
+      syncFortemiCoreIndex(opts.frameworkRoot, { graph: 'framework' });
+    }
+  } catch {
+    // The shared verifier reports discovery failures with stable remediation.
+  }
+
   if (opts.args.includes('--no-context-files')) return;
   const paths = getProviderPaths(opts.provider);
   const sections = await discoverDeployedArtifacts(opts.projectPath, {
@@ -3518,6 +3535,8 @@ export class UseHandler implements CommandHandler {
           // project (#1217). The output index location is XDG-shared
           // regardless of build cwd.
           await buildIndex(aiwgRootForIndex, { graph: 'framework', explicit: false });
+          const { syncFortemiCoreIndex } = await import('../../artifacts/fortemi-core-sync.js');
+          syncFortemiCoreIndex(aiwgRootForIndex, { graph: 'framework' });
           console.log = origLog;
           const indexElapsedSec = ((Date.now() - indexStart) / 1000).toFixed(1);
           ui.success(`Capability index ready (${indexElapsedSec}s).`);

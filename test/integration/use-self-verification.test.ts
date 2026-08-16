@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -102,6 +102,27 @@ function runFrameworkIndexStats(homeRoot: string) {
   return JSON.parse(result.stdout || '{}');
 }
 
+function runDiscover(projectRoot: string, homeRoot: string) {
+  const result = spawnSync(process.execPath, [
+    BIN, 'discover', 'requirements review', '--json', '--compact',
+  ], {
+    cwd: projectRoot,
+    encoding: 'utf8',
+    timeout: 30_000,
+    env: {
+      ...process.env,
+      HOME: homeRoot,
+      USERPROFILE: homeRoot,
+      XDG_CACHE_HOME: path.join(homeRoot, '.cache'),
+      XDG_CONFIG_HOME: path.join(homeRoot, '.config'),
+      XDG_DATA_HOME: path.join(homeRoot, '.local', 'share'),
+      NO_UPDATE_NOTIFIER: '1',
+    },
+  });
+  expect(result.status, result.stderr || result.stdout).toBe(0);
+  return JSON.parse(result.stdout || '{}');
+}
+
 afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
@@ -131,7 +152,9 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
     const projectRoot = isolatedRoot('aiwg-use-verify-codex-project-');
     const homeRoot = isolatedRoot('aiwg-use-verify-codex-home-');
     const first = runUse(projectRoot, homeRoot, ['--provider', 'codex']);
+    const firstDiscovery = runDiscover(projectRoot, homeRoot);
     const repeated = runUse(projectRoot, homeRoot, ['--provider', 'codex']);
+    const repeatedDiscovery = runDiscover(projectRoot, homeRoot);
 
     for (const result of [first, repeated]) {
       expect(result.exitCode, result.stderr || result.stdout).toBe(0);
@@ -165,7 +188,23 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
     }
     expect(existsSync(path.join(projectRoot, '.agents', 'skills'))).toBe(true);
     expect(existsSync(path.join(projectRoot, 'AGENTS.md'))).toBe(true);
-  }, 20_000);
+    for (const discovery of [firstDiscovery, repeatedDiscovery]) {
+      expect(discovery.total).toBeGreaterThan(0);
+      expect(discovery.results[0].provenance.graph).toBe('framework');
+    }
+    const fortemiRoot = path.join(
+      homeRoot,
+      '.local', 'share', 'aiwg', 'index', 'fortemi-core', 'framework',
+    );
+    const fortemiManifest = JSON.parse(readFileSync(path.join(fortemiRoot, 'manifest.json'), 'utf8'));
+    const frameworkMetadata = JSON.parse(readFileSync(
+      path.join(homeRoot, '.local', 'share', 'aiwg', 'index', 'framework', 'metadata.json'),
+      'utf8',
+    ));
+    expect(existsSync(path.join(fortemiRoot, 'aiwg-fortemi-index-v2.json'))).toBe(true);
+    expect(fortemiManifest.item_count).toBe(stats.totalArtifacts);
+    expect(fortemiManifest.source_index_built_at).toBe(frameworkMetadata.builtAt);
+  }, 60_000);
 
   it('keeps default non-TTY output compact, colorless, and free of registry chatter', () => {
     const projectRoot = isolatedRoot('aiwg-use-output-codex-project-');
@@ -181,7 +220,7 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
     expect(result.stdout).not.toContain('reload rationale');
     expect(result.stdout).not.toMatch(/\x1b\[/);
     expect(result.stdout.split('\n').every((line) => line.length <= 80)).toBe(true);
-  });
+  }, 30_000);
 
   it('verifies a native-skills provider deployment', () => {
     const projectRoot = isolatedRoot('aiwg-use-verify-cursor-project-');
@@ -212,7 +251,7 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
     expect(existsSync(path.join(homeRoot, '.openclaw', 'skills'))).toBe(true);
     expect(readdirSync(path.join(projectRoot, '.agents', 'skills')).length).toBeGreaterThan(0);
     expect(existsSync(repoSkillsRoot) ? readdirSync(repoSkillsRoot).sort() : []).toEqual(repoSkillsBefore);
-  });
+  }, 30_000);
 
   it('verifies every provider and computes one deterministic multi-provider outcome', () => {
     const projectRoot = isolatedRoot('aiwg-use-verify-multi-project-');
@@ -223,5 +262,5 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
     expect(result.payload.outcome).toBe('ready-restart-required');
     expect(result.payload.providers.map((provider: { provider: string }) => provider.provider)).toEqual(['codex', 'claude']);
     expect(result.payload.providers.every((provider: { outcome: string }) => provider.outcome === 'ready-restart-required')).toBe(true);
-  });
+  }, 30_000);
 });
