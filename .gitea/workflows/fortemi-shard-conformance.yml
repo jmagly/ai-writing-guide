@@ -64,13 +64,16 @@ jobs:
           git checkout --quiet --detach FETCH_HEAD
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           PRODUCER_COMMIT="$(node -p "require('./test/fixtures/fortemi-shard/aiwg-core-v1.receipt.json').producer.commit")"
-          git fetch --quiet --no-tags --depth=1 origin "$PRODUCER_COMMIT"
-          test "$(git rev-parse "$PRODUCER_COMMIT^{commit}")" = "$PRODUCER_COMMIT"
           SOURCE_AUTHORITY_COMMIT="$(node -p "require('./test/fixtures/fortemi-shard/aiwg-core-v1.receipt.json').producer.source_contract.authority_commit")"
-          git fetch --quiet --no-tags --depth=1 origin "$SOURCE_AUTHORITY_COMMIT"
-          test "$(git rev-parse "$SOURCE_AUTHORITY_COMMIT^{commit}")" = "$SOURCE_AUTHORITY_COMMIT"
           FULL_CONSUMER_COMMIT="$(node -p "require('./test/fixtures/fortemi-shard/aiwg-full-v1.consumer.receipt.json').consumer.commit")"
-          git fetch --quiet --no-tags --depth=1 origin "$FULL_CONSUMER_COMMIT"
+          # One atomic shallow fetch avoids concurrent shallow-file rewrites
+          # observed with Git 2.54 on container-backed Gitea runners.
+          git fetch --quiet --no-tags --depth=1 origin \
+            "$PRODUCER_COMMIT" \
+            "$SOURCE_AUTHORITY_COMMIT" \
+            "$FULL_CONSUMER_COMMIT"
+          test "$(git rev-parse "$PRODUCER_COMMIT^{commit}")" = "$PRODUCER_COMMIT"
+          test "$(git rev-parse "$SOURCE_AUTHORITY_COMMIT^{commit}")" = "$SOURCE_AUTHORITY_COMMIT"
           test "$(git rev-parse "$FULL_CONSUMER_COMMIT^{commit}")" = "$FULL_CONSUMER_COMMIT"
 
       - name: Install locked published package graph

@@ -25,6 +25,12 @@ describe('Fortemi shard conformance workflow', () => {
     expect(workflow).toContain('DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}')
   })
 
+  it('fetches all receipt authority commits in one shallow transaction', () => {
+    expect(workflow).toMatch(
+      /git fetch --quiet --no-tags --depth=1 origin \\\n\s+"\$PRODUCER_COMMIT" \\\n\s+"\$SOURCE_AUTHORITY_COMMIT" \\\n\s+"\$FULL_CONSUMER_COMMIT"/,
+    )
+  })
+
   it('uses run-scoped resources and always removes them', () => {
     expect(workflow).toContain('DB_IMAGE="aiwg-fortemi-testdb:${GITHUB_RUN_ID}"')
     expect(workflow).toContain('DB_CONTAINER="aiwg-fortemi-${GITHUB_RUN_ID}"')
