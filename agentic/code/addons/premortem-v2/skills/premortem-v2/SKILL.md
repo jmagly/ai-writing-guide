@@ -1,5 +1,7 @@
 ---
+namespace: aiwg
 name: premortem-v2
+platforms: [all]
 description: Run a diversity-first premortem with bounded deep dives, blind plausibility and impact verification, and explicit provenance labels.
 ---
 

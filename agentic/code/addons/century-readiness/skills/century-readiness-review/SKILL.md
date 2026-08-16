@@ -7,7 +7,7 @@ description: Review long-horizon obligations, stable cores, dependencies, replac
 
 # Century-Scale Readiness Review
 
-Assess all eight required dimensions and produce concrete migration rehearsal
+Assess all nine required dimensions and produce concrete migration rehearsal
 candidates. Preserve missing external evidence as `NOT RUN` with a reason.
 
 Use `aiwg century-readiness review <review.json>` for the deterministic report.
