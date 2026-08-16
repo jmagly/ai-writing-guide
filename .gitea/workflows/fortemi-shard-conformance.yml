@@ -33,8 +33,8 @@ concurrency:
 jobs:
   producer-consumer-receipt:
     name: Published Core receipts → full-v1 clean PGlite and Fortemi
-    # Use the alternate host runner; fail fast unless it exposes every required capability.
-    runs-on: teroknor
+    # Use the purpose-built host and fail fast unless it exposes every required capability.
+    runs-on: matric-builder
     timeout-minutes: 30
 
     steps:
