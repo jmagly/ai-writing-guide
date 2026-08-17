@@ -612,13 +612,24 @@ jobs:
       # provenance attestation — same chain of trust, portable artifact.
 
       - name: Install cosign (keyless signing)
-        uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5  # v3.10.1 (ci/digests.txt)
-        with:
-          # Pinned to the latest v2.x; v3.x requires cosign-installer v4.
-          # The keyless `sign-blob --bundle` / `verify-blob --bundle` API
-          # is identical across v2.x and v3.x — upgrade path is a digest
-          # bump in ci/digests.txt plus this string.
-          cosign-release: 'v2.6.1'
+        # Install the pinned binary directly instead of relying on a third-party
+        # setup action. GitHub resolves every `uses:` action before the first
+        # job step, so repeated codeload 429/503 responses for
+        # sigstore/cosign-installer prevented the publish job from starting at
+        # all. The release binary and its immutable SHA-256 are tracked in
+        # ci/digests.txt; retries cover transient release-download failures.
+        run: |
+          set -euo pipefail
+          COSIGN_VERSION='v2.6.1'
+          COSIGN_SHA256='064954c5d8c7e3b28188eee5b1727b31c411550bc5fefd41aa672d3c761d103a'
+          COSIGN_TMP="$(mktemp)"
+          trap 'rm -f "$COSIGN_TMP"' EXIT
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 \
+            "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" \
+            -o "$COSIGN_TMP"
+          printf '%s  %s\n' "$COSIGN_SHA256" "$COSIGN_TMP" | sha256sum -c -
+          install -m 0755 "$COSIGN_TMP" /usr/local/bin/cosign
+          cosign version
 
       - name: Generate tarball + cosign sign + manifest
         id: sign
