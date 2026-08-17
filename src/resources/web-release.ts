@@ -14,6 +14,10 @@ const CHANNEL_PATTERN = /^[a-z][a-z0-9-]{0,31}$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/;
 const DIGEST_SELECTOR_PATTERN = /^sha256:([0-9a-f]{64})$/;
 const SIGNATURE_PATTERN = /^(?:[A-Za-z0-9+/]{4}){21}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)$/;
+const RFC3339_UTC_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/;
+const MEDIA_TYPE_PATTERN = /^[a-z0-9][a-z0-9!#$&^_.+-]{0,63}\/[a-z0-9][a-z0-9!#$&^_.+-]{0,127}$/;
+const ARTIFACT_ATTESTATION_MEDIA_TYPE = "application/vnd.aiwg.artifact-attestation.v1+json";
+const ARTIFACT_ATTESTATION_SUFFIX = ".aiwg-attestation.json";
 const RELEASE_MANIFEST_SCHEMAS = new Set([
   "aiwg.resource-manifest/v1",
   "aiwg.resource-manifest/v2",
@@ -91,6 +95,15 @@ export interface VerifiedReleaseDescriptor {
   path: string;
   size: number;
   sha256: string;
+  mediaType?: string;
+  attestation?: VerifiedReleaseAttestationDescriptor;
+}
+
+export interface VerifiedReleaseAttestationDescriptor {
+  path: string;
+  size: number;
+  sha256: string;
+  mediaType: typeof ARTIFACT_ATTESTATION_MEDIA_TYPE;
 }
 
 export interface VerifiedWebRelease {
@@ -110,6 +123,7 @@ export interface VerifiedWebRelease {
   fortemiExportSha256: string;
   fortemiExportSize: number;
   channelSequence?: number;
+  channelExpiresAt?: string;
   descriptors: ReadonlyMap<string, VerifiedReleaseDescriptor>;
 }
 
@@ -133,6 +147,7 @@ interface ChannelManifest {
   version: string;
   releaseManifest: string;
   releaseManifestSha256: string;
+  expiresAt?: string;
 }
 
 interface VersionIndexEntry {
@@ -260,7 +275,7 @@ function assertSafeRelativePath(value: unknown, label: string): asserts value is
   }
 }
 
-function descriptorFrom(value: unknown, descriptorPath: string): VerifiedReleaseDescriptor {
+function descriptorBaseFrom(value: unknown, descriptorPath: string): Omit<VerifiedReleaseDescriptor, "attestation"> {
   if (!isRecord(value)) throw new Error(`release descriptor for ${descriptorPath} must be an object`);
   assertSafeRelativePath(value.path, `release descriptor path for ${descriptorPath}`);
   if (!Number.isSafeInteger(value.size) || (value.size as number) < 0) {
@@ -269,7 +284,34 @@ function descriptorFrom(value: unknown, descriptorPath: string): VerifiedRelease
   if (typeof value.sha256 !== "string" || !SHA256_PATTERN.test(value.sha256)) {
     throw new Error(`release descriptor digest for ${value.path} is invalid`);
   }
-  return { path: value.path, size: value.size as number, sha256: value.sha256 };
+  if (value.mediaType !== undefined && (typeof value.mediaType !== "string" || !MEDIA_TYPE_PATTERN.test(value.mediaType))) {
+    throw new Error(`release descriptor mediaType for ${value.path} is invalid`);
+  }
+  return {
+    path: value.path,
+    size: value.size as number,
+    sha256: value.sha256,
+    ...(typeof value.mediaType === "string" ? { mediaType: value.mediaType } : {}),
+  };
+}
+
+function descriptorFrom(value: unknown, descriptorPath: string): VerifiedReleaseDescriptor {
+  const descriptor = descriptorBaseFrom(value, descriptorPath);
+  if (!isRecord(value) || value.attestation === undefined) return descriptor;
+  if (!descriptor.mediaType) {
+    throw new Error(`release descriptor ${descriptor.path} with an attestation must declare mediaType`);
+  }
+  const attestation = descriptorBaseFrom(value.attestation, `${descriptor.path} attestation`);
+  if (attestation.path !== `${descriptor.path}${ARTIFACT_ATTESTATION_SUFFIX}`) {
+    throw new Error(`release attestation descriptor for ${descriptor.path} is not adjacent to its artifact`);
+  }
+  if (attestation.mediaType !== ARTIFACT_ATTESTATION_MEDIA_TYPE) {
+    throw new Error(`release attestation descriptor for ${descriptor.path} has an invalid mediaType`);
+  }
+  if (isRecord(value.attestation) && value.attestation.attestation !== undefined) {
+    throw new Error(`release attestation descriptor for ${descriptor.path} must not contain another attestation`);
+  }
+  return { ...descriptor, attestation: attestation as VerifiedReleaseAttestationDescriptor };
 }
 
 function validateReleaseManifest(
@@ -302,13 +344,25 @@ function validateReleaseManifest(
   const add = (descriptor: VerifiedReleaseDescriptor): void => {
     if (descriptors.has(descriptor.path)) throw new Error(`duplicate release descriptor path: ${descriptor.path}`);
     descriptors.set(descriptor.path, descriptor);
+    if (descriptor.attestation) {
+      if (descriptors.has(descriptor.attestation.path)) {
+        throw new Error(`duplicate release descriptor path: ${descriptor.attestation.path}`);
+      }
+      descriptors.set(descriptor.attestation.path, descriptor.attestation);
+    }
   };
 
   for (const bundle of value.bundles) {
     if (!isRecord(bundle) || typeof bundle.filename !== "string" || !/^[a-z0-9-]+\.tar\.zst$/.test(bundle.filename)) {
       throw new Error("release manifest contains an unsafe bundle filename");
     }
-    add(descriptorFrom({ path: `bundles/${bundle.filename}`, size: bundle.size, sha256: bundle.sha256 }, bundle.filename));
+    add(descriptorFrom({
+      path: `bundles/${bundle.filename}`,
+      size: bundle.size,
+      sha256: bundle.sha256,
+      mediaType: bundle.mediaType,
+      attestation: bundle.attestation,
+    }, bundle.filename));
   }
   for (const file of value.files) add(descriptorFrom(file, "file"));
   return { manifest: value, descriptors };
@@ -331,6 +385,18 @@ function validateChannelManifest(value: unknown, channel: string): ChannelManife
   }
   if (typeof value.releaseManifestSha256 !== "string" || !SHA256_PATTERN.test(value.releaseManifestSha256)) {
     throw new Error(`channel ${channel} has an invalid release manifest digest`);
+  }
+  if (value.expiresAt !== undefined) {
+    if (
+      typeof value.expiresAt !== "string" ||
+      !RFC3339_UTC_PATTERN.test(value.expiresAt) ||
+      !Number.isFinite(Date.parse(value.expiresAt))
+    ) {
+      throw new Error(`channel ${channel} has an invalid expiry`);
+    }
+    if (Date.parse(value.expiresAt) <= Date.now()) {
+      throw new Error(`channel ${channel} signed metadata has expired`);
+    }
   }
   return value as unknown as ChannelManifest;
 }
@@ -1296,7 +1362,7 @@ export async function resolveWebRelease(options: WebReleaseOptions = {}): Promis
   if (options.offline) {
     const cached = readCachedChannel(cacheRoot, selector.value, publicKeyPem);
     if (!cached) throw new Error(`AIWG resource channel ${selector.value} is not cached; offline mode cannot fetch it`);
-    return resolveOfflineExact(
+    const release = resolveOfflineExact(
       cacheRoot,
       selector,
       cached.manifest.version,
@@ -1305,6 +1371,7 @@ export async function resolveWebRelease(options: WebReleaseOptions = {}): Promis
       cached.manifest.releaseManifestSha256,
       cached.manifest.sequence,
     );
+    return cached.manifest.expiresAt ? { ...release, channelExpiresAt: cached.manifest.expiresAt } : release;
   }
 
   const fetcher = authorize;
@@ -1316,10 +1383,11 @@ export async function resolveWebRelease(options: WebReleaseOptions = {}): Promis
   if (fetched.notModified) {
     cacheChannel(cacheRoot, prior!.manifest, prior!.bytes, prior!.signatureBytes, prior!.digest, fetched.validator);
     options.onDiagnostic?.({ resource: "channel", outcome: "conditional-hit", validator: prior!.validator!.etag ? "etag" : "last-modified" });
-    return fetchAndCacheRelease(
+    const release = await fetchAndCacheRelease(
       base, fetcher, cacheRoot, selector, prior!.manifest.version, publicKeyPem,
       prior!.manifest.releaseManifestSha256, prior!.manifest.sequence,
     );
+    return prior!.manifest.expiresAt ? { ...release, channelExpiresAt: prior!.manifest.expiresAt } : release;
   }
   const channelBytes = fetched.bytes!;
   const channelSignatureBytes = await fetchBytes(fetcher, resourceUrl(base, `${channelPrefix}.sig`), `channel ${selector.value} signature`, MAX_SIGNATURE_BYTES);
@@ -1352,7 +1420,7 @@ export async function resolveWebRelease(options: WebReleaseOptions = {}): Promis
   );
   cacheChannel(cacheRoot, channel, channelBytes, channelSignatureBytes, channelDigest, fetched.validator);
   options.onDiagnostic?.({ resource: "channel", outcome: prior?.validator ? "revalidated" : "unconditional", validator: fetched.validator?.etag ? "etag" : fetched.validator?.lastModified ? "last-modified" : "none" });
-  return release;
+  return channel.expiresAt ? { ...release, channelExpiresAt: channel.expiresAt } : release;
 }
 
 export async function fetchVerifiedRawResource(

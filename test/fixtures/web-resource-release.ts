@@ -5,8 +5,13 @@ import type { ResourceFetchResponse } from "../../src/resources/web-release.js";
 export const TEST_VERSION = "2026.7.22";
 export const TEST_SKILL_PATH = "agentic/code/frameworks/sdlc-complete/skills/web-regression/SKILL.md";
 export const TEST_RAW_PATH = `raw/${TEST_SKILL_PATH}`;
+export const TEST_RAW_ATTESTATION_PATH = `${TEST_RAW_PATH}.aiwg-attestation.json`;
 export const TEST_SKILL_BODY = Buffer.from(
   "---\nname: web-regression\ndescription: Exercise signed web resource regression behavior\n---\n# Web Regression\n\nDownloaded exactly from the signed release fixture.\n",
+  "utf8",
+);
+export const TEST_RAW_ATTESTATION_BODY = Buffer.from(
+  '{"mediaType":"application/vnd.aiwg.artifact-attestation.v1+json","fixture":true}\n',
   "utf8",
 );
 
@@ -70,6 +75,7 @@ export interface PublishedRelease {
   fortemiManifestBytes: Buffer;
   exportBytes: Buffer;
   rawBody: Buffer;
+  rawAttestationBody: Buffer;
 }
 
 export interface ReleaseOverrides {
@@ -191,7 +197,18 @@ export function createWebResourceReleaseFixture() {
           size: exportBytes.length,
           sha256: digest(exportBytes),
         },
-        { path: TEST_RAW_PATH, size: rawBody.length, sha256: digest(rawBody) },
+        {
+          path: TEST_RAW_PATH,
+          size: rawBody.length,
+          sha256: digest(rawBody),
+          mediaType: "text/markdown",
+          attestation: {
+            path: TEST_RAW_ATTESTATION_PATH,
+            size: TEST_RAW_ATTESTATION_BODY.length,
+            sha256: digest(TEST_RAW_ATTESTATION_BODY),
+            mediaType: "application/vnd.aiwg.artifact-attestation.v1+json",
+          },
+        },
       ],
     };
     overrides.mutateReleaseManifest?.(releaseManifest);
@@ -202,6 +219,7 @@ export function createWebResourceReleaseFixture() {
     routes.set(`${prefix}/raw/prebuilt/fortemi-core/framework/manifest.json`, fortemiManifestBytes);
     routes.set(`${prefix}/raw/prebuilt/fortemi-core/framework/aiwg-fortemi-index-v2.json`, exportBytes);
     routes.set(`${prefix}/${TEST_RAW_PATH}`, rawBody);
+    routes.set(`${prefix}/${TEST_RAW_ATTESTATION_PATH}`, TEST_RAW_ATTESTATION_BODY);
     return {
       version,
       manifestBytes,
@@ -209,10 +227,16 @@ export function createWebResourceReleaseFixture() {
       fortemiManifestBytes,
       exportBytes,
       rawBody,
+      rawAttestationBody: TEST_RAW_ATTESTATION_BODY,
     };
   };
 
-  const publishChannel = (channel: string, sequence: number, release: PublishedRelease): Buffer => {
+  const publishChannel = (
+    channel: string,
+    sequence: number,
+    release: PublishedRelease,
+    options: { expiresAt?: string } = {},
+  ): Buffer => {
     const bytes = jsonBytes({
       schemaVersion: "aiwg.channel-manifest/v1",
       channel,
@@ -220,6 +244,7 @@ export function createWebResourceReleaseFixture() {
       version: release.version,
       releaseManifest: `/resources/${release.version}/manifest.json`,
       releaseManifestSha256: release.manifestDigest,
+      ...(options.expiresAt ? { expiresAt: options.expiresAt } : {}),
     });
     routes.set(`/resources/channels/${channel}.json`, bytes);
     routes.set(`/resources/channels/${channel}.sig`, detachedSignature(bytes));

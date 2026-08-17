@@ -138,6 +138,7 @@
     "tools/manifest/check-discovery-coverage.mjs",
     "!tools/release/",
     "schemas/security/",
+    "schemas/providers/",
     "schemas/activity/",
     "test/conformance/activity-v1/fixtures/",
     "schemas/marketplace/",

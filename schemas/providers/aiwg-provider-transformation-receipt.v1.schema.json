@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/providers/aiwg-provider-transformation-receipt.v1.schema.json",
+  "title": "AIWG provider transformation receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "generatedAt", "scope", "provider", "source", "transformer", "outputs"],
+  "properties": {
+    "schemaVersion": { "const": "aiwg.provider-transformation-receipt.v1" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "scope": { "enum": ["project", "user"] },
+    "provider": { "$ref": "#/$defs/provider" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject", "sha256", "verification"],
+      "properties": {
+        "subject": { "$ref": "#/$defs/id" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "verification": { "const": "verified" }
+      }
+    },
+    "transformer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "providerAdapter", "providerAdapterVersion"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "version": { "$ref": "#/$defs/id" },
+        "providerAdapter": { "$ref": "#/$defs/id" },
+        "providerAdapterVersion": { "$ref": "#/$defs/id" }
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256", "bytes"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$" },
+          "sha256": { "$ref": "#/$defs/sha256" },
+          "bytes": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "provider": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._+\\-]*$" },
+    "id": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:/@+\\-]*$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

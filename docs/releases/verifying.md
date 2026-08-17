@@ -19,6 +19,19 @@ AIWG ships four cryptographic verifications you can run on any release:
    transitive dep level. Applies to the first release published after
    #1288 (A13, Wave 6 of #1278) and forward.
 
+Web-consumed YAML, flow bundles, and selected indices additionally use adjacent
+cross-asset attestations. These are not a fifth substitute for the controls
+above: consumers first verify the existing signed channel/release manifest,
+then its artifact and attestation descriptors, then the sidecar's DSSE/in-toto
+policy. The signed descriptor includes each object's path, media type, exact
+byte length, and SHA-256 digest. HTTP cache and discovery headers are never
+signature or digest evidence.
+
+The attested site-publication pipeline is fail-closed while this repository has
+no reviewed authoritative `agentic.yaml`. Until that source contract exists,
+absence of the public agentic sidecar is an explicit unpublished state, not a
+reason to accept an unsigned or generated substitute.
+
 This doc walks through all four verifications and shows what each one
 rules out.
 

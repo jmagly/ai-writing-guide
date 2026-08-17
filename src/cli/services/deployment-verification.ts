@@ -10,6 +10,8 @@ import {
   normalizeProviderDefinitionId,
   resolveProviderPathValue,
 } from '../../providers/provider-definitions.js';
+import { diagnoseIntegratedProviderTransformationReceipt } from '../../providers/transformation-receipt-integration.js';
+import type { ProviderDriftKind } from '../../providers/transformation-receipt.js';
 import {
   diagnoseWorkspaceContext,
   providerContextContract,
@@ -83,6 +85,8 @@ export interface UseDeploymentResult {
 
 export interface VerifyProviderDeploymentOptions {
   projectRoot: string;
+  /** Provider output root when it is split from the local project control root. */
+  outputRoot?: string;
   frameworkRoot: string;
   provider: string;
   scope: DeploymentScope;
@@ -227,6 +231,75 @@ function classifyOutcome(
   return restartRequired ? 'ready-restart-required' : 'ready';
 }
 
+const RECEIPT_DRIFT_POLICY: Readonly<Record<ProviderDriftKind, {
+  severity: DeploymentFindingSeverity;
+  remediation: string;
+}>> = {
+  'source-verification-failure': {
+    severity: 'blocking',
+    remediation: 'Restore or reverify the canonical source before regenerating provider outputs.',
+  },
+  'transformation-mismatch': {
+    severity: 'blocking',
+    remediation: 'Review the active provider adapter change, then re-run the same aiwg use command.',
+  },
+  'user-modification': {
+    severity: 'blocking',
+    remediation: 'Back up the changed managed output if needed, then re-run the same aiwg use command.',
+  },
+  'stale-output': {
+    severity: 'blocking',
+    remediation: 'Re-run the same aiwg use command to complete a verified regeneration.',
+  },
+  'missing-receipt': {
+    severity: 'advisory',
+    remediation: 'Re-run the same aiwg use command to establish provider transformation evidence.',
+  },
+};
+
+async function collectProviderReceiptFindings(
+  options: VerifyProviderDeploymentOptions,
+  provider: string,
+): Promise<DeploymentVerificationFinding[]> {
+  try {
+    const diagnosis = await diagnoseIntegratedProviderTransformationReceipt({
+      projectRoot: options.projectRoot,
+      outputRoot: options.outputRoot,
+      frameworkRoot: options.frameworkRoot,
+      provider,
+      scope: options.scope,
+      requestedBundles: options.requestedBundles,
+    });
+    return diagnosis.findings.map((drift, index) => {
+      const policy = RECEIPT_DRIFT_POLICY[drift.kind];
+      return finding(
+        provider,
+        `provider-drift:${drift.kind}:${index}`,
+        policy.severity,
+        drift.message,
+        policy.remediation,
+        {
+          driftClass: drift.kind,
+          receiptPath: diagnosis.receiptPath,
+          checkedOutputs: diagnosis.checkedOutputs,
+          ...(drift.path ? { path: drift.path } : {}),
+          ...(drift.expected ? { expected: drift.expected } : {}),
+          ...(drift.actual ? { actual: drift.actual } : {}),
+        },
+      );
+    });
+  } catch (error) {
+    return [finding(
+      provider,
+      'provider-drift:missing-receipt:0',
+      'advisory',
+      `Provider transformation evidence could not be evaluated: ${error instanceof Error ? error.message : String(error)}`,
+      RECEIPT_DRIFT_POLICY['missing-receipt'].remediation,
+      { driftClass: 'missing-receipt' },
+    )];
+  }
+}
+
 function indexContainsRequestedBundles(index: ArtifactIndex, requestedBundles: string[]): boolean {
   if (requestedBundles.includes('all')) return Object.keys(index.entries).length > 0;
   const entryPaths = Object.keys(index.entries);
@@ -354,17 +427,18 @@ export async function verifyProviderDeployment(
   }
 
   if (definition) {
+    const deploymentRoot = options.outputRoot ?? options.projectRoot;
     const artifactPaths = options.scope === 'user'
       ? USER_SCOPE_PATHS[normalized] ?? definition.paths.artifacts
       : definition.paths.artifacts;
     for (const type of ['agents', 'commands', 'skills', 'rules', 'behaviors'] as const) {
-      const resolved = resolveProviderPathValue(artifactPaths[type], options.projectRoot);
+      const resolved = resolveProviderPathValue(artifactPaths[type], deploymentRoot);
       counts[type] = await countEntries(resolved);
     }
-    const resolvedSkillsPath = resolveProviderPathValue(artifactPaths.skills, options.projectRoot);
+    const resolvedSkillsPath = resolveProviderPathValue(artifactPaths.skills, deploymentRoot);
     const kernelPath = options.scope === 'user'
       ? ''
-      : resolveProviderPathValue(definition.paths.kernelSkills, options.projectRoot);
+      : resolveProviderPathValue(definition.paths.kernelSkills, deploymentRoot);
     const kernelCount = await countEntries(kernelPath);
     if (kernelPath && kernelPath !== resolvedSkillsPath) counts.skills += kernelCount;
     const artifactTotal = Object.values(counts).reduce((sum, value) => sum + value, 0);
@@ -381,6 +455,7 @@ export async function verifyProviderDeployment(
   }
 
   findings.push(...await collectRegistryFindings(options, normalized, counts));
+  findings.push(...await collectProviderReceiptFindings(options, normalized));
 
   const projectConfig = await readAiwgConfig(options.projectRoot);
   const scopedRegistry = options.scope === 'user'
@@ -549,7 +624,7 @@ export async function verifyProviderDeployment(
   const contextFailed = findings.some((item) => item.id.startsWith('context-') && item.severity === 'blocking');
   const deployFailed = findings.some((item) =>
     item.severity === 'blocking'
-      && (item.id.startsWith('deployment-') || item.id.startsWith('provider-') || item.id.startsWith('registry-'))
+      && (item.id.startsWith('deployment-') || item.id === 'provider-unknown' || item.id === 'provider-artifacts-missing' || item.id.startsWith('registry-'))
   );
   const phases: DeploymentPhaseResult[] = [
     phase('resolve', 'passed', true, `Resolved ${options.projectRoot}, ${normalized}, ${options.scope} scope.`),
@@ -683,13 +758,20 @@ export async function verifyConfiguredDeployments(
   frameworkRoot = process.env.AIWG_ROOT || projectRoot,
 ): Promise<UseDeploymentResult> {
   const config = await readAiwgConfig(projectRoot);
+  const userRegistry = filters.scope === 'user' ? await readUserRegistry() : null;
+  const installed = userRegistry?.installed ?? config?.installed ?? {};
+  const registeredProviders = [...new Set(
+    Object.values(installed).flatMap((entry) => Object.keys(entry.deployedTo ?? {})),
+  )];
   const providers = filters.provider
     ? [filters.provider]
-    : config?.providers?.length ? config.providers : [];
-  const bundles = filters.bundle ? [filters.bundle] : Object.keys(config?.installed ?? {});
+    : filters.scope === 'user'
+      ? registeredProviders
+      : config?.providers?.length ? config.providers : registeredProviders;
+  const bundles = filters.bundle ? [filters.bundle] : Object.keys(installed);
   const results: ProviderDeploymentVerification[] = [];
   for (const provider of providers) {
-    const providerBundles = bundles.filter((bundle) => Boolean(config?.installed[bundle]?.deployedTo[provider]));
+    const providerBundles = bundles.filter((bundle) => Boolean(installed[bundle]?.deployedTo[provider]));
     if (providerBundles.length === 0) continue;
     results.push(await verifyProviderDeployment({
       projectRoot,

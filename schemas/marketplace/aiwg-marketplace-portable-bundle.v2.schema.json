@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/marketplace/aiwg-marketplace-portable-bundle.v2.schema.json",
+  "title": "Strict dual-evidence offline AIWG marketplace package bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "envelope", "lock", "receipts", "fortemiShardBase64", "files", "crossAsset", "dependencies"],
+  "properties": {
+    "schemaVersion": { "const": "aiwg.marketplace.portable-bundle.v2" },
+    "envelope": { "$ref": "aiwg-marketplace-envelope.v1.schema.json" },
+    "lock": { "$ref": "aiwg-marketplace-lock.v1.schema.json" },
+    "receipts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "aiwg-marketplace-receipt.v1.schema.json" }
+    },
+    "fortemiShardBase64": { "$ref": "#/$defs/base64" },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/file" }
+    },
+    "crossAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attestation", "materials"],
+      "properties": {
+        "attestation": { "$ref": "../security/aiwg-artifact-attestation.v1.schema.json" },
+        "materials": {
+          "type": "array",
+          "minItems": 7,
+          "items": { "$ref": "#/$defs/material" }
+        }
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "$ref": "aiwg-marketplace-portable-bundle.v1.schema.json" },
+          { "$ref": "#" }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "base64": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "mode", "sha256", "contentBase64"],
+      "properties": {
+        "path": { "$ref": "aiwg-marketplace-envelope.v1.schema.json#/$defs/safePath" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "mode": { "type": "integer", "minimum": 0, "maximum": 511 },
+        "sha256": { "$ref": "aiwg-marketplace-envelope.v1.schema.json#/$defs/sha256" },
+        "contentBase64": { "type": "string" }
+      }
+    },
+    "material": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "uri", "bytes", "sha256", "contentBase64"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "uri": { "type": "string", "format": "uri", "minLength": 1 },
+        "mediaType": { "type": "string", "minLength": 1 },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "contentBase64": { "$ref": "#/$defs/base64" }
+      }
+    }
+  }
+}

@@ -23,7 +23,8 @@
           "validFrom": { "type": "string", "format": "date-time" },
           "validUntil": { "type": "string", "format": "date-time" },
           "revokedAt": { "type": "string", "format": "date-time" },
-          "revocationReason": { "type": "string" }
+          "revocationReason": { "type": "string" },
+          "artifactIdentityId": { "type": "string", "minLength": 1 }
         }
       }
     },

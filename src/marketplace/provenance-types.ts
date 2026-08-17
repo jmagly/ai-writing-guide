@@ -9,6 +9,8 @@
  * @implements #2009
  */
 
+import type { ArtifactAttestation } from '../security/artifact-attestation.js';
+
 export const MARKETPLACE_ENVELOPE_SCHEMA = 'aiwg.marketplace.provenance-envelope.v1' as const;
 export const MARKETPLACE_LOCK_SCHEMA = 'aiwg.marketplace.package-lock.v1' as const;
 export const MARKETPLACE_RECEIPT_SCHEMA = 'aiwg.marketplace.operation-receipt.v1' as const;
@@ -16,6 +18,7 @@ export const MARKETPLACE_TRUST_SCHEMA = 'aiwg.marketplace.trust-store.v1' as con
 export const MARKETPLACE_CATALOG_SCHEMA = 'aiwg.marketplace.catalog.v1' as const;
 export const MARKETPLACE_CATALOG_REGISTRY_SCHEMA = 'aiwg.marketplace.catalog-registry.v1' as const;
 export const MARKETPLACE_BUNDLE_SCHEMA = 'aiwg.marketplace.portable-bundle.v1' as const;
+export const MARKETPLACE_BUNDLE_V2_SCHEMA = 'aiwg.marketplace.portable-bundle.v2' as const;
 export const MARKETPLACE_INDEX_SCHEMA = 'aiwg.marketplace.local-index.v1' as const;
 
 export type PackageKind = 'framework' | 'addon' | 'extension' | 'plugin' | 'unknown';
@@ -203,6 +206,8 @@ export interface MarketplaceTrustedKey {
   validUntil?: string;
   revokedAt?: string;
   revocationReason?: string;
+  /** Cross-asset trust-root identity that represents this same authority. */
+  artifactIdentityId?: string;
 }
 
 export interface MarketplaceTrustStore {
@@ -218,6 +223,7 @@ export interface MarketplaceVerificationPolicy {
   allowDeprecated: boolean;
   allowRefMove: boolean;
   allowRollback: boolean;
+  requireDependencyLocks?: boolean;
   minimumSequence?: Record<string, number>;
   requiredPublisher?: string;
 }
@@ -289,11 +295,50 @@ export interface MarketplacePortableBundle {
   files: MarketplacePortableFile[];
 }
 
+/** Exact offline material referenced by the cross-asset attestation. */
+export interface MarketplacePortableAttestationMaterial {
+  name: string;
+  uri: string;
+  mediaType?: string;
+  bytes: number;
+  sha256: string;
+  contentBase64: string;
+}
+
+export interface MarketplacePortableCrossAssetEvidence {
+  attestation: ArtifactAttestation;
+  materials: MarketplacePortableAttestationMaterial[];
+}
+
+/**
+ * v2 is deliberately separate from v1: old archives stay readable without
+ * acquiring new required fields, while v2 is a closed, recursively portable
+ * dual-evidence contract.
+ */
+export interface MarketplacePortableBundleV2 {
+  schemaVersion: typeof MARKETPLACE_BUNDLE_V2_SCHEMA;
+  envelope: MarketplaceProvenanceEnvelope;
+  lock: MarketplacePackageLock;
+  receipts: MarketplaceOperationReceipt[];
+  fortemiShardBase64: string;
+  files: MarketplacePortableFile[];
+  crossAsset: MarketplacePortableCrossAssetEvidence;
+  dependencies: Array<MarketplacePortableBundle | MarketplacePortableBundleV2>;
+}
+
+export type MarketplaceReadablePortableBundle = MarketplacePortableBundle | MarketplacePortableBundleV2;
+
 export interface MarketplaceIndexEntry {
   lock: MarketplacePackageLock;
   envelopePath: string;
   receiptPaths: string[];
   fortemiShardPath?: string;
+  /** Adjacent cross-asset attestation retained from a verified v2 bundle. */
+  attestationPath?: string;
+  /** Offline material URI to its content-addressed local sidecar path. */
+  materialPaths?: Record<string, string>;
+  /** Recursively verified required dependency locks carried by a v2 bundle. */
+  dependencyLockIds?: string[];
   cachePath: string;
   artifactPath: string;
   installedAt: string;

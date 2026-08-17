@@ -5,6 +5,9 @@ import path from 'node:path';
 import { parseDocument, stringify } from 'yaml';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { findPackageRoot } from '../find-package-root.js';
+import { sha256 } from '../../security/artifact-trust.js';
+import type { ArtifactVerificationResult } from '../../security/artifact-verifier.js';
+import { artifactVerifyHandler } from './artifact-verify.js';
 
 type Severity = 'error' | 'warning';
 
@@ -103,6 +106,7 @@ interface RunOptions {
   skip: Set<string>;
   type?: string;
   yes?: boolean;
+  artifactVerification?: ArtifactVerificationResult;
 }
 
 interface GenerateOptions {
@@ -154,7 +158,8 @@ Usage:
   aiwg setup-run [manifest-path] [--manifest PATH] [--dry-run] [--platform OS]
                  [--distro NAME] [--params-file PATH] [--param KEY=VALUE]
                  [--step STEP_ID] [--skip A,B] [--type user|developer|ci]
-                 [--yes|--confirm]
+                 [--yes|--confirm] [--attestation PATH] [--policy ROOT]
+                 [--state PATH] [--offline]
 
 Options:
   --manifest PATH      Manifest path. Defaults to ./setup.manifest.yaml.
@@ -167,11 +172,17 @@ Options:
   --skip A,B           Comma-separated step IDs to skip.
   --type TYPE          Select default manifest by install type when no path is given.
   --yes, --confirm     Explicitly authorize mutating step execution and recovery.
+  --attestation PATH   Adjacent AIWG attestation for provider-orchestrated handoff.
+  --policy ROOT        Explicit cross-asset trust root; required for agent handoff.
+  --state PATH         Persisted trust/freshness state used by verification.
+  --offline            Forbid network retrieval and require portable evidence.
   --help, -h           Show this help.
 
 Safety:
   setup-run always runs setup-validate before platform detection or execution.
   Mutating execution refuses to run without explicit confirmation.
+  Provider-orchestrated manifests are never handed to an agent unless their
+  exact bytes have status verified under the explicit trust policy.
 `;
 
 function flagValue(args: readonly string[], name: string): string | undefined {
@@ -202,6 +213,12 @@ function positionalManifest(args: readonly string[]): string | undefined {
     '--type',
     '--output',
     '--name',
+    '--attestation',
+    '--policy',
+    '--state',
+    '--asset-type',
+    '--namespace',
+    '--channel',
   ]);
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
@@ -803,9 +820,17 @@ export function runSetupManifest(options: RunOptions): HandlerResult {
   }
   const manifest = validation.manifest;
   if (manifest.metadata.execution_mode === 'provider-orchestrated') {
+    const expectedDigest = sha256(readFileSync(validation.manifestPath));
+    if (options.artifactVerification?.status !== 'verified'
+      || options.artifactVerification.artifact.sha256 !== expectedDigest) {
+      return {
+        exitCode: 29,
+        message: 'setup-run: provider-orchestrated handoff blocked; verify these exact manifest bytes with an explicit trust root and adjacent attestation first',
+      };
+    }
     return {
       exitCode: 2,
-      message: 'setup-run: this manifest is provider-orchestrated; give its URL or contents to a supported AI provider instead of executing it as a deterministic CLI manifest',
+      message: `setup-run: verified provider-orchestrated manifest (${options.artifactVerification.artifact.sha256}); give these exact contents to a supported AI provider instead of executing them as a deterministic CLI manifest`,
     };
   }
   const target = detectPlatform(options);
@@ -911,6 +936,31 @@ export const setupRunHandler: CommandHandler = {
       process.stdout.write(RUN_HELP);
       return { exitCode: 0 };
     }
-    return runSetupManifest(parseRunOptions(ctx));
+    const options = parseRunOptions(ctx);
+    const manifestPath = options.manifestPath ?? 'setup.manifest.yaml';
+    let artifactVerification: ArtifactVerificationResult | undefined;
+    if (flagValue(ctx.args, '--policy')) {
+      const verificationArgs = [
+        manifestPath,
+        '--attestation', flagValue(ctx.args, '--attestation') ?? `${manifestPath}.aiwg-attestation.json`,
+        '--policy', flagValue(ctx.args, '--policy')!,
+        '--asset-type', flagValue(ctx.args, '--asset-type') ?? 'setup-manifest',
+        '--namespace', flagValue(ctx.args, '--namespace') ?? 'aiwg',
+        '--channel', flagValue(ctx.args, '--channel') ?? 'stable',
+        '--json',
+        ...(flagValue(ctx.args, '--state') ? ['--state', flagValue(ctx.args, '--state')!] : []),
+        ...(hasFlag(ctx.args, '--offline') ? ['--offline'] : []),
+      ];
+      const verification = await artifactVerifyHandler.execute({ ...ctx, args: verificationArgs, rawArgs: verificationArgs });
+      try {
+        artifactVerification = JSON.parse(verification.message ?? '') as ArtifactVerificationResult;
+      } catch {
+        return { exitCode: verification.exitCode || 27, message: `setup-run: artifact verification failed: ${verification.message ?? 'invalid verifier output'}` };
+      }
+      if (artifactVerification.status !== 'verified') {
+        return { exitCode: artifactVerification.exitCode, message: `setup-run: provider handoff blocked by artifact verification status '${artifactVerification.status}'` };
+      }
+    }
+    return runSetupManifest({ ...options, artifactVerification });
   },
 };

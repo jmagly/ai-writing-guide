@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { createHash } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -16,14 +17,18 @@ import {
   buildDryRunUseResult,
   normalizeFrameworkDiscoveryInventory,
   renderUseDeploymentResult,
+  verifyConfiguredDeployments,
   verifyProviderDeployment,
   type ProviderDeploymentVerification,
   type UseDeploymentResult,
 } from '../../../src/cli/services/deployment-verification.js';
 import type { IndexStats } from '../../../src/artifacts/types.js';
+import { finalizeProviderTransformationReceipt } from '../../../src/providers/transformation-receipt-integration.js';
+import type { ArtifactVerificationResult } from '../../../src/security/artifact-verifier.js';
 
 const roots: string[] = [];
 let previousXdgDataHome: string | undefined;
+let previousUserRegistryPath: string | undefined;
 
 async function tempRoot(prefix: string): Promise<string> {
   const root = await mkdtemp(path.join(tmpdir(), prefix));
@@ -55,15 +60,22 @@ async function writeFrameworkIndex(frameworkRoot: string, builtAt = new Date().t
     tagDistribution: {},
     graphMetrics: { totalEdges: 0 },
   }));
+  const manifest = path.join(frameworkRoot, 'agentic/code/frameworks/sdlc-complete/manifest.json');
+  await mkdir(path.dirname(manifest), { recursive: true });
+  await writeFile(manifest, '{"id":"sdlc-complete","version":"test"}\n');
 }
 
 async function readyCodexFixture(): Promise<{ projectRoot: string; frameworkRoot: string }> {
   const projectRoot = await tempRoot('aiwg-deploy-verify-project-');
   const frameworkRoot = await tempRoot('aiwg-deploy-verify-framework-');
   await mkdir(path.join(projectRoot, '.codex', 'commands'), { recursive: true });
-  await writeFile(path.join(projectRoot, '.codex', 'commands', 'fixture.md'), '# Fixture command\n');
+  await writeFile(path.join(projectRoot, '.codex', 'commands', 'fixture.md'), '# aiwg:managed vtest bundled\n# Fixture command\n');
+  await writeFile(path.join(projectRoot, '.codex', 'commands', '.aiwg-manifest.json'), JSON.stringify({
+    managed: { 'fixture.md': { hash: 'sha256:fixture' } },
+  }));
   await mkdir(path.join(projectRoot, '.agents', 'skills', 'fixture'), { recursive: true });
   await writeFile(path.join(projectRoot, '.agents', 'skills', 'fixture', 'SKILL.md'), '# Fixture skill\n');
+  await writeFile(path.join(projectRoot, '.agents', 'skills', 'fixture', '.aiwg-managed'), 'aiwg\n');
 
   const config = updateInstalled(
     emptyConfig(['codex']),
@@ -81,6 +93,28 @@ async function readyCodexFixture(): Promise<{ projectRoot: string; frameworkRoot
     force: true,
   });
   await writeFrameworkIndex(frameworkRoot);
+  const manifestBytes = await readFile(path.join(frameworkRoot, 'agentic/code/frameworks/sdlc-complete/manifest.json'));
+  const sourceVerification: ArtifactVerificationResult = {
+    schemaVersion: 'aiwg.verify.result.v1',
+    status: 'verified',
+    exitCode: 0,
+    artifact: {
+      name: 'agentic/code/frameworks/sdlc-complete/manifest.json',
+      sha256: createHash('sha256').update(manifestBytes).digest('hex'),
+    },
+    policy: 'test-threshold-policy',
+    identities: ['test-release-signer'],
+    rootVersion: 1,
+    diagnostics: [],
+  };
+  await finalizeProviderTransformationReceipt({
+    projectRoot,
+    frameworkRoot,
+    provider: 'codex',
+    scope: 'project',
+    requestedBundles: ['sdlc'],
+    sourceVerifications: { sdlc: sourceVerification },
+  });
   return { projectRoot, frameworkRoot };
 }
 
@@ -102,11 +136,18 @@ describe.sequential('deployment verification contract (#2069)', () => {
   beforeEach(async () => {
     previousXdgDataHome = process.env.XDG_DATA_HOME;
     process.env.XDG_DATA_HOME = await tempRoot('aiwg-deploy-verify-xdg-');
+    previousUserRegistryPath = process.env.AIWG_USER_REGISTRY_PATH;
+    process.env.AIWG_USER_REGISTRY_PATH = path.join(
+      await tempRoot('aiwg-deploy-verify-user-registry-'),
+      'installed.json',
+    );
   });
 
   afterEach(async () => {
     if (previousXdgDataHome === undefined) delete process.env.XDG_DATA_HOME;
     else process.env.XDG_DATA_HOME = previousXdgDataHome;
+    if (previousUserRegistryPath === undefined) delete process.env.AIWG_USER_REGISTRY_PATH;
+    else process.env.AIWG_USER_REGISTRY_PATH = previousUserRegistryPath;
     await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
   });
 
@@ -218,6 +259,52 @@ describe.sequential('deployment verification contract (#2069)', () => {
     });
   });
 
+  it('surfaces the five receipt drift classes through deployment, doctor, and probe verification', async () => {
+    const missing = await readyCodexFixture();
+    await rm(path.join(missing.projectRoot, '.aiwg/receipts/providers/codex.project.json'));
+    expect((await verifyFixture(missing.projectRoot, missing.frameworkRoot)).findings)
+      .toEqual(expect.arrayContaining([expect.objectContaining({
+        id: 'provider-drift:missing-receipt:0',
+        evidence: expect.objectContaining({ driftClass: 'missing-receipt' }),
+      })]));
+
+    const altered = await readyCodexFixture();
+    await writeFile(path.join(altered.projectRoot, '.codex/commands/fixture.md'), '# operator changed managed output\n');
+    expect((await buildDeploymentStatusProbe(altered.projectRoot, altered.frameworkRoot)))
+      .toMatchObject({
+        status: 'needs-repair',
+        deployment_verification: {
+          findings: expect.arrayContaining([expect.objectContaining({
+            evidence: expect.objectContaining({ driftClass: 'user-modification' }),
+          })]),
+        },
+      });
+
+    const partial = await readyCodexFixture();
+    await rm(path.join(partial.projectRoot, '.codex/commands/fixture.md'));
+    expect((await verifyFixture(partial.projectRoot, partial.frameworkRoot)).findings)
+      .toEqual(expect.arrayContaining([expect.objectContaining({
+        evidence: expect.objectContaining({ driftClass: 'stale-output' }),
+      })]));
+
+    const adapter = await readyCodexFixture();
+    const adapterReceiptPath = path.join(adapter.projectRoot, '.aiwg/receipts/providers/codex.project.json');
+    const adapterReceipt = JSON.parse(await readFile(adapterReceiptPath, 'utf8'));
+    adapterReceipt.transformer.providerAdapterVersion = 'outdated';
+    await writeFile(adapterReceiptPath, JSON.stringify(adapterReceipt));
+    expect((await verifyFixture(adapter.projectRoot, adapter.frameworkRoot)).findings)
+      .toEqual(expect.arrayContaining([expect.objectContaining({
+        evidence: expect.objectContaining({ driftClass: 'transformation-mismatch' }),
+      })]));
+
+    const source = await readyCodexFixture();
+    await rm(path.join(source.frameworkRoot, 'agentic/code/frameworks/sdlc-complete/manifest.json'));
+    expect((await verifyFixture(source.projectRoot, source.frameworkRoot)).findings)
+      .toEqual(expect.arrayContaining([expect.objectContaining({
+        evidence: expect.objectContaining({ driftClass: 'source-verification-failure' }),
+      })]));
+  });
+
   it('reports an unconfigured workspace as diagnostic state rather than deployment failure', async () => {
     const projectRoot = await tempRoot('aiwg-deploy-unconfigured-');
     const frameworkRoot = await tempRoot('aiwg-deploy-framework-');
@@ -240,6 +327,33 @@ describe.sequential('deployment verification contract (#2069)', () => {
       },
       verification: { next_command: 'aiwg wizard --dry-run' },
     });
+  });
+
+  it('resolves user-scope deployments from the user registry without a project deployment record', async () => {
+    const projectRoot = await tempRoot('aiwg-user-deploy-project-');
+    const frameworkRoot = await tempRoot('aiwg-user-deploy-framework-');
+    await writeFrameworkIndex(frameworkRoot);
+    await mkdir(path.dirname(process.env.AIWG_USER_REGISTRY_PATH!), { recursive: true });
+    await writeFile(process.env.AIWG_USER_REGISTRY_PATH!, JSON.stringify({
+      version: '1',
+      installed: {
+        sdlc: {
+          version: 'test',
+          source: 'bundled',
+          installedAt: new Date().toISOString(),
+          deployedTo: { codex: { agents: 0, commands: 1, skills: 1, rules: 0 } },
+        },
+      },
+    }));
+
+    const result = await verifyConfiguredDeployments(
+      projectRoot,
+      { scope: 'user' },
+      frameworkRoot,
+    );
+    expect(result.providers[0]).toMatchObject({ provider: 'codex', scope: 'user' });
+    expect(result.requestedBundles).toEqual(['sdlc']);
+    expect(result.findings.some(item => item.id === 'deployment-not-configured')).toBe(false);
   });
 });
 

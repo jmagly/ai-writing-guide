@@ -299,12 +299,14 @@ npm dist-tag add @aiwg/cli@2026.1.5 next
 
 ### 5. Mirror signed release assets to the Gitea release
 
-Once `.github/workflows/npm-publish.yml` finishes on the GitHub mirror, the GitHub release for the new tag carries four signed assets:
+Once `.github/workflows/npm-publish.yml` finishes on the GitHub mirror, the GitHub release for the new tag carries the release evidence mirrored by this step:
 
 - `aiwg-X.Y.Z.tgz` (the published tarball)
 - `aiwg-X.Y.Z.tgz.sigstore` (cosign keyless signature bundle)
 - `release-manifest.json` (audit manifest — SHA-256, version, tag, commit, workflow run URL)
 - `release-manifest.json.sigstore` (cosign keyless signature bundle for the manifest)
+- `aiwg-X.Y.Z.cdx.json` and `.sigstore` (CycloneDX SBOM and signature bundle)
+- `install.sh` and `SHA256SUMS` (installer plus the release-asset checksum manifest)
 
 The Gitea-side release does NOT auto-mirror these — to avoid expanding the Gitea write-token surface that Wave 4 reduced (#1283, #1286), the mirror is a single explicit operator command after the GitHub workflow lands the assets. Run:
 
@@ -316,7 +318,7 @@ gh workflow run upload-release-sigs.yml \
 
 …or trigger it from the Gitea Actions UI (Actions → "Mirror signed release assets to Gitea release" → Run workflow → enter the tag).
 
-The workflow downloads the four assets from the public GitHub mirror and uploads them to the Gitea release via the existing `NPM_TOKEN` (no new token required). Re-runs are idempotent — duplicate-name uploads are detected (HTTP 409) and the existing asset is deleted then re-uploaded.
+The workflow downloads these assets from the public GitHub mirror and uploads them to the Gitea release with a vault-provided Gitea release token. Re-runs are idempotent — duplicate-name uploads are detected (HTTP 409) and the existing asset is deleted then re-uploaded.
 
 Verify both releases have the four sig assets attached:
 
@@ -326,6 +328,36 @@ Verify both releases have the four sig assets attached:
 | Gitea   | <https://git.integrolabs.net/roctinam/aiwg/releases/tag/vYYYY.M.PATCH> |
 
 Consumer verification commands (cosign-based, registry-independent) are documented in [`docs/releases/verifying.md`](../releases/verifying.md). See [`#1287`](https://git.integrolabs.net/roctinam/aiwg/issues/1287) and [the A8 ADR](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-tarball-cosign-signing.md) for the full rationale.
+
+#### Attested web publication ordering
+
+After the Gitea release assets are present and independently rechecked, the
+same workflow dispatches the private web-release publisher with an
+`aiwg.web-release-handoff/v1` contract. The handoff is bound to exact
+`setup.aiwg.yaml` and `agentic.yaml` bytes from the verified signed tag and
+requires:
+
+- an adjacent AIWG attestation descriptor for each published YAML, flow bundle,
+  and selected prebuilt index;
+- descriptor path, SHA-256, exact byte length, and media type in the signed web
+  release manifest;
+- compatibility with signed `aiwg.resource-manifest/v1` and v2 consumers;
+- monotonic sequence and expiry for stable-channel metadata; and
+- a site callback only after the signed release and sidecars are published.
+
+`notify-site.yml` is therefore recovery/callback-only; tag pushes no longer race
+the attestation publisher. Its descriptor payload helps aiwg.io locate the
+expected objects, but the site must verify the signed web manifest and exact
+digests. CDN ETags, Last-Modified, Content-Type, and Content-Length never replace
+that verification.
+
+The repository intentionally does not contain an authoritative `agentic.yaml`
+today. The handoff stops after preserving the already-mirrored release evidence
+and reports this as a missing source contract. Do not copy or generate an
+`agentic.yaml` to bypass the gate; establish the canonical source in a reviewed
+change, then retry the web publication step. Disabling attestation emission for
+rollback likewise leaves prior sidecars, signed manifests, and trusted sequence
+state intact.
 
 ## Release Gates
 

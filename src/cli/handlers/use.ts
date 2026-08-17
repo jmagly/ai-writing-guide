@@ -103,6 +103,7 @@ import {
   type DeploymentScope,
   type UseDeploymentResult,
 } from '../services/deployment-verification.js';
+import { finalizeProviderTransformationReceipt } from '../../providers/transformation-receipt-integration.js';
 
 /**
  * Valid framework identifiers
@@ -2283,6 +2284,19 @@ export class UseHandler implements CommandHandler {
         const effectiveScope: DeploymentScope = provider === 'openclaw' || provider === 'openhuman'
           ? 'user'
           : requestedScope;
+        if (coreResult.exitCode === 0 && !dryRun) {
+          try {
+            await finalizeProviderTransformationReceipt({
+              projectRoot: projectDir,
+              frameworkRoot,
+              provider,
+              scope: effectiveScope,
+              requestedBundles: [requestedBundle],
+            });
+          } catch (error) {
+            originalConsole.warn(`Provider receipt finalization failed for ${provider}: ${error instanceof Error ? error.message : String(error)}`);
+          }
+        }
         providerResults.push(await verifyProviderDeployment({
           projectRoot: projectDir,
           frameworkRoot,

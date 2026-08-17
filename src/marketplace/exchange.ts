@@ -23,6 +23,16 @@ import path from 'node:path';
 import { setPackageEntry } from '../packages/package-registry.js';
 import { discoverInstallablePackage } from '../packages/package-discovery.js';
 import {
+  parseTrustRoot,
+  sha256 as artifactSha256,
+  type ArtifactTrustState,
+} from '../security/artifact-trust.js';
+import {
+  serializeMarketplaceAttestation,
+  verifyMarketplaceEvidence,
+  type MarketplaceCrossAssetEvidence,
+} from './artifact-attestation.js';
+import {
   buildFortemiEnvelopeShard,
   canonicalJson,
   createOperationReceipt,
@@ -40,6 +50,7 @@ import {
 } from './provenance.js';
 import {
   MARKETPLACE_BUNDLE_SCHEMA,
+  MARKETPLACE_BUNDLE_V2_SCHEMA,
   MARKETPLACE_CATALOG_REGISTRY_SCHEMA,
   MARKETPLACE_CATALOG_SCHEMA,
   MARKETPLACE_INDEX_SCHEMA,
@@ -53,8 +64,10 @@ import {
   type MarketplaceLocalIndex,
   type MarketplaceOperationReceipt,
   type MarketplacePackageLock,
-  type MarketplacePortableBundle,
+  type MarketplacePortableBundleV2,
+  type MarketplacePortableCrossAssetEvidence,
   type MarketplacePortableFile,
+  type MarketplaceReadablePortableBundle,
   type MarketplaceProvenanceEnvelope,
   type MarketplaceTrustStore,
   type MarketplaceVerificationPolicy,
@@ -201,6 +214,8 @@ export interface RecordInstalledPackageOptions extends MarketplaceScopeOptions {
   artifactPath: string;
   verificationStatus: MarketplaceIndexEntry['verificationStatus'];
   fortemiShard?: Uint8Array;
+  crossAsset?: MarketplaceCrossAssetEvidence;
+  dependencyLockIds?: string[];
   catalogId?: string;
 }
 
@@ -212,11 +227,23 @@ export async function recordInstalledPackage(options: RecordInstalledPackageOpti
   const lockPath = path.join(packageDir, 'lock.json');
   const receiptPath = path.join(packageDir, 'receipts', `${safeDigestName(options.receipt.receiptId)}.json`);
   const shardPath = options.fortemiShard ? path.join(packageDir, 'provenance.full-v1.shard') : undefined;
+  const attestationPath = options.crossAsset ? path.join(packageDir, 'cross-asset', 'attestation.json') : undefined;
+  const materialPaths = options.crossAsset
+    ? Object.fromEntries(options.crossAsset.materials.map((material, index) => [
+        material.uri,
+        path.join(packageDir, 'cross-asset', 'materials', `${String(index).padStart(4, '0')}-${artifactSha256(material.bytes)}.material`),
+      ]))
+    : undefined;
+  if (options.crossAsset && Object.keys(materialPaths!).length !== options.crossAsset.materials.length) {
+    throw new Error('Cross-asset material URIs must be unique');
+  }
   await Promise.all([
     atomicWrite(envelopePath, `${canonicalJson(options.envelope)}\n`),
     atomicWrite(lockPath, `${canonicalJson(options.lock)}\n`),
     atomicWrite(receiptPath, `${canonicalJson(options.receipt)}\n`),
     ...(shardPath && options.fortemiShard ? [atomicWrite(shardPath, options.fortemiShard)] : []),
+    ...(attestationPath && options.crossAsset ? [atomicWrite(attestationPath, serializeMarketplaceAttestation(options.crossAsset))] : []),
+    ...((options.crossAsset && materialPaths) ? options.crossAsset.materials.map(material => atomicWrite(materialPaths[material.uri]!, material.bytes)) : []),
   ]);
   const index = await readMarketplaceIndex(options);
   const existing = index.packages[options.lock.lockId];
@@ -225,6 +252,11 @@ export async function recordInstalledPackage(options: RecordInstalledPackageOpti
     envelopePath,
     receiptPaths: [...new Set([...(existing?.receiptPaths ?? []), receiptPath])].sort(),
     ...(shardPath ? { fortemiShardPath: shardPath } : existing?.fortemiShardPath ? { fortemiShardPath: existing.fortemiShardPath } : {}),
+    ...(attestationPath ? { attestationPath } : existing?.attestationPath ? { attestationPath: existing.attestationPath } : {}),
+    ...(materialPaths ? { materialPaths } : existing?.materialPaths ? { materialPaths: existing.materialPaths } : {}),
+    ...(options.dependencyLockIds
+      ? { dependencyLockIds: [...new Set(options.dependencyLockIds)].sort() }
+      : existing?.dependencyLockIds ? { dependencyLockIds: existing.dependencyLockIds } : {}),
     cachePath: options.cachePath,
     artifactPath: options.artifactPath,
     installedAt: options.receipt.occurredAt,
@@ -376,14 +408,26 @@ async function portableFiles(root: string): Promise<MarketplacePortableFile[]> {
   })));
 }
 
-function validatePortableFiles(bundle: MarketplacePortableBundle): void {
+function decodeStrictBase64(value: string, label: string, allowEmpty = false): Buffer {
+  if ((!allowEmpty && value.length === 0)
+    || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)) {
+    throw new Error(`${label} is not canonical base64`);
+  }
+  const bytes = Buffer.from(value, 'base64');
+  if (bytes.toString('base64') !== value) throw new Error(`${label} is not canonical base64`);
+  return bytes;
+}
+
+function validatePortableFiles(bundle: MarketplaceReadablePortableBundle): void {
   if (!Array.isArray(bundle.files) || bundle.files.length === 0) throw new Error('Portable marketplace bundle has no package files');
   const inventory = bundle.files.map(({ contentBase64: _content, ...entry }) => entry);
   if (canonicalJson(inventory) !== canonicalJson(bundle.envelope.package.inventory)) {
     throw new Error('Portable bundle file inventory diverges from the signed envelope');
   }
   for (const file of bundle.files) {
-    const bytes = Buffer.from(file.contentBase64, 'base64');
+    const bytes = bundle.schemaVersion === MARKETPLACE_BUNDLE_V2_SCHEMA
+      ? decodeStrictBase64(file.contentBase64, `Portable file '${file.path}' content`, true)
+      : Buffer.from(file.contentBase64, 'base64');
     if (bytes.byteLength !== file.bytes || sha256(bytes) !== file.sha256) {
       throw new Error(`Portable bundle content digest mismatch for '${file.path}'`);
     }
@@ -393,11 +437,144 @@ function validatePortableFiles(bundle: MarketplacePortableBundle): void {
   }
 }
 
+export interface MarketplacePortableArtifactTrust {
+  /** Exact bytes of an already bootstrapped, scoped cross-asset trust root. */
+  rootBytes: Uint8Array;
+  state: ArtifactTrustState;
+  now?: string;
+}
+
+function toPortableCrossAsset(evidence: MarketplaceCrossAssetEvidence): MarketplacePortableCrossAssetEvidence {
+  return {
+    attestation: evidence.attestation,
+    materials: evidence.materials.map(material => ({
+      name: material.name,
+      uri: material.uri,
+      ...(material.mediaType ? { mediaType: material.mediaType } : {}),
+      bytes: material.bytes.byteLength,
+      sha256: artifactSha256(material.bytes),
+      contentBase64: Buffer.from(material.bytes).toString('base64'),
+    })),
+  };
+}
+
+function fromPortableCrossAsset(crossAsset: MarketplacePortableCrossAssetEvidence): MarketplaceCrossAssetEvidence {
+  return {
+    attestation: crossAsset.attestation,
+    materials: crossAsset.materials.map(material => ({
+      name: material.name,
+      uri: material.uri,
+      ...(material.mediaType ? { mediaType: material.mediaType } : {}),
+      bytes: new Uint8Array(decodeStrictBase64(material.contentBase64, `Portable material '${material.uri}' content`)),
+    })),
+  };
+}
+
+function canonicalMaterial(value: unknown): Buffer {
+  return Buffer.from(`${canonicalJson(value)}\n`, 'utf8');
+}
+
+/**
+ * Produce the only material byte representation accepted by portable v2.
+ * The Git/SBOM/license entries use explicit deterministic descriptors when
+ * their source bytes are not themselves an archive member.
+ */
+export function marketplacePortableBindingMaterials(options: {
+  envelope: MarketplaceProvenanceEnvelope;
+  lock: MarketplacePackageLock;
+  receipts: MarketplaceOperationReceipt[];
+  fortemiShard: Uint8Array;
+  /** Exact NUL-delimited bytes from `git ls-tree -r --full-tree -z`. */
+  gitTreeBytes: Uint8Array;
+  files: MarketplacePortableFile[];
+}): MarketplaceCrossAssetEvidence['materials'] {
+  if (options.receipts.length === 0) throw new Error('Marketplace binding requires at least one receipt');
+  const boundReceipt = options.receipts.find(receipt => receipt.lockId === options.lock.lockId);
+  if (!boundReceipt) throw new Error(`Marketplace binding has no receipt for ${options.lock.lockId}`);
+  const sbom = options.envelope.package.sbom;
+  let sbomBytes: Uint8Array;
+  if (sbom) {
+    const file = options.files.find(candidate => candidate.path === sbom.path);
+    if (!file) throw new Error(`Marketplace SBOM '${sbom.path}' is absent from the portable inventory`);
+    sbomBytes = new Uint8Array(Buffer.from(file.contentBase64, 'base64'));
+    if (sha256(sbomBytes) !== sbom.sha256) throw new Error(`Marketplace SBOM '${sbom.path}' does not match its envelope digest`);
+  } else {
+    sbomBytes = canonicalMaterial({ present: false });
+  }
+  if (artifactSha256(options.gitTreeBytes) !== options.envelope.source.treeSha256) {
+    throw new Error('Marketplace Git tree bytes do not match the envelope treeSha256');
+  }
+  return [
+    { name: 'lock', uri: 'aiwg:marketplace-material:lock', mediaType: 'application/vnd.aiwg.marketplace-lock.v1+json', bytes: canonicalMaterial(options.lock) },
+    { name: 'inventory', uri: 'aiwg:marketplace-material:inventory', mediaType: 'application/json', bytes: canonicalMaterial(options.envelope.package.inventory) },
+    {
+      name: 'git-tree',
+      uri: 'aiwg:marketplace-material:git-tree',
+      mediaType: 'application/vnd.aiwg.git-ls-tree.v1',
+      bytes: options.gitTreeBytes,
+    },
+    { name: 'fortemi-shard', uri: 'aiwg:marketplace-material:fortemi-shard', mediaType: 'application/vnd.fortemi.index.full-v1', bytes: options.fortemiShard },
+    { name: 'receipt', uri: 'aiwg:marketplace-material:receipt', mediaType: 'application/vnd.aiwg.marketplace-receipt.v1+json', bytes: canonicalMaterial(boundReceipt) },
+    {
+      name: 'sbom',
+      uri: 'aiwg:marketplace-material:sbom',
+      mediaType: sbom?.format ?? 'application/vnd.aiwg.absent-descriptor.v1+json',
+      bytes: sbomBytes,
+    },
+    { name: 'license', uri: 'aiwg:marketplace-material:license', mediaType: 'application/vnd.aiwg.license-descriptor.v1+json', bytes: canonicalMaterial({ license: options.envelope.package.license }) },
+  ];
+}
+
+function validatePortableMaterialBindings(
+  bundle: MarketplacePortableBundleV2,
+  evidence: MarketplaceCrossAssetEvidence,
+  shard: Uint8Array,
+): void {
+  const gitTree = evidence.materials.find(material => material.name === 'git-tree');
+  if (!gitTree) throw new Error("Portable crossAsset evidence requires 'git-tree' material");
+  const expected = marketplacePortableBindingMaterials({
+    envelope: bundle.envelope,
+    lock: bundle.lock,
+    receipts: bundle.receipts,
+    fortemiShard: shard,
+    gitTreeBytes: gitTree.bytes,
+    files: bundle.files,
+  });
+  const actual = new Map(evidence.materials.map(material => [material.name, material]));
+  for (const binding of expected) {
+    const material = actual.get(binding.name);
+    if (!material) throw new Error(`Portable crossAsset evidence requires '${binding.name}' material`);
+    if (material.uri !== binding.uri || material.mediaType !== binding.mediaType) {
+      throw new Error(`Portable crossAsset '${binding.name}' material descriptor is not canonical`);
+    }
+    if (binding.name === 'receipt') {
+      const matchesReceipt = bundle.receipts.some(receipt => (
+        receipt.lockId === bundle.lock.lockId && Buffer.from(material.bytes).equals(canonicalMaterial(receipt))
+      ));
+      if (!matchesReceipt) throw new Error('Portable crossAsset receipt material does not bind a bundled receipt');
+      continue;
+    }
+    if (!Buffer.from(material.bytes).equals(Buffer.from(binding.bytes))) {
+      throw new Error(`Portable crossAsset '${binding.name}' material does not bind the bundle evidence`);
+    }
+  }
+}
+
 export async function exportPortablePackage(options: MarketplaceScopeOptions & {
   query: string;
   output: string;
   actor?: string;
-}): Promise<{ bundle: MarketplacePortableBundle; output: string; receipt: MarketplaceOperationReceipt }> {
+  /** Supplying cross-asset evidence opts into the strict v2 portable format. */
+  crossAsset?: MarketplaceCrossAssetEvidence;
+  artifactTrust?: MarketplacePortableArtifactTrust;
+  dependencies?: MarketplaceReadablePortableBundle[];
+  trustStore?: MarketplaceTrustStore;
+}): Promise<{
+  bundle: MarketplaceReadablePortableBundle;
+  output: string;
+  receipt: MarketplaceOperationReceipt;
+  nextArtifactTrustState?: ArtifactTrustState;
+}> {
   const indexed = await findIndexedPackage(options.query, options);
   if (!indexed) throw new Error(`Installed marketplace package '${options.query}' was not found`);
   const envelope = await readEnvelope(indexed.envelopePath);
@@ -418,14 +595,32 @@ export async function exportPortablePackage(options: MarketplaceScopeOptions & {
     conformance: fortemi.conformance,
   });
   const receipts = await Promise.all(indexed.receiptPaths.map(readReceipt));
-  const bundle: MarketplacePortableBundle = {
-    schemaVersion: MARKETPLACE_BUNDLE_SCHEMA,
+  const common = {
     envelope,
     lock: indexed.lock,
     receipts: [...receipts, receipt],
     fortemiShardBase64: Buffer.from(fortemi.archive).toString('base64'),
     files: await portableFiles(indexed.artifactPath),
   };
+  const bundle: MarketplaceReadablePortableBundle = options.crossAsset
+    ? {
+        schemaVersion: MARKETPLACE_BUNDLE_V2_SCHEMA,
+        ...common,
+        crossAsset: toPortableCrossAsset(options.crossAsset),
+        dependencies: options.dependencies ?? [],
+      }
+    : { schemaVersion: MARKETPLACE_BUNDLE_SCHEMA, ...common };
+  let nextArtifactTrustState: ArtifactTrustState | undefined;
+  if (bundle.schemaVersion === MARKETPLACE_BUNDLE_V2_SCHEMA) {
+    if (!options.artifactTrust) throw new Error('v2 portable export requires scoped cross-asset trust root and state');
+    validatePortableBundle(bundle);
+    const verifiedTree = await verifyPortableBundleTree(bundle, {
+      artifactTrust: options.artifactTrust,
+      trustStore: options.trustStore,
+      requireLegacySignature: true,
+    });
+    nextArtifactTrustState = verifiedTree.nextState;
+  }
   const output = path.resolve(options.output);
   await atomicWrite(output, `${canonicalJson(bundle)}\n`);
   await recordInstalledPackage({
@@ -437,22 +632,177 @@ export async function exportPortablePackage(options: MarketplaceScopeOptions & {
     artifactPath: indexed.artifactPath,
     verificationStatus: indexed.verificationStatus,
     fortemiShard: fortemi.archive,
+    ...(options.crossAsset ? { crossAsset: options.crossAsset } : {}),
+    ...(bundle.schemaVersion === MARKETPLACE_BUNDLE_V2_SCHEMA
+      ? { dependencyLockIds: bundle.dependencies.map(dependency => dependency.lock.lockId) }
+      : {}),
   });
-  return { bundle, output, receipt };
+  return { bundle, output, receipt, ...(nextArtifactTrustState ? { nextArtifactTrustState } : {}) };
 }
 
-function validatePortableBundle(value: unknown): asserts value is MarketplacePortableBundle {
-  if (!isRecord(value) || value.schemaVersion !== MARKETPLACE_BUNDLE_SCHEMA) throw new Error('Unsupported portable marketplace bundle schema');
-  const allowed = new Set(['schemaVersion', 'envelope', 'lock', 'receipts', 'fortemiShardBase64', 'files']);
+function exactPortableKeys(value: Record<string, unknown>, allowed: readonly string[], label: string): void {
+  const accepted = new Set(allowed);
+  const extras = Object.keys(value).filter(key => !accepted.has(key));
+  if (extras.length) throw new Error(`${label} contains unknown required field(s): ${extras.join(', ')}`);
+}
+
+function validatePortableBundle(value: unknown): asserts value is MarketplaceReadablePortableBundle {
+  if (!isRecord(value) || ![MARKETPLACE_BUNDLE_SCHEMA, MARKETPLACE_BUNDLE_V2_SCHEMA].includes(value.schemaVersion as never)) {
+    throw new Error('Unsupported portable marketplace bundle schema');
+  }
+  const isV2 = value.schemaVersion === MARKETPLACE_BUNDLE_V2_SCHEMA;
+  const allowed = new Set([
+    'schemaVersion', 'envelope', 'lock', 'receipts', 'fortemiShardBase64', 'files',
+    ...(isV2 ? ['crossAsset', 'dependencies'] : []),
+  ]);
   const extras = Object.keys(value).filter((key) => !allowed.has(key));
   if (extras.length) throw new Error(`Portable bundle contains unknown required field(s): ${extras.join(', ')}`);
   validateProvenanceEnvelope(value.envelope);
   if (!isRecord(value.lock) || value.lock.schemaVersion !== 'aiwg.marketplace.package-lock.v1') throw new Error('Portable bundle lock is invalid');
   if (!Array.isArray(value.receipts) || !Array.isArray(value.files) || typeof value.fortemiShardBase64 !== 'string') throw new Error('Portable bundle is incomplete');
+  if (!isV2) return;
+  decodeStrictBase64(value.fortemiShardBase64 as string, 'v2 portable Fortemi shard');
+  if (!isRecord(value.crossAsset) || !Array.isArray(value.crossAsset.materials) || !isRecord(value.crossAsset.attestation)) {
+    throw new Error('v2 portable bundle crossAsset evidence is incomplete');
+  }
+  exactPortableKeys(value.crossAsset, ['attestation', 'materials'], 'Portable crossAsset evidence');
+  const uris = new Set<string>();
+  const materialNames = new Set<string>();
+  for (const [index, material] of value.crossAsset.materials.entries()) {
+    if (!isRecord(material)) throw new Error(`Portable crossAsset material ${index} is malformed`);
+    exactPortableKeys(material, ['name', 'uri', 'mediaType', 'bytes', 'sha256', 'contentBase64'], `Portable crossAsset material ${index}`);
+    if (typeof material.name !== 'string' || !material.name
+      || typeof material.uri !== 'string' || !material.uri
+      || (material.mediaType !== undefined && (typeof material.mediaType !== 'string' || !material.mediaType))
+      || !Number.isSafeInteger(material.bytes) || Number(material.bytes) < 0
+      || typeof material.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(material.sha256)
+      || typeof material.contentBase64 !== 'string') {
+      throw new Error(`Portable crossAsset material ${index} is incomplete`);
+    }
+    decodeStrictBase64(material.contentBase64, `Portable crossAsset material ${index}`);
+    if (uris.has(material.uri)) throw new Error(`Portable crossAsset material URI '${material.uri}' is duplicated`);
+    if (materialNames.has(material.name)) throw new Error(`Portable crossAsset material name '${material.name}' is duplicated`);
+    uris.add(material.uri);
+    materialNames.add(material.name);
+  }
+  const names = new Set(value.crossAsset.materials.map(material => (material as Record<string, unknown>).name));
+  for (const required of ['lock', 'inventory', 'git-tree', 'fortemi-shard', 'receipt', 'sbom', 'license']) {
+    if (!names.has(required)) throw new Error(`v2 portable crossAsset evidence requires '${required}' material`);
+  }
+  if (!Array.isArray(value.dependencies)) throw new Error('v2 portable bundle dependencies must be an array');
+  value.dependencies.forEach(validatePortableBundle);
 }
 
 async function verifyFortemiBundle(envelope: MarketplaceProvenanceEnvelope, bytes: Uint8Array): Promise<void> {
   await verifyFortemiEnvelopeShard(envelope, bytes);
+}
+
+interface PortableTreeVerificationOptions {
+  artifactTrust: MarketplacePortableArtifactTrust;
+  trustStore?: MarketplaceTrustStore;
+  requireLegacySignature: boolean;
+}
+
+async function verifyPortableBundleTree(
+  root: MarketplacePortableBundleV2,
+  options: PortableTreeVerificationOptions,
+): Promise<{ verifications: Map<string, MarketplaceVerificationResult>; nextState: ArtifactTrustState }> {
+  const artifactRoot = parseTrustRoot(options.artifactTrust.rootBytes);
+  const marketplacePolicy = artifactRoot.signed.policy.marketplace ?? {
+    evidenceMode: 'marketplace-only' as const,
+    legacySignatureMigrationGate: false,
+    recursiveDependencies: 'if-present' as const,
+  };
+  const results = new Map<string, MarketplaceVerificationResult>();
+  const visiting = new Set<string>();
+  let nextState = options.artifactTrust.state;
+
+  const visit = async (bundle: MarketplaceReadablePortableBundle): Promise<void> => {
+    validatePortableFiles(bundle);
+    const expectedLock = createPackageLock(bundle.envelope, bundle.lock.createdAt);
+    if (canonicalJson(expectedLock) !== canonicalJson(bundle.lock)) throw new Error('Portable bundle lock does not match its provenance envelope');
+    const shard = new Uint8Array(Buffer.from(bundle.fortemiShardBase64, 'base64'));
+    await verifyFortemiBundle(bundle.envelope, shard);
+    if (results.has(bundle.lock.lockId)) return;
+    if (visiting.has(bundle.lock.lockId)) throw new Error(`Portable dependency cycle detected at ${bundle.lock.lockId}`);
+    visiting.add(bundle.lock.lockId);
+
+    let verification: MarketplaceVerificationResult;
+    if (bundle.schemaVersion === MARKETPLACE_BUNDLE_V2_SCHEMA) {
+      const evidence = fromPortableCrossAsset(bundle.crossAsset);
+      for (const material of bundle.crossAsset.materials) {
+        const bytes = evidence.materials.find(candidate => candidate.uri === material.uri)!.bytes;
+        if (bytes.byteLength !== material.bytes || artifactSha256(bytes) !== material.sha256) {
+          throw new Error(`Portable crossAsset material digest mismatch for '${material.uri}'`);
+        }
+      }
+      validatePortableMaterialBindings(bundle, evidence, shard);
+      const composite = await verifyMarketplaceEvidence({
+        envelope: bundle.envelope,
+        trustStore: options.trustStore,
+        // Legacy verification authenticates the signed lock declarations here;
+        // the recursive closure below proves the declared children are present
+        // and unsubstituted before any persistence.
+        installedLocks: Object.fromEntries(bundle.envelope.package.dependencies
+          .filter(dependency => dependency.lockId)
+          .map(dependency => [dependency.identity, dependency.lockId!])),
+        artifact: {
+          evidence,
+          rootBytes: options.artifactTrust.rootBytes,
+          state: nextState,
+          now: options.artifactTrust.now,
+          offline: true,
+        },
+      });
+      if (!composite.ok) throw new Error(`Portable package verification failed: ${composite.errors.join('; ')}`);
+      if (!composite.crossAsset?.nextState) throw new Error('Cross-asset verifier did not return advanced freshness state');
+      nextState = composite.crossAsset.nextState;
+      verification = composite.marketplace;
+    } else {
+      if (marketplacePolicy.evidenceMode !== 'marketplace-only') {
+        throw new Error(`Portable dependency ${bundle.lock.lockId} lacks cross-asset evidence required by '${marketplacePolicy.evidenceMode}' policy`);
+      }
+      verification = await verifyProvenanceEnvelope({
+        envelope: bundle.envelope,
+        trustStore: options.trustStore,
+        policy: options.requireLegacySignature ? { requireSignature: true, allowIntegrityOnly: false } : undefined,
+      });
+      if (!verification.ok) throw new Error(`Portable package verification failed: ${verification.errors.join('; ')}`);
+    }
+
+    const children = bundle.schemaVersion === MARKETPLACE_BUNDLE_V2_SCHEMA ? bundle.dependencies : [];
+    const childByLock = new Map(children.map(child => [child.lock.lockId, child]));
+    if (childByLock.size !== children.length) throw new Error(`Portable bundle ${bundle.lock.lockId} contains duplicate dependencies`);
+    const requiredLocks = new Set<string>();
+    for (const dependency of bundle.envelope.package.dependencies.filter(candidate => !candidate.optional)) {
+      if (!dependency.lockId) {
+        if (marketplacePolicy.recursiveDependencies === 'required') {
+          throw new Error(`Required dependency '${dependency.identity}' has no immutable lockId`);
+        }
+        continue;
+      }
+      requiredLocks.add(dependency.lockId);
+      const child = childByLock.get(dependency.lockId);
+      if (!child) {
+        const substituted = children.find(candidate => candidate.lock.identity === dependency.identity);
+        if (substituted) {
+          throw new Error(`Dependency substitution for '${dependency.identity}': expected ${dependency.lockId}, got ${substituted.lock.lockId}`);
+        }
+        throw new Error(`Required dependency '${dependency.identity}' is unavailable at ${dependency.lockId}`);
+      }
+      if (child.lock.identity !== dependency.identity) {
+        throw new Error(`Dependency substitution for '${dependency.identity}' at ${dependency.lockId}`);
+      }
+      await visit(child);
+    }
+    for (const child of children) {
+      if (!requiredLocks.has(child.lock.lockId)) throw new Error(`Portable bundle contains undeclared dependency ${child.lock.lockId}`);
+    }
+    visiting.delete(bundle.lock.lockId);
+    results.set(bundle.lock.lockId, verification);
+  };
+  await visit(root);
+  return { verifications: results, nextState };
 }
 
 async function writePortableFiles(stage: string, files: MarketplacePortableFile[]): Promise<void> {
@@ -473,87 +823,137 @@ export async function importPortablePackage(options: MarketplaceScopeOptions & {
   verify?: boolean;
   policy?: Partial<MarketplaceVerificationPolicy>;
   trustStore?: MarketplaceTrustStore;
+  artifactTrust?: MarketplacePortableArtifactTrust;
   actor?: string;
-}): Promise<{ entry: MarketplaceIndexEntry; verification: MarketplaceVerificationResult; receipt: MarketplaceOperationReceipt }> {
+}): Promise<{
+  entry: MarketplaceIndexEntry;
+  verification: MarketplaceVerificationResult;
+  receipt: MarketplaceOperationReceipt;
+  nextArtifactTrustState?: ArtifactTrustState;
+}> {
   const input = path.resolve(options.input);
   const value = await readJson(input, MAX_PORTABLE_BUNDLE_BYTES);
   validatePortableBundle(value);
   const bundle = value;
-  validatePortableFiles(bundle);
-  const expectedLock = createPackageLock(bundle.envelope, bundle.lock.createdAt);
-  if (canonicalJson(expectedLock) !== canonicalJson(bundle.lock)) throw new Error('Portable bundle lock does not match its provenance envelope');
-  const shard = new Uint8Array(Buffer.from(bundle.fortemiShardBase64, 'base64'));
-  await verifyFortemiBundle(bundle.envelope, shard);
-  const verification = await verifyProvenanceEnvelope({
-    envelope: bundle.envelope,
-    trustStore: options.trustStore,
-    policy: options.verify ? { requireSignature: true, allowIntegrityOnly: false, ...options.policy } : options.policy,
-  });
-  if (!verification.ok) throw new Error(`Portable package verification failed: ${verification.errors.join('; ')}`);
+  let verifications: Map<string, MarketplaceVerificationResult>;
+  let nextArtifactTrustState: ArtifactTrustState | undefined;
+  if (bundle.schemaVersion === MARKETPLACE_BUNDLE_V2_SCHEMA) {
+    if (!options.artifactTrust) throw new Error('v2 portable import requires scoped cross-asset trust root and state');
+    const verifiedTree = await verifyPortableBundleTree(bundle, {
+      artifactTrust: options.artifactTrust,
+      trustStore: options.trustStore,
+      requireLegacySignature: true,
+    });
+    verifications = verifiedTree.verifications;
+    nextArtifactTrustState = verifiedTree.nextState;
+  } else {
+    validatePortableFiles(bundle);
+    const expectedLock = createPackageLock(bundle.envelope, bundle.lock.createdAt);
+    if (canonicalJson(expectedLock) !== canonicalJson(bundle.lock)) throw new Error('Portable bundle lock does not match its provenance envelope');
+    await verifyFortemiBundle(bundle.envelope, new Uint8Array(Buffer.from(bundle.fortemiShardBase64, 'base64')));
+    const verification = await verifyProvenanceEnvelope({
+      envelope: bundle.envelope,
+      trustStore: options.trustStore,
+      policy: options.verify ? { requireSignature: true, allowIntegrityOnly: false, ...options.policy } : options.policy,
+    });
+    if (!verification.ok) throw new Error(`Portable package verification failed: ${verification.errors.join('; ')}`);
+    verifications = new Map([[bundle.lock.lockId, verification]]);
+  }
 
+  const ordered: MarketplaceReadablePortableBundle[] = [];
+  const collect = (candidate: MarketplaceReadablePortableBundle): void => {
+    if (candidate.schemaVersion === MARKETPLACE_BUNDLE_V2_SCHEMA) candidate.dependencies.forEach(collect);
+    if (!ordered.some(existing => existing.lock.lockId === candidate.lock.lockId)) ordered.push(candidate);
+  };
+  collect(bundle);
   const state = marketplaceStateDir(options);
   const cacheParent = path.join(state, 'cache');
-  const destination = path.join(cacheParent, safeDigestName(bundle.lock.lockId));
   await mkdir(cacheParent, { recursive: true });
-  if (!await pathExists(destination)) {
-    const stage = await mkdtemp(path.join(cacheParent, '.import-'));
-    try {
-      await writePortableFiles(stage, bundle.files);
-      const stagedInventory = await inventoryDirectory(stage);
-      if (inventorySha256(stagedInventory) !== bundle.envelope.source.artifactSha256) throw new Error('Staged import changed package bytes');
-      await rename(stage, destination);
-    } catch (error) {
-      await rm(stage, { recursive: true, force: true });
-      throw error;
-    }
-  } else {
-    const existing = await inventoryDirectory(destination);
-    if (inventorySha256(existing) !== bundle.envelope.source.artifactSha256) throw new Error(`Existing cache content for ${bundle.lock.lockId} is inconsistent`);
-  }
-  let conformance: MarketplaceConformanceEvidence = { profile: '2.0.0/full-v1', lossless: true, contractValid: true, shardSha256: sha256(shard) };
-  for (let index = bundle.receipts.length - 1; index >= 0; index--) {
-    const candidate = bundle.receipts[index]?.conformance;
-    if (candidate?.lossless) {
-      conformance = candidate;
-      break;
+  for (const candidate of ordered) {
+    const destination = path.join(cacheParent, safeDigestName(candidate.lock.lockId));
+    if (!await pathExists(destination)) {
+      const stage = await mkdtemp(path.join(cacheParent, '.import-'));
+      try {
+        await writePortableFiles(stage, candidate.files);
+        const stagedInventory = await inventoryDirectory(stage);
+        if (inventorySha256(stagedInventory) !== candidate.envelope.source.artifactSha256) throw new Error('Staged import changed package bytes');
+        await rename(stage, destination);
+      } catch (error) {
+        await rm(stage, { recursive: true, force: true });
+        throw error;
+      }
+    } else {
+      const existing = await inventoryDirectory(destination);
+      if (inventorySha256(existing) !== candidate.envelope.source.artifactSha256) throw new Error(`Existing cache content for ${candidate.lock.lockId} is inconsistent`);
     }
   }
-  const receipt = createOperationReceipt({
-    operation: 'import',
-    lock: bundle.lock,
-    actor: options.actor ?? 'aiwg',
-    verificationStatus: verification.status,
-    evidence: { input, offline: true, importedFiles: bundle.files.length },
-    conformance,
-  });
-  const entry = await recordInstalledPackage({
-    ...options,
-    envelope: bundle.envelope,
-    lock: bundle.lock,
-    receipt,
-    cachePath: destination,
-    artifactPath: destination,
-    verificationStatus: verification.status,
-    fortemiShard: shard,
-  });
-  const configDir = marketplaceConfigDir(options);
-  await setPackageEntry(bundle.lock.identity, {
-    version: bundle.lock.version,
-    source: bundle.lock.canonicalRemote,
-    type: bundle.envelope.package.type === 'plugin' ? 'extension' : bundle.envelope.package.type,
-    cachePath: destination,
-    installedAt: receipt.occurredAt,
-    deployedTo: [],
-    provenance: {
-      lockId: bundle.lock.lockId,
-      resolvedCommit: bundle.lock.resolvedCommit,
-      treeSha256: bundle.lock.treeSha256,
-      artifactSha256: bundle.lock.artifactSha256,
-      envelopeSha256: bundle.lock.envelopeSha256,
+
+  let rootEntry: MarketplaceIndexEntry | undefined;
+  let rootReceipt: MarketplaceOperationReceipt | undefined;
+  for (const candidate of ordered) {
+    const verification = verifications.get(candidate.lock.lockId)!;
+    const shard = new Uint8Array(Buffer.from(candidate.fortemiShardBase64, 'base64'));
+    let conformance: MarketplaceConformanceEvidence = { profile: '2.0.0/full-v1', lossless: true, contractValid: true, shardSha256: sha256(shard) };
+    for (let index = candidate.receipts.length - 1; index >= 0; index--) {
+      const receiptConformance = candidate.receipts[index]?.conformance;
+      if (receiptConformance?.lossless) {
+        conformance = receiptConformance;
+        break;
+      }
+    }
+    const receipt = createOperationReceipt({
+      operation: 'import',
+      lock: candidate.lock,
+      actor: options.actor ?? 'aiwg',
       verificationStatus: verification.status,
-    },
-  }, configDir);
-  return { entry, verification, receipt };
+      evidence: { input, offline: true, importedFiles: candidate.files.length },
+      conformance,
+    });
+    const destination = path.join(cacheParent, safeDigestName(candidate.lock.lockId));
+    const entry = await recordInstalledPackage({
+      ...options,
+      envelope: candidate.envelope,
+      lock: candidate.lock,
+      receipt,
+      cachePath: destination,
+      artifactPath: destination,
+      verificationStatus: verification.status,
+      fortemiShard: shard,
+      ...(candidate.schemaVersion === MARKETPLACE_BUNDLE_V2_SCHEMA
+        ? {
+            crossAsset: fromPortableCrossAsset(candidate.crossAsset),
+            dependencyLockIds: candidate.dependencies.map(dependency => dependency.lock.lockId),
+          }
+        : {}),
+    });
+    const configDir = marketplaceConfigDir(options);
+    await setPackageEntry(candidate.lock.identity, {
+      version: candidate.lock.version,
+      source: candidate.lock.canonicalRemote,
+      type: candidate.envelope.package.type === 'plugin' ? 'extension' : candidate.envelope.package.type,
+      cachePath: destination,
+      installedAt: receipt.occurredAt,
+      deployedTo: [],
+      provenance: {
+        lockId: candidate.lock.lockId,
+        resolvedCommit: candidate.lock.resolvedCommit,
+        treeSha256: candidate.lock.treeSha256,
+        artifactSha256: candidate.lock.artifactSha256,
+        envelopeSha256: candidate.lock.envelopeSha256,
+        verificationStatus: verification.status,
+      },
+    }, configDir);
+    if (candidate.lock.lockId === bundle.lock.lockId) {
+      rootEntry = entry;
+      rootReceipt = receipt;
+    }
+  }
+  return {
+    entry: rootEntry!,
+    verification: verifications.get(bundle.lock.lockId)!,
+    receipt: rootReceipt!,
+    ...(nextArtifactTrustState ? { nextArtifactTrustState } : {}),
+  };
 }
 
 function emptyCatalogRegistry(): MarketplaceCatalogRegistry {

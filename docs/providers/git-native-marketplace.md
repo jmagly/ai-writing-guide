@@ -163,6 +163,20 @@ Fortemi evidence, or a lock/envelope mismatch aborts the operation. A mirror
 may retain Git objects, signed catalogs, and portable archives, but must not
 rewrite them; consumers still verify publisher identity and local trust.
 
+Portable bundle v1 remains the readable legacy marketplace-only format.
+Portable bundle v2 is a separate strict format: it carries the adjacent
+cross-asset attestation, the exact bytes of every signed material, and nested
+bundles for required immutable dependencies. Import requires an already
+bootstrapped scoped cross-asset trust root/state, verifies the complete
+dependency tree and both evidence paths offline, and only then writes package
+bytes, sidecars, material paths, or index entries. A trust root requiring dual
+or cross-asset evidence therefore cannot silently accept a v1 dependency.
+The v2 API returns the verifier's advanced cross-asset freshness state after
+all recursive members; the caller must persist that state atomically with its
+trust-state workflow before treating the import as the new channel baseline.
+The legacy marketplace publisher signature remains mandatory unless the
+authenticated root explicitly enables the cross-asset migration gate.
+
 For recovery, restore the portable archive and scoped `trust.json`, import the
 archive, and run offline verification. Catalog availability is not required
 when the immutable lock and evidence are present.

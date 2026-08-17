@@ -539,6 +539,7 @@ export interface KeyDelegationStatement {
   publisher: string;
   validFrom: string;
   validUntil?: string;
+  artifactIdentityId?: string;
 }
 
 export function keyDelegationStatement(key: MarketplaceTrustedKey): KeyDelegationStatement {
@@ -549,6 +550,7 @@ export function keyDelegationStatement(key: MarketplaceTrustedKey): KeyDelegatio
     publisher: key.publisher,
     validFrom: key.validFrom,
     ...(key.validUntil ? { validUntil: key.validUntil } : {}),
+    ...(key.artifactIdentityId ? { artifactIdentityId: key.artifactIdentityId } : {}),
   };
 }
 
@@ -890,7 +892,11 @@ export async function verifyProvenanceEnvelope(options: {
     && options.previousLock.resolvedCommit !== lock.resolvedCommit) {
     errors.push(`Mutable ref '${lock.requestedRef}' moved from ${options.previousLock.resolvedCommit} to ${lock.resolvedCommit}`);
   }
-  for (const dependency of envelope.package.dependencies.filter((item) => !item.optional && item.lockId)) {
+  for (const dependency of envelope.package.dependencies.filter((item) => !item.optional)) {
+    if (!dependency.lockId) {
+      if (policy.requireDependencyLocks) errors.push(`Required dependency '${dependency.identity}' has no immutable lockId`);
+      continue;
+    }
     const actual = options.installedLocks?.[dependency.identity];
     const ok = actual === dependency.lockId;
     checks.push({ check: `dependency:${dependency.identity}`, ok, detail: actual ?? 'not installed' });

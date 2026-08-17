@@ -15,6 +15,7 @@ import {
 import {
   createWebResourceReleaseFixture,
   createStreamingResourceResponse,
+  TEST_RAW_ATTESTATION_PATH,
   TEST_RAW_PATH,
   TEST_VERSION,
 } from "../../fixtures/web-resource-release.js";
@@ -75,6 +76,16 @@ describe("signed web release resolver", () => {
     expect(release.descriptors.get(TEST_RAW_PATH)?.sha256).toBe(
       createHash("sha256").update(published.rawBody).digest("hex"),
     );
+    expect(release.descriptors.get(TEST_RAW_PATH)).toMatchObject({
+      mediaType: "text/markdown",
+      attestation: {
+        path: TEST_RAW_ATTESTATION_PATH,
+        mediaType: "application/vnd.aiwg.artifact-attestation.v1+json",
+      },
+    });
+    expect(release.descriptors.get(TEST_RAW_ATTESTATION_PATH)?.sha256).toBe(
+      createHash("sha256").update(published.rawAttestationBody).digest("hex"),
+    );
     expect(fixture.requestPaths).toEqual([
       `/resources/${TEST_VERSION}/manifest.json`,
       `/resources/${TEST_VERSION}/manifest.sig`,
@@ -90,6 +101,26 @@ describe("signed web release resolver", () => {
     await resolveWebRelease(options());
     expect(fixture.requestPaths).toHaveLength(before);
   });
+
+  it.each(["aiwg.resource-manifest/v1", "aiwg.resource-manifest/v2"])(
+    "accepts attestation-aware descriptors without breaking signed %s manifests",
+    async (schemaVersion) => {
+      fixture.publishRelease({
+        mutateReleaseManifest: (value) => {
+          value.schemaVersion = schemaVersion;
+          if (schemaVersion === "aiwg.resource-manifest/v1") delete value.compatibility;
+        },
+      });
+
+      const release = await resolveWebRelease(options());
+      const sidecar = await fetchVerifiedRawResource(release, TEST_RAW_ATTESTATION_PATH, {
+        baseUrl: fixture.baseUrl,
+        allowInsecureLoopbackHttp: true,
+      });
+
+      expect(sidecar).toEqual(fixture.routes.get(`/resources/${TEST_VERSION}/${TEST_RAW_ATTESTATION_PATH}`));
+    },
+  );
 
   it("keeps a verified digest-selected immutable generation local without refreshing the index", async () => {
     const published = fixture.publishRelease();
@@ -123,6 +154,21 @@ describe("signed web release resolver", () => {
     expect(release.selectorKind).toBe("channel");
     expect(release.channelSequence).toBe(7);
     expect(release.manifestDigest).toBe(published.manifestDigest);
+  });
+
+  it("enforces additive signed channel expiry while accepting legacy metadata without it", async () => {
+    const published = fixture.publishRelease();
+    const expiresAt = new Date(Date.now() + 60_000).toISOString();
+    fixture.publishChannel("stable", 7, published, { expiresAt });
+
+    const release = await resolveWebRelease(options("stable"));
+    expect(release.channelExpiresAt).toBe(expiresAt);
+
+    fixture.publishChannel("expired", 1, published, { expiresAt: "2020-01-01T00:00:00Z" });
+    await expect(resolveWebRelease(options("expired"))).rejects.toThrow(/signed metadata has expired/);
+
+    fixture.publishChannel("legacy", 1, published);
+    await expect(resolveWebRelease(options("legacy"))).resolves.toMatchObject({ channelSequence: 1 });
   });
 
   it("conditionally revalidates a verified channel with ETag and skips its signature on 304", async () => {
@@ -172,6 +218,24 @@ describe("signed web release resolver", () => {
       "/resources/channels/stable.sig",
     ]);
     expect(fixture.requestHeaders[before]?.["if-none-match"]).toBeUndefined();
+  });
+
+  it("never accepts a 304 or HTTP validator in place of signed channel bytes", async () => {
+    const published = fixture.publishRelease();
+    fixture.publishChannel("stable", 4, published);
+    await resolveWebRelease(options("stable"));
+    const generation = path.join(cacheRoot, "channels", "stable", fs.readdirSync(path.join(cacheRoot, "channels", "stable"))[0]);
+    fs.writeFileSync(path.join(generation, "channel.json"), "tampered");
+    const onlyNotModified = vi.fn(async () => ({
+      ok: false,
+      status: 304,
+      headers: { get: () => '"forged-validator"' },
+      body: null,
+      arrayBuffer: async () => new ArrayBuffer(0),
+    }));
+
+    await expect(resolveWebRelease({ ...options("stable"), fetcher: onlyNotModified }))
+      .rejects.toThrow(/304 without a verified cached representation/);
   });
 
   it("resolves SemVer ranges and manifest digest selectors through the signed version index", async () => {
@@ -358,6 +422,31 @@ describe("signed web release resolver", () => {
       name: "invalid descriptor digest",
       mutateReleaseManifest: (value: any) => { value.files[0].sha256 = "bad"; },
       error: /descriptor digest.*invalid/,
+    },
+    {
+      name: "invalid descriptor media type",
+      mutateReleaseManifest: (value: any) => { value.files[2].mediaType = "text/markdown; charset=utf-8"; },
+      error: /descriptor mediaType.*invalid/,
+    },
+    {
+      name: "attestation without artifact media type",
+      mutateReleaseManifest: (value: any) => { delete value.files[2].mediaType; },
+      error: /with an attestation must declare mediaType/,
+    },
+    {
+      name: "non-adjacent attestation descriptor",
+      mutateReleaseManifest: (value: any) => { value.files[2].attestation.path = "raw/unrelated.aiwg-attestation.json"; },
+      error: /not adjacent to its artifact/,
+    },
+    {
+      name: "wrong attestation media type",
+      mutateReleaseManifest: (value: any) => { value.files[2].attestation.mediaType = "application/json"; },
+      error: /attestation descriptor.*invalid mediaType/,
+    },
+    {
+      name: "recursive attestation descriptor",
+      mutateReleaseManifest: (value: any) => { value.files[2].attestation.attestation = {}; },
+      error: /must not contain another attestation/,
     },
   ])("rejects $name validation failure", async ({ mutateReleaseManifest, error }) => {
     fixture.publishRelease({ mutateReleaseManifest });

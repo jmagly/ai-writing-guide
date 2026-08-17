@@ -338,18 +338,39 @@ operators can enable them in automation without disclosing access tokens.
 ### Cross-asset attestation migration
 
 The accepted [cross-asset authenticity
-contract](../research/asset-authenticity-and-provenance.md) will add adjacent
+contract](../research/asset-authenticity-and-provenance.md) adds adjacent
 DSSE/in-toto sidecars for remotely consumed setup YAML, agentic flows, bundles,
-and indices. The first public paths are designed as:
+and indices. Signed `aiwg.resource-manifest/v1` and
+`aiwg.resource-manifest/v2` descriptors may now declare `mediaType` and an
+adjacent `attestation` descriptor containing the sidecar path, exact byte
+length, SHA-256 digest, and
+`application/vnd.aiwg.artifact-attestation.v1+json` media type. Both manifest
+versions remain accepted during migration.
+
+The target public paths are:
 
 - `https://aiwg.io/setup.aiwg.yaml.aiwg-attestation.json`
 - `https://aiwg.io/agentic.yaml.aiwg-attestation.json`
 
-The current Ed25519-signed channel and release manifests remain mandatory
-during migration. A future inspection UI may show the YAML and verification
-details in place, but rendering or copying from the website is never itself
-proof. Only a local verifier may report `verified`; unsigned, expired, revoked,
-stale, mismatched, and policy-exempt assets remain distinct outcomes.
+The Ed25519-signed channel and release manifests remain mandatory during
+migration. The nested attestation descriptor is trusted only after that
+signature verifies; an adjacent filename or HTTP `Link`, ETag, Last-Modified,
+Content-Type, or Content-Length header is discovery/cache metadata, not
+verification evidence. A release descriptor may expose the sidecar to the raw
+resource fetcher, but the artifact verifier must still validate the sidecar's
+DSSE/in-toto policy before reporting `verified`.
+
+The site publication callback is deliberately downstream of signed web-release
+and sidecar emission. It requires the stable channel's monotonic sequence and
+signed expiry. The source repository currently has no authoritative
+`agentic.yaml`; release publication fails with an explicit source-contract
+diagnostic until that canonical artifact is separately reviewed and added. CI
+must not synthesize one from examples or another repository.
+
+An inspection UI may show the YAML and verification details in place, but
+rendering or copying from the website is never itself proof. Only a local
+verifier may report `verified`; unsigned, expired, revoked, stale, mismatched,
+and policy-exempt assets remain distinct outcomes.
 
 ## Research Basis
 

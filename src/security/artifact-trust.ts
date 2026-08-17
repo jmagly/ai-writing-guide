@@ -74,6 +74,11 @@ export interface ArtifactTrustPolicySettings {
   requireMaterialDigests: boolean;
   maxFreezeSeconds: number;
   allowPolicyExempt: ArtifactScope[];
+  marketplace?: {
+    evidenceMode: 'marketplace-only' | 'dual-required' | 'cross-asset-required';
+    legacySignatureMigrationGate: boolean;
+    recursiveDependencies: 'if-present' | 'required';
+  };
 }
 
 export interface ArtifactTrustRootSigned {
@@ -103,6 +108,10 @@ export interface ArtifactTrustRoot {
 export interface TrustedChannelState {
   namespace: string;
   channel: string;
+  /** Stable signed subject identity. Absent only in pre-subject-key v1 state. */
+  subject?: string;
+  /** Signed asset class used with subject to isolate one release member. */
+  assetType?: string;
   sequence: number;
   artifactSha256: string;
   version: string;
@@ -422,13 +431,24 @@ export function validateTrustRoot(root: ArtifactTrustRoot): void {
   }
 
   if (!isRecord(root.signed.policy) || !root.signed.policy.name) throw new Error('policy name is required');
-  assertKeys(root.signed.policy, ['name', 'requireMaterialDigests', 'maxFreezeSeconds', 'allowPolicyExempt'], 'policy');
+  assertKeys(root.signed.policy, ['name', 'requireMaterialDigests', 'maxFreezeSeconds', 'allowPolicyExempt', 'marketplace'], 'policy');
   if (typeof root.signed.policy.requireMaterialDigests !== 'boolean') throw new Error('policy requireMaterialDigests must be boolean');
   if (!Number.isInteger(root.signed.policy.maxFreezeSeconds) || root.signed.policy.maxFreezeSeconds < 0) {
     throw new Error('policy maxFreezeSeconds must be a non-negative integer');
   }
   if (!Array.isArray(root.signed.policy.allowPolicyExempt)) throw new Error('policy allowPolicyExempt must be an array');
   root.signed.policy.allowPolicyExempt.forEach((scope, index) => assertScope(scope, `policy.allowPolicyExempt[${index}]`));
+  if (root.signed.policy.marketplace !== undefined) {
+    const marketplace = root.signed.policy.marketplace;
+    if (!isRecord(marketplace)) throw new Error('policy marketplace must be an object');
+    assertKeys(marketplace, ['evidenceMode', 'legacySignatureMigrationGate', 'recursiveDependencies'], 'policy marketplace');
+    if (!['marketplace-only', 'dual-required', 'cross-asset-required'].includes(marketplace.evidenceMode)) throw new Error('policy marketplace evidenceMode is invalid');
+    if (typeof marketplace.legacySignatureMigrationGate !== 'boolean') throw new Error('policy marketplace legacySignatureMigrationGate must be boolean');
+    if (!['if-present', 'required'].includes(marketplace.recursiveDependencies)) throw new Error('policy marketplace recursiveDependencies is invalid');
+    if (marketplace.legacySignatureMigrationGate && marketplace.evidenceMode !== 'cross-asset-required') {
+      throw new Error('policy marketplace migration gate requires cross-asset-required mode');
+    }
+  }
   if (!Array.isArray(root.signatures) || root.signatures.length === 0) throw new Error('trust root signatures must not be empty');
   root.signatures.forEach((signature, index) => {
     if (!isRecord(signature)) throw new Error(`trust root signature ${index} must be an object`);
@@ -545,8 +565,15 @@ export function validateTrustState(state: ArtifactTrustState): void {
   if (!isRecord(state.channels)) throw new Error('trust-state channels must be an object');
   for (const [key, channel] of Object.entries(state.channels)) {
     if (!isRecord(channel) || !channel.namespace || !channel.channel || !channel.version) throw new Error(`trust-state channel '${key}' is incomplete`);
-    assertKeys(channel, ['namespace', 'channel', 'sequence', 'artifactSha256', 'version', 'verifiedAt'], `trust-state channel '${key}'`);
-    if (key !== channelStateKey(String(channel.namespace), String(channel.channel))) throw new Error(`trust-state channel '${key}' key does not match its scope`);
+    assertKeys(channel, ['namespace', 'channel', 'subject', 'assetType', 'sequence', 'artifactSha256', 'version', 'verifiedAt'], `trust-state channel '${key}'`);
+    if ((channel.subject === undefined) !== (channel.assetType === undefined)) throw new Error(`trust-state channel '${key}' subject and assetType must appear together`);
+    if (channel.subject !== undefined && (typeof channel.subject !== 'string' || !channel.subject || typeof channel.assetType !== 'string' || !channel.assetType)) {
+      throw new Error(`trust-state channel '${key}' subject scope is invalid`);
+    }
+    if (key !== channelStateKey(String(channel.namespace), String(channel.channel), channel.subject === undefined ? undefined : {
+      assetType: String(channel.assetType),
+      subject: String(channel.subject),
+    })) throw new Error(`trust-state channel '${key}' key does not match its scope`);
     if (!Number.isInteger(channel.sequence) || channel.sequence < 1) throw new Error(`trust-state channel '${key}' sequence is invalid`);
     if (!SHA256_PATTERN.test(channel.artifactSha256)) throw new Error(`trust-state channel '${key}' digest is invalid`);
     assertIsoDate(channel.verifiedAt, `trust-state channel '${key}' verifiedAt`);
@@ -631,8 +658,15 @@ export function verifyRootTransition(
   };
 }
 
-export function channelStateKey(namespace: string, channel: string): string {
-  return `${encodeURIComponent(namespace)}::${encodeURIComponent(channel)}`;
+export function channelStateKey(
+  namespace: string,
+  channel: string,
+  member?: { assetType: string; subject: string },
+): string {
+  const base = `${encodeURIComponent(namespace)}::${encodeURIComponent(channel)}`;
+  return member
+    ? `${base}::${encodeURIComponent(member.assetType)}::${encodeURIComponent(member.subject)}`
+    : base;
 }
 
 export function selectDelegations(

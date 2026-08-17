@@ -88,7 +88,7 @@ type Provenance = {
     issuedAt: string;
     notBefore?: string;
     expiresAt?: string;
-    derivation?: { materials: Array<{ uri: string; digest: { sha256: string } }> };
+    derivation?: { materials: Array<{ name?: string; uri: string; mediaType?: string; digest: { sha256: string } }> };
   };
 };
 
@@ -224,7 +224,9 @@ function parseProvenance(payload: Uint8Array): Provenance {
     }
     for (const material of predicate.derivation.materials) {
       if (!record(material) || typeof material.uri !== 'string' || !record(material.digest) || typeof material.digest.sha256 !== 'string') throw new Error('derivation material is malformed');
-      exactKeys(material, ['uri', 'digest'], 'derivation material');
+      exactKeys(material, ['name', 'uri', 'mediaType', 'digest'], 'derivation material');
+      if (material.name !== undefined && (typeof material.name !== 'string' || !material.name)) throw new Error('derivation material name is malformed');
+      if (material.mediaType !== undefined && (typeof material.mediaType !== 'string' || !material.mediaType)) throw new Error('derivation material mediaType is malformed');
       exactKeys(material.digest, ['sha256'], 'derivation material digest');
       if (!/^[a-f0-9]{64}$/.test(material.digest.sha256)) throw new Error('derivation material SHA-256 is malformed');
     }
@@ -484,7 +486,13 @@ export async function verifyArtifact(input: ArtifactVerificationInput): Promise<
       return result('mismatched', input, [{ code: 'TRUST_STATE_MISMATCH', message: 'Persisted state does not match the exact active trust root' }], { ...common, identities, freshness });
     }
     if (nowMs < Date.parse(state.trustedTime)) return result('stale', input, [{ code: 'CLOCK_ROLLBACK', message: 'Verification time predates persisted trusted time' }], { ...common, identities, freshness });
-    const prior = state.channels[channelStateKey(scopeInput.namespace, scopeInput.channel)];
+    const member = { assetType: scopeInput.assetType, subject: input.artifactName };
+    const memberKey = channelStateKey(scopeInput.namespace, scopeInput.channel, member);
+    // Pre-member v1 state is conservatively inherited by the first migration.
+    // Operators must migrate/reset ambiguous legacy state before adding a
+    // distinct collection member; silently ignoring it would permit rollback.
+    const legacy = state.channels[channelStateKey(scopeInput.namespace, scopeInput.channel)];
+    const prior = state.channels[memberKey] ?? legacy;
     if (prior) {
       if (freshness.sequence < prior.sequence
         || freshness.sequence > prior.sequence + 1
@@ -499,9 +507,14 @@ export async function verifyArtifact(input: ArtifactVerificationInput): Promise<
     trustedTime: new Date(Math.max(Date.parse(state.trustedTime), nowMs)).toISOString(),
     channels: {
       ...state.channels,
-      [channelStateKey(scopeInput.namespace, scopeInput.channel)]: {
+      [channelStateKey(scopeInput.namespace, scopeInput.channel, {
+        assetType: scopeInput.assetType,
+        subject: input.artifactName,
+      })]: {
         namespace: scopeInput.namespace,
         channel: scopeInput.channel,
+        subject: input.artifactName,
+        assetType: scopeInput.assetType,
         sequence: freshness.sequence,
         artifactSha256: artifactDigest,
         version: freshness.version,

@@ -146,6 +146,44 @@ describe('cross-asset verification contract (#2087)', () => {
     expect(outcome.identities).toEqual(['release-1']);
   });
 
+  it('tracks freshness independently for multiple signed assets in one release sequence', async () => {
+    const fixture = unsignedRoot();
+    const rootBytes = encodeRoot(fixture.root, fixture.rootKey);
+    const bootstrap = bootstrapTrustRoot(rootBytes, sha256(rootBytes), NOW);
+    const first = await verifyArtifact({
+      artifactBytes: ARTIFACT,
+      artifactName: ARTIFACT_NAME,
+      attestation: attestation(fixture.releaseKey),
+      rootBytes,
+      state: bootstrap.state,
+      now: NOW,
+    });
+    expect(first.status).toBe('verified');
+
+    const secondBytes = Buffer.from('name: second member\n');
+    const secondName = 'second.yaml';
+    const secondStatement = JSON.parse(Buffer.from(
+      attestation(fixture.releaseKey).envelope.payload,
+      'base64url',
+    ).toString('utf8'));
+    secondStatement.subject = [{ name: secondName, digest: { sha256: sha256(secondBytes) } }];
+    const secondPayload = Buffer.from(canonicalJson(secondStatement));
+    const second = await verifyArtifact({
+      artifactBytes: secondBytes,
+      artifactName: secondName,
+      attestation: signedPayloadAttestation(fixture.releaseKey, secondPayload),
+      rootBytes,
+      state: first.nextState,
+      now: NOW,
+    });
+
+    expect(second.status).toBe('verified');
+    expect(Object.keys(second.nextState!.channels)).toEqual(expect.arrayContaining([
+      'aiwg.io::stable::generated-provider-artifact::provider.yaml',
+      'aiwg.io::stable::generated-provider-artifact::second.yaml',
+    ]));
+  });
+
   it('returns stable mismatch, stale, revoked, and offline failure states', async () => {
     const fixture = unsignedRoot();
     const rootBytes = encodeRoot(fixture.root, fixture.rootKey);

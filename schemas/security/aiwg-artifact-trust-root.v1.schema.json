@@ -20,7 +20,21 @@
         "revocations": { "type": "array", "items": { "$ref": "#/$defs/revocation" } },
         "policy": {
           "type": "object", "additionalProperties": false, "required": ["name", "requireMaterialDigests", "maxFreezeSeconds", "allowPolicyExempt"],
-          "properties": { "name": { "$ref": "#/$defs/nonEmpty" }, "requireMaterialDigests": { "type": "boolean" }, "maxFreezeSeconds": { "type": "integer", "minimum": 0 }, "allowPolicyExempt": { "type": "array", "items": { "$ref": "#/$defs/scope" } } }
+          "properties": {
+            "name": { "$ref": "#/$defs/nonEmpty" },
+            "requireMaterialDigests": { "type": "boolean" },
+            "maxFreezeSeconds": { "type": "integer", "minimum": 0 },
+            "allowPolicyExempt": { "type": "array", "items": { "$ref": "#/$defs/scope" } },
+            "marketplace": {
+              "type": "object", "additionalProperties": false,
+              "required": ["evidenceMode", "legacySignatureMigrationGate", "recursiveDependencies"],
+              "properties": {
+                "evidenceMode": { "enum": ["marketplace-only", "dual-required", "cross-asset-required"] },
+                "legacySignatureMigrationGate": { "type": "boolean" },
+                "recursiveDependencies": { "enum": ["if-present", "required"] }
+              }
+            }
+          }
         }
       }
     },

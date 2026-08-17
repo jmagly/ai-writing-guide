@@ -14,9 +14,11 @@
       "type": "object",
       "additionalProperties": {
         "type": "object", "additionalProperties": false,
+        "dependentRequired": { "subject": ["assetType"], "assetType": ["subject"] },
         "required": ["namespace", "channel", "sequence", "artifactSha256", "version", "verifiedAt"],
         "properties": {
           "namespace": { "$ref": "#/$defs/nonEmpty" }, "channel": { "$ref": "#/$defs/nonEmpty" },
+          "subject": { "$ref": "#/$defs/nonEmpty" }, "assetType": { "$ref": "#/$defs/nonEmpty" },
           "sequence": { "type": "integer", "minimum": 1 }, "artifactSha256": { "$ref": "#/$defs/sha256" },
           "version": { "$ref": "#/$defs/nonEmpty" }, "verifiedAt": { "type": "string", "format": "date-time" }
         }

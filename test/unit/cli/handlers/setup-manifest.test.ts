@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -187,7 +188,7 @@ describe('setup manifest CLI handlers', () => {
     expect(stdoutSpy.mock.calls.map(([chunk]) => String(chunk)).join('\n')).toContain('[setup:dry-run]');
   });
 
-  it('accepts provider-orchestrated agentic workflows and hands them off before CLI execution', () => {
+  it('blocks provider-orchestrated handoff until the exact manifest bytes are verified', () => {
     const manifest = baseManifest({ id: 'inspect', type: 'agentic', instruction: 'Inspect the project safely.' });
     manifest.metadata.execution_mode = 'provider-orchestrated';
     writeManifest(tmpDir, manifest);
@@ -202,8 +203,30 @@ describe('setup manifest CLI handlers', () => {
       skip: new Set(),
       yes: true,
     })).toMatchObject({
+      exitCode: 29,
+      message: expect.stringContaining('handoff blocked'),
+    });
+
+    const manifestPath = path.join(tmpDir, 'setup.manifest.yaml');
+    const bytes = fs.readFileSync(manifestPath);
+    expect(runSetupManifest({
+      cwd: tmpDir,
+      frameworkRoot: REPO_ROOT,
+      platform: 'linux',
+      paramValues: { INSTALL_DIR: tmpDir },
+      skip: new Set(),
+      yes: true,
+      artifactVerification: {
+        schemaVersion: 'aiwg.verify.result.v1',
+        status: 'verified',
+        exitCode: 0,
+        artifact: { name: 'setup.manifest.yaml', sha256: createHash('sha256').update(bytes).digest('hex') },
+        identities: ['release'],
+        diagnostics: [],
+      },
+    })).toMatchObject({
       exitCode: 2,
-      message: expect.stringContaining('provider-orchestrated'),
+      message: expect.stringContaining('verified provider-orchestrated manifest'),
     });
   });
 

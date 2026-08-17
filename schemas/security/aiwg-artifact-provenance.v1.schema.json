@@ -124,7 +124,9 @@
       "additionalProperties": false,
       "required": ["uri", "digest"],
       "properties": {
+        "name": { "$ref": "#/$defs/nonEmpty" },
         "uri": { "type": "string", "format": "uri-reference" },
+        "mediaType": { "$ref": "#/$defs/nonEmpty" },
         "digest": {
           "type": "object",
           "additionalProperties": false,
