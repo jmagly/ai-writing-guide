@@ -103,13 +103,68 @@ import {
   type DeploymentScope,
   type UseDeploymentResult,
 } from '../services/deployment-verification.js';
-import { finalizeProviderTransformationReceipt } from '../../providers/transformation-receipt-integration.js';
+import {
+  finalizeProviderTransformationReceipt,
+  sourceVerificationsFromSignedWebRelease,
+} from '../../providers/transformation-receipt-integration.js';
+import {
+  loadResourceTrustRootFile,
+  resolveWebRelease,
+  type WebReleaseOptions,
+} from '../../resources/web-release.js';
+import { createResourceCredentialProvider } from '../../auth/resource-credentials.js';
 
 /**
  * Valid framework identifiers
  */
 const VALID_FRAMEWORKS = ['sdlc', 'marketing', 'media-curator', 'research', 'forensics', 'dfir', 'security-engineering', 'ops', 'validation', 'knowledge-base', 'writing', 'general', 'all'] as const;
 type Framework = typeof VALID_FRAMEWORKS[number];
+
+function providerReceiptWebReleaseOptions(): Omit<WebReleaseOptions, 'selector' | 'offline'> {
+  const baseUrl = process.env.AIWG_RESOURCE_BASE_URL;
+  const cacheRoot = process.env.AIWG_RESOURCE_CACHE_ROOT;
+  const trustRootFile = process.env.AIWG_RESOURCE_TRUST_ROOT_FILE;
+  const publicKeyPem = trustRootFile === undefined
+    ? undefined
+    : loadResourceTrustRootFile(path.resolve(trustRootFile));
+  return {
+    ...(baseUrl === undefined ? {} : { baseUrl }),
+    ...(cacheRoot === undefined ? {} : { cacheRoot }),
+    ...(publicKeyPem === undefined ? {} : { publicKeyPem }),
+    ...(process.env.AIWG_RESOURCE_ALLOW_INSECURE_LOOPBACK_HTTP === '1'
+      ? { allowInsecureLoopbackHttp: true }
+      : {}),
+  };
+}
+
+async function signedProviderSourceVerifications(options: {
+  projectRoot: string;
+  frameworkRoot: string;
+  provider: string;
+  scope: DeploymentScope;
+  requestedBundles: string[];
+}): Promise<Readonly<Record<string, import('../../security/artifact-verifier.js').ArtifactVerificationResult>> | undefined> {
+  const versionInfo = await getVersionInfo();
+  if (versionInfo.devMode) return undefined;
+  const releaseOptions = providerReceiptWebReleaseOptions();
+  let release;
+  try {
+    release = await resolveWebRelease({ ...releaseOptions, selector: versionInfo.version, offline: true });
+  } catch {
+    const credentialProvider = createResourceCredentialProvider(process.env);
+    const token = await credentialProvider();
+    // Protected production resources require the authenticated release
+    // credential. A configured alternate endpoint may intentionally be public.
+    if (!token && releaseOptions.baseUrl === undefined) return undefined;
+    release = await resolveWebRelease({
+      ...releaseOptions,
+      selector: versionInfo.version,
+      credentialProvider: async () => token,
+    });
+  }
+  const verifications = await sourceVerificationsFromSignedWebRelease(options, release);
+  return Object.keys(verifications).length > 0 ? verifications : undefined;
+}
 
 /**
  * Framework name to deploy mode mapping.
@@ -2286,13 +2341,15 @@ export class UseHandler implements CommandHandler {
           : requestedScope;
         if (coreResult.exitCode === 0 && !dryRun) {
           try {
-            await finalizeProviderTransformationReceipt({
+            const receiptOptions = {
               projectRoot: projectDir,
               frameworkRoot,
               provider,
               scope: effectiveScope,
               requestedBundles: [requestedBundle],
-            });
+            };
+            const sourceVerifications = await signedProviderSourceVerifications(receiptOptions);
+            await finalizeProviderTransformationReceipt({ ...receiptOptions, sourceVerifications });
           } catch (error) {
             originalConsole.warn(`Provider receipt finalization failed for ${provider}: ${error instanceof Error ? error.message : String(error)}`);
           }

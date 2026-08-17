@@ -94,13 +94,19 @@ async function readyCodexFixture(): Promise<{ projectRoot: string; frameworkRoot
   });
   await writeFrameworkIndex(frameworkRoot);
   const manifestBytes = await readFile(path.join(frameworkRoot, 'agentic/code/frameworks/sdlc-complete/manifest.json'));
+  const manifestSha256 = createHash('sha256').update(manifestBytes).digest('hex');
+  const bundleSha256 = createHash('sha256').update(JSON.stringify([{
+    bytes: manifestBytes.byteLength,
+    path: 'manifest.json',
+    sha256: manifestSha256,
+  }])).digest('hex');
   const sourceVerification: ArtifactVerificationResult = {
     schemaVersion: 'aiwg.verify.result.v1',
     status: 'verified',
     exitCode: 0,
     artifact: {
       name: 'agentic/code/frameworks/sdlc-complete/manifest.json',
-      sha256: createHash('sha256').update(manifestBytes).digest('hex'),
+      sha256: bundleSha256,
     },
     policy: 'test-threshold-policy',
     identities: ['test-release-signer'],

@@ -10,8 +10,10 @@ import {
   diagnoseIntegratedProviderTransformationReceipt,
   finalizeProviderTransformationReceipt,
   resolveProviderReceiptRuntimeEvidence,
+  sourceVerificationsFromSignedWebRelease,
 } from '../../../src/providers/transformation-receipt-integration.js';
 import type { ArtifactVerificationResult } from '../../../src/security/artifact-verifier.js';
+import type { VerifiedWebRelease } from '../../../src/resources/web-release.js';
 
 const roots: string[] = [];
 
@@ -46,11 +48,17 @@ async function fixture(split = false) {
     agents: 0, commands: 1, skills: 1, rules: 0,
   }, { version: '1', source: 'bundled' });
   await writeAiwgConfig(projectRoot, config);
+  const manifestDigest = createHash('sha256').update(manifestBytes).digest('hex');
   return {
     projectRoot,
     outputRoot,
     frameworkRoot,
-    manifestDigest: createHash('sha256').update(manifestBytes).digest('hex'),
+    manifestDigest,
+    bundleDigest: createHash('sha256').update(JSON.stringify([{
+      bytes: Buffer.byteLength(manifestBytes),
+      path: 'manifest.json',
+      sha256: manifestDigest,
+    }])).digest('hex'),
   };
 }
 
@@ -67,11 +75,92 @@ function verifiedSource(sha256: string): ArtifactVerificationResult {
   };
 }
 
+function signedRelease(descriptors: Array<{ path: string; sha256: string; size: number }>): VerifiedWebRelease {
+  return {
+    selector: '2026.8.11',
+    selectorKind: 'exact',
+    version: '2026.8.11',
+    manifestDigest: 'a'.repeat(64),
+    baseUrl: 'https://releases.aiwg.io',
+    manifestUrl: 'https://releases.aiwg.io/resources/2026.8.11/manifest.json',
+    cacheDir: '/verified-cache',
+    releaseManifestPath: '/verified-cache/manifest.json',
+    releaseSignaturePath: '/verified-cache/manifest.sig',
+    fortemiManifestPath: '/verified-cache/fortemi-manifest.json',
+    fortemiExportPath: '/verified-cache/fortemi-export.json',
+    fortemiManifestSha256: 'b'.repeat(64),
+    fortemiManifestSize: 1,
+    fortemiExportSha256: 'c'.repeat(64),
+    fortemiExportSize: 1,
+    descriptors: new Map(descriptors.map(descriptor => [descriptor.path, descriptor])),
+  };
+}
+
 afterEach(async () => {
   await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true })));
 });
 
 describe('provider transformation receipt integration', () => {
+  it('uses the exact signed web-release descriptor as the bundled source trust handoff', async () => {
+    const roots = await fixture();
+    const options = {
+      ...roots,
+      provider: 'codex',
+      scope: 'project' as const,
+      requestedBundles: ['sdlc'],
+    };
+    const manifestBytes = await readFile(path.join(
+      roots.frameworkRoot,
+      'agentic/code/frameworks/sdlc-complete/manifest.json',
+    ));
+    const rulePath = path.join(roots.frameworkRoot, 'agentic/code/frameworks/sdlc-complete/rules/example.md');
+    const ruleBytes = Buffer.from('# Signed rule\n');
+    await mkdir(path.dirname(rulePath), { recursive: true });
+    await writeFile(rulePath, ruleBytes);
+    const ruleDigest = createHash('sha256').update(ruleBytes).digest('hex');
+    const bundleDigest = createHash('sha256').update(JSON.stringify([
+      { bytes: manifestBytes.byteLength, path: 'manifest.json', sha256: roots.manifestDigest },
+      { bytes: ruleBytes.byteLength, path: 'rules/example.md', sha256: ruleDigest },
+    ])).digest('hex');
+    const release = signedRelease([
+      {
+        path: 'raw/agentic/code/frameworks/sdlc-complete/manifest.json',
+        sha256: roots.manifestDigest,
+        size: manifestBytes.byteLength,
+      },
+      {
+        path: 'raw/agentic/code/frameworks/sdlc-complete/rules/example.md',
+        sha256: ruleDigest,
+        size: ruleBytes.byteLength,
+      },
+    ]);
+    const verified = await sourceVerificationsFromSignedWebRelease(options, release);
+    expect(verified.sdlc).toMatchObject({
+      status: 'verified',
+      artifact: {
+        name: 'aiwg:bundle-inventory:sdlc',
+        sha256: bundleDigest,
+      },
+      policy: 'aiwg-signed-web-release',
+    });
+    expect((await finalizeProviderTransformationReceipt({ ...options, sourceVerifications: verified })).status)
+      .toBe('written');
+
+    const substituted = signedRelease([
+      {
+        path: 'raw/agentic/code/frameworks/sdlc-complete/manifest.json',
+        sha256: roots.manifestDigest,
+        size: manifestBytes.byteLength,
+      },
+      {
+        path: 'raw/agentic/code/frameworks/sdlc-complete/rules/example.md',
+        sha256: '0'.repeat(64),
+        size: ruleBytes.byteLength,
+      },
+    ]);
+    expect(await sourceVerificationsFromSignedWebRelease(options, substituted)).toEqual({});
+  });
+
   it('does not claim authentication from readability and binds only managed outputs idempotently', async () => {
     const roots = await fixture();
     const options = {
@@ -82,7 +171,7 @@ describe('provider transformation receipt integration', () => {
     };
     const evidence = await resolveProviderReceiptRuntimeEvidence(options);
     expect(evidence.source.verification).toBe('policy-exempt');
-    const sourceVerifications = { sdlc: verifiedSource(roots.manifestDigest) };
+    const sourceVerifications = { sdlc: verifiedSource(roots.bundleDigest) };
     expect((await resolveProviderReceiptRuntimeEvidence({ ...options, sourceVerifications })).source.verification)
       .toBe('verified');
     expect(evidence.outputPaths).toEqual(expect.arrayContaining([
@@ -123,7 +212,7 @@ describe('provider transformation receipt integration', () => {
     };
     const finalized = await finalizeProviderTransformationReceipt({
       ...options,
-      sourceVerifications: { sdlc: verifiedSource(roots.manifestDigest) },
+      sourceVerifications: { sdlc: verifiedSource(roots.bundleDigest) },
     });
     expect(finalized.receiptPath).toBe(path.join(
       roots.projectRoot, '.aiwg', 'receipts', 'providers', 'codex.project.json',

@@ -6,6 +6,7 @@ import path from 'node:path';
 import { readAiwgConfig, type InstalledEntry } from '../config/aiwg-config.js';
 import { readUserRegistry, type UserScopeProviderDeploy } from '../config/user-registry.js';
 import type { ArtifactVerificationResult } from '../security/artifact-verifier.js';
+import type { VerifiedWebRelease } from '../resources/web-release.js';
 import { USER_SCOPE_PATHS } from '../cli/scope-resolver.js';
 import {
   getProviderDefinition,
@@ -214,11 +215,43 @@ function exactUserEntries(
   return [...entries].sort();
 }
 
-async function resolveSourceManifest(
+interface CanonicalSourceBundle {
+  digest: string;
+  root: string;
+  files: Array<{ path: string; sha256: string; bytes: number; absolutePath: string }>;
+  canonicalBytesAvailable: boolean;
+}
+
+async function sourceBundleFiles(root: string): Promise<CanonicalSourceBundle['files']> {
+  const files: string[] = [];
+  const walk = async (directory: string): Promise<void> => {
+    const entries = await readdir(directory, { withFileTypes: true });
+    for (const entry of entries) {
+      const candidate = path.join(directory, entry.name);
+      if (entry.isSymbolicLink()) throw new Error(`canonical source bundle contains a symbolic link: ${candidate}`);
+      if (entry.isDirectory()) await walk(candidate);
+      else if (entry.isFile()) files.push(candidate);
+      else throw new Error(`canonical source bundle contains a non-regular entry: ${candidate}`);
+    }
+  };
+  await walk(root);
+  const inventory = await Promise.all(files.map(async absolutePath => {
+    const content = await readFile(absolutePath);
+    return {
+      path: path.relative(root, absolutePath).split(path.sep).join('/'),
+      sha256: sha256(content),
+      bytes: content.byteLength,
+      absolutePath,
+    };
+  }));
+  return inventory.sort((left, right) => left.path.localeCompare(right.path));
+}
+
+async function resolveSourceBundle(
   options: ProviderReceiptIntegrationOptions,
   bundle: string,
   entry: InstalledEntry | undefined,
-): Promise<{ digest: string; canonicalBytesAvailable: boolean } | null> {
+): Promise<CanonicalSourceBundle | null> {
   const candidates: string[] = [];
   if (entry?.source === 'project-local' && entry.localPath) {
     candidates.push(path.resolve(options.projectRoot, entry.localPath, 'manifest.json'));
@@ -231,15 +264,90 @@ async function resolveSourceManifest(
   );
   for (const candidate of candidates) {
     try {
-      return { digest: sha256(await readFile(candidate)), canonicalBytesAvailable: true };
+      await access(candidate);
+      const root = path.dirname(candidate);
+      const files = await sourceBundleFiles(root);
+      if (files.length === 0) continue;
+      return {
+        digest: sha256(stable(files.map(({ path: file, sha256: digest, bytes }) => ({ path: file, sha256: digest, bytes })))),
+        root,
+        files,
+        canonicalBytesAvailable: true,
+      };
     } catch {
       // Continue through the canonical source locations.
     }
   }
   const recorded = entry?.manifestHash?.replace(/^sha256:/, '');
   return recorded && /^[a-f0-9]{64}$/.test(recorded)
-    ? { digest: recorded, canonicalBytesAvailable: false }
+    ? { digest: recorded, root: '', files: [], canonicalBytesAvailable: false }
     : null;
+}
+
+function receiptBundles(
+  installed: Record<string, InstalledEntry>,
+  options: ProviderReceiptIntegrationOptions,
+): string[] {
+  const deployed = Object.keys(installed)
+    .filter(bundle => Boolean(installed[bundle]?.deployedTo[options.provider]))
+    .sort();
+  return deployed.length > 0 ? deployed : [...new Set(options.requestedBundles)].sort();
+}
+
+/**
+ * Convert an already signature-verified web release into the stable verifier
+ * result contract for the complete canonical bundle consumed by deployment.
+ * Every local file must match its signed descriptor; a registry's self-recorded
+ * manifestHash is never an authentication boundary.
+ */
+export async function sourceVerificationsFromSignedWebRelease(
+  options: ProviderReceiptIntegrationOptions,
+  release: VerifiedWebRelease,
+): Promise<Readonly<Record<string, ArtifactVerificationResult>>> {
+  const installed = await installedEntries(options);
+  const results: Record<string, ArtifactVerificationResult> = {};
+  for (const bundle of receiptBundles(installed, options)) {
+    const entry = installed[bundle];
+    if (entry?.source === 'project-local') continue;
+    const source = await resolveSourceBundle(options, bundle, entry);
+    if (!source?.canonicalBytesAvailable) continue;
+    let matched = true;
+    for (const file of source.files) {
+      const relative = path.relative(options.frameworkRoot, file.absolutePath).split(path.sep).join('/');
+      if (!relative || relative === '..' || relative.startsWith('../')) {
+        matched = false;
+        break;
+      }
+      const descriptor = release.descriptors.get(`raw/${relative}`);
+      if (!descriptor || descriptor.sha256 !== file.sha256 || descriptor.size !== file.bytes) {
+        matched = false;
+        break;
+      }
+    }
+    if (!matched) continue;
+    const artifactName = `aiwg:bundle-inventory:${bundle}`;
+    results[bundle] = {
+      schemaVersion: 'aiwg.verify.result.v1',
+      status: 'verified',
+      exitCode: 0,
+      artifact: { name: artifactName, sha256: source.digest },
+      policy: 'aiwg-signed-web-release',
+      identities: ['aiwg-release-publisher'],
+      ...(release.channelSequence === undefined ? {} : {
+        freshness: {
+          namespace: 'aiwg',
+          channel: release.selector,
+          sequence: release.channelSequence,
+          version: release.version,
+        },
+      }),
+      diagnostics: [{
+        code: 'SIGNED_RELEASE_DESCRIPTOR',
+        message: `Exact canonical source bytes match signed release manifest ${release.manifestDigest}`,
+      }],
+    };
+  }
+  return results;
 }
 
 async function sourceEvidence(
@@ -251,7 +359,7 @@ async function sourceEvidence(
   let authenticated = Boolean(options.sourceVerifications);
   for (const bundle of bundles) {
     const entry = installed[bundle];
-    const source = await resolveSourceManifest(options, bundle, entry);
+    const source = await resolveSourceBundle(options, bundle, entry);
     if (!source) {
       return {
         subject: `aiwg:deployment:${sha256(bundles.join('\0')).slice(0, 24)}`,
@@ -310,11 +418,9 @@ export async function resolveProviderReceiptRuntimeEvidence(
   const provider = normalizeProviderDefinitionId(rawOptions.provider) ?? rawOptions.provider;
   const options = { ...rawOptions, provider };
   const installed = await installedEntries(options);
-  const receiptBundles = Object.keys(installed)
-    .filter(bundle => Boolean(installed[bundle]?.deployedTo[provider]))
-    .sort();
-  const evidenceOptions = receiptBundles.length > 0
-    ? { ...options, requestedBundles: receiptBundles }
+  const deployedBundles = receiptBundles(installed, options);
+  const evidenceOptions = deployedBundles.length > 0
+    ? { ...options, requestedBundles: deployedBundles }
     : options;
   const paths = artifactPaths(provider, options.scope);
   const outputRoot = path.resolve(

@@ -14,6 +14,12 @@ AIWG records provider transformation evidence under the local control root:
 Each `aiwg.provider-transformation-receipt.v1` document binds a verified source
 subject and digest, provider and scope, transformer and provider-adapter
 contract versions, and the SHA-256 and byte length of every recorded output.
+For bundled AIWG sources, the trust handoff is the existing signature-verified
+web release manifest: every regular file below the canonical bundle root must
+match its exact signed `raw/` descriptor before AIWG derives the bundle-inventory
+subject. Matching only `manifest.json`, a registry hash, or provider output is
+not sufficient authentication. Cached signed release metadata supports the same
+check offline after the first authenticated resolution.
 Output paths are forward-slash relative paths. Receipts must not contain home
 directories, usernames, hostnames, credentials, environment values, or other
 machine-local identifiers. In split-root projects the receipt stays with local
