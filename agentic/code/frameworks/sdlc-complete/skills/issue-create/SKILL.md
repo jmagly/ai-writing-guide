@@ -182,7 +182,7 @@ When `provider === 'unknown'` (self-hosted instances we can't classify by URL), 
 - `resolved.issue_tracker` = `'origin'`
 - `git remote get-url origin` = `git@git.integrolabs.net:roctinam/aiwg.git`
 - `resolveRemoteProvider(url)` returns `'unknown'` (the host doesn't include "gitea")
-- → operator must set `--provider gitea`, OR the project's `aiwg.config` providers list must explicitly include `gitea` so we can fall through to that.
+- → operator must set `--provider gitea`, OR the project's `aiwg.config` must set `remotes.issue_provider: "gitea"` so issue tooling can use that explicit tracker hint.
 
 **Override warning**: if `--provider` differs from the auto-resolved one, print:
 `⚠️ Using --provider github (resolved from .aiwg/aiwg.config: gitea)`

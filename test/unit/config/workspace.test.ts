@@ -153,6 +153,33 @@ describe('workspace repository resolution', () => {
     });
   });
 
+  it('uses remotes.issue_provider for ambiguous self-hosted issue trackers', async () => {
+    execFileSync('git', ['-C', externalRepo, 'remote', 'set-url', 'tickets', 'git@git.integrolabs.net:ops/sysops.git']);
+    await writeConfig(externalRepo, baseConfig({
+      workspace: { member_of: '../home' },
+      remotes: {
+        primary: 'primary',
+        issue_tracker: 'tickets',
+        issue_provider: 'gitea',
+        tracker_actor: {
+          login: 'ops-maintainer',
+          via: 'tea',
+        },
+      },
+    }));
+
+    const workspace = await resolveWorkspace(workspaceDir);
+    const sysops = workspace.members.find((member) => member.name === 'sysops');
+
+    expect(sysops?.issueTracker).toMatchObject({
+      name: 'tickets',
+      provider: 'gitea',
+      domain: 'git.integrolabs.net',
+      providerSource: 'manifest-hint',
+    });
+    expect(sysops?.drift).not.toContain("issue tracker provider is unknown for 'git.integrolabs.net'");
+  });
+
   it('discovers an external workspace through member_of', async () => {
     expect(await findWorkspaceProjectRoot(externalRepo)).toBe(workspaceDir);
 

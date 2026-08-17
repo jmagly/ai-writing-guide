@@ -149,6 +149,9 @@ export interface TrackerActorConfig {
   forbid_actors?: string[];
 }
 
+/** Explicit issue-tracker provider hint for self-hosted or local trackers. */
+export type IssueProviderConfig = 'gitea' | 'github' | 'local';
+
 /** Git transport identity and the project-local helper that enforces it. */
 export interface RemoteTransportConfig {
   /** Forge login expected to authenticate git pushes. */
@@ -172,6 +175,8 @@ export interface RemotesConfig {
   primary?: string;
   /** Where issues live. Defaults to `primary`. */
   issue_tracker?: string;
+  /** Explicit tracker provider for ambiguous self-hosted or local issue stores. */
+  issue_provider?: IssueProviderConfig;
   /** Where CI runs. Defaults to `primary`. */
   ci?: string;
   /** Which forge account/tool performs delivery writes. */
@@ -189,6 +194,7 @@ export interface RemotesConfig {
 export interface ResolvedRemotes {
   primary: string;
   issue_tracker: string;
+  issue_provider?: IssueProviderConfig;
   ci: string;
   tracker_actor?: TrackerActorConfig;
   transport?: RemoteTransportConfig;
@@ -1155,8 +1161,8 @@ export async function readIndexConfig(
  *   - any host containing 'gitea' (or matching the typical Gitea path shape) → 'gitea'
  *
  * Returns 'unknown' for self-hosted instances we can't classify by host alone —
- * callers should then prompt the operator or fall back to the configured
- * AIWG provider list.
+ * callers should then prompt the operator or use `remotes.issue_provider`
+ * when the project has declared one.
  *
  * @implements #997
  */
@@ -1173,7 +1179,7 @@ export function resolveRemoteProvider(remoteUrl: string): 'github' | 'gitlab' | 
   // gitea — identified by hostname token. Self-hosted Gitea instances often
   // don't include 'gitea' in their hostname (e.g. corporate git servers), so
   // 'unknown' is the honest answer there — callers should consult the
-  // configured AIWG provider list rather than guess.
+  // explicit remotes.issue_provider hint rather than guess.
   if (lower.includes('gitea')) return 'gitea';
 
   return 'unknown';
@@ -1195,6 +1201,7 @@ export function resolveRemotes(remotes: RemotesConfig | undefined): ResolvedRemo
   return {
     primary,
     issue_tracker: remotes?.issue_tracker ?? primary,
+    issue_provider: remotes?.issue_provider,
     ci: remotes?.ci ?? primary,
     tracker_actor: remotes?.tracker_actor,
     transport: remotes?.transport,

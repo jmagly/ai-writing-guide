@@ -30,6 +30,7 @@ import {
 const execFileAsync = promisify(execFile);
 
 export type ForgeProvider = 'github' | 'gitlab' | 'gitea' | 'unknown';
+type RemoteProviderHint = Exclude<ForgeProvider, 'unknown'>;
 
 export interface ResolvedRemoteEndpoint {
   name: string;
@@ -177,7 +178,7 @@ async function readRemoteUrl(repoPath: string, remote: string): Promise<string |
 async function resolveEndpoint(
   repoPath: string,
   remote: string,
-  providerHint?: WorkspaceRepoConfig['provider'],
+  providerHint?: RemoteProviderHint,
 ): Promise<ResolvedRemoteEndpoint> {
   const url = await readRemoteUrl(repoPath, remote);
   const detected = resolveRemoteProvider(url ?? '');
@@ -195,6 +196,15 @@ async function resolveEndpoint(
   };
 }
 
+function trackerProviderHint(
+  remotes: ResolvedRemotes,
+  fallback?: WorkspaceRepoConfig['provider'],
+): RemoteProviderHint | undefined {
+  const configured = remotes.issue_provider;
+  if (configured === 'gitea' || configured === 'github') return configured;
+  return fallback;
+}
+
 async function resolveMember(
   entry: WorkspaceRepoConfig,
   workspaceRoot: string,
@@ -203,9 +213,10 @@ async function resolveMember(
   const configPath = getConfigPath(memberPath);
   const config = await readAiwgConfig(memberPath);
   const remotes = resolveRemotes(config?.remotes);
+  const issueProviderHint = trackerProviderHint(remotes, entry.provider);
   const [primary, issueTracker, ci] = await Promise.all([
     resolveEndpoint(memberPath, remotes.primary, entry.provider),
-    resolveEndpoint(memberPath, remotes.issue_tracker, entry.provider),
+    resolveEndpoint(memberPath, remotes.issue_tracker, issueProviderHint),
     resolveEndpoint(memberPath, remotes.ci, entry.provider),
   ]);
   const drift: string[] = [];

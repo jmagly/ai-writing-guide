@@ -53,7 +53,7 @@ Located at `.aiwg/aiwg.config` (top level), the `delivery` block contains:
       "enforce": "tags"
     },
     "require_ci_green": true,
-    "force_push_policy": "never" | "main-only-blocked" | "allowed",
+    "force_push_policy": "never" | "own-branch-only" | "allowed",
     "require_signed_commits": true,
     "auto_close_issues": true,
     "issue_comment_on_cycle": true,
@@ -239,7 +239,7 @@ When the policy is already declared, do NOT use `AskUserQuestion` (or equivalent
 `force_push_policy` defines what's allowed:
 
 - `never`: no force-push to any branch, ever
-- `main-only-blocked`: force-push allowed on feature branches, never on `default_branch`
+- `own-branch-only`: force-push allowed on the agent's own feature branch, never on `default_branch`
 - `allowed`: force-push allowed everywhere (rare; only configure on solo projects)
 
 Agents MUST NOT force-push outside the declared policy.

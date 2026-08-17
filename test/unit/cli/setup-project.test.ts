@@ -47,6 +47,7 @@ describe('aiwg setup project', () => {
     expect(plan.next.remotes).toMatchObject({
       primary: 'origin',
       issue_tracker: 'origin',
+      issue_provider: 'github',
       ci: 'origin',
       tracker_actor: { via: 'gh' },
     });
@@ -91,8 +92,30 @@ describe('aiwg setup project', () => {
     });
 
     expect(plan.issueProvider).toBe('gitea');
+    expect(plan.next.remotes?.issue_provider).toBe('gitea');
     expect(plan.next.remotes?.tracker_actor).toEqual({ login: 'maintainer', via: 'tea' });
     expect(plan.warnings.join('\n')).toContain("Remote 'origin' is self-hosted or unknown");
+  });
+
+  it('normalizes legacy main-only-blocked force-push policy during setup repair', async () => {
+    const cfg = emptyConfig(['codex']);
+    cfg.remotes = { primary: 'origin', issue_tracker: 'origin', ci: 'origin' };
+    cfg.delivery = {
+      ...cfg.delivery,
+      force_push_policy: 'main-only-blocked',
+    } as typeof cfg.delivery;
+    await writeAiwgConfig(tmp, cfg);
+    addRemote(tmp, 'origin', 'git@git.integrolabs.net:org/project.git');
+
+    const plan = await buildSetupProjectPlan({
+      projectDir: tmp,
+      dryRun: true,
+      issueProvider: 'gitea',
+      trackerActorLogin: 'maintainer',
+    });
+
+    expect(plan.next.delivery?.force_push_policy).toBe('own-branch-only');
+    expect(plan.warnings.join('\n')).toContain('main-only-blocked is a legacy alias');
   });
 
   it('classifies a GitHub secondary remote as a public mirror', async () => {
@@ -118,6 +141,7 @@ describe('aiwg setup project', () => {
 
     expect(plan.issueProvider).toBe('local');
     expect(plan.next.remotes?.issue_tracker).toBe('local');
+    expect(plan.next.remotes?.issue_provider).toBe('local');
     expect(plan.warnings.join('\n')).not.toContain('Local issue store selected');
   });
 

@@ -161,7 +161,8 @@ async function handleSet(config: UserConfig, args: string[]): Promise<void> {
 //   aiwg config get --project remotes.primary
 //
 // Set validates enum membership for known fields (delivery.mode,
-// delivery.merge_style, delivery.force_push_policy) before writing.
+// delivery.merge_style, delivery.force_push_policy, remotes.issue_provider)
+// before writing.
 
 const ENUM_RULES: Record<string, readonly string[]> = {
   'delivery.mode': ['direct', 'feature-branch', 'pr-required'],
@@ -171,6 +172,7 @@ const ENUM_RULES: Record<string, readonly string[]> = {
   'delivery.signing.enforce': ['commits', 'tags', 'all'],
   'delivery.release_signing.format': ['openpgp', 'ssh', 'x509'],
   'delivery.release_signing.enforce': ['commits', 'tags', 'all'],
+  'remotes.issue_provider': ['gitea', 'github', 'local'],
   'remotes.tracker_actor.via': ['tea', 'gh', 'mcp', 'api'],
   'remotes.transport.protocol': ['ssh', 'https'],
   'repo_maintainer.tiers.local': ['collaborator', 'maintainer', 'admin'],

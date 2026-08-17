@@ -62,6 +62,44 @@ describe('tracker capability protocol', () => {
     expect(decision.blocker).toContain('Do not file on mirror or secondary remotes');
   });
 
+  it('uses remotes.issue_provider for ambiguous self-hosted issue tracker remotes', () => {
+    const config = baseConfig();
+    config.delivery = { mode: 'pr-required' };
+    config.remotes = {
+      primary: 'origin',
+      issue_tracker: 'origin',
+      ci: 'origin',
+      issue_provider: 'gitea',
+      secondary: [{ name: 'github', purpose: 'publish-target' }],
+    };
+
+    const authority = resolveTrackerAuthority(config, {
+      origin: 'git@git.integrolabs.net:roctinam/strategy.git',
+      github: 'git@github.com:jmagly/strategy.git',
+    });
+
+    expect(authority.provider).toBe('gitea');
+    expect(authority.issueTrackerRemote).toBe('origin');
+  });
+
+  it('lets remotes.issue_provider override legacy delivery.issue_storage hints', () => {
+    const config = baseConfig();
+    config.delivery = { mode: 'pr-required', issue_storage: 'github-only' };
+    config.remotes = {
+      primary: 'origin',
+      issue_tracker: 'local',
+      ci: 'origin',
+      issue_provider: 'local',
+    };
+
+    const authority = resolveTrackerAuthority(config, {
+      origin: 'git@git.integrolabs.net:roctinam/strategy.git',
+    });
+
+    expect(authority.provider).toBe('local');
+    expect(authority.issueTrackerRemote).toBe('local');
+  });
+
   it('renders concise generated protocol with a direct config link', () => {
     const authority = resolveTrackerAuthority(baseConfig(), {
       origin: 'git@git.integrolabs.net:roctinam/aiwg.git',

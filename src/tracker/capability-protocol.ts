@@ -60,7 +60,7 @@ function providerFromIssueStorage(issueStorage: string | undefined): TrackerProv
 }
 
 function normalizeProvider(provider: string): TrackerProvider {
-  return provider === 'gitea' || provider === 'github' || provider === 'gitlab'
+  return provider === 'gitea' || provider === 'github' || provider === 'gitlab' || provider === 'local'
     ? provider
     : 'unknown';
 }
@@ -92,6 +92,7 @@ export function resolveTrackerAuthority(
   const issueStorage = config?.delivery?.issue_storage;
   const issueTrackerUrl = remoteUrls[remotes.issue_tracker];
   const storageProvider = providerFromIssueStorage(issueStorage);
+  const configuredProvider = remotes.issue_provider ? normalizeProvider(remotes.issue_provider) : 'unknown';
   const urlProvider = issueTrackerUrl ? normalizeProvider(resolveRemoteProvider(issueTrackerUrl)) : 'unknown';
 
   return {
@@ -101,7 +102,11 @@ export function resolveTrackerAuthority(
     ciRemote: remotes.ci,
     issueTrackerUrl,
     issueStorage,
-    provider: storageProvider !== 'unknown' ? storageProvider : urlProvider,
+    provider: configuredProvider !== 'unknown'
+      ? configuredProvider
+      : storageProvider !== 'unknown'
+        ? storageProvider
+        : urlProvider,
     secondaryRemotes: remotes.secondary,
   };
 }

@@ -1240,10 +1240,12 @@ aiwg setup project --yes --delivery-mode direct --default-branch main
 aiwg setup project --yes --issue-provider local
 ```
 
-`--issue-provider` accepts `gitea`, `github`, or `local`. Local mode writes
-`remotes.issue_tracker: "local"` and pairs with the `.aiwg/issues/` store
-managed by `aiwg issue init`. Self-hosted remotes that cannot be classified from
-their URL require an explicit provider choice or confirmation.
+`--issue-provider` accepts `gitea`, `github`, or `local` and writes
+`remotes.issue_provider` so later issue tooling can resolve self-hosted trackers
+whose remote URL is ambiguous. Local mode also writes `remotes.issue_tracker:
+"local"` and pairs with the `.aiwg/issues/` store managed by `aiwg issue init`.
+Self-hosted remotes that cannot be classified from their URL require an explicit
+provider choice or confirmation.
 
 The helper validates the proposed repo/tracker/delivery/signing combination
 before writing. Manual `.aiwg/aiwg.config` editing remains available for

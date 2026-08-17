@@ -1,7 +1,13 @@
 import { spawnSync } from 'child_process';
 import { existsSync } from 'fs';
 import type { Interface as ReadlineInterface } from 'readline';
-import type { AiwgConfig, DeliveryConfig, RemotesConfig, SecondaryRemote } from '../../config/aiwg-config.js';
+import type {
+  AiwgConfig,
+  DeliveryConfig,
+  IssueProviderConfig,
+  RemotesConfig,
+  SecondaryRemote,
+} from '../../config/aiwg-config.js';
 import {
   emptyConfig,
   getConfigPath,
@@ -17,9 +23,10 @@ import * as ui from '../ui.js';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { projectAiwgPath } from '../../config/project-artifacts.js';
 
-type IssueProvider = 'gitea' | 'github' | 'local';
+type IssueProvider = IssueProviderConfig;
 type DeliveryMode = 'direct' | 'feature-branch' | 'pr-required';
 type ForcePushPolicy = 'never' | 'own-branch-only' | 'allowed';
+type LegacyForcePushPolicy = 'main-only-blocked';
 type SigningFormat = 'openpgp' | 'ssh' | 'x509';
 type TrackerVia = 'tea' | 'gh' | 'mcp' | 'api';
 
@@ -218,6 +225,19 @@ function secondaryRemotes(remotes: GitRemoteInfo[], primary: string, issueTracke
     }));
 }
 
+function normalizeForcePushPolicy(
+  value: DeliveryConfig['force_push_policy'] | LegacyForcePushPolicy | undefined,
+  warnings: string[],
+): ForcePushPolicy | undefined {
+  if (value === 'main-only-blocked') {
+    warnings.push(
+      'delivery.force_push_policy=main-only-blocked is a legacy alias; setup normalized it to own-branch-only.',
+    );
+    return 'own-branch-only';
+  }
+  return value;
+}
+
 function cloneConfig(config: AiwgConfig): AiwgConfig {
   return JSON.parse(JSON.stringify(config)) as AiwgConfig;
 }
@@ -257,6 +277,9 @@ function validateSetupConfig(config: AiwgConfig, remotes: GitRemoteInfo[], issue
   } else {
     checkRemote('remotes.issue_tracker', config.remotes?.issue_tracker);
   }
+  if (config.remotes?.issue_provider && !ISSUE_PROVIDERS.includes(config.remotes.issue_provider as IssueProvider)) {
+    errors.push('remotes.issue_provider is invalid');
+  }
   checkRemote('remotes.ci', config.remotes?.ci);
 
   if (!DELIVERY_MODES.includes(config.delivery?.mode as DeliveryMode)) errors.push('delivery.mode is invalid');
@@ -288,6 +311,7 @@ export async function buildSetupProjectPlan(options: SetupProjectOptions): Promi
   const primaryRemote = remotes.find(r => r.name === primary);
   const hasLocalIssues = existsSync(projectAiwgPath(options.projectDir, 'issues', 'config.json'));
   const issueProvider = options.issueProvider ?? chooseIssueProvider(primaryRemote, hasLocalIssues);
+  const warnings: string[] = [];
   const issueTracker = issueProvider === 'local'
     ? 'local'
     : options.issueTracker ?? base.remotes?.issue_tracker ?? primary;
@@ -296,6 +320,7 @@ export async function buildSetupProjectPlan(options: SetupProjectOptions): Promi
   const remotesConfig: RemotesConfig = {
     primary,
     issue_tracker: issueTracker,
+    issue_provider: issueProvider,
     ci,
     secondary: base.remotes?.secondary ?? secondaryRemotes(remotes, primary, issueTracker, ci),
   };
@@ -317,9 +342,13 @@ export async function buildSetupProjectPlan(options: SetupProjectOptions): Promi
     require_ci_green: options.requireCiGreen ?? existingDelivery.require_ci_green ?? true,
     auto_close_issues: options.autoCloseIssues ?? existingDelivery.auto_close_issues ?? true,
     issue_comment_on_cycle: options.issueCommentOnCycle ?? existingDelivery.issue_comment_on_cycle ?? true,
-    force_push_policy: options.forcePushPolicy ?? existingDelivery.force_push_policy ?? 'never',
     require_signed_commits: options.requireSignedCommits ?? existingDelivery.require_signed_commits ?? false,
   };
+  delivery.force_push_policy = (
+    options.forcePushPolicy
+    ?? normalizeForcePushPolicy(existingDelivery.force_push_policy as DeliveryConfig['force_push_policy'] | LegacyForcePushPolicy | undefined, warnings)
+    ?? 'never'
+  );
 
   const committerName = options.committerName ?? existingDelivery.committer?.name ?? gitConfig(options.projectDir, 'user.name');
   const committerEmail = options.committerEmail ?? existingDelivery.committer?.email ?? gitConfig(options.projectDir, 'user.email');
@@ -345,7 +374,6 @@ export async function buildSetupProjectPlan(options: SetupProjectOptions): Promi
   base.remotes = remotesConfig;
   base.delivery = delivery;
 
-  const warnings: string[] = [];
   if (primaryRemote?.provider === 'unknown' && issueProvider !== 'local') {
     warnings.push(`Remote '${primary}' is self-hosted or unknown; provider '${issueProvider}' was selected explicitly/defaulted.`);
   }

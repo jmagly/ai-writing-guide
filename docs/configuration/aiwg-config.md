@@ -439,6 +439,7 @@ targets. Defaults: `primary: origin`, `issue_tracker: primary`, `ci: primary`,
 | --------------- | ----------------------- | --------- | ----------------------------------------------------------------------------------- |
 | `primary`       | string                  | `origin`  | Git remote name driving CI and PRs by default. Must match a name from `git remote`. |
 | `issue_tracker` | string                  | `primary` | Where issues live.                                                                  |
+| `issue_provider`| enum                    | unset     | Explicit tracker provider for self-hosted or local trackers (`gitea`, `github`, `local`). |
 | `ci`            | string                  | `primary` | Where CI runs.                                                                      |
 | `tracker_actor` | `TrackerActorConfig`    | unset     | Forge login and tool route for issue, PR, comment, label, and closure writes.       |
 | `transport`     | `RemoteTransportConfig` | unset     | Login, protocol, helper, and public SSH fingerprint used for Git pushes.            |
@@ -484,7 +485,7 @@ The loader exposes `resolveRemoteProvider(url)` which classifies a remote URL by
 - `github.com` → `github`
 - `gitlab.com` or self-hosted GitLab → `gitlab`
 - Hosts containing `gitea` → `gitea`
-- Anything else → `unknown` (callers fall back to the configured provider list)
+- Anything else → `unknown` (callers use `remotes.issue_provider` when set, or ask for an explicit provider)
 
 ## Worked Examples
 

@@ -474,6 +474,7 @@ describe('aiwg-config', () => {
       expect(r).toEqual({
         primary: 'origin',
         issue_tracker: 'origin',
+        issue_provider: undefined,
         ci: 'origin',
         tracker_actor: undefined,
         transport: undefined,
@@ -485,6 +486,7 @@ describe('aiwg-config', () => {
       const r = resolveRemotes({});
       expect(r.primary).toBe('origin');
       expect(r.issue_tracker).toBe('origin');
+      expect(r.issue_provider).toBeUndefined();
       expect(r.ci).toBe('origin');
       expect(r.tracker_actor).toBeUndefined();
       expect(r.transport).toBeUndefined();
@@ -502,9 +504,11 @@ describe('aiwg-config', () => {
       const r = resolveRemotes({
         primary: 'origin',
         issue_tracker: 'gitea',
+        issue_provider: 'gitea',
         ci: 'jenkins',
       });
       expect(r.issue_tracker).toBe('gitea');
+      expect(r.issue_provider).toBe('gitea');
       expect(r.ci).toBe('jenkins');
     });
 
