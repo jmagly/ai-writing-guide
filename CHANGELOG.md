@@ -7,6 +7,58 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.12] - 2026-08-17 - "Verifiable artifacts and research labs"
+
+### Added
+
+- **Cross-asset artifact trust lifecycle** - AIWG now exposes stable artifact
+  verification outcomes, trust-root and trust-state handling, attestation
+  emission, CLI verification, public schemas, adversarial vectors, and
+  operational guidance across first-party asset classes (#2087, #2088).
+
+- **Portable release-surface attestations** - Marketplace v2 bundles, provider
+  transformation receipts, and signed web-release descriptors carry portable
+  provenance contracts that can be verified across marketplace, deployment,
+  and release boundaries (#2089, #2090, #2091).
+
+- **Research experiment addons** - Five bounded experiment bundles add
+  century-readiness review, long-context retrieval benchmarking, a
+  natural-language evaluation harness, orchestration topology comparison, and
+  premortem-v2 analysis with fixtures and recorded evidence (#2042, #2043,
+  #2044, #2046, #2047).
+
+- **Synthetic monitorability red team** - A dedicated addon probes whether
+  orchestration and evaluation systems remain observable when labels are
+  missing or monitor limits are stressed, with reproducible fixtures and
+  evidence (#2045).
+
+### Changed
+
+- **Authenticated provider transformation inventory** - Deployment receipts
+  bind transformed provider outputs to their source inventories, while doctor,
+  status, and normal first-use output distinguish expected pre-receipt state
+  from actionable trust failures.
+
+- **Fortemi conformance portability** - The shard gate validates runner
+  capabilities explicitly, provisions pinned Rust, and fetches receipt refs
+  atomically so conformance remains reproducible across capable Gitea runners
+  (#2111).
+
+### Fixed
+
+- **Effective gitignore detection** - Doctor and configuration checks now use
+  Git's ignore engine, correctly handling broad patterns, negations,
+  repository excludes, global excludes, and non-redundant remediation (#2106).
+
+- **Deterministic delivery cleanup tests** - Steward discovery children are
+  tracked and terminated on signals, process-group assumptions are removed,
+  and deployment integration budgets account for their bounded subprocesses
+  (#2107, #2108).
+
+- **Self-hosted tracker configuration** - Project setup persists an explicit
+  issue-provider hint for self-hosted Gitea, and repair normalizes the legacy
+  `main-only-blocked` force-push policy to `own-branch-only` (#2112, #2113).
+
 ## [2026.8.11] - 2026-08-15 - "Reliable refresh and discovery"
 
 ### Fixed

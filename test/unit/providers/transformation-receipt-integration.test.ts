@@ -77,12 +77,12 @@ function verifiedSource(sha256: string): ArtifactVerificationResult {
 
 function signedRelease(descriptors: Array<{ path: string; sha256: string; size: number }>): VerifiedWebRelease {
   return {
-    selector: '2026.8.11',
+    selector: '2026.8.12',
     selectorKind: 'exact',
-    version: '2026.8.11',
+    version: '2026.8.12',
     manifestDigest: 'a'.repeat(64),
     baseUrl: 'https://releases.aiwg.io',
-    manifestUrl: 'https://releases.aiwg.io/resources/2026.8.11/manifest.json',
+    manifestUrl: 'https://releases.aiwg.io/resources/2026.8.12/manifest.json',
     cacheDir: '/verified-cache',
     releaseManifestPath: '/verified-cache/manifest.json',
     releaseSignaturePath: '/verified-cache/manifest.sig',
