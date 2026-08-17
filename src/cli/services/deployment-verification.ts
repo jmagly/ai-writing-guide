@@ -95,6 +95,8 @@ export interface VerifyProviderDeploymentOptions {
   invocationStartedAt?: string;
   deploymentExitCode?: number;
   deploymentMessage?: string;
+  /** Suppress first-run receipt absence while retaining diagnosis in doctor/status. */
+  reportMissingReceipt?: boolean;
 }
 
 const RESTART_NOTICES: Readonly<Record<string, { action: string; reason: string }>> = {
@@ -270,24 +272,26 @@ async function collectProviderReceiptFindings(
       scope: options.scope,
       requestedBundles: options.requestedBundles,
     });
-    return diagnosis.findings.map((drift, index) => {
-      const policy = RECEIPT_DRIFT_POLICY[drift.kind];
-      return finding(
-        provider,
-        `provider-drift:${drift.kind}:${index}`,
-        policy.severity,
-        drift.message,
-        policy.remediation,
-        {
-          driftClass: drift.kind,
-          receiptPath: diagnosis.receiptPath,
-          checkedOutputs: diagnosis.checkedOutputs,
-          ...(drift.path ? { path: drift.path } : {}),
-          ...(drift.expected ? { expected: drift.expected } : {}),
-          ...(drift.actual ? { actual: drift.actual } : {}),
-        },
-      );
-    });
+    return diagnosis.findings
+      .filter((drift) => options.reportMissingReceipt !== false || drift.kind !== 'missing-receipt')
+      .map((drift, index) => {
+        const policy = RECEIPT_DRIFT_POLICY[drift.kind];
+        return finding(
+          provider,
+          `provider-drift:${drift.kind}:${index}`,
+          policy.severity,
+          drift.message,
+          policy.remediation,
+          {
+            driftClass: drift.kind,
+            receiptPath: diagnosis.receiptPath,
+            checkedOutputs: diagnosis.checkedOutputs,
+            ...(drift.path ? { path: drift.path } : {}),
+            ...(drift.expected ? { expected: drift.expected } : {}),
+            ...(drift.actual ? { actual: drift.actual } : {}),
+          },
+        );
+      });
   } catch (error) {
     return [finding(
       provider,

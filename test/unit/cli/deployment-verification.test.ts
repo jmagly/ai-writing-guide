@@ -121,6 +121,7 @@ async function readyCodexFixture(): Promise<{ projectRoot: string; frameworkRoot
 async function verifyFixture(projectRoot: string, frameworkRoot: string, options: {
   contextOptOut?: boolean;
   invocationStartedAt?: string;
+  reportMissingReceipt?: boolean;
 } = {}) {
   return verifyProviderDeployment({
     projectRoot,
@@ -267,6 +268,11 @@ describe.sequential('deployment verification contract (#2069)', () => {
         id: 'provider-drift:missing-receipt:0',
         evidence: expect.objectContaining({ driftClass: 'missing-receipt' }),
       })]));
+    const firstUse = await verifyFixture(missing.projectRoot, missing.frameworkRoot, {
+      reportMissingReceipt: false,
+    });
+    expect(firstUse.findings.some((finding) => finding.id.startsWith('provider-drift:missing-receipt'))).toBe(false);
+    expect(firstUse.outcome).toBe('ready-restart-required');
 
     const altered = await readyCodexFixture();
     await writeFile(path.join(altered.projectRoot, '.codex/commands/fixture.md'), '# operator changed managed output\n');

@@ -2307,6 +2307,10 @@ export class UseHandler implements CommandHandler {
           invocationStartedAt: dryRun ? undefined : startedAt,
           deploymentExitCode: coreResult.exitCode,
           deploymentMessage: coreResult.message,
+          // A normal first deployment has no authenticated verifier handoff
+          // yet, so receipt absence belongs in doctor/status rather than
+          // degrading an otherwise successful `aiwg use` result.
+          reportMissingReceipt: false,
         }));
       }
       result = aggregateUseDeploymentResult({
