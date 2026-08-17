@@ -778,45 +778,26 @@ jobs:
       #   tool to a workflow whose entire point is reducing dep surface.
       #   See .aiwg/architecture/adr-publish-time-evidence.md.
       #
-      # Pin strategy: install via syft's official install.sh at a pinned
-      # version tag, with the install script's SHA-256 verified inline
-      # against the value in ci/digests.txt before execution. This gives
-      # us a content-addressed installer without depending on a separate
-      # action SHA we can't easily verify from inside the AIWG repo.
-      # Follow-up #1310-class: switch to the syft GitHub Action once it
-      # has a stable SHA-pinning surface that matches our other pins.
+      # Pin strategy: download Syft's official release archive at a pinned
+      # version and verify its immutable SHA-256 from ci/digests.txt before
+      # installing the binary. This avoids executing a remotely fetched
+      # installer and tolerates transient release-download failures.
 
       - name: Install syft (SBOM generator)
         # syft v1.18.0 — see ci/digests.txt "Standalone tools" section.
-        #
-        # Pinning model: we fetch the install script from a TAG-pinned raw
-        # GitHub URL (raw.githubusercontent.com/anchore/syft/<tag>/install.sh).
-        # GitHub serves the file at the exact commit the tag points at, so
-        # the URL itself is content-addressed via the tag — equivalent to
-        # pinning a Docker image by digest for the install script's bytes.
-        # An attacker who can rotate the tag would also need to push to
-        # the anchore/syft repo, which has its own access controls and
-        # tag-protection rules.
-        #
-        # SHA-256 of the install script is logged on every run so the
-        # operator can spot a drift (e.g., if anchore force-pushes the
-        # tag, which they shouldn't but the workflow surfaces it). To
-        # graduate to enforced SHA verification, set ENFORCE_INSTALL_SHA
-        # to the observed value and uncomment the strict check below.
-        # Follow-up #1310-class: replace with anchore/sbom-action once it
-        # has a clean SHA-pinnable surface matching our other action pins.
         run: |
           set -euo pipefail
           SYFT_VERSION='v1.18.0'
-          INSTALL_URL="https://raw.githubusercontent.com/anchore/syft/${SYFT_VERSION}/install.sh"
-          curl -fsSL "$INSTALL_URL" -o /tmp/syft-install.sh
-          OBSERVED_SHA=$(sha256sum /tmp/syft-install.sh | awk '{print $1}')
-          echo "syft install.sh SHA-256 (observed): $OBSERVED_SHA"
-          # ENFORCE_INSTALL_SHA='' # set to OBSERVED_SHA value once verified
-          # if [ -n "$ENFORCE_INSTALL_SHA" ] && [ "$OBSERVED_SHA" != "$ENFORCE_INSTALL_SHA" ]; then
-          #   echo "✗ install.sh SHA mismatch (expected $ENFORCE_INSTALL_SHA)"; exit 1
-          # fi
-          sh /tmp/syft-install.sh -b /usr/local/bin "$SYFT_VERSION"
+          SYFT_ARCHIVE='syft_1.18.0_linux_amd64.tar.gz'
+          SYFT_SHA256='0b6fd1e0dd5b00b19585e5cde8e1c1f4ef60dc8fba8b41fab55f00852a2fbb8d'
+          SYFT_TMP_DIR="$(mktemp -d)"
+          trap 'find "$SYFT_TMP_DIR" -type f -delete; rmdir "$SYFT_TMP_DIR"' EXIT
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 \
+            "https://github.com/anchore/syft/releases/download/${SYFT_VERSION}/${SYFT_ARCHIVE}" \
+            -o "$SYFT_TMP_DIR/$SYFT_ARCHIVE"
+          printf '%s  %s\n' "$SYFT_SHA256" "$SYFT_TMP_DIR/$SYFT_ARCHIVE" | sha256sum -c -
+          tar -xzf "$SYFT_TMP_DIR/$SYFT_ARCHIVE" -C "$SYFT_TMP_DIR" syft
+          install -m 0755 "$SYFT_TMP_DIR/syft" /usr/local/bin/syft
           syft version
 
       - name: Generate CycloneDX SBOM
