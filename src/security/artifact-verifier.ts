@@ -257,8 +257,11 @@ async function verifySigstore(
   if (!profile) return undefined;
   try {
     const [{ bundleFromJSON, isBundleWithDsseEnvelope }, { TrustedRoot }, { Verifier, toSignedEntity, toTrustMaterial }] = await Promise.all([
+      // @ts-ignore -- runtime-optional; metadata CI intentionally installs with --omit=optional.
       import('@sigstore/bundle'),
+      // @ts-ignore -- runtime-optional; verifySigstore fails closed when unavailable.
       import('@sigstore/protobuf-specs'),
+      // @ts-ignore -- runtime-optional; verifySigstore fails closed when unavailable.
       import('@sigstore/verify'),
     ]);
     const bundle = bundleFromJSON(material.bundle);
