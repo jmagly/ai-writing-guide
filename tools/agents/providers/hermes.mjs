@@ -37,6 +37,7 @@ import {
   collectFrameworkArtifacts,
   listOnDemandRuleFiles,
   renderOnDemandRuleSection,
+  stripPlatformsFromContent,
 } from './base.mjs';
 
 // ============================================================================
@@ -440,7 +441,18 @@ export async function deploy(opts) {
     allSkillDirs.push(...(artifacts.skills || []));
 
     if (allSkillDirs.length > 0) {
-      deploySkills(allSkillDirs, opts);
+      // Hermes's skill loader reads `platforms:` as an OS gate
+      // (linux / macos / windows). AIWG's shared deploy path injects
+      // `[hermes]` into that field, which then filters every skill out
+      // on Linux. Strip the field post-injection — hermes documents
+      // "absent field = all platforms" as its default. This leaves the
+      // other providers' `transformSkillMd` pipeline untouched.
+      const skillOpts = {
+        ...opts,
+        provider: 'hermes', // ensure deploySkillDir's injectPlatform branch runs
+        transformSkillMd: stripPlatformsFromContent,
+      };
+      deploySkills(allSkillDirs, skillOpts);
     } else if (!opts.quiet) {
       console.log('  No skills found to deploy');
     }
@@ -721,7 +733,11 @@ function deployAiwgOrchestrateSkill(srcRoot, opts) {
   try {
     ensureDir(destDir);
     const content = fs.readFileSync(templatePath, 'utf8');
-    fs.writeFileSync(destPath, content, 'utf8');
+    // Defensive: the template is hermes-specific and should not carry a
+    // `platforms:` field (hermes reads that as an OS gate). Strip it if a
+    // future template regression reintroduces one so this orphan path
+    // stays consistent with the main deploy pipeline.
+    fs.writeFileSync(destPath, stripPlatformsFromContent(content), 'utf8');
     if (!opts.quiet) {
       console.log(`  Installed aiwg-orchestrate to ${destPath} (delegate_task wrapper, 95% context reduction)`);
     }

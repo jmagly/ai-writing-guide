@@ -463,9 +463,33 @@ export function injectPlatformInContent(content, targetPlatform) {
   return open + fmLines.join('\n') + close + body;
 }
 
-/** @deprecated Use injectPlatformInContent instead */
+/**
+ * Remove the `platforms:` field from a SKILL.md frontmatter block.
+ *
+ * Hermes (and other providers that treat `platforms:` as an OS gate —
+ * linux / macos / windows) hide any skill whose value isn't a recognized
+ * OS. AIWG source skills use the field as a *provider* restriction token
+ * (`[all]`, provider names), which is the opposite meaning, so deployed
+ * copies destined for such providers must drop the field entirely. An
+ * absent field is the documented "compatible with all platforms" default.
+ */
 export function stripPlatformsFromContent(content) {
-  return injectPlatformInContent(content, null);
+  const fmMatch = content.match(/^(---\n)([\s\S]*?)(\n---\n?)([\s\S]*)$/);
+  if (!fmMatch) return content;
+
+  const [, open, fm, close, body] = fmMatch;
+  let updated = fm.replace(/^platforms:[^\n]*\n/m, '');
+
+  // Multi-line list form:
+  //   platforms:
+  //     - claude-code
+  //     - hermes
+  if (updated === fm) {
+    updated = fm.replace(/^platforms:\n(?:[ \t]+-[ \t]+\S[^\n]*\n?)*/m, '');
+  }
+
+  if (updated === fm) return content;
+  return open + updated + close + body;
 }
 
 /**

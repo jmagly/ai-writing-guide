@@ -3631,11 +3631,12 @@ export class UseHandler implements CommandHandler {
     // Collect deployment counts for registry persistence and the final
     // orchestrated report. Presentation happens once, after verification, so
     // users do not see a second competing summary.
-    let counts = { agents: 0, commands: 0, skills: 0, rules: 0, behaviors: 0 };
-    if (quiet) {
-      const paths = getProviderPaths(provider);
-      counts = await countDeployedArtifacts(target, paths, provider);
-    }
+    //
+    // Counts are always populated from the on-disk artifacts so that the
+    // registry record written below (#621) reflects the real deploy even on
+    // a verbose run — the prior `if (quiet)` guard left the record
+    // `{agents: 0, commands: 0, skills: 0, rules: 0}` on `-v` runs.
+    const counts = await countDeployedArtifacts(target, paths, provider);
 
     // Deploy CI workflow files when --ci-hooks-enabled is set (#661)
     if (ciHooksEnabled) {
