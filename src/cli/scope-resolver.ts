@@ -12,6 +12,29 @@
 
 import { homedir } from 'node:os';
 import * as path from 'node:path';
+// #2119: HERMES_HOME resolution lives in the hermes provider. scope-resolver
+// is consumed from plain node (no module graph of the provider layer), so we
+// re-implement the same three-way resolution inline to keep the dependency
+// one-way (scope-resolver never imports the provider stack).
+export function hermesHome(): string {
+  const env = (process.env.HERMES_HOME || '').trim();
+  if (env) {
+    const userHome = homedir();
+    // `path.resolve` does not expand `~`; honor `~` the way CPython `Path.expanduser`
+    // (`hermes_constants.get_hermes_home`) does.
+    if (env === '~' || env.startsWith('~/')) {
+      return path.resolve(userHome, env === '~' ? '' : env.slice(2));
+    }
+    return path.resolve(env);
+  }
+  if (process.platform === 'win32') {
+    const localAppData = (process.env.LOCALAPPDATA || '').trim();
+    return localAppData
+      ? path.join(localAppData, 'hermes')
+      : path.join(homedir(), 'AppData', 'Local', 'hermes');
+  }
+  return path.join(homedir(), '.hermes');
+}
 
 export type Scope = 'project' | 'user';
 
@@ -163,7 +186,10 @@ export const USER_SCOPE_PATHS: Record<string, { agents: string; skills: string; 
   },
   hermes: {
     agents: '',
-    skills: path.join(homedir(), '.hermes', 'skills'),
+    // #2119: honor HERMES_HOME so `--scope user` deploys land under the same
+    // root the running Hermes session scans, matching the hermes provider's
+    // paths.skills resolution.
+    skills: path.join(hermesHome(), 'skills'),
     commands: '',
     rules: '',
     behaviors: '',

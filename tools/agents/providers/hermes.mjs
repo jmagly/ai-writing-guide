@@ -40,6 +40,61 @@ import {
 } from './base.mjs';
 
 // ============================================================================
+// Hermes home resolution (HERMES_HOME) — #2119
+// ============================================================================
+//
+// Mirrors `hermes_constants.get_hermes_home()` in the Hermes Agent runtime.
+// Resolution order (upstream, hermes_constants.py:114-):
+//   1. A context-local override installed in-process via
+//      set_hermes_home_override() — AIWG runs in a separate node process and
+//      cannot observe that token, so step 1 is intentionally NOT part of the
+//      cross-process contract.
+//   2. The process `HERMES_HOME` env var.
+//   3. The platform-native default:
+//        win32 → %LOCALAPPDATA%/hermes   (falls back to %USERPROFILE%/AppData/
+//                  Local/hermes when LOCALAPPDATA is unset)
+//        other → $HOME/.hermes
+//
+// AIWG reads the env var when `getHermesHome()` is invoked; the module-level
+// constants below lock in the value captured at first use so every consumer
+// (paths, kernels, orchestrate, legacy migration) sees the same resolved root
+// for the life of the process.
+
+/**
+ * Resolve the Hermes home directory.
+ *
+ * Honors HERMES_HOME the way the running Hermes runtime does, so that
+ * `aiwg use --provider hermes` writes skills under the same root the live
+ * session scans. See #2119 — before this helper, the provider hardcoded
+ * `os.homedir()/.hermes` and any operator running Hermes under a non-default
+ * HERMES_HOME (multi-profile, hermes-role wrappers, dev containers) got a
+ * silently divergent deployment.
+ */
+export function getHermesHome() {
+  const env = (process.env.HERMES_HOME || '').trim();
+  if (env) {
+    // `path.resolve` does not expand `~`; honor `~` the way
+    // `hermes_constants` (CPython `Path.expanduser`) does, then normalize
+    // relative paths against the current working directory.
+    if (env === '~' || env.startsWith('~/')) {
+      return path.resolve(os.homedir(), env === '~' ? '' : env.slice(2));
+    }
+    return path.resolve(env);
+  }
+  if (process.platform === 'win32') {
+    const localAppData = (process.env.LOCALAPPDATA || '').trim();
+    return localAppData
+      ? path.join(localAppData, 'hermes')
+      : path.join(os.homedir(), 'AppData', 'Local', 'hermes');
+  }
+  return path.join(os.homedir(), '.hermes');
+}
+
+// The value captured below is the target any running Hermes session with the
+// same environ would use as its scan root.
+const HERMES_HOME = getHermesHome();
+
+// ============================================================================
 // Provider Configuration
 // ============================================================================
 
@@ -49,10 +104,15 @@ export const aliases = [];
 export const paths = {
   agents: 'AGENTS.md',                           // Aggregated routing guide at project root
   commands: '',                                   // Not applicable — no AIWG slash-command file surface
-  // Standard skills under ~/.hermes/skills/.aiwg/ — child of Hermes's scanned root,
-  // recursively discovered (verified `agent/skill_utils.py:478-489`, os.walk follows
-  // subdirs except .git/.github/.hub/.archive). Kernel skills land in the parent.
-  skills: path.join(os.homedir(), '.hermes', 'skills', '.aiwg'),
+  // Standard skills under <HERMES_HOME>/skills/.aiwg/ — child of Hermes's
+  // scanned root, recursively discovered (verified `agent/skill_utils.py:478-489`,
+  // os.walk follows subdirs except .git/.github/.hub/.archive).
+  //
+  // HERMES_HOME honors the process env var and falls back to $HOME/.hermes
+  // (win32: %LOCALAPPDATA%/hermes), matching hermes_constants.get_hermes_home().
+  // #2119: previously hardcoded os.homedir() — wrong for any operator running
+  // Hermes under a non-default HERMES_HOME (multi-profile, hermes-role, etc.).
+  skills: path.join(HERMES_HOME, 'skills', '.aiwg'),
   rules: '',                                      // Inlined into AGENTS.md + reachable via `aiwg show rule`
 };
 
@@ -60,7 +120,12 @@ export const paths = {
 // Standard skills land in the .aiwg/ subdirectory under the same root —
 // Hermes recursively walks the skill root (verified against upstream v0.13.0,
 // `agent/skill_utils.py:478-489`).
-export const kernelSkillsPath = path.join(os.homedir(), '.hermes', 'skills');
+export const kernelSkillsPath = path.join(HERMES_HOME, 'skills');
+
+// Resolved home directory this provider's paths were computed against.
+// Consumers (deploy verification, doctor, status) should use this rather than
+// re-reading os.homedir() to stay consistent with the deploy target.
+export const hermesHome = HERMES_HOME;
 
 export const support = {
   agents: 'aggregated',      // Agents aggregated into lean AGENTS.md
@@ -435,9 +500,34 @@ export async function deploy(opts) {
   // ── Post-deployment hint ───────────────────────────────────────────────────
   if (!opts.quiet) {
     console.log('');
+    console.log(`Skills root: ${kernelSkillsPath}`);
     console.log('Rules are in AGENTS.md as compressed directives; full bodies via `aiwg show rule <name>`.');
-    console.log('Optional: configure ~/.hermes/config.yaml to connect AIWG MCP server.');
+    console.log('Optional: configure config.yaml to connect AIWG MCP server.');
     console.log('See: docs/integrations/hermes-quickstart.md (optional MCP setup)');
+  }
+
+  // ── Consumer visibility check (#2119) ──────────────────────────────────────
+  // The running Hermes runtime reads skills from get_skills_dir(), which is
+  // HERMES_HOME/skills (hermes_constants.get_hermes_home: context-local
+  // override → HERMES_HOME env → $HOME/.hermes). AIWG can observe only ITS
+  // own process environment, so this check reports which root AIWG resolved
+  // and warns when that root may be invisible to a Hermes session the
+  // operator launched elsewhere (custom HERMES_HOME, hermes-role wrapper).
+  //
+  // Before #2119 this was a silent failure: AIWG wrote to $HOME/.hermes/skills
+  // unconditionally and `aiwg status --probe` reported healthy even when the
+  // live session scanned a different HERMES_HOME.
+  if (!dryRun && !opts.quiet) {
+    const envHome = (process.env.HERMES_HOME || '').trim();
+    const hermesActive = Boolean(
+      process.env.HERMES_SESSION_ID ||
+      (process.env.AI_AGENT || '').includes('hermes')
+    );
+    if (hermesActive && !envHome) {
+      console.warn(`Warning: HERMES_HOME is not set in this AIWG process — deployed skills landed under \`${kernelSkillsPath}\` (default $HOME/.hermes).`);
+      console.warn('  If your running Hermes session uses a non-default HERMES_HOME, it CANNOT see these skills.');
+      console.warn('  Re-run with the matching value: HERMES_HOME=<that value> aiwg use --provider hermes');
+    }
   }
 }
 

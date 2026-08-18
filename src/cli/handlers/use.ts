@@ -2370,12 +2370,13 @@ export class UseHandler implements CommandHandler {
           reportMissingReceipt: false,
         }));
       }
-      result = aggregateUseDeploymentResult({
+      result = await aggregateUseDeploymentResult({
         projectRoot: projectDir,
         frameworkRoot,
         scope: requestedScope,
         requestedBundles: [requestedBundle],
         providers: providerResults,
+        configuredProviders: config?.providers,
       });
       if (dryRun) {
         result.dryRun = true;

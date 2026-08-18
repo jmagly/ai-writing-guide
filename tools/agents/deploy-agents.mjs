@@ -210,7 +210,13 @@ function resolveCommandMirrorDir(provider, target) {
   // Closest conventional location for providers whose primary command
   // surface is MCP/aggregation rather than a documented command directory.
   if (provider.name === 'hermes') {
-    return path.join(os.homedir(), '.hermes', 'commands');
+    // #2119: HERMES_HOME is the single source of truth the running Hermes
+    // runtime uses to locate its files — resolve the home the same way the
+    // provider does instead of hardcoding $HOME/.hermes.
+    const hermesHome = typeof provider.getHermesHome === 'function'
+      ? provider.getHermesHome()
+      : path.join(os.homedir(), '.hermes');
+    return path.join(hermesHome, 'commands');
   }
 
   return null;

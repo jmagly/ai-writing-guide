@@ -194,6 +194,54 @@ function finding(
   return { id, provider, severity, message, remediation, evidence };
 }
 
+/**
+ * #2119 — surface divergence between `aiwg.config.json` `providers` and the
+ * installed-state registry (`installed[*].deployedTo`). Deploying for a
+ * provider that is absent from `providers` produces evidence the configured
+ * provider list can be inconsistent with (e.g. `status` iterates `providers`
+ * and skips it, or a config sync tool removes it while deployed skills stay on
+ * disk). Advisory, never blocking — the deployment itself is valid; the
+ * operator just needs to reconcile config with the deployed reality.
+ */
+async function collectProviderRegistryDivergenceFindings(options: {
+  projectRoot: string;
+  scope: DeploymentScope;
+  providers: ProviderDeploymentVerification[];
+  configuredProviders?: readonly string[];
+}): Promise<DeploymentVerificationFinding[]> {
+  const configured = options.configuredProviders;
+  if (!configured || configured.length === 0) return [];
+  const projectConfig = await readAiwgConfig(options.projectRoot);
+  const userRegistry = options.scope === 'user' ? await readUserRegistry() : null;
+  const registries = [projectConfig?.installed, userRegistry?.installed].filter(Boolean);
+  const deployedProviders = new Set<string>();
+  for (const installed of registries) {
+    for (const entry of Object.values(installed ?? {})) {
+      for (const provider of Object.keys(entry.deployedTo ?? {})) {
+        deployedProviders.add(provider);
+      }
+    }
+  }
+  const findings: DeploymentVerificationFinding[] = [];
+  for (const provider of options.providers) {
+    if (configured.includes(provider.provider)) continue;
+    if (!deployedProviders.has(provider.provider)) continue;
+    findings.push(finding(
+      provider.provider,
+      'registry-provider-divergence',
+      'advisory',
+      `Installed-state records deployment evidence for ${provider.provider}, but it is not in the aiwg.config.json providers list. Provider config and deployed state have diverged.`,
+      `Add ${provider.provider} to aiwg.config.json providers (or re-run aiwg use --provider ${provider.provider} so the config syncs with the deployment).`,
+      {
+        configured: configured.slice(),
+        deployed: [...deployedProviders],
+        scope: options.scope,
+      },
+    ));
+  }
+  return findings;
+}
+
 async function exists(candidate: string): Promise<boolean> {
   if (!candidate) return false;
   return access(candidate).then(() => true).catch(() => false);
@@ -703,14 +751,22 @@ export function buildDryRunUseResult(options: {
   };
 }
 
-export function aggregateUseDeploymentResult(options: {
+export async function aggregateUseDeploymentResult(options: {
   projectRoot: string;
   frameworkRoot: string;
   scope: DeploymentScope;
   requestedBundles: string[];
   providers: ProviderDeploymentVerification[];
-}): UseDeploymentResult {
+  /** Providers declared in aiwg.config.json `providers` (used for the #2119 divergence check). */
+  configuredProviders?: readonly string[];
+}): Promise<UseDeploymentResult> {
   const findings = options.providers.flatMap((provider) => provider.findings);
+  try {
+    findings.push(...(await collectProviderRegistryDivergenceFindings(options)));
+  } catch {
+    // Divergence detection is advisory-only; a missing config/registry in the
+    // caller's options must not turn an aggregate into a failure.
+  }
   const hasFailed = options.providers.some((provider) => provider.outcome === 'failed');
   const hasDegraded = options.providers.some((provider) => provider.outcome === 'degraded');
   const restartRequired = options.providers.some((provider) => provider.restartRequired);
