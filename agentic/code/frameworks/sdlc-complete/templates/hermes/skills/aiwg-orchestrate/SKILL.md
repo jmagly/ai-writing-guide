@@ -3,8 +3,7 @@ namespace: aiwg
 platforms: [all]
 name: aiwg-orchestrate
 description: Route structured artifact work to AIWG workflows via MCP with zero parent context cost
-keywords: [aiwg, orchestrate, artifacts, sdlc, delegate]
-version: 1.1.0
+version: 1.2.0
 author: aiwg
 license: MIT
 metadata:
