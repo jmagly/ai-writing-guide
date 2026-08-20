@@ -9,7 +9,7 @@ ROOT="$(git rev-parse --show-toplevel)"
 ROLE="${AIWG_GIT_VAULT_ROLE:-$(git config --local --get aiwg.vault.readerRole)}"
 KEY_PATH="${AIWG_COMMIT_SIGNING_KEY_VAULT_PATH:-$(git config --local --get aiwg.vault.commitKeyPath)}"
 EXPECTED="${AIWG_COMMIT_SIGNING_FINGERPRINT:-$(git config --local --get user.signingkey)}"
-TOKEN_HELPER="${OPENBAO_TOKEN_HELPER:-/home/roctinam/dev/itops/scripts/lib/openbao-token.sh}"
+TOKEN_HELPER="${OPENBAO_TOKEN_HELPER:-/home/roctinam/.local/lib/itops/openbao-token.sh}"
 source "${OPENBAO_ENV:-/home/roctinam/.config/openbao/env}"
 export BAO_CACERT="${BAO_CACERT:-$ROOT/ci/trust/integro-labs-root-ca-g2.crt}"
 

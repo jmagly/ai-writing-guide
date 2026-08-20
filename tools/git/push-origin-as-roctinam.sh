@@ -1,38 +1,42 @@
 #!/usr/bin/env bash
 # Push AIWG through its project-dedicated Gitea SSH key as roctinam.
+# The ITOps wrapper resolves the key from OpenBao into tmpfs for one command,
+# validates its fingerprint, and isolates SSH from ambient agents/config.
 
 set -euo pipefail
 set +x
-umask 077
-
 ROOT="$(git rev-parse --show-toplevel)"
 ROLE="${AIWG_GIT_VAULT_ROLE:-$(git config --local --get aiwg.vault.readerRole)}"
 KEY_PATH="${AIWG_GIT_SSH_KEY_VAULT_PATH:-$(git config --local --get aiwg.vault.sshKeyPath)}"
-TOKEN_HELPER="${OPENBAO_TOKEN_HELPER:-/home/roctinam/dev/itops/scripts/lib/openbao-token.sh}"
-source "${OPENBAO_ENV:-/home/roctinam/.config/openbao/env}"
+FINGERPRINT="${AIWG_GIT_SSH_KEY_FINGERPRINT:-$(git config --local --get aiwg.vault.sshKeyFingerprint)}"
+EXPECTED_HOST="${AIWG_GIT_EXPECTED_HOST:-$(git config --local --get aiwg.vault.sshExpectedHost)}"
+EXPECTED_REPO="${AIWG_GIT_EXPECTED_REPO:-$(git config --local --get aiwg.vault.sshExpectedRepo)}"
+SSH_HELPER="${AIWG_GIT_SSH_HELPER:-$(git config --local --get aiwg.vault.sshHelper)}"
+TOKEN_HELPER="${OPENBAO_TOKEN_HELPER:-/home/roctinam/.local/lib/itops/openbao-token.sh}"
 
-[[ -n "$ROLE" && -n "$KEY_PATH" ]] || { echo 'FAIL: AIWG Git vault routing is not configured.' >&2; exit 1; }
-for candidate in "${XDG_RUNTIME_DIR:-}" /dev/shm; do
-  if [[ -n "$candidate" && -d "$candidate" && -w "$candidate" && "$(stat -f -c %T "$candidate" 2>/dev/null || true)" == tmpfs ]]; then
-    RUNTIME_PARENT="$candidate"
-    break
-  fi
-done
-[[ -n "${RUNTIME_PARENT:-}" ]] || { echo 'FAIL: writable tmpfs is required.' >&2; exit 1; }
+[[ -n "$ROLE" && -n "$KEY_PATH" && -n "$FINGERPRINT" && -n "$EXPECTED_HOST" && -n "$EXPECTED_REPO" ]] || {
+  echo 'FAIL: AIWG Git vault routing is incomplete.' >&2
+  exit 1
+}
+[[ -x "$SSH_HELPER" && -x "$TOKEN_HELPER" ]] || {
+  echo 'FAIL: installed ITOps OpenBao SSH helpers are unavailable.' >&2
+  exit 1
+}
 
-TMP="$(mktemp -d "$RUNTIME_PARENT/aiwg-git-push.XXXXXX")"
-trap 'rm -rf "$TMP"' EXIT INT TERM
-TOKEN="$($TOKEN_HELPER approle "$ROLE")"
-curl -fsS --config /dev/fd/3 "$BAO_ADDR/v1/$KEY_PATH" \
-  3<<<"header = \"X-Vault-Token: $TOKEN\"" > "$TMP/secret.json"
-jq -er '.data.data.private_key' "$TMP/secret.json" > "$TMP/id_ed25519"
-chmod 600 "$TMP/id_ed25519"
+run_git() {
+  OPENBAO_GIT_APPROLE="$ROLE" \
+  OPENBAO_GIT_DATA_PATH="$KEY_PATH" \
+  OPENBAO_GIT_FINGERPRINT="$FINGERPRINT" \
+  OPENBAO_GIT_EXPECTED_HOST="$EXPECTED_HOST" \
+  OPENBAO_GIT_EXPECTED_REPO="$EXPECTED_REPO" \
+  OPENBAO_TOKEN_HELPER="$TOKEN_HELPER" \
+  GIT_SSH_COMMAND="$SSH_HELPER" \
+    git -C "$ROOT" "$@"
+}
 
-SSH_COMMAND="ssh -F /dev/null -o BatchMode=yes -o IdentitiesOnly=yes -o IdentityFile=$TMP/id_ed25519"
-identity="$($SSH_COMMAND -T git@git.integrolabs.net 2>&1 || true)"
-grep -q 'roctinam' <<<"$identity" || { echo 'FAIL: AIWG key did not authenticate as roctinam.' >&2; exit 1; }
 if [[ "${1:-}" == --check ]]; then
-  echo 'Gitea SSH authentication passed for roctinam.'
+  run_git ls-remote origin HEAD >/dev/null
+  echo "Gitea SSH authentication passed for roctinam ($FINGERPRINT)."
   exit 0
 fi
-GIT_SSH_COMMAND="$SSH_COMMAND" git -C "$ROOT" push origin "$@"
+run_git push origin "$@"
