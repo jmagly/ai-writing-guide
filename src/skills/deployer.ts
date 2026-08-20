@@ -36,6 +36,7 @@ import type {
   AgentSkillImportResult,
 } from './types.js';
 import { validateAgentSkillContent } from './validator.js';
+import { resolveHermesHomePath } from '../providers/hermes-home.js';
 
 export const AGENT_SKILL_MANAGED_MARKER = '.aiwg-managed';
 export const AGENT_SKILL_DEPLOYMENT_SIDECAR = '.aiwg-agent-skill.json';
@@ -173,8 +174,11 @@ function resolvePolicy(
       reasons.push('applies the Factory description guidance before strict validation');
       break;
     case 'hermes':
+      if (options.homeDir === undefined) {
+        root = resolveHermesHomePath('skills');
+      }
       reasons.push(
-        'uses the user-global ~/.hermes/skills bundle surface with strict managed ownership markers',
+        'uses the active HERMES_HOME skills surface with strict managed ownership markers',
       );
       break;
     case 'openhuman':

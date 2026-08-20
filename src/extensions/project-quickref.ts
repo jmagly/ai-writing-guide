@@ -15,6 +15,7 @@ import {
   getProviderDefinition,
   normalizeProviderDefinitionId,
 } from '../providers/provider-definitions.js';
+import { resolveHermesHome } from '../providers/hermes-home.js';
 import { OPERATIONAL_SHOW_TYPES } from '../artifacts/types.js';
 import { projectAiwgPath } from '../config/project-artifacts.js';
 import { appendAiwgSourceTrackBlock } from './project-local-gitignore.js';
@@ -428,6 +429,15 @@ function resolveProviderSkillsRoot(provider: string, projectDir: string, homeDir
   if (!normalized) throw new Error(`Unknown provider '${provider}'`);
   const definition = getProviderDefinition(normalized);
   if (!definition) throw new Error(`Provider definition unavailable for '${provider}'`);
+
+  if (normalized === 'hermes') {
+    return {
+      provider: normalized,
+      root: resolve(resolveHermesHome(homeDir), 'skills'),
+      emulated: false,
+      global: true,
+    };
+  }
 
   const configured = definition.paths.kernelSkills ?? definition.paths.artifacts.skills;
   if (!configured) throw new Error(`Provider '${normalized}' has no supported skill or aggregation target`);

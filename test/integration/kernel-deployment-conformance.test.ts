@@ -114,7 +114,11 @@ function deploy(
     ...(options.dryRun ? ['--dry-run'] : []),
   ], {
     cwd: REPO_ROOT,
-    env: { ...process.env, HOME: home, USERPROFILE: home },
+    // #2119: pin HERMES_HOME to the fake home too. Without this, a HERMES_HOME
+    // inherited from the developer's environment (e.g. a per-role Hermes home)
+    // redirects hermes skill deploys away from the test root and into the
+    // real home — breaking test hermeticity and mutating user state.
+    env: { ...process.env, HOME: home, USERPROFILE: home, HERMES_HOME: join(home, '.hermes') },
     stdio: 'pipe',
   });
   return { project, home };

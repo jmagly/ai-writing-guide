@@ -837,7 +837,7 @@ const SESSION_RELOAD_NOTICE: Record<string, { action: string; rationale: string;
     rationale: 'OpenCode loads agent files on session start and does not hot-reload.',
   },
   hermes: {
-    action: 'In an active Hermes session, run /reload-skills to pick up new skills in ~/.hermes/skills/ and /reload-mcp to pick up MCP server changes (~/.hermes/config.yaml) — both are in-session slash commands, no chat restart needed. Restart the chat only as a fallback if the slash commands are unavailable.',
+    action: 'In an active Hermes session, run /reload-skills to pick up new skills in $HERMES_HOME/skills/ and /reload-mcp to pick up MCP server changes ($HERMES_HOME/config.yaml) — both are in-session slash commands, no chat restart needed. Restart the chat only as a fallback if the slash commands are unavailable.',
     rationale: 'Hermes loads skills and MCP config at session start (verified in hermes_cli/commands.py:178 and hermes_cli/config.py:1228). The /reload-skills and /reload-mcp slash commands re-scan in place; /reload-mcp prompts for confirmation by default.',
     symptom: 'Until reloaded, newly deployed kernel skills are missing from `hermes skills list` and unreachable via natural-language invocation; new MCP servers (incl. AIWG) are missing from the tool surface.',
   },
@@ -3630,11 +3630,12 @@ export class UseHandler implements CommandHandler {
     // Collect deployment counts for registry persistence and the final
     // orchestrated report. Presentation happens once, after verification, so
     // users do not see a second competing summary.
-    let counts = { agents: 0, commands: 0, skills: 0, rules: 0, behaviors: 0 };
-    if (quiet) {
-      const paths = getProviderPaths(provider);
-      counts = await countDeployedArtifacts(target, paths, provider);
-    }
+    //
+    // Counts are always populated from the on-disk artifacts so that the
+    // registry record written below (#621) reflects the real deploy even on
+    // a verbose run — the prior `if (quiet)` guard left the record
+    // `{agents: 0, commands: 0, skills: 0, rules: 0}` on `-v` runs.
+    const counts = await countDeployedArtifacts(target, paths, provider);
 
     // Deploy CI workflow files when --ci-hooks-enabled is set (#661)
     if (ciHooksEnabled) {

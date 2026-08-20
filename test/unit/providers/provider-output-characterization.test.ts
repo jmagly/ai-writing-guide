@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { HandlerContext } from '../../../src/cli/handlers/types.js';
 import { getProviderDefinition } from '../../../src/providers/provider-definitions.js';
+import { resolveHermesHomePath } from '../../../src/providers/hermes-home.js';
 
 vi.mock('../../../src/cli/ui.js', () => ({
   blank: vi.fn(),
@@ -112,11 +113,11 @@ const USE_PATH_GOLDENS = {
     artifacts: {
       agents: null,
       commands: null,
-      skills: '~/.hermes/.aiwg/skills',
+      skills: resolveHermesHomePath('skills', '.aiwg'),
       rules: null,
       behaviors: null,
     },
-    kernelSkills: '~/.hermes/skills',
+    kernelSkills: resolveHermesHomePath('skills'),
   },
   opencode: {
     deployTarget: 'project',

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { homedir } from 'os';
 import { join } from 'path';
 import type { Platform } from '../agents/types.js';
+import { resolveHermesHomePath } from './hermes-home.js';
 import {
   getProviderCapabilities,
   type DeployTarget,
@@ -619,7 +620,7 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
     id: 'hermes',
     aliases: [],
     builtIn: true,
-    surfaces: { primary: 'hermes', compatibility: [], precedence: ['AGENTS.md', '.hermes.md', '~/.hermes/skills/'], related: [] },
+    surfaces: { primary: 'hermes', compatibility: [], precedence: ['.hermes.md', 'AGENTS.md', resolveHermesHomePath('skills')], related: [] },
     detection: {
       env: [],
       process: ['hermes'],
@@ -629,18 +630,18 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       artifacts: {
         agents: null,
         commands: null,
-        skills: '~/.hermes/.aiwg/skills',
+        skills: resolveHermesHomePath('skills', '.aiwg'),
         rules: null,
         behaviors: null,
       },
-      kernelSkills: '~/.hermes/skills',
+      kernelSkills: resolveHermesHomePath('skills'),
       configFile: 'AGENTS.md',
       contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: '.hermes.md', contextFile: 'AGENTS.md' },
     },
     smithPaths: {
       agents: null,
       commands: null,
-      skills: '~/.hermes/skills',
+      skills: resolveHermesHomePath('skills'),
       rules: null,
       fileExtension: '.md',
       configFile: 'AGENTS.md',

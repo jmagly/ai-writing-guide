@@ -12,6 +12,9 @@
 
 import { homedir } from 'node:os';
 import * as path from 'node:path';
+import { resolveHermesHome, resolveHermesHomePath } from '../providers/hermes-home.js';
+
+export const hermesHome = resolveHermesHome;
 
 export type Scope = 'project' | 'user';
 
@@ -163,7 +166,10 @@ export const USER_SCOPE_PATHS: Record<string, { agents: string; skills: string; 
   },
   hermes: {
     agents: '',
-    skills: path.join(homedir(), '.hermes', 'skills'),
+    // #2119: honor HERMES_HOME so `--scope user` deploys land under the same
+    // root the running Hermes session scans, matching the hermes provider's
+    // paths.skills resolution.
+    skills: resolveHermesHomePath('skills'),
     commands: '',
     rules: '',
     behaviors: '',
