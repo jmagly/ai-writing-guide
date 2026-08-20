@@ -112,6 +112,8 @@ export interface RunSkillOptions {
   args: string[];
   /** Override the script's CWD policy from the CLI (e.g., --cwd <path>) */
   cwdOverride?: string;
+  /** Additional resolved runtime policy exported by the CLI wrapper. */
+  env?: Record<string, string>;
 }
 
 /**
@@ -171,6 +173,7 @@ export async function runSkill(opts: RunSkillOptions): Promise<number> {
     AIWG_SKILL_DIR: skillDir,
     AIWG_PROJECT_ROOT: opts.cwd,
     ...(aiwgRoot ? { AIWG_ROOT: aiwgRoot } : {}),
+    ...opts.env,
   };
   const fullArgs = [...invocation.prefixArgs, entrypointPath, ...opts.args];
   return new Promise<number>((resolve) => {
@@ -204,7 +207,7 @@ export async function runSkill(opts: RunSkillOptions): Promise<number> {
  * Anything after `--` is verbatim-forwarded. If no `--`, all args after
  * the skill name are forwarded.
  */
-export async function main(args: string[]): Promise<number> {
+export async function main(args: string[], env?: Record<string, string>): Promise<number> {
   // First positional must be the kind ("skill" — reserved for future kinds).
   if (args.length === 0) {
     printUsage();
@@ -264,6 +267,7 @@ export async function main(args: string[]): Promise<number> {
     name,
     args: scriptArgs,
     cwdOverride,
+    env,
   });
 }
 

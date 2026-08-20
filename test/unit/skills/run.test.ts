@@ -190,6 +190,23 @@ describe('runSkill — project-root CWD invariant (#1227)', () => {
     expect(args).toEqual(['--voice', 'technical-authority', '--input', 'draft.md']);
   });
 
+  it('exports resolved output-mode policy without rewriting provider context', async () => {
+    await buildFakeSkill(
+      `const fs = require('fs');
+       fs.writeFileSync('mode-env.json', JSON.stringify({ ids: process.env.AIWG_OUTPUT_MODES, profiles: JSON.parse(process.env.AIWG_OUTPUT_MODES_JSON) }));`,
+    );
+    await buildIndex();
+    const exitCode = await runSkill({
+      cwd: projectDir,
+      name: 'marker-skill',
+      args: [],
+      env: { AIWG_OUTPUT_MODES: 'asd-ste', AIWG_OUTPUT_MODES_JSON: '[{"id":"asd-ste"}]' },
+    });
+    expect(exitCode).toBe(0);
+    expect(JSON.parse(await fs.readFile(path.join(projectDir, 'mode-env.json'), 'utf8'))).toEqual({ ids: 'asd-ste', profiles: [{ id: 'asd-ste' }] });
+    await expect(fs.access(path.join(projectDir, '.claude', 'CLAUDE.md'))).rejects.toThrow();
+  });
+
   it('propagates the script exit code', async () => {
     await buildFakeSkill(`process.exit(42);`);
     await buildIndex();

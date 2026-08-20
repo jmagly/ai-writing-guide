@@ -1290,7 +1290,7 @@ Two routes, dispatched by the first argument:
 Execute a named script defined in `.aiwg/aiwg.config` (analogous to `npm run`).
 
 ```bash
-aiwg run [script-name] [project-dir]
+aiwg run [script-name] [--output-mode <id>]... [project-dir]
 ```
 
 **Arguments:**
@@ -1307,8 +1307,13 @@ entrypoint with the right interpreter (node, python3, bash, sh, pwsh, ruby,
 or `auto` by extension/shebang).
 
 ```bash
-aiwg run skill <name> [--cwd <path>] [-- <args forwarded to script>]
+aiwg run skill <name> [--output-mode <id>]... [--cwd <path>] [-- <args forwarded to script>]
 ```
+
+Repeated `--output-mode` flags compose invocation-scoped modes with session and
+project state. The resolved ordered profiles are exposed to scripts as
+`AIWG_OUTPUT_MODES` and `AIWG_OUTPUT_MODES_JSON`; provider startup files are not
+rewritten.
 
 **Examples:**
 
@@ -1332,6 +1337,8 @@ via `--cwd <path>` for scripted/CI cases. Per-skill manifest can also set
 | `AIWG_PROJECT_ROOT` | absolute path to the calling project's root   |
 | `AIWG_SKILL_DIR`    | absolute path to the skill's source directory |
 | `AIWG_ROOT`         | AIWG installation root                        |
+| `AIWG_OUTPUT_MODES` | comma-separated effective output-mode IDs     |
+| `AIWG_OUTPUT_MODES_JSON` | ordered profiles, metadata, and protected-content policy |
 
 **Manifest schema** (in SKILL.md frontmatter):
 
@@ -1348,6 +1355,30 @@ Discovery surfaces script-bearing skills with `"executable": true` and a
 `run_hint` in `aiwg discover --json`; human output marks them with `[exec]`.
 
 **Capabilities:** cli, utility, scripts, skills
+
+---
+
+### output-mode
+
+Manage provider-neutral output presentation constraints without rewriting
+provider startup files.
+
+```bash
+aiwg output-mode list
+aiwg output-mode show <id>
+aiwg output-mode enable <id> --scope invocation|session|project
+aiwg output-mode disable <id> --scope session|project
+aiwg output-mode clear --scope session|project
+aiwg output-mode status [--output-mode <id>]...
+```
+
+The empty effective stack is the byte-preserving `unaltered` path. Profile
+resolution is project, user, voice adapter, then built-in; composition order is
+semantic, voice, controlled language, structure, presentation. Unknown modes,
+undeclared same-kind combinations, explicit conflicts, missing requirements,
+and mandatory validation without a configured validator fail safe.
+
+**Capabilities:** cli, voice, controlled-language, presentation
 **Tools:** Read, Bash
 
 ---

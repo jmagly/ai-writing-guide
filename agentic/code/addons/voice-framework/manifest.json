@@ -3,7 +3,7 @@
   "type": "addon",
   "name": "Voice Framework",
   "version": "1.0.0",
-  "description": "Voice profile system for crafting and applying consistent writing voices. Define custom voices, apply them to content, and create new voices on demand.",
+  "description": "Voice profiles and composable runtime-selectable output modes for controlled writing and presentation.",
   "core": false,
   "autoInstall": false,
   "author": "AIWG Contributors",
@@ -16,6 +16,8 @@
     "writing",
     "profiles",
     "customization"
+    ,"output-modes"
+    ,"controlled-language"
   ],
   "entry": {
     "rules": "rules/",

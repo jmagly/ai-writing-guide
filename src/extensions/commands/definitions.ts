@@ -1111,6 +1111,25 @@ export const sessionCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const outputModeCommand: Extension = {
+  id: 'output-mode',
+  type: 'command',
+  name: 'Output Modes',
+  description: 'List, inspect, enable, disable, clear, and report composable output modes',
+  version: '1.0.0',
+  capabilities: ['cli', 'voice', 'output-mode', 'controlled-language', 'presentation'],
+  keywords: ['output-mode', 'voice', 'style', 'asd-ste', 'presentation'],
+  category: 'project',
+  platforms: { claude: 'full', generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: {
+    type: 'command',
+    template: 'utility',
+    argumentHint: '<list|show|enable|disable|clear|status> [id] [--scope invocation|session|project]',
+    allowedTools: ['Read', 'Write'],
+  } satisfies CommandMetadata,
+};
+
 // Session Catalog Command (#1903)
 
 export const sessionsCommand: Extension = {
@@ -3902,6 +3921,7 @@ export const commandDefinitions: Extension[] = [
   // Session (#884)
   sessionCommand,
   sessionsCommand,
+  outputModeCommand,
 ];
 
 // ============================================

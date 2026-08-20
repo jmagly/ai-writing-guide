@@ -18,6 +18,21 @@ import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { readAiwgConfig, getProjectDir } from '../../config/aiwg-config.js';
 import { handlerResultFromError } from '../errors.js';
 import * as ui from '../ui.js';
+import { resolveOutputModes } from '../../output-modes/registry.js';
+
+function extractOutputModes(args: string[]): { args: string[]; modes: string[] } {
+  const cleaned: string[] = [];
+  const modes: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--output-mode') {
+      const id = args[i + 1];
+      if (!id || id.startsWith('-')) throw new Error('--output-mode requires a mode ID');
+      modes.push(id);
+      i += 1;
+    } else cleaned.push(args[i]);
+  }
+  return { args: cleaned, modes };
+}
 
 /**
  * Execute a shell command with inherited stdio.
@@ -52,8 +67,22 @@ export const runHandler: CommandHandler = {
   aliases: [],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
-    const scriptName = ctx.args[0];
+    let parsed: { args: string[]; modes: string[] };
+    try { parsed = extractOutputModes(ctx.args); } catch (error) { return { exitCode: 1, message: (error as Error).message }; }
+    const scriptName = parsed.args[0];
     const projectDir = getProjectDir(ctx, ctx.args);
+    let outputModeEnv: Record<string, string> = {};
+    try {
+      const resolved = await resolveOutputModes(projectDir, ctx.frameworkRoot, parsed.modes);
+      if (resolved.modes.length > 0) {
+        outputModeEnv = {
+          AIWG_OUTPUT_MODES: resolved.modes.map(mode => mode.id).join(','),
+          AIWG_OUTPUT_MODES_JSON: JSON.stringify(resolved.modes),
+        };
+      }
+    } catch (error) {
+      return { exitCode: 1, message: `Output mode resolution failed: ${(error as Error).message}` };
+    }
 
     // #1231 — intercept --help/-h before script lookup so the user sees
     // help for both run forms, not "No script named '--help'".
@@ -68,7 +97,7 @@ export const runHandler: CommandHandler = {
     if (scriptName === 'skill') {
       try {
         const { main } = await import('../../skills/run.js');
-        const exitCode = await main(ctx.args);
+        const exitCode = await main(parsed.args, outputModeEnv);
         return { exitCode };
       } catch (error) {
         const result = handlerResultFromError(error);
@@ -137,6 +166,7 @@ export const runHandler: CommandHandler = {
     const env: Record<string, string> = {
       AIWG_PROJECT: projectDir,
       AIWG_PROVIDERS: config.providers.join(','),
+      ...outputModeEnv,
     };
 
     ui.blank();
@@ -162,8 +192,8 @@ export const runHandler: CommandHandler = {
 };
 
 function printRunUsage(): void {
-  console.log('Usage: aiwg run <script-name> [args...]');
-  console.log('       aiwg run skill <skill-name> [--cwd <path>] [-- <args forwarded to script>]');
+  console.log('Usage: aiwg run <script-name> [--output-mode <id>] [args...]');
+  console.log('       aiwg run skill <skill-name> [--output-mode <id>] [--cwd <path>] [-- <args forwarded to script>]');
   console.log('');
   console.log('Two forms share the `run` namespace:');
   console.log('');

@@ -139,6 +139,7 @@ import { jobHandler } from './job.js';
 import { costReportHandler } from './cost-report.js';
 import { evidenceHandler } from './evidence.js';
 import { artifactVerifyHandler } from './artifact-verify.js';
+import { outputModeHandler } from './output-mode.js';
 
 import type { CommandHandler } from './types.js';
 
@@ -175,6 +176,7 @@ export {
   costReportHandler,
   evidenceHandler,
   artifactVerifyHandler,
+  outputModeHandler,
 
   // Project
   newBundleHandler,
@@ -358,6 +360,7 @@ export const allHandlers: CommandHandler[] = [
   costReportHandler,
   evidenceHandler,
   artifactVerifyHandler,
+  outputModeHandler,
 
   // Workspace management
   ...workspaceHandlers,

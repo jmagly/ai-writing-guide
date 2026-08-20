@@ -70,6 +70,9 @@ Output is a structured analysis mapping the content against the profile schema d
 
 ## Profile Resolution Order
 
+For runtime-selectable cross-kind composition, see
+`@$AIWG_ROOT/agentic/code/addons/voice-framework/docs/output-modes.md`.
+
 When a skill looks for a voice profile by name, it checks:
 
 1. `.aiwg/voices/` — Project-specific profiles
@@ -106,3 +109,4 @@ aiwg use all
 - `@$AIWG_ROOT/agentic/code/addons/voice-framework/docs/quickstart.md` — Apply your first voice profile
 - `@$AIWG_ROOT/agentic/code/addons/voice-framework/voices/templates/` — Built-in profile files
 - `@$AIWG_ROOT/agentic/code/addons/voice-framework/schemas/voice-profile.schema.json` — Profile schema
+- `@$AIWG_ROOT/agentic/code/addons/voice-framework/schemas/output-mode-profile.schema.json` — Output-mode profile schema

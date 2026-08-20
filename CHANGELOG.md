@@ -7,6 +7,14 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Composable output modes** - A provider-neutral registry and runtime stack
+  adds a true `unaltered` default, project/user custom profiles, existing voice
+  adapters, deterministic cross-kind composition, protected-content policy,
+  advisory ASD-STE and Wittgenstein-inspired examples, and invocation, session,
+  and project selection through `aiwg output-mode` and `aiwg run` (#2121).
+
 ## [2026.8.13] - 2026-08-20 - "Hermes profile-aware deployment"
 
 ### Changed
