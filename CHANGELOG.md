@@ -7,6 +7,33 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.13] - 2026-08-20 - "Hermes profile-aware deployment"
+
+### Changed
+
+- **Native Hermes skill projection** - Hermes deployments now remove AIWG's
+  provider-oriented `platforms` field and project portable source tags into
+  `metadata.hermes.tags`, keeping deployed skills visible to Hermes while
+  preserving portable source metadata.
+
+- **Checksum-verified publication tools** - The npm publication workflow now
+  installs pinned Cosign and Syft release binaries directly after verifying
+  their SHA-256 digests, avoiding third-party action and remote-installer
+  availability failures.
+
+### Fixed
+
+- **Profile-aware Hermes deployment** - Framework, kernel, and managed skills,
+  provider paths, user scope, and project quickrefs now honor the active
+  `HERMES_HOME` with Hermes-compatible path semantics, so multi-profile and
+  wrapped Hermes sessions receive AIWG capabilities at the directory they
+  actually scan (#2119, #2120).
+
+- **Hermes context precedence** - Generated `.hermes.md` bridges explicitly
+  route to `AGENTS.md` while matching Hermes's first-found context behavior;
+  deployment counts and provider metadata now describe the same active
+  profile (#2119, #2120).
+
 ## [2026.8.12] - 2026-08-17 - "Verifiable artifacts and research labs"
 
 ### Added
