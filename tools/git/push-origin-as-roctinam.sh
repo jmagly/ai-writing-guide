@@ -31,7 +31,6 @@ chmod 600 "$TMP/id_ed25519"
 SSH_COMMAND="ssh -F /dev/null -o BatchMode=yes -o IdentitiesOnly=yes -o IdentityFile=$TMP/id_ed25519"
 identity="$($SSH_COMMAND -T git@git.integrolabs.net 2>&1 || true)"
 grep -q 'roctinam' <<<"$identity" || { echo 'FAIL: AIWG key did not authenticate as roctinam.' >&2; exit 1; }
-
 if [[ "${1:-}" == --check ]]; then
   echo 'Gitea SSH authentication passed for roctinam.'
   exit 0
