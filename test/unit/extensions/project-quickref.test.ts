@@ -19,6 +19,7 @@ const ARTIFACT_ENV_KEYS = [
   'AIWG_ARTIFACTS_PATH',
   'AIWG_PROJECT_ARTIFACTS_PATH',
   'AIWG_PROJECT_AIWG_DIR',
+  'HERMES_HOME',
   PROJECT_LOCAL_SEARCH_PATHS_ENV,
 ] as const;
 let originalEnv: Partial<Record<typeof ARTIFACT_ENV_KEYS[number], string | undefined>> = {};
@@ -308,6 +309,17 @@ describe('project quickref generation and deployment (#1788)', () => {
 
     expect(result.emulated).toBe(true);
     expect(result.targetPath).toBe(join(projectDir, 'skills', result.skillName, 'SKILL.md'));
+  });
+
+  it('deploys Hermes quickrefs to the active HERMES_HOME skills surface', async () => {
+    const { projectDir, homeDir } = await fixture();
+    const hermesHome = join(homeDir, 'hermes-profile');
+    process.env.HERMES_HOME = hermesHome;
+
+    const result = await deployProjectQuickref(projectDir, 'hermes', { homeDir });
+
+    expect(result.targetPath).toBe(join(hermesHome, 'skills', result.skillName, 'SKILL.md'));
+    expect(existsSync(result.targetPath)).toBe(true);
   });
 
   it('deploys to the current kernel surface for every supported provider', async () => {

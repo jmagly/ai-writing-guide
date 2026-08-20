@@ -216,7 +216,7 @@ function resolveCommandMirrorDir(provider, target) {
     const hermesHome = typeof provider.getHermesHome === 'function'
       ? provider.getHermesHome()
       : path.join(os.homedir(), '.hermes');
-    return path.join(hermesHome, 'commands');
+    return path.resolve(hermesHome, 'commands');
   }
 
   return null;
@@ -536,7 +536,7 @@ Providers (all deploy agents, commands, skills, and rules):
   devin     - Devin Desktop (preferred; aliases: devin-desktop, windsurf)
               Paths: .windsurf/agents/, .windsurf/workflows/, .windsurf/skills/, .windsurf/rules/
   hermes    - Hermes Agent (MCP-based integration)
-              Skills: ~/.hermes/skills/ (user-global) | Agents: AGENTS.md (lean routing guide)
+              Skills: $HERMES_HOME/skills/ (user-global; defaults to ~/.hermes/skills/) | Agents: AGENTS.md
               Commands/Rules: served via MCP, not file-deployed
 
 Modes:

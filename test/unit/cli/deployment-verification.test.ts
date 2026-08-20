@@ -230,7 +230,7 @@ describe.sequential('deployment verification contract (#2069)', () => {
         message: 'No artifacts found.',
       }],
     };
-    const aggregate = await aggregateUseDeploymentResult({
+    const aggregate = aggregateUseDeploymentResult({
       ...fixture,
       scope: 'project',
       requestedBundles: ['sdlc'],

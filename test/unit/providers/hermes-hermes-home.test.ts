@@ -27,9 +27,14 @@ describe('hermes provider getHermesHome (#2119)', () => {
     expect(getHermesHome()).toBe('/custom/role/home');
   });
 
-  it('expands a leading tilde against the user home directory', () => {
+  it('preserves a leading tilde like upstream Path(env)', () => {
     process.env.HERMES_HOME = '~/role-home';
-    expect(getHermesHome()).toBe(`${HOMEDIR}/role-home`);
+    expect(getHermesHome()).toBe('~/role-home');
+  });
+
+  it('preserves a relative path like upstream Path(env)', () => {
+    process.env.HERMES_HOME = '.profiles/coder';
+    expect(getHermesHome()).toBe('.profiles/coder');
   });
 
   it('falls back to $HOME/.hermes when HERMES_HOME is unset', () => {

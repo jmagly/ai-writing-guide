@@ -10,6 +10,13 @@ stable_id: aiwg.agent-reference.provider.hermes
 
 Integrate AIWG with [Hermes Agent](https://github.com/NousResearch/hermes-agent) — file-based deployment plus an **optional** MCP sidecar.
 
+Hermes resolves its active data directory from `HERMES_HOME`; when the variable
+is unset, the platform default is `~/.hermes` on POSIX and
+`%LOCALAPPDATA%\hermes` on Windows. Every `~/.hermes/...` path shown below
+means the equivalent path under the active `HERMES_HOME`. Run
+`hermes config path` to confirm which profile/config directory the current CLI
+uses, and invoke `aiwg use` with the same `HERMES_HOME` value.
+
 > **Hermes integrates like any other provider; the MCP sidecar is optional.** As of v2026.5.13 (validated in #1527), `aiwg use sdlc --provider hermes` deploys artifacts and Hermes reaches AIWG through the discover-first CLI (`aiwg discover` / `aiwg show`) and the AGENTS.md / `.hermes.md` bridge — the same model as Claude Code and Codex, **no MCP required**. The `Hermes → MCP → AIWG` sidecar described below is an *optional* enrichment: any provider or system can connect to AIWG's MCP server, but none require it. Rules are delivered through generated `AGENTS.md` `### Rule:` sections and the CLI `aiwg show rule <name>` fallback; MCP remains a richer optional path. The broader MCP modernization audit is tracked in #1533. The rest of this guide covers the optional MCP setup.
 
 ---
@@ -77,8 +84,11 @@ Configure delegation model in `~/.hermes/config.yaml` under `delegation.model: "
 
 ## Version compatibility
 
-This guide is verified against **Hermes Agent v0.13.0** (commit `942adf6`, 2026-05).
-File:line references throughout this document are pinned to that version.
+The original file:line citations in this guide are pinned to **Hermes Agent
+v0.13.0** (commit `942adf6`, 2026-05). The `HERMES_HOME`, skill discovery,
+skill frontmatter, `/reload-skills`, and `/reload-mcp` contracts were revalidated
+against installed **v0.20.2** (commit `4323c67d`) and upstream `main` commit
+`4a5b6dd` on 2026-08-20.
 
 The AIWG integration depends on Hermes capabilities that have been stable
 since v0.4.0:
@@ -379,15 +389,15 @@ After Part 4, AIWG ships a convenience skill that uses `delegate_task` to keep A
 
 **Why:** Direct MCP calls add 3,000-8,000 tokens to the parent context per workflow. `delegate_task` reduces this to ~200 tokens — a 95% reduction.
 
-> **#1242 update**: Since 2026.5.0+ `aiwg use --provider hermes` automatically installs this skill at `~/.hermes/skills/aiwg-orchestrate/SKILL.md` on first deploy. The install is idempotent — your edits are preserved across subsequent `aiwg use` runs. The Hermes provider's prune-stale-skills sweep treats `aiwg-orchestrate` as part of the kernel set so it survives reruns.
+> **#1242 update**: Since 2026.5.0+ `aiwg use --provider hermes` automatically installs this skill at `$HERMES_HOME/skills/aiwg-orchestrate/SKILL.md` on first deploy (default: `~/.hermes/skills/...`). The install is idempotent — your edits are preserved across subsequent `aiwg use` runs. The Hermes provider's prune-stale-skills sweep treats `aiwg-orchestrate` as part of the kernel set so it survives reruns.
 
 > **API note (verified v0.13.0):** `delegate_task` automatically excludes context files (AGENTS.md, SOUL.md, .hermes.md) and memory (MEMORY.md, USER.md) from child agents — this is hardcoded behavior, not a per-call parameter. Earlier AIWG docs that suggested `skip_context_files=True, skip_memory=True` kwargs were incorrect (those parameters do not exist on the signature; the behavior is automatic). The delegation model is configured globally in `~/.hermes/config.yaml` under `delegation.model`.
 
-**To verify the install:** `ls ~/.hermes/skills/aiwg-orchestrate/SKILL.md`
+**To verify the install:** `hermes skills list` (look for `aiwg-orchestrate`), or inspect `$HERMES_HOME/skills/aiwg-orchestrate/SKILL.md`.
 
-**To re-install** (after deletion or to reset to the shipped version): `rm -rf ~/.hermes/skills/aiwg-orchestrate && aiwg use sdlc --provider hermes`
+**To re-install** (after removing the existing operator copy): run `aiwg use sdlc --provider hermes` with the same `HERMES_HOME` used by Hermes.
 
-**Manual creation** (if for some reason auto-install was skipped — e.g. read-only home dir): create `~/.hermes/skills/aiwg-orchestrate/SKILL.md` with the body below.
+**Manual creation** (if for some reason auto-install was skipped — e.g. read-only home dir): create `$HERMES_HOME/skills/aiwg-orchestrate/SKILL.md` with the body below.
 
 ```markdown
 ---

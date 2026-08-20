@@ -5,8 +5,8 @@
  * server is an optional enrichment hook that Hermes can call when configured.
  *
  * What this provider DOES deploy:
- *   - Skills: ~/.hermes/skills/ (user-global, for agentic skills callable by Hermes)
- *   - AGENTS.md: project root (lean routing guide that Hermes loads on every turn)
+ *   - Skills: $HERMES_HOME/skills/ (user-global, for agentic skills callable by Hermes)
+ *   - AGENTS.md: project root (full AIWG routing guide referenced by .hermes.md)
  *
  * What this provider SKIPS:
  *   - Commands: Hermes has no AIWG slash-command file surface
@@ -22,6 +22,7 @@ let fs;
 try { const gfs = _require('graceful-fs'); gfs.gracefulify(realFs); fs = realFs; } catch { fs = realFs; }
 import path from 'path';
 import os from 'os';
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import {
   ensureDir,
   listMdFiles,
@@ -74,13 +75,10 @@ import {
 export function getHermesHome() {
   const env = (process.env.HERMES_HOME || '').trim();
   if (env) {
-    // `path.resolve` does not expand `~`; honor `~` the way
-    // `hermes_constants` (CPython `Path.expanduser`) does, then normalize
-    // relative paths against the current working directory.
-    if (env === '~' || env.startsWith('~/')) {
-      return path.resolve(os.homedir(), env === '~' ? '' : env.slice(2));
-    }
-    return path.resolve(env);
+    // Match upstream's Path(env) contract exactly. Hermes does not expand a
+    // leading `~` or resolve relative values here; both remain relative to the
+    // process working directory when the path is consumed.
+    return env;
   }
   if (process.platform === 'win32') {
     const localAppData = (process.env.LOCALAPPDATA || '').trim();
@@ -113,7 +111,7 @@ export const paths = {
   // (win32: %LOCALAPPDATA%/hermes), matching hermes_constants.get_hermes_home().
   // #2119: previously hardcoded os.homedir() — wrong for any operator running
   // Hermes under a non-default HERMES_HOME (multi-profile, hermes-role, etc.).
-  skills: path.join(HERMES_HOME, 'skills', '.aiwg'),
+  skills: path.resolve(HERMES_HOME, 'skills', '.aiwg'),
   rules: '',                                      // Inlined into AGENTS.md + reachable via `aiwg show rule`
 };
 
@@ -121,7 +119,7 @@ export const paths = {
 // Standard skills land in the .aiwg/ subdirectory under the same root —
 // Hermes recursively walks the skill root (verified against upstream v0.13.0,
 // `agent/skill_utils.py:478-489`).
-export const kernelSkillsPath = path.join(HERMES_HOME, 'skills');
+export const kernelSkillsPath = path.resolve(HERMES_HOME, 'skills');
 
 // Resolved home directory this provider's paths were computed against.
 // Consumers (deploy verification, doctor, status) should use this rather than
@@ -131,7 +129,7 @@ export const hermesHome = HERMES_HOME;
 export const support = {
   agents: 'aggregated',      // Agents aggregated into lean AGENTS.md
   commands: 'none',          // Hermes has no AIWG slash-command file surface
-  skills: 'native',          // ~/.hermes/skills/ is native Hermes skill location
+  skills: 'native',          // $HERMES_HOME/skills/ is the native skill location
   rules: 'agents-md+cli',    // compressed in AGENTS.md; full bodies via CLI/MCP
 };
 
@@ -142,6 +140,43 @@ export const capabilities = {
   yamlFormat: false,
   homeDirectoryDeploy: true,  // Skills deploy to home dir
 };
+
+/**
+ * Project portable Agent Skills metadata into Hermes's native frontmatter.
+ *
+ * The portable Agent Skills contract restricts `metadata` values to strings,
+ * while Hermes expects tags at `metadata.hermes.tags`. AIWG stores the tag
+ * list as a comma-separated `metadata.hermes-tags` string in source and
+ * performs the provider-specific projection only in the deployed copy.
+ */
+export function transformHermesSkillContent(content) {
+  const stripped = stripPlatformsFromContent(content);
+  const match = stripped.match(/^---\r?\n([\s\S]*?)\r?\n---(\r?\n|$)/);
+  if (!match) return stripped;
+
+  let frontmatter;
+  try {
+    frontmatter = parseYaml(match[1]);
+  } catch {
+    return stripped;
+  }
+  if (!frontmatter || typeof frontmatter !== 'object' || Array.isArray(frontmatter)) {
+    return stripped;
+  }
+
+  const metadata = frontmatter.metadata;
+  const encodedTags = metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+    ? metadata['hermes-tags']
+    : undefined;
+  if (typeof encodedTags !== 'string') return stripped;
+
+  const tags = encodedTags.split(',').map((tag) => tag.trim()).filter(Boolean);
+  delete metadata['hermes-tags'];
+  metadata.hermes = { tags };
+
+  const body = stripped.slice(match[0].length);
+  return `---\n${stringifyYaml(frontmatter).trimEnd()}\n---\n${body}`;
+}
 
 // ============================================================================
 // Model Mapping (not applicable — Hermes uses local Ollama models)
@@ -269,7 +304,8 @@ export function generateAgentsMd(agentCount, skillCount, targetDir, opts) {
   const header = `# AIWG Integration
 
 AIWG connected through file-based deployment. Native Hermes skills are available
-at \`~/.hermes/skills/\` (kernel) and \`~/.hermes/skills/.aiwg/\` (standard).
+at \`$HERMES_HOME/skills/\` (kernel) and \`$HERMES_HOME/skills/.aiwg/\` (standard).
+When unset, \`HERMES_HOME\` defaults to the platform-native Hermes home.
 Use \`aiwg discover\` and \`aiwg show <type> <name>\` for the on-demand catalog.
 The MCP sidecar (\`aiwg mcp serve\`) is optional.
 
@@ -351,10 +387,12 @@ AIWG project context lives in \`AGENTS.md\` (this file is a thin Hermes pointer)
 
 **Routing**: see \`AGENTS.md\` in this directory.
 **MCP**: AIWG is reachable via \`mcp_aiwg_*\` tools.
-**Skills**: kernel skills at \`~/.hermes/skills/\`; standard skills at \`~/.hermes/skills/.aiwg/\`.
+**Skills**: kernel skills at \`$HERMES_HOME/skills/\`; standard skills at \`$HERMES_HOME/skills/.aiwg/\`.
+When unset, \`HERMES_HOME\` defaults to the platform-native Hermes home.
 
-Hermes loads \`.hermes.md\` before \`AGENTS.md\` (first-match-wins). Keep this
-file minimal — Hermes will load AGENTS.md content next via the routing chain.
+Hermes loads only \`.hermes.md\` when it is present (first-match-wins). Keep
+this file minimal; its routing instruction tells the agent to read \`AGENTS.md\`
+when the full AIWG project context is needed.
 `;
   const destPath = path.join(targetDir, '.hermes.md');
   if (dryRun) {
@@ -375,8 +413,8 @@ file minimal — Hermes will load AGENTS.md content next via the routing chain.
  *
  * Skills are user-global in Hermes, deployed once, available in all
  * projects. Kernel routing per the cross-provider pattern:
- *   - kernel skills → ~/.hermes/skills/         (platform-native, always-loaded)
- *   - standard      → ~/.hermes/skills/.aiwg/   (recursively walked by Hermes)
+ *   - kernel skills → $HERMES_HOME/skills/         (platform-native, always-loaded)
+ *   - standard      → $HERMES_HOME/skills/.aiwg/   (recursively walked by Hermes)
  */
 export function deploySkills(skillDirs, opts) {
   const standardDestDir = paths.skills;
@@ -450,7 +488,7 @@ export async function deploy(opts) {
       const skillOpts = {
         ...opts,
         provider: 'hermes', // ensure deploySkillDir's injectPlatform branch runs
-        transformSkillMd: stripPlatformsFromContent,
+        transformSkillMd: transformHermesSkillContent,
       };
       deploySkills(allSkillDirs, skillOpts);
     } else if (!opts.quiet) {
@@ -501,7 +539,7 @@ export async function deploy(opts) {
 
   // ── aiwg-orchestrate convenience skill (#1242) ──────────────────────────────
   // First-deploy-only copy: lays down the delegate_task wrapper at
-  // ~/.hermes/skills/aiwg-orchestrate/SKILL.md if it isn't already present.
+  // $HERMES_HOME/skills/aiwg-orchestrate/SKILL.md if it isn't already present.
   // The skill provides ~95% per-workflow context reduction by routing AIWG
   // calls through Hermes's `delegate_task` instead of inline MCP. Idempotent
   // on re-run — operator edits are preserved across `aiwg use` invocations.
@@ -686,7 +724,7 @@ export function migrateLegacySkillPath(opts) {
 // ============================================================================
 
 /**
- * Copy the aiwg-orchestrate skill template to ~/.hermes/skills/ on first
+ * Copy the aiwg-orchestrate skill template to $HERMES_HOME/skills/ on first
  * deploy. Skip if a SKILL.md already exists — preserves operator edits and
  * any prior version they're running. Errors during the copy are non-fatal:
  * the rest of the deploy must succeed even if the home dir is read-only or
@@ -737,7 +775,7 @@ function deployAiwgOrchestrateSkill(srcRoot, opts) {
     // `platforms:` field (hermes reads that as an OS gate). Strip it if a
     // future template regression reintroduces one so this orphan path
     // stays consistent with the main deploy pipeline.
-    fs.writeFileSync(destPath, stripPlatformsFromContent(content), 'utf8');
+    fs.writeFileSync(destPath, transformHermesSkillContent(content), 'utf8');
     if (!opts.quiet) {
       console.log(`  Installed aiwg-orchestrate to ${destPath} (delegate_task wrapper, 95% context reduction)`);
     }

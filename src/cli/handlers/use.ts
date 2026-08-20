@@ -837,7 +837,7 @@ const SESSION_RELOAD_NOTICE: Record<string, { action: string; rationale: string;
     rationale: 'OpenCode loads agent files on session start and does not hot-reload.',
   },
   hermes: {
-    action: 'In an active Hermes session, run /reload-skills to pick up new skills in ~/.hermes/skills/ and /reload-mcp to pick up MCP server changes (~/.hermes/config.yaml) — both are in-session slash commands, no chat restart needed. Restart the chat only as a fallback if the slash commands are unavailable.',
+    action: 'In an active Hermes session, run /reload-skills to pick up new skills in $HERMES_HOME/skills/ and /reload-mcp to pick up MCP server changes ($HERMES_HOME/config.yaml) — both are in-session slash commands, no chat restart needed. Restart the chat only as a fallback if the slash commands are unavailable.',
     rationale: 'Hermes loads skills and MCP config at session start (verified in hermes_cli/commands.py:178 and hermes_cli/config.py:1228). The /reload-skills and /reload-mcp slash commands re-scan in place; /reload-mcp prompts for confirmation by default.',
     symptom: 'Until reloaded, newly deployed kernel skills are missing from `hermes skills list` and unreachable via natural-language invocation; new MCP servers (incl. AIWG) are missing from the tool surface.',
   },
@@ -2370,13 +2370,12 @@ export class UseHandler implements CommandHandler {
           reportMissingReceipt: false,
         }));
       }
-      result = await aggregateUseDeploymentResult({
+      result = aggregateUseDeploymentResult({
         projectRoot: projectDir,
         frameworkRoot,
         scope: requestedScope,
         requestedBundles: [requestedBundle],
         providers: providerResults,
-        configuredProviders: config?.providers,
       });
       if (dryRun) {
         result.dryRun = true;

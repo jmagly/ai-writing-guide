@@ -17,6 +17,7 @@ import { validateAgentSkillFile } from '../../../src/skills/validator.js';
 
 const IMPORTED_AT = '2026-07-26T12:00:00.000Z';
 const AIWG_VERSION = 'test-version';
+const ORIGINAL_HERMES_HOME = process.env.HERMES_HOME;
 
 let root: string;
 let projectDir: string;
@@ -104,6 +105,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  if (ORIGINAL_HERMES_HOME === undefined) delete process.env.HERMES_HOME;
+  else process.env.HERMES_HOME = ORIGINAL_HERMES_HOME;
   vi.restoreAllMocks();
   fs.rmSync(root, { recursive: true, force: true });
 });
@@ -210,6 +213,22 @@ describe('managed Agent Skills provider matrix', () => {
       .toBe(path.join(homeDir, '.hermes', 'skills', name));
     expect(fs.existsSync(path.join(projectDir, '.openhuman'))).toBe(false);
     expect(fs.existsSync(path.join(projectDir, '.hermes'))).toBe(false);
+  });
+
+  it('deploys a managed Hermes skill to the active HERMES_HOME', async () => {
+    const name = 'hermes-profile-skill';
+    const hermesHome = path.join(root, 'hermes-profile');
+    process.env.HERMES_HOME = hermesHome;
+    await importActive(name);
+
+    const result = deployImportedAgentSkill(name, {
+      projectDir,
+      target: 'hermes',
+      dryRun: false,
+    });
+
+    expect(result.path).toBe(path.join(hermesHome, 'skills', name));
+    expect(fs.existsSync(path.join(result.path, 'SKILL.md'))).toBe(true);
   });
 
   it('reports provider incompatibility instead of truncating standard metadata', async () => {

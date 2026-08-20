@@ -474,18 +474,21 @@ export function injectPlatformInContent(content, targetPlatform) {
  * absent field is the documented "compatible with all platforms" default.
  */
 export function stripPlatformsFromContent(content) {
-  const fmMatch = content.match(/^(---\n)([\s\S]*?)(\n---\n?)([\s\S]*)$/);
+  const fmMatch = content.match(/^(---\r?\n)([\s\S]*?)(\r?\n---(?:\r?\n|$))([\s\S]*)$/);
   if (!fmMatch) return content;
 
   const [, open, fm, close, body] = fmMatch;
-  let updated = fm.replace(/^platforms:[^\n]*\n/m, '');
+  let updated = fm.replace(/^platforms:[^\r\n]*(?:\r?\n|$)/m, '');
 
   // Multi-line list form:
   //   platforms:
   //     - claude-code
   //     - hermes
   if (updated === fm) {
-    updated = fm.replace(/^platforms:\n(?:[ \t]+-[ \t]+\S[^\n]*\n?)*/m, '');
+    updated = fm.replace(
+      /^platforms:[ \t]*\r?\n(?:[ \t]+-[ \t]+\S[^\r\n]*(?:\r?\n|$))*/m,
+      '',
+    );
   }
 
   if (updated === fm) return content;

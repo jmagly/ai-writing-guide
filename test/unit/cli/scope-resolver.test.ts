@@ -2,12 +2,11 @@
  * Tests for the --scope user|project resolver (PUW-027 / #1128).
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { homedir } from 'node:os';
 import * as path from 'node:path';
 import { promises as fs } from 'node:fs';
 import * as os from 'node:os';
-import { vi } from 'vitest';
 import {
   detectScope,
   userScopeConfigPath,
@@ -363,14 +362,14 @@ describe('hermesHome (#2119 HERMES_HOME)', () => {
     expect(hermesHome()).toBe('/tmp/hermes-home-x');
   });
 
-  it('expands leading ~ like CPython Path.expanduser', () => {
+  it('preserves a leading tilde like upstream Path(env)', () => {
     process.env.HERMES_HOME = '~/custom-role';
-    expect(hermesHome()).toBe(path.join(homedir(), 'custom-role'));
+    expect(hermesHome()).toBe('~/custom-role');
   });
 
-  it('treats bare ~ as $HOME', () => {
-    process.env.HERMES_HOME = '~';
-    expect(hermesHome()).toBe(homedir());
+  it('preserves a relative path like upstream Path(env)', () => {
+    process.env.HERMES_HOME = '.profiles/coder';
+    expect(hermesHome()).toBe('.profiles/coder');
   });
 
   it('ignores blank / whitespace-only values', () => {
@@ -378,7 +377,10 @@ describe('hermesHome (#2119 HERMES_HOME)', () => {
     expect(hermesHome()).toBe(path.join(homedir(), '.hermes'));
   });
 
-  it('USER_SCOPE_PATHS.hermes.skills uses the same helper', () => {
-    expect(USER_SCOPE_PATHS.hermes.skills.endsWith(path.join('skills'))).toBe(true);
+  it('resolves the user-scope skills path from HERMES_HOME at module load', async () => {
+    process.env.HERMES_HOME = '/tmp/hermes-user-scope';
+    vi.resetModules();
+    const fresh = await import('../../../src/cli/scope-resolver.js');
+    expect(fresh.USER_SCOPE_PATHS.hermes.skills).toBe('/tmp/hermes-user-scope/skills');
   });
 });
