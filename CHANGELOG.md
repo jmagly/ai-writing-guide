@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.14] - 2026-08-20 - "Controlled output surfaces"
+
 ### Added
 
 - **Composable output modes** - A provider-neutral registry and runtime stack
