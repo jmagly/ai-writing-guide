@@ -63,7 +63,22 @@ function displayProjectPath(projectPath: string, targetPath: string): string {
   return targetPath;
 }
 
-export async function buildContextFinalizationBlock(projectPath: string): Promise<string> {
+function documentRelativeHref(projectPath: string, documentPath: string, targetPath: string): string {
+  const absoluteDocument = path.isAbsolute(documentPath)
+    ? documentPath
+    : path.resolve(projectPath, documentPath);
+  const absoluteTarget = path.isAbsolute(targetPath)
+    ? targetPath
+    : path.resolve(projectPath, targetPath);
+  const relative = path.relative(path.dirname(absoluteDocument), absoluteTarget).replace(/\\/g, '/');
+  if (!relative) return `./${path.basename(absoluteTarget)}`;
+  return relative.startsWith('.') ? relative : `./${relative}`;
+}
+
+export async function buildContextFinalizationBlock(
+  projectPath: string,
+  documentPath = path.join(projectPath, 'AIWG.md'),
+): Promise<string> {
   const config = await readConfig(projectPath);
   const remoteUrls = await readGitRemoteUrls(projectPath);
   const providers = config?.providers ?? [];
@@ -79,6 +94,7 @@ export async function buildContextFinalizationBlock(projectPath: string): Promis
     }
   }
 
+  const trackerAuthority = resolveTrackerAuthority(config, remoteUrls);
   const lines = [
     FINALIZATION_START,
     '## Context Finalization',
@@ -102,7 +118,9 @@ export async function buildContextFinalizationBlock(projectPath: string): Promis
     '',
     'When a user asks whether AIWG is active or engaged in this project, run or read `aiwg status --probe --json` and report the result plainly: engaged state, project root, deployed provider files, installed frameworks/addons, and the next action from the probe. Do not add AIWG attribution, signatures, generated-by text, or passive footers to user files, commits, PRs, comments, code headers, or docs.',
     '',
-    renderTrackerProtocol(resolveTrackerAuthority(config, remoteUrls)),
+    renderTrackerProtocol(trackerAuthority, {
+      configHref: documentRelativeHref(projectPath, documentPath, trackerAuthority.configPath),
+    }),
     '',
     '### Source Model',
     '',
@@ -130,7 +148,8 @@ export function replaceOrAppendFinalizationBlock(content: string, block: string)
 }
 
 export async function buildNormalizedAiwgMd(projectPath: string, existing = ''): Promise<string> {
-  const block = await buildContextFinalizationBlock(projectPath);
+  const normalizedDocumentPath = projectControlPath(projectPath, 'AIWG.md');
+  const block = await buildContextFinalizationBlock(projectPath, normalizedDocumentPath);
   const externalLinksSection = await buildExternalLinksSection(projectPath);
   const normalizedAiwgMdPath = displayProjectPath(projectPath, projectControlPath(projectPath, 'AIWG.md'));
   const base = existing.trim().length > 0

@@ -52,6 +52,11 @@ export interface TrackerAccessDecision {
   blocker?: string;
 }
 
+export interface TrackerProtocolRenderOptions {
+  /** Link target relative to the document receiving the rendered protocol. */
+  configHref?: string;
+}
+
 function providerFromIssueStorage(issueStorage: string | undefined): TrackerProvider {
   const value = issueStorage?.toLowerCase() ?? '';
   if (!value) return 'unknown';
@@ -156,7 +161,10 @@ export function chooseTrackerAccess(
   };
 }
 
-export function renderTrackerProtocol(authority: TrackerAuthority): string {
+export function renderTrackerProtocol(
+  authority: TrackerAuthority,
+  options: TrackerProtocolRenderOptions = {},
+): string {
   const secondary = authority.secondaryRemotes.length > 0
     ? authority.secondaryRemotes
         .map((remote) => `${remote.name}${remote.purpose ? ` (${remote.purpose})` : ''}`)
@@ -167,11 +175,12 @@ export function renderTrackerProtocol(authority: TrackerAuthority): string {
   const customerTracker = authority.customerIssueTrackerRemote
     ? `\`${authority.customerIssueTrackerRemote}\` (${authority.customerProvider ?? 'unknown'}; ${authority.customerIssueTrackerUrl ?? 'remote URL unavailable'})`
     : 'not configured';
+  const configHref = options.configHref ?? `./${authority.configPath}`;
 
   return [
     '### Tracker Authority Protocol',
     '',
-    `- Source of truth: [${authority.configPath}](./${authority.configPath})`,
+    `- Source of truth: [${authority.configPath}](${configHref})`,
     `- Internal/canonical tracker: \`${authority.issueTrackerRemote}\` (${authority.provider}; ${trackerUrl})`,
     `- Customer issue tracker: ${customerTracker}`,
     `- Primary repo remote: \`${authority.primaryRemote}\`; CI remote: \`${authority.ciRemote}\``,

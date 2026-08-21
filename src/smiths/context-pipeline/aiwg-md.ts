@@ -59,7 +59,10 @@ export async function buildAiwgMdContent(
   // #1362: parallelism cap section, injected after generation so it surfaces
   // in regenerated context files regardless of CLAUDE.md content.
   const parallelismSection = await buildParallelismSection(projectPath);
-  const finalizationBlock = await buildContextFinalizationBlock(projectPath);
+  const finalizationBlock = await buildContextFinalizationBlock(
+    projectPath,
+    path.join(projectPath, 'AIWG.md'),
+  );
   const externalLinksSection = await buildExternalLinksSection(projectPath);
 
   if (claudeMdContent) {

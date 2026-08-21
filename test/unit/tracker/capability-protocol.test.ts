@@ -121,6 +121,16 @@ describe('tracker capability protocol', () => {
     expect(rendered).toContain('Route customer acknowledgements, follow-up, and closure to the customer tracker');
   });
 
+  it('accepts a destination-relative config link for nested generated documents', () => {
+    const authority = resolveTrackerAuthority(baseConfig(), {
+      origin: 'git@git.integrolabs.net:roctinam/aiwg.git',
+      github: 'git@github.com:jmagly/aiwg.git',
+    });
+    const rendered = renderTrackerProtocol(authority, { configHref: './aiwg.config' });
+
+    expect(rendered).toContain('Source of truth: [.aiwg/aiwg.config](./aiwg.config)');
+  });
+
   it('retains backward-compatible behavior when no customer tracker is configured', () => {
     const config = baseConfig();
     delete config.remotes?.customer_issue_tracker;
