@@ -151,14 +151,13 @@ jobs:
             exit 1
           fi
 
-          # Bind the deployment callback to exact source bytes from the signed
-          # release tag. No authoritative agentic.yaml currently exists in this
-          # repository, so the handoff fails explicitly until one is added by a
-          # separately reviewed source contract. Never synthesize it here.
+          # Bind the callback to exact, independently reviewed setup and agent
+          # handoff bytes from the signed release tag. Never synthesize or alias
+          # either file here.
           git show "${REF_NAME}:setup.aiwg.yaml" > /tmp/setup.aiwg.yaml
           if ! git cat-file -e "${REF_NAME}:agentic.yaml" 2>/dev/null; then
-            echo "::error::signed tag ${REF_NAME} has no authoritative agentic.yaml; attested site publication is blocked"
-            echo "::error::define and review the canonical agentic.yaml source contract before retrying this callback"
+            echo "::error::signed tag ${REF_NAME} is missing authoritative agentic.yaml; attested site publication is blocked"
+            echo "::error::restore the reviewed repository-owned handoff manifest before retrying this callback"
             exit 1
           fi
           git show "${REF_NAME}:agentic.yaml" > /tmp/agentic.yaml

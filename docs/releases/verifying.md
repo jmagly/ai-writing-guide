@@ -27,10 +27,12 @@ policy. The signed descriptor includes each object's path, media type, exact
 byte length, and SHA-256 digest. HTTP cache and discovery headers are never
 signature or digest evidence.
 
-The attested site-publication pipeline is fail-closed while this repository has
-no reviewed authoritative `agentic.yaml`. Until that source contract exists,
-absence of the public agentic sidecar is an explicit unpublished state, not a
-reason to accept an unsigned or generated substitute.
+The repository-owned [`agentic.yaml`](../../agentic.yaml) is the reviewed
+agent-handoff source. It requires local verification of the exact public setup
+bytes before an agent may inspect or execute them. Release publication reads
+both manifests from the verified signed tag; absence of either file or sidecar
+is an explicit unpublished state, not a reason to accept an unsigned or
+generated substitute.
 
 This doc walks through all four verifications and shows what each one
 rules out.

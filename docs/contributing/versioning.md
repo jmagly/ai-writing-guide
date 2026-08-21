@@ -351,13 +351,13 @@ expected objects, but the site must verify the signed web manifest and exact
 digests. CDN ETags, Last-Modified, Content-Type, and Content-Length never replace
 that verification.
 
-The repository intentionally does not contain an authoritative `agentic.yaml`
-today. The handoff stops after preserving the already-mirrored release evidence
-and reports this as a missing source contract. Do not copy or generate an
-`agentic.yaml` to bypass the gate; establish the canonical source in a reviewed
-change, then retry the web publication step. Disabling attestation emission for
-rollback likewise leaves prior sidecars, signed manifests, and trusted sequence
-state intact.
+The repository-owned [`agentic.yaml`](../../agentic.yaml) is the authoritative
+agent handoff source. It is deliberately distinct from `setup.aiwg.yaml`: the
+first manifest requires local verification and binds the handoff, while the
+second contains the installation plan. Release CI reads both exact files from
+the verified signed tag and never aliases, copies, or synthesizes either one.
+Disabling attestation emission for rollback likewise leaves prior sidecars,
+signed manifests, and trusted sequence state intact.
 
 ## Release Gates
 

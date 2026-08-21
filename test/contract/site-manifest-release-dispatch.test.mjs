@@ -8,7 +8,7 @@ test('site notification is a post-attestation callback, not a tag-push race', as
   assert.match(workflow, /AIWG_VERIFY_TAG_REF=.*verify-signed-tag\.sh/);
   assert.match(workflow, /git show .*setup\.aiwg\.yaml.*> \/tmp\/setup\.aiwg\.yaml/);
   assert.match(workflow, /git cat-file -e .*agentic\.yaml/);
-  assert.match(workflow, /no authoritative agentic\.yaml/);
+  assert.match(workflow, /missing authoritative agentic\.yaml/);
   assert.match(workflow, /SETUP_SHA256=\$\(sha256sum \/tmp\/setup\.aiwg\.yaml/);
   assert.match(workflow, /aiwg\.site-publication\/v1/);
   assert.match(workflow, /aiwg\.resource-manifest\/v1/);
@@ -33,6 +33,7 @@ test('private web release handoff follows mirrored evidence and carries signed-s
   assert.match(workflow, /Web attestation emission is stopped; mirrored release evidence was not deleted/);
   assert.match(workflow, /requireMonotonicSequence: true/);
   assert.match(workflow, /requireExpiry: true/);
+  assert.match(workflow, /channel: "stable"/);
   assert.match(workflow, /after: "signed-release-and-attestations-published"/);
   assert.match(workflow, /httpMetadataIsNonAuthoritative: true/);
 });

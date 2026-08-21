@@ -309,9 +309,9 @@ jobs:
           AIWG_VERIFY_TAG_REF="refs/tags/${TAG}" bash tools/ci/verify-signed-tag.sh
           git show "${TAG}:setup.aiwg.yaml" > /tmp/setup.aiwg.yaml
           if ! git cat-file -e "${TAG}:agentic.yaml" 2>/dev/null; then
-            echo "✗ Signed tag ${TAG} has no authoritative agentic.yaml." >&2
+            echo "✗ Signed tag ${TAG} is missing the authoritative agentic.yaml." >&2
             echo "  Web attestation emission is stopped; mirrored release evidence was not deleted." >&2
-            echo "  Define and review the canonical agentic.yaml source contract before retrying." >&2
+            echo "  Restore the reviewed repository-owned handoff manifest before retrying." >&2
             exit 1
           fi
           git show "${TAG}:agentic.yaml" > /tmp/agentic.yaml
@@ -345,7 +345,7 @@ jobs:
             --arg ref "refs/heads/main" \
             --arg version "$VERSION" \
             --arg publication_contract "$PUBLICATION_CONTRACT" \
-            '{ref: $ref, inputs: {version: $version, publication_contract: $publication_contract}}')
+            '{ref: $ref, inputs: {version: $version, channel: "stable", publication_contract: $publication_contract}}')
           RESPONSE_FILE=$(mktemp)
           trap 'rm -f "$RESPONSE_FILE"' EXIT INT TERM
           HTTP_CODE=$(env -u GITEA_TOKEN curl --config /dev/fd/3 \

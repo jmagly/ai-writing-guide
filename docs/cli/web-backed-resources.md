@@ -362,10 +362,11 @@ DSSE/in-toto policy before reporting `verified`.
 
 The site publication callback is deliberately downstream of signed web-release
 and sidecar emission. It requires the stable channel's monotonic sequence and
-signed expiry. The source repository currently has no authoritative
-`agentic.yaml`; release publication fails with an explicit source-contract
-diagnostic until that canonical artifact is separately reviewed and added. CI
-must not synthesize one from examples or another repository.
+signed expiry. The source repository owns the reviewed `agentic.yaml` handoff
+manifest. It is not an alias for `setup.aiwg.yaml`: it requires local
+verification before delegating to the separately signed setup plan. Release
+publication reads both exact files from the signed tag, and CI must not
+synthesize either one from examples, mirrors, or another repository.
 
 An inspection UI may show the YAML and verification details in place, but
 rendering or copying from the website is never itself proof. Only a local
