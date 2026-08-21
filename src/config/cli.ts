@@ -177,6 +177,8 @@ const ENUM_RULES: Record<string, readonly string[]> = {
   'remotes.transport.protocol': ['ssh', 'https'],
   'repo_maintainer.tiers.local': ['collaborator', 'maintainer', 'admin'],
   'security.threatAssessment.mode': ['off', 'audit', 'enforce'],
+  'artifact_outputs.canonical': ['aiwg'],
+  'artifact_outputs.provider_native': ['disabled', 'explicit-only', 'project-default'],
 };
 
 const BOOLEAN_FIELDS = new Set([

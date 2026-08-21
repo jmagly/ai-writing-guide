@@ -36,12 +36,32 @@ export const CLAUDE_HOOK_END = '<!-- AIWG:claude-md-hook:end -->';
  * to load AIWG.md as the project context entry point. Kept short — the
  * actual context lives in AIWG.md.
  */
-export function buildClaudeHookBlock(): string {
+type ClaudeArtifactOutputPolicy = { canonical?: string; provider_native?: string; destinations?: Record<string, { enabled?: boolean; use_when?: string }> };
+
+function buildClaudeArtifactOutputPolicy(policy: ClaudeArtifactOutputPolicy = {}): string[] {
+  const providerNative = policy.provider_native ?? 'explicit-only';
+  const design = policy.destinations?.['claude-code.design'];
+  const designEnabled = design?.enabled !== false && design?.use_when !== 'disabled';
+  return [
+    '## AIWG artifact output policy',
+    '',
+    `- Canonical durable artifacts: AIWG artifact store (policy: ${policy.canonical ?? 'aiwg'}).`,
+    `- Provider-native presentation/export: ${providerNative}.`,
+    `- Claude Design: ${designEnabled ? 'available only when explicitly selected by the resolved policy or requested by the user' : 'disabled by project policy'}.`,
+    '- Never substitute, relocate, or omit the canonical AIWG plan/review artifact because Claude adds or changes a provider default.',
+    '- When both canonical and presentation outputs are selected, write the canonical artifact first; treat Design as a derived export and record provenance linking it to the canonical source of truth.',
+    '- Unknown provider-native destinations fail safe with a diagnostic. Higher-authority project policy overrides user preferences; explicit task selection overrides provider defaults only within the project policy ceiling.',
+  ];
+}
+
+export function buildClaudeHookBlock(policy: ClaudeArtifactOutputPolicy = {}): string {
   return [
     CLAUDE_HOOK_START,
     '',
     buildProviderBootstrapBlock('claude'),
     '@.aiwg/aiwg.config',
+    '',
+    ...buildClaudeArtifactOutputPolicy(policy),
     '',
     '<!--',
     '  This block is managed by `aiwg regenerate` and `aiwg use`.',
@@ -87,7 +107,14 @@ export async function ensureClaudeMdHook(
     warnings: [],
   };
 
-  const block = buildClaudeHookBlock();
+  let policy: ClaudeArtifactOutputPolicy = {};
+  try {
+    const config = JSON.parse(await fs.readFile(path.join(projectPath, '.aiwg', 'aiwg.config'), 'utf8')) as { artifact_outputs?: ClaudeArtifactOutputPolicy };
+    policy = config.artifact_outputs ?? {};
+  } catch {
+    // Missing/legacy/temporarily malformed config receives the safe default.
+  }
+  const block = buildClaudeHookBlock(policy);
 
   // Case 1: CLAUDE.md does not exist — create a minimal one with just the block.
   let existing: string;

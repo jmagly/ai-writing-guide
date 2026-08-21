@@ -15,6 +15,15 @@ Load the canonical project context first, then the generated AIWG framework cont
 <!-- AIWG:provider-bootstrap:end -->
 @.aiwg/aiwg.config
 
+## AIWG artifact output policy
+
+- Canonical durable artifacts: AIWG artifact store (policy: aiwg).
+- Provider-native presentation/export: explicit-only.
+- Claude Design: available only when explicitly selected by the resolved policy or requested by the user.
+- Never substitute, relocate, or omit the canonical AIWG plan/review artifact because Claude adds or changes a provider default.
+- When both canonical and presentation outputs are selected, write the canonical artifact first; treat Design as a derived export and record provenance linking it to the canonical source of truth.
+- Unknown provider-native destinations fail safe with a diagnostic. Higher-authority project policy overrides user preferences; explicit task selection overrides provider defaults only within the project policy ceiling.
+
 <!--
   This block is managed by `aiwg regenerate` and `aiwg use`.
   Operator content above and below this block is preserved on regenerate.
@@ -76,7 +85,7 @@ When a user asks whether AIWG is active or engaged in this project, run or read 
 ### Tracker Authority Protocol
 
 - Source of truth: [.aiwg/aiwg.config](./.aiwg/aiwg.config)
-- Canonical tracker: `origin` (unknown; git@git.integrolabs.net:roctinam/aiwg.git)
+- Canonical tracker: `origin` (gitea; git@git.integrolabs.net:roctinam/aiwg.git)
 - Primary repo remote: `origin`; CI remote: `origin`
 - Secondary/mirror remotes: github (public-mirror)
 - Issue storage mode: not configured

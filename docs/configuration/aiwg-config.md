@@ -44,6 +44,7 @@ Writes are atomic: the loader writes to a randomly-suffixed temp sibling, then
 | `installed`     | `Record<string, InstalledEntry>` | yes      | Frameworks and addons currently deployed, keyed by the name passed to `aiwg use`. Defaults to `{}`.                                                   |
 | `scripts`       | `Record<string, string>`         | yes      | User-defined scripts, run via `aiwg run <name>`. Executed with `sh -c "<command>"` (or `cmd /c` on Windows). Defaults to `{}`.                        |
 | `security`      | `SecurityConfig`                 | optional | Project-owned deterministic security policy. See [Threat Assessment](#threat-assessment).                                                         |
+| `artifact_outputs` | `ArtifactOutputsConfig`       | optional | Canonical storage and optional provider-native presentation/export policy. Safe default: AIWG canonical + explicit-only. See [Artifact Outputs](#artifact-outputs). |
 | `workspace`     | `WorkspaceConfig`                | optional | General workspace metadata or an external-member back-reference. See [Workspace Repositories](#workspace-repositories).                               |
 | `repos`         | `WorkspaceRepoConfig[]`          | optional | Canonical member list and per-member allowed operations. Requires `workspace.name`.                                                                   |
 | `externalLinks` | `Record<string, ExternalLink>`   | optional | Named public resources that travel with the project and appear in provider-facing context. See [External Links](#external-links).                     |
@@ -70,6 +71,38 @@ its own trust posture and does not inherit this block from a workspace parent.
 See [Threat-assessment policy](../security/threat-assessment-policy.md) for the
 schema, precedence model, examples, CLI operations, migration behavior, and
 provider/platform safety boundary.
+
+## Artifact Outputs
+
+`artifact_outputs` separates durable canonical storage from optional provider-native presentation or export surfaces:
+
+```json
+{
+  "artifact_outputs": {
+    "canonical": "aiwg",
+    "provider_native": "explicit-only",
+    "destinations": {
+      "claude-code.design": {
+        "enabled": true,
+        "use_when": "user-requested"
+      }
+    }
+  }
+}
+```
+
+`canonical` is currently `aiwg`; an export never replaces it. `provider_native`
+is `disabled`, `explicit-only`, or `project-default`. Each stable destination
+ID can be disabled, restricted to `user-requested`, or declared as a
+`project-default`. Legacy configs with no block resolve to the safe
+`aiwg`/`explicit-only` behavior.
+
+Project policy is the ceiling. Within it, an explicit task request outranks a
+user preference, and provider defaults are lowest authority. Unknown or
+unsupported destinations fail safe. Dual output writes the canonical artifact
+first and records the presentation reference in artifact-output provenance.
+See [the architecture decision](../architecture/adr-artifact-output-destinations.md)
+for migration, degraded-mode, precedence, and provenance details.
 
 ## Project Local Block
 

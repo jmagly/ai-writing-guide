@@ -66,6 +66,37 @@
         }
       }
     },
+    "artifact_outputs": {
+      "type": "object",
+      "description": "Canonical AIWG artifact storage and optional provider-native presentation/export destinations. Provider-native output is explicit-only by default.",
+      "additionalProperties": false,
+      "properties": {
+        "canonical": {
+          "type": "string",
+          "enum": ["aiwg"],
+          "default": "aiwg",
+          "description": "Durable source of truth. Presentation destinations never replace this artifact."
+        },
+        "provider_native": {
+          "type": "string",
+          "enum": ["disabled", "explicit-only", "project-default"],
+          "default": "explicit-only",
+          "description": "Whether provider-native destinations are disabled, require an explicit task request, or may be selected by a declared project default."
+        },
+        "destinations": {
+          "type": "object",
+          "propertyNames": { "pattern": "^[a-z0-9][a-z0-9.-]*$" },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "enabled": { "type": "boolean", "default": true },
+              "use_when": { "type": "string", "enum": ["disabled", "user-requested", "project-default"], "default": "user-requested" }
+            }
+          }
+        }
+      }
+    },
     "workspace": {
       "$ref": "#/definitions/Workspace",
       "description": "General multi-repository workspace metadata. Root manifests pair this with repos; external members may use member_of to discover their workspace."

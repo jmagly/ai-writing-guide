@@ -4,7 +4,7 @@ Core meta-utility rules for agent coordination, context management, and platform
 
 ---
 
-## AIWG Utilities Rules (26 rules — active with aiwg-utils addon)
+## AIWG Utilities Rules (27 rules — active with aiwg-utils addon)
 
 ### HIGH
 
@@ -71,6 +71,10 @@ Core meta-utility rules for agent coordination, context management, and platform
 #### delivery-policy
 **Summary**: AIWG projects declare their git workflow in `.aiwg/aiwg.config` `delivery` block (`mode`: direct / feature-branch / pr-required, `default_branch`, `require_ci_green`, `force_push_policy`, `auto_close_issues`).
 **Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/delivery-policy.md
+
+#### artifact-output-policy
+**Summary**: Durable AIWG artifacts remain canonical; provider-native presentation destinations require resolved project authorization and explicit selection by default.
+**Full rule**: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/artifact-output-policy.md
 
 #### sdlc-right-sizing
 **Summary**: Match SDLC artifacts to the actual scope of change.
@@ -143,6 +147,7 @@ Core meta-utility rules for agent coordination, context management, and platform
 | **Parallel dispatch design** | parallel-then-synthesize, subagent-scoping, context-budget |
 | **Activity tracking** | activity-log |
 | **Git workflow / branching / PRs** | delivery-policy, human-authorization |
+| **Artifact destinations / provider-native exports** | artifact-output-policy, human-authorization |
 | **Estimation and planning** | no-time-estimates, vague-discretion, subagent-scoping |
 | **Debugging in monorepos / output trees** | debug-source-not-output |
 | **Post-commit hygiene** | post-commit-index-refresh, activity-log |
@@ -151,5 +156,5 @@ Core meta-utility rules for agent coordination, context management, and platform
 
 ---
 
-*Generated from aiwg-utils manifest.json — 24 rules*
+*Generated from aiwg-utils manifest.json — 27 rules*
 *Full rule files: @$AIWG_ROOT/agentic/code/addons/aiwg-utils/rules/*

@@ -56,6 +56,10 @@ const { validateThreatAssessmentConfig } = await importImpl(
   import.meta.url,
   'security/threat-assessment-config.js'
 );
+const { validateArtifactOutputs } = await importImpl(
+  import.meta.url,
+  'artifacts/output-policy.js'
+);
 const { collectPackagedAgentInventory, diagnoseOversizedAgent } = await importImpl(
   import.meta.url,
   'agents/packaged-agent-inventory.js'
@@ -1533,6 +1537,23 @@ async function runDoctor() {
     }
   } catch {
     // Non-fatal — skip silently
+  }
+
+  // Artifact output destination policy (#2122). Missing blocks are valid and
+  // resolve to the safe explicit-only compatibility default.
+  try {
+    const aiwgCfgPath = path.join(process.cwd(), '.aiwg', 'aiwg.config');
+    if (await fileExists(aiwgCfgPath)) {
+      const raw = JSON.parse(await fs.readFile(aiwgCfgPath, 'utf-8'));
+      const issues = validateArtifactOutputs(raw.artifact_outputs);
+      if (issues.length > 0) check('Artifact Output Policy', 'error', issues.join('; '));
+      else {
+        const policy = raw.artifact_outputs ?? { canonical: 'aiwg', provider_native: 'explicit-only' };
+        check('Artifact Output Policy', 'ok', `canonical=${policy.canonical ?? 'aiwg'}, provider-native=${policy.provider_native ?? 'explicit-only'}`);
+      }
+    }
+  } catch (err) {
+    check('Artifact Output Policy', 'warn', `Could not validate artifact_outputs: ${err.message}`);
   }
 
   // 11c. Validate .aiwg/aiwg.config delivery block (#995)

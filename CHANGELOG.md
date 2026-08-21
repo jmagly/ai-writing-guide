@@ -15,6 +15,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   advisory ASD-STE and Wittgenstein-inspired examples, and invocation, session,
   and project selection through `aiwg output-mode` and `aiwg run` (#2121).
 
+- **Explicit artifact destination policy** - Project configuration now keeps
+  canonical AIWG artifacts as the source of truth and makes provider-native
+  presentation/export surfaces explicit-only by default. Claude Code bootstrap
+  guidance preserves canonical plans and reviews when Claude Design is
+  explicitly requested, and dual output records traceable provenance (#2122).
+
 ## [2026.8.13] - 2026-08-20 - "Hermes profile-aware deployment"
 
 ### Changed

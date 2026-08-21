@@ -35,6 +35,8 @@ import {
   validateThreatAssessmentConfig,
   type SecurityConfig,
 } from '../security/threat-assessment-config.js';
+import { defaultArtifactOutputs, validateArtifactOutputs, type ArtifactOutputsConfig } from '../artifacts/output-policy.js';
+export type { ArtifactOutputsConfig } from '../artifacts/output-policy.js';
 
 export type {
   SecurityConfig,
@@ -370,6 +372,9 @@ export interface AiwgConfig {
 
   /** Deterministic, project-owned security policy including forge-content assessment. */
   security?: SecurityConfig;
+
+  /** Canonical artifact storage and optional provider-native presentation/export policy. */
+  artifact_outputs?: ArtifactOutputsConfig;
 
   /**
    * General multi-repository workspace metadata. Root manifests pair this
@@ -1367,6 +1372,7 @@ export function emptyConfig(providers: string[] = ['claude']): AiwgConfig {
     security: {
       threatAssessment: defaultThreatAssessmentConfig(),
     },
+    artifact_outputs: defaultArtifactOutputs(),
     delivery: {
       mode: 'pr-required',
       default_branch: 'main',
@@ -1466,6 +1472,9 @@ export async function readAiwgConfig(projectDir: string): Promise<AiwgConfig | n
     throw new Error(`Invalid .aiwg/aiwg.config:\n${threatAssessmentErrors.join('\n')}`);
   }
 
+  const artifactOutputErrors = validateArtifactOutputs(parsed.artifact_outputs);
+  if (artifactOutputErrors.length > 0) throw new Error(`Invalid .aiwg/aiwg.config:\n${artifactOutputErrors.join('\n')}`);
+
   return parsed;
 }
 
@@ -1479,6 +1488,8 @@ export async function writeAiwgConfig(projectDir: string, config: AiwgConfig): P
   if (threatAssessmentErrors.length > 0) {
     throw new Error(`Invalid .aiwg/aiwg.config:\n${threatAssessmentErrors.join('\n')}`);
   }
+  const artifactOutputErrors = validateArtifactOutputs(config.artifact_outputs);
+  if (artifactOutputErrors.length > 0) throw new Error(`Invalid .aiwg/aiwg.config:\n${artifactOutputErrors.join('\n')}`);
   const localPath = getConfigPath(projectDir);
   const artifactDir = resolveProjectAiwgDir(projectDir);
   const artifactPath = join(artifactDir, CONFIG_FILENAME);

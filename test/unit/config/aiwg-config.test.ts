@@ -79,6 +79,10 @@ describe('aiwg-config', () => {
       expect(cfg.delivery!.force_push_policy).toBe('never');
     });
 
+    it('ships the safe artifact output policy (#2122)', () => {
+      expect(emptyConfig().artifact_outputs).toEqual({ canonical: 'aiwg', provider_native: 'explicit-only', destinations: {} });
+    });
+
     it('ships an explicit parallelism block with provider defaults (#1359)', () => {
       const cfg = emptyConfig(); // default provider = claude
       expect(cfg.parallelism).toBeDefined();
