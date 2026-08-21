@@ -1,6 +1,6 @@
 {
   "name": "line-memory",
-  "version": "2026.8.14",
+  "version": "2026.8.15",
   "description": "Bounded, plain-text project memory with least-recently-used retention.",
   "author": {
     "name": "AIWG Contributors",

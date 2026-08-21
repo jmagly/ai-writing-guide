@@ -1,6 +1,6 @@
 {
   "name": "star-prompt",
-  "version": "2026.8.14",
+  "version": "2026.8.15",
   "description": "Tasteful prompt to encourage users to star the repository after successful command completion",
   "author": {
     "name": "AIWG Contributors",
