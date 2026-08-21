@@ -54,6 +54,7 @@ describe('workspace repository resolution', () => {
     await fs.mkdir(externalRepo, { recursive: true });
 
     initRemote(githubRepo, 'origin', 'git@github.com:example/widget.git');
+    execFileSync('git', ['-C', githubRepo, 'remote', 'add', 'customers', 'https://github.com/example/widget-support.git']);
     initRemote(externalRepo, 'primary', 'ssh://git@gitea.example.net/ops/sysops.git');
     initRemote(externalRepo, 'tickets', 'https://gitlab.example.net/ops/sysops.git');
 
@@ -77,8 +78,15 @@ describe('workspace repository resolution', () => {
       remotes: {
         primary: 'origin',
         issue_tracker: 'origin',
+        customer_issue_tracker: 'customers',
+        customer_issue_provider: 'github',
         tracker_actor: {
           login: 'widget-maintainer',
+          via: 'gh',
+          forbid_actors: ['shared-bot'],
+        },
+        customer_tracker_actor: {
+          login: 'customer-maintainer',
           via: 'gh',
           forbid_actors: ['shared-bot'],
         },
@@ -131,10 +139,16 @@ describe('workspace repository resolution', () => {
     expect(widget?.delivery.mode).toBe('pr-required');
     expect(widget?.delivery.signing?.key).toBe('widget-key');
     expect(widget?.remotes.tracker_actor?.login).toBe('widget-maintainer');
+    expect(widget?.remotes.customer_tracker_actor?.login).toBe('customer-maintainer');
     expect(widget?.primary).toMatchObject({
       provider: 'github',
       domain: 'github.com',
       providerSource: 'remote',
+    });
+    expect(widget?.customerIssueTracker).toMatchObject({
+      name: 'customers',
+      provider: 'github',
+      domain: 'github.com',
     });
 
     expect(sysops?.delivery.mode).toBe('direct');
@@ -178,6 +192,31 @@ describe('workspace repository resolution', () => {
       providerSource: 'manifest-hint',
     });
     expect(sysops?.drift).not.toContain("issue tracker provider is unknown for 'git.integrolabs.net'");
+  });
+
+  it('reports missing customer remotes and forbids the configured customer actor', async () => {
+    await writeConfig(githubRepo, baseConfig({
+      remotes: {
+        primary: 'origin',
+        issue_tracker: 'origin',
+        customer_issue_tracker: 'missing-customers',
+        customer_issue_provider: 'github',
+        customer_tracker_actor: {
+          login: 'blocked-customer-bot',
+          via: 'gh',
+          forbid_actors: ['blocked-customer-bot'],
+        },
+      },
+    }));
+
+    const workspace = await resolveWorkspace(workspaceDir);
+    const widget = workspace.members.find((member) => member.name === 'widget');
+    expect(widget?.drift).toContain("customer issue tracker remote 'missing-customers' is unavailable");
+    expect(widget?.drift).toContain("configured customer tracker actor 'blocked-customer-bot' is also forbidden");
+    expect(checkTrackerActor(widget!, undefined, 'customer')).toMatchObject({
+      allowed: false,
+      actor: 'blocked-customer-bot',
+    });
   });
 
   it('discovers an external workspace through member_of', async () => {

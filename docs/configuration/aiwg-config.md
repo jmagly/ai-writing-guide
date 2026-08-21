@@ -462,9 +462,10 @@ Example, auto-detected defaults with one project override:
 ## Remotes Block
 
 The `remotes` block declares repo topology — which git remote drives CI and PRs
-(primary), where issues live, and which secondary remotes are mirrors or publishing
-targets. Defaults: `primary: origin`, `issue_tracker: primary`, `ci: primary`,
-`secondary: []`.
+(primary), where internal engineering issues live, an optional customer-facing
+issue intake tracker, and which secondary remotes are mirrors or publishing
+targets. Defaults: `primary: origin`, `issue_tracker: primary`, no customer
+tracker, `ci: primary`, `secondary: []`.
 
 ### Fields
 
@@ -475,6 +476,9 @@ targets. Defaults: `primary: origin`, `issue_tracker: primary`, `ci: primary`,
 | `issue_provider`| enum                    | unset     | Explicit tracker provider for self-hosted or local trackers (`gitea`, `github`, `local`). |
 | `ci`            | string                  | `primary` | Where CI runs.                                                                      |
 | `tracker_actor` | `TrackerActorConfig`    | unset     | Forge login and tool route for issue, PR, comment, label, and closure writes.       |
+| `customer_issue_tracker` | string          | unset     | Optional customer-facing issue intake remote; does not become CI or delivery authority. |
+| `customer_issue_provider` | enum            | unset     | Explicit provider hint for the customer tracker.                                    |
+| `customer_tracker_actor` | `TrackerActorConfig` | unset | Forge login and tool route for customer acknowledgements, comments, and closures.   |
 | `transport`     | `RemoteTransportConfig` | unset     | Login, protocol, helper, and public SSH fingerprint used for Git pushes.            |
 | `secondary`     | `SecondaryRemote[]`     | `[]`      | Mirrors, fork bases, publishing targets.                                            |
 
@@ -502,6 +506,26 @@ writes and Git pushes may authenticate through different mechanisms.
 `tracker_actor.via` accepts `tea`, `gh`, `mcp`, or `api`.
 `transport.protocol` accepts `ssh` or `https`. A configured helper should fail
 closed when the authenticated account or public key fingerprint does not match.
+
+When customer intake and internal delivery use different forges, declare both
+roles explicitly. For example, AIWG keeps engineering and CI on Gitea while
+responding to customer reports on GitHub:
+
+```json
+{
+  "issue_tracker": "origin",
+  "issue_provider": "gitea",
+  "tracker_actor": { "login": "roctinam", "via": "tea" },
+  "customer_issue_tracker": "github",
+  "customer_issue_provider": "github",
+  "customer_tracker_actor": { "login": "jmagly", "via": "gh" }
+}
+```
+
+Internal implementation, delivery, and CI-sensitive issue state remains on
+`issue_tracker`. Customer acknowledgement, follow-up, and closure route to
+`customer_issue_tracker`. Projects without customer fields retain the existing
+single-tracker behavior.
 
 ### `SecondaryRemote` shape
 

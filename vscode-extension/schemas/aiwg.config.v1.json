@@ -150,6 +150,19 @@
           "$ref": "#/definitions/TrackerActor",
           "description": "Forge account/tool that must author delivery writes such as issue comments, PRs, labels, and closures (#1601)."
         },
+        "customer_issue_tracker": {
+          "type": "string",
+          "description": "Optional customer-facing issue intake remote. Internal engineering work remains on issue_tracker."
+        },
+        "customer_issue_provider": {
+          "type": "string",
+          "enum": ["gitea", "github", "local"],
+          "description": "Explicit provider hint for the customer-facing issue tracker."
+        },
+        "customer_tracker_actor": {
+          "$ref": "#/definitions/TrackerActor",
+          "description": "Forge account/tool for customer acknowledgements, comments, and closures."
+        },
         "transport": {
           "$ref": "#/definitions/RemoteTransport",
           "description": "Git transport identity and project-local helper for the primary remote."

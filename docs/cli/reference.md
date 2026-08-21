@@ -1224,7 +1224,8 @@ aiwg setup project [--yes] [--dry-run] [--target <dir>]
 ```
 
 The helper detects Git remotes and proposes `remotes.primary`,
-`remotes.issue_tracker`, `remotes.ci`, secondary mirrors, tracker tooling,
+`remotes.issue_tracker`, optional `remotes.customer_issue_tracker`,
+`remotes.ci`, secondary mirrors, tracker tooling,
 delivery policy, committer identity, and signing metadata. Agents should use
 `--dry-run` first, discuss the preview with the user, then write only after the
 policy choices are understood. In non-interactive contexts it refuses to write
@@ -1236,6 +1237,9 @@ Common overrides:
 aiwg setup project --dry-run
 aiwg setup project --yes --providers claude,codex
 aiwg setup project --yes --issue-provider gitea --tracker-actor-login roctinam
+aiwg setup project --yes --issue-provider gitea \
+  --customer-issue-tracker github --customer-issue-provider github \
+  --customer-tracker-actor-login jmagly
 aiwg setup project --yes --delivery-mode direct --default-branch main
 aiwg setup project --yes --issue-provider local
 ```

@@ -481,6 +481,9 @@ describe('aiwg-config', () => {
         issue_provider: undefined,
         ci: 'origin',
         tracker_actor: undefined,
+        customer_issue_tracker: undefined,
+        customer_issue_provider: undefined,
+        customer_tracker_actor: undefined,
         transport: undefined,
         secondary: [],
       });
@@ -493,6 +496,7 @@ describe('aiwg-config', () => {
       expect(r.issue_provider).toBeUndefined();
       expect(r.ci).toBe('origin');
       expect(r.tracker_actor).toBeUndefined();
+      expect(r.customer_issue_tracker).toBeUndefined();
       expect(r.transport).toBeUndefined();
       expect(r.secondary).toEqual([]);
     });
@@ -530,6 +534,28 @@ describe('aiwg-config', () => {
         via: 'tea',
         forbid_actors: ['roctibot'],
       });
+    });
+
+    it('preserves a distinct customer tracker and actor', () => {
+      const r = resolveRemotes({
+        primary: 'origin',
+        issue_tracker: 'origin',
+        customer_issue_tracker: 'github',
+        customer_issue_provider: 'github',
+        customer_tracker_actor: {
+          login: 'customer-maintainer',
+          via: 'gh',
+          forbid_actors: ['release-bot'],
+        },
+      });
+      expect(r.customer_issue_tracker).toBe('github');
+      expect(r.customer_issue_provider).toBe('github');
+      expect(r.customer_tracker_actor).toEqual({
+        login: 'customer-maintainer',
+        via: 'gh',
+        forbid_actors: ['release-bot'],
+      });
+      expect(r.issue_tracker).toBe('origin');
     });
 
     it('preserves primary remote transport identity metadata', () => {

@@ -275,6 +275,25 @@ describe('aiwg config get|set --project (#1006)', () => {
       });
     });
 
+    it('round-trips customer tracker identity and validates provider and route', async () => {
+      await main(['set', '--project', 'remotes.customer_issue_tracker', 'github', '--target', tmp]);
+      await main(['set', '--project', 'remotes.customer_issue_provider', 'github', '--target', tmp]);
+      await main(['set', '--project', 'remotes.customer_tracker_actor.login', 'jmagly', '--target', tmp]);
+      await main(['set', '--project', 'remotes.customer_tracker_actor.via', 'gh', '--target', tmp]);
+      await main(['set', '--project', 'remotes.customer_tracker_actor.forbid_actors', 'roctibot', '--target', tmp]);
+
+      const cfg = readConfig(tmp) as { remotes?: Record<string, unknown> };
+      expect(cfg.remotes).toMatchObject({
+        customer_issue_tracker: 'github',
+        customer_issue_provider: 'github',
+        customer_tracker_actor: { login: 'jmagly', via: 'gh', forbid_actors: ['roctibot'] },
+      });
+
+      await expect(
+        main(['set', '--project', 'remotes.customer_tracker_actor.via', 'invalid-tool', '--target', tmp]),
+      ).rejects.toMatchObject({ code: 'ERR_INVALID_VALUE' });
+    });
+
     it('round-trips primary remote transport identity and validates protocol', async () => {
       await main(['set', '--project', 'remotes.transport.login', 'roctinam', '--target', tmp]);
       await main(['set', '--project', 'remotes.transport.protocol', 'ssh', '--target', tmp]);

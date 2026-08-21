@@ -491,7 +491,8 @@ describe('context finalization emission', () => {
         expect(content).toContain('show command');
         expect(content).toContain('.aiwg/aiwg.config');
         expect(content).toContain('Tracker Authority Protocol');
-        expect(content).toContain('Canonical tracker: `origin` (gitea;');
+        expect(content).toContain('Internal/canonical tracker: `origin` (gitea;');
+        expect(content).toContain('Customer issue tracker: not configured');
         expect(content).toContain('MCP/app tools for the configured tracker');
         expect(content).toContain('Git SSH remote access is repository sync, not issue-tracker API access');
       }
@@ -553,7 +554,7 @@ describe('context finalization emission', () => {
       expect(readFileSync(overridePath, 'utf8')).toBe('# AGENTS.override.md\n\nOperator tracker notes stay here.\n');
       const normalized = readFileSync(join(dir, '.aiwg', 'AIWG.md'), 'utf8');
       expect(normalized).toContain('Tracker Authority Protocol');
-      expect(normalized).toContain('Canonical tracker: `github` (github;');
+      expect(normalized).toContain('Internal/canonical tracker: `github` (github;');
       expect(normalized).toContain('Issue storage mode: github-only');
     } finally {
       rmSync(dir, { recursive: true, force: true });

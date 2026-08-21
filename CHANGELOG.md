@@ -7,6 +7,14 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Split customer/internal tracker roles** - Project configuration can declare
+  a customer-facing issue tracker, provider, and actor independently from the
+  internal engineering tracker. Workspace resolution, setup, config display,
+  and generated tracker guidance preserve Gitea delivery authority while
+  routing customer follow-up to GitHub (#2124; customer report jmagly#145).
+
 ## [2026.8.14] - 2026-08-20 - "Controlled output surfaces"
 
 ### Added

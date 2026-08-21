@@ -45,8 +45,10 @@ export interface SetupProjectOptions {
   yes?: boolean;
   primary?: string;
   issueTracker?: string;
+  customerIssueTracker?: string;
   ci?: string;
   issueProvider?: IssueProvider;
+  customerIssueProvider?: IssueProvider;
   deliveryMode?: DeliveryMode;
   defaultBranch?: string;
   requireCiGreen?: boolean;
@@ -61,6 +63,8 @@ export interface SetupProjectOptions {
   signingEnforce?: 'commits' | 'tags' | 'all';
   trackerActorLogin?: string;
   trackerActorVia?: TrackerVia;
+  customerTrackerActorLogin?: string;
+  customerTrackerActorVia?: TrackerVia;
   providers?: string[];
   confirm?: boolean;
 }
@@ -139,8 +143,10 @@ export function parseSetupProjectOptions(ctx: HandlerContext): SetupProjectOptio
     nonInteractive: boolFlag(args, '--non-interactive') || boolFlag(args, '--yes'),
     primary: flagValue(args, '--primary'),
     issueTracker: flagValue(args, '--issue-tracker'),
+    customerIssueTracker: flagValue(args, '--customer-issue-tracker'),
     ci: flagValue(args, '--ci'),
     issueProvider: parseEnum(flagValue(args, '--issue-provider'), ISSUE_PROVIDERS, '--issue-provider'),
+    customerIssueProvider: parseEnum(flagValue(args, '--customer-issue-provider'), ISSUE_PROVIDERS, '--customer-issue-provider'),
     deliveryMode: parseEnum(flagValue(args, '--delivery-mode'), DELIVERY_MODES, '--delivery-mode'),
     defaultBranch: flagValue(args, '--default-branch'),
     requireCiGreen: parseBooleanFlag(args, '--require-ci-green'),
@@ -155,6 +161,8 @@ export function parseSetupProjectOptions(ctx: HandlerContext): SetupProjectOptio
     signingEnforce: parseEnum(flagValue(args, '--signing-enforce'), ['commits', 'tags', 'all'] as const, '--signing-enforce'),
     trackerActorLogin: flagValue(args, '--tracker-actor-login'),
     trackerActorVia: parseEnum(flagValue(args, '--tracker-actor-via'), TRACKER_VIA, '--tracker-actor-via'),
+    customerTrackerActorLogin: flagValue(args, '--customer-tracker-actor-login'),
+    customerTrackerActorVia: parseEnum(flagValue(args, '--customer-tracker-actor-via'), TRACKER_VIA, '--customer-tracker-actor-via'),
     providers: parseStringList(flagValue(args, '--providers')),
   };
 }
@@ -280,6 +288,12 @@ function validateSetupConfig(config: AiwgConfig, remotes: GitRemoteInfo[], issue
   if (config.remotes?.issue_provider && !ISSUE_PROVIDERS.includes(config.remotes.issue_provider as IssueProvider)) {
     errors.push('remotes.issue_provider is invalid');
   }
+  if (config.remotes?.customer_issue_tracker) {
+    checkRemote('remotes.customer_issue_tracker', config.remotes.customer_issue_tracker);
+  }
+  if (config.remotes?.customer_issue_provider && !ISSUE_PROVIDERS.includes(config.remotes.customer_issue_provider as IssueProvider)) {
+    errors.push('remotes.customer_issue_provider is invalid');
+  }
   checkRemote('remotes.ci', config.remotes?.ci);
 
   if (!DELIVERY_MODES.includes(config.delivery?.mode as DeliveryMode)) errors.push('delivery.mode is invalid');
@@ -293,6 +307,9 @@ function validateSetupConfig(config: AiwgConfig, remotes: GitRemoteInfo[], issue
   }
   if (config.remotes?.tracker_actor?.via && !TRACKER_VIA.includes(config.remotes.tracker_actor.via as TrackerVia)) {
     errors.push('remotes.tracker_actor.via is invalid');
+  }
+  if (config.remotes?.customer_tracker_actor?.via && !TRACKER_VIA.includes(config.remotes.customer_tracker_actor.via as TrackerVia)) {
+    errors.push('remotes.customer_tracker_actor.via is invalid');
   }
   if (!config.providers.every(p => (VALID_PROVIDERS as readonly string[]).includes(p))) {
     errors.push('providers contains an unknown AIWG provider');
@@ -316,12 +333,16 @@ export async function buildSetupProjectPlan(options: SetupProjectOptions): Promi
     ? 'local'
     : options.issueTracker ?? base.remotes?.issue_tracker ?? primary;
   const ci = options.ci ?? base.remotes?.ci ?? primary;
+  const customerIssueTracker = options.customerIssueTracker ?? base.remotes?.customer_issue_tracker;
+  const customerIssueProvider = options.customerIssueProvider ?? base.remotes?.customer_issue_provider;
 
   const remotesConfig: RemotesConfig = {
     primary,
     issue_tracker: issueTracker,
     issue_provider: issueProvider,
     ci,
+    ...(customerIssueTracker ? { customer_issue_tracker: customerIssueTracker } : {}),
+    ...(customerIssueProvider ? { customer_issue_provider: customerIssueProvider } : {}),
     secondary: base.remotes?.secondary ?? secondaryRemotes(remotes, primary, issueTracker, ci),
   };
   const trackerLogin = options.trackerActorLogin ?? base.remotes?.tracker_actor?.login;
@@ -331,6 +352,16 @@ export async function buildSetupProjectPlan(options: SetupProjectOptions): Promi
       ...(base.remotes?.tracker_actor ?? {}),
       ...(trackerLogin ? { login: trackerLogin } : {}),
       ...(trackerVia ? { via: trackerVia } : {}),
+    };
+  }
+  const customerTrackerLogin = options.customerTrackerActorLogin ?? base.remotes?.customer_tracker_actor?.login;
+  const customerTrackerVia = options.customerTrackerActorVia ?? base.remotes?.customer_tracker_actor?.via
+    ?? (customerIssueProvider === 'github' ? 'gh' : customerIssueProvider === 'gitea' ? 'tea' : undefined);
+  if (customerTrackerLogin || customerTrackerVia || base.remotes?.customer_tracker_actor?.forbid_actors) {
+    remotesConfig.customer_tracker_actor = {
+      ...(base.remotes?.customer_tracker_actor ?? {}),
+      ...(customerTrackerLogin ? { login: customerTrackerLogin } : {}),
+      ...(customerTrackerVia ? { via: customerTrackerVia } : {}),
     };
   }
 

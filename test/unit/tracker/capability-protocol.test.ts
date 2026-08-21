@@ -16,6 +16,8 @@ function baseConfig(): AiwgConfig {
     remotes: {
       primary: 'origin',
       issue_tracker: 'origin',
+      customer_issue_tracker: 'github',
+      customer_issue_provider: 'github',
       ci: 'origin',
       secondary: [{ name: 'github', purpose: 'backup-mirror' }],
     },
@@ -40,6 +42,8 @@ describe('tracker capability protocol', () => {
 
     expect(authority.provider).toBe('gitea');
     expect(authority.issueTrackerRemote).toBe('origin');
+    expect(authority.customerIssueTrackerRemote).toBe('github');
+    expect(authority.customerProvider).toBe('github');
     expect(authority.secondaryRemotes[0].name).toBe('github');
     expect(chooseTrackerAccess(authority, probes)).toEqual({
       kind: 'mcp-app',
@@ -108,10 +112,40 @@ describe('tracker capability protocol', () => {
     const rendered = renderTrackerProtocol(authority);
 
     expect(rendered).toContain('Source of truth: [.aiwg/aiwg.config](./.aiwg/aiwg.config)');
-    expect(rendered).toContain('Canonical tracker: `origin` (gitea; git@git.integrolabs.net:roctinam/aiwg.git)');
+    expect(rendered).toContain('Internal/canonical tracker: `origin` (gitea; git@git.integrolabs.net:roctinam/aiwg.git)');
+    expect(rendered).toContain('Customer issue tracker: `github` (github; git@github.com:jmagly/aiwg.git)');
     expect(rendered).toContain('Secondary/mirror remotes: github (backup-mirror)');
     expect(rendered).toContain('Issue storage mode: gitea-only');
     expect(rendered).toContain('MCP/app tools for the configured tracker');
     expect(rendered).toContain('Git SSH remote access is repository sync, not issue-tracker API access');
+    expect(rendered).toContain('Route customer acknowledgements, follow-up, and closure to the customer tracker');
+  });
+
+  it('retains backward-compatible behavior when no customer tracker is configured', () => {
+    const config = baseConfig();
+    delete config.remotes?.customer_issue_tracker;
+    delete config.remotes?.customer_issue_provider;
+    const rendered = renderTrackerProtocol(resolveTrackerAuthority(config, {
+      origin: 'git@git.integrolabs.net:roctinam/aiwg.git',
+    }));
+    expect(rendered).toContain('Customer issue tracker: not configured');
+  });
+
+  it('supports the same remote for internal and customer roles when explicitly configured', () => {
+    const config = baseConfig();
+    config.remotes = {
+      primary: 'origin',
+      issue_tracker: 'origin',
+      issue_provider: 'github',
+      customer_issue_tracker: 'origin',
+      customer_issue_provider: 'github',
+    };
+    const authority = resolveTrackerAuthority(config, {
+      origin: 'https://github.com/example/project.git',
+    });
+    expect(authority.issueTrackerRemote).toBe('origin');
+    expect(authority.customerIssueTrackerRemote).toBe('origin');
+    expect(authority.provider).toBe('github');
+    expect(authority.customerProvider).toBe('github');
   });
 });

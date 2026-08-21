@@ -132,6 +132,27 @@ describe('aiwg setup project', () => {
     ]);
   });
 
+  it('configures a distinct customer issue tracker and actor', async () => {
+    addRemote(tmp, 'origin', 'git@git.integrolabs.net:org/project.git');
+    addRemote(tmp, 'github', 'https://github.com/example/project.git');
+
+    const plan = await buildSetupProjectPlan({
+      projectDir: tmp,
+      issueProvider: 'gitea',
+      customerIssueTracker: 'github',
+      customerIssueProvider: 'github',
+      customerTrackerActorLogin: 'customer-maintainer',
+    });
+
+    expect(plan.next.remotes).toMatchObject({
+      issue_tracker: 'origin',
+      issue_provider: 'gitea',
+      customer_issue_tracker: 'github',
+      customer_issue_provider: 'github',
+      customer_tracker_actor: { login: 'customer-maintainer', via: 'gh' },
+    });
+  });
+
   it('routes issue tracking to the local issue store when initialized', async () => {
     mkdirSync(join(tmp, '.aiwg', 'issues'), { recursive: true });
     writeFileSync(join(tmp, '.aiwg', 'issues', 'config.json'), '{"provider":"local"}\n');

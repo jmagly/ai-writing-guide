@@ -124,6 +124,21 @@ describe('aiwg config show --project (#999)', () => {
     expect(out).toContain('push tags on release');
   });
 
+  it('shows a distinct customer issue tracker', async () => {
+    execSync('git remote add origin https://primary/r.git', { cwd: tmp });
+    execSync('git remote add github https://github.com/o/r.git', { cwd: tmp });
+    writeConfig(tmp, {
+      remotes: {
+        primary: 'origin',
+        issue_tracker: 'origin',
+        customer_issue_tracker: 'github',
+        customer_issue_provider: 'github',
+      },
+    });
+    await main(['show', '--project', '--target', tmp]);
+    expect(logs.join('\n')).toContain('Customer issues: github (https://github.com/o/r.git)');
+  });
+
   it('emits stable JSON with --json', async () => {
     execSync('git remote add origin https://example.com/owner/repo.git', { cwd: tmp });
     writeConfig(tmp, {

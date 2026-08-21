@@ -183,6 +183,12 @@ export interface RemotesConfig {
   ci?: string;
   /** Which forge account/tool performs delivery writes. */
   tracker_actor?: TrackerActorConfig;
+  /** Optional customer-facing issue intake remote, distinct from internal engineering work. */
+  customer_issue_tracker?: string;
+  /** Explicit provider hint for the customer-facing tracker. */
+  customer_issue_provider?: IssueProviderConfig;
+  /** Account/tool used for customer acknowledgements, comments, and closures. */
+  customer_tracker_actor?: TrackerActorConfig;
   /** Identity and helper used for git transport to the primary remote. */
   transport?: RemoteTransportConfig;
   /** Mirrors, fork bases, publishing targets. */
@@ -199,6 +205,9 @@ export interface ResolvedRemotes {
   issue_provider?: IssueProviderConfig;
   ci: string;
   tracker_actor?: TrackerActorConfig;
+  customer_issue_tracker?: string;
+  customer_issue_provider?: IssueProviderConfig;
+  customer_tracker_actor?: TrackerActorConfig;
   transport?: RemoteTransportConfig;
   secondary: SecondaryRemote[];
 }
@@ -1196,6 +1205,7 @@ export function resolveRemoteProvider(remoteUrl: string): 'github' | 'gitlab' | 
  * Defaults:
  *   - `primary` defaults to "origin"
  *   - `issue_tracker` defaults to `primary`
+ *   - customer tracker fields remain unset unless explicitly configured
  *   - `ci` defaults to `primary`
  *   - `secondary` defaults to `[]`
  *
@@ -1209,6 +1219,9 @@ export function resolveRemotes(remotes: RemotesConfig | undefined): ResolvedRemo
     issue_provider: remotes?.issue_provider,
     ci: remotes?.ci ?? primary,
     tracker_actor: remotes?.tracker_actor,
+    customer_issue_tracker: remotes?.customer_issue_tracker,
+    customer_issue_provider: remotes?.customer_issue_provider,
+    customer_tracker_actor: remotes?.customer_tracker_actor,
     transport: remotes?.transport,
     secondary: remotes?.secondary ?? [],
   };

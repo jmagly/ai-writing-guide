@@ -52,6 +52,7 @@ export interface ResolvedWorkspaceMember {
   remotes: ResolvedRemotes;
   primary: ResolvedRemoteEndpoint;
   issueTracker: ResolvedRemoteEndpoint;
+  customerIssueTracker?: ResolvedRemoteEndpoint;
   ci: ResolvedRemoteEndpoint;
   drift: string[];
 }
@@ -196,11 +197,10 @@ async function resolveEndpoint(
   };
 }
 
-function trackerProviderHint(
-  remotes: ResolvedRemotes,
+function providerHint(
+  configured: ResolvedRemotes['issue_provider'],
   fallback?: WorkspaceRepoConfig['provider'],
 ): RemoteProviderHint | undefined {
-  const configured = remotes.issue_provider;
   if (configured === 'gitea' || configured === 'github') return configured;
   return fallback;
 }
@@ -213,10 +213,14 @@ async function resolveMember(
   const configPath = getConfigPath(memberPath);
   const config = await readAiwgConfig(memberPath);
   const remotes = resolveRemotes(config?.remotes);
-  const issueProviderHint = trackerProviderHint(remotes, entry.provider);
-  const [primary, issueTracker, ci] = await Promise.all([
+  const issueProviderHint = providerHint(remotes.issue_provider, entry.provider);
+  const customerProviderHint = providerHint(remotes.customer_issue_provider);
+  const [primary, issueTracker, customerIssueTracker, ci] = await Promise.all([
     resolveEndpoint(memberPath, remotes.primary, entry.provider),
     resolveEndpoint(memberPath, remotes.issue_tracker, issueProviderHint),
+    remotes.customer_issue_tracker
+      ? resolveEndpoint(memberPath, remotes.customer_issue_tracker, customerProviderHint)
+      : Promise.resolve(undefined),
     resolveEndpoint(memberPath, remotes.ci, entry.provider),
   ]);
   const drift: string[] = [];
@@ -224,11 +228,17 @@ async function resolveMember(
   if (!config) drift.push('member .aiwg/aiwg.config is missing');
   if (!primary.url) drift.push(`primary remote '${remotes.primary}' is unavailable`);
   if (!issueTracker.url) drift.push(`issue tracker remote '${remotes.issue_tracker}' is unavailable`);
+  if (remotes.customer_issue_tracker && !customerIssueTracker?.url) {
+    drift.push(`customer issue tracker remote '${remotes.customer_issue_tracker}' is unavailable`);
+  }
   if (primary.provider === 'unknown') {
     drift.push(`primary remote provider is unknown for '${primary.domain ?? remotes.primary}'`);
   }
   if (issueTracker.provider === 'unknown') {
     drift.push(`issue tracker provider is unknown for '${issueTracker.domain ?? remotes.issue_tracker}'`);
+  }
+  if (customerIssueTracker?.provider === 'unknown') {
+    drift.push(`customer issue tracker provider is unknown for '${customerIssueTracker.domain ?? remotes.customer_issue_tracker}'`);
   }
   if (entry.allowed.includes('issue-comment') && !remotes.tracker_actor?.login) {
     drift.push('issue-comment is allowed but remotes.tracker_actor.login is missing');
@@ -238,6 +248,12 @@ async function resolveMember(
     && remotes.tracker_actor.forbid_actors?.includes(remotes.tracker_actor.login)
   ) {
     drift.push(`configured tracker actor '${remotes.tracker_actor.login}' is also forbidden`);
+  }
+  if (
+    remotes.customer_tracker_actor?.login
+    && remotes.customer_tracker_actor.forbid_actors?.includes(remotes.customer_tracker_actor.login)
+  ) {
+    drift.push(`configured customer tracker actor '${remotes.customer_tracker_actor.login}' is also forbidden`);
   }
   if (
     config?.delivery?.signing?.enforce
@@ -261,6 +277,7 @@ async function resolveMember(
     remotes,
     primary,
     issueTracker,
+    ...(customerIssueTracker ? { customerIssueTracker } : {}),
     ci,
     drift,
   };
@@ -356,32 +373,35 @@ export async function authorizeWorkspaceOperation(
 export function checkTrackerActor(
   member: ResolvedWorkspaceMember,
   actualActor?: string,
+  role: 'internal' | 'customer' = 'internal',
 ): TrackerActorDecision {
-  const configured = member.remotes.tracker_actor;
+  const configured = role === 'customer'
+    ? member.remotes.customer_tracker_actor
+    : member.remotes.tracker_actor;
   const actor = actualActor ?? configured?.login;
   if (!actor) {
     return {
       allowed: false,
-      reason: `repo '${member.name}' does not resolve a tracker actor`,
+      reason: `repo '${member.name}' does not resolve a ${role} tracker actor`,
     };
   }
   if (configured?.forbid_actors?.includes(actor)) {
     return {
       allowed: false,
       actor,
-      reason: `tracker actor '${actor}' is forbidden by repo '${member.name}'`,
+      reason: `${role} tracker actor '${actor}' is forbidden by repo '${member.name}'`,
     };
   }
   if (actualActor && configured?.login && actualActor !== configured.login) {
     return {
       allowed: false,
       actor,
-      reason: `tracker actor '${actualActor}' does not match configured actor '${configured.login}'`,
+      reason: `${role} tracker actor '${actualActor}' does not match configured actor '${configured.login}'`,
     };
   }
   return {
     allowed: true,
     actor,
-    reason: `tracker actor '${actor}' is allowed for repo '${member.name}'`,
+    reason: `${role} tracker actor '${actor}' is allowed for repo '${member.name}'`,
   };
 }
