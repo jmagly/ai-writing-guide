@@ -88,6 +88,7 @@
     "architecture/adr-agent-skills-portability-contract",
     "reports/agentskills-standard-audit-2026-07-25",
     "configuration/aiwg-config",
+    "architecture/adr-artifact-output-destinations",
     "context-tier-model",
     "skills-budget-guide",
     "security/threat-assessment-policy",
@@ -920,6 +921,13 @@
       "title": "AIWG Project Config",
       "summary": "Project and multi-repository workspace configuration reference",
       "file": "configuration/aiwg-config.md",
+      "parent": "reference"
+    },
+    {
+      "id": "architecture/adr-artifact-output-destinations",
+      "title": "Artifact Output Destinations",
+      "summary": "Canonical storage, optional provider-native presentation, precedence, and provenance",
+      "file": "architecture/adr-artifact-output-destinations.md",
       "parent": "reference"
     },
     {
