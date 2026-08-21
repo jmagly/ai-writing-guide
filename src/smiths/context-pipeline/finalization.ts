@@ -72,7 +72,9 @@ function documentRelativeHref(projectPath: string, documentPath: string, targetP
     : path.resolve(projectPath, targetPath);
   const relative = path.relative(path.dirname(absoluteDocument), absoluteTarget).replace(/\\/g, '/');
   if (!relative) return `./${path.basename(absoluteTarget)}`;
-  return relative.startsWith('.') ? relative : `./${relative}`;
+  return relative.startsWith('./') || relative.startsWith('../')
+    ? relative
+    : `./${relative}`;
 }
 
 export async function buildContextFinalizationBlock(
