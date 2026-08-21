@@ -10,6 +10,7 @@ test('site notification is a post-attestation callback, not a tag-push race', as
   assert.match(workflow, /git cat-file -e .*agentic\.yaml/);
   assert.match(workflow, /missing authoritative agentic\.yaml/);
   assert.match(workflow, /SETUP_SHA256=\$\(sha256sum \/tmp\/setup\.aiwg\.yaml/);
+  assert.match(workflow, /setup_sha256: \$setup_sha256/);
   assert.match(workflow, /aiwg\.site-publication\/v1/);
   assert.match(workflow, /aiwg\.resource-manifest\/v1/);
   assert.match(workflow, /aiwg\.resource-manifest\/v2/);

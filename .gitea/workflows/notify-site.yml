@@ -194,6 +194,7 @@ jobs:
               inputs: {
                 aiwg_version: $version,
                 source_tag: $source_tag,
+                setup_sha256: $setup_sha256,
                 publication_contract: ({
                   schemaVersion: $contract_version,
                   signedReleaseManifest: {
