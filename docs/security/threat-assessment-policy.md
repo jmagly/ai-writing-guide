@@ -209,6 +209,6 @@ npx vitest run test/unit/security/threat-assessment.test.ts
 
 The labeled fixture at
 `test/fixtures/security/threat-assessment-corpus.json` covers every supported
-surface and includes issue #1922's false-positive sentence, malicious variants,
-cross-surface injection, credential exfiltration, floating dependencies, and
-unsafe third-party execution.
+surface and includes issues #1922 and #2136's false-positive sentences,
+malicious variants, cross-surface injection, credential exfiltration, floating
+dependencies, and unsafe third-party execution.
