@@ -22,7 +22,20 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   a customer-facing issue tracker, provider, and actor independently from the
   internal engineering tracker. Workspace resolution, setup, config display,
   and generated tracker guidance preserve Gitea delivery authority while
-  routing customer follow-up to GitHub (#2124; customer report jmagly#145).
+  routing customer follow-up to GitHub (#2124).
+
+### Fixed
+
+- **Context-aware security terminology** - Threat assessment no longer treats
+  ordinary ML/NLP uses of `token` as credential probing. Credential-qualified
+  terms and explicit requests to inspect or disclose authentication material
+  remain blocking, with cross-surface corpus measurements and regression
+  coverage (#2136).
+
+- **Destination-aware tracker authority links** - Generated root and nested
+  context documents now render the tracker configuration link relative to the
+  document receiving it, so both `AIWG.md` and `.aiwg/AIWG.md` resolve the same
+  source of truth (customer report jmagly/aiwg#145).
 
 ## [2026.8.14] - 2026-08-20 - "Controlled output surfaces"
 
