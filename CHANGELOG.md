@@ -7,7 +7,16 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.15] - 2026-08-21 - "Verified setup handoffs"
+
 ### Added
+
+- **Attested public setup and agent handoff** - The reviewed repository-owned
+  `agentic.yaml` requires exact-byte local verification before delegating to
+  `setup.aiwg.yaml`. Release dispatch binds both files to the signed tag and
+  requests stable-channel attestation publication, while aiwg.io verifies the
+  signed web manifest and adjacent DSSE provenance before reporting verified
+  inspection status (#2089).
 
 - **Split customer/internal tracker roles** - Project configuration can declare
   a customer-facing issue tracker, provider, and actor independently from the
