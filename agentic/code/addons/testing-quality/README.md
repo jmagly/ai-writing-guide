@@ -62,7 +62,7 @@ cp -r agentic/code/addons/testing-quality/ .aiwg/addons/
 ```
 "Run mutation testing on src/auth/"
 
-→ Runs Stryker/PITest/mutmut
+→ Runs Stryker/PITest/mutmut (Python covered-line mode includes a native-extension preflight)
 → Generates mutation score report
 → Identifies weak tests with specific fixes
 ```

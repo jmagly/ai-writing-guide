@@ -1,0 +1,6 @@
+Running stats
+Fatal Python error: Segmentation fault
+Current thread (most recent call first):
+  File "mutmut/__main__.py", line 480 in run_stats
+Extension modules: yaml._yaml (total: 1)
+failed to collect stats. runner returned 1

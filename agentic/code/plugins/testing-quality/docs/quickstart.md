@@ -53,6 +53,32 @@ The skill detects your test framework and runs the appropriate mutation tool:
 - Java: PITest
 - Python: mutmut
 
+### Python native-extension preflight
+
+Before mutmut uses `mutate_only_covered_lines = true`, the skill runs the
+selected pytest nodes in a disposable subprocess and records native extensions
+loaded by the test, conftest, plugin, or source import graph:
+
+```bash
+python scripts/native_extension_preflight.py \
+  --test-selection tests/test_numerical_contracts.py \
+  --pytest-arg=--no-cov \
+  --mutation-target package/numerical_contracts.py \
+  --estimated-mutants 80 --max-children 4 \
+  --runtime-budget-seconds 600 --format json
+```
+
+If the report classifies `harness_native_extension_reload_risk`, do not start
+mutmut covered-line mode. The script allows `mutate_only_covered_lines = false`
+only when the mutation target, observed mutant estimate, child count, and runtime
+budget are explicit and the conservative estimate fits. Otherwise narrow the
+target or select a project-approved harness with subprocess-isolated coverage and
+stats phases.
+
+Preserve the preflight JSON with the mutation report. A stats-phase crash or
+re-import error is a harness/tool failure; it is not a project test failure and
+must not be counted as a killed, survived, timed-out, or no-tests mutant.
+
 Output is a mutation score report with:
 - Overall score (target: ≥80%)
 - Which specific functions/methods have weak test coverage

@@ -28,7 +28,11 @@ Coverage tells you which lines were executed during tests. Mutation testing tell
 
 A codebase with 85% coverage but a 50% mutation score has a lot of tests that would pass with broken code.
 
-The `mutation-test` skill runs Stryker (JavaScript/TypeScript), PITest (Java), or mutmut (Python) depending on the project language, generates a mutation score report, and identifies which specific tests are weak and what they should be checking.
+The `mutation-test` skill runs Stryker (JavaScript/TypeScript), PITest (Java), or mutmut (Python) depending on the project language, generates a mutation score report, and identifies which specific tests are weak and what they should be checking. Python covered-line runs first execute a subprocess-isolated native-extension preflight. If that preflight detects a module that mutmut could unload and re-import, the skill blocks covered-line mode and permits the non-covered-line fallback only for explicit mutation targets whose conservative estimate fits the declared runtime budget.
+
+Mutation evidence keeps three result classes separate: harness/tool failures,
+direct project-test failures, and mutant outcomes. A native-extension crash while
+mutmut is collecting stats never contributes to the mutation score.
 
 ## Quality Targets
 
