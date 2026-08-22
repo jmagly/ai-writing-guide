@@ -1,0 +1,76 @@
+{
+  "apiVersion": "flow.aiwg.io/v1alpha1",
+  "kind": "FlowGraph",
+  "metadata": {
+    "name": "polyrhythmic-strict-lcm",
+    "labels": { "composition.aiwg.io/pattern": "polyrhythmic-reasoning", "composition.aiwg.io/profile": "strict-lcm" }
+  },
+  "spec": {
+    "description": "Explicit problem-mode and user-mode tracks aligned at the 4/5 LCM without hidden reasoning.",
+    "entry": ["problem-mode", "user-mode"],
+    "candidates": [
+      { "id": "aiwg:agent:1111111111111111", "kind": "agent" },
+      { "id": "aiwg:agent:2222222222222222", "kind": "agent" },
+      { "id": "aiwg:evaluator:4444444444444444", "kind": "evaluator" }
+    ],
+    "state": {
+      "fields": [
+        { "name": "problem-evidence", "schema": { "type": "array", "items": { "type": "object" } }, "reducer": "append", "initial": [] },
+        { "name": "user-evidence", "schema": { "type": "array", "items": { "type": "object" } }, "reducer": "append", "initial": [] },
+        { "name": "user-state", "schema": { "type": "string", "enum": ["unknown", "stated-novice", "stated-practitioner"] }, "reducer": "replace", "initial": "unknown" },
+        { "name": "convergence", "schema": { "type": "number", "minimum": 0, "maximum": 1 }, "reducer": "max", "initial": 0 }
+      ]
+    },
+    "permissions": [],
+    "capabilities": [],
+    "ceilings": { "activations": 20, "tokens": 80000, "costUsd": 8, "timeMs": 300000, "concurrency": 2 },
+    "nodes": [
+      {
+        "id": "problem-mode", "kind": "agent", "ref": "aiwg:agent:1111111111111111", "phase": "derive-evaluate-expand", "track": "problem-mode",
+        "description": "Derive a candidate, evaluate it against task evidence, and expand only supported implications.",
+        "inputs": [
+          { "name": "question", "schema": { "type": "string" }, "value": "Explain the observed behavior." },
+          { "name": "evidence", "schema": { "type": "array" }, "value": [] }
+        ],
+        "outputs": [
+          { "name": "beat-evidence", "schema": { "type": "array", "items": { "type": "object" } }, "state": "problem-evidence" },
+          { "name": "confidence", "schema": { "type": "number" }, "state": "convergence" }
+        ],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      },
+      {
+        "id": "user-mode", "kind": "agent", "ref": "aiwg:agent:2222222222222222", "phase": "classify-evaluate-expand", "track": "user-mode",
+        "description": "Classify only stated user context, preserve unknown state, evaluate evidence, and expand presentation constraints.",
+        "inputs": [
+          { "name": "question", "schema": { "type": "string" }, "value": "Explain the observed behavior." },
+          { "name": "classification-evidence", "schema": { "type": "array" }, "value": [] },
+          { "name": "stated-user-state", "schema": { "type": "string" }, "value": "unknown" }
+        ],
+        "outputs": [
+          { "name": "beat-evidence", "schema": { "type": "array", "items": { "type": "object" } }, "state": "user-evidence" },
+          { "name": "classification", "schema": { "type": "string" }, "state": "user-state" },
+          { "name": "confidence", "schema": { "type": "number" }, "state": "convergence" }
+        ],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      },
+      {
+        "id": "final-synthesis", "kind": "evaluator", "ref": "aiwg:evaluator:4444444444444444", "phase": "synthesize", "track": "control",
+        "description": "Return the user-facing result and concise decision/evidence summaries without private reasoning traces.",
+        "inputs": [
+          { "name": "problem-evidence", "schema": { "type": "array" }, "state": "problem-evidence" },
+          { "name": "user-evidence", "schema": { "type": "array" }, "state": "user-evidence" },
+          { "name": "user-state", "schema": { "type": "string" }, "state": "user-state" }
+        ],
+        "outputs": [{ "name": "result", "schema": { "type": "object", "required": ["answer", "decisionSummary", "evidenceSummary", "userState"] } }],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      }
+    ],
+    "routes": [],
+    "joins": [
+      { "id": "four-five-alignment", "sources": ["problem-mode", "user-mode"], "target": "final-synthesis", "policy": { "mode": "lcm", "periods": [4, 5] } }
+    ],
+    "failure": { "onNodeFailure": "partial-synthesis", "maxFailures": 1 },
+    "output": { "mode": "final-only", "from": "final-synthesis.result", "schema": { "type": "object", "required": ["answer", "decisionSummary", "evidenceSummary", "userState"] } },
+    "trace": { "level": "metadata", "redact": ["/classification-evidence"] }
+  }
+}

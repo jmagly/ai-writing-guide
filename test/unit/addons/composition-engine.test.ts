@@ -16,6 +16,8 @@ const FIXTURES = [
   'agent-tool-flow',
   'phased-multi-track',
   'lcm-4x5',
+  'polyrhythmic-strict-lcm',
+  'polyrhythmic-adaptive',
 ];
 
 function fixture(name = 'linear-flow'): any {
@@ -183,5 +185,6 @@ describe('composition-engine FlowGraph contract', () => {
     expect(manifest.fixtures).toEqual(expect.arrayContaining(FIXTURES));
     expect(readFileSync(resolve(ROOT, 'types', 'flow-graph.generated.ts'), 'utf8')).toContain('export interface FlowGraph');
     expect(readFileSync(resolve(ROOT, 'skills', 'composition-validate', 'SKILL.md'), 'utf8')).toContain('validate a Flow graph');
+    expect(readFileSync(resolve(ROOT, 'skills', 'polyrhythmic-reasoning', 'SKILL.md'), 'utf8')).toContain('strict-LCM or adaptive');
   });
 });

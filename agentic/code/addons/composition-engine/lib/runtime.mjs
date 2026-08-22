@@ -617,7 +617,7 @@ export async function executeFlowGraph(manifest, options = {}) {
       } catch (error) {
         await handleFailure(target, error, realized.activations);
       }
-    } else {
+    } else if (!terminal) {
       terminal = { code: 'JOIN_CEILING_EXHAUSTED', reason: `join '${join.id}' stopped: ${reason}` };
     }
   }

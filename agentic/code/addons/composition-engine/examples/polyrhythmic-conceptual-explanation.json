@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "composition.pattern-example.aiwg.io/v1alpha1",
+  "id": "conceptual-explanation",
+  "domain": "conceptual-explanation",
+  "profile": "adaptive",
+  "composition": "agent-plus-read-only-tool",
+  "question": "Explain the difference between idempotent and exactly-once execution.",
+  "evidence": [{ "source": "local-document", "path": "docs/runtime-operations.md" }],
+  "classificationEvidence": [{ "source": "user-stated", "fact": "The user is new to distributed systems." }],
+  "statedUserState": "stated-novice"
+}

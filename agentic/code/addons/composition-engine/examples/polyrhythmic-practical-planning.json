@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "composition.pattern-example.aiwg.io/v1alpha1",
+  "id": "practical-planning",
+  "domain": "practical-planning",
+  "profile": "adaptive",
+  "composition": "agent-only",
+  "question": "Plan a reversible migration from one internal queue to another.",
+  "evidence": [{ "source": "operator", "fact": "A rollback window and shadow traffic are available." }],
+  "classificationEvidence": [],
+  "statedUserState": "unknown"
+}

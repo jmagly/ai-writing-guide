@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "composition.pattern-safety.aiwg.io/v1alpha1",
+  "pattern": "polyrhythmic-reasoning",
+  "allowedGeneralDomains": ["technical-troubleshooting", "conceptual-explanation", "practical-planning", "theoretical-comparison"],
+  "deniedGeneralTemplates": ["medical diagnosis", "healthcare treatment", "investment advice", "financial advice"],
+  "userStateRule": "Preserve unknown unless a user-stated evidence item supports a declared non-sensitive state.",
+  "claimsRule": "Do not claim better quality, accuracy, or efficiency before reproducible benchmark evidence."
+}

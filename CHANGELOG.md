@@ -9,6 +9,13 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Safe polyrhythmic composition pattern** - The composition-engine addon now
+  ships strict 4/5 LCM and adaptive convergence profiles over one typed
+  problem-mode/user-mode contract, with evidence-bound user-state handling,
+  conflict and failed-beat semantics, final-only synthesis, agent-only and
+  read-only-tool examples, and fail-closed high-risk/unsupported-claim policy
+  (#2117).
+
 - **Deterministic FlowGraph execution runtime** - `aiwg composition run`
   executes validated phased and multi-track graphs through an explicit adapter,
   with stable activation/invocation identities, typed reducers, bounded joins,

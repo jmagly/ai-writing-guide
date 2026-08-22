@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "composition.pattern-example.aiwg.io/v1alpha1",
+  "id": "theoretical-comparison",
+  "domain": "theoretical-comparison",
+  "profile": "strict-lcm",
+  "composition": "agent-plus-read-only-tool",
+  "question": "Compare quorum and all-source joins under partial failure.",
+  "evidence": [{ "source": "local-schema", "path": "schemas/flow-graph.schema.json" }],
+  "classificationEvidence": [{ "source": "user-stated", "fact": "The user works with workflow engines." }],
+  "statedUserState": "stated-practitioner"
+}

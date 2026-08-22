@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "composition.pattern-example.aiwg.io/v1alpha1",
+  "id": "technical-troubleshooting",
+  "domain": "technical-troubleshooting",
+  "profile": "strict-lcm",
+  "composition": "agent-only",
+  "question": "Explain why a deterministic test passes locally but times out in CI.",
+  "evidence": [{ "source": "test-log", "fact": "CI reaches the same assertion after a slower setup phase." }],
+  "classificationEvidence": [],
+  "statedUserState": "unknown"
+}

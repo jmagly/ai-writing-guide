@@ -124,6 +124,10 @@ assigns runId when execution begins; validation leaves it null.
 - agent-tool-flow.json
 - phased-multi-track.json
 - lcm-4x5.json — periods four and five synchronize at activation 20
+- polyrhythmic-strict-lcm.json — the safe strict profile aligns at activation 20
+- polyrhythmic-adaptive.json — the same contract may converge before its hard ceiling
 
 See [docs/schema-evolution.md](docs/schema-evolution.md) for compatibility and
-unknown-field policy.
+unknown-field policy, and
+[docs/polyrhythmic-reasoning.md](docs/polyrhythmic-reasoning.md) for the
+bounded pattern, examples, safety policy, and evidence rules.

@@ -21,18 +21,29 @@
     "commands": "commands/",
     "skills": "skills/",
     "schemas": "schemas/",
-    "fixtures": "fixtures/"
+    "fixtures": "fixtures/",
+    "docs": "docs/",
+    "examples": "examples/"
   },
   "agents": [],
   "commands": [],
-  "skills": ["composition-validate"],
+  "skills": ["composition-validate", "polyrhythmic-reasoning"],
   "schemas": ["flow-graph.schema"],
   "fixtures": [
     "linear-flow",
     "parallel-fanout",
     "agent-tool-flow",
     "phased-multi-track",
-    "lcm-4x5"
+    "lcm-4x5",
+    "polyrhythmic-strict-lcm",
+    "polyrhythmic-adaptive"
+  ],
+  "examples": [
+    "polyrhythmic-technical-troubleshooting",
+    "polyrhythmic-conceptual-explanation",
+    "polyrhythmic-practical-planning",
+    "polyrhythmic-theoretical-comparison",
+    "polyrhythmic-safety-policy"
   ],
   "cli_commands": {
     "namespace": "composition",
@@ -60,7 +71,7 @@
     "baseKind": "FlowPlaybook"
   },
   "researchFoundation": {
-    "issue": "#2115",
+    "issue": "#2115, #2116, #2117",
     "parent": "#2114"
   }
 }
