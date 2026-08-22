@@ -731,6 +731,7 @@ function recordForEntry(
               ...(entry.searchTerms?.length
                 ? { aiwg_search_terms: uniqueSorted(entry.searchTerms) }
                 : {}),
+              ...(entry.script ? { aiwg_script: entry.script } : {}),
             },
           },
         }

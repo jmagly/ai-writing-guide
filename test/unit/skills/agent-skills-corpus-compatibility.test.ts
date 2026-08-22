@@ -87,7 +87,7 @@ describe('canonical Agent Skills-compatible corpus', () => {
       diagnostic.code === 'AS_ADVISORY_LINES'
     ));
 
-    expect(skills).toHaveLength(514);
+    expect(skills).toHaveLength(515);
     expect(errors, formatDiagnostics(errors)).toEqual([]);
     expect(lineAdvisories).toHaveLength(85);
     expect(lineAdvisories.every((diagnostic) => (

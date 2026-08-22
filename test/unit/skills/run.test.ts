@@ -12,6 +12,8 @@ import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { runSkill } from '../../../src/skills/run.js';
+import { recordTypeForEntry, stableRecordId } from '../../../src/artifacts/browser-export.js';
+import type { MetadataEntry } from '../../../src/artifacts/types.js';
 
 let tmpRoot: string;
 let projectDir: string;
@@ -50,7 +52,7 @@ async function buildFakeSkill(scriptBody: string): Promise<void> {
   await fs.writeFile(path.join(skillDir, 'scripts', 'run.cjs'), scriptBody, 'utf8');
 }
 
-async function buildIndex(extraEntry?: Record<string, unknown>): Promise<void> {
+async function buildIndex(extraEntry?: Record<string, unknown>, entryType = 'skill'): Promise<void> {
   // Use the project graph (`<cwd>/.aiwg/.index/project/`) — keeps the
   // index inside the test's tmpRoot so we never touch the user's real
   // framework graph at $XDG_DATA_HOME/aiwg/index/framework/.
@@ -60,7 +62,7 @@ async function buildIndex(extraEntry?: Record<string, unknown>): Promise<void> {
   const entries: Record<string, unknown> = {
     [skillRelPath]: {
       path: skillRelPath,
-      type: 'skill',
+      type: entryType,
       phase: 'meta',
       title: 'marker-skill',
       tags: [],
@@ -105,10 +107,40 @@ beforeEach(async () => {
 
 afterEach(async () => {
   delete process.env.AIWG_ROOT;
+  delete process.env.XDG_DATA_HOME;
   await fs.rm(tmpRoot, { recursive: true, force: true });
 });
 
 describe('runSkill — project-root CWD invariant (#1227)', () => {
+  it('resolves a canonical framework skill by name and stable artifact ID (#2110)', async () => {
+    await buildFakeSkill(
+      `const fs = require('fs');
+       fs.appendFileSync('canonical-runs.txt', process.argv[2] + '\\n');`,
+    );
+    const skillPath = 'agentic/code/addons/test-pack/skills/marker-skill/SKILL.md';
+    const entry = {
+      path: skillPath,
+      type: 'aiwg.skill',
+      phase: 'meta',
+      title: 'Marker Skill',
+      name: 'marker-skill',
+      tags: [],
+      created: new Date().toISOString(),
+      updated: new Date().toISOString(),
+      checksum: 'cccccccccccccccc',
+      summary: 'canonical framework-index script fixture',
+      dependencies: [],
+      dependents: [],
+      script: { entrypoint: 'scripts/run.cjs', runtime: 'node', cwd: 'project-root' },
+    } satisfies MetadataEntry;
+    await buildIndex({ [skillPath]: entry }, 'aiwg.skill');
+
+    const stableId = stableRecordId(recordTypeForEntry({ ...entry, type: 'skill' }, 'v2'), skillPath);
+    expect(await runSkill({ cwd: projectDir, name: 'marker-skill', args: ['name'] })).toBe(0);
+    expect(await runSkill({ cwd: projectDir, name: stableId, args: ['id'] })).toBe(0);
+    expect(await fs.readFile(path.join(projectDir, 'canonical-runs.txt'), 'utf8')).toBe('name\nid\n');
+  });
+
   it('runs the script with CWD = project root, not skill-dir or AIWG root', async () => {
     // Script writes marker.txt to CWD using a relative path.
     await buildFakeSkill(

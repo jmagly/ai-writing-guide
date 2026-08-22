@@ -32,6 +32,8 @@ nothing here ships in the base `aiwg` npm package.
 | Page | Covers |
 |---|---|
 | [Installation](./installation.md) | Install and launch paths (CLI, direct npm, dev workspace, desktop, VS Code), version pinning, troubleshooting |
+| [Connection Doctor](./doctor.md) | Topology-aware Bridge/executor, listener, runtime-tier, and persistence diagnostics |
+| [Guided Headless Deployment](./headless-deployment.md) | SetupManifest-driven same-host/cross-host planning, staged services, and scoped rollback |
 | [Architecture](./architecture.md) | Shells → Bridge → executor topology, control vs data plane, component map, ports, the serve↔cockpit relationship |
 | [Surfaces](./surfaces.md) | All 11 tabs — Home, Inventory, Running, Missions, Sessions, Approvals, Explore, Library, Telemetry, Memory, Actions — plus the launch/start modals |
 | [Sessions](./sessions.md) | The observe-first attach model: take control, replay, per-session persistent terminals, backends, response detection |

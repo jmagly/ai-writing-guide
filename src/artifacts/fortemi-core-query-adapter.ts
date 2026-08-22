@@ -339,6 +339,7 @@ function artifactTypeFromRecord(record: AiwgFortemiRecord): string {
 function entryFromRecord(record: AiwgFortemiRecord): MetadataEntry {
   const indexedFrontmatter = record.search?.frontmatter ?? {};
   const indexedSearchTerms = indexedFrontmatter.aiwg_search_terms;
+  const indexedScript = indexedFrontmatter.aiwg_script;
   return {
     path: record.source.path,
     type: artifactTypeFromRecord(record),
@@ -382,6 +383,12 @@ function entryFromRecord(record: AiwgFortemiRecord): MetadataEntry {
     kernel:
       typeof record.search?.frontmatter?.kernel === "boolean"
         ? record.search.frontmatter.kernel
+        : undefined,
+    script:
+      indexedScript && typeof indexedScript === "object"
+        && typeof (indexedScript as Record<string, unknown>).entrypoint === "string"
+        && typeof (indexedScript as Record<string, unknown>).runtime === "string"
+        ? indexedScript as MetadataEntry["script"]
         : undefined,
     operationalState: record.operational_state,
   };

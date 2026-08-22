@@ -32,7 +32,8 @@
   "skills": [
     "setup-generate",
     "setup-run",
-    "setup-validate"
+    "setup-validate",
+    "cockpit-headless-deploy"
   ],
   "rules": [
     "installer-safety",

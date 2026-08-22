@@ -1311,8 +1311,13 @@ entrypoint with the right interpreter (node, python3, bash, sh, pwsh, ruby,
 or `auto` by extension/shebang).
 
 ```bash
-aiwg run skill <name> [--output-mode <id>]... [--cwd <path>] [-- <args forwarded to script>]
+aiwg run skill <stable-id-or-name> [--output-mode <id>]... [--cwd <path>] [-- <args forwarded to script>]
 ```
+
+The selector accepts either the canonical skill name returned by `aiwg discover`
+or that result's stable `aiwg:skill:...` artifact ID. Both resolve through the
+same framework, project, and codebase graph normalization used by
+`aiwg discover` and `aiwg show`.
 
 Repeated `--output-mode` flags compose invocation-scoped modes with session and
 project state. The resolved ordered profiles are exposed to scripts as

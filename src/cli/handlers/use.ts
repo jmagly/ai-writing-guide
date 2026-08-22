@@ -1196,6 +1196,75 @@ async function countBundleDeployedArtifacts(
   };
 }
 
+const SKILL_SUPPORT_REFERENCE = /(?:^|[\s`('"\[])((?:templates|references|scripts|assets)\/[A-Za-z0-9._@/+\-]+)(?=$|[\s`)'"\],:;])/gm;
+
+/**
+ * Project skill-relative support files may live beside the skill or at the
+ * bundle root (plugin payloads commonly share report templates). Materialize
+ * only paths explicitly named by SKILL.md, and fail closed on missing or
+ * unsafe sources so a deployed instruction can never point at absent assets.
+ */
+async function reconcileProjectLocalSkillAssets(
+  bundlePath: string,
+  target: string,
+  provider: string,
+): Promise<void> {
+  const skillsRoot = path.join(bundlePath, 'skills');
+  let skillDirs: string[];
+  try {
+    skillDirs = (await fs.readdir(skillsRoot, { withFileTypes: true }))
+      .filter(entry => entry.isDirectory())
+      .map(entry => entry.name);
+  } catch {
+    return;
+  }
+  const paths = getProviderPaths(provider);
+  const kernelSkillsPath = getProviderKernelSkillsPath(provider);
+  const deployRoots = [...new Set([
+    paths.skills,
+    kernelSkillsPath,
+  ].filter((value): value is string => Boolean(value)).map(value => resolveDeployPath(target, value)))];
+
+  for (const skillName of skillDirs) {
+    const sourceSkillDir = path.join(skillsRoot, skillName);
+    const sourceSkillMd = path.join(sourceSkillDir, 'SKILL.md');
+    let content: string;
+    try { content = await fs.readFile(sourceSkillMd, 'utf8'); } catch { continue; }
+    const references = [...new Set([...content.matchAll(SKILL_SUPPORT_REFERENCE)].map(match => match[1]))];
+    for (const relative of references) {
+      const normalized = path.posix.normalize(relative);
+      if (normalized !== relative || normalized.startsWith('../') || path.isAbsolute(normalized)) {
+        throw new Error(`unsafe skill support reference '${relative}' in ${sourceSkillMd}`);
+      }
+      const candidates = [path.join(sourceSkillDir, normalized), path.join(bundlePath, normalized)];
+      let source: string | undefined;
+      for (const candidate of candidates) {
+        try {
+          const stat = await fs.lstat(candidate);
+          if (stat.isFile() && !stat.isSymbolicLink()) { source = candidate; break; }
+        } catch { /* try bundle-root fallback */ }
+      }
+      if (!source) throw new Error(`missing skill support asset '${relative}' referenced by ${sourceSkillMd}`);
+
+      let deployedSkillRoot: string | undefined;
+      for (const root of deployRoots) {
+        // The deployer may select the bulk or kernel tier; use the tier that
+        // actually contains this skill's transformed SKILL.md.
+        if (await fileExists(path.join(root, skillName, 'SKILL.md'))) {
+          deployedSkillRoot = root;
+          break;
+        }
+      }
+      if (!deployedSkillRoot) throw new Error(`deployed skill '${skillName}' not found while reconciling support assets`);
+      const destination = path.join(deployedSkillRoot, skillName, ...normalized.split('/'));
+      await fs.mkdir(path.dirname(destination), { recursive: true });
+      await fs.copyFile(source, destination);
+      const mode = (await fs.stat(source)).mode & 0o777;
+      await fs.chmod(destination, mode);
+    }
+  }
+}
+
 /**
  * Deploy a single project-local bundle to one provider via deploy-agents.mjs.
  * Runs the same script and flags used for upstream addons, with the bundle
@@ -1275,6 +1344,14 @@ async function deployOneProjectLocalBundle(opts: {
       env: { AIWG_ROOT: frameworkRoot },
     });
     exitCode = result.exitCode;
+    if (exitCode === 0 && !dryRun) {
+      try {
+        await reconcileProjectLocalSkillAssets(bundle.artifactPath, target, provider);
+      } catch (error) {
+        ui.warn(`Project-local skill asset deployment failed for '${bundle.id}': ${(error as Error).message}`);
+        exitCode = 1;
+      }
+    }
   }
 
   if (exitCode === 0 && cliCommandCount > 0) {

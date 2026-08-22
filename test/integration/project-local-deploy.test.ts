@@ -81,10 +81,28 @@ function makePluginWrapperEnv(label: string): Env {
   mkdirSync(path.join(payload, 'rules'), { recursive: true });
   writeFileSync(path.join(payload, 'agents', 'bt6-agent.md'), `---\nname: bt6-agent\ndescription: Wrapper agent\nmodel: claude-sonnet-4-6\ntools: Read\n---\n\n# Agent\n`);
   writeFileSync(path.join(payload, 'rules', 'bt6-rule.md'), `---\nid: bt6-rule\nname: bt6-rule\n---\n\n# Rule\n`);
-  for (let index = 1; index <= 5; index += 1) {
-    const name = `bt6-skill-${index}`;
+  const skills = [
+    ['bt6-issue-steward', ['templates/bt6-issue-response.md', 'templates/bt6-maintainer-action-items.md']],
+    ['bt6-merge-train', ['templates/bt6-merge-train-report.md']],
+    ['bt6-pr-audit', ['templates/bt6-public-input-threat-assessment.md', 'templates/bt6-pr-audit-review.md']],
+    ['bt6-provider-review', ['references/bt6-provider-integration-checklist.md', 'templates/bt6-external-provider-assessment.md']],
+    ['bt6-queue-audit', ['templates/bt6-public-input-threat-assessment.md', 'templates/bt6-queue-audit-report.md']],
+  ] as const;
+  mkdirSync(path.join(payload, 'templates'), { recursive: true });
+  for (const [, refs] of skills) {
+    for (const ref of refs.filter(value => value.startsWith('templates/'))) {
+      const file = path.join(payload, ref);
+      if (!existsSync(file)) writeFileSync(file, `# ${path.basename(ref)}\n`);
+    }
+  }
+  for (const [name, refs] of skills) {
     mkdirSync(path.join(payload, 'skills', name), { recursive: true });
-    writeFileSync(path.join(payload, 'skills', name, 'SKILL.md'), `---\nname: ${name}\ndescription: Wrapper skill ${index}\nplatforms: [all]\n---\n\n# ${name}\n`);
+    for (const ref of refs.filter(value => value.startsWith('references/'))) {
+      const file = path.join(payload, 'skills', name, ref);
+      mkdirSync(path.dirname(file), { recursive: true });
+      writeFileSync(file, `# ${path.basename(ref)}\n`);
+    }
+    writeFileSync(path.join(payload, 'skills', name, 'SKILL.md'), `---\nname: ${name}\ndescription: Wrapper skill ${name}\nplatforms: [all]\n---\n\n# ${name}\n\n${refs.map(ref => `Use \`${ref}\`.`).join('\n')}\n`);
   }
   rmSync(env.bundleDir, { recursive: true, force: true });
   return { ...env, bundleDir: payload };
@@ -506,7 +524,7 @@ describe('project-local deploy integration (#1046)', () => {
           ? path.join(roundTripEnv.projectDir, '.agents', 'skills')
           : path.join(roundTripEnv.projectDir, '.claude', '.aiwg', 'skills');
         const skills = wrapper
-          ? Array.from({ length: 5 }, (_, index) => `bt6-skill-${index + 1}`)
+          ? ['bt6-issue-steward', 'bt6-merge-train', 'bt6-pr-audit', 'bt6-provider-review', 'bt6-queue-audit']
           : ['demo-skill'];
         for (const skill of skills) {
           expect(existsSync(path.join(skillRoot, skill, 'SKILL.md'))).toBe(false);
@@ -519,4 +537,39 @@ describe('project-local deploy integration (#1046)', () => {
     },
     240_000,
   );
+
+  it('PL-ASSETS (#2109): deploys every referenced BT6 asset and repairs drift', () => {
+    const bt6 = makePluginWrapperEnv('codex-assets');
+    try {
+      writeFileSync(path.join(bt6.projectDir, '.aiwg', 'aiwg.config'), JSON.stringify({
+        version: '1', providers: ['codex'], installed: {}, scripts: {},
+      }, null, 2));
+      const first = runAiwg(bt6, ['use', 'bt6-maintainer', '--provider', 'codex', '--quiet']);
+      expect(first.status, first.stdout).toBe(0);
+      const root = path.join(bt6.projectDir, '.agents', 'skills');
+      const expected = [
+        ['bt6-issue-steward', 'templates/bt6-issue-response.md'],
+        ['bt6-issue-steward', 'templates/bt6-maintainer-action-items.md'],
+        ['bt6-merge-train', 'templates/bt6-merge-train-report.md'],
+        ['bt6-pr-audit', 'templates/bt6-public-input-threat-assessment.md'],
+        ['bt6-pr-audit', 'templates/bt6-pr-audit-review.md'],
+        ['bt6-provider-review', 'references/bt6-provider-integration-checklist.md'],
+        ['bt6-provider-review', 'templates/bt6-external-provider-assessment.md'],
+        ['bt6-queue-audit', 'templates/bt6-public-input-threat-assessment.md'],
+        ['bt6-queue-audit', 'templates/bt6-queue-audit-report.md'],
+      ];
+      for (const [skill, ref] of expected) {
+        const deployed = path.join(root, skill, ref);
+        expect(existsSync(deployed), `missing deployed support asset: ${skill}/${ref}`).toBe(true);
+      }
+
+      const drifted = path.join(root, 'bt6-merge-train', 'templates', 'bt6-merge-train-report.md');
+      rmSync(drifted);
+      const repair = runAiwg(bt6, ['use', 'bt6-maintainer', '--provider', 'codex', '--quiet']);
+      expect(repair.status, repair.stdout).toBe(0);
+      expect(existsSync(drifted)).toBe(true);
+    } finally {
+      cleanup(bt6);
+    }
+  }, 240_000);
 });

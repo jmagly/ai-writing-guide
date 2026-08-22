@@ -106,7 +106,7 @@ function displayHelp(): void {
 
   helpGroup('FEATURES', [
     ['features', 'Show optional feature install status'],
-    ['cockpit [--status]', 'Launch the opt-in AIWG Cockpit control plane'],
+    ['cockpit [--status|doctor]', 'Launch Cockpit or diagnose its executor topology'],
   ]);
 
   helpGroup('VALIDATION', [

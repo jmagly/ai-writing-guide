@@ -316,6 +316,11 @@ describe("AIWG Fortemi browser index export", () => {
           triggers: ["doctor", "health check"],
           capability: "Diagnose the AIWG workspace.",
           kernel: true,
+          script: {
+            entrypoint: "scripts/doctor.mjs",
+            runtime: "node",
+            cwd: "project-root",
+          },
         }),
         ".opencode/agent/software-implementer.md": entry({
           path: ".opencode/agent/software-implementer.md",
@@ -556,6 +561,11 @@ describe("AIWG Fortemi browser index export", () => {
         capability: "Diagnose the AIWG workspace.",
         frontmatter: {
           kernel: true,
+          aiwg_script: {
+            entrypoint: "scripts/doctor.mjs",
+            runtime: "node",
+            cwd: "project-root",
+          },
         },
       },
       privacy: {

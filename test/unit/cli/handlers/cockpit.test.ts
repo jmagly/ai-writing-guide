@@ -55,6 +55,20 @@ describe('cockpit handler', () => {
     expect(result.message).toContain(`${COCKPIT_PACKAGE_NAME}@2026.6.1`);
   });
 
+  it('routes cockpit doctor and emits stable JSON even when disconnected', async () => {
+    const result = await cockpitHandler.execute({
+      ...ctx,
+      args: ['doctor', '--json', '--runtime-file', path.join(tmp, 'missing-runtime.json')],
+    });
+    const report = JSON.parse(result.message!);
+
+    expect(result.exitCode).toBe(1);
+    expect(report.schema).toBe('aiwg.cockpit-doctor/v1');
+    expect(report.status).toBe('blocked');
+    expect(report.rows.some((row: any) => row.code === 'cockpit_not_installed')).toBe(true);
+    expect(report.rows.some((row: any) => row.code === 'bridge_unreachable')).toBe(true);
+  });
+
   it('resolves an installed matching package', async () => {
     const root = path.join(process.env.AIWG_COCKPIT_HOME!, 'node_modules', '@aiwg', 'cockpit');
     await writeJson(path.join(root, 'package.json'), {

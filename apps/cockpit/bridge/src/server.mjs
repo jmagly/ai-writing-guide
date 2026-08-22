@@ -689,6 +689,11 @@ async function getExecutorCapabilities(executorUrl) {
       host_runtime_enabled: body.host_runtime_enabled === true || body.hostRuntimeEnabled === true,
       runtime_providers: runtimeProviders && Array.isArray(runtimeProviders.providers) ? runtimeProviders : undefined,
       raw_status: body.status ?? body.state ?? 'unknown',
+      real_executor: !mockExecutorReason(body),
+      implementation: body.implementation ?? body.service ?? body.name ?? 'agentic-sandbox',
+      version: body.version ?? body.build?.version ?? null,
+      commit: body.commit ?? body.build?.commit ?? body.git_commit ?? null,
+      auth_required: body.auth_required ?? body.auth?.required ?? null,
     };
   } catch (err) {
     rethrowExecutorSecurityError(err);
@@ -3212,6 +3217,7 @@ export function createBridge({
         executor_url: upstreamUrl,
         mock_executor_allowed: allowMockExecutor,
         executor_auth_configured: Boolean(executorTokenFile),
+        executor: await getExecutorCapabilities(upstreamUrl),
       });
       if (url.pathname === '/' || url.pathname === '/index.html') {
         const distIndex = join(WEB_DIST, 'index.html');

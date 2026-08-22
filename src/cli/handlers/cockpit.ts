@@ -4,6 +4,11 @@ import { mkdir, readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
+import {
+  formatCockpitDoctor,
+  runCockpitDoctor,
+  type CockpitTopology,
+} from '../../cockpit/doctor.js';
 
 export const COCKPIT_PACKAGE_NAME = '@aiwg/cockpit';
 
@@ -26,6 +31,17 @@ async function coreVersion(frameworkRoot: string): Promise<string> {
 
 function packageRoot(home = cockpitHome()): string {
   return path.join(home, 'node_modules', '@aiwg', 'cockpit');
+}
+
+function valueAfter(args: string[], flag: string): string | undefined {
+  const index = args.indexOf(flag);
+  return index >= 0 ? args[index + 1] : undefined;
+}
+
+function doctorFormat(args: string[]): 'text' | 'json' | 'markdown' {
+  if (args.includes('--json')) return 'json';
+  const value = valueAfter(args, '--format');
+  return value === 'json' || value === 'markdown' ? value : 'text';
 }
 
 export async function resolveCockpitInstall(home = cockpitHome()): Promise<{
@@ -113,6 +129,37 @@ export const cockpitHandler: CommandHandler = {
     const install = await resolveCockpitInstall();
     const version = await coreVersion(ctx.frameworkRoot);
     const autoInstall = ctx.args.includes('--install') || ctx.args.includes('--yes') || ctx.args.includes('-y');
+
+    if (ctx.args[0] === 'doctor' || ctx.args.includes('--doctor')) {
+      const sourcePackageRoot = path.join(ctx.frameworkRoot, 'apps', 'cockpit');
+      const sourcePackage = !install.installed ? await readJson(path.join(sourcePackageRoot, 'package.json')) : null;
+      const doctorInstall = install.installed ? install : {
+        installed: Boolean(sourcePackage),
+        version: typeof sourcePackage?.version === 'string' ? sourcePackage.version : undefined,
+        packageRoot: sourcePackageRoot,
+      };
+      const topologyValue = valueAfter(ctx.args, '--topology');
+      const topology: CockpitTopology = topologyValue === 'ssh-local' || topologyValue === 'ssh-reverse'
+        ? topologyValue
+        : 'same-host';
+      const report = await runCockpitDoctor({
+        coreVersion: version,
+        cockpitInstalled: doctorInstall.installed,
+        cockpitVersion: doctorInstall.version,
+        cockpitPackageRoot: doctorInstall.packageRoot,
+        topology,
+        cockpitHost: valueAfter(ctx.args, '--cockpit-host'),
+        executorHost: valueAfter(ctx.args, '--executor-host'),
+        expectedExecutorVersion: valueAfter(ctx.args, '--executor-version'),
+        forwardEndpoint: valueAfter(ctx.args, '--forward-endpoint'),
+        runtimeFile: valueAfter(ctx.args, '--runtime-file'),
+      });
+      return {
+        exitCode: report.status === 'blocked' ? 1 : 0,
+        message: formatCockpitDoctor(report, doctorFormat(ctx.args)),
+        rawOutput: true,
+      };
+    }
 
     if (ctx.args.includes('--status')) {
       return {
