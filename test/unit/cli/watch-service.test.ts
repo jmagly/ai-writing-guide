@@ -9,6 +9,22 @@ import { randomUUID } from 'crypto';
 import { WatchService, WatchEvent } from '../../../src/cli/watch-service.ts';
 import { WatchConfig } from '../../../src/cli/config-loader.ts';
 
+async function waitFor(
+  condition: () => boolean,
+  timeoutMs = 3000,
+  pollIntervalMs = 25
+): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+
+  while (!condition()) {
+    if (Date.now() >= deadline) {
+      throw new Error(`Condition was not met within ${timeoutMs}ms`);
+    }
+
+    await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+  }
+}
+
 describe('WatchService', () => {
   let service: WatchService;
   let testDir: string;
@@ -188,8 +204,9 @@ describe('WatchService', () => {
       await new Promise(resolve => setTimeout(resolve, 400));
       expect(processed).toBe(false);
 
-      // Wait for remaining time (awaitWriteFinish + debounce complete)
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Chokidar event delivery can be delayed under full-suite CI load. Wait for
+      // the debounced callback instead of assuming it arrives in a fixed window.
+      await waitFor(() => processed);
       expect(processed).toBe(true);
     }, 10000);
 
