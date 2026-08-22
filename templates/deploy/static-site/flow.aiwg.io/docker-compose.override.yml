@@ -1,0 +1,4 @@
+services:
+  caddy:
+    volumes:
+      - /home/roctinam/production-deploy/flow.aiwg.io:/srv/flow.aiwg.io:ro

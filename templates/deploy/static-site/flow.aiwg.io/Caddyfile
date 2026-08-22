@@ -1,0 +1,23 @@
+# Host block to append to roctinam/serve-static/Caddyfile.
+# TLS terminates at Cloudflare; the shared origin listens on HTTP port 80.
+http://flow.aiwg.io {
+    root * /srv/flow.aiwg.io
+    encode gzip
+
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    handle /health {
+        respond "OK" 200
+    }
+
+    try_files {path} {path}.html {path}/index.html {path}/ /index.html
+    file_server {
+        hide .*
+        index index.html index.htm
+    }
+}

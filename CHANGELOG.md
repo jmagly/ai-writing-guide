@@ -9,6 +9,14 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Flow domain static-site deployment plan** - A versioned, validated #2125
+  bootstrap approves private `roctinam/flow.aiwg.io` on the shared
+  `serve-static` origin, routes graph content under `/graph/`, rejects
+  fourth-level DNS, supplies exact Caddy/volume and pinned Gitea workflow
+  payloads, reserves collision-checked isolated-container ports for future
+  exceptions, and records the controlled DNS/tunnel/operator handoff without
+  creating repositories or changing live infrastructure (#2125).
+
 - **Claim-gated composition policy evaluation** - `aiwg composition benchmark`
   now expands a versioned fixed-task manifest into raw records and a
   reproducible summary for single-pass, Self-Refine, parallel candidates,

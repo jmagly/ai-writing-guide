@@ -1,0 +1,112 @@
+name: deploy-flow-site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-flow-site
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  DEPLOY_PATH: /home/roctinam/production-deploy/flow.aiwg.io/
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    container:
+      image: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Build
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build
+          test -f dist/index.html
+          test -f dist/graph/index.html
+          printf '%s\n' "${{ gitea.sha }}" > "dist/flow-deploy-${{ gitea.sha }}.txt"
+
+      - name: Check deployment configuration
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+        run: |
+          set -euo pipefail
+          test -n "${DEPLOY_SSH_KEY}"
+          test -n "${DEPLOY_HOST}"
+          test -n "${DEPLOY_PORT}"
+          test -n "${DEPLOY_USER}"
+          case "${DEPLOY_HOST}" in *[!A-Za-z0-9.-]*) echo "::error::Invalid deployment host" >&2; exit 1 ;; esac
+          case "${DEPLOY_USER}" in *[!A-Za-z0-9._-]*) echo "::error::Invalid deployment user" >&2; exit 1 ;; esac
+          case "${DEPLOY_PORT}" in *[!0-9]*) echo "::error::Invalid deployment port" >&2; exit 1 ;; esac
+          test "${DEPLOY_PORT}" -ge 1
+          test "${DEPLOY_PORT}" -le 65535
+
+      - name: Install transport tools
+        run: |
+          set -euo pipefail
+          apt-get update
+          apt-get install -y --no-install-recommends curl jq openssh-client rsync
+          rm -rf /var/lib/apt/lists/*
+
+      - name: Configure deployment key
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${DEPLOY_SSH_KEY}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+      - name: Preflight and deploy
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+        run: |
+          set -euo pipefail
+          SSH="ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=20"
+          case "${DEPLOY_PATH}" in
+            /home/roctinam/production-deploy/flow.aiwg.io/) ;;
+            *) echo "::error::Refusing unexpected deployment path" >&2; exit 1 ;;
+          esac
+          ${SSH} "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p '${DEPLOY_PATH}'"
+          rsync -avzn --delete --timeout=60 \
+            -e "${SSH}" dist/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
+          rsync -avz --delete --timeout=60 \
+            -e "${SSH}" dist/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
+          ${SSH} "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "test -f '${DEPLOY_PATH}index.html' && test -f '${DEPLOY_PATH}graph/index.html' && test -f '${DEPLOY_PATH}flow-deploy-${{ gitea.sha }}.txt'"
+
+      - name: Purge cache when configured
+        env:
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+          CF_TOKEN: ${{ secrets.CF_CACHE_PURGE }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CF_ZONE_ID}" ] && [ -z "${CF_TOKEN}" ]; then
+            echo "Cache purge is not configured; skipping."
+            exit 0
+          fi
+          test -n "${CF_ZONE_ID}"
+          test -n "${CF_TOKEN}"
+          response="$(curl -sS -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/purge_cache" \
+            -H "Authorization: Bearer ${CF_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{"hosts":["flow.aiwg.io"]}')"
+          jq -e '.success == true' <<<"${response}" >/dev/null
+
+      - name: Cleanup deployment key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

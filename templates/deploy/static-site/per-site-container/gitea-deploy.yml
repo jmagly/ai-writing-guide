@@ -1,0 +1,61 @@
+# Copy to .gitea/workflows/deploy.yml and replace every {{PLACEHOLDER}}.
+name: deploy-static-site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    container:
+      image: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - name: Build and verify
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build
+          test -f {{OUTPUT_DIRECTORY}}/index.html
+      - name: Install transport tools
+        run: |
+          set -euo pipefail
+          apt-get update
+          apt-get install -y --no-install-recommends openssh-client rsync
+          rm -rf /var/lib/apt/lists/*
+      - name: Deploy to the approved isolated origin
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+        run: |
+          set -euo pipefail
+          test -n "${DEPLOY_SSH_KEY}"
+          test -n "${DEPLOY_HOST}"
+          test -n "${DEPLOY_PORT}"
+          test -n "${DEPLOY_USER}"
+          case "${DEPLOY_HOST}" in *[!A-Za-z0-9.-]*) echo "::error::Invalid deployment host" >&2; exit 1 ;; esac
+          case "${DEPLOY_USER}" in *[!A-Za-z0-9._-]*) echo "::error::Invalid deployment user" >&2; exit 1 ;; esac
+          case "${DEPLOY_PORT}" in *[!0-9]*) echo "::error::Invalid deployment port" >&2; exit 1 ;; esac
+          test "${DEPLOY_PORT}" -ge 1
+          test "${DEPLOY_PORT}" -le 65535
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${DEPLOY_SSH_KEY}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # The instantiated plan must allocate one unique {{ORIGIN_PORT}} and
+          # record {{HOSTNAME}} -> http://127.0.0.1:{{ORIGIN_PORT}}.
+          SSH="ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=20"
+          ${SSH} "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p '{{HOST_DEPLOY_PATH}}/'"
+          rsync -avzn --delete {{OUTPUT_DIRECTORY}}/ \
+            -e "${SSH}" \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:{{HOST_DEPLOY_PATH}}/"
+          rsync -avz --delete {{OUTPUT_DIRECTORY}}/ \
+            -e "${SSH}" \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:{{HOST_DEPLOY_PATH}}/"
+      - name: Cleanup deployment key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

@@ -1,0 +1,125 @@
+{
+  "apiVersion": "flow.aiwg.io/v1alpha1",
+  "kind": "FlowDomainStaticDeploymentPlan",
+  "metadata": {
+    "name": "flow-aiwg-io",
+    "issue": "#2125",
+    "approval": {
+      "status": "approved",
+      "authority": "maintainer authorization in the active #2125 address-issues session",
+      "authorizedAt": "2026-08-22"
+    }
+  },
+  "spec": {
+    "canonicalHostname": "flow.aiwg.io",
+    "hostnamePolicy": {
+      "zone": "aiwg.io",
+      "maximumLabels": 3,
+      "graphContentPath": "/graph/",
+      "fourthLevelDnsAllowed": false
+    },
+    "repositories": [
+      {
+        "id": "flow-site",
+        "owner": "roctinam",
+        "name": "flow.aiwg.io",
+        "visibility": "private",
+        "state": "approved-not-created",
+        "initialization": {
+          "template": "static-docs",
+          "initialContent": [
+            "generated Flow landing page",
+            "FlowGraph documentation and demos under /graph/"
+          ]
+        },
+        "build": {
+          "installCommand": "npm ci",
+          "command": "npm run build",
+          "outputDirectory": "dist"
+        },
+        "workflowTarget": ".gitea/workflows/deploy.yml",
+        "workflowTemplate": "templates/deploy/static-site/flow.aiwg.io/gitea-deploy.yml"
+      }
+    ],
+    "sites": [
+      {
+        "id": "flow-site",
+        "hostname": "flow.aiwg.io",
+        "repository": "flow-site",
+        "paths": [
+          { "path": "/", "purpose": "Flow landing page and domain documentation" },
+          { "path": "/graph/", "purpose": "FlowGraph documentation and bounded demos" }
+        ],
+        "deployment": {
+          "pattern": "shared-serve-static",
+          "hostPath": "/home/roctinam/production-deploy/flow.aiwg.io",
+          "containerPath": "/srv/flow.aiwg.io",
+          "origin": {
+            "scheme": "http",
+            "host": "127.0.0.1",
+            "port": 80,
+            "service": "roctinam/serve-static:static-server"
+          },
+          "caddyTemplate": "templates/deploy/static-site/flow.aiwg.io/Caddyfile",
+          "composeTemplate": "templates/deploy/static-site/flow.aiwg.io/docker-compose.override.yml"
+        },
+        "dns": {
+          "hostname": "flow.aiwg.io",
+          "recordType": "CNAME",
+          "targetSource": "approved Cloudflare tunnel CNAME target",
+          "proxied": true
+        },
+        "tunnel": {
+          "hostname": "flow.aiwg.io",
+          "origin": "http://127.0.0.1:80",
+          "accessPolicyReview": "required-before-change"
+        }
+      }
+    ],
+    "isolatedContainerPolicy": {
+      "selectedSites": [],
+      "portRange": { "minimum": 8700, "maximum": 8799 },
+      "portRegistry": [],
+      "templateRoot": "templates/deploy/static-site/per-site-container"
+    },
+    "configuration": {
+      "requiredSecretNames": ["DEPLOY_SSH_KEY"],
+      "optionalCachePurgeSecretNames": ["CF_ZONE_ID", "CF_CACHE_PURGE"],
+      "requiredVariableNames": ["DEPLOY_HOST", "DEPLOY_PORT", "DEPLOY_USER"],
+      "secretValuesNeverStored": true
+    },
+    "operatorHandoff": {
+      "dnsRoutes": [
+        {
+          "hostname": "flow.aiwg.io",
+          "recordType": "CNAME",
+          "targetSource": "approved Cloudflare tunnel CNAME target",
+          "proxied": true
+        }
+      ],
+      "tunnelRoutes": [
+        {
+          "hostname": "flow.aiwg.io",
+          "origin": "http://127.0.0.1:80",
+          "accessPolicyReview": "required-before-change"
+        }
+      ],
+      "originPorts": [
+        {
+          "hostname": "flow.aiwg.io",
+          "binding": "shared-host",
+          "port": 80,
+          "owner": "roctinam/serve-static:static-server"
+        }
+      ],
+      "changeOrder": [
+        "create the approved private repository and copy the reviewed bootstrap payload",
+        "configure repository references without recording any protected values",
+        "deploy and verify static files before changing ingress",
+        "review the tunnel access policy and every existing route on the shared tunnel",
+        "add the DNS and tunnel route, then verify the external hostname",
+        "enable optional cache purge only after scoped configuration is approved"
+      ]
+    }
+  }
+}

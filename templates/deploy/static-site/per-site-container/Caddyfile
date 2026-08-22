@@ -1,0 +1,7 @@
+# Replace the placeholders before use. TLS terminates at the approved ingress.
+http://{{HOSTNAME}} {
+    root * /srv/www
+    encode gzip
+    try_files {path} {path}.html {path}/index.html {path}/ /index.html
+    file_server
+}

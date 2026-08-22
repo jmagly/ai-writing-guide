@@ -38,6 +38,26 @@ Features:
 - Security context (non-root, read-only)
 - Pod anti-affinity
 
+### Static sites
+
+| Template | Purpose |
+|----------|---------|
+| `static-site/flow.aiwg.io/` | Approved #2125 bootstrap for the private `roctinam/flow.aiwg.io` repository on the shared `serve-static` origin |
+| `static-site/per-site-container/` | Guarded fallback for a site that requires its own Caddy container and unique localhost origin port |
+
+The Flow site bootstrap contains a versioned deployment plan, exact Caddy host
+block, read-only volume mapping, and pinned Gitea deploy workflow. Validate the
+plan before copying it:
+
+```bash
+node tools/deploy/validate-flow-domain-static-site-plan.mjs \
+  templates/deploy/static-site/flow.aiwg.io/deployment-plan.json
+```
+
+It approves `flow.aiwg.io` with graph content under `/graph/`; fourth-level DNS
+names are rejected. The bootstrap does not create a repository or mutate live
+DNS, Cloudflare, tunnels, origins, or access policies.
+
 ## Usage
 
 ### Via Command
@@ -53,6 +73,10 @@ Features:
 cp templates/deploy/docker/node.Dockerfile ./Dockerfile
 # Then replace {{VARIABLES}} with actual values
 ```
+
+For an approved static-site repository, copy its reviewed workflow template to
+`.gitea/workflows/deploy.yml`. Keep protected values in the tracker or approved
+secret broker and commit only interface names.
 
 ## Variables
 
