@@ -71,6 +71,7 @@ export interface Node {
   ref?: IndexRef;
   deterministic?: true;
   description?: string;
+  optional?: boolean;
   phase?: string;
   track?: string;
   dependsOn?: Array<Id>;
@@ -126,7 +127,7 @@ export interface Join {
 }
 
 export interface FailurePolicy {
-  onNodeFailure: "fail" | "continue" | "fallback" | "partial-synthesis";
+  onNodeFailure: "fail" | "continue" | "skip-optional" | "fallback" | "partial-synthesis";
   maxFailures: number;
   terminalSchema?: JsonSchema;
 }

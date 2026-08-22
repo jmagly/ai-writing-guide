@@ -178,6 +178,7 @@ describe('composition-engine FlowGraph contract', () => {
     const manifest = JSON.parse(readFileSync(resolve(ROOT, 'manifest.json'), 'utf8'));
     expect(manifest.cli_commands.namespace).toBe('composition');
     expect(manifest.cli_commands.subcommands.validate.file).toBe('composition.mjs');
+    expect(manifest.cli_commands.subcommands.run.file).toBe('composition-run.mjs');
     expect(manifest.schemas).toContain('flow-graph.schema');
     expect(manifest.fixtures).toEqual(expect.arrayContaining(FIXTURES));
     expect(readFileSync(resolve(ROOT, 'types', 'flow-graph.generated.ts'), 'utf8')).toContain('export interface FlowGraph');

@@ -36,12 +36,16 @@
   ],
   "cli_commands": {
     "namespace": "composition",
-    "description": "Validate and inspect provider-neutral Flow graph manifests",
+    "description": "Validate and execute provider-neutral Flow graph manifests",
     "entry": "commands/",
     "subcommands": {
       "validate": {
         "file": "composition.mjs",
         "description": "Validate and normalize one FlowGraph manifest"
+      },
+      "run": {
+        "file": "composition-run.mjs",
+        "description": "Execute one validated FlowGraph through an explicit adapter"
       }
     }
   },

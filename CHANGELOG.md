@@ -9,6 +9,14 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Deterministic FlowGraph execution runtime** - `aiwg composition run`
+  executes validated phased and multi-track graphs through an explicit adapter,
+  with stable activation/invocation identities, typed reducers, bounded joins,
+  optional/fallback/partial failure handling, mutation-safe retries,
+  capability narrowing, replay checkpoints, provider conformance, and redacted
+  requested-versus-realized resource traces. MissionConductor retains durable
+  ledger and provenance ownership (#2116).
+
 - **Provider-neutral Flow graph composition contract** - The new
   `composition-engine` addon defines strict `flow.aiwg.io/v1alpha1`
   `FlowGraph` schema and generated TypeScript types, semantic diagnostics,

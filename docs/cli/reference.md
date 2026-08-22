@@ -5313,6 +5313,7 @@ Validate and normalize provider-neutral Flow execution graphs from the
 ~~~bash
 aiwg use composition-engine
 aiwg composition validate <manifest.yaml|json> [--format human|json] [--catalog <index.json>]
+aiwg composition run <manifest.yaml|json> --adapter <module.mjs> [--format human|json]
 ~~~
 
 The manifest uses `apiVersion: flow.aiwg.io/v1alpha1` and `kind: FlowGraph`.
@@ -5326,6 +5327,23 @@ retry modes are errors.
 includes the provider-neutral normalized graph with graph, node, and edge
 identities. `--catalog` additionally proves the manifest's authorized stable
 IDs against a captured AIWG index export.
+
+`composition run` validates the graph, loads an explicit provider/transport
+adapter, and executes the bounded deterministic planner. The adapter must
+export `invokeNode(request)` and may export `parallelDispatch` and
+`evaluatePredicate`. Runtime options include:
+
+- `--run-id <id>` — choose the stable execution identity.
+- `--checkpoint <file.json>` — atomically persist checkpoint projections for
+  the MissionConductor-owned ledger.
+- `--resume <file.json>` — resume without re-invoking completed or receipted
+  exactly-once work.
+
+The runtime enforces phase and track order, typed reducers, all supported join
+modes, independent resource ceilings, capability/permission narrowing,
+retry-safe mutation keys, output gates, and trace redaction. Final-only output
+does not stream intermediate drafts. Execution metadata contains no private
+chain-of-thought.
 
 ## Extension System
 

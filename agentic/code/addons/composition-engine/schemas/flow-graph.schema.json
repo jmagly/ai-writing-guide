@@ -139,6 +139,7 @@
         "ref": { "$ref": "#/definitions/indexRef" },
         "deterministic": { "const": true },
         "description": { "type": "string", "minLength": 1 },
+        "optional": { "type": "boolean" },
         "phase": { "type": "string", "minLength": 1 },
         "track": { "type": "string", "minLength": 1 },
         "dependsOn": {
@@ -251,7 +252,7 @@
       "required": ["onNodeFailure", "maxFailures"],
       "additionalProperties": false,
       "properties": {
-        "onNodeFailure": { "enum": ["fail", "continue", "fallback", "partial-synthesis"] },
+        "onNodeFailure": { "enum": ["fail", "continue", "skip-optional", "fallback", "partial-synthesis"] },
         "maxFailures": { "type": "integer", "minimum": 0 },
         "terminalSchema": { "$ref": "#/definitions/jsonSchema" }
       }

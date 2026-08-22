@@ -22,6 +22,7 @@ aiwg use composition-engine
 aiwg composition validate path/to/graph.yaml
 aiwg composition validate path/to/graph.yaml --format json
 aiwg composition validate path/to/graph.yaml --catalog index-export.json --format json
+aiwg composition run path/to/graph.yaml --adapter ./composition-adapter.mjs
 ~~~
 
 The optional catalog accepts an array of stable IDs or an object containing
@@ -32,6 +33,30 @@ the executor never discovers an artifact outside that authorized set.
 
 Invalid manifests return exit code 1 and a stable
 **FlowGraphValidationReport**. Invocation errors return exit code 2.
+
+## Execute
+
+**aiwg composition run** validates before executing and requires an explicit
+adapter module. The adapter exports **invokeNode(request)** and may export
+**parallelDispatch(requests, invokeNode)** and **evaluatePredicate(...)**.
+This keeps provider and transport behavior outside the portable graph.
+
+The runtime owns deterministic runnable-set planning, immutable activation
+inputs, typed reducer order, routes, joins, invocation keys, and hard ceilings.
+It emits an append-only event projection and checkpoint snapshots for
+MissionConductor to persist; it does not replace MissionConductor's durable
+ledger, provenance, cost, best-output, or checkpoint ownership.
+
+~~~bash
+aiwg composition run graph.yaml --adapter ./adapter.mjs --format json
+aiwg composition run graph.yaml --adapter ./adapter.mjs \
+  --run-id review-42 --checkpoint .aiwg/runs/review-42.json
+aiwg composition run graph.yaml --adapter ./adapter.mjs \
+  --resume .aiwg/runs/review-42.json
+~~~
+
+See [docs/runtime-operations.md](docs/runtime-operations.md) for adapter,
+failure, replay, output-gate, and tracing guidance.
 
 ## Contract
 
@@ -53,7 +78,7 @@ The strict schema covers:
 - phases, tracks, dependencies, conditional routes, and guarded finite cycles;
 - all, quorum, fixed, lcm, converged, and budget joins;
 - activation, token, cost, time, and concurrency ceilings;
-- retry, fallback, failure, and partial-synthesis policies;
+- retry, optional-skip, fallback, failure, and partial-synthesis policies;
 - declared capabilities, permissions, and four side-effect modes;
 - final-only, progressive, and typed terminal-failure outputs; and
 - metadata/binding/full-I/O traces with JSON-pointer redaction.
