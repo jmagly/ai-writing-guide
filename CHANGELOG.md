@@ -7,6 +7,23 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.16] - 2026-08-21 - "Verified publication completion"
+
+### Fixed
+
+- **Attested site dispatch integrity** - The post-publication callback now
+  carries the signed setup artifact digest at the top level expected by the
+  aiwg.io deployment contract. Stable publication can therefore bind the exact
+  `setup.aiwg.yaml` bytes, adjacent attestation, and release manifest through
+  the final site deployment without weakening the existing fail-closed gates
+  (#2089).
+
+- **Accurate project index coverage** - Index statistics now measure indexed
+  entries and total files over the same source set, including `WORKSPACE.md`
+  and its linked project context. Human and JSON output stay aligned, never
+  report more indexed artifacts than current files, and expose missing index
+  entries instead of producing coverage above 100% (jmagly/aiwg#146).
+
 ## [2026.8.15] - 2026-08-21 - "Verified setup handoffs"
 
 ### Added
