@@ -223,4 +223,43 @@ describe('provider transformation receipt integration', () => {
     expect((await diagnoseIntegratedProviderTransformationReceipt(options)).findings)
       .toEqual(expect.arrayContaining([expect.objectContaining({ kind: 'user-modification' })]));
   });
+
+  it('records local-source policy exemption without reporting missing receipt', async () => {
+    const roots = await fixture();
+    const options = {
+      ...roots,
+      provider: 'codex',
+      scope: 'project' as const,
+      requestedBundles: ['sdlc'],
+      sourceDisposition: 'local-source' as const,
+    };
+    const finalized = await finalizeProviderTransformationReceipt(options);
+    expect(finalized).toMatchObject({
+      status: 'policy-exempt',
+      receiptPath: null,
+      evidenceStatePath: path.join(
+        roots.projectRoot, '.aiwg', 'receipts', 'providers', 'codex.project.evidence.json',
+      ),
+    });
+    expect(await diagnoseIntegratedProviderTransformationReceipt(options)).toMatchObject({
+      status: 'policy-exempt',
+      findings: [expect.objectContaining({ kind: 'policy-exempt' })],
+    });
+  });
+
+  it('records unavailable stable-release evidence with explicit status semantics', async () => {
+    const roots = await fixture();
+    const options = {
+      ...roots,
+      provider: 'codex',
+      scope: 'project' as const,
+      requestedBundles: ['sdlc'],
+      sourceDisposition: 'source-unavailable' as const,
+    };
+    expect(await finalizeProviderTransformationReceipt(options)).toMatchObject({ status: 'source-unavailable' });
+    expect(await diagnoseIntegratedProviderTransformationReceipt(options)).toMatchObject({
+      status: 'source-evidence-unavailable',
+      findings: [expect.objectContaining({ kind: 'source-evidence-unavailable' })],
+    });
+  });
 });

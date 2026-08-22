@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/providers/aiwg-provider-transformation-evidence-state.v1.schema.json",
+  "title": "AIWG provider transformation evidence state v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "recordedAt", "provider", "scope", "disposition"],
+  "properties": {
+    "schemaVersion": { "const": "aiwg.provider-transformation-evidence-state.v1" },
+    "recordedAt": { "type": "string", "format": "date-time" },
+    "provider": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._+\\-]*$" },
+    "scope": { "enum": ["project", "user"] },
+    "disposition": { "enum": ["local-source", "source-unavailable", "verification-failed"] }
+  }
+}

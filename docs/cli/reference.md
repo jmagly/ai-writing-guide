@@ -602,8 +602,10 @@ records; then reports one stable outcome:
 
 `aiwg doctor --deployment [--provider <name>] [--bundle <id>]
 [--scope project|user] [--json]` reruns the same verifier without redeploying.
-`aiwg status --probe --json` projects the same result into the stable status
-probe envelope. Standalone index and context commands remain targeted repair
+`aiwg status --probe [--provider <name>] [--bundle <id>]
+[--scope project|user] --json` projects the same filtered result into the
+stable status probe envelope. The value of `--scope` is never interpreted as a
+project path. Standalone index and context commands remain targeted repair
 tools; a successful `aiwg use` does not require users to invoke them manually.
 
 The human completion report deliberately distinguishes two inventories:

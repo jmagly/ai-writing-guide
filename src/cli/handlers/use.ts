@@ -105,6 +105,7 @@ import {
 } from '../services/deployment-verification.js';
 import {
   finalizeProviderTransformationReceipt,
+  providerReceiptHasLocalSources,
   sourceVerificationsFromSignedWebRelease,
 } from '../../providers/transformation-receipt-integration.js';
 import {
@@ -137,15 +138,24 @@ function providerReceiptWebReleaseOptions(): Omit<WebReleaseOptions, 'selector' 
   };
 }
 
-async function signedProviderSourceVerifications(options: {
+function releaseResourceUnavailable(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /fetch failed|request timed out|no fetch implementation/i.test(message);
+}
+
+export async function resolveProviderReceiptSource(options: {
   projectRoot: string;
   frameworkRoot: string;
   provider: string;
   scope: DeploymentScope;
   requestedBundles: string[];
-}): Promise<Readonly<Record<string, import('../../security/artifact-verifier.js').ArtifactVerificationResult>> | undefined> {
+}): Promise<{
+  sourceVerifications?: Readonly<Record<string, import('../../security/artifact-verifier.js').ArtifactVerificationResult>>;
+  sourceDisposition?: 'local-source' | 'source-unavailable' | 'verification-failed';
+}> {
+  if (await providerReceiptHasLocalSources(options)) return { sourceDisposition: 'local-source' };
   const versionInfo = await getVersionInfo();
-  if (versionInfo.devMode) return undefined;
+  if (versionInfo.devMode) return { sourceDisposition: 'local-source' };
   const releaseOptions = providerReceiptWebReleaseOptions();
   let release;
   try {
@@ -155,15 +165,22 @@ async function signedProviderSourceVerifications(options: {
     const token = await credentialProvider();
     // Protected production resources require the authenticated release
     // credential. A configured alternate endpoint may intentionally be public.
-    if (!token && releaseOptions.baseUrl === undefined) return undefined;
-    release = await resolveWebRelease({
-      ...releaseOptions,
-      selector: versionInfo.version,
-      credentialProvider: async () => token,
-    });
+    if (!token && releaseOptions.baseUrl === undefined) return { sourceDisposition: 'source-unavailable' };
+    try {
+      release = await resolveWebRelease({
+        ...releaseOptions,
+        selector: versionInfo.version,
+        credentialProvider: async () => token,
+      });
+    } catch (error) {
+      if (releaseResourceUnavailable(error)) return { sourceDisposition: 'source-unavailable' };
+      throw error;
+    }
   }
   const verifications = await sourceVerificationsFromSignedWebRelease(options, release);
-  return Object.keys(verifications).length > 0 ? verifications : undefined;
+  return Object.keys(verifications).length > 0
+    ? { sourceVerifications: verifications }
+    : { sourceDisposition: 'verification-failed' };
 }
 
 /**
@@ -2425,9 +2442,17 @@ export class UseHandler implements CommandHandler {
               scope: effectiveScope,
               requestedBundles: [requestedBundle],
             };
-            const sourceVerifications = await signedProviderSourceVerifications(receiptOptions);
-            await finalizeProviderTransformationReceipt({ ...receiptOptions, sourceVerifications });
+            const sourceResolution = await resolveProviderReceiptSource(receiptOptions);
+            await finalizeProviderTransformationReceipt({ ...receiptOptions, ...sourceResolution });
           } catch (error) {
+            await finalizeProviderTransformationReceipt({
+              projectRoot: projectDir,
+              frameworkRoot,
+              provider,
+              scope: effectiveScope,
+              requestedBundles: [requestedBundle],
+              sourceDisposition: 'verification-failed',
+            }).catch(() => undefined);
             originalConsole.warn(`Provider receipt finalization failed for ${provider}: ${error instanceof Error ? error.message : String(error)}`);
           }
         }

@@ -161,10 +161,16 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
       expect(result.stderr).toBe('');
       expect(result.payload).toMatchObject({
         schema: 'aiwg.use.result.v1',
-        outcome: 'ready-restart-required',
-        exitClassification: 'success',
+        outcome: 'degraded',
+        exitClassification: 'degraded',
         exitCode: 0,
       });
+      expect(result.payload.findings).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          id: 'provider-drift:source-evidence-unavailable:0',
+          severity: 'advisory',
+        }),
+      ]));
       expect(result.payload.discovery.byType).toEqual(expect.objectContaining({
         agent: expect.any(Number),
         skill: expect.any(Number),
@@ -213,7 +219,7 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
 
     expect(result.exitCode, result.stderr || result.stdout).toBe(0);
     expect(result.stderr).toBe('');
-    expect(result.stdout).toContain('AIWG ready — provider reload required');
+    expect(result.stdout).toContain('AIWG ready with advisories');
     expect(result.stdout).toContain('Deployed to OpenAI Codex (codex)');
     expect(result.stdout).toContain('Indexed for discovery');
     expect(result.stdout).not.toContain('Registered ');
@@ -229,7 +235,7 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
 
     expect(result.exitCode, result.stderr || result.stdout).toBe(0);
     expect(result.payload.providers).toEqual([
-      expect.objectContaining({ provider: 'cursor', outcome: 'ready-restart-required' }),
+      expect.objectContaining({ provider: 'cursor', outcome: 'degraded' }),
     ]);
     expect(existsSync(path.join(projectRoot, '.cursor', 'skills'))).toBe(true);
   });
@@ -259,8 +265,8 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
     const result = runUse(projectRoot, homeRoot, ['--providers', 'codex,claude']);
 
     expect(result.exitCode, result.stderr || result.stdout).toBe(0);
-    expect(result.payload.outcome).toBe('ready-restart-required');
+    expect(result.payload.outcome).toBe('degraded');
     expect(result.payload.providers.map((provider: { provider: string }) => provider.provider)).toEqual(['codex', 'claude']);
-    expect(result.payload.providers.every((provider: { outcome: string }) => provider.outcome === 'ready-restart-required')).toBe(true);
+    expect(result.payload.providers.every((provider: { outcome: string }) => provider.outcome === 'degraded')).toBe(true);
   }, 30_000);
 });

@@ -9,7 +9,9 @@ export type ProviderDriftKind =
   | 'transformation-mismatch'
   | 'user-modification'
   | 'stale-output'
-  | 'missing-receipt';
+  | 'missing-receipt'
+  | 'policy-exempt'
+  | 'source-evidence-unavailable';
 
 export interface ProviderTransformationReceipt {
   schemaVersion: typeof PROVIDER_TRANSFORMATION_RECEIPT_SCHEMA;
@@ -43,7 +45,7 @@ export interface ProviderDriftFinding {
 }
 
 export interface ProviderTransformationDiagnosis {
-  status: 'verified' | 'drifted' | 'missing-receipt';
+  status: 'verified' | 'drifted' | 'missing-receipt' | 'policy-exempt' | 'source-evidence-unavailable';
   receiptPath: string;
   checkedOutputs: number;
   findings: ProviderDriftFinding[];

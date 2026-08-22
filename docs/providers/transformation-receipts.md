@@ -20,6 +20,24 @@ match its exact signed `raw/` descriptor before AIWG derives the bundle-inventor
 subject. Matching only `manifest.json`, a registry hash, or provider output is
 not sufficient authentication. Cached signed release metadata supports the same
 check offline after the first authenticated resolution.
+
+Local-source development checkouts and project-local bundles cannot
+authenticate their working-tree bytes against a published AIWG release. A
+successful `aiwg use` therefore records a separate `*.evidence.json` state with
+the explicit `local-source` policy exemption. Status and doctor report that
+state as informational, not as a missing receipt or degraded deployment. The
+exemption never produces a `verified` receipt and does not weaken the receipt
+schema.
+
+For stable package installs, AIWG first tries the verified release cache and
+then configured authenticated resource access. If neither is available, the
+same evidence-state file records `source-unavailable`; `aiwg use`, doctor, and
+status report an advisory telling the operator to run `aiwg auth login`, then
+`aiwg versions resolve <installed-version>` once online to warm the verified
+cache, before rerunning the deployment. Signature or source-byte mismatches
+remain blocking verification failures. Evidence-state files contain only the
+provider, scope, disposition, schema, and timestamp—no credential values or
+machine-local paths.
 Output paths are forward-slash relative paths. Receipts must not contain home
 directories, usernames, hostnames, credentials, environment values, or other
 machine-local identifiers. In split-root projects the receipt stays with local
@@ -43,6 +61,12 @@ classifier:
 - `missing-receipt` — legacy or incomplete deployment evidence is unavailable.
   Run a verified regeneration to establish a receipt; absence is not proof of
   tampering.
+- `policy-exempt` — a local-source development deployment explicitly records
+  why a signed-release receipt does not apply; this is informational.
+- `source-evidence-unavailable` — a stable deployment could not use a verified
+  cache or configured release-resource access. Configure either source and
+  rerun `aiwg use`; repeating the command without that prerequisite cannot
+  establish a receipt.
 
 ## Safe recovery
 

@@ -1,5 +1,5 @@
-import { createHash } from 'node:crypto';
-import { access, lstat, readFile, readdir } from 'node:fs/promises';
+import { createHash, randomUUID } from 'node:crypto';
+import { access, lstat, mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
@@ -55,6 +55,8 @@ export interface ProviderReceiptIntegrationOptions {
   generatedAt?: string;
   /** Verifier results keyed by installed bundle name. Required for receipt issuance. */
   sourceVerifications?: Readonly<Record<string, ArtifactVerificationResult>>;
+  /** Explicit reason a verified source handoff is unavailable. */
+  sourceDisposition?: 'local-source' | 'source-unavailable' | 'verification-failed';
 }
 
 export interface ProviderReceiptRuntimeEvidence {
@@ -70,10 +72,84 @@ export interface ProviderReceiptRuntimeEvidence {
 }
 
 export interface ProviderReceiptFinalization {
-  status: 'written' | 'skipped';
+  status: 'written' | 'policy-exempt' | 'source-unavailable' | 'skipped';
   receiptPath: string | null;
+  evidenceStatePath?: string;
   outputCount: number;
   reason?: string;
+}
+
+const PROVIDER_TRANSFORMATION_EVIDENCE_STATE_SCHEMA = 'aiwg.provider-transformation-evidence-state.v1' as const;
+
+interface ProviderTransformationEvidenceState {
+  schemaVersion: typeof PROVIDER_TRANSFORMATION_EVIDENCE_STATE_SCHEMA;
+  recordedAt: string;
+  provider: string;
+  scope: 'project' | 'user';
+  disposition: 'local-source' | 'source-unavailable' | 'verification-failed';
+}
+
+export function providerTransformationEvidenceStatePath(
+  projectRoot: string,
+  provider: string,
+  scope: 'project' | 'user',
+): string {
+  const receiptPath = providerTransformationReceiptPath(projectRoot, provider, scope);
+  return receiptPath.replace(/\.json$/, '.evidence.json');
+}
+
+function validateEvidenceState(value: unknown): ProviderTransformationEvidenceState {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('evidence state must be an object');
+  const state = value as ProviderTransformationEvidenceState;
+  if (state.schemaVersion !== PROVIDER_TRANSFORMATION_EVIDENCE_STATE_SCHEMA) throw new Error('unsupported evidence state schema');
+  if (!Number.isFinite(Date.parse(state.recordedAt))) throw new Error('recordedAt must be an RFC 3339 date-time');
+  if (state.scope !== 'project' && state.scope !== 'user') throw new Error('scope must be project or user');
+  if (!['local-source', 'source-unavailable', 'verification-failed'].includes(state.disposition)) {
+    throw new Error('unsupported source evidence disposition');
+  }
+  if (!state.provider || state.provider.includes('/') || state.provider.includes('\\')) throw new Error('provider is invalid');
+  return state;
+}
+
+async function writeEvidenceState(
+  options: ProviderReceiptIntegrationOptions,
+  disposition: ProviderTransformationEvidenceState['disposition'],
+): Promise<string> {
+  const provider = normalizeProviderDefinitionId(options.provider) ?? options.provider;
+  const target = providerTransformationEvidenceStatePath(options.projectRoot, provider, options.scope);
+  await mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
+  const temporary = path.join(path.dirname(target), `.${path.basename(target)}.${randomUUID()}.tmp`);
+  const state: ProviderTransformationEvidenceState = {
+    schemaVersion: PROVIDER_TRANSFORMATION_EVIDENCE_STATE_SCHEMA,
+    recordedAt: options.generatedAt ?? new Date().toISOString(),
+    provider,
+    scope: options.scope,
+    disposition,
+  };
+  try {
+    await writeFile(temporary, `${JSON.stringify(state, null, 2)}\n`, { encoding: 'utf8', mode: 0o600, flag: 'wx' });
+    await rename(temporary, target);
+  } catch (error) {
+    await rm(temporary, { force: true }).catch(() => undefined);
+    throw error;
+  }
+  await rm(providerTransformationReceiptPath(options.projectRoot, provider, options.scope), { force: true });
+  return target;
+}
+
+async function readEvidenceState(options: ProviderReceiptIntegrationOptions): Promise<ProviderTransformationEvidenceState | null> {
+  const provider = normalizeProviderDefinitionId(options.provider) ?? options.provider;
+  try {
+    const state = validateEvidenceState(JSON.parse(await readFile(
+      providerTransformationEvidenceStatePath(options.projectRoot, provider, options.scope),
+      'utf8',
+    )));
+    if (state.provider !== provider || state.scope !== options.scope) throw new Error('evidence state identity does not match deployment');
+    return state;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    throw error;
+  }
 }
 
 function sha256(value: string | Uint8Array): string {
@@ -295,6 +371,20 @@ function receiptBundles(
 }
 
 /**
+ * Return whether the deployed provider surface includes project-local source
+ * material that cannot be authenticated by an AIWG signed web release.
+ */
+export async function providerReceiptHasLocalSources(
+  rawOptions: ProviderReceiptIntegrationOptions,
+): Promise<boolean> {
+  const provider = normalizeProviderDefinitionId(rawOptions.provider) ?? rawOptions.provider;
+  const options = { ...rawOptions, provider };
+  const installed = await installedEntries(options);
+  return receiptBundles(installed, options)
+    .some(bundle => installed[bundle]?.source === 'project-local');
+}
+
+/**
  * Convert an already signature-verified web release into the stable verifier
  * result contract for the complete canonical bundle consumed by deployment.
  * Every local file must match its signed descriptor; a registry's self-recorded
@@ -458,6 +548,27 @@ export async function resolveProviderReceiptRuntimeEvidence(
 export async function finalizeProviderTransformationReceipt(
   options: ProviderReceiptIntegrationOptions,
 ): Promise<ProviderReceiptFinalization> {
+  if (options.sourceDisposition) {
+    const evidenceStatePath = await writeEvidenceState(options, options.sourceDisposition);
+    if (options.sourceDisposition === 'local-source') {
+      return {
+        status: 'policy-exempt',
+        receiptPath: null,
+        evidenceStatePath,
+        outputCount: 0,
+        reason: 'local-source development deployments are exempt from signed-release receipt issuance',
+      };
+    }
+    return {
+      status: options.sourceDisposition === 'source-unavailable' ? 'source-unavailable' : 'skipped',
+      receiptPath: null,
+      evidenceStatePath,
+      outputCount: 0,
+      reason: options.sourceDisposition === 'source-unavailable'
+        ? 'verified signed-release source evidence is not available from cache or configured resource access'
+        : 'canonical source verification failed',
+    };
+  }
   if (!options.sourceVerifications) {
     return {
       status: 'skipped',
@@ -495,9 +606,11 @@ export async function finalizeProviderTransformationReceipt(
     transformer: evidence.transformer,
     outputPaths: evidence.outputPaths,
   });
+  const receiptPath = await writeProviderTransformationReceipt(options.projectRoot, receipt);
+  await rm(providerTransformationEvidenceStatePath(options.projectRoot, evidence.provider, options.scope), { force: true });
   return {
     status: 'written',
-    receiptPath: await writeProviderTransformationReceipt(options.projectRoot, receipt),
+    receiptPath,
     outputCount: receipt.outputs.length,
   };
 }
@@ -510,6 +623,40 @@ export async function diagnoseIntegratedProviderTransformationReceipt(
   try {
     await access(receiptPath);
   } catch {
+    const state = await readEvidenceState(options);
+    if (state?.disposition === 'local-source') {
+      return {
+        status: 'policy-exempt',
+        receiptPath,
+        checkedOutputs: 0,
+        findings: [{
+          kind: 'policy-exempt',
+          message: 'This local-source development deployment is explicitly exempt from signed-release transformation receipts.',
+        }],
+      };
+    }
+    if (state?.disposition === 'source-unavailable') {
+      return {
+        status: 'source-evidence-unavailable',
+        receiptPath,
+        checkedOutputs: 0,
+        findings: [{
+          kind: 'source-evidence-unavailable',
+          message: 'The deployment succeeded, but verified signed-release source evidence was unavailable from cache or configured resource access.',
+        }],
+      };
+    }
+    if (state?.disposition === 'verification-failed') {
+      return {
+        status: 'drifted',
+        receiptPath,
+        checkedOutputs: 0,
+        findings: [{
+          kind: 'source-verification-failure',
+          message: 'Canonical source verification failed during receipt finalization.',
+        }],
+      };
+    }
     return {
       status: 'missing-receipt',
       receiptPath,

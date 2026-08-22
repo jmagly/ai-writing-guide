@@ -317,6 +317,44 @@ describe.sequential('deployment verification contract (#2069)', () => {
       })]));
   });
 
+  it('treats local-source evidence as informational and stable source unavailability as actionable', async () => {
+    const local = await readyCodexFixture();
+    await finalizeProviderTransformationReceipt({
+      ...local,
+      provider: 'codex',
+      scope: 'project',
+      requestedBundles: ['sdlc'],
+      sourceDisposition: 'local-source',
+    });
+    const localResult = await verifyFixture(local.projectRoot, local.frameworkRoot);
+    expect(localResult.findings).toEqual(expect.arrayContaining([expect.objectContaining({
+      id: 'provider-drift:policy-exempt:0',
+      severity: 'info',
+      remediation: undefined,
+    })]));
+    expect(localResult.outcome).not.toBe('degraded');
+
+    const stable = await readyCodexFixture();
+    await finalizeProviderTransformationReceipt({
+      ...stable,
+      provider: 'codex',
+      scope: 'project',
+      requestedBundles: ['sdlc'],
+      sourceDisposition: 'source-unavailable',
+    });
+    const stableResult = await verifyFixture(stable.projectRoot, stable.frameworkRoot, {
+      reportMissingReceipt: false,
+    });
+    expect(stableResult).toMatchObject({
+      outcome: 'degraded',
+      findings: expect.arrayContaining([expect.objectContaining({
+        id: 'provider-drift:source-evidence-unavailable:0',
+        severity: 'advisory',
+        remediation: expect.stringMatching(/cache|resource access/),
+      })]),
+    });
+  });
+
   it('reports an unconfigured workspace as diagnostic state rather than deployment failure', async () => {
     const projectRoot = await tempRoot('aiwg-deploy-unconfigured-');
     const frameworkRoot = await tempRoot('aiwg-deploy-framework-');

@@ -11,7 +11,10 @@ import type { HandlerContext } from '../../../../src/cli/handlers/types.js';
 
 // ── Mocks ────────────────────────────────────────────────────
 
-const mockRun = vi.fn().mockResolvedValue({ exitCode: 0 });
+const { mockRun, mockBuildDeploymentStatusProbe } = vi.hoisted(() => ({
+  mockRun: vi.fn().mockResolvedValue({ exitCode: 0 }),
+  mockBuildDeploymentStatusProbe: vi.fn().mockResolvedValue({ status: 'ready' }),
+}));
 
 vi.mock('../../../../src/cli/handlers/script-runner.js', () => ({
   createScriptRunner: vi.fn(() => ({ run: mockRun })),
@@ -19,6 +22,10 @@ vi.mock('../../../../src/cli/handlers/script-runner.js', () => ({
 
 vi.mock('../../../../src/channel/manager.mjs', () => ({
   getFrameworkRoot: vi.fn().mockResolvedValue('/mock/framework/root'),
+}));
+
+vi.mock('../../../../src/cli/services/deployment-verification.js', () => ({
+  buildDeploymentStatusProbe: mockBuildDeploymentStatusProbe,
 }));
 
 import {
@@ -43,7 +50,11 @@ function makeCtx(args: string[] = []): HandlerContext {
 // ── statusHandler ─────────────────────────────────────────────
 
 describe('statusHandler', () => {
-  beforeEach(() => { vi.clearAllMocks(); mockRun.mockResolvedValue({ exitCode: 0 }); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRun.mockResolvedValue({ exitCode: 0 });
+    mockBuildDeploymentStatusProbe.mockResolvedValue({ status: 'ready' });
+  });
 
   it('has correct metadata', () => {
     expect(statusHandler.id).toBe('status');
@@ -77,6 +88,27 @@ describe('statusHandler', () => {
       'tools/cli/workspace-status.mjs',
       ['--verbose'],
       expect.any(Object)
+    );
+  });
+
+  it('does not parse --scope user as the probe project root and forwards the scope filter', async () => {
+    const result = await statusHandler.execute(makeCtx(['--probe', '--scope', 'user', '--json']));
+    expect(result.exitCode).toBe(0);
+    expect(mockBuildDeploymentStatusProbe).toHaveBeenCalledWith(
+      '/mock/cwd',
+      '/mock/framework/root',
+      { scope: 'user', provider: undefined, bundle: undefined },
+    );
+  });
+
+  it('forwards an explicit probe root and deployment filters', async () => {
+    await statusHandler.execute(makeCtx([
+      '--probe', '/workspace', '--provider', 'codex', '--bundle', 'sdlc', '--scope', 'project', '--json',
+    ]));
+    expect(mockBuildDeploymentStatusProbe).toHaveBeenCalledWith(
+      '/workspace',
+      '/mock/framework/root',
+      { scope: 'project', provider: 'codex', bundle: 'sdlc' },
     );
   });
 

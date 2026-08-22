@@ -235,7 +235,7 @@ function classifyOutcome(
 
 const RECEIPT_DRIFT_POLICY: Readonly<Record<ProviderDriftKind, {
   severity: DeploymentFindingSeverity;
-  remediation: string;
+  remediation?: string;
 }>> = {
   'source-verification-failure': {
     severity: 'blocking',
@@ -256,6 +256,13 @@ const RECEIPT_DRIFT_POLICY: Readonly<Record<ProviderDriftKind, {
   'missing-receipt': {
     severity: 'advisory',
     remediation: 'Re-run the same aiwg use command to establish provider transformation evidence.',
+  },
+  'policy-exempt': {
+    severity: 'info',
+  },
+  'source-evidence-unavailable': {
+    severity: 'advisory',
+    remediation: 'Run aiwg auth login, then aiwg versions resolve <installed-version> once online to warm the verified cache; re-run the same aiwg use command afterward.',
   },
 };
 
@@ -805,8 +812,9 @@ export async function verifyConfiguredDeployments(
 export async function buildDeploymentStatusProbe(
   projectRoot: string,
   frameworkRoot = process.env.AIWG_ROOT || projectRoot,
+  filters: { provider?: string; bundle?: string; scope?: DeploymentScope } = {},
 ): Promise<Record<string, unknown>> {
-  const result = await verifyConfiguredDeployments(projectRoot, {}, frameworkRoot);
+  const result = await verifyConfiguredDeployments(projectRoot, filters, frameworkRoot);
   const notConfigured = result.requestedBundles.length === 0
     && result.findings.length > 0
     && result.findings.every((item) => item.id === 'deployment-not-configured');
