@@ -182,16 +182,20 @@ describe('handlePtyConnection message routing', () => {
     expect(session.clients.size).toBe(0);
   });
 
-  it('replays from the last full-screen erase when reconnecting', async () => {
+  it('replays retained scrollback before the current screen when reconnecting (#2146)', async () => {
     const session = registry.create('replay-trim');
-    session.outputBuffer = 'old bytes\x1b[2Jcurrent screen';
+    const priorLines = Array.from({ length: 40 }, (_, i) => `history-${i}\r\n`).join('');
+    session.outputBuffer = `${priorLines}\x1b[2Jcurrent screen`;
     session.pty = { write: vi.fn(), resize: vi.fn(), kill: vi.fn(), onData: vi.fn(), onExit: vi.fn() };
 
     const ws = makeMockWs();
     await handlePtyConnection('replay-trim', ws);
 
     expect(ws.messages).toHaveLength(1);
-    expect(ws.messages[0]).toEqual({ type: 'data', payload: '\x1b[2Jcurrent screen' });
+    expect(ws.messages[0]).toEqual({
+      type: 'data',
+      payload: `${priorLines}\x1b[2Jcurrent screen`,
+    });
   });
 
   it('returns an exit frame and closes when the session already exited', async () => {

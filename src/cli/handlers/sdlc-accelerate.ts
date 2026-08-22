@@ -144,7 +144,8 @@ AGENT OPTIONS:
                           IDE-integrated (guidance only): copilot, cursor, factory, warp, windsurf
   --dangerous             Enable unrestricted mode (skips permission prompts).
                           Maps to the provider's native flag — e.g. claude gets
-                          --dangerously-skip-permissions, codex gets --full-auto.
+                          --dangerously-skip-permissions, codex gets
+                          --dangerously-bypass-approvals-and-sandbox.
                           Has no effect on providers that don't support it.
   --params "<args>"       Pass arbitrary args directly to the agent binary.
                           Appended verbatim after all other flags. You are

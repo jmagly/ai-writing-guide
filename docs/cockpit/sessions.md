@@ -36,6 +36,12 @@ full-screen snapshot — useful when a TUI's incremental updates leave a stale
 picture. Under the hood the client sends `pty.join_session` with
 `{role, replay_from}` and tracks sequence numbers from keyframe/output frames.
 
+When the browser connection itself must be recreated, Cockpit replays the
+entire retained bridge buffer in order, including output before the most recent
+full-screen repaint. This restores both scrollback and the current viewport;
+screen-clear sequences are interpreted by xterm and are not used as a reason
+to discard earlier retained output.
+
 Attach readiness is defensive: if no first frame arrives promptly, controllers
 request a keyframe and observers reconnect, with bounded retries — so a slow
 executor shows a notice rather than a dead black terminal.

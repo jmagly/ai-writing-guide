@@ -226,15 +226,17 @@ AGENTS.md is **free-form Markdown** — there is no structured schema, no YAML f
 
 ## Approval Policy & Sandboxing
 
-### Approval Modes
+### Dangerous mode
 
-Three CLI modes via `--approval-mode` / `-a`:
+AIWG maps `--dangerous` to Codex's current explicit bypass flag:
 
-| Mode | Flag | Auto-approves | Requires approval |
-|------|------|---------------|-------------------|
-| **Suggest** | `suggest` (default) | File reads | All writes, all shell commands |
-| **Auto Edit** | `auto-edit` | File reads + patch writes | All shell commands |
-| **Full Auto** | `full-auto` | Reads, writes, shell execution (sandboxed) | Nothing (sandbox enforced instead) |
+```bash
+codex exec --dangerously-bypass-approvals-and-sandbox "<prompt>"
+```
+
+This disables both approval prompts and sandboxing. Use it only in an already
+trusted environment. AIWG launchers do not emit the removed `--full-auto`
+compatibility flag.
 
 ### Approval Policy (config.toml)
 
@@ -550,11 +552,11 @@ This is a separate capability from Codex consuming MCP tools (the sidecar patter
 ## Non-Interactive / CI Mode
 
 ```bash
-# Full auto execution
-codex exec "Perform AIWG security review" --full-auto --sandbox read-only
+# Unrestricted non-interactive execution
+codex exec --dangerously-bypass-approvals-and-sandbox "Perform AIWG security review"
 
 # With specific model
-codex exec "Fix failing tests" --model gpt-5.3-codex --full-auto
+codex exec --dangerously-bypass-approvals-and-sandbox --model gpt-5.3-codex "Fix failing tests"
 ```
 
 ---
@@ -639,7 +641,8 @@ cat AGENTS.md | head -20
 
 ## MCP Sidecar (AIWG Tooling Layer)
 
-For structured AIWG tool access beyond what `--full-auto` provides, connect the MCP sidecar:
+For structured AIWG tool access beyond what Codex's explicit approval/sandbox
+bypass provides, connect the MCP sidecar:
 
 ```bash
 aiwg mcp install codex

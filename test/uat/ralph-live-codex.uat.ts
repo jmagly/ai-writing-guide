@@ -9,7 +9,7 @@
  *   npm run uat:codex
  *
  * Requirements:
- *   - codex CLI installed (codex exec --full-auto)
+ *   - codex CLI installed (codex exec --dangerously-bypass-approvals-and-sandbox)
  *   - OPENAI_API_KEY set
  */
 

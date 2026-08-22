@@ -52,8 +52,10 @@ export const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   },
   codex: {
     binary: 'codex',
-    // Codex supports --full-auto (no approval prompts) and --approval-mode full-auto
-    dangerousFlag: '--full-auto',
+    // Current Codex releases use the explicit bypass flag for unrestricted,
+    // non-interactive execution. Keep this centralized so every launcher maps
+    // AIWG's --dangerous option consistently.
+    dangerousFlag: '--dangerously-bypass-approvals-and-sandbox',
     name: 'OpenAI Codex',
   },
   hermes: {

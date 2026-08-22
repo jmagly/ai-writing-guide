@@ -309,7 +309,8 @@ LFD LOOP CONTROLS (hard cumulative ceilings; loop stops with a best-output repor
                           Spawnable: claude, opencode, codex, hermes
   --dangerous             Enable unrestricted mode for the selected provider.
                           Passes the provider's native flag (e.g. --dangerously-skip-permissions
-                          for claude/opencode, --full-auto for codex). No effect if the
+                          for claude/opencode,
+                          --dangerously-bypass-approvals-and-sandbox for codex). No effect if the
                           provider doesn't have a dangerous mode flag.
   --params "<args>"       Pass arbitrary args verbatim to the agent binary.
                           Appended after all other flags. Quoted segments preserved.

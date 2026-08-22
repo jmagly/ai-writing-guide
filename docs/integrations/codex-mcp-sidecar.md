@@ -2,7 +2,7 @@
 
 Connect the AIWG MCP server to OpenAI Codex for structured artifact management and workflow tools.
 
-> **This is a tooling layer, not a permission workaround.** Codex already supports `--full-auto` (or `--approval-mode full-auto`) for unrestricted execution. The MCP sidecar adds a complementary layer: structured AIWG tools for artifact management, template rendering, and workflow execution.
+> **This is a tooling layer, not a permission workaround.** Codex supports `--dangerously-bypass-approvals-and-sandbox` for unrestricted execution. The MCP sidecar adds a complementary layer: structured AIWG tools for artifact management, template rendering, and workflow execution.
 
 > **Version note:** Codex's MCP client support is a newer capability. Verify your Codex CLI version supports MCP before proceeding: `codex --version`. If MCP server config is not recognized, update with `npm install -g @openai/codex`.
 
@@ -12,7 +12,7 @@ Connect the AIWG MCP server to OpenAI Codex for structured artifact management a
 
 | Layer | Flag / Tool | Controls |
 |---|---|---|
-| **Permission** | `--full-auto` / `--approval-mode full-auto` | Execution scope, approval policy |
+| **Permission** | `--dangerously-bypass-approvals-and-sandbox` | Execution scope, approval policy |
 | **Tooling** | MCP sidecar (`aiwg mcp serve`) | AIWG artifact tools, workflows, templates |
 
 Both layers are independent. You can use either or both:
@@ -30,7 +30,7 @@ Both layers are independent. You can use either or both:
 ```
 Codex CLI (host)
   ├── Conversation, code editing, web search
-  ├── --full-auto (permission layer)
+  ├── --dangerously-bypass-approvals-and-sandbox (permission layer)
   └── MCP connection (tooling layer)
         └── AIWG MCP Server (sidecar)
               ├── discover / command-run
@@ -124,7 +124,7 @@ Codex should list the lean whitelisted tools.
 aiwg sdlc-accelerate "My project" --provider codex --dangerous
 ```
 
-Codex runs with `--full-auto` and has AIWG MCP tools available via the sidecar simultaneously.
+Codex runs with `--dangerously-bypass-approvals-and-sandbox` and has AIWG MCP tools available via the sidecar simultaneously.
 
 ---
 
@@ -161,8 +161,8 @@ Codex runs with full execution permissions and can call AIWG MCP tools for struc
 Because Codex supports non-interactive execution, the sidecar is especially useful in automation pipelines:
 
 ```bash
-# Non-interactive full-auto with MCP tools available
-codex --full-auto "Create an ADR for our database choice and save it to .aiwg/architecture/"
+# Non-interactive unrestricted execution with MCP tools available
+codex exec --dangerously-bypass-approvals-and-sandbox "Create an ADR for our database choice and save it to .aiwg/architecture/"
 ```
 
 Codex calls `template-render` and `artifact-write` via MCP to produce a schema-validated artifact without prompting.
@@ -177,7 +177,7 @@ The agent loop agent can use `artifact-read` to check existing requirements and 
 
 ### Artifact-Driven Workflow (Standard Approval Mode)
 
-Without `--full-auto`, the sidecar still provides structured access:
+Without `--dangerously-bypass-approvals-and-sandbox`, the sidecar still provides structured access:
 
 ```bash
 # Start Codex normally, with AIWG tools available
@@ -217,9 +217,9 @@ Key fields:
 |---|---|---|
 | MCP connection | Ask "list AIWG tools" | Lean core tools listed |
 | Artifact write | Ask to create an ADR | File appears in `.aiwg/architecture/` |
-| Permission layer | Run a command without approval | No prompt (with `--full-auto`) |
+| Permission layer | Run a command without approval | No prompt (with `--dangerously-bypass-approvals-and-sandbox`) |
 | Combined | Run a workflow that reads requirements and writes code | Both layers work together |
-| Non-interactive | `codex --full-auto "create a test plan artifact"` | Artifact written, exits cleanly |
+| Non-interactive | `codex exec --dangerously-bypass-approvals-and-sandbox "create a test plan artifact"` | Artifact written, exits cleanly |
 
 ---
 
@@ -232,8 +232,8 @@ Key fields:
 - Restart Codex after config changes
 
 **Permission prompts still appearing with the sidecar:**
-- The sidecar does not grant execution permissions — that is the `--full-auto` flag
-- Use `--full-auto` or `--approval-mode full-auto` for unrestricted execution
+- The sidecar does not grant execution permissions — that is the `--dangerously-bypass-approvals-and-sandbox` flag
+- Use `--dangerously-bypass-approvals-and-sandbox` for unrestricted execution
 
 **Artifacts not appearing in `.aiwg/`:**
 - Ensure AIWG is initialized in the project: `aiwg use sdlc --provider codex`
