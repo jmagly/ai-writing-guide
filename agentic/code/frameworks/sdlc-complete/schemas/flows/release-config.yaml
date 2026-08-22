@@ -192,6 +192,55 @@ properties:
           description: Post-release hook actions.
           items:
             type: object
+            properties:
+              required_for_channels:
+                type: array
+                items: { type: string }
+              skip_when_flag:
+                type: string
+              close_imported_issues_with_thanks:
+                type: boolean
+              update_release_entry:
+                type: string
+                enum: [gitea, github]
+              create_github_announcement_discussion:
+                type: object
+                required: [category, links, style]
+                properties:
+                  category:
+                    type: string
+                    description: GitHub Discussions category name, normally Announcements.
+                  required_for_channels:
+                    type: array
+                    items: { type: string }
+                  hard_stop:
+                    type: boolean
+                    default: true
+                  skip_when_flag:
+                    type: string
+                  links:
+                    type: array
+                    minItems: 4
+                    maxItems: 4
+                    uniqueItems: true
+                    items:
+                      type: string
+                      enum: [github_release, npm_version, release_notes, changelog]
+                    description: Release surfaces that must be linked from the discussion body.
+                    allOf:
+                      - contains: { const: github_release }
+                      - contains: { const: npm_version }
+                      - contains: { const: release_notes }
+                      - contains: { const: changelog }
+                  style:
+                    type: string
+                    enum: [conversational-impact-guidance]
+                    description: Explain user impact and invite conversation instead of repeating release notes.
+                  voice_sources:
+                    type: array
+                    items: { type: string }
+                    description: Optional operator voice files; fall back to the named style when unavailable.
+            additionalProperties: false
 
   policy:
     type: object

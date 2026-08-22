@@ -126,7 +126,7 @@ plan and that plan cannot be resolved.
 
 ## Config-driven gate semantics
 
-The config schema (`release-config.yaml`) defines five gate shapes. Each gate has exactly one shape:
+The config schema (`release-config.yaml`) defines six gate shapes. Each gate has exactly one shape:
 
 ### Shape 1: `steps`
 
@@ -230,12 +230,42 @@ Declarative actions for post-release housekeeping.
     - update_release_entry: gitea
     - update_release_entry: github
       skip_when_flag: '--no-mirror'
+    - create_github_announcement_discussion:
+        category: Announcements
+        required_for_channels: [stable]
+        hard_stop: true
+        skip_when_flag: '--no-mirror'
+        links: [github_release, npm_version, release_notes, changelog]
+        style: conversational-impact-guidance
 ```
 
 Each action is interpreted by the skill:
 
 - `close_imported_issues_with_thanks: true` — find issues with the `imported` label closed by commits in this release, post a thank-you comment on the source tracker, then close on both sides. Mirrors the May-2026 jmagly→roctinam sweep pattern.
 - `update_release_entry: <tracker>` — create or update the release entry (Gitea/GitHub) with the announcement body.
+- `create_github_announcement_discussion` — after GitHub release publication
+  is verified, create one discussion in the configured category for stable
+  releases. Resolve the repository and category node IDs, then use GitHub's
+  GraphQL `createDiscussion` mutation. Search that category for the exact
+  release title first and reuse the existing discussion so retries are
+  idempotent. Fail with an actionable message when Discussions are disabled,
+  the category is absent, or authentication lacks Discussions write access.
+  Respect `required_for_channels`, `hard_stop`, and `skip_when_flag`; the
+  reference release uses `hard_stop: true` so a stable release is not reported
+  complete without its discussion.
+
+  The discussion is a companion to the durable release records, not another
+  copy of them. Its body must link to the GitHub release, the published npm
+  version, the release announcement/notes, and the matching CHANGELOG section.
+  Summarize the few changes with the greatest user impact; explain who each
+  helps, what it changes in practice, and one concrete way to try it. Use a
+  friendly, educational, professional voice, and close with specific questions
+  about how people are using the update or where they want more guidance. For
+  `style: conversational-impact-guidance`, prefer direct language, concrete
+  examples close to claims, varied sentence length, and useful analogies only
+  when they clarify the change. Avoid corporate filler, hype, and exhaustive
+  restatement. Optional `voice_sources` refine that style when readable;
+  absence of a local voice file must not block an otherwise valid release.
 
 > **Verify publication before closing release-completion issues.** After the
 > `release` gate pushes the tag and the release workflows run, invoke the
@@ -302,7 +332,7 @@ This repository's `.aiwg/release.config` declares the gates AIWG uses today:
 4. **changelog-and-announcement** (CHANGELOG.md + docs/releases/ for stable)
 5. **readme-freshness** (diff prompt for stable)
 6. **release** (tag, push, mirror, npm dist-tag)
-7. **post-release** (tracker close-outs + reporter thanks)
+7. **post-release** (release entries, stable GitHub announcement discussion, tracker close-outs, and reporter thanks)
 
 That config IS the AIWG release checklist — what was previously prose in CLAUDE.md is now an executable spec.
 
@@ -325,4 +355,7 @@ That config IS the AIWG release checklist — what was previously prose in CLAUD
 - [ ] No AI attribution in commits, tags, or announcement
 - [ ] Original reporters thanked (if release closes imported issues)
 - [ ] Release entry created on Gitea (and GitHub mirror for stable)
+- [ ] One idempotent GitHub Announcements discussion created for stable
+      releases, linking the GitHub release, npm version, release notes, and
+      CHANGELOG
 - [ ] npm dist-tag updated correctly per channel

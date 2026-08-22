@@ -5,8 +5,8 @@ metadata:
   name: release-post-actions
   labels: { domain: release }
 spec:
-  description: Run declarative post-release housekeeping — close imported issues with thanks, update release entries on trackers (flow-release Shape 6 "actions").
-  version: "1.0.0"
+  description: Run declarative post-release housekeeping — close imported issues with thanks, update release entries, and open stable-release GitHub announcement discussions (flow-release Shape 6 "actions").
+  version: "1.1.0"
   inputs:
     - { name: actions, type: array, required: true }
     - { name: hard_stop, type: boolean, required: false, default: false }

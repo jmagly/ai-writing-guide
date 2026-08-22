@@ -124,6 +124,13 @@ gates:
       - update_release_entry: gitea
       - update_release_entry: github
         skip_when_flag: --no-mirror
+      - create_github_announcement_discussion:
+          category: Announcements
+          required_for_channels: [stable]
+          hard_stop: true
+          skip_when_flag: --no-mirror
+          links: [github_release, npm_version, release_notes, changelog]
+          style: conversational-impact-guidance
       - close_imported_issues_with_thanks: true
 
 policy:

@@ -114,9 +114,18 @@ spec:
       outputs:
         - name: tag
 
+    - id: verify-release-publication
+      capability: release-publication-verify
+      depends_on: [tag-and-release]
+      inputs:
+        - name: tag
+          value: "{tag}"
+        - name: hard_stop
+          value: true
+
     - id: post-release
       capability: release-post-actions
-      depends_on: [tag-and-release]
+      depends_on: [verify-release-publication]
       inputs:
         - name: hard_stop
           value: false
@@ -125,3 +134,10 @@ spec:
             - { close_imported_issues_with_thanks: true }
             - { update_release_entry: gitea }
             - { update_release_entry: github, skip_when_flag: "--no-mirror" }
+            - create_github_announcement_discussion:
+                category: Announcements
+                required_for_channels: [stable]
+                hard_stop: true
+                skip_when_flag: "--no-mirror"
+                links: [github_release, npm_version, release_notes, changelog]
+                style: conversational-impact-guidance

@@ -7,7 +7,24 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.17] - 2026-08-22 - "Runnable graphs, useful release conversations"
+
 ### Added
+
+- **Guided GitHub release discussions** - Stable releases now open one
+  idempotent GitHub Announcements discussion after publication verification.
+  The post links the GitHub release, npm versions, release notes, and CHANGELOG,
+  then explains practical user impact in a conversational professional voice
+  instead of duplicating the full notes. The active AIWG release plan can refine
+  that voice from the operator's reviewed SOUL and style profile, and discussion
+  creation is a hard completion gate.
+
+- **Graph development pattern gap audit** - A repository-grounded assessment
+  maps AIWG's existing Flow, Mission, RLM, A2A, Sandbox, and Cockpit primitives
+  against current graph-system practice. It recommends a graph profile over the
+  existing Flow metalanguage, with state, conditional routing, guarded cycles,
+  reducers, run identity, adapters, conformance tests, and a read-only operator
+  view rather than a second orchestration DSL.
 
 - **Flow domain static-site deployment plan** - A versioned, validated #2125
   bootstrap approves private `roctinam/flow.aiwg.io` on the shared
@@ -47,6 +64,13 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   normalized adapter input, five conformance fixtures, and
   `aiwg composition validate`. The profile extends the existing Flow
   metalanguage without requiring fourth-level DNS or provider fields (#2115).
+
+### Changed
+
+- **Recoverable Cockpit browser bootstrap** - Installation guidance now shows
+  how to mint a fresh 60-second one-time browser URL for an already-running
+  Bridge, including managed-install, source-checkout, and SSH local-forward
+  usage while keeping the reusable bearer off the URL.
 
 ### Fixed
 

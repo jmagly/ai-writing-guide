@@ -180,6 +180,41 @@ describe('release plan sidecars', () => {
     expect(validate(config), JSON.stringify(validate.errors, null, 2)).toBe(true);
   });
 
+  it('keeps the stable GitHub announcement discussion contract in the shipped release config', () => {
+    const configPath = join(
+      REPO_ROOT,
+      'agentic/code/frameworks/sdlc-complete/schemas/flows/examples/aiwg.release.config.yaml',
+    );
+    const config = yaml.load(readFileSync(configPath, 'utf8')) as {
+      gates: Array<{
+        name: string;
+        actions?: Array<{
+          create_github_announcement_discussion?: {
+            category: string;
+            required_for_channels: string[];
+            hard_stop: boolean;
+            skip_when_flag: string;
+            links: string[];
+            style: string;
+          };
+        }>;
+      }>;
+    };
+    const postRelease = config.gates.find((gate) => gate.name === 'post-release');
+    const discussion = postRelease?.actions
+      ?.find((action) => action.create_github_announcement_discussion)
+      ?.create_github_announcement_discussion;
+
+    expect(discussion).toEqual({
+      category: 'Announcements',
+      required_for_channels: ['stable'],
+      hard_stop: true,
+      skip_when_flag: '--no-mirror',
+      links: ['github_release', 'npm_version', 'release_notes', 'changelog'],
+      style: 'conversational-impact-guidance',
+    });
+  });
+
   it('validates the active project release config when one is attached', () => {
     const schema = yaml.load(readFileSync(
       join(REPO_ROOT, 'agentic/code/frameworks/sdlc-complete/schemas/flows/release-config.yaml'),

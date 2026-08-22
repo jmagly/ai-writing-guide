@@ -1,0 +1,21 @@
+# Declarative bridge to the release-publication-verify skill. The discussion
+# action depends on this proof so every required link resolves to a published
+# surface rather than a predicted URL.
+apiVersion: workflow.aiwg.io/v1
+kind: WorkflowCapability
+metadata:
+  name: release-publication-verify
+  labels: { domain: release }
+spec:
+  description: Verify the signed tag, GitHub release, npm package versions, release assets, checksums, and configured installer surfaces before post-release communication.
+  version: "1.0.0"
+  inputs:
+    - { name: tag, type: string, required: true }
+    - { name: hard_stop, type: boolean, required: false, default: true }
+  outputs:
+    - { name: verified, type: boolean }
+    - { name: evidence_report, type: string }
+    - { name: github_release_url, type: string }
+    - { name: npm_version_urls, type: array }
+  agent: deployment-manager
+  idempotent: true

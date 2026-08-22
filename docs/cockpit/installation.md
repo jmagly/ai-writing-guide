@@ -53,6 +53,29 @@ global-prefix permissions entirely.
 3. Prints a 60-second, one-time browser bootstrap URL whose nonce is in the
    fragment. The reusable bearer never enters the URL.
 
+Open that printed URL rather than the bare `http://127.0.0.1:8140/` address.
+If the Bridge is already running and the printed URL has expired, mint a fresh
+one from the same host and user account that launched Cockpit:
+
+```bash
+node --input-type=module -e '
+  const moduleUrl = `file://${process.env.HOME}/.aiwg/cockpit/package/node_modules/@aiwg/cockpit/shell-core/runtime.mjs`;
+  const { connect, webviewUrl } = await import(moduleUrl);
+  const runtime = await connect();
+  console.log(await webviewUrl(runtime));
+'
+```
+
+This command targets the default managed installation. In a source checkout,
+replace `moduleUrl` with
+`new URL('./apps/cockpit/shell-core/runtime.mjs', import.meta.url)`. The result
+is a browser URL containing a one-time, browser-audience bootstrap nonce valid
+for 60 seconds. It is safe to pass through an SSH local-forward because only
+the short-lived nonce enters the URL; the reusable Bridge bearer remains in
+the runtime file or OS keychain on the Cockpit host. With the standard local
+forward (`localhost:8140` to the Cockpit host's `127.0.0.1:8140`), open the
+printed URL unchanged on the local machine.
+
 Point at a different executor:
 
 ```bash
