@@ -24,6 +24,11 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   report more indexed artifacts than current files, and expose missing index
   entries instead of producing coverage above 100% (jmagly/aiwg#146).
 
+- **Fortemi conformance runner bootstrap** - The cross-project shard gate now
+  selects the same digest-pinned Node 24 job image as core CI before installing
+  its checksum-verified Rust toolchain, rather than inheriting a runner image
+  that may not provide Node.
+
 ## [2026.8.15] - 2026-08-21 - "Verified setup handoffs"
 
 ### Added

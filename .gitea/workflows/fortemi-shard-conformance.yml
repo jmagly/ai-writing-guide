@@ -37,6 +37,7 @@ jobs:
     # Use the shared Node job image and the host Docker socket. The preflight
     # provides the Docker CLI and pinned Rust toolchain when the image omits them.
     runs-on: ubuntu-latest
+    container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb  # node 24.15.0 / npm 11.12.1 (see ci/digests.txt)
     timeout-minutes: 30
 
     steps:

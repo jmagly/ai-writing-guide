@@ -12,6 +12,9 @@ describe('Fortemi shard conformance workflow', () => {
   it('uses the shared runner pool with an explicit capability preflight', () => {
     expect(workflow).toContain('workflow_dispatch:')
     expect(workflow).toContain('runs-on: ubuntu-latest')
+    expect(workflow).toContain(
+      'container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb',
+    )
     expect(workflow).not.toContain('runs-on: matric-builder')
     expect(workflow).toContain("apt-get install -y --no-install-recommends docker.io")
     expect(workflow).toContain("docker version --format 'client={{.Client.Version}} server={{.Server.Version}}'")
