@@ -1,5 +1,6 @@
 import {
   ARTIFACT_TRUST_STATE_SCHEMA_VERSION,
+  canonicalJson,
   channelStateKey,
   decodeBase64,
   dssePae,
@@ -406,6 +407,12 @@ export async function verifyArtifact(input: ArtifactVerificationInput): Promise<
   let statement: Provenance;
   try { statement = parseProvenance(payload); } catch (error) {
     return result('malformed', input, [{ code: 'MALFORMED_SIGNED_PAYLOAD', message: error instanceof Error ? error.message : String(error) }], {
+      ...common,
+      identities: allAuthenticated.map(identity => identity.id).sort(),
+    });
+  }
+  if (!Buffer.from(canonicalJson(statement), 'utf8').equals(payload)) {
+    return result('mismatched', input, [{ code: 'NONCANONICAL_SIGNED_PAYLOAD', message: 'Signed provenance payload is not canonical JSON' }], {
       ...common,
       identities: allAuthenticated.map(identity => identity.id).sort(),
     });

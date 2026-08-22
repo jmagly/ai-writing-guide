@@ -117,6 +117,11 @@ jobs:
         # CI budget intact. Zero network I/O — fully deterministic. (#1183)
         run: npm run test:conformance
 
+      - name: Enforce adversarial attestation transport conformance (#2092)
+        # Regenerates deterministic real-key fixtures, rejects drift, and proves
+        # identical non-waiveable outcomes across every supported transport.
+        run: npm run test:security:attestation-conformance
+
       - name: Run node test suite (ralph-external + ralph)
         # The tools/ralph-external/*.test.mjs and test/unit/ralph/*.test.mjs
         # suites are excluded from the vitest config and only run via node

@@ -1,0 +1,467 @@
+{
+  "schemaVersion": "aiwg.adversarial-attestation-conformance.v1",
+  "provenance": {
+    "issue": 2092,
+    "generatedBy": "test/fixtures/security/generate-adversarial-attestation-conformance.mjs",
+    "deterministicInputs": "SHA-256-derived Ed25519 seeds whose labels contain TEST ONLY",
+    "releaseUse": "forbidden",
+    "generatedAt": "SOURCE_DATE_EPOCH:2026-08-16T12:00:00.000Z"
+  },
+  "transports": [
+    "file",
+    "https-web-resource",
+    "release-sidecar",
+    "marketplace-fortemi",
+    "oci-referrer",
+    "provider-transformation-receipt"
+  ],
+  "now": "2026-08-16T12:00:00.000Z",
+  "artifact": {
+    "name": "provider.yaml",
+    "bytesBase64": "cHJvdmlkZXI6IGNvZGV4CnNvdXJjZTogY2Fub25pY2FsCg=="
+  },
+  "material": {
+    "uri": "test://dependency",
+    "bytesBase64": "ZGVwZW5kZW5jeTp2MQo="
+  },
+  "portableSigstoreTestBundle": {
+    "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+    "testOnly": true,
+    "dsseEnvelopeSha256": "46bf62e831484ed41aad58624c80c6e1152b1b7501d991a3cff79b8cd74efe3d",
+    "note": "Portable test-bundle provenance; production parsing is covered by artifact-sigstore-profile.test.ts."
+  },
+  "root": {
+    "mediaType": "application/vnd.aiwg.artifact-trust-root.v1+json",
+    "signed": {
+      "schemaVersion": "aiwg.artifact-trust-root.v1",
+      "version": 1,
+      "issuedAt": "2026-08-01T00:00:00.000Z",
+      "expiresAt": "2027-08-01T00:00:00.000Z",
+      "identities": [
+        {
+          "id": "test-root",
+          "independenceGroup": "test-offline-root",
+          "kind": "public-key",
+          "algorithm": "ed25519",
+          "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAgT3SJy3+21R8SCP9oDVvuFfaQddXkPVxRapxPwaMDTQ=\n-----END PUBLIC KEY-----\n"
+        },
+        {
+          "id": "test-release-a",
+          "independenceGroup": "test-release-a",
+          "kind": "public-key",
+          "algorithm": "ed25519",
+          "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAwH5NVWzYwEQ8eAv7f92W07DF1nGAweXfOGH32ZlvdlI=\n-----END PUBLIC KEY-----\n"
+        },
+        {
+          "id": "test-release-b",
+          "independenceGroup": "test-release-b",
+          "kind": "public-key",
+          "algorithm": "ed25519",
+          "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA8Yt2snsRnybh0EiAa1YgO101+Py/arkaxL4bYiayfEk=\n-----END PUBLIC KEY-----\n"
+        }
+      ],
+      "sigstoreProfiles": [],
+      "root": {
+        "keyIds": [
+          "test-root"
+        ],
+        "threshold": 1,
+        "scope": {
+          "assetTypes": [
+            "*"
+          ],
+          "namespaces": [
+            "*"
+          ],
+          "channels": [
+            "*"
+          ]
+        }
+      },
+      "delegations": [
+        {
+          "id": "test-release-threshold",
+          "parent": "root",
+          "keyIds": [
+            "test-release-a",
+            "test-release-b"
+          ],
+          "threshold": 2,
+          "scope": {
+            "assetTypes": [
+              "*"
+            ],
+            "namespaces": [
+              "aiwg.test"
+            ],
+            "channels": [
+              "conformance"
+            ]
+          }
+        }
+      ],
+      "revocations": [],
+      "policy": {
+        "name": "TEST ONLY #2092 conformance policy",
+        "requireMaterialDigests": true,
+        "maxFreezeSeconds": 86400,
+        "allowPolicyExempt": [
+          {
+            "assetTypes": [
+              "documentation"
+            ],
+            "namespaces": [
+              "aiwg.test"
+            ],
+            "channels": [
+              "conformance"
+            ]
+          }
+        ]
+      }
+    },
+    "signatures": [
+      {
+        "identityId": "test-root",
+        "sig": "/Wvor02dKgV3QXS+wGTmFbDmkirUuENsq+8ttItGhQA+bFvAsgbyPj+ViHXXKvNtKyjUVk4HrbxbQE5Ip2KXBQ=="
+      }
+    ]
+  },
+  "revokedRoot": {
+    "mediaType": "application/vnd.aiwg.artifact-trust-root.v1+json",
+    "signed": {
+      "schemaVersion": "aiwg.artifact-trust-root.v1",
+      "version": 1,
+      "issuedAt": "2026-08-01T00:00:00.000Z",
+      "expiresAt": "2027-08-01T00:00:00.000Z",
+      "identities": [
+        {
+          "id": "test-root",
+          "independenceGroup": "test-offline-root",
+          "kind": "public-key",
+          "algorithm": "ed25519",
+          "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAgT3SJy3+21R8SCP9oDVvuFfaQddXkPVxRapxPwaMDTQ=\n-----END PUBLIC KEY-----\n"
+        },
+        {
+          "id": "test-release-a",
+          "independenceGroup": "test-release-a",
+          "kind": "public-key",
+          "algorithm": "ed25519",
+          "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAwH5NVWzYwEQ8eAv7f92W07DF1nGAweXfOGH32ZlvdlI=\n-----END PUBLIC KEY-----\n"
+        },
+        {
+          "id": "test-release-b",
+          "independenceGroup": "test-release-b",
+          "kind": "public-key",
+          "algorithm": "ed25519",
+          "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA8Yt2snsRnybh0EiAa1YgO101+Py/arkaxL4bYiayfEk=\n-----END PUBLIC KEY-----\n"
+        }
+      ],
+      "sigstoreProfiles": [],
+      "root": {
+        "keyIds": [
+          "test-root"
+        ],
+        "threshold": 1,
+        "scope": {
+          "assetTypes": [
+            "*"
+          ],
+          "namespaces": [
+            "*"
+          ],
+          "channels": [
+            "*"
+          ]
+        }
+      },
+      "delegations": [
+        {
+          "id": "test-release-threshold",
+          "parent": "root",
+          "keyIds": [
+            "test-release-a",
+            "test-release-b"
+          ],
+          "threshold": 2,
+          "scope": {
+            "assetTypes": [
+              "*"
+            ],
+            "namespaces": [
+              "aiwg.test"
+            ],
+            "channels": [
+              "conformance"
+            ]
+          }
+        }
+      ],
+      "revocations": [
+        {
+          "identityId": "test-release-a",
+          "effectiveAt": "2026-08-16T10:00:00.000Z",
+          "scope": {
+            "assetTypes": [
+              "*"
+            ],
+            "namespaces": [
+              "*"
+            ],
+            "channels": [
+              "*"
+            ]
+          },
+          "reason": "TEST ONLY adversarial fixture"
+        }
+      ],
+      "policy": {
+        "name": "TEST ONLY #2092 conformance policy",
+        "requireMaterialDigests": true,
+        "maxFreezeSeconds": 86400,
+        "allowPolicyExempt": [
+          {
+            "assetTypes": [
+              "documentation"
+            ],
+            "namespaces": [
+              "aiwg.test"
+            ],
+            "channels": [
+              "conformance"
+            ]
+          }
+        ]
+      }
+    },
+    "signatures": [
+      {
+        "identityId": "test-root",
+        "sig": "mqzuFqmEKv2UD7gt1aVLCi/PgwB5OLyIc7i2cFfRBAVThPAtH4qdEYAOVrxaTZHHAbTBaqYJNjveiPQJFa1DDA=="
+      }
+    ]
+  },
+  "compromisedRoot": {
+    "mediaType": "application/vnd.aiwg.artifact-trust-root.v1+json",
+    "signed": {
+      "schemaVersion": "aiwg.artifact-trust-root.v1",
+      "version": 1,
+      "issuedAt": "2026-08-01T00:00:00.000Z",
+      "expiresAt": "2027-08-01T00:00:00.000Z",
+      "identities": [
+        {
+          "id": "test-root",
+          "independenceGroup": "test-offline-root",
+          "kind": "public-key",
+          "algorithm": "ed25519",
+          "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAgT3SJy3+21R8SCP9oDVvuFfaQddXkPVxRapxPwaMDTQ=\n-----END PUBLIC KEY-----\n"
+        },
+        {
+          "id": "test-release-a",
+          "independenceGroup": "test-release-a",
+          "kind": "public-key",
+          "algorithm": "ed25519",
+          "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAwH5NVWzYwEQ8eAv7f92W07DF1nGAweXfOGH32ZlvdlI=\n-----END PUBLIC KEY-----\n"
+        },
+        {
+          "id": "test-release-b",
+          "independenceGroup": "test-release-b",
+          "kind": "public-key",
+          "algorithm": "ed25519",
+          "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA8Yt2snsRnybh0EiAa1YgO101+Py/arkaxL4bYiayfEk=\n-----END PUBLIC KEY-----\n"
+        }
+      ],
+      "sigstoreProfiles": [],
+      "root": {
+        "keyIds": [
+          "test-root"
+        ],
+        "threshold": 1,
+        "scope": {
+          "assetTypes": [
+            "*"
+          ],
+          "namespaces": [
+            "*"
+          ],
+          "channels": [
+            "*"
+          ]
+        }
+      },
+      "delegations": [
+        {
+          "id": "test-release-threshold",
+          "parent": "root",
+          "keyIds": [
+            "test-release-a",
+            "test-release-b"
+          ],
+          "threshold": 2,
+          "scope": {
+            "assetTypes": [
+              "*"
+            ],
+            "namespaces": [
+              "aiwg.test"
+            ],
+            "channels": [
+              "conformance"
+            ]
+          }
+        }
+      ],
+      "revocations": [
+        {
+          "identityId": "test-release-a",
+          "effectiveAt": "2026-08-16T10:30:00.000Z",
+          "compromisedFrom": "2026-08-16T10:30:00.000Z",
+          "scope": {
+            "assetTypes": [
+              "*"
+            ],
+            "namespaces": [
+              "*"
+            ],
+            "channels": [
+              "*"
+            ]
+          },
+          "reason": "TEST ONLY adversarial fixture"
+        }
+      ],
+      "policy": {
+        "name": "TEST ONLY #2092 conformance policy",
+        "requireMaterialDigests": true,
+        "maxFreezeSeconds": 86400,
+        "allowPolicyExempt": [
+          {
+            "assetTypes": [
+              "documentation"
+            ],
+            "namespaces": [
+              "aiwg.test"
+            ],
+            "channels": [
+              "conformance"
+            ]
+          }
+        ]
+      }
+    },
+    "signatures": [
+      {
+        "identityId": "test-root",
+        "sig": "wPwSpx6Q46JkRIhs/i30lZkgzhQksOMC7Nx8ADW0hLyEoeNt5IATAI7DFEmBtfpfxjcJzKdqEyWekBBWZMNGDA=="
+      }
+    ]
+  },
+  "attestations": {
+    "sequence1": {
+      "mediaType": "application/vnd.aiwg.artifact-attestation.v1+json",
+      "envelope": {
+        "payloadType": "application/vnd.in-toto+json",
+        "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCJwcmVkaWNhdGUiOnsiYXNzZXRUeXBlIjoiZ2VuZXJhdGVkLXByb3ZpZGVyLWFydGlmYWN0IiwiZGVyaXZhdGlvbiI6eyJidWlsZGVyIjp7ImlkIjoidGVzdC1vbmx5LWZpeHR1cmUtZ2VuZXJhdG9yIiwidmVyc2lvbiI6IjEifSwibWF0ZXJpYWxzIjpbeyJkaWdlc3QiOnsic2hhMjU2IjoiNTA0ODQ0ODViMjAyNmEzOTk5Y2I0NmZmODdiZTY4YzdkNDg2NTBiOWI1ZTgzMzJjY2I4NTk5OTliOGRmYzE1ZiJ9LCJ1cmkiOiJ0ZXN0Oi8vZGVwZW5kZW5jeSJ9XSwicmVwcm9kdWNpYmxlIjp0cnVlfSwiZXhwaXJlc0F0IjoiMjAyNi0wOC0xN1QwMDowMDowMC4wMDBaIiwiaXNzdWVkQXQiOiIyMDI2LTA4LTE2VDExOjAwOjAwLjAwMFoiLCJwdWJsaWNhdGlvbiI6eyJjaGFubmVsIjoiY29uZm9ybWFuY2UiLCJzZXF1ZW5jZSI6MSwidmVyc2lvbiI6InRlc3QtMSJ9LCJwdWJsaXNoZXIiOnsiaWQiOiJ0ZXN0LW9ubHktcmVsZWFzZSIsIm5hbWVzcGFjZSI6ImFpd2cudGVzdCJ9LCJzY2hlbWFWZXJzaW9uIjoiYWl3Zy5hcnRpZmFjdC1wcm92ZW5hbmNlLnYxIn0sInByZWRpY2F0ZVR5cGUiOiJodHRwczovL2Fpd2cuaW8vYXR0ZXN0YXRpb25zL2FydGlmYWN0LXByb3ZlbmFuY2UvdjEiLCJzdWJqZWN0IjpbeyJkaWdlc3QiOnsic2hhMjU2IjoiZDI4NmYwNWRjMWFlN2Y0NjJhMDQyNWYzMTRmOTc5MDUxY2FkMGFhMDI3Mjk1ZTBlYzMyM2U0Mjk5Y2U5M2YwZSJ9LCJuYW1lIjoicHJvdmlkZXIueWFtbCJ9XX0=",
+        "signatures": [
+          {
+            "keyid": "00fc0aa6c38605dfea23b9a62c41552cafd51f1a81f505f2604af9553f00f626",
+            "sig": "1JE522qruXne6s1tu9Bd0Jc9aSivGVr+Ubpe694IGj5ZEsCeTsJAaWufCwZtyOxuq14XgzC2EIfKO+tr6hzrDQ=="
+          },
+          {
+            "keyid": "a8d01eb67b919d425fe144590952454cad55a088a7646027c99a6e8227045a85",
+            "sig": "aPd1e6FbjhpPq1T0T0C/4IdzuO508Png3jfuY1xNhvHUiZADXMp8INoJshKhGtTLFDZLFL97ayNzmr/WG1I3CQ=="
+          }
+        ]
+      },
+      "verificationMaterial": {
+        "kind": "public-key",
+        "algorithm": "ed25519",
+        "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAwH5NVWzYwEQ8eAv7f92W07DF1nGAweXfOGH32ZlvdlI=\n-----END PUBLIC KEY-----\n"
+      }
+    },
+    "sequence2": {
+      "mediaType": "application/vnd.aiwg.artifact-attestation.v1+json",
+      "envelope": {
+        "payloadType": "application/vnd.in-toto+json",
+        "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCJwcmVkaWNhdGUiOnsiYXNzZXRUeXBlIjoiZ2VuZXJhdGVkLXByb3ZpZGVyLWFydGlmYWN0IiwiZGVyaXZhdGlvbiI6eyJidWlsZGVyIjp7ImlkIjoidGVzdC1vbmx5LWZpeHR1cmUtZ2VuZXJhdG9yIiwidmVyc2lvbiI6IjEifSwibWF0ZXJpYWxzIjpbeyJkaWdlc3QiOnsic2hhMjU2IjoiNTA0ODQ0ODViMjAyNmEzOTk5Y2I0NmZmODdiZTY4YzdkNDg2NTBiOWI1ZTgzMzJjY2I4NTk5OTliOGRmYzE1ZiJ9LCJ1cmkiOiJ0ZXN0Oi8vZGVwZW5kZW5jeSJ9XSwicmVwcm9kdWNpYmxlIjp0cnVlfSwiZXhwaXJlc0F0IjoiMjAyNi0wOC0xN1QwMDowMDowMC4wMDBaIiwiaXNzdWVkQXQiOiIyMDI2LTA4LTE2VDExOjAwOjAwLjAwMFoiLCJwdWJsaWNhdGlvbiI6eyJjaGFubmVsIjoiY29uZm9ybWFuY2UiLCJzZXF1ZW5jZSI6MiwidmVyc2lvbiI6InRlc3QtMiJ9LCJwdWJsaXNoZXIiOnsiaWQiOiJ0ZXN0LW9ubHktcmVsZWFzZSIsIm5hbWVzcGFjZSI6ImFpd2cudGVzdCJ9LCJzY2hlbWFWZXJzaW9uIjoiYWl3Zy5hcnRpZmFjdC1wcm92ZW5hbmNlLnYxIn0sInByZWRpY2F0ZVR5cGUiOiJodHRwczovL2Fpd2cuaW8vYXR0ZXN0YXRpb25zL2FydGlmYWN0LXByb3ZlbmFuY2UvdjEiLCJzdWJqZWN0IjpbeyJkaWdlc3QiOnsic2hhMjU2IjoiZDI4NmYwNWRjMWFlN2Y0NjJhMDQyNWYzMTRmOTc5MDUxY2FkMGFhMDI3Mjk1ZTBlYzMyM2U0Mjk5Y2U5M2YwZSJ9LCJuYW1lIjoicHJvdmlkZXIueWFtbCJ9XX0=",
+        "signatures": [
+          {
+            "keyid": "00fc0aa6c38605dfea23b9a62c41552cafd51f1a81f505f2604af9553f00f626",
+            "sig": "TxHljcRy4XDZw0v918it8J3vGIqFTD50Rmq4rDqej+t5INyeIZlGQfFB7KdChJFdPvxXazO6cMzfvJ2mFq00Ag=="
+          },
+          {
+            "keyid": "a8d01eb67b919d425fe144590952454cad55a088a7646027c99a6e8227045a85",
+            "sig": "s1LXqvrG7mzGmzD3epOd3zUfCsRCrO+j147+TUAbhtWDuJc38hLjo65yh6l8uRpySwiDJoZU9JNYM9+2sixaDA=="
+          }
+        ]
+      },
+      "verificationMaterial": {
+        "kind": "public-key",
+        "algorithm": "ed25519",
+        "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAwH5NVWzYwEQ8eAv7f92W07DF1nGAweXfOGH32ZlvdlI=\n-----END PUBLIC KEY-----\n"
+      }
+    },
+    "sequence3": {
+      "mediaType": "application/vnd.aiwg.artifact-attestation.v1+json",
+      "envelope": {
+        "payloadType": "application/vnd.in-toto+json",
+        "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCJwcmVkaWNhdGUiOnsiYXNzZXRUeXBlIjoiZ2VuZXJhdGVkLXByb3ZpZGVyLWFydGlmYWN0IiwiZGVyaXZhdGlvbiI6eyJidWlsZGVyIjp7ImlkIjoidGVzdC1vbmx5LWZpeHR1cmUtZ2VuZXJhdG9yIiwidmVyc2lvbiI6IjEifSwibWF0ZXJpYWxzIjpbeyJkaWdlc3QiOnsic2hhMjU2IjoiNTA0ODQ0ODViMjAyNmEzOTk5Y2I0NmZmODdiZTY4YzdkNDg2NTBiOWI1ZTgzMzJjY2I4NTk5OTliOGRmYzE1ZiJ9LCJ1cmkiOiJ0ZXN0Oi8vZGVwZW5kZW5jeSJ9XSwicmVwcm9kdWNpYmxlIjp0cnVlfSwiZXhwaXJlc0F0IjoiMjAyNi0wOC0xN1QwMDowMDowMC4wMDBaIiwiaXNzdWVkQXQiOiIyMDI2LTA4LTE2VDExOjAwOjAwLjAwMFoiLCJwdWJsaWNhdGlvbiI6eyJjaGFubmVsIjoiY29uZm9ybWFuY2UiLCJzZXF1ZW5jZSI6MywidmVyc2lvbiI6InRlc3QtMyJ9LCJwdWJsaXNoZXIiOnsiaWQiOiJ0ZXN0LW9ubHktcmVsZWFzZSIsIm5hbWVzcGFjZSI6ImFpd2cudGVzdCJ9LCJzY2hlbWFWZXJzaW9uIjoiYWl3Zy5hcnRpZmFjdC1wcm92ZW5hbmNlLnYxIn0sInByZWRpY2F0ZVR5cGUiOiJodHRwczovL2Fpd2cuaW8vYXR0ZXN0YXRpb25zL2FydGlmYWN0LXByb3ZlbmFuY2UvdjEiLCJzdWJqZWN0IjpbeyJkaWdlc3QiOnsic2hhMjU2IjoiZDI4NmYwNWRjMWFlN2Y0NjJhMDQyNWYzMTRmOTc5MDUxY2FkMGFhMDI3Mjk1ZTBlYzMyM2U0Mjk5Y2U5M2YwZSJ9LCJuYW1lIjoicHJvdmlkZXIueWFtbCJ9XX0=",
+        "signatures": [
+          {
+            "keyid": "00fc0aa6c38605dfea23b9a62c41552cafd51f1a81f505f2604af9553f00f626",
+            "sig": "s/5AU+yuxqg1uYvx7pt4Z3JfM/tJ8MxrMZo6f2YJlfux+3Jq++TlppmyqX6rPqMKTSP7yQwbtlgKBvDd8a/9Bg=="
+          },
+          {
+            "keyid": "a8d01eb67b919d425fe144590952454cad55a088a7646027c99a6e8227045a85",
+            "sig": "4ikDx7uHj99hbU/fbEt9OhQOq4xg1QWy/9x6l9wb7bp8B0o+OuKazMpwjqJuG7Uxuw9YLbD1ytRszvcQavYODQ=="
+          }
+        ]
+      },
+      "verificationMaterial": {
+        "kind": "public-key",
+        "algorithm": "ed25519",
+        "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAwH5NVWzYwEQ8eAv7f92W07DF1nGAweXfOGH32ZlvdlI=\n-----END PUBLIC KEY-----\n"
+      }
+    },
+    "unknownSigner": {
+      "mediaType": "application/vnd.aiwg.artifact-attestation.v1+json",
+      "envelope": {
+        "payloadType": "application/vnd.in-toto+json",
+        "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCJwcmVkaWNhdGUiOnsiYXNzZXRUeXBlIjoiZ2VuZXJhdGVkLXByb3ZpZGVyLWFydGlmYWN0IiwiZGVyaXZhdGlvbiI6eyJidWlsZGVyIjp7ImlkIjoidGVzdC1vbmx5LWZpeHR1cmUtZ2VuZXJhdG9yIiwidmVyc2lvbiI6IjEifSwibWF0ZXJpYWxzIjpbeyJkaWdlc3QiOnsic2hhMjU2IjoiNTA0ODQ0ODViMjAyNmEzOTk5Y2I0NmZmODdiZTY4YzdkNDg2NTBiOWI1ZTgzMzJjY2I4NTk5OTliOGRmYzE1ZiJ9LCJ1cmkiOiJ0ZXN0Oi8vZGVwZW5kZW5jeSJ9XSwicmVwcm9kdWNpYmxlIjp0cnVlfSwiZXhwaXJlc0F0IjoiMjAyNi0wOC0xN1QwMDowMDowMC4wMDBaIiwiaXNzdWVkQXQiOiIyMDI2LTA4LTE2VDExOjAwOjAwLjAwMFoiLCJwdWJsaWNhdGlvbiI6eyJjaGFubmVsIjoiY29uZm9ybWFuY2UiLCJzZXF1ZW5jZSI6MSwidmVyc2lvbiI6InRlc3QtMSJ9LCJwdWJsaXNoZXIiOnsiaWQiOiJ0ZXN0LW9ubHktcmVsZWFzZSIsIm5hbWVzcGFjZSI6ImFpd2cudGVzdCJ9LCJzY2hlbWFWZXJzaW9uIjoiYWl3Zy5hcnRpZmFjdC1wcm92ZW5hbmNlLnYxIn0sInByZWRpY2F0ZVR5cGUiOiJodHRwczovL2Fpd2cuaW8vYXR0ZXN0YXRpb25zL2FydGlmYWN0LXByb3ZlbmFuY2UvdjEiLCJzdWJqZWN0IjpbeyJkaWdlc3QiOnsic2hhMjU2IjoiZDI4NmYwNWRjMWFlN2Y0NjJhMDQyNWYzMTRmOTc5MDUxY2FkMGFhMDI3Mjk1ZTBlYzMyM2U0Mjk5Y2U5M2YwZSJ9LCJuYW1lIjoicHJvdmlkZXIueWFtbCJ9XX0=",
+        "signatures": [
+          {
+            "keyid": "29f34f3e985ba3a0128c8ea670f560ddb12400e79bbc8e354c94d872791fe85a",
+            "sig": "mNeREol4gK9l1fSwC+2w+OUITbwjmVyCVY/k4uuEgsVq16aH/+HWDU7OO88bo1QkLAq+3tRo3IJ+9qejMWzDBw=="
+          }
+        ]
+      },
+      "verificationMaterial": {
+        "kind": "public-key",
+        "algorithm": "ed25519",
+        "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAVulpW0Ly6vvsE86pJiEeN971r4orljbawVApweZLkTc=\n-----END PUBLIC KEY-----\n"
+      }
+    },
+    "noncanonical": {
+      "mediaType": "application/vnd.aiwg.artifact-attestation.v1+json",
+      "envelope": {
+        "payloadType": "application/vnd.in-toto+json",
+        "payload": "ewogICJfdHlwZSI6ICJodHRwczovL2luLXRvdG8uaW8vU3RhdGVtZW50L3YxIiwKICAic3ViamVjdCI6IFsKICAgIHsKICAgICAgIm5hbWUiOiAicHJvdmlkZXIueWFtbCIsCiAgICAgICJkaWdlc3QiOiB7CiAgICAgICAgInNoYTI1NiI6ICJkMjg2ZjA1ZGMxYWU3ZjQ2MmEwNDI1ZjMxNGY5NzkwNTFjYWQwYWEwMjcyOTVlMGVjMzIzZTQyOTljZTkzZjBlIgogICAgICB9CiAgICB9CiAgXSwKICAicHJlZGljYXRlVHlwZSI6ICJodHRwczovL2Fpd2cuaW8vYXR0ZXN0YXRpb25zL2FydGlmYWN0LXByb3ZlbmFuY2UvdjEiLAogICJwcmVkaWNhdGUiOiB7CiAgICAic2NoZW1hVmVyc2lvbiI6ICJhaXdnLmFydGlmYWN0LXByb3ZlbmFuY2UudjEiLAogICAgImFzc2V0VHlwZSI6ICJnZW5lcmF0ZWQtcHJvdmlkZXItYXJ0aWZhY3QiLAogICAgInB1Ymxpc2hlciI6IHsKICAgICAgImlkIjogInRlc3Qtb25seS1yZWxlYXNlIiwKICAgICAgIm5hbWVzcGFjZSI6ICJhaXdnLnRlc3QiCiAgICB9LAogICAgInB1YmxpY2F0aW9uIjogewogICAgICAidmVyc2lvbiI6ICJ0ZXN0LTEiLAogICAgICAiY2hhbm5lbCI6ICJjb25mb3JtYW5jZSIsCiAgICAgICJzZXF1ZW5jZSI6IDEKICAgIH0sCiAgICAiaXNzdWVkQXQiOiAiMjAyNi0wOC0xNlQxMTowMDowMC4wMDBaIiwKICAgICJleHBpcmVzQXQiOiAiMjAyNi0wOC0xN1QwMDowMDowMC4wMDBaIiwKICAgICJkZXJpdmF0aW9uIjogewogICAgICAiYnVpbGRlciI6IHsKICAgICAgICAiaWQiOiAidGVzdC1vbmx5LWZpeHR1cmUtZ2VuZXJhdG9yIiwKICAgICAgICAidmVyc2lvbiI6ICIxIgogICAgICB9LAogICAgICAibWF0ZXJpYWxzIjogWwogICAgICAgIHsKICAgICAgICAgICJ1cmkiOiAidGVzdDovL2RlcGVuZGVuY3kiLAogICAgICAgICAgImRpZ2VzdCI6IHsKICAgICAgICAgICAgInNoYTI1NiI6ICI1MDQ4NDQ4NWIyMDI2YTM5OTljYjQ2ZmY4N2JlNjhjN2Q0ODY1MGI5YjVlODMzMmNjYjg1OTk5OWI4ZGZjMTVmIgogICAgICAgICAgfQogICAgICAgIH0KICAgICAgXSwKICAgICAgInJlcHJvZHVjaWJsZSI6IHRydWUKICAgIH0KICB9Cn0=",
+        "signatures": [
+          {
+            "keyid": "00fc0aa6c38605dfea23b9a62c41552cafd51f1a81f505f2604af9553f00f626",
+            "sig": "NIMmUEyo9VqsXMZimOMLu+Ao76sLCWfBxLbp/4eVaL6iSX3PizC7rafmz1mxT3VNRBATgkd71hvDsrqlDrvmDw=="
+          },
+          {
+            "keyid": "a8d01eb67b919d425fe144590952454cad55a088a7646027c99a6e8227045a85",
+            "sig": "RRn3qCldSZJo3UcZ5Baf1r3ypKfwMRsZT9l66NRq0Dpr4c4SoWoO3imrmdfG27gWGIcKAc0V/3/FfNm69U2SDA=="
+          }
+        ]
+      },
+      "verificationMaterial": {
+        "kind": "public-key",
+        "algorithm": "ed25519",
+        "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAwH5NVWzYwEQ8eAv7f92W07DF1nGAweXfOGH32ZlvdlI=\n-----END PUBLIC KEY-----\n"
+      }
+    }
+  }
+}
