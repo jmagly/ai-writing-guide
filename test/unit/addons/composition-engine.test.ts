@@ -149,7 +149,8 @@ describe('composition-engine FlowGraph contract', () => {
   it('normalizes one provider-neutral graph with graph, node, and edge identities', () => {
     const value = fixture();
     const normalized = normalizeFlowGraph(value);
-    expect(normalized.contractVersion).toBe('composition.normalized.aiwg.io/v1alpha1');
+    expect(normalized.contractVersion).toBe('flow.aiwg.io/v1alpha1');
+    expect(normalized.kind).toBe('FlowGraphNormalized');
     expect(normalized.identity.graphId).toBe('linear-flow');
     expect(normalized.identity.nodeIds).toEqual(['linear-flow:draft', 'linear-flow:polish']);
     expect(normalized.identity.edgeIds[0]).toContain('draft-to-polish');
@@ -181,10 +182,14 @@ describe('composition-engine FlowGraph contract', () => {
     expect(manifest.cli_commands.namespace).toBe('composition');
     expect(manifest.cli_commands.subcommands.validate.file).toBe('composition.mjs');
     expect(manifest.cli_commands.subcommands.run.file).toBe('composition-run.mjs');
+    expect(manifest.cli_commands.subcommands.benchmark.file).toBe('composition-benchmark.mjs');
     expect(manifest.schemas).toContain('flow-graph.schema');
     expect(manifest.fixtures).toEqual(expect.arrayContaining(FIXTURES));
+    expect(manifest.benchmarks).toContain('composition-policy-benchmark.v1');
+    expect(manifest.evidence).toContain('composition-policy-benchmark-v1.summary');
     expect(readFileSync(resolve(ROOT, 'types', 'flow-graph.generated.ts'), 'utf8')).toContain('export interface FlowGraph');
     expect(readFileSync(resolve(ROOT, 'skills', 'composition-validate', 'SKILL.md'), 'utf8')).toContain('validate a Flow graph');
+    expect(readFileSync(resolve(ROOT, 'skills', 'composition-evaluate', 'SKILL.md'), 'utf8')).toContain('success-conditioned');
     expect(readFileSync(resolve(ROOT, 'skills', 'polyrhythmic-reasoning', 'SKILL.md'), 'utf8')).toContain('strict-LCM or adaptive');
   });
 });

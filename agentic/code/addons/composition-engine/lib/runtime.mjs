@@ -172,7 +172,8 @@ export async function executeFlowGraph(manifest, options = {}) {
 
   function checkpoint() {
     return {
-      schemaVersion: 'composition.checkpoint.aiwg.io/v1alpha1',
+      schemaVersion: 'flow.aiwg.io/v1alpha1',
+      kind: 'FlowGraphCheckpoint',
       graphId,
       runId,
       state: clone(state),
@@ -681,7 +682,8 @@ export async function executeFlowGraph(manifest, options = {}) {
   await persist();
 
   return {
-    schemaVersion: 'composition.run.aiwg.io/v1alpha1',
+    schemaVersion: 'flow.aiwg.io/v1alpha1',
+    kind: 'FlowGraphRunReport',
     graphId,
     runId,
     status,

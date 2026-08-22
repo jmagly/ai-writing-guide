@@ -23,11 +23,13 @@
     "schemas": "schemas/",
     "fixtures": "fixtures/",
     "docs": "docs/",
-    "examples": "examples/"
+    "examples": "examples/",
+    "benchmarks": "benchmarks/",
+    "evidence": "evidence/"
   },
   "agents": [],
   "commands": [],
-  "skills": ["composition-validate", "polyrhythmic-reasoning"],
+  "skills": ["composition-validate", "composition-evaluate", "polyrhythmic-reasoning"],
   "schemas": ["flow-graph.schema"],
   "fixtures": [
     "linear-flow",
@@ -45,6 +47,11 @@
     "polyrhythmic-theoretical-comparison",
     "polyrhythmic-safety-policy"
   ],
+  "benchmarks": ["composition-policy-benchmark.v1"],
+  "evidence": [
+    "composition-policy-benchmark-v1.raw",
+    "composition-policy-benchmark-v1.summary"
+  ],
   "cli_commands": {
     "namespace": "composition",
     "description": "Validate and execute provider-neutral Flow graph manifests",
@@ -57,6 +64,10 @@
       "run": {
         "file": "composition-run.mjs",
         "description": "Execute one validated FlowGraph through an explicit adapter"
+      },
+      "benchmark": {
+        "file": "composition-benchmark.mjs",
+        "description": "Evaluate fixed composition policies and emit raw records plus a claim-gated summary"
       }
     }
   },
@@ -71,7 +82,7 @@
     "baseKind": "FlowPlaybook"
   },
   "researchFoundation": {
-    "issue": "#2115, #2116, #2117",
+    "issue": "#2115, #2116, #2117, #2118",
     "parent": "#2114"
   }
 }

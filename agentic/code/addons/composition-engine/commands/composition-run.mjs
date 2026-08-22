@@ -108,7 +108,8 @@ export default async function compositionRun(args, context) {
     };
   } catch (error) {
     const report = {
-      schemaVersion: 'composition.run.aiwg.io/v1alpha1',
+      schemaVersion: 'flow.aiwg.io/v1alpha1',
+      kind: 'FlowGraphRunReport',
       status: 'failed',
       code: error instanceof FlowGraphRuntimeError ? error.code : 'RUN_FAILED',
       message: error instanceof Error ? error.message : String(error),

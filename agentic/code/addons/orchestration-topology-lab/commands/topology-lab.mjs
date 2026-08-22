@@ -13,6 +13,36 @@ function round(value) {
   return Math.round(value * 10000) / 10000;
 }
 
+export function summarizeEvaluationRuns(runs, {
+  qualityField = 'quality_score',
+  successField = 'success',
+  latencyField = 'duration_ms',
+  costField = 'cost_usd',
+} = {}) {
+  if (!Array.isArray(runs) || runs.length === 0) throw new Error('Evaluation summary requires at least one run.');
+  for (const [index, run] of runs.entries()) {
+    assertNumber(run[qualityField], `runs[${index}].${qualityField}`);
+    assertNumber(run[latencyField], `runs[${index}].${latencyField}`);
+    assertNumber(run[costField], `runs[${index}].${costField}`);
+    if (typeof run[successField] !== 'boolean') throw new Error(`runs[${index}].${successField} must be boolean.`);
+  }
+  const successful = runs.filter((run) => run[successField]);
+  return {
+    sample_n: runs.length,
+    success_n: successful.length,
+    success_rate: round(successful.length / runs.length),
+    failure_rate: round((runs.length - successful.length) / runs.length),
+    mean_quality: round(mean(runs.map((run) => run[qualityField]))),
+    mean_latency_ms: round(mean(runs.map((run) => run[latencyField]))),
+    total_cost_usd: round(runs.reduce((sum, run) => sum + run[costField], 0)),
+    success_conditioned: successful.length ? {
+      mean_quality: round(mean(successful.map((run) => run[qualityField]))),
+      mean_latency_ms: round(mean(successful.map((run) => run[latencyField]))),
+      mean_cost_usd: round(mean(successful.map((run) => run[costField]))),
+    } : null,
+  };
+}
+
 function assertNumber(value, label) {
   if (!Number.isFinite(value) || value < 0) throw new Error(`${label} must be a non-negative number.`);
 }
@@ -60,6 +90,12 @@ export function evaluateTopologyLab(fixture) {
       .map((run) => run.activity_evidence.reason);
 
     const totalCost = entry.runs.reduce((sum, run) => sum + run.cost_usd, 0);
+    const sharedSummary = summarizeEvaluationRuns(entry.runs.map((run) => ({
+      quality_score: run.quality_score,
+      success: run.outcome === 'accepted',
+      duration_ms: run.duration_ms,
+      cost_usd: run.cost_usd,
+    })));
     const metrics = {
       sample_n: entry.runs.length,
       quality_score: round(mean(entry.runs.map((run) => run.quality_score))),
@@ -85,6 +121,7 @@ export function evaluateTopologyLab(fixture) {
         accepted: entry.runs.filter((run) => run.outcome === 'accepted').length,
         rejected: entry.runs.filter((run) => run.outcome === 'rejected').length,
       },
+      shared_evaluation_summary: sharedSummary,
     };
     const evidenceScore = metrics.activity_evidence.state === 'captured' ? metrics.activity_evidence.mean_quality : 0;
     const recommendationScore = round(

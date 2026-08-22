@@ -1,0 +1,551 @@
+{
+  "schemaVersion": "flow.aiwg.io/v1alpha1",
+  "kind": "CompositionPolicyBenchmarkSummary",
+  "benchmark_id": "composition-policy-benchmark-v1",
+  "evidence_mode": "synthetic-conformance",
+  "task_count": 6,
+  "policy_run_count": 36,
+  "failure_injection_count": 6,
+  "model_settings": {
+    "id": "deterministic-policy-fixture-v1",
+    "provider": "fixture",
+    "model": "deterministic-policy-fixture-v1",
+    "temperature": 0,
+    "tool_fixture_version": "1"
+  },
+  "policies": [
+    {
+      "policy_id": "single-pass",
+      "sample_n": 6,
+      "success_n": 2,
+      "success_rate": 0.3333,
+      "failure_rate": 0.6667,
+      "mean_quality": 0.6817,
+      "mean_latency_ms": 561.6667,
+      "total_cost_usd": 0.0131,
+      "success_conditioned": {
+        "mean_quality": 0.71,
+        "mean_latency_ms": 485,
+        "mean_cost_usd": 0.0018
+      },
+      "constraint_satisfaction": 0.88,
+      "calibration_error": 0.05,
+      "self_judge_bias": 0.05,
+      "mean_tokens": 966.6667,
+      "mean_tool_calls": 0.5,
+      "mean_activations": 1,
+      "mean_retries": 0,
+      "success_conditioned_efficiency": {
+        "mean_tokens": 875,
+        "mean_cost_usd": 0.0018,
+        "mean_latency_ms": 485
+      },
+      "speed_of_accuracy": [
+        {
+          "quality_threshold": 0.65,
+          "success_n": 2,
+          "success_rate": 0.3333,
+          "mean_latency_ms": 485,
+          "mean_tokens": 875
+        },
+        {
+          "quality_threshold": 0.75,
+          "success_n": 0,
+          "success_rate": 0,
+          "mean_latency_ms": null,
+          "mean_tokens": null
+        },
+        {
+          "quality_threshold": 0.85,
+          "success_n": 0,
+          "success_rate": 0,
+          "mean_latency_ms": null,
+          "mean_tokens": null
+        }
+      ],
+      "convergence_reasons": [
+        "single-pass-complete"
+      ],
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      }
+    },
+    {
+      "policy_id": "self-refine",
+      "sample_n": 6,
+      "success_n": 6,
+      "success_rate": 1,
+      "failure_rate": 0,
+      "mean_quality": 0.7617,
+      "mean_latency_ms": 898.6667,
+      "total_cost_usd": 0.0241,
+      "success_conditioned": {
+        "mean_quality": 0.7617,
+        "mean_latency_ms": 898.6667,
+        "mean_cost_usd": 0.004
+      },
+      "constraint_satisfaction": 0.91,
+      "calibration_error": 0.06,
+      "self_judge_bias": 0.06,
+      "mean_tokens": 1643.3333,
+      "mean_tool_calls": 0.5,
+      "mean_activations": 3,
+      "mean_retries": 1,
+      "success_conditioned_efficiency": {
+        "mean_tokens": 1643.3333,
+        "mean_cost_usd": 0.004,
+        "mean_latency_ms": 898.6667
+      },
+      "speed_of_accuracy": [
+        {
+          "quality_threshold": 0.65,
+          "success_n": 6,
+          "success_rate": 1,
+          "mean_latency_ms": 898.6667,
+          "mean_tokens": 1643.3333
+        },
+        {
+          "quality_threshold": 0.75,
+          "success_n": 4,
+          "success_rate": 0.6667,
+          "mean_latency_ms": 848,
+          "mean_tokens": 1572.5
+        },
+        {
+          "quality_threshold": 0.85,
+          "success_n": 0,
+          "success_rate": 0,
+          "mean_latency_ms": null,
+          "mean_tokens": null
+        }
+      ],
+      "convergence_reasons": [
+        "refinement-limit"
+      ],
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      }
+    },
+    {
+      "policy_id": "parallel-candidates",
+      "sample_n": 6,
+      "success_n": 6,
+      "success_rate": 1,
+      "failure_rate": 0,
+      "mean_quality": 0.7817,
+      "mean_latency_ms": 702.3333,
+      "total_cost_usd": 0.0324,
+      "success_conditioned": {
+        "mean_quality": 0.7817,
+        "mean_latency_ms": 702.3333,
+        "mean_cost_usd": 0.0054
+      },
+      "constraint_satisfaction": 0.9,
+      "calibration_error": 0.04,
+      "self_judge_bias": 0.04,
+      "mean_tokens": 2223.3333,
+      "mean_tool_calls": 1,
+      "mean_activations": 4,
+      "mean_retries": 0,
+      "success_conditioned_efficiency": {
+        "mean_tokens": 2223.3333,
+        "mean_cost_usd": 0.0054,
+        "mean_latency_ms": 702.3333
+      },
+      "speed_of_accuracy": [
+        {
+          "quality_threshold": 0.65,
+          "success_n": 6,
+          "success_rate": 1,
+          "mean_latency_ms": 702.3333,
+          "mean_tokens": 2223.3333
+        },
+        {
+          "quality_threshold": 0.75,
+          "success_n": 5,
+          "success_rate": 0.8333,
+          "mean_latency_ms": 667.8,
+          "mean_tokens": 2162
+        },
+        {
+          "quality_threshold": 0.85,
+          "success_n": 0,
+          "success_rate": 0,
+          "mean_latency_ms": null,
+          "mean_tokens": null
+        }
+      ],
+      "convergence_reasons": [
+        "best-output-selected"
+      ],
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      }
+    },
+    {
+      "policy_id": "strict-lcm",
+      "sample_n": 6,
+      "success_n": 6,
+      "success_rate": 1,
+      "failure_rate": 0,
+      "mean_quality": 0.8017,
+      "mean_latency_ms": 1235.6667,
+      "total_cost_usd": 0.0408,
+      "success_conditioned": {
+        "mean_quality": 0.8017,
+        "mean_latency_ms": 1235.6667,
+        "mean_cost_usd": 0.0068
+      },
+      "constraint_satisfaction": 0.92,
+      "calibration_error": 0.07,
+      "self_judge_bias": 0.07,
+      "mean_tokens": 2996.6667,
+      "mean_tool_calls": 1,
+      "mean_activations": 20,
+      "mean_retries": 0,
+      "success_conditioned_efficiency": {
+        "mean_tokens": 2996.6667,
+        "mean_cost_usd": 0.0068,
+        "mean_latency_ms": 1235.6667
+      },
+      "speed_of_accuracy": [
+        {
+          "quality_threshold": 0.65,
+          "success_n": 6,
+          "success_rate": 1,
+          "mean_latency_ms": 1235.6667,
+          "mean_tokens": 2996.6667
+        },
+        {
+          "quality_threshold": 0.75,
+          "success_n": 6,
+          "success_rate": 1,
+          "mean_latency_ms": 1235.6667,
+          "mean_tokens": 2996.6667
+        },
+        {
+          "quality_threshold": 0.85,
+          "success_n": 0,
+          "success_rate": 0,
+          "mean_latency_ms": null,
+          "mean_tokens": null
+        }
+      ],
+      "convergence_reasons": [
+        "lcm-alignment-20"
+      ],
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      }
+    },
+    {
+      "policy_id": "adaptive-convergence",
+      "sample_n": 6,
+      "success_n": 6,
+      "success_rate": 1,
+      "failure_rate": 0,
+      "mean_quality": 0.7917,
+      "mean_latency_ms": 870.8333,
+      "total_cost_usd": 0.0269,
+      "success_conditioned": {
+        "mean_quality": 0.7917,
+        "mean_latency_ms": 870.8333,
+        "mean_cost_usd": 0.0045
+      },
+      "constraint_satisfaction": 0.92,
+      "calibration_error": 0.04,
+      "self_judge_bias": 0.04,
+      "mean_tokens": 1933.3333,
+      "mean_tool_calls": 0.8333,
+      "mean_activations": 8,
+      "mean_retries": 1,
+      "success_conditioned_efficiency": {
+        "mean_tokens": 1933.3333,
+        "mean_cost_usd": 0.0045,
+        "mean_latency_ms": 870.8333
+      },
+      "speed_of_accuracy": [
+        {
+          "quality_threshold": 0.65,
+          "success_n": 6,
+          "success_rate": 1,
+          "mean_latency_ms": 870.8333,
+          "mean_tokens": 1933.3333
+        },
+        {
+          "quality_threshold": 0.75,
+          "success_n": 6,
+          "success_rate": 1,
+          "mean_latency_ms": 870.8333,
+          "mean_tokens": 1933.3333
+        },
+        {
+          "quality_threshold": 0.85,
+          "success_n": 0,
+          "success_rate": 0,
+          "mean_latency_ms": null,
+          "mean_tokens": null
+        }
+      ],
+      "convergence_reasons": [
+        "evaluator-converged"
+      ],
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      }
+    },
+    {
+      "policy_id": "budget-partial",
+      "sample_n": 6,
+      "success_n": 4,
+      "success_rate": 0.6667,
+      "failure_rate": 0.3333,
+      "mean_quality": 0.7117,
+      "mean_latency_ms": 449.3333,
+      "total_cost_usd": 0.0094,
+      "success_conditioned": {
+        "mean_quality": 0.7275,
+        "mean_latency_ms": 424,
+        "mean_cost_usd": 0.0014
+      },
+      "constraint_satisfaction": 0.89,
+      "calibration_error": 0.03,
+      "self_judge_bias": 0.03,
+      "mean_tokens": 725.1667,
+      "mean_tool_calls": 0.5,
+      "mean_activations": 4,
+      "mean_retries": 0,
+      "success_conditioned_efficiency": {
+        "mean_tokens": 694,
+        "mean_cost_usd": 0.0014,
+        "mean_latency_ms": 424
+      },
+      "speed_of_accuracy": [
+        {
+          "quality_threshold": 0.65,
+          "success_n": 4,
+          "success_rate": 0.6667,
+          "mean_latency_ms": 424,
+          "mean_tokens": 694
+        },
+        {
+          "quality_threshold": 0.75,
+          "success_n": 1,
+          "success_rate": 0.1667,
+          "mean_latency_ms": 360,
+          "mean_tokens": 600
+        },
+        {
+          "quality_threshold": 0.85,
+          "success_n": 0,
+          "success_rate": 0,
+          "mean_latency_ms": null,
+          "mean_tokens": null
+        }
+      ],
+      "convergence_reasons": [
+        "budget-partial-synthesis"
+      ],
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      }
+    }
+  ],
+  "baseline_comparisons": [
+    {
+      "left": "single-pass",
+      "right": "self-refine",
+      "independent_quality_delta": 0.08,
+      "success_rate_delta": 0.6667,
+      "mean_tokens_delta": 676.6666,
+      "mean_latency_ms_delta": 337,
+      "mean_activations_delta": 2,
+      "failure_rate_delta": -0.6667
+    },
+    {
+      "left": "single-pass",
+      "right": "parallel-candidates",
+      "independent_quality_delta": 0.1,
+      "success_rate_delta": 0.6667,
+      "mean_tokens_delta": 1256.6666,
+      "mean_latency_ms_delta": 140.6666,
+      "mean_activations_delta": 3,
+      "failure_rate_delta": -0.6667
+    },
+    {
+      "left": "single-pass",
+      "right": "strict-lcm",
+      "independent_quality_delta": 0.12,
+      "success_rate_delta": 0.6667,
+      "mean_tokens_delta": 2030,
+      "mean_latency_ms_delta": 674,
+      "mean_activations_delta": 19,
+      "failure_rate_delta": -0.6667
+    },
+    {
+      "left": "single-pass",
+      "right": "adaptive-convergence",
+      "independent_quality_delta": 0.11,
+      "success_rate_delta": 0.6667,
+      "mean_tokens_delta": 966.6666,
+      "mean_latency_ms_delta": 309.1666,
+      "mean_activations_delta": 7,
+      "failure_rate_delta": -0.6667
+    },
+    {
+      "left": "single-pass",
+      "right": "budget-partial",
+      "independent_quality_delta": 0.03,
+      "success_rate_delta": 0.3334,
+      "mean_tokens_delta": -241.5,
+      "mean_latency_ms_delta": -112.3334,
+      "mean_activations_delta": 3,
+      "failure_rate_delta": -0.3334
+    }
+  ],
+  "strict_lcm_vs_adaptive": {
+    "left": "strict-lcm",
+    "right": "adaptive-convergence",
+    "independent_quality_delta": -0.01,
+    "success_rate_delta": 0,
+    "mean_tokens_delta": -1063.3334,
+    "mean_latency_ms_delta": -364.8334,
+    "mean_activations_delta": -12,
+    "failure_rate_delta": 0
+  },
+  "independent_evaluation": {
+    "path": "independent-rubric-fixture-v1",
+    "self_judge_bias_reported": true,
+    "human_evaluation": {
+      "state": "NOT RUN",
+      "reason": "required before empirical preference or quality claims"
+    }
+  },
+  "failure_injections": [
+    {
+      "id": "evaluator-error",
+      "outcome": "failed-closed",
+      "recovery": "independent-evaluator-or-last-accepted",
+      "matched": true
+    },
+    {
+      "id": "non-convergence",
+      "outcome": "partial",
+      "recovery": "ceiling-partial-synthesis",
+      "matched": true
+    },
+    {
+      "id": "prompt-injection",
+      "outcome": "denied",
+      "recovery": "drop-tainted-candidate",
+      "matched": true
+    },
+    {
+      "id": "denied-tool",
+      "outcome": "denied",
+      "recovery": "skip-or-approved-gate",
+      "matched": true
+    },
+    {
+      "id": "duplicate-retry",
+      "outcome": "deduplicated",
+      "recovery": "reuse-receipt",
+      "matched": true
+    },
+    {
+      "id": "budget-exhaustion",
+      "outcome": "partial",
+      "recovery": "resume-with-new-budget",
+      "matched": true
+    }
+  ],
+  "ablations": [
+    {
+      "id": "track-count",
+      "variants": [
+        1,
+        2,
+        4
+      ],
+      "state": "configured"
+    },
+    {
+      "id": "evaluator-identity",
+      "variants": [
+        "self",
+        "independent-rubric",
+        "blinded-human"
+      ],
+      "state": "configured"
+    },
+    {
+      "id": "model-sharing",
+      "variants": [
+        "shared",
+        "independent"
+      ],
+      "state": "configured"
+    },
+    {
+      "id": "join-policy",
+      "variants": [
+        "all",
+        "best",
+        "quorum",
+        "lcm",
+        "converged"
+      ],
+      "state": "configured"
+    },
+    {
+      "id": "budget",
+      "variants": [
+        0.5,
+        1,
+        2
+      ],
+      "state": "configured"
+    }
+  ],
+  "claim_gate": {
+    "state": "BLOCKED",
+    "reason": "Synthetic conformance data validates the harness, not provider quality or efficiency.",
+    "required_evidence": [
+      "repeated trusted provider runs",
+      "independent or blinded human evaluation",
+      "confidence intervals and task-family replication"
+    ],
+    "supported_positioning": "Flow graphs are useful when dependencies, conditional routing, fanout/fanin, approvals, retries, audit, or multi-agent boundaries must be explicit.",
+    "prohibited_positioning": "Graphs are a general upgrade over loops or are inherently smarter, faster, cheaper, or more accurate."
+  }
+}

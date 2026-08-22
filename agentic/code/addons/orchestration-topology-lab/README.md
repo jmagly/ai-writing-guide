@@ -21,3 +21,8 @@ profiles are deliberately descriptive; they do not enable automatic routing.
 The addon depends on the integrity and provenance controls delivered by #2037
 and #2039. Its recommendations are local experimental evidence, not automatic
 fleet or production routing policy.
+
+The exported `summarizeEvaluationRuns()` primitive is also the shared metric
+surface for the composition-engine benchmark. This keeps sample count, success,
+failure, quality, latency, cost, and success-conditioned aggregation consistent
+across topology and composition-policy comparisons.

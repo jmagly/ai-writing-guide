@@ -58,6 +58,27 @@ aiwg composition run graph.yaml --adapter ./adapter.mjs \
 See [docs/runtime-operations.md](docs/runtime-operations.md) for adapter,
 failure, replay, output-gate, and tracing guidance.
 
+## Evaluate composition policies
+
+`aiwg composition benchmark` expands a versioned benchmark manifest into raw
+machine-readable records and a reproducible summary. The shipped suite holds
+tasks, fixture-model settings, budgets, seeds, metrics, and thresholds fixed
+while comparing single-pass, Self-Refine, parallel candidates, strict 4/5 LCM,
+adaptive convergence, and budget-partial policies.
+
+~~~bash
+aiwg composition benchmark benchmarks/composition-policy-benchmark.v1.json \
+  --raw-out evidence/composition-policy-benchmark-v1.raw.json \
+  --summary-out evidence/composition-policy-benchmark-v1.summary.json
+~~~
+
+The included records are labeled **synthetic-conformance**. They validate
+aggregation, failure handling, and reproducibility but cannot support provider
+quality, cost, latency, or preference claims. See
+[docs/composition-evaluation.md](docs/composition-evaluation.md) for the claim
+gate and [docs/composition-evaluation-research-matrix.md](docs/composition-evaluation-research-matrix.md)
+for local-corpus evidence decisions.
+
 ## Contract
 
 The source of truth is
@@ -108,11 +129,13 @@ repair is known.
 
 ## Provider adapters
 
-Successful validation produces **composition.normalized.aiwg.io/v1alpha1**.
-The normalized envelope carries the unchanged core graph plus graph, node, and
-edge identities. Mission, A2A, Sandbox, Cockpit, and provider adapters consume
-that same envelope and project it into their own runtime formats; provider
-names and provider-specific configuration are forbidden in the core schema.
+Successful validation produces a **flow.aiwg.io/v1alpha1**
+**FlowGraphNormalized** envelope. Run reports and checkpoints use that same API
+group with **FlowGraphRunReport** and **FlowGraphCheckpoint** kinds. The
+normalized envelope carries the unchanged core graph plus graph, node, and edge
+identities. Mission, A2A, Sandbox, Cockpit, and provider adapters consume that
+same envelope and project it into their own runtime formats; provider names and
+provider-specific configuration are forbidden in the core schema.
 
 Runtime graph/run/node/edge metadata is public execution provenance. A runtime
 assigns runId when execution begins; validation leaves it null.

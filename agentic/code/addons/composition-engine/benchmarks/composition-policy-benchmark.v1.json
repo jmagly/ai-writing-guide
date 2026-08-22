@@ -1,0 +1,83 @@
+{
+  "apiVersion": "flow.aiwg.io/v1alpha1",
+  "kind": "CompositionPolicyBenchmark",
+  "benchmark_id": "composition-policy-benchmark-v1",
+  "evidence_mode": "synthetic-conformance",
+  "description": "Deterministic harness conformance suite; not empirical provider-performance evidence.",
+  "model_settings": {
+    "id": "deterministic-policy-fixture-v1",
+    "provider": "fixture",
+    "model": "deterministic-policy-fixture-v1",
+    "temperature": 0,
+    "tool_fixture_version": "1"
+  },
+  "seeds": [17],
+  "budgets": {
+    "tokens": 5000,
+    "tool_calls": 10,
+    "cost_usd": 0.1,
+    "latency_ms": 5000,
+    "activations": 20,
+    "retries": 3
+  },
+  "thresholds": {
+    "quality": 0.7,
+    "constraint_satisfaction": 0.8,
+    "speed_of_accuracy": [0.65, 0.75, 0.85]
+  },
+  "metrics": [
+    "task_success",
+    "independent_quality",
+    "constraint_satisfaction",
+    "calibration_error",
+    "self_judge_bias",
+    "human_preference_state",
+    "tokens",
+    "tool_calls",
+    "cost_usd",
+    "latency_ms",
+    "activations",
+    "retries",
+    "convergence_reason",
+    "failure_rate",
+    "hitl_burden",
+    "observability",
+    "recovery"
+  ],
+  "evaluators": [
+    {"id": "self-judge-fixture-v1", "independence": "shared", "role": "calibration-probe"},
+    {"id": "independent-rubric-fixture-v1", "independence": "independent", "role": "task-and-constraint-rubric"},
+    {"id": "blinded-human-preference-v1", "independence": "human", "role": "preference", "state": "NOT RUN"}
+  ],
+  "tasks": [
+    {"id": "technical-debug", "family": "technical", "tool_mode": "none", "base_quality": 0.68, "base_constraint_score": 0.86, "base_tokens": 900, "base_latency_ms": 500, "base_tool_calls": 0},
+    {"id": "concept-explain", "family": "conceptual", "tool_mode": "none", "base_quality": 0.72, "base_constraint_score": 0.9, "base_tokens": 800, "base_latency_ms": 450, "base_tool_calls": 0},
+    {"id": "practical-plan", "family": "practical", "tool_mode": "none", "base_quality": 0.66, "base_constraint_score": 0.82, "base_tokens": 1000, "base_latency_ms": 550, "base_tool_calls": 0},
+    {"id": "theory-compare", "family": "theoretical", "tool_mode": "none", "base_quality": 0.7, "base_constraint_score": 0.88, "base_tokens": 950, "base_latency_ms": 520, "base_tool_calls": 0},
+    {"id": "read-only-repo-check", "family": "technical", "tool_mode": "read-only", "base_quality": 0.69, "base_constraint_score": 0.9, "base_tokens": 1050, "base_latency_ms": 650, "base_tool_calls": 1},
+    {"id": "sandboxed-side-effect", "family": "practical", "tool_mode": "side-effect-fixture", "base_quality": 0.64, "base_constraint_score": 0.92, "base_tokens": 1100, "base_latency_ms": 700, "base_tool_calls": 2}
+  ],
+  "policies": [
+    {"id": "single-pass", "quality_delta": 0, "constraint_delta": 0, "self_judge_bias": 0.05, "tokens_factor": 1, "latency_factor": 1, "cost_factor": 1, "tool_call_factor": 1, "activations": 1, "retries": 0, "convergence_reason": "single-pass-complete", "hitl_burden": "none", "observability": "final-only", "recovery": "rerun"},
+    {"id": "self-refine", "quality_delta": 0.08, "constraint_delta": 0.03, "self_judge_bias": 0.06, "tokens_factor": 1.7, "latency_factor": 1.6, "cost_factor": 1.15, "tool_call_factor": 1, "activations": 3, "retries": 1, "convergence_reason": "refinement-limit", "hitl_burden": "optional-review", "observability": "iteration-receipts", "recovery": "last-accepted-draft"},
+    {"id": "parallel-candidates", "quality_delta": 0.1, "constraint_delta": 0.02, "self_judge_bias": 0.04, "tokens_factor": 2.3, "latency_factor": 1.25, "cost_factor": 1.1, "tool_call_factor": 2, "activations": 4, "retries": 0, "convergence_reason": "best-output-selected", "hitl_burden": "optional-tie-break", "observability": "candidate-receipts", "recovery": "next-ranked-candidate"},
+    {"id": "strict-lcm", "quality_delta": 0.12, "constraint_delta": 0.04, "self_judge_bias": 0.07, "tokens_factor": 3.1, "latency_factor": 2.2, "cost_factor": 1.05, "tool_call_factor": 2, "activations": 20, "retries": 0, "convergence_reason": "lcm-alignment-20", "hitl_burden": "optional-final-review", "observability": "activation-and-join-receipts", "recovery": "checkpoint-replay"},
+    {"id": "adaptive-convergence", "quality_delta": 0.11, "constraint_delta": 0.04, "self_judge_bias": 0.04, "tokens_factor": 2, "latency_factor": 1.55, "cost_factor": 1.05, "tool_call_factor": 1.5, "activations": 8, "retries": 1, "convergence_reason": "evaluator-converged", "hitl_burden": "optional-disagreement-review", "observability": "activation-evaluation-receipts", "recovery": "ceiling-partial-synthesis"},
+    {"id": "budget-partial", "quality_delta": 0.03, "constraint_delta": 0.01, "self_judge_bias": 0.03, "tokens_factor": 0.75, "latency_factor": 0.8, "cost_factor": 0.9, "tool_call_factor": 1, "activations": 4, "retries": 0, "convergence_reason": "budget-partial-synthesis", "hitl_burden": "partial-result-review", "observability": "budget-and-cutoff-receipts", "recovery": "resume-with-new-budget"}
+  ],
+  "ablations": [
+    {"id": "track-count", "variants": [1, 2, 4], "state": "configured"},
+    {"id": "evaluator-identity", "variants": ["self", "independent-rubric", "blinded-human"], "state": "configured"},
+    {"id": "model-sharing", "variants": ["shared", "independent"], "state": "configured"},
+    {"id": "join-policy", "variants": ["all", "best", "quorum", "lcm", "converged"], "state": "configured"},
+    {"id": "budget", "variants": [0.5, 1, 2], "state": "configured"}
+  ],
+  "failure_injections": [
+    {"id": "evaluator-error", "policy_id": "self-refine", "task_id": "concept-explain", "expected_outcome": "failed-closed", "expected_recovery": "independent-evaluator-or-last-accepted"},
+    {"id": "non-convergence", "policy_id": "adaptive-convergence", "task_id": "theory-compare", "expected_outcome": "partial", "expected_recovery": "ceiling-partial-synthesis"},
+    {"id": "prompt-injection", "policy_id": "parallel-candidates", "task_id": "read-only-repo-check", "expected_outcome": "denied", "expected_recovery": "drop-tainted-candidate"},
+    {"id": "denied-tool", "policy_id": "strict-lcm", "task_id": "sandboxed-side-effect", "expected_outcome": "denied", "expected_recovery": "skip-or-approved-gate"},
+    {"id": "duplicate-retry", "policy_id": "self-refine", "task_id": "technical-debug", "expected_outcome": "deduplicated", "expected_recovery": "reuse-receipt"},
+    {"id": "budget-exhaustion", "policy_id": "budget-partial", "task_id": "practical-plan", "expected_outcome": "partial", "expected_recovery": "resume-with-new-budget"}
+  ]
+}

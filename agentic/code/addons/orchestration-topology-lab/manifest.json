@@ -32,7 +32,7 @@
     "optional": ["rlm", "agent-loop"]
   },
   "researchFoundation": {
-    "issue": "#2042",
+    "issue": "#2042, #2118",
     "source": "research-papers@e0dd2f37 proposal 6"
   }
 }

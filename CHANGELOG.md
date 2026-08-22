@@ -9,6 +9,15 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Claim-gated composition policy evaluation** - `aiwg composition benchmark`
+  now expands a versioned fixed-task manifest into raw records and a
+  reproducible summary for single-pass, Self-Refine, parallel candidates,
+  strict LCM, adaptive convergence, and budget-partial policies. The harness
+  reuses topology-lab aggregation, reports success-conditioned resources and
+  self-judge bias, injects six failure modes, records nine local-corpus research
+  decisions, and blocks quality/efficiency claims for synthetic evidence
+  (#2118).
+
 - **Safe polyrhythmic composition pattern** - The composition-engine addon now
   ships strict 4/5 LCM and adaptive convergence profiles over one typed
   problem-mode/user-mode contract, with evidence-bound user-state handling,

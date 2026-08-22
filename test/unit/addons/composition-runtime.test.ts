@@ -249,8 +249,17 @@ describe('composition-engine deterministic runtime', () => {
         compositionAdapter: { id: 'test', invokeNode: echoAdapter },
       });
       expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.message)).toMatchObject({ runId: 'cli-run', status: 'completed' });
-      expect(JSON.parse(readFileSync(checkpoint, 'utf8'))).toMatchObject({ runId: 'cli-run' });
+      expect(JSON.parse(result.message)).toMatchObject({
+        schemaVersion: 'flow.aiwg.io/v1alpha1',
+        kind: 'FlowGraphRunReport',
+        runId: 'cli-run',
+        status: 'completed',
+      });
+      expect(JSON.parse(readFileSync(checkpoint, 'utf8'))).toMatchObject({
+        schemaVersion: 'flow.aiwg.io/v1alpha1',
+        kind: 'FlowGraphCheckpoint',
+        runId: 'cli-run',
+      });
 
       const missing = await compositionRun([resolve(ROOT, 'fixtures', 'linear-flow.json'), '--format', 'json'], { cwd: process.cwd() });
       expect(missing.exitCode).toBe(2);

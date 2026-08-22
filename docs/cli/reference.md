@@ -5314,6 +5314,7 @@ Validate and normalize provider-neutral Flow execution graphs from the
 aiwg use composition-engine
 aiwg composition validate <manifest.yaml|json> [--format human|json] [--catalog <index.json>]
 aiwg composition run <manifest.yaml|json> --adapter <module.mjs> [--format human|json]
+aiwg composition benchmark <benchmark.json> [--format json|markdown] [--raw-out <file>] [--summary-out <file>]
 ~~~
 
 The manifest uses `apiVersion: flow.aiwg.io/v1alpha1` and `kind: FlowGraph`.
@@ -5344,6 +5345,13 @@ modes, independent resource ceilings, capability/permission narrowing,
 retry-safe mutation keys, output gates, and trace redaction. Final-only output
 does not stream intermediate drafts. Execution metadata contains no private
 chain-of-thought.
+
+`composition benchmark` compares fixed composition policies with a single-pass
+baseline and emits requested-versus-realized resources, success-conditioned
+efficiency, speed-of-accuracy curves, strict-LCM-versus-adaptive deltas,
+independent-evaluator bias, ablations, and failure-injection outcomes. The
+shipped manifest and evidence are labeled synthetic conformance and keep the
+empirical quality/efficiency claim gate blocked.
 
 ## Extension System
 

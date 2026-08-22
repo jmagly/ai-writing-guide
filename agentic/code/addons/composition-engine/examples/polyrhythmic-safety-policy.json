@@ -1,5 +1,6 @@
 {
-  "schemaVersion": "composition.pattern-safety.aiwg.io/v1alpha1",
+  "schemaVersion": "flow.aiwg.io/v1alpha1",
+  "kind": "CompositionPatternSafetyPolicy",
   "pattern": "polyrhythmic-reasoning",
   "allowedGeneralDomains": ["technical-troubleshooting", "conceptual-explanation", "practical-planning", "theoretical-comparison"],
   "deniedGeneralTemplates": ["medical diagnosis", "healthcare treatment", "investment advice", "financial advice"],

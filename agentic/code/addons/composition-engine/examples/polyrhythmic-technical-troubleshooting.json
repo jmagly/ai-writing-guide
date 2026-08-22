@@ -1,5 +1,6 @@
 {
-  "schemaVersion": "composition.pattern-example.aiwg.io/v1alpha1",
+  "schemaVersion": "flow.aiwg.io/v1alpha1",
+  "kind": "CompositionPatternExample",
   "id": "technical-troubleshooting",
   "domain": "technical-troubleshooting",
   "profile": "strict-lcm",

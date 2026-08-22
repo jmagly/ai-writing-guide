@@ -1,0 +1,2169 @@
+{
+  "schemaVersion": "flow.aiwg.io/v1alpha1",
+  "kind": "CompositionPolicyBenchmarkRawEvidence",
+  "benchmark_id": "composition-policy-benchmark-v1",
+  "manifest_digest": "b402841c71e2e54b",
+  "evidence_mode": "synthetic-conformance",
+  "records": [
+    {
+      "record_id": "run-76c1e41bfde7b86d",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "technical-debug",
+      "task_family": "technical",
+      "tool_mode": "none",
+      "policy_id": "single-pass",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": false,
+      "outcome": "rejected",
+      "metrics": {
+        "quality_score": 0.68,
+        "constraint_satisfaction": 0.86,
+        "calibration_error": 0.05,
+        "self_judge_score": 0.73,
+        "independent_score": 0.68,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 900,
+        "tool_calls": 0,
+        "cost_usd": 0.0018,
+        "latency_ms": 500,
+        "activations": 1,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.18,
+      "convergence_reason": "single-pass-complete",
+      "hitl_burden": "none",
+      "observability": "final-only",
+      "recovery": "rerun",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-e9175e885fabb941",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "technical-debug",
+      "task_family": "technical",
+      "tool_mode": "none",
+      "policy_id": "self-refine",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.76,
+        "constraint_satisfaction": 0.89,
+        "calibration_error": 0.06,
+        "self_judge_score": 0.82,
+        "independent_score": 0.76,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1530,
+        "tool_calls": 0,
+        "cost_usd": 0.0035,
+        "latency_ms": 800,
+        "activations": 3,
+        "retries": 1
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.306,
+      "convergence_reason": "refinement-limit",
+      "hitl_burden": "optional-review",
+      "observability": "iteration-receipts",
+      "recovery": "last-accepted-draft",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-dffcbc4c9200513d",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "technical-debug",
+      "task_family": "technical",
+      "tool_mode": "none",
+      "policy_id": "parallel-candidates",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.78,
+        "constraint_satisfaction": 0.88,
+        "calibration_error": 0.04,
+        "self_judge_score": 0.82,
+        "independent_score": 0.78,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 2070,
+        "tool_calls": 0,
+        "cost_usd": 0.0046,
+        "latency_ms": 625,
+        "activations": 4,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.414,
+      "convergence_reason": "best-output-selected",
+      "hitl_burden": "optional-tie-break",
+      "observability": "candidate-receipts",
+      "recovery": "next-ranked-candidate",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-46c21d8a7fd854b7",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "technical-debug",
+      "task_family": "technical",
+      "tool_mode": "none",
+      "policy_id": "strict-lcm",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.8,
+        "constraint_satisfaction": 0.9,
+        "calibration_error": 0.07,
+        "self_judge_score": 0.87,
+        "independent_score": 0.8,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 2790,
+        "tool_calls": 0,
+        "cost_usd": 0.0059,
+        "latency_ms": 1100,
+        "activations": 20,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.558,
+      "convergence_reason": "lcm-alignment-20",
+      "hitl_burden": "optional-final-review",
+      "observability": "activation-and-join-receipts",
+      "recovery": "checkpoint-replay",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-f01af097896dca38",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "technical-debug",
+      "task_family": "technical",
+      "tool_mode": "none",
+      "policy_id": "adaptive-convergence",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.79,
+        "constraint_satisfaction": 0.9,
+        "calibration_error": 0.04,
+        "self_judge_score": 0.83,
+        "independent_score": 0.79,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1800,
+        "tool_calls": 0,
+        "cost_usd": 0.0038,
+        "latency_ms": 775,
+        "activations": 8,
+        "retries": 1
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.36,
+      "convergence_reason": "evaluator-converged",
+      "hitl_burden": "optional-disagreement-review",
+      "observability": "activation-evaluation-receipts",
+      "recovery": "ceiling-partial-synthesis",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-e88d6227f72271f0",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "technical-debug",
+      "task_family": "technical",
+      "tool_mode": "none",
+      "policy_id": "budget-partial",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.71,
+        "constraint_satisfaction": 0.87,
+        "calibration_error": 0.03,
+        "self_judge_score": 0.74,
+        "independent_score": 0.71,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 675,
+        "tool_calls": 0,
+        "cost_usd": 0.0012,
+        "latency_ms": 400,
+        "activations": 4,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.135,
+      "convergence_reason": "budget-partial-synthesis",
+      "hitl_burden": "partial-result-review",
+      "observability": "budget-and-cutoff-receipts",
+      "recovery": "resume-with-new-budget",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-02ecdbbd1dfa39ad",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "concept-explain",
+      "task_family": "conceptual",
+      "tool_mode": "none",
+      "policy_id": "single-pass",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.72,
+        "constraint_satisfaction": 0.9,
+        "calibration_error": 0.05,
+        "self_judge_score": 0.77,
+        "independent_score": 0.72,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 800,
+        "tool_calls": 0,
+        "cost_usd": 0.0016,
+        "latency_ms": 450,
+        "activations": 1,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.16,
+      "convergence_reason": "single-pass-complete",
+      "hitl_burden": "none",
+      "observability": "final-only",
+      "recovery": "rerun",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-6ef16994195535fe",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "concept-explain",
+      "task_family": "conceptual",
+      "tool_mode": "none",
+      "policy_id": "self-refine",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.8,
+        "constraint_satisfaction": 0.93,
+        "calibration_error": 0.06,
+        "self_judge_score": 0.86,
+        "independent_score": 0.8,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1360,
+        "tool_calls": 0,
+        "cost_usd": 0.0031,
+        "latency_ms": 720,
+        "activations": 3,
+        "retries": 1
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.272,
+      "convergence_reason": "refinement-limit",
+      "hitl_burden": "optional-review",
+      "observability": "iteration-receipts",
+      "recovery": "last-accepted-draft",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-0b96d1992fbeb18d",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "concept-explain",
+      "task_family": "conceptual",
+      "tool_mode": "none",
+      "policy_id": "parallel-candidates",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.82,
+        "constraint_satisfaction": 0.92,
+        "calibration_error": 0.04,
+        "self_judge_score": 0.86,
+        "independent_score": 0.82,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1840,
+        "tool_calls": 0,
+        "cost_usd": 0.004,
+        "latency_ms": 563,
+        "activations": 4,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.368,
+      "convergence_reason": "best-output-selected",
+      "hitl_burden": "optional-tie-break",
+      "observability": "candidate-receipts",
+      "recovery": "next-ranked-candidate",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-89661023779afaa2",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "concept-explain",
+      "task_family": "conceptual",
+      "tool_mode": "none",
+      "policy_id": "strict-lcm",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.84,
+        "constraint_satisfaction": 0.94,
+        "calibration_error": 0.07,
+        "self_judge_score": 0.91,
+        "independent_score": 0.84,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 2480,
+        "tool_calls": 0,
+        "cost_usd": 0.0052,
+        "latency_ms": 990,
+        "activations": 20,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.496,
+      "convergence_reason": "lcm-alignment-20",
+      "hitl_burden": "optional-final-review",
+      "observability": "activation-and-join-receipts",
+      "recovery": "checkpoint-replay",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-2b7c35ed3655b5a5",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "concept-explain",
+      "task_family": "conceptual",
+      "tool_mode": "none",
+      "policy_id": "adaptive-convergence",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.83,
+        "constraint_satisfaction": 0.94,
+        "calibration_error": 0.04,
+        "self_judge_score": 0.87,
+        "independent_score": 0.83,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1600,
+        "tool_calls": 0,
+        "cost_usd": 0.0034,
+        "latency_ms": 698,
+        "activations": 8,
+        "retries": 1
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.32,
+      "convergence_reason": "evaluator-converged",
+      "hitl_burden": "optional-disagreement-review",
+      "observability": "activation-evaluation-receipts",
+      "recovery": "ceiling-partial-synthesis",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-1505e6c64c945471",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "concept-explain",
+      "task_family": "conceptual",
+      "tool_mode": "none",
+      "policy_id": "budget-partial",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.75,
+        "constraint_satisfaction": 0.91,
+        "calibration_error": 0.03,
+        "self_judge_score": 0.78,
+        "independent_score": 0.75,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 600,
+        "tool_calls": 0,
+        "cost_usd": 0.0011,
+        "latency_ms": 360,
+        "activations": 4,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.12,
+      "convergence_reason": "budget-partial-synthesis",
+      "hitl_burden": "partial-result-review",
+      "observability": "budget-and-cutoff-receipts",
+      "recovery": "resume-with-new-budget",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-405866a34eff7fff",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "practical-plan",
+      "task_family": "practical",
+      "tool_mode": "none",
+      "policy_id": "single-pass",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": false,
+      "outcome": "rejected",
+      "metrics": {
+        "quality_score": 0.66,
+        "constraint_satisfaction": 0.82,
+        "calibration_error": 0.05,
+        "self_judge_score": 0.71,
+        "independent_score": 0.66,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1000,
+        "tool_calls": 0,
+        "cost_usd": 0.002,
+        "latency_ms": 550,
+        "activations": 1,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.2,
+      "convergence_reason": "single-pass-complete",
+      "hitl_burden": "none",
+      "observability": "final-only",
+      "recovery": "rerun",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-d199516580fb32e5",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "practical-plan",
+      "task_family": "practical",
+      "tool_mode": "none",
+      "policy_id": "self-refine",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.74,
+        "constraint_satisfaction": 0.85,
+        "calibration_error": 0.06,
+        "self_judge_score": 0.8,
+        "independent_score": 0.74,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1700,
+        "tool_calls": 0,
+        "cost_usd": 0.0039,
+        "latency_ms": 880,
+        "activations": 3,
+        "retries": 1
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.34,
+      "convergence_reason": "refinement-limit",
+      "hitl_burden": "optional-review",
+      "observability": "iteration-receipts",
+      "recovery": "last-accepted-draft",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-c3b5e2da3fa6c4f0",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "practical-plan",
+      "task_family": "practical",
+      "tool_mode": "none",
+      "policy_id": "parallel-candidates",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.76,
+        "constraint_satisfaction": 0.84,
+        "calibration_error": 0.04,
+        "self_judge_score": 0.8,
+        "independent_score": 0.76,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 2300,
+        "tool_calls": 0,
+        "cost_usd": 0.0051,
+        "latency_ms": 688,
+        "activations": 4,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.46,
+      "convergence_reason": "best-output-selected",
+      "hitl_burden": "optional-tie-break",
+      "observability": "candidate-receipts",
+      "recovery": "next-ranked-candidate",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-e8eea345011f5912",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "practical-plan",
+      "task_family": "practical",
+      "tool_mode": "none",
+      "policy_id": "strict-lcm",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.78,
+        "constraint_satisfaction": 0.86,
+        "calibration_error": 0.07,
+        "self_judge_score": 0.85,
+        "independent_score": 0.78,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 3100,
+        "tool_calls": 0,
+        "cost_usd": 0.0065,
+        "latency_ms": 1210,
+        "activations": 20,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.62,
+      "convergence_reason": "lcm-alignment-20",
+      "hitl_burden": "optional-final-review",
+      "observability": "activation-and-join-receipts",
+      "recovery": "checkpoint-replay",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-3aaac4b69a8066d6",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "practical-plan",
+      "task_family": "practical",
+      "tool_mode": "none",
+      "policy_id": "adaptive-convergence",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.77,
+        "constraint_satisfaction": 0.86,
+        "calibration_error": 0.04,
+        "self_judge_score": 0.81,
+        "independent_score": 0.77,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 2000,
+        "tool_calls": 0,
+        "cost_usd": 0.0042,
+        "latency_ms": 853,
+        "activations": 8,
+        "retries": 1
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.4,
+      "convergence_reason": "evaluator-converged",
+      "hitl_burden": "optional-disagreement-review",
+      "observability": "activation-evaluation-receipts",
+      "recovery": "ceiling-partial-synthesis",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-2668dab05b4a0145",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "practical-plan",
+      "task_family": "practical",
+      "tool_mode": "none",
+      "policy_id": "budget-partial",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": false,
+      "outcome": "rejected",
+      "metrics": {
+        "quality_score": 0.69,
+        "constraint_satisfaction": 0.83,
+        "calibration_error": 0.03,
+        "self_judge_score": 0.72,
+        "independent_score": 0.69,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 750,
+        "tool_calls": 0,
+        "cost_usd": 0.0014,
+        "latency_ms": 440,
+        "activations": 4,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.15,
+      "convergence_reason": "budget-partial-synthesis",
+      "hitl_burden": "partial-result-review",
+      "observability": "budget-and-cutoff-receipts",
+      "recovery": "resume-with-new-budget",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-67b1c224bb89fc34",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "theory-compare",
+      "task_family": "theoretical",
+      "tool_mode": "none",
+      "policy_id": "single-pass",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.7,
+        "constraint_satisfaction": 0.88,
+        "calibration_error": 0.05,
+        "self_judge_score": 0.75,
+        "independent_score": 0.7,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 950,
+        "tool_calls": 0,
+        "cost_usd": 0.0019,
+        "latency_ms": 520,
+        "activations": 1,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.19,
+      "convergence_reason": "single-pass-complete",
+      "hitl_burden": "none",
+      "observability": "final-only",
+      "recovery": "rerun",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-66fd5a8dd8a94a05",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "theory-compare",
+      "task_family": "theoretical",
+      "tool_mode": "none",
+      "policy_id": "self-refine",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.78,
+        "constraint_satisfaction": 0.91,
+        "calibration_error": 0.06,
+        "self_judge_score": 0.84,
+        "independent_score": 0.78,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1615,
+        "tool_calls": 0,
+        "cost_usd": 0.0037,
+        "latency_ms": 832,
+        "activations": 3,
+        "retries": 1
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.323,
+      "convergence_reason": "refinement-limit",
+      "hitl_burden": "optional-review",
+      "observability": "iteration-receipts",
+      "recovery": "last-accepted-draft",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-90ca50c89a73230c",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "theory-compare",
+      "task_family": "theoretical",
+      "tool_mode": "none",
+      "policy_id": "parallel-candidates",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.8,
+        "constraint_satisfaction": 0.9,
+        "calibration_error": 0.04,
+        "self_judge_score": 0.84,
+        "independent_score": 0.8,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 2185,
+        "tool_calls": 0,
+        "cost_usd": 0.0048,
+        "latency_ms": 650,
+        "activations": 4,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.437,
+      "convergence_reason": "best-output-selected",
+      "hitl_burden": "optional-tie-break",
+      "observability": "candidate-receipts",
+      "recovery": "next-ranked-candidate",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-dfe2bc096ee09adb",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "theory-compare",
+      "task_family": "theoretical",
+      "tool_mode": "none",
+      "policy_id": "strict-lcm",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.82,
+        "constraint_satisfaction": 0.92,
+        "calibration_error": 0.07,
+        "self_judge_score": 0.89,
+        "independent_score": 0.82,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 2945,
+        "tool_calls": 0,
+        "cost_usd": 0.0062,
+        "latency_ms": 1144,
+        "activations": 20,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.589,
+      "convergence_reason": "lcm-alignment-20",
+      "hitl_burden": "optional-final-review",
+      "observability": "activation-and-join-receipts",
+      "recovery": "checkpoint-replay",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-b7a11d13ed69be70",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "theory-compare",
+      "task_family": "theoretical",
+      "tool_mode": "none",
+      "policy_id": "adaptive-convergence",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.81,
+        "constraint_satisfaction": 0.92,
+        "calibration_error": 0.04,
+        "self_judge_score": 0.85,
+        "independent_score": 0.81,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1900,
+        "tool_calls": 0,
+        "cost_usd": 0.004,
+        "latency_ms": 806,
+        "activations": 8,
+        "retries": 1
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.38,
+      "convergence_reason": "evaluator-converged",
+      "hitl_burden": "optional-disagreement-review",
+      "observability": "activation-evaluation-receipts",
+      "recovery": "ceiling-partial-synthesis",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-4c778821891e98b7",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "theory-compare",
+      "task_family": "theoretical",
+      "tool_mode": "none",
+      "policy_id": "budget-partial",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.73,
+        "constraint_satisfaction": 0.89,
+        "calibration_error": 0.03,
+        "self_judge_score": 0.76,
+        "independent_score": 0.73,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 713,
+        "tool_calls": 0,
+        "cost_usd": 0.0013,
+        "latency_ms": 416,
+        "activations": 4,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.1426,
+      "convergence_reason": "budget-partial-synthesis",
+      "hitl_burden": "partial-result-review",
+      "observability": "budget-and-cutoff-receipts",
+      "recovery": "resume-with-new-budget",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-f354c88d9f148a1c",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "read-only-repo-check",
+      "task_family": "technical",
+      "tool_mode": "read-only",
+      "policy_id": "single-pass",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": false,
+      "outcome": "rejected",
+      "metrics": {
+        "quality_score": 0.69,
+        "constraint_satisfaction": 0.9,
+        "calibration_error": 0.05,
+        "self_judge_score": 0.74,
+        "independent_score": 0.69,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1050,
+        "tool_calls": 1,
+        "cost_usd": 0.0026,
+        "latency_ms": 650,
+        "activations": 1,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.21,
+      "convergence_reason": "single-pass-complete",
+      "hitl_burden": "none",
+      "observability": "final-only",
+      "recovery": "rerun",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-1f1e632a8f941b1a",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "read-only-repo-check",
+      "task_family": "technical",
+      "tool_mode": "read-only",
+      "policy_id": "self-refine",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.77,
+        "constraint_satisfaction": 0.93,
+        "calibration_error": 0.06,
+        "self_judge_score": 0.83,
+        "independent_score": 0.77,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1785,
+        "tool_calls": 1,
+        "cost_usd": 0.0046,
+        "latency_ms": 1040,
+        "activations": 3,
+        "retries": 1
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.357,
+      "convergence_reason": "refinement-limit",
+      "hitl_burden": "optional-review",
+      "observability": "iteration-receipts",
+      "recovery": "last-accepted-draft",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-881757b494a36070",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "read-only-repo-check",
+      "task_family": "technical",
+      "tool_mode": "read-only",
+      "policy_id": "parallel-candidates",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.79,
+        "constraint_satisfaction": 0.92,
+        "calibration_error": 0.04,
+        "self_judge_score": 0.83,
+        "independent_score": 0.79,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 2415,
+        "tool_calls": 2,
+        "cost_usd": 0.0063,
+        "latency_ms": 813,
+        "activations": 4,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.483,
+      "convergence_reason": "best-output-selected",
+      "hitl_burden": "optional-tie-break",
+      "observability": "candidate-receipts",
+      "recovery": "next-ranked-candidate",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-0f06cb2906e19729",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "read-only-repo-check",
+      "task_family": "technical",
+      "tool_mode": "read-only",
+      "policy_id": "strict-lcm",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.81,
+        "constraint_satisfaction": 0.94,
+        "calibration_error": 0.07,
+        "self_judge_score": 0.88,
+        "independent_score": 0.81,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 3255,
+        "tool_calls": 2,
+        "cost_usd": 0.0078,
+        "latency_ms": 1430,
+        "activations": 20,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.651,
+      "convergence_reason": "lcm-alignment-20",
+      "hitl_burden": "optional-final-review",
+      "observability": "activation-and-join-receipts",
+      "recovery": "checkpoint-replay",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-809f65122622449d",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "read-only-repo-check",
+      "task_family": "technical",
+      "tool_mode": "read-only",
+      "policy_id": "adaptive-convergence",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.8,
+        "constraint_satisfaction": 0.94,
+        "calibration_error": 0.04,
+        "self_judge_score": 0.84,
+        "independent_score": 0.8,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 2100,
+        "tool_calls": 2,
+        "cost_usd": 0.0054,
+        "latency_ms": 1008,
+        "activations": 8,
+        "retries": 1
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.42,
+      "convergence_reason": "evaluator-converged",
+      "hitl_burden": "optional-disagreement-review",
+      "observability": "activation-evaluation-receipts",
+      "recovery": "ceiling-partial-synthesis",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-7ca9ee23e64389ef",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "read-only-repo-check",
+      "task_family": "technical",
+      "tool_mode": "read-only",
+      "policy_id": "budget-partial",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.72,
+        "constraint_satisfaction": 0.91,
+        "calibration_error": 0.03,
+        "self_judge_score": 0.75,
+        "independent_score": 0.72,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 788,
+        "tool_calls": 1,
+        "cost_usd": 0.0019,
+        "latency_ms": 520,
+        "activations": 4,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.1576,
+      "convergence_reason": "budget-partial-synthesis",
+      "hitl_burden": "partial-result-review",
+      "observability": "budget-and-cutoff-receipts",
+      "recovery": "resume-with-new-budget",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-251a35e9b7cd776f",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "sandboxed-side-effect",
+      "task_family": "practical",
+      "tool_mode": "side-effect-fixture",
+      "policy_id": "single-pass",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": false,
+      "outcome": "rejected",
+      "metrics": {
+        "quality_score": 0.64,
+        "constraint_satisfaction": 0.92,
+        "calibration_error": 0.05,
+        "self_judge_score": 0.69,
+        "independent_score": 0.64,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1100,
+        "tool_calls": 2,
+        "cost_usd": 0.0032,
+        "latency_ms": 700,
+        "activations": 1,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.22,
+      "convergence_reason": "single-pass-complete",
+      "hitl_burden": "none",
+      "observability": "final-only",
+      "recovery": "rerun",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-125af27f8b32d2ec",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "sandboxed-side-effect",
+      "task_family": "practical",
+      "tool_mode": "side-effect-fixture",
+      "policy_id": "self-refine",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.72,
+        "constraint_satisfaction": 0.95,
+        "calibration_error": 0.06,
+        "self_judge_score": 0.78,
+        "independent_score": 0.72,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1870,
+        "tool_calls": 2,
+        "cost_usd": 0.0053,
+        "latency_ms": 1120,
+        "activations": 3,
+        "retries": 1
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.374,
+      "convergence_reason": "refinement-limit",
+      "hitl_burden": "optional-review",
+      "observability": "iteration-receipts",
+      "recovery": "last-accepted-draft",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-dd2dd6821ab63a65",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "sandboxed-side-effect",
+      "task_family": "practical",
+      "tool_mode": "side-effect-fixture",
+      "policy_id": "parallel-candidates",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.74,
+        "constraint_satisfaction": 0.94,
+        "calibration_error": 0.04,
+        "self_judge_score": 0.78,
+        "independent_score": 0.74,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 2530,
+        "tool_calls": 4,
+        "cost_usd": 0.0076,
+        "latency_ms": 875,
+        "activations": 4,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.506,
+      "convergence_reason": "best-output-selected",
+      "hitl_burden": "optional-tie-break",
+      "observability": "candidate-receipts",
+      "recovery": "next-ranked-candidate",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-23efc06271317546",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "sandboxed-side-effect",
+      "task_family": "practical",
+      "tool_mode": "side-effect-fixture",
+      "policy_id": "strict-lcm",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.76,
+        "constraint_satisfaction": 0.96,
+        "calibration_error": 0.07,
+        "self_judge_score": 0.83,
+        "independent_score": 0.76,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 3410,
+        "tool_calls": 4,
+        "cost_usd": 0.0092,
+        "latency_ms": 1540,
+        "activations": 20,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.682,
+      "convergence_reason": "lcm-alignment-20",
+      "hitl_burden": "optional-final-review",
+      "observability": "activation-and-join-receipts",
+      "recovery": "checkpoint-replay",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-cc9ab091fe6728e2",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "sandboxed-side-effect",
+      "task_family": "practical",
+      "tool_mode": "side-effect-fixture",
+      "policy_id": "adaptive-convergence",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": true,
+      "outcome": "accepted",
+      "metrics": {
+        "quality_score": 0.75,
+        "constraint_satisfaction": 0.96,
+        "calibration_error": 0.04,
+        "self_judge_score": 0.79,
+        "independent_score": 0.75,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 2200,
+        "tool_calls": 3,
+        "cost_usd": 0.0061,
+        "latency_ms": 1085,
+        "activations": 8,
+        "retries": 1
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.44,
+      "convergence_reason": "evaluator-converged",
+      "hitl_burden": "optional-disagreement-review",
+      "observability": "activation-evaluation-receipts",
+      "recovery": "ceiling-partial-synthesis",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "run-7ff711d3ad50afc7",
+      "record_type": "policy-run",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "sandboxed-side-effect",
+      "task_family": "practical",
+      "tool_mode": "side-effect-fixture",
+      "policy_id": "budget-partial",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": false,
+      "outcome": "rejected",
+      "metrics": {
+        "quality_score": 0.67,
+        "constraint_satisfaction": 0.93,
+        "calibration_error": 0.03,
+        "self_judge_score": 0.7,
+        "independent_score": 0.67,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 825,
+        "tool_calls": 2,
+        "cost_usd": 0.0025,
+        "latency_ms": 560,
+        "activations": 4,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.165,
+      "convergence_reason": "budget-partial-synthesis",
+      "hitl_burden": "partial-result-review",
+      "observability": "budget-and-cutoff-receipts",
+      "recovery": "resume-with-new-budget",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ]
+    },
+    {
+      "record_id": "failure-7d1b50cb6021fbfe",
+      "record_type": "failure-injection",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "concept-explain",
+      "task_family": "conceptual",
+      "tool_mode": "none",
+      "policy_id": "self-refine",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": false,
+      "outcome": "failed-closed",
+      "metrics": {
+        "quality_score": 0.8,
+        "constraint_satisfaction": 0.93,
+        "calibration_error": 0.06,
+        "self_judge_score": 0.86,
+        "independent_score": 0.8,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1360,
+        "tool_calls": 0,
+        "cost_usd": 0.0031,
+        "latency_ms": 720,
+        "activations": 3,
+        "retries": 1
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.272,
+      "convergence_reason": "evaluator-error",
+      "hitl_burden": "optional-review",
+      "observability": "iteration-receipts",
+      "recovery": "independent-evaluator-or-last-accepted",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ],
+      "injection_id": "evaluator-error",
+      "expected": {
+        "outcome": "failed-closed",
+        "recovery": "independent-evaluator-or-last-accepted"
+      },
+      "observed": {
+        "outcome": "failed-closed",
+        "recovery": "independent-evaluator-or-last-accepted",
+        "matched": true
+      }
+    },
+    {
+      "record_id": "failure-b9678e2b899ba819",
+      "record_type": "failure-injection",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "theory-compare",
+      "task_family": "theoretical",
+      "tool_mode": "none",
+      "policy_id": "adaptive-convergence",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": false,
+      "outcome": "partial",
+      "metrics": {
+        "quality_score": 0.81,
+        "constraint_satisfaction": 0.92,
+        "calibration_error": 0.04,
+        "self_judge_score": 0.85,
+        "independent_score": 0.81,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1900,
+        "tool_calls": 0,
+        "cost_usd": 0.004,
+        "latency_ms": 806,
+        "activations": 8,
+        "retries": 1
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.38,
+      "convergence_reason": "non-convergence",
+      "hitl_burden": "optional-disagreement-review",
+      "observability": "activation-evaluation-receipts",
+      "recovery": "ceiling-partial-synthesis",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ],
+      "injection_id": "non-convergence",
+      "expected": {
+        "outcome": "partial",
+        "recovery": "ceiling-partial-synthesis"
+      },
+      "observed": {
+        "outcome": "partial",
+        "recovery": "ceiling-partial-synthesis",
+        "matched": true
+      }
+    },
+    {
+      "record_id": "failure-87fce8b658033df4",
+      "record_type": "failure-injection",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "read-only-repo-check",
+      "task_family": "technical",
+      "tool_mode": "read-only",
+      "policy_id": "parallel-candidates",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": false,
+      "outcome": "denied",
+      "metrics": {
+        "quality_score": 0.79,
+        "constraint_satisfaction": 0.92,
+        "calibration_error": 0.04,
+        "self_judge_score": 0.83,
+        "independent_score": 0.79,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 2415,
+        "tool_calls": 2,
+        "cost_usd": 0.0063,
+        "latency_ms": 813,
+        "activations": 4,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.483,
+      "convergence_reason": "prompt-injection",
+      "hitl_burden": "optional-tie-break",
+      "observability": "candidate-receipts",
+      "recovery": "drop-tainted-candidate",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ],
+      "injection_id": "prompt-injection",
+      "expected": {
+        "outcome": "denied",
+        "recovery": "drop-tainted-candidate"
+      },
+      "observed": {
+        "outcome": "denied",
+        "recovery": "drop-tainted-candidate",
+        "matched": true
+      }
+    },
+    {
+      "record_id": "failure-bd5942d1cddeffae",
+      "record_type": "failure-injection",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "sandboxed-side-effect",
+      "task_family": "practical",
+      "tool_mode": "side-effect-fixture",
+      "policy_id": "strict-lcm",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": false,
+      "outcome": "denied",
+      "metrics": {
+        "quality_score": 0.76,
+        "constraint_satisfaction": 0.96,
+        "calibration_error": 0.07,
+        "self_judge_score": 0.83,
+        "independent_score": 0.76,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 3410,
+        "tool_calls": 4,
+        "cost_usd": 0.0092,
+        "latency_ms": 1540,
+        "activations": 20,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.682,
+      "convergence_reason": "denied-tool",
+      "hitl_burden": "optional-final-review",
+      "observability": "activation-and-join-receipts",
+      "recovery": "skip-or-approved-gate",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ],
+      "injection_id": "denied-tool",
+      "expected": {
+        "outcome": "denied",
+        "recovery": "skip-or-approved-gate"
+      },
+      "observed": {
+        "outcome": "denied",
+        "recovery": "skip-or-approved-gate",
+        "matched": true
+      }
+    },
+    {
+      "record_id": "failure-5edaf0463da8ef7d",
+      "record_type": "failure-injection",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "technical-debug",
+      "task_family": "technical",
+      "tool_mode": "none",
+      "policy_id": "self-refine",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": false,
+      "outcome": "deduplicated",
+      "metrics": {
+        "quality_score": 0.76,
+        "constraint_satisfaction": 0.89,
+        "calibration_error": 0.06,
+        "self_judge_score": 0.82,
+        "independent_score": 0.76,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1530,
+        "tool_calls": 0,
+        "cost_usd": 0.0035,
+        "latency_ms": 800,
+        "activations": 3,
+        "retries": 1
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.306,
+      "convergence_reason": "duplicate-retry",
+      "hitl_burden": "optional-review",
+      "observability": "iteration-receipts",
+      "recovery": "reuse-receipt",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ],
+      "injection_id": "duplicate-retry",
+      "expected": {
+        "outcome": "deduplicated",
+        "recovery": "reuse-receipt"
+      },
+      "observed": {
+        "outcome": "deduplicated",
+        "recovery": "reuse-receipt",
+        "matched": true
+      }
+    },
+    {
+      "record_id": "failure-e4106403730ead49",
+      "record_type": "failure-injection",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "practical-plan",
+      "task_family": "practical",
+      "tool_mode": "none",
+      "policy_id": "budget-partial",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": false,
+      "outcome": "partial",
+      "metrics": {
+        "quality_score": 0.69,
+        "constraint_satisfaction": 0.83,
+        "calibration_error": 0.03,
+        "self_judge_score": 0.72,
+        "independent_score": 0.69,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 750,
+        "tool_calls": 0,
+        "cost_usd": 0.0014,
+        "latency_ms": 440,
+        "activations": 4,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.15,
+      "convergence_reason": "budget-exhaustion",
+      "hitl_burden": "partial-result-review",
+      "observability": "budget-and-cutoff-receipts",
+      "recovery": "resume-with-new-budget",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ],
+      "injection_id": "budget-exhaustion",
+      "expected": {
+        "outcome": "partial",
+        "recovery": "resume-with-new-budget"
+      },
+      "observed": {
+        "outcome": "partial",
+        "recovery": "resume-with-new-budget",
+        "matched": true
+      }
+    }
+  ]
+}

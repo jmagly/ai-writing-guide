@@ -117,7 +117,17 @@ describe('polyrhythmic-reasoning composition pattern', () => {
     const scenarios = EXAMPLES.map(example);
     expect(new Set(scenarios.map((item) => item.domain))).toEqual(new Set(polyrhythmicSafeDomains));
     expect(new Set(scenarios.map((item) => item.composition))).toEqual(new Set(['agent-only', 'agent-plus-read-only-tool']));
-    for (const scenario of scenarios) expect(validatePolyrhythmicScenario(scenario).valid).toBe(true);
+    for (const scenario of scenarios) {
+      expect(scenario).toMatchObject({
+        schemaVersion: 'flow.aiwg.io/v1alpha1',
+        kind: 'CompositionPatternExample',
+      });
+      expect(validatePolyrhythmicScenario(scenario).valid).toBe(true);
+    }
+    expect(JSON.parse(readFileSync(resolve(ROOT, 'examples', 'polyrhythmic-safety-policy.json'), 'utf8'))).toMatchObject({
+      schemaVersion: 'flow.aiwg.io/v1alpha1',
+      kind: 'CompositionPatternSafetyPolicy',
+    });
   });
 
   it.each([

@@ -438,7 +438,8 @@ export function normalizeFlowGraph(manifest) {
     join.sources.map((source) => `${graphId}:join:${join.id}:${source}->${join.target}`)
   ));
   return {
-    contractVersion: 'composition.normalized.aiwg.io/v1alpha1',
+    contractVersion: 'flow.aiwg.io/v1alpha1',
+    kind: 'FlowGraphNormalized',
     source: {
       apiVersion: manifest.apiVersion,
       kind: manifest.kind,
