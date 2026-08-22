@@ -326,6 +326,14 @@
           },
           "additionalProperties": { "$ref": "#/definitions/IndexGraphDef" }
         },
+        "graphOverrides": {
+          "type": "object",
+          "description": "Safely adapts supported built-in graphs without redefining their identity or storage semantics.",
+          "additionalProperties": false,
+          "properties": {
+            "codebase": { "$ref": "#/definitions/IndexBuiltinGraphOverride" }
+          }
+        },
         "userIndices": {
           "type": "object",
           "description": "Controls whether user/global index sidecars are included by default in merged capability discovery/show.",
@@ -877,6 +885,15 @@
             "rebuildOn": { "type": "string", "enum": ["content-change", "always", "never"] }
           }
         }
+      }
+    },
+    "IndexBuiltinGraphOverride": {
+      "type": "object",
+      "description": "Operator-controlled scan fields for an immutable built-in graph. Present fields replace the detected/default values.",
+      "additionalProperties": false,
+      "properties": {
+        "scanDirs": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "extensions": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
       }
     },
     "IndexMarkdownIndices": {

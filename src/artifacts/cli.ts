@@ -543,7 +543,7 @@ async function handleBuild(args: string[]): Promise<void> {
     console.log('');
     console.log('Default behavior (no --graph): builds all graphs with defaultBuild: true');
     console.log('Multi-graph builds run by buildOrder/buildTier (refs → citations → bibliography before heavy graphs)');
-    console.log('  Built-in defaults: project (always), codebase (skipped if src/test/tools absent)');
+    console.log('  Built-in defaults: project (always), codebase (auto-detects JavaScript/TypeScript and Python layouts)');
     console.log('');
     console.log('Examples:');
     console.log('  aiwg index build');

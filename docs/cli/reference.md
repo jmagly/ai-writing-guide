@@ -4072,7 +4072,7 @@ The index uses a **multi-graph architecture** with three built-in graph types pl
 | Graph            | Scans                                                   | Storage                            | Built by default             |
 | ---------------- | ------------------------------------------------------- | ---------------------------------- | ---------------------------- |
 | `project`        | configured AIWG artifact root (virtualized as `.aiwg/`) | `<artifact-root>/.index/project/`  | Yes                          |
-| `codebase`       | `src/`, `test/`, `tools/`                               | `<artifact-root>/.index/codebase/` | Yes (skipped if dirs absent) |
+| `codebase`       | JS/TS: `src/`, `test/`, `tools/`; Python: detected package, `tests/`, `scripts/` roots | `<artifact-root>/.index/codebase/` | Yes (skipped if dirs absent) |
 | `framework`      | `agentic/code/`, `docs/`                                | `.aiwg/.index/framework/`          | No (use `--graph framework`) |
 | _(user-defined)_ | configured in the artifact root's `aiwg.config` (#1491) | `<artifact-root>/.index/<name>/`   | Configurable                 |
 
@@ -4081,7 +4081,7 @@ The artifact root defaults to `<project>/.aiwg`, but `AIWG_ARTIFACTS_PATH` or
 artifacts keep stable virtual paths like `.aiwg/requirements/UC-001.md`, while
 file reads, graph config, and writes resolve through the configured root.
 
-**`defaultBuild` behavior**: When you run `aiwg index build` with no `--graph` flag, every graph with `defaultBuild: true` is built. If a defaultBuild graph's scan directories do not exist (e.g. `codebase` in a docs-only repo), it is skipped with a warning rather than erroring. To require a graph's directories to exist, request it explicitly: `aiwg index build --graph codebase`.
+**`defaultBuild` behavior**: When you run `aiwg index build` with no `--graph` flag, every graph with `defaultBuild: true` is built. The `codebase` graph preserves the JavaScript/TypeScript defaults and, when `pyproject.toml`, `setup.py`, or `setup.cfg` is present, adds `.py`/`.pyi`, top-level package directories containing `__init__.py`, and existing `tests/` and `scripts/` roots. If no supported scan directory exists (for example, in a docs-only repo), the graph is skipped with a warning rather than erroring. To require a graph's directories to exist, request it explicitly: `aiwg index build --graph codebase`.
 
 All commands without `--graph` operate across all available project-local graphs (`project` + `codebase`). Use `--graph <name>` to target a specific graph, including user-defined ones.
 
@@ -4166,7 +4166,7 @@ aiwg index build [options]
 - `--scope <dir>` - Limit scan to a specific subdirectory (relative to project root)
 - `--graph <name>` - Build a single graph only — built-in (`project`, `codebase`, `framework`) or user-defined
 
-**Default behavior** (no `--graph`): Builds all graphs with `defaultBuild: true`. Built-in defaults: `project` (always) and `codebase` (skipped with a warning if `src/`, `test/`, `tools/` are absent). The `framework` graph covers AIWG framework source (`agentic/code/`, `docs/`) and must be built explicitly with `--graph framework`.
+**Default behavior** (no `--graph`): Builds all graphs with `defaultBuild: true`. Built-in defaults: `project` (always) and `codebase` (JavaScript/TypeScript roots plus detected conventional Python layouts; skipped with a warning only when no supported roots exist). The `framework` graph covers AIWG framework source (`agentic/code/`, `docs/`) and must be built explicitly with `--graph framework`.
 
 **Incremental mode** (default): Only re-indexes files whose checksum has changed. Use `--force` for a full rebuild.
 
@@ -4205,6 +4205,21 @@ Fields:
 - `shared` — whether the graph is shared across projects (default: `false`)
 
 User-defined graph names cannot override built-in names (`project`, `codebase`, `framework`).
+
+To replace only the built-in `codebase` graph's scan roots or extension allow-list, use the bounded `index.graphOverrides.codebase` contract. Present fields replace the detected/default value; omitted fields retain it. The graph identity, storage location, sharing mode, build policy, and backend cannot be widened through an override.
+
+```json
+{
+  "index": {
+    "graphOverrides": {
+      "codebase": {
+        "scanDirs": ["backend", "spec", "scripts"],
+        "extensions": [".py", ".pyi"]
+      }
+    }
+  }
+}
+```
 
 **Advanced graph config fields:**
 
@@ -4257,7 +4272,7 @@ index:
 
 See [Graph Backends](../extensions/graph-backends.md) for full backend documentation.
 
-**Documentation-only repos**: If your repo has no `src/`, `test/`, or `tools/` directories, `aiwg index build` will skip the `codebase` graph with a warning and still build the `project` graph. To index documentation under a custom path, define a user-defined graph:
+**Documentation-only repos**: If your repo has none of the JavaScript/TypeScript roots and no detected Python package layout, `aiwg index build` will skip the `codebase` graph with a warning and still build the `project` graph. To index documentation under a custom path, define a user-defined graph:
 
 ```yaml
 # .aiwg/config.yaml

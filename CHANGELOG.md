@@ -7,6 +7,14 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Fixed
+
+- **Python-aware built-in codebase indexing** - `aiwg index build` now detects
+  conventional Python manifests, package roots, `tests/`, and `scripts/` while
+  preserving JavaScript/TypeScript defaults. Projects can safely replace only
+  the built-in codebase graph's scan roots or extensions through the validated
+  `index.graphOverrides.codebase` contract (#2123).
+
 ## [2026.8.16] - 2026-08-21 - "Verified publication completion"
 
 ### Fixed

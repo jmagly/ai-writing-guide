@@ -132,6 +132,89 @@ index:
     warnSpy.mockRestore();
   });
 
+  it('auto-detects a conventional Python package layout without a misleading warning (#2123)', async () => {
+    const aiwgDir = path.join(tmpDir, '.aiwg');
+    const packageDir = path.join(tmpDir, 'obliteratus');
+    const testsDir = path.join(tmpDir, 'tests');
+    const scriptsDir = path.join(tmpDir, 'scripts');
+    fs.mkdirSync(aiwgDir, { recursive: true });
+    fs.mkdirSync(packageDir, { recursive: true });
+    fs.mkdirSync(testsDir, { recursive: true });
+    fs.mkdirSync(scriptsDir, { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, 'pyproject.toml'), '[project]\nname = "obliteratus"\n');
+    fs.writeFileSync(path.join(packageDir, '__init__.py'), '__version__ = "1.0"\n');
+    fs.writeFileSync(path.join(packageDir, 'core.py'), 'def run():\n    return True\n');
+    fs.writeFileSync(path.join(testsDir, 'test_core.py'), 'def test_core():\n    assert True\n');
+    fs.writeFileSync(path.join(scriptsDir, 'inspect.py'), 'print("ok")\n');
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await expect(main(['build'])).resolves.toBeUndefined();
+
+    expect(warnSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining('codebase graph: scan directories not found'),
+    );
+    const metadataPath = path.join(tmpDir, '.aiwg', '.index', 'codebase', 'metadata.json');
+    const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
+    const entries = Object.keys(metadata.entries);
+    expect(entries).toEqual(expect.arrayContaining([
+      'obliteratus/__init__.py',
+      'obliteratus/core.py',
+      'tests/test_core.py',
+      'scripts/inspect.py',
+    ]));
+
+    consoleSpy.mockRestore();
+    warnSpy.mockRestore();
+  });
+
+  it('allows codebase scan roots and extensions to be replaced through graphOverrides (#2123)', async () => {
+    const aiwgDir = path.join(tmpDir, '.aiwg');
+    const backendDir = path.join(tmpDir, 'backend');
+    fs.mkdirSync(aiwgDir, { recursive: true });
+    fs.mkdirSync(backendDir, { recursive: true });
+    fs.writeFileSync(path.join(backendDir, 'service.py'), 'SERVICE = True\n');
+    fs.writeFileSync(path.join(aiwgDir, 'aiwg.config'), JSON.stringify({
+      index: {
+        graphOverrides: {
+          codebase: {
+            scanDirs: ['backend'],
+            extensions: ['.py'],
+          },
+        },
+      },
+    }));
+
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await expect(main(['build', '--graph', 'codebase'])).resolves.toBeUndefined();
+
+    expect(GRAPH_CONFIGS.codebase.scanDirs).toEqual(['backend']);
+    expect(GRAPH_CONFIGS.codebase.extensions).toEqual(['.py']);
+    const metadata = JSON.parse(fs.readFileSync(
+      path.join(tmpDir, '.aiwg', '.index', 'codebase', 'metadata.json'),
+      'utf-8',
+    ));
+    expect(Object.keys(metadata.entries)).toEqual(['backend/service.py']);
+    consoleSpy.mockRestore();
+  });
+
+  it('keeps explicit --graph codebase failure semantics when no supported roots exist (#2123)', async () => {
+    fs.mkdirSync(path.join(tmpDir, '.aiwg'), { recursive: true });
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('process.exit');
+    });
+
+    await expect(main(['build', '--graph', 'codebase'])).rejects.toThrow('process.exit');
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Error: No scan directories found'));
+
+    exitSpy.mockRestore();
+    logSpy.mockRestore();
+    errorSpy.mockRestore();
+  });
+
   it('user-defined defaultBuild graph is included in default aiwg index build', async () => {
     const aiwgDir = path.join(tmpDir, '.aiwg');
     const docsDir = path.join(tmpDir, 'docs');

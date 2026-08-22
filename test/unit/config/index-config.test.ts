@@ -44,6 +44,29 @@ describe('validateIndexConfig', () => {
     expect(errs).toEqual([]);
   });
 
+  it('accepts a bounded codebase built-in override', () => {
+    expect(validateIndexConfig({
+      graphOverrides: {
+        codebase: {
+          scanDirs: ['backend', 'spec'],
+          extensions: ['.py', '.pyi'],
+        },
+      },
+    })).toEqual([]);
+  });
+
+  it('rejects unsupported or unsafe built-in override fields', () => {
+    const errors = validateIndexConfig({
+      graphOverrides: {
+        project: { scanDirs: ['elsewhere'] },
+        codebase: { scanDirs: [], shared: true },
+      },
+    });
+    expect(errors).toContain('index.graphOverrides.project: unsupported built-in graph override (supported: codebase)');
+    expect(errors).toContain('index.graphOverrides.codebase.scanDirs: must be a non-empty array of strings');
+    expect(errors).toContain('index.graphOverrides.codebase.shared: unknown field (supported: scanDirs, extensions)');
+  });
+
   it('flags a graph def missing scanDirs', () => {
     const errs = validateIndexConfig({ graphs: { bad: { extensions: ['.md'] } } });
     expect(errs).toContain('index.graphs.bad.scanDirs: required, must be a non-empty array of strings');
