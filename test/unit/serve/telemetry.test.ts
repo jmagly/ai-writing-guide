@@ -16,6 +16,21 @@ describe('TelemetryStore', () => {
 
   beforeEach(() => { store = new TelemetryStore(); });
 
+  it('requires and preserves graph metadata for graph events', () => {
+    expect(() => createEvent('graph.node.state', 's1', { state: 'running' })).toThrow('requires graph execution metadata');
+    const graph = {
+      schemaVersion: 'graph.flow.aiwg.io/v1' as const,
+      graphId: 'examples/review',
+      graphVersion: '1.0.0',
+      runId: 'run-42',
+      nodeId: 'screen',
+      nodeRunId: 'run-42:screen',
+    };
+    const event = createEvent('graph.node.state', 's1', { state: 'running' }, 'mission-42', graph);
+    store.ingest(event);
+    expect(store.query('s1')[0].graph).toEqual(graph);
+  });
+
   it('ingests and queries events', () => {
     store.ingest(createEvent('session.start', 's1', { name: 'test' }));
     const events = store.query('s1');

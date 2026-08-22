@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, waitFor, fireEvent, act } from '@testing-library/react';
 import { App, waitForSessionReady } from './App';
+import { Missions } from './components/Missions';
 
 // Rendered-DOM coverage (the a11y assertions deferred from T2, and a guard against the
 // "blank render" class of bug). The Welcome tab fetches inventory/running/approvals on
@@ -14,6 +15,50 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 const TAB_LABELS = ['Home', 'Inventory', 'Running', 'Missions', 'Sessions', 'Approvals', 'Explore', 'Library', 'Telemetry', 'Activity', 'Memory', 'Actions'];
 
 describe('App shell (rendered DOM)', () => {
+  it('renders read-only graph nodes, filters, degraded metadata, and replay lineage', async () => {
+    const graphNodes = [
+      ['success', 'succeeded', 'flow-capability'],
+      ['failure', 'failed', 'external-job'],
+      ['approval', 'blocked-hitl', 'hitl'],
+      ['retry', 'retrying', 'a2a-sandbox'],
+      ['skip', 'skipped', 'provider-native'],
+      ['reducer', 'succeeded', 'rlm'],
+    ].map(([node_id, state, runtime_binding], index) => ({
+      node_id,
+      node_run_id: `run-2:${node_id}`,
+      state,
+      runtime_binding,
+      route_reason: `${node_id} route selected`,
+      evidence_summary: `${node_id} evidence available`,
+      hitl_status: node_id === 'approval' ? 'waiting until deadline' : undefined,
+      retry_count: node_id === 'retry' ? 2 : 0,
+      cost_usd: index / 100,
+      tokens: index * 10,
+      replay_of_node_run_id: node_id === 'success' ? 'run-1:success' : undefined,
+    }));
+    const missions = [
+      { id: 'graph-2', session_id: 'mc-graph', source: 'aiwg-mc', title: 'Graph run', status: 'running', terminal: false, graph: { schema_version: 'graph.flow.aiwg.io/v1', graph_id: 'examples/review', graph_version: '1.0.0', run_id: 'run-2', replay_of_run_id: 'run-1', checkpoint_id: 'cp-4' }, graph_nodes: graphNodes },
+      { id: 'graph-metadata-only', session_id: 'mc-graph', source: 'aiwg-mc', title: 'Graph metadata only', status: 'queued', terminal: false, graph: { schema_version: 'graph.flow.aiwg.io/v1', graph_id: 'examples/pending', run_id: 'run-pending' } },
+      { id: 'ordinary', session_id: 'mc-graph', source: 'aiwg-mc', title: 'Ordinary Mission', status: 'running', terminal: false },
+    ];
+    globalThis.fetch = vi.fn(async () => jsonResponse({
+      count: 3,
+      sessions: [{
+        id: 'mc-graph', name: 'Graph session', state: 'active', source: 'aiwg-mc', audit_count: 0, audit_tail: [],
+        missions,
+      }],
+      missions,
+    })) as typeof fetch;
+    render(<Missions />);
+    expect(await screen.findByRole('region', { name: 'Flow graph runs' })).toBeTruthy();
+    for (const label of ['succeeded', 'failed', 'blocked-hitl', 'retrying', 'skipped']) expect(screen.getAllByText(label).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/replay of run-1/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Graph identity is present; node ledger data is not available yet/)).toBeTruthy();
+    expect(screen.queryByText(/raw-secret-route-payload/)).toBeNull();
+    fireEvent.click(screen.getByLabelText('Ordinary Flow / Mission'));
+    expect(screen.getByText('Ordinary Mission')).toBeTruthy();
+  });
+
   it('renders an ARIA tablist with all Cockpit tabs', () => {
     render(<App />);
     expect(screen.getByRole('tablist', { name: /cockpit views/i })).toBeTruthy();

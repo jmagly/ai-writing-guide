@@ -14,6 +14,8 @@
 // what the AIWG orchestrator inspects; the rest is forwarded opaquely.
 
 import type { JsonValue } from './jcs.js';
+export type { GraphExecutionMetadata, GraphRunIdentity } from '../flow/graph-metadata.js';
+export { AIWG_GRAPH_METADATA_KEY } from '../flow/graph-metadata.js';
 
 // Re-export so consumers can `import type { JsonValue } from './types.js';`
 // without reaching into the JCS module's surface.

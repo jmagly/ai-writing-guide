@@ -89,6 +89,30 @@ describe('composition-engine deterministic runtime', () => {
     expect(report.trace.find((event: any) => event.type === 'join-evaluated' && event.satisfied)).toMatchObject({ iteration: 3, reason: 'converged' });
   });
 
+  it('executes guarded feedback and stops at the declared cycle ceiling', async () => {
+    const graph = fixture();
+    graph.spec.ceilings.activations = 10;
+    graph.spec.state.fields = [{ name: 'iterations', schema: { type: 'integer' }, reducer: 'sum', initial: 0 }];
+    graph.spec.nodes[0].outputs.push({ name: 'iteration', schema: { type: 'integer' }, state: 'iterations' });
+    graph.spec.routes.push({
+      id: 'polish-to-draft', from: 'polish', to: 'draft',
+      guard: { language: 'cel', expression: 'true' }, maxIterations: 2,
+    });
+    const report = await executeFlowGraph(graph, {
+      runId: 'guarded-cycle',
+      invokeNode: async (request: any) => {
+        const result = await echoAdapter(request);
+        if (request.node.id === 'draft') result.outputs.iteration = 1;
+        return result;
+      },
+    });
+    expect(report.status).toBe('failed');
+    expect(report.stopReason).toContain('exhausted maxIterations 2');
+    expect(report.state.iterations).toBe(3);
+    expect(report.trace.filter((event: any) => event.type === 'node-completed' && event.nodeId === 'draft')).toHaveLength(3);
+    expect(report.trace.find((event: any) => event.type === 'route-evaluated' && event.exhausted)).toMatchObject({ routeId: 'polish-to-draft', iteration: 2, maxIterations: 2 });
+  });
+
   it('never exceeds a convergence hard ceiling and returns the declared partial shape', async () => {
     const graph = fixture();
     graph.spec.ceilings.activations = 3;

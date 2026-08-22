@@ -151,3 +151,12 @@ contributions include issue-audit, address-issues, and doctor.
 - [Sessions](./sessions.md) — the attach model behind the Sessions tab
 - [Trust & Security](./trust-and-security.md) — what the badges mean
 - [Bridge API](./bridge-api.md) — the endpoints each tab consumes
+# Flow / graph run view
+
+The Missions surface includes a read-only `graph.flow.aiwg.io/v1` ledger view
+when graph metadata is present. Operators can filter graph-profile runs from
+ordinary Flow/Mission runs and inspect node state, runtime binding, route
+reason, redacted evidence summary, HITL posture, retry count, cost/tokens, and
+checkpoint/replay lineage. Missing graph metadata or node ledger rows degrade
+to the ordinary Mission view. Raw route evidence is not rendered. Visual graph
+editing and runtime scheduling decisions remain explicitly out of scope.

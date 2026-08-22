@@ -18,6 +18,8 @@
  * @implements #1546
  */
 
+import type { GraphExecutionMetadata } from '../flow/graph-metadata.js';
+
 /** How a worker cycle is dispatched onto a given stack. */
 export interface WorkerInvocation {
   /** The `runtime:<name>` capability the executor MUST advertise to receive it. */
@@ -26,6 +28,8 @@ export interface WorkerInvocation {
   primitive: string;
   /** Human-readable description of the dispatched worker mechanism. */
   describe: string;
+  /** Optional graph identity is forwarded unchanged; adapters cannot widen authority. */
+  graph?: GraphExecutionMetadata;
 }
 
 /** A per-stack adapter: maps a worker cycle onto one stack's native primitive. */
@@ -37,7 +41,7 @@ export interface StackAdapter {
   /** Native long-running primitive a worker cycle drives on this stack. */
   primitive: string;
   /** Build the worker-invocation descriptor for a cycle prompt. */
-  invoke(prompt: string): WorkerInvocation;
+  invoke(prompt: string, graph?: GraphExecutionMetadata): WorkerInvocation;
 }
 
 function makeAdapter(runtime: string, primitive: string): StackAdapter {
@@ -46,7 +50,7 @@ function makeAdapter(runtime: string, primitive: string): StackAdapter {
     runtime,
     runtimeCapability,
     primitive,
-    invoke(prompt: string): WorkerInvocation {
+    invoke(prompt: string, graph?: GraphExecutionMetadata): WorkerInvocation {
       // prompt is carried by the dispatch payload; the descriptor records the
       // mechanism so the conductor's ledger is identical-shape across stacks.
       const trimmed = prompt.length > 60 ? `${prompt.slice(0, 57)}...` : prompt;
@@ -54,6 +58,7 @@ function makeAdapter(runtime: string, primitive: string): StackAdapter {
         runtimeCapability,
         primitive,
         describe: `dispatch worker to ${runtime} executor via ${primitive} (${trimmed})`,
+        ...(graph ? { graph: structuredClone(graph) } : {}),
       };
     },
   };

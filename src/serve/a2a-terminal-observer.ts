@@ -20,6 +20,7 @@ import type {
   ExecutorRegistration,
   ExecutorRegistry,
 } from './executor-registry.js';
+import { extractGraphMetadata } from '../flow/graph-metadata.js';
 
 export interface A2ATerminalObserverOptions {
   fetch?: typeof fetch;
@@ -144,13 +145,34 @@ function makeEnvelope(
   task: Task,
   data: Record<string, unknown>
 ): EventEnvelope {
+  const graph = extractGraphMetadata(task.metadata);
   return {
     event,
     executor_id: executorId,
     mission_id: missionId,
     ts: task.status.timestamp ?? new Date().toISOString(),
-    data,
+    data: {
+      ...data,
+      ...(graph ? {
+        graph_metadata: { ...graph, nodeState: taskStateToGraphState(task.status.state) },
+        graph_node_state: taskStateToGraphState(task.status.state),
+      } : {}),
+    },
   };
+}
+
+function taskStateToGraphState(state: TaskState): string {
+  switch (state) {
+    case 'submitted': return 'pending';
+    case 'working': return 'running';
+    case 'input-required':
+    case 'auth-required': return 'blocked-hitl';
+    case 'completed': return 'succeeded';
+    case 'failed':
+    case 'rejected': return 'failed';
+    case 'canceled': return 'canceled';
+    default: return 'unknown';
+  }
 }
 
 function taskStatusSummary(task: Task): string | undefined {

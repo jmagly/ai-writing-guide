@@ -1,0 +1,55 @@
+{
+  "id": "graph-pattern",
+  "type": "addon",
+  "name": "Flow Graph Pattern",
+  "version": "2026.8.0",
+  "description": "Optional graph.flow.aiwg.io profile, validator, planner, fixtures, and operator guidance over AIWG Flow.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": ["graph flow profile", "graph-pattern", "GraphPlaybook", "flow", "guarded cycles", "reducers"],
+  "entry": {
+    "commands": "commands/",
+    "skills": "skills/",
+    "schemas": "schemas/",
+    "fixtures": "fixtures/",
+    "examples": "fixtures/",
+    "docs": "docs/"
+  },
+  "agents": [],
+  "commands": [],
+  "skills": ["graph-flow-profile"],
+  "schemas": ["graph-playbook.schema"],
+  "fixtures": ["loop-with-approval", "screen-fanout-synthesize", "sandbox-task-with-retry", "airflow-style-dag-subset", "durable-code-node-with-metadata", "mixed-runtime-dispatch"],
+  "examples": ["loop-with-approval", "screen-fanout-synthesize", "sandbox-task-with-retry", "airflow-style-dag-subset", "durable-code-node-with-metadata"],
+  "cli_commands": {
+    "namespace": "graph",
+    "description": "Validate and explain graph.flow.aiwg.io Flow profiles",
+    "entry": "commands/",
+    "subcommands": {
+      "validate": { "file": "graph.mjs", "description": "Validate and normalize a GraphPlaybook" },
+      "explain": { "file": "graph-explain.mjs", "description": "Explain static nodes, routes, guards, joins, and runtime bindings" }
+      ,
+      "dry-run": { "file": "graph-dry-run.mjs", "description": "Produce a deterministic route plan without side effects" },
+      "replay": { "file": "graph-replay.mjs", "description": "Assess and resume a graph run from a compatible checkpoint" },
+      "scaffold": { "file": "graph-scaffold.mjs", "description": "Create a project-local GraphPlaybook and state schema from a safe template" },
+      "conformance": { "file": "graph-conformance.mjs", "description": "Run the fast headless graph conformance matrix" }
+    }
+  },
+  "dependencies": {
+    "required": ["aiwg-utils", "composition-engine"],
+    "optional": ["mission-control", "orchestration-topology-lab"]
+  },
+  "flowProfile": {
+    "apiVersion": "graph.flow.aiwg.io/v1",
+    "kind": "GraphPlaybook",
+    "baseApiVersion": "flow.aiwg.io/v1alpha1",
+    "baseKind": "FlowGraph"
+  },
+  "researchFoundation": {
+    "issues": ["#2126", "#2127", "#2128", "#2132"],
+    "report": "docs/reports/graph-development-pattern-gap-audit-2026-08-21.md"
+  }
+}

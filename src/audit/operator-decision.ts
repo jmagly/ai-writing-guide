@@ -46,6 +46,20 @@ export interface RuntimeEvidence {
   evidence_refs?: string[];
 }
 
+/** Optional graph-profile correlation. Required identity fields travel together. */
+export interface GraphDecisionContext {
+  graph_id: string;
+  graph_version: string;
+  run_id: string;
+  node_id: string;
+  node_run_id: string;
+  edge_id?: string;
+  route_name?: string;
+  route_reason?: string;
+  checkpoint_id?: string;
+  replay_parent_run_id?: string;
+}
+
 export interface OperatorDecisionInput {
   kind: DecisionKind;
   outcome: DecisionOutcome;
@@ -55,6 +69,7 @@ export interface OperatorDecisionInput {
   classification: DataClassification;
   correlation: DecisionCorrelation;
   runtime?: RuntimeEvidence;
+  graph?: GraphDecisionContext;
   policy_ref?: string;
   redacted_fields?: string[];
   timestamp?: string;
@@ -73,6 +88,7 @@ export interface OperatorDecisionRecord {
   classification: DataClassification;
   correlation: DecisionCorrelation;
   runtime?: RuntimeEvidence;
+  graph?: GraphDecisionContext;
   policy_ref?: string;
   redacted_fields: string[];
   previous_hash: string | null;
@@ -99,8 +115,9 @@ export function createDecisionRecord(
   const actor = redact(input.actor);
   const correlation = redact(input.correlation);
   const runtime = input.runtime ? redact(input.runtime) : undefined;
+  const graph = input.graph ? redact(input.graph) : undefined;
   const reason = redact(input.reason);
-  const detected = [...actor.paths, ...correlation.paths, ...(runtime?.paths ?? []), ...reason.paths];
+  const detected = [...actor.paths, ...correlation.paths, ...(runtime?.paths ?? []), ...(graph?.paths ?? []), ...reason.paths];
   const unsigned = {
     schema_version: OPERATOR_DECISION_SCHEMA,
     event_id: input.event_id ?? randomUUID(),
@@ -113,6 +130,7 @@ export function createDecisionRecord(
     classification: input.classification,
     correlation: correlation.value as unknown as DecisionCorrelation,
     ...(runtime ? { runtime: runtime.value as unknown as RuntimeEvidence } : {}),
+    ...(graph ? { graph: graph.value as unknown as GraphDecisionContext } : {}),
     ...(input.policy_ref ? { policy_ref: input.policy_ref } : {}),
     redacted_fields: [...new Set([...(input.redacted_fields ?? []), ...detected])].sort(),
     previous_hash: previousHash,
@@ -155,6 +173,15 @@ export function toOpenTelemetryLog(record: OperatorDecisionRecord): Record<strin
       'aiwg.provider.id': record.correlation.provider_id,
       'aiwg.sandbox.task_id': record.correlation.sandbox_task_id,
       'aiwg.prompt.id': record.correlation.prompt_id,
+      'aiwg.graph.id': record.graph?.graph_id,
+      'aiwg.graph.version': record.graph?.graph_version,
+      'aiwg.graph.run_id': record.graph?.run_id,
+      'aiwg.graph.node_id': record.graph?.node_id,
+      'aiwg.graph.node_run_id': record.graph?.node_run_id,
+      'aiwg.graph.edge_id': record.graph?.edge_id,
+      'aiwg.graph.route_name': record.graph?.route_name,
+      'aiwg.graph.checkpoint_id': record.graph?.checkpoint_id,
+      'aiwg.graph.replay_parent_run_id': record.graph?.replay_parent_run_id,
     }).filter(([, value]) => value !== undefined).map(([key, value]) => ({
       key,
       value: { stringValue: String(value) },
@@ -212,6 +239,9 @@ function validateInput(input: OperatorDecisionInput): void {
   if (!input.actor.id || !input.actor.authentication) throw new Error('actor identity and authentication are required');
   if (!input.reason.trim()) throw new Error('a non-empty operator reason is required');
   if (!Object.values(input.correlation).some(Boolean)) throw new Error('at least one correlation identifier is required');
+  if (input.graph && ![input.graph.graph_id, input.graph.graph_version, input.graph.run_id, input.graph.node_id, input.graph.node_run_id].every(value => typeof value === 'string' && value.length > 0)) {
+    throw new Error('graph decision context requires graph, run, node, and node-run identity');
+  }
   if (input.timestamp && !Number.isFinite(Date.parse(input.timestamp))) throw new Error('timestamp must be valid ISO time');
 }
 

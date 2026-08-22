@@ -20,6 +20,8 @@ Each approval, denial, escalation, or override contains:
 - a SHA-256 digest of the redacted decision context, never the raw prompt;
 - correlation IDs where applicable: Mission, Flow, provider, sandbox task and
   session, issue, pull request, HITL prompt, and distributed trace;
+- optional graph-profile correlation: graph/version/run/node/node-run identity,
+  plus edge, route name/reason, checkpoint, and replay-parent identifiers;
 - runtime evidence posture: host/container/VM kind, isolation, session backend,
   transport mode/trust, and immutable evidence references;
 - paths redacted during record construction;
@@ -54,6 +56,13 @@ secrets, passwords, credentials, authorization, cookies, CSRF values, and API
 keys. Integrations must classify domain-specific response payloads before
 append. HITL response content is retained only when policy explicitly permits
 it; the default orchestration record stores a digest and outcome.
+
+Graph dimensions use the `aiwg.graph.*` OpenTelemetry namespace and the
+`aiwg.flow.graph` A2A metadata key (`graph.flow.aiwg.io/v1`). Route evidence is
+not an audit correlation field: adapters store only a classified context digest
+or an immutable evidence reference. Route reasons pass through the same
+recursive redaction as actor, correlation, and runtime fields. Ordinary
+Flow/Mission decisions omit `graph` entirely and remain v1-compatible.
 
 ## Review and export
 

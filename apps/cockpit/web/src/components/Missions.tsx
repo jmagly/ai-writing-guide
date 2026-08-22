@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api';
 import { fmtId } from '../util';
-import type { MissionProjection, MissionSession, MissionsResponse } from '../types';
+import type { GraphNodeProjection, MissionProjection, MissionSession, MissionsResponse } from '../types';
 
 export function Missions({ refreshTick = 0 }: { refreshTick?: number }) {
   const [data, setData] = useState<MissionsResponse | null>(null);
   const [err, setErr] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
+  const [profileFilter, setProfileFilter] = useState<'all' | 'graph' | 'ordinary'>('all');
 
   const load = useCallback(() => {
     api<MissionsResponse>('/api/missions')
@@ -23,8 +24,13 @@ export function Missions({ refreshTick = 0 }: { refreshTick?: number }) {
   if (err) return <p className="err">Could not load Missions: {err}</p>;
   if (!data) return <p className="empty">Loading...</p>;
 
-  const active = data.sessions.find((s) => s.id === selected) ?? data.sessions[0] ?? null;
   const totals = summarize(data.missions);
+  const graphMissions = data.missions.filter((mission) => mission.graph);
+  const visibleSessions = data.sessions.map((session) => ({
+    ...session,
+    missions: session.missions.filter((mission) => profileFilter === 'all' || (profileFilter === 'graph' ? Boolean(mission.graph) : !mission.graph)),
+  })).filter((session) => session.missions.length > 0 || profileFilter === 'all');
+  const active = visibleSessions.find((s) => s.id === selected) ?? visibleSessions[0] ?? null;
 
   return (
     <>
@@ -38,12 +44,20 @@ export function Missions({ refreshTick = 0 }: { refreshTick?: number }) {
         <span><strong>{totals.active}</strong> active</span>
         <span><strong>{totals.awaiting}</strong> awaiting approval</span>
         <span><strong>{totals.terminal}</strong> terminal</span>
+        <span><strong>{graphMissions.length}</strong> graph-profile</span>
       </div>
+      <fieldset className="mission-profile-filter">
+        <legend>Run profile</legend>
+        {(['all', 'graph', 'ordinary'] as const).map((filter) => <label key={filter}>
+          <input type="radio" name="mission-profile" checked={profileFilter === filter} onChange={() => setProfileFilter(filter)} /> {filter === 'graph' ? 'Graph profile' : filter === 'ordinary' ? 'Ordinary Flow / Mission' : 'All runs'}
+        </label>)}
+      </fieldset>
+      {profileFilter !== 'ordinary' && graphMissions.length > 0 && <GraphRuns missions={graphMissions} />}
       <MissionComposer sessions={data.sessions.filter((session) => session.source === 'aiwg-mc')} onChanged={load} />
-      {!data.sessions.length ? <p className="empty">No Mission Control sessions or live executor tasks are visible yet.</p> : (
+      {!visibleSessions.length ? <p className="empty">No runs match this profile filter.</p> : (
         <div className="missions-layout">
           <aside className="mission-sessions" aria-label="Mission sessions">
-            {data.sessions.map((s) => (
+            {visibleSessions.map((s) => (
               <button
                 key={s.id}
                 className={s.id === active?.id ? 'selected' : ''}
@@ -60,6 +74,33 @@ export function Missions({ refreshTick = 0 }: { refreshTick?: number }) {
       )}
     </>
   );
+}
+
+function GraphRuns({ missions }: { missions: MissionProjection[] }) {
+  return <section className="graph-runs" aria-label="Flow graph runs">
+    <h2>Flow / graph runs</h2>
+    <p className="hint">Read-only ledger projection. Visual editing is intentionally deferred; raw route evidence is not rendered.</p>
+    {missions.map((mission) => <article key={`${mission.graph!.run_id}:${mission.id}`} className="graph-run">
+      <h3>{mission.graph!.graph_id} <small>run {fmtId(mission.graph!.run_id)}</small></h3>
+      <p>{mission.graph!.graph_version ? `v${mission.graph!.graph_version} · ` : ''}{mission.status}{mission.graph!.replay_of_run_id ? ` · replay of ${fmtId(mission.graph!.replay_of_run_id)}` : ''}{mission.graph!.checkpoint_id ? ` · checkpoint ${fmtId(mission.graph!.checkpoint_id)}` : ''}</p>
+      {!mission.graph_nodes?.length ? <p className="empty">Graph identity is present; node ledger data is not available yet.</p> : <table>
+        <caption>{mission.graph_nodes.length} graph node(s)</caption>
+        <thead><tr><th scope="col">Node</th><th scope="col">State</th><th scope="col">Runtime / route</th><th scope="col">HITL / retry</th><th scope="col">Cost / evidence</th><th scope="col">Replay lineage</th></tr></thead>
+        <tbody>{mission.graph_nodes.map((node) => <GraphNodeRow key={node.node_run_id ?? node.node_id} node={node} />)}</tbody>
+      </table>}
+    </article>)}
+  </section>;
+}
+
+function GraphNodeRow({ node }: { node: GraphNodeProjection }) {
+  return <tr>
+    <td><strong>{node.node_id}</strong>{node.node_run_id && <small className="block">{fmtId(node.node_run_id)}</small>}</td>
+    <td><span className={`state ${statusClass(node.state)}`}><span className="dot" aria-hidden="true" />{node.state}</span></td>
+    <td>{node.runtime_binding}<small className="block">{node.route_reason ?? 'No route reason recorded'}</small></td>
+    <td>{node.hitl_status ?? '-'}<small className="block">retries {node.retry_count ?? 0}</small></td>
+    <td>${(node.cost_usd ?? 0).toFixed(4)} · {node.tokens ?? 0} tokens<small className="block">{node.evidence_summary ?? 'No redacted evidence summary'}</small></td>
+    <td>{node.replay_of_node_run_id ? `replay of ${fmtId(node.replay_of_node_run_id)}` : node.checkpoint_id ? `checkpoint ${fmtId(node.checkpoint_id)}` : '-'}</td>
+  </tr>;
 }
 
 function MissionComposer({ sessions, onChanged }: { sessions: MissionSession[]; onChanged: () => void }) {

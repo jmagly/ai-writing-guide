@@ -1,0 +1,30 @@
+{
+  "apiVersion": "graph.flow.aiwg.io/v1",
+  "kind": "GraphPlaybook",
+  "metadata": { "name": "airflow-style-dag-subset", "graphId": "examples/airflow-style-dag-subset", "graphVersion": "1.0.0" },
+  "spec": {
+    "description": "A deliberately small DAG subset: scheduled extract, deterministic transform, publish.",
+    "entry": ["extract"],
+    "candidates": [
+      { "id": "aiwg:tool:1111111111111111", "kind": "tool" },
+      { "id": "aiwg:function:2222222222222222", "kind": "function" },
+      { "id": "aiwg:tool:3333333333333333", "kind": "tool" }
+    ],
+    "state": { "fields": [] },
+    "checkpoint": { "mode": "node", "on": ["success", "failure", "terminal"] },
+    "permissions": [], "capabilities": [],
+    "ceilings": { "activations": 4, "tokens": 1000, "costUsd": 1, "timeMs": 120000, "concurrency": 1 },
+    "nodes": [
+      { "id": "extract", "kind": "tool", "ref": "aiwg:tool:1111111111111111", "runtimeBinding": "external-job", "inputs": [], "outputs": [{ "name": "rows", "schema": { "type": "array" } }], "capabilities": [], "permissions": [], "sideEffectMode": "idempotent", "idempotencyKey": "schedule-plus-data-interval" },
+      { "id": "transform", "kind": "function", "ref": "aiwg:function:2222222222222222", "deterministic": true, "runtimeBinding": "flow-playbook", "dependsOn": ["extract"], "inputs": [{ "name": "rows", "schema": { "type": "array" }, "from": "extract.rows" }], "outputs": [{ "name": "rows", "schema": { "type": "array" } }], "capabilities": [], "permissions": [], "sideEffectMode": "none" },
+      { "id": "publish", "kind": "tool", "ref": "aiwg:tool:3333333333333333", "runtimeBinding": "provider-native", "dependsOn": ["transform"], "inputs": [{ "name": "rows", "schema": { "type": "array" }, "from": "transform.rows" }], "outputs": [{ "name": "receipt", "schema": { "type": "string" } }], "capabilities": [], "permissions": [], "sideEffectMode": "idempotent", "idempotencyKey": "dag-run-plus-output-digest" }
+    ],
+    "routes": [
+      { "id": "extract-to-transform", "name": "extract-complete", "from": "extract", "to": "transform", "evidenceField": "/dag/extract", "onFailure": "fail-closed" },
+      { "id": "transform-to-publish", "name": "transform-complete", "from": "transform", "to": "publish", "evidenceField": "/dag/transform", "onFailure": "fail-closed" }
+    ],
+    "joins": [], "failure": { "onNodeFailure": "fail", "maxFailures": 0 },
+    "output": { "mode": "final-only", "from": "publish.receipt", "schema": { "type": "string" } },
+    "trace": { "level": "metadata", "redact": [] }
+  }
+}

@@ -26,6 +26,7 @@
 import { routeMission } from './agent-router.js';
 import type { ExecutorRegistration } from './executor-registry.js';
 import { StackAdapterRegistry } from './stack-adapters.js';
+import type { GraphExecutionMetadata, GraphRunIdentity } from '../flow/graph-metadata.js';
 
 /** A single worker cycle within a Mission — runs on exactly one stack. */
 export interface WorkerCycle {
@@ -38,6 +39,10 @@ export interface WorkerCycle {
   requiredCapabilities?: string[];
   /** Long-running workers require the `resumable` capability (per ADR §3). */
   longRunning?: boolean;
+  /** Graph node projection. Present only for GraphPlaybook missions. */
+  graph?: Omit<GraphExecutionMetadata, 'schemaVersion' | 'graphId' | 'graphVersion' | 'runId' | 'nodeRunId'> & {
+    nodeRunId?: string;
+  };
 }
 
 /** A Mission: a goal + measurable completion criterion + worker cycles. */
@@ -47,6 +52,8 @@ export interface MissionPlan {
   /** Measurable completion criterion (per the vague-discretion rule). */
   completionCriterion: string;
   cycles: WorkerCycle[];
+  /** Required when any cycle is projected from a GraphPlaybook. */
+  graph?: GraphRunIdentity;
 }
 
 /** Outcome of dispatching one worker cycle. */
@@ -61,6 +68,7 @@ export interface CycleResult {
   output?: string;
   /** Runtime-agnostic cost units (e.g. output tokens) for cross-stack aggregation. */
   cost: number;
+  graph?: GraphExecutionMetadata;
 }
 
 /**
@@ -82,6 +90,8 @@ export interface MissionLedger {
   checkpoint: { completed: string[]; pending: string[]; failed: string[] };
   /** Distinct stacks a worker actually ran on. */
   runtimesUsed: string[];
+  /** Optional for ordinary Missions; required for GraphPlaybook projections. */
+  graph?: GraphRunIdentity;
 }
 
 /**
@@ -134,6 +144,9 @@ export class MissionConductor {
    * crash-resilient resume path; their prior results are carried forward.
    */
   async conduct(plan: MissionPlan, pool: ExecutorRegistration[], resumeFrom?: MissionLedger): Promise<MissionLedger> {
+    if (plan.cycles.some((cycle) => cycle.graph) && !plan.graph) {
+      throw new Error('Graph-projected worker cycles require MissionPlan.graph identity.');
+    }
     const carried = new Map<string, CycleResult>();
     if (resumeFrom) {
       for (const c of resumeFrom.cycles) {
@@ -150,6 +163,7 @@ export class MissionConductor {
       totalCost: 0,
       checkpoint: { completed: [], pending: [], failed: [] },
       runtimesUsed: [],
+      ...(plan.graph ? { graph: structuredClone(plan.graph) } : {}),
     };
 
     ledger.activityLog.push(
@@ -158,6 +172,12 @@ export class MissionConductor {
     );
 
     for (const cycle of plan.cycles) {
+      const graph = plan.graph && cycle.graph ? {
+        ...structuredClone(plan.graph),
+        ...structuredClone(cycle.graph),
+        schemaVersion: 'graph.flow.aiwg.io/v1' as const,
+        nodeRunId: cycle.graph.nodeRunId ?? `${plan.graph.runId}:${cycle.graph.nodeId}`,
+      } : undefined;
       // Resume: carry a previously-completed cycle forward, identical bookkeeping.
       const prior = carried.get(cycle.id);
       if (prior) {
@@ -178,6 +198,7 @@ export class MissionConductor {
           routed: false,
           reason: `no stack adapter registered for runtime '${cycle.runtime}'`,
           cost: 0,
+          ...(graph ? { graph } : {}),
         };
         ledger.cycles.push(result);
         ledger.checkpoint.failed.push(cycle.id);
@@ -198,6 +219,7 @@ export class MissionConductor {
           routed: false,
           reason: `no connected executor advertises ${filter.capabilities.join(', ')}`,
           cost: 0,
+          ...(graph ? { graph } : {}),
         };
         ledger.cycles.push(result);
         ledger.checkpoint.failed.push(cycle.id);
@@ -206,7 +228,7 @@ export class MissionConductor {
       }
 
       const executor = routing.selected.executor;
-      const invocation = adapter.invoke(cycle.prompt);
+      const invocation = adapter.invoke(cycle.prompt, graph);
       ledger.activityLog.push(
         `cycle ${cycle.id} → executor ${executor.name} (${executor.executorId}) on ${cycle.runtime}: ${invocation.describe}`,
       );
@@ -226,6 +248,7 @@ export class MissionConductor {
           routed: true,
           reason: `worker error: ${err instanceof Error ? err.message : String(err)}`,
           cost: 0,
+          ...(graph ? { graph } : {}),
         };
         ledger.cycles.push(result);
         ledger.checkpoint.failed.push(cycle.id);
@@ -242,6 +265,7 @@ export class MissionConductor {
         reason: routing.selected.matchReason,
         output,
         cost,
+        ...(graph ? { graph } : {}),
       };
       ledger.cycles.push(result);
       ledger.checkpoint.completed.push(cycle.id);

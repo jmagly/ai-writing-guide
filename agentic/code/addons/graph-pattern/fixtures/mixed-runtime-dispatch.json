@@ -1,0 +1,36 @@
+{
+  "apiVersion": "graph.flow.aiwg.io/v1", "kind": "GraphPlaybook",
+  "metadata": { "name": "mixed-runtime-dispatch", "graphId": "examples/mixed-runtime-dispatch", "graphVersion": "1.0.0" },
+  "spec": {
+    "description": "One dispatch chain spanning existing FlowCapability, RLM, A2A Sandbox, HITL, and terminal adapters.",
+    "entry": ["capability"],
+    "candidates": [
+      { "id": "aiwg:skill:6666666666666666", "kind": "skill" },
+      { "id": "aiwg:skill:7777777777777777", "kind": "skill" },
+      { "id": "aiwg:tool:8888888888888888", "kind": "tool" },
+      { "id": "aiwg:function:9999999999999999", "kind": "function" }
+    ],
+    "state": { "fields": [] },
+    "checkpoint": { "mode": "node-and-route", "on": ["success", "failure", "hitl", "terminal"] },
+    "permissions": [], "capabilities": [],
+    "ceilings": { "activations": 8, "tokens": 10000, "costUsd": 3, "timeMs": 300000, "concurrency": 1 },
+    "nodes": [
+      { "id": "capability", "kind": "skill", "ref": "aiwg:skill:6666666666666666", "runtimeBinding": "flow-capability", "inputs": [], "outputs": [{ "name": "request", "schema": { "type": "string" } }], "capabilities": [], "permissions": [], "sideEffectMode": "none" },
+      { "id": "fanout", "kind": "skill", "ref": "aiwg:skill:7777777777777777", "runtimeBinding": "rlm", "dependsOn": ["capability"], "inputs": [{ "name": "request", "schema": { "type": "string" }, "from": "capability.request" }], "outputs": [{ "name": "plan", "schema": { "type": "object" } }], "capabilities": [], "permissions": [], "sideEffectMode": "none" },
+      { "id": "sandbox", "kind": "tool", "ref": "aiwg:tool:8888888888888888", "runtimeBinding": "a2a-sandbox", "dependsOn": ["fanout"], "inputs": [{ "name": "plan", "schema": { "type": "object" }, "from": "fanout.plan" }], "outputs": [{ "name": "evidence", "schema": { "type": "object" } }], "capabilities": [], "permissions": [], "sideEffectMode": "idempotent", "idempotencyKey": "run-node-input-digest", "retry": { "limit": 1, "backoff": "exponential", "on": ["timeout", "failure"] } },
+      { "id": "approval", "kind": "gate", "runtimeBinding": "hitl", "dependsOn": ["sandbox"], "inputs": [{ "name": "evidence", "schema": { "type": "object" }, "from": "sandbox.evidence" }], "outputs": [{ "name": "decision", "schema": { "type": "string" } }], "capabilities": [], "permissions": [], "sideEffectMode": "none", "hitl": { "responder": "role:operator", "deadline": "2027-01-01T00:00:00Z", "approveRoute": "approval-approved", "denyRoute": "approval-denied", "timeoutRoute": "approval-timeout" } },
+      { "id": "terminal", "kind": "function", "ref": "aiwg:function:9999999999999999", "deterministic": true, "runtimeBinding": "terminal", "inputs": [{ "name": "decision", "schema": { "type": "string" }, "from": "approval.decision" }], "outputs": [{ "name": "result", "schema": { "type": "string" } }], "capabilities": [], "permissions": [], "sideEffectMode": "none" }
+    ],
+    "routes": [
+      { "id": "capability-to-fanout", "name": "request-ready", "from": "capability", "to": "fanout", "evidenceField": "/capability/request", "onFailure": "fail-closed" },
+      { "id": "fanout-to-sandbox", "name": "plan-ready", "from": "fanout", "to": "sandbox", "evidenceField": "/rlm/plan", "onFailure": "fail-closed" },
+      { "id": "sandbox-to-approval", "name": "evidence-ready", "from": "sandbox", "to": "approval", "evidenceField": "/sandbox/evidence", "onFailure": "fail-closed" },
+      { "id": "approval-approved", "name": "approved", "from": "approval", "to": "terminal", "when": { "language": "cel", "expression": "true" }, "evidenceField": "/hitl/outcome", "onFailure": "fail-closed" },
+      { "id": "approval-denied", "name": "denied", "from": "approval", "to": "terminal", "when": { "language": "cel", "expression": "false" }, "evidenceField": "/hitl/outcome", "onFailure": "terminal-failure" },
+      { "id": "approval-timeout", "name": "timed-out", "from": "approval", "to": "terminal", "when": { "language": "cel", "expression": "false" }, "evidenceField": "/hitl/outcome", "onFailure": "terminal-failure" }
+    ],
+    "joins": [], "failure": { "onNodeFailure": "fail", "maxFailures": 0 },
+    "output": { "mode": "final-only", "from": "terminal.result", "schema": { "type": "string" } },
+    "trace": { "level": "metadata", "redact": [] }
+  }
+}

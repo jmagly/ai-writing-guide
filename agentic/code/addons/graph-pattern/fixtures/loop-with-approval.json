@@ -1,0 +1,81 @@
+{
+  "apiVersion": "graph.flow.aiwg.io/v1",
+  "kind": "GraphPlaybook",
+  "metadata": {
+    "name": "loop-with-approval",
+    "graphId": "examples/loop-with-approval",
+    "graphVersion": "1.0.0"
+  },
+  "spec": {
+    "description": "A bounded refinement loop with explicit approve, deny, and timeout routes.",
+    "entry": ["draft"],
+    "candidates": [
+      { "id": "aiwg:prompt:1111111111111111", "kind": "prompt" },
+      { "id": "aiwg:function:2222222222222222", "kind": "function" }
+    ],
+    "state": {
+      "fields": [
+        { "name": "iterations", "schema": { "type": "integer" }, "reducer": "max", "initial": 0 }
+      ]
+    },
+    "checkpoint": { "mode": "node-and-route", "on": ["success", "failure", "hitl", "terminal"], "retention": 10 },
+    "permissions": [],
+    "capabilities": [],
+    "ceilings": { "activations": 12, "tokens": 16000, "costUsd": 2, "timeMs": 120000, "concurrency": 1 },
+    "nodes": [
+      {
+        "id": "draft",
+        "kind": "prompt",
+        "ref": "aiwg:prompt:1111111111111111",
+        "runtimeBinding": "ralph",
+        "inputs": [{ "name": "topic", "schema": { "type": "string" }, "value": "Graph profile" }],
+        "outputs": [
+          { "name": "text", "schema": { "type": "string" } },
+          { "name": "iteration", "schema": { "type": "integer" }, "state": "iterations" }
+        ],
+        "capabilities": [],
+        "permissions": [],
+        "sideEffectMode": "none"
+      },
+      {
+        "id": "approval",
+        "kind": "gate",
+        "runtimeBinding": "hitl",
+        "inputs": [{ "name": "draft", "schema": { "type": "string" }, "from": "draft.text" }],
+        "outputs": [],
+        "capabilities": [],
+        "permissions": [],
+        "sideEffectMode": "none",
+        "hitl": {
+          "responder": "role:maintainer",
+          "deadline": "2027-01-01T00:00:00Z",
+          "approveRoute": "approval-to-finish",
+          "denyRoute": "approval-to-rework",
+          "timeoutRoute": "approval-timeout"
+        }
+      },
+      {
+        "id": "finish",
+        "kind": "function",
+        "ref": "aiwg:function:2222222222222222",
+        "deterministic": true,
+        "runtimeBinding": "terminal",
+        "inputs": [{ "name": "draft", "schema": { "type": "string" }, "from": "draft.text" }],
+        "outputs": [{ "name": "result", "schema": { "type": "string" } }],
+        "capabilities": [],
+        "permissions": [],
+        "sideEffectMode": "none"
+      }
+    ],
+    "routes": [
+      { "id": "draft-to-approval", "name": "request-approval", "from": "draft", "to": "approval", "evidenceField": "/decision/request", "onFailure": "fail-closed" },
+      { "id": "approval-to-finish", "name": "approved", "from": "approval", "to": "finish", "when": { "language": "cel", "expression": "state.iterations >= 1" }, "evidenceField": "/decision/approval", "onFailure": "fail-closed" },
+      { "id": "approval-to-rework", "name": "denied-rework", "from": "approval", "to": "draft", "guard": { "language": "cel", "expression": "state.iterations < 3" }, "maxIterations": 3, "evidenceField": "/decision/denial", "onFailure": "terminal-failure" },
+      { "id": "approval-timeout", "name": "approval-timeout", "from": "approval", "to": "finish", "evidenceField": "/decision/timeout", "onFailure": "terminal-failure" }
+    ],
+    "joins": [],
+    "failure": { "onNodeFailure": "fail", "maxFailures": 0 },
+    "output": { "mode": "final-only", "from": "finish.result", "schema": { "type": "string" } },
+    "trace": { "level": "bindings", "redact": ["/decision/request"] }
+  }
+}

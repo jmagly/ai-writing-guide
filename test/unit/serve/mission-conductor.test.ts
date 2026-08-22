@@ -70,6 +70,47 @@ function mixedPlan(): MissionPlan {
 }
 
 describe('MissionConductor cross-stack dispatch (#1546)', () => {
+  it('projects stable graph/run/node/edge identity through the adapter and ledger', async () => {
+    let dispatched: any;
+    const conductor = new MissionConductor({
+      runWorker: (_cycle, _executor, invocation) => {
+        dispatched = invocation;
+        return { output: 'ok', cost: 1 };
+      },
+    });
+    const plan: MissionPlan = {
+      missionId: 'mission-graph-1',
+      goal: 'project one graph node',
+      completionCriterion: 'node completes',
+      graph: {
+        schemaVersion: 'graph.flow.aiwg.io/v1',
+        graphId: 'examples/review',
+        graphVersion: '1.0.0',
+        runId: 'run-42',
+      },
+      cycles: [{
+        id: 'screen',
+        runtime: 'codex',
+        prompt: 'screen input',
+        graph: { nodeId: 'screen', edgeId: 'start-to-screen', runtimeBinding: 'provider-native' },
+      }],
+    };
+    const ledger = await conductor.conduct(plan, fleet);
+    expect(dispatched.graph).toMatchObject({ graphId: 'examples/review', runId: 'run-42', nodeId: 'screen', edgeId: 'start-to-screen' });
+    expect(ledger.graph).toEqual(plan.graph);
+    expect(ledger.cycles[0].graph?.nodeRunId).toBe('run-42:screen');
+  });
+
+  it('rejects graph nodes without graph-run identity', async () => {
+    const plan: MissionPlan = {
+      missionId: 'mission-invalid-graph',
+      goal: 'g',
+      completionCriterion: 'c',
+      cycles: [{ id: 'n', runtime: 'codex', prompt: 'x', graph: { nodeId: 'n' } }],
+    };
+    await expect(new MissionConductor({ runWorker: fakeRun }).conduct(plan, fleet)).rejects.toThrow('MissionPlan.graph');
+  });
+
   it('routes each worker cycle to an executor advertising its runtime', async () => {
     const conductor = new MissionConductor({ runWorker: fakeRun });
     const ledger = await conductor.conduct(mixedPlan(), fleet);

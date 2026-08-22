@@ -150,6 +150,8 @@ export async function executeFlowGraph(manifest, options = {}) {
   const failed = new Set(resume.failed ?? []);
   const skipped = new Set(resume.skipped ?? []);
   const activatedRoutes = new Set(resume.activatedRoutes ?? []);
+  const routeActivations = clone(resume.routeActivations) ?? {};
+  const reactivatedNodes = new Set(resume.reactivatedNodes ?? []);
   const events = clone(resume.events) ?? [];
   const realized = {
     activations: Number(resume.realized?.activations ?? 0),
@@ -183,6 +185,8 @@ export async function executeFlowGraph(manifest, options = {}) {
       failed: [...failed].sort((a, b) => nodeOrder.get(a) - nodeOrder.get(b)),
       skipped: [...skipped].sort((a, b) => nodeOrder.get(a) - nodeOrder.get(b)),
       activatedRoutes: [...activatedRoutes].sort(),
+      routeActivations: clone(routeActivations),
+      reactivatedNodes: [...reactivatedNodes].sort(),
       joins: clone(joinState),
       realized: clone(realized),
       events: clone(events),
@@ -366,15 +370,47 @@ export async function executeFlowGraph(manifest, options = {}) {
     for (const [index, route] of manifest.spec.routes.entries()) {
       if (route.from !== nodeId) continue;
       const routeId = route.id ?? `route-${index}-${route.from}-${route.to}`;
-      const active = await evaluatePredicate(route.when, predicateContext());
-      if (active) activatedRoutes.add(routeId);
+      const predicateMatched = await evaluatePredicate(route.when, predicateContext());
+      const guardMatched = predicateMatched && await evaluatePredicate(route.guard, predicateContext({
+        routeIterations: Number(routeActivations[routeId] ?? 0),
+      }));
+      const exhausted = Boolean(
+        guardMatched
+        && route.maxIterations
+        && Number(routeActivations[routeId] ?? 0) >= route.maxIterations,
+      );
+      const active = guardMatched && !exhausted;
+      if (active) {
+        activatedRoutes.add(routeId);
+        routeActivations[routeId] = Number(routeActivations[routeId] ?? 0) + 1;
+        // Guarded finite routes are explicit feedback edges. A completed target
+        // must become runnable again; ordinary DAG routes stay single-shot.
+        if (route.guard || route.maxIterations || reactivatedNodes.has(nodeId)) {
+          completed.delete(route.to);
+          failed.delete(route.to);
+          skipped.delete(route.to);
+          reactivatedNodes.add(route.to);
+        }
+      }
       await emit('route-evaluated', {
         routeId,
         edgeId: `${graphId}:route:${routeId}:${route.from}->${route.to}`,
         from: route.from,
         to: route.to,
         active: Boolean(active),
+        predicateMatched: Boolean(predicateMatched),
+        guardMatched: Boolean(guardMatched),
+        exhausted,
+        iteration: Number(routeActivations[routeId] ?? 0),
+        maxIterations: route.maxIterations,
       });
+      if (exhausted) {
+        terminal = {
+          code: 'CYCLE_GUARD_EXHAUSTED',
+          reason: `route '${routeId}' exhausted maxIterations ${route.maxIterations}`,
+        };
+        return;
+      }
     }
   }
 
@@ -407,6 +443,8 @@ export async function executeFlowGraph(manifest, options = {}) {
     if (join) return false;
     if ((node.dependsOn ?? []).some((id) => !completed.has(id) && !skipped.has(id))) return false;
     const incoming = incomingRoutes(node.id);
+    // Entry nodes run once before any feedback edge into them is activated.
+    if (manifest.spec.entry.includes(node.id) && !results[node.id]) return true;
     if (incoming.length === 0) return manifest.spec.entry.includes(node.id) || (node.dependsOn?.length ?? 0) > 0;
     return incoming.some(({ route, index }) => activatedRoutes.has(route.id ?? `route-${index}-${route.from}-${route.to}`));
   }

@@ -2078,6 +2078,41 @@ function missionSummary(mission) {
     completed_at: mission.completedAt ?? mission.completed_at,
     error: mission.error,
     terminal: TERMINAL_MISSION_STATES.has(status),
+    ...(graphMissionProjection(mission) ?? {}),
+  };
+}
+
+function graphMissionProjection(mission) {
+  const graph = mission.graph ?? mission.graph_metadata;
+  if (!graph || typeof graph !== 'object' || !graph.graphId || !graph.runId) return null;
+  const nodes = Array.isArray(mission.graphNodes ?? mission.graph_nodes)
+    ? (mission.graphNodes ?? mission.graph_nodes).map((node) => ({
+      node_id: node.nodeId ?? node.node_id,
+      node_run_id: node.nodeRunId ?? node.node_run_id,
+      state: node.state ?? node.nodeState ?? 'unknown',
+      runtime_binding: node.runtimeBinding ?? node.runtime_binding ?? 'unknown',
+      route_reason: node.routeReason ?? node.route_reason,
+      evidence_summary: node.evidenceSummary ?? node.evidence_summary,
+      hitl_status: node.hitlStatus ?? node.hitl_status,
+      cost_usd: Number(node.costUsd ?? node.cost_usd ?? 0),
+      tokens: Number(node.tokens ?? 0),
+      duration_ms: Number(node.durationMs ?? node.duration_ms ?? 0),
+      retry_count: Number(node.retryCount ?? node.retry_count ?? 0),
+      budget_remaining: node.budgetRemaining ?? node.budget_remaining,
+      checkpoint_id: node.checkpointId ?? node.checkpoint_id,
+      replay_of_node_run_id: node.replayOfNodeRunId ?? node.replay_of_node_run_id,
+      artifacts: Array.isArray(node.artifacts) ? node.artifacts : [],
+    })) : [];
+  return {
+    graph: {
+      schema_version: graph.schemaVersion ?? graph.schema_version ?? 'graph.flow.aiwg.io/v1',
+      graph_id: graph.graphId,
+      graph_version: graph.graphVersion,
+      run_id: graph.runId,
+      replay_of_run_id: graph.replayOfRunId ?? graph.replay_of_run_id,
+      checkpoint_id: graph.checkpointId ?? graph.checkpoint_id,
+    },
+    graph_nodes: nodes,
   };
 }
 
@@ -2226,6 +2261,10 @@ function fleetMissionProjection(record, sessionId) {
     exit_classification: status.exit_classification,
     error: status.error_code,
     schedule: record.spec?.schedule,
+    ...(graphMissionProjection({
+      graph_metadata: record.lineage?.graph_metadata ?? record.metadata?.['aiwg.flow.graph'],
+      graph_nodes: record.status?.graph_nodes,
+    }) ?? {}),
   };
 }
 

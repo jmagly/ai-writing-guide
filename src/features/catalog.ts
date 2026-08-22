@@ -90,7 +90,7 @@ export const FEATURE_CATALOG: FeatureDefinition[] = [
   },
   {
     name: 'graph',
-    description: 'Graphology backend for rich artifact traversal and graph operators',
+    description: 'Graphology backend for artifact-index traversal only; not Flow graph execution',
     packages: ['graphology', 'graphology-operators', 'graphology-traversal'],
     packageSpecs: {
       graphology: '0.26.0',
@@ -100,6 +100,7 @@ export const FEATURE_CATALOG: FeatureDefinition[] = [
     enables: [
       'index.graphBackend: graphology',
       'in-memory attributed graph traversal and operator workflows',
+      'artifact graph data operations (use graph-pattern addon for Flow execution graphs)',
     ],
     cost: '~2 MB — pure JS, no native deps',
   },

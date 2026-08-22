@@ -1,0 +1,32 @@
+{
+  "apiVersion": "graph.flow.aiwg.io/v1",
+  "kind": "GraphPlaybook",
+  "metadata": { "name": "screen-fanout-synthesize", "graphId": "examples/screen-fanout-synthesize", "graphVersion": "1.0.0" },
+  "spec": {
+    "description": "Two parallel screens joined by an explicit deterministic reducer.",
+    "entry": ["screen-a", "screen-b"],
+    "candidates": [
+      { "id": "aiwg:skill:aaaaaaaaaaaaaaaa", "kind": "skill" },
+      { "id": "aiwg:skill:bbbbbbbbbbbbbbbb", "kind": "skill" },
+      { "id": "aiwg:function:cccccccccccccccc", "kind": "function" }
+    ],
+    "state": { "fields": [{ "name": "findings", "schema": { "type": "array" }, "reducer": "append", "initial": [] }] },
+    "checkpoint": { "mode": "node", "on": ["success", "failure", "terminal"] },
+    "permissions": [],
+    "capabilities": [],
+    "ceilings": { "activations": 8, "tokens": 24000, "costUsd": 3, "timeMs": 180000, "concurrency": 2 },
+    "nodes": [
+      { "id": "screen-a", "kind": "skill", "ref": "aiwg:skill:aaaaaaaaaaaaaaaa", "runtimeBinding": "flow-capability", "inputs": [{ "name": "input", "schema": { "type": "string" }, "value": "artifact" }], "outputs": [{ "name": "findings", "schema": { "type": "array" }, "state": "findings" }], "capabilities": [], "permissions": [], "sideEffectMode": "none" },
+      { "id": "screen-b", "kind": "skill", "ref": "aiwg:skill:bbbbbbbbbbbbbbbb", "runtimeBinding": "rlm", "inputs": [{ "name": "input", "schema": { "type": "string" }, "value": "artifact" }], "outputs": [{ "name": "findings", "schema": { "type": "array" }, "state": "findings" }], "capabilities": [], "permissions": [], "sideEffectMode": "none" },
+      { "id": "synthesize", "kind": "function", "ref": "aiwg:function:cccccccccccccccc", "deterministic": true, "runtimeBinding": "terminal", "inputs": [{ "name": "left", "schema": { "type": "array" }, "from": "screen-a.findings" }, { "name": "right", "schema": { "type": "array" }, "from": "screen-b.findings" }], "outputs": [{ "name": "result", "schema": { "type": "array" } }], "capabilities": [], "permissions": [], "sideEffectMode": "none" }
+    ],
+    "routes": [
+      { "id": "a-to-synthesis", "name": "screen-a-complete", "from": "screen-a", "to": "synthesize", "evidenceField": "/screens/a", "onFailure": "fail-closed" },
+      { "id": "b-to-synthesis", "name": "screen-b-complete", "from": "screen-b", "to": "synthesize", "evidenceField": "/screens/b", "onFailure": "fail-closed" }
+    ],
+    "joins": [{ "id": "screen-reducer", "sources": ["screen-a", "screen-b"], "target": "synthesize", "policy": { "mode": "all" } }],
+    "failure": { "onNodeFailure": "fail", "maxFailures": 0 },
+    "output": { "mode": "final-only", "from": "synthesize.result", "schema": { "type": "array" } },
+    "trace": { "level": "metadata", "redact": [] }
+  }
+}

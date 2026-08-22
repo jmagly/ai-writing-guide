@@ -14,6 +14,8 @@
  * @see #717 — fortemi-react storage layer (browser)
  */
 
+import type { GraphExecutionMetadata } from '../flow/graph-metadata.js';
+
 // ============================================================
 // Event Schema
 // ============================================================
@@ -34,7 +36,11 @@ export type TelemetryEventType =
   | 'scope.unit.complete'
   | 'v1.deprecation.observed'
   | 'v1.dispatch.fallback'
-  | 'a2a.webhook.received';
+  | 'a2a.webhook.received'
+  | 'graph.node.state'
+  | 'graph.route.decision'
+  | 'graph.checkpoint.saved'
+  | 'graph.replay.started';
 
 export interface TelemetryEvent {
   /** Unique event ID */
@@ -47,6 +53,8 @@ export interface TelemetryEvent {
   timestamp: string;
   type: TelemetryEventType;
   payload: Record<string, unknown>;
+  /** Optional on ordinary events; required for graph.* events. */
+  graph?: GraphExecutionMetadata;
 }
 
 /** Payload shapes for well-known event types */
@@ -249,7 +257,11 @@ export function createEvent(
   sessionId: string,
   payload: Record<string, unknown>,
   missionId?: string,
+  graph?: GraphExecutionMetadata,
 ): TelemetryEvent {
+  if (type.startsWith('graph.') && !graph) {
+    throw new Error(`Telemetry event '${type}' requires graph execution metadata.`);
+  }
   return {
     id: `evt-${Date.now()}-${++eventCounter}`,
     sessionId,
@@ -257,5 +269,6 @@ export function createEvent(
     timestamp: new Date().toISOString(),
     type,
     payload,
+    ...(graph ? { graph: structuredClone(graph) } : {}),
   };
 }

@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/graph/flow/v1/graph-playbook.schema.json",
+  "title": "GraphPlaybook",
+  "description": "Optional graph domain profile layered over AIWG FlowGraph/FlowPlaybook validation.",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": { "const": "graph.flow.aiwg.io/v1" },
+    "kind": { "const": "GraphPlaybook" },
+    "metadata": {
+      "type": "object",
+      "required": ["name", "graphId", "graphVersion"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/definitions/dnsLabel" },
+        "namespace": { "$ref": "#/definitions/dnsLabel" },
+        "graphId": { "$ref": "#/definitions/identity" },
+        "graphVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$" },
+        "labels": { "$ref": "#/definitions/stringMap" },
+        "annotations": { "$ref": "#/definitions/stringMap" }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": ["entry", "candidates", "state", "checkpoint", "permissions", "capabilities", "ceilings", "nodes", "routes", "joins", "failure", "output", "trace"],
+      "additionalProperties": false,
+      "properties": {
+        "description": { "type": "string", "minLength": 1 },
+        "entry": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/definitions/id" } },
+        "candidates": { "type": "array", "items": { "type": "object" } },
+        "state": { "type": "object" },
+        "stateSchema": { "type": "string", "minLength": 1 },
+        "checkpoint": {
+          "type": "object",
+          "required": ["mode", "on"],
+          "additionalProperties": false,
+          "properties": {
+            "mode": { "enum": ["none", "node", "route", "node-and-route"] },
+            "on": { "type": "array", "uniqueItems": true, "items": { "enum": ["success", "failure", "hitl", "terminal"] } },
+            "retention": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "permissions": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "capabilities": { "type": "array", "items": { "type": "object" } },
+        "ceilings": { "type": "object" },
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "kind", "runtimeBinding"],
+            "properties": {
+              "id": { "$ref": "#/definitions/id" },
+              "kind": { "type": "string" },
+              "runtimeBinding": { "enum": ["flow-capability", "flow-playbook", "ralph", "rlm", "a2a-sandbox", "external-job", "provider-native", "durable-code", "hitl", "terminal"] },
+              "lifecycle": { "enum": ["active", "external", "disabled"] },
+              "hitl": {
+                "type": "object",
+                "required": ["responder", "deadline", "approveRoute", "denyRoute", "timeoutRoute"],
+                "additionalProperties": false,
+                "properties": {
+                  "responder": { "type": "string", "minLength": 1 },
+                  "deadline": { "type": "string", "format": "date-time" },
+                  "approveRoute": { "$ref": "#/definitions/id" },
+                  "denyRoute": { "$ref": "#/definitions/id" },
+                  "timeoutRoute": { "$ref": "#/definitions/id" }
+                }
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "from", "to", "evidenceField", "onFailure"],
+            "properties": {
+              "id": { "$ref": "#/definitions/id" },
+              "name": { "type": "string", "minLength": 1 },
+              "from": { "$ref": "#/definitions/id" },
+              "to": { "$ref": "#/definitions/id" },
+              "evidenceField": { "type": "string", "pattern": "^/" },
+              "onFailure": { "enum": ["fail-closed", "fallback", "terminal-failure"] },
+              "fallbackRoute": { "$ref": "#/definitions/id" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "joins": { "type": "array", "items": { "type": "object" } },
+        "failure": { "type": "object" },
+        "output": { "type": "object" },
+        "trace": { "type": "object" }
+      }
+    }
+  },
+  "definitions": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "identity": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$" },
+    "dnsLabel": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "stringMap": { "type": "object", "additionalProperties": { "type": "string" } }
+  }
+}

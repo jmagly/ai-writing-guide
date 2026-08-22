@@ -191,6 +191,32 @@ export interface SessionInfo {
 export interface Approval { id: string; instance_id: string; prompt: string; risk: string; status: string }
 export interface ResponseNeeded { id: string; instance_id: string; prompt: string; source: string; status: string; attach_url?: string | null }
 export interface MissionAuditEvent { event?: string; ts?: string; missionId?: string; mission_id?: string; objective?: string; [key: string]: unknown }
+export interface GraphRunProjection {
+  schema_version: 'graph.flow.aiwg.io/v1' | string;
+  graph_id: string;
+  graph_version?: string;
+  run_id: string;
+  replay_of_run_id?: string;
+  checkpoint_id?: string;
+}
+export interface GraphNodeProjection {
+  node_id: string;
+  node_run_id?: string;
+  state: string;
+  runtime_binding: string;
+  route_reason?: string;
+  /** Pre-redacted summary only; raw route evidence is not rendered. */
+  evidence_summary?: string;
+  hitl_status?: string;
+  cost_usd?: number;
+  tokens?: number;
+  duration_ms?: number;
+  retry_count?: number;
+  budget_remaining?: { tokens?: number; cost_usd?: number; duration_ms?: number };
+  checkpoint_id?: string;
+  replay_of_node_run_id?: string;
+  artifacts?: Array<{ kind: string; uri: string; sha256: string }>;
+}
 export interface MissionProjection {
   id: string;
   session_id: string;
@@ -229,6 +255,8 @@ export interface MissionProjection {
   artifacts?: Array<{ kind: string; uri: string; sha256: string }>;
   exit_classification?: string;
   schedule?: string;
+  graph?: GraphRunProjection;
+  graph_nodes?: GraphNodeProjection[];
 }
 export interface MissionSession {
   id: string;

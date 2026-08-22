@@ -47,6 +47,8 @@ beforeAll(async () => {
       maxIterations: 5,
       priority: 'high',
       ralphLoopId: 'ralph-loop-1',
+      graph: { schemaVersion: 'graph.flow.aiwg.io/v1', graphId: 'examples/cockpit', graphVersion: '1.0.0', runId: 'run-cockpit-1', checkpointId: 'cp-1' },
+      graphNodes: [{ nodeId: 'screen', nodeRunId: 'run-cockpit-1:screen', state: 'retrying', runtimeBinding: 'a2a-sandbox', routeReason: 'transient failure', evidenceSummary: 'redacted sandbox receipt', retryCount: 1, costUsd: 0.02, tokens: 20 }],
     }],
   }, null, 2));
   await writeFile(join(testMcSessionDir, 'log.jsonl'), [
@@ -502,6 +504,8 @@ describe('cockpit Bridge — control surface', () => {
       status: 'running',
       ralph_loop_id: 'ralph-loop-1',
       source: 'aiwg-mc',
+      graph: { graph_id: 'examples/cockpit', run_id: 'run-cockpit-1', checkpoint_id: 'cp-1' },
+      graph_nodes: [expect.objectContaining({ node_id: 'screen', state: 'retrying', runtime_binding: 'a2a-sandbox', evidence_summary: 'redacted sandbox receipt' })],
     });
     expect(missions.sessions.some((s) => s.id === 'executor-live')).toBe(true);
     const fleetSession = missions.sessions.find((s) => s.parent_mission_id === 'mission-fleet-demo');

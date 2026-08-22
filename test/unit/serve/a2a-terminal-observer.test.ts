@@ -13,6 +13,7 @@ import {
   type ExecutorRegistration,
 } from '../../../src/serve/executor-registry.js';
 import type { Task } from '../../../src/a2a/types.js';
+import { AIWG_GRAPH_METADATA_KEY } from '../../../src/flow/graph-metadata.js';
 
 const EXECUTOR_ID = '019da2c3-fde4-7471-8ca7-377d8d09be4b';
 
@@ -62,6 +63,26 @@ function setupRegistry(): { registry: ExecutorRegistry; executor: ExecutorRegist
 }
 
 describe('observeA2ATerminalState', () => {
+  it('projects graph node terminal state when namespaced A2A metadata is present', async () => {
+    const { registry, executor } = setupRegistry();
+    const task = mkTask('completed', { summary: 'node done', exit_code: 0 });
+    task.metadata = {
+      [AIWG_GRAPH_METADATA_KEY]: {
+        schemaVersion: 'graph.flow.aiwg.io/v1',
+        graphId: 'examples/review',
+        graphVersion: '1.0.0',
+        runId: 'run-42',
+        nodeId: 'screen',
+        nodeRunId: 'run-42:screen',
+        edgeId: 'start-to-screen',
+      },
+    };
+    await observeA2ATerminalState(registry, executor, 'mission-1', 'instance-1', task, { maxPolls: 0 });
+    const event = registry.getMission('mission-1')?.recentEvents.at(-1);
+    expect(event?.data.graph_node_state).toBe('succeeded');
+    expect(event?.data.graph_metadata).toMatchObject({ graphId: 'examples/review', nodeId: 'screen', nodeState: 'succeeded' });
+  });
+
   it('transitions a completed sandbox task to terminal AIWG mission state', async () => {
     const { registry, executor } = setupRegistry();
 

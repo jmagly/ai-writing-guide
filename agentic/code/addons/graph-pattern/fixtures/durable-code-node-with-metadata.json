@@ -1,0 +1,25 @@
+{
+  "apiVersion": "graph.flow.aiwg.io/v1",
+  "kind": "GraphPlaybook",
+  "metadata": { "name": "durable-code-node-with-metadata", "graphId": "examples/durable-code-node-with-metadata", "graphVersion": "1.0.0" },
+  "spec": {
+    "description": "Durable code owns its internal workflow while Flow carries identity, ceilings, and terminal evidence.",
+    "entry": ["prepare"],
+    "candidates": [
+      { "id": "aiwg:skill:4444444444444444", "kind": "skill" },
+      { "id": "aiwg:tool:5555555555555555", "kind": "tool" }
+    ],
+    "state": { "fields": [] },
+    "checkpoint": { "mode": "node", "on": ["success", "failure", "terminal"] },
+    "permissions": [], "capabilities": [],
+    "ceilings": { "activations": 3, "tokens": 4000, "costUsd": 2, "timeMs": 300000, "concurrency": 1 },
+    "nodes": [
+      { "id": "prepare", "kind": "skill", "ref": "aiwg:skill:4444444444444444", "runtimeBinding": "ralph", "inputs": [{ "name": "request", "schema": { "type": "string" }, "value": "bounded implementation task" }], "outputs": [{ "name": "plan", "schema": { "type": "object" } }], "capabilities": [], "permissions": [], "sideEffectMode": "none" },
+      { "id": "durable-worker", "kind": "tool", "ref": "aiwg:tool:5555555555555555", "runtimeBinding": "durable-code", "dependsOn": ["prepare"], "inputs": [{ "name": "plan", "schema": { "type": "object" }, "from": "prepare.plan" }], "outputs": [{ "name": "result", "schema": { "type": "object" } }], "capabilities": [], "permissions": [], "sideEffectMode": "idempotent", "idempotencyKey": "run-node-input-digest", "retry": { "limit": 1, "backoff": "exponential", "on": ["timeout", "failure"] } }
+    ],
+    "routes": [{ "id": "prepare-to-worker", "name": "plan-ready", "from": "prepare", "to": "durable-worker", "evidenceField": "/durable/plan", "onFailure": "fail-closed" }],
+    "joins": [], "failure": { "onNodeFailure": "fail", "maxFailures": 0 },
+    "output": { "mode": "final-only", "from": "durable-worker.result", "schema": { "type": "object" } },
+    "trace": { "level": "metadata", "redact": [] }
+  }
+}

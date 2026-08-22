@@ -1,0 +1,31 @@
+{
+  "apiVersion": "graph.flow.aiwg.io/v1",
+  "kind": "GraphPlaybook",
+  "metadata": { "name": "sandbox-task-with-retry", "graphId": "examples/sandbox-task-with-retry", "graphVersion": "1.0.0" },
+  "spec": {
+    "description": "Idempotent A2A/Sandbox task with bounded retry and terminal fallback.",
+    "entry": ["sandbox-task"],
+    "candidates": [
+      { "id": "aiwg:tool:dddddddddddddddd", "kind": "tool" },
+      { "id": "aiwg:function:eeeeeeeeeeeeeeee", "kind": "function" }
+    ],
+    "state": { "fields": [] },
+    "checkpoint": { "mode": "node-and-route", "on": ["success", "failure", "terminal"], "retention": 20 },
+    "permissions": ["sandbox:execute"],
+    "capabilities": [{ "id": "sandbox-task", "permissions": ["sandbox:execute"], "sideEffectMode": "idempotent", "idempotencyKey": "task/id" }],
+    "ceilings": { "activations": 6, "tokens": 4000, "costUsd": 1, "timeMs": 120000, "concurrency": 1 },
+    "nodes": [
+      { "id": "sandbox-task", "kind": "tool", "ref": "aiwg:tool:dddddddddddddddd", "runtimeBinding": "a2a-sandbox", "inputs": [{ "name": "task", "schema": { "type": "string" }, "value": "verify" }], "outputs": [{ "name": "evidence", "schema": { "type": "string" } }], "capabilities": ["sandbox-task"], "permissions": ["sandbox:execute"], "sideEffectMode": "idempotent", "idempotencyKey": "graph/run/node/input", "retry": { "limit": 2, "backoff": "exponential", "on": ["failure", "timeout"] }, "fallback": { "node": "failed" } },
+      { "id": "complete", "kind": "function", "ref": "aiwg:function:eeeeeeeeeeeeeeee", "deterministic": true, "runtimeBinding": "terminal", "inputs": [{ "name": "evidence", "schema": { "type": "string" }, "from": "sandbox-task.evidence" }], "outputs": [{ "name": "result", "schema": { "type": "string" } }], "capabilities": [], "permissions": [], "sideEffectMode": "none" },
+      { "id": "failed", "kind": "function", "ref": "aiwg:function:eeeeeeeeeeeeeeee", "deterministic": true, "runtimeBinding": "terminal", "optional": true, "inputs": [{ "name": "reason", "schema": { "type": "string" }, "value": "sandbox unavailable" }], "outputs": [{ "name": "result", "schema": { "type": "string" } }], "capabilities": [], "permissions": [], "sideEffectMode": "none" }
+    ],
+    "routes": [
+      { "id": "sandbox-success", "name": "sandbox-completed", "from": "sandbox-task", "to": "complete", "evidenceField": "/sandbox/evidence", "onFailure": "fallback", "fallbackRoute": "sandbox-failure" },
+      { "id": "sandbox-failure", "name": "sandbox-failed", "from": "sandbox-task", "to": "failed", "when": { "language": "cel", "expression": "false" }, "evidenceField": "/sandbox/error", "onFailure": "terminal-failure" }
+    ],
+    "joins": [],
+    "failure": { "onNodeFailure": "fallback", "maxFailures": 1 },
+    "output": { "mode": "final-only", "from": "complete.result", "schema": { "type": "string" } },
+    "trace": { "level": "bindings", "redact": ["/sandbox/evidence"] }
+  }
+}

@@ -95,6 +95,21 @@ describe('operator decision audit (#1567)', () => {
     expect(JSON.stringify(exported)).toContain('aiwg.mission.id');
   });
 
+  it('carries optional graph decision identity through audit and telemetry', () => {
+    const graph = {
+      graph_id: 'release/graph', graph_version: '1.0.0', run_id: 'run-1',
+      node_id: 'approval', node_run_id: 'run-1:approval:2:1', edge_id: 'review-to-approval',
+      route_name: 'request-approval', route_reason: 'policy matched', checkpoint_id: 'checkpoint-2',
+      replay_parent_run_id: 'run-0',
+    };
+    const record = createDecisionRecord(input({ graph }), null);
+    expect(record.graph).toEqual(graph);
+    const exported = JSON.stringify(toOpenTelemetryLog(record));
+    expect(exported).toContain('aiwg.graph.node_run_id');
+    expect(exported).toContain('checkpoint-2');
+    expect(() => createDecisionRecord(input({ graph: { ...graph, run_id: '' } }), null)).toThrow(/graph decision context/);
+  });
+
   it('requires identity, reason, and correlation', () => {
     expect(() => createDecisionRecord(input({ actor: { id: '', type: 'human', authentication: '' } }), null)).toThrow(/identity/);
     expect(() => createDecisionRecord(input({ reason: '' }), null)).toThrow(/reason/);

@@ -206,6 +206,21 @@ describe('buildHitlResponseMessage', () => {
     });
     expect(msg.taskId).toBeUndefined();
   });
+
+  it('preserves graph extension identity on the HITL response path', () => {
+    const graph = {
+      schemaVersion: 'graph.flow.aiwg.io/v1', graphId: 'examples/review', graphVersion: '1.0.0',
+      runId: 'run-1', nodeId: 'approval', nodeRunId: 'run-1:approval:1:1',
+    } as JsonValue;
+    const msg = buildHitlResponseMessage({
+      promptId: PROMPT_ID,
+      response: { approved: true },
+      messageId: 'reply-graph',
+      metadata: { 'aiwg.flow.graph': graph },
+    });
+    expect(msg.metadata?.['aiwg.flow.graph']).toEqual(graph);
+    expect(msg.metadata?.['hitl_response_for']).toMatchObject({ prompt_id: PROMPT_ID });
+  });
 });
 
 describe('validateResponseStructurally', () => {
