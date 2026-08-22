@@ -1,0 +1,56 @@
+{
+  "apiVersion": "flow.aiwg.io/v1alpha1",
+  "kind": "FlowGraph",
+  "metadata": { "name": "phased-multi-track" },
+  "spec": {
+    "entry": ["intake"],
+    "candidates": [
+      { "id": "aiwg:prompt:9999999999999999", "kind": "prompt" },
+      { "id": "aiwg:agent:aaaaaaaaaaaaaaaa", "kind": "agent" },
+      { "id": "aiwg:agent:bbbbbbbbbbbbbbbb", "kind": "agent" },
+      { "id": "aiwg:evaluator:cccccccccccccccc", "kind": "evaluator" }
+    ],
+    "state": {
+      "fields": [{ "name": "findings", "schema": { "type": "array", "items": { "type": "string" } }, "reducer": "append", "initial": [] }]
+    },
+    "permissions": [],
+    "capabilities": [],
+    "ceilings": { "activations": 12, "tokens": 36000, "costUsd": 6, "timeMs": 180000, "concurrency": 2 },
+    "nodes": [
+      {
+        "id": "intake", "kind": "prompt", "ref": "aiwg:prompt:9999999999999999", "phase": "discover", "track": "control",
+        "inputs": [{ "name": "scope", "schema": { "type": "string" }, "value": "Assess proposal" }],
+        "outputs": [{ "name": "brief", "schema": { "type": "string" } }],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      },
+      {
+        "id": "architecture", "kind": "agent", "ref": "aiwg:agent:aaaaaaaaaaaaaaaa", "phase": "analyze", "track": "architecture",
+        "inputs": [{ "name": "brief", "schema": { "type": "string" }, "from": "intake.brief" }],
+        "outputs": [{ "name": "finding", "schema": { "type": "array" }, "state": "findings" }],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      },
+      {
+        "id": "security", "kind": "agent", "ref": "aiwg:agent:bbbbbbbbbbbbbbbb", "phase": "analyze", "track": "security",
+        "inputs": [{ "name": "brief", "schema": { "type": "string" }, "from": "intake.brief" }],
+        "outputs": [{ "name": "finding", "schema": { "type": "array" }, "state": "findings" }],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      },
+      {
+        "id": "decision", "kind": "evaluator", "ref": "aiwg:evaluator:cccccccccccccccc", "phase": "synthesize", "track": "control",
+        "inputs": [{ "name": "findings", "schema": { "type": "array" }, "state": "findings" }],
+        "outputs": [{ "name": "decision", "schema": { "type": "object" } }],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      }
+    ],
+    "routes": [
+      { "from": "intake", "to": "architecture" },
+      { "from": "intake", "to": "security" }
+    ],
+    "joins": [
+      { "id": "analysis-quorum", "sources": ["architecture", "security"], "target": "decision", "policy": { "mode": "quorum", "quorum": 2 } }
+    ],
+    "failure": { "onNodeFailure": "partial-synthesis", "maxFailures": 1 },
+    "output": { "mode": "typed-terminal-failure", "from": "decision.decision", "schema": { "type": "object" }, "failureSchema": { "type": "object", "required": ["code"] } },
+    "trace": { "level": "metadata", "redact": [] }
+  }
+}

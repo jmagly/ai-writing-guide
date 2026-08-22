@@ -1,0 +1,40 @@
+{
+  "apiVersion": "flow.aiwg.io/v1alpha1",
+  "kind": "FlowGraph",
+  "metadata": { "name": "agent-tool-flow" },
+  "spec": {
+    "entry": ["plan"],
+    "candidates": [
+      { "id": "aiwg:agent:7777777777777777", "kind": "agent" },
+      { "id": "aiwg:tool:8888888888888888", "kind": "tool" }
+    ],
+    "state": {
+      "fields": [{ "name": "evidence", "schema": { "type": "array", "items": { "type": "string" } }, "reducer": "append", "initial": [] }]
+    },
+    "permissions": ["network:read"],
+    "capabilities": [
+      { "id": "web-read", "permissions": ["network:read"], "sideEffectMode": "none" }
+    ],
+    "ceilings": { "activations": 4, "tokens": 12000, "costUsd": 2, "timeMs": 90000, "concurrency": 1 },
+    "nodes": [
+      {
+        "id": "plan", "kind": "agent", "ref": "aiwg:agent:7777777777777777",
+        "inputs": [{ "name": "question", "schema": { "type": "string" }, "value": "Find primary evidence" }],
+        "outputs": [{ "name": "query", "schema": { "type": "string" } }],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      },
+      {
+        "id": "fetch", "kind": "tool", "ref": "aiwg:tool:8888888888888888",
+        "inputs": [{ "name": "query", "schema": { "type": "string" }, "from": "plan.query" }],
+        "outputs": [{ "name": "result", "schema": { "type": "array", "items": { "type": "string" } }, "state": "evidence" }],
+        "capabilities": ["web-read"], "permissions": ["network:read"], "sideEffectMode": "none",
+        "retry": { "limit": 2, "backoff": "exponential", "on": ["timeout", "rate-limit"] }
+      }
+    ],
+    "routes": [{ "from": "plan", "to": "fetch" }],
+    "joins": [],
+    "failure": { "onNodeFailure": "fail", "maxFailures": 0 },
+    "output": { "mode": "final-only", "from": "fetch.result", "schema": { "type": "array" } },
+    "trace": { "level": "bindings", "redact": [] }
+  }
+}

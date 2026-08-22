@@ -1,0 +1,45 @@
+{
+  "apiVersion": "flow.aiwg.io/v1alpha1",
+  "kind": "FlowGraph",
+  "metadata": { "name": "linear-flow" },
+  "spec": {
+    "description": "Two-step Flow graph with a typed binding.",
+    "entry": ["draft"],
+    "candidates": [
+      { "id": "aiwg:prompt:1111111111111111", "kind": "prompt" },
+      { "id": "aiwg:skill:2222222222222222", "kind": "skill" }
+    ],
+    "state": { "fields": [] },
+    "permissions": [],
+    "capabilities": [],
+    "ceilings": { "activations": 4, "tokens": 8000, "costUsd": 1, "timeMs": 60000, "concurrency": 1 },
+    "nodes": [
+      {
+        "id": "draft",
+        "kind": "prompt",
+        "ref": "aiwg:prompt:1111111111111111",
+        "inputs": [{ "name": "topic", "schema": { "type": "string" }, "value": "Flow contracts" }],
+        "outputs": [{ "name": "text", "schema": { "type": "string" } }],
+        "capabilities": [],
+        "permissions": [],
+        "sideEffectMode": "none"
+      },
+      {
+        "id": "polish",
+        "kind": "skill",
+        "ref": "aiwg:skill:2222222222222222",
+        "dependsOn": ["draft"],
+        "inputs": [{ "name": "draft", "schema": { "type": "string" }, "from": "draft.text" }],
+        "outputs": [{ "name": "result", "schema": { "type": "string" } }],
+        "capabilities": [],
+        "permissions": [],
+        "sideEffectMode": "none"
+      }
+    ],
+    "routes": [{ "id": "draft-to-polish", "from": "draft", "to": "polish" }],
+    "joins": [],
+    "failure": { "onNodeFailure": "fail", "maxFailures": 0 },
+    "output": { "mode": "final-only", "from": "polish.result", "schema": { "type": "string" } },
+    "trace": { "level": "metadata", "redact": [] }
+  }
+}

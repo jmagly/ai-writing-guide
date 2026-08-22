@@ -1,0 +1,352 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/flow/graph/v1alpha1/flow-graph.schema.json",
+  "title": "FlowGraph",
+  "description": "Provider-neutral graph profile for the AIWG Flow metalanguage.",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": { "const": "flow.aiwg.io/v1alpha1" },
+    "kind": { "const": "FlowGraph" },
+    "metadata": { "$ref": "#/definitions/metadata" },
+    "spec": { "$ref": "#/definitions/spec" }
+  },
+  "definitions": {
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/definitions/dnsLabel" },
+        "namespace": { "$ref": "#/definitions/dnsLabel" },
+        "labels": { "$ref": "#/definitions/stringMap" },
+        "annotations": { "$ref": "#/definitions/stringMap" }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": ["entry", "candidates", "state", "permissions", "capabilities", "ceilings", "nodes", "routes", "joins", "failure", "output", "trace"],
+      "additionalProperties": false,
+      "properties": {
+        "description": { "type": "string", "minLength": 1 },
+        "entry": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/definitions/id" }
+        },
+        "candidates": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/candidate" }
+        },
+        "state": { "$ref": "#/definitions/state" },
+        "permissions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/definitions/permission" }
+        },
+        "capabilities": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/capability" }
+        },
+        "ceilings": { "$ref": "#/definitions/ceilings" },
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/node" }
+        },
+        "routes": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/route" }
+        },
+        "joins": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/join" }
+        },
+        "failure": { "$ref": "#/definitions/failurePolicy" },
+        "output": { "$ref": "#/definitions/outputPolicy" },
+        "trace": { "$ref": "#/definitions/tracePolicy" }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "required": ["id", "kind"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/definitions/indexRef" },
+        "kind": { "$ref": "#/definitions/artifactKind" },
+        "schema": { "$ref": "#/definitions/jsonSchema" }
+      }
+    },
+    "state": {
+      "type": "object",
+      "required": ["fields"],
+      "additionalProperties": false,
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/stateField" }
+        }
+      }
+    },
+    "stateField": {
+      "type": "object",
+      "required": ["name", "schema", "reducer"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/definitions/id" },
+        "schema": { "$ref": "#/definitions/jsonSchema" },
+        "reducer": { "enum": ["replace", "append", "merge", "sum", "min", "max", "set-union"] },
+        "initial": {}
+      }
+    },
+    "capability": {
+      "type": "object",
+      "required": ["id", "permissions", "sideEffectMode"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "permissions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/definitions/permission" }
+        },
+        "sideEffectMode": { "$ref": "#/definitions/sideEffectMode" },
+        "idempotencyKey": { "type": "string", "minLength": 1 },
+        "approvalGate": { "$ref": "#/definitions/id" }
+      }
+    },
+    "ceilings": {
+      "type": "object",
+      "required": ["activations", "tokens", "costUsd", "timeMs", "concurrency"],
+      "additionalProperties": false,
+      "properties": {
+        "activations": { "type": "integer", "minimum": 1 },
+        "tokens": { "type": "integer", "minimum": 1 },
+        "costUsd": { "type": "number", "exclusiveMinimum": 0 },
+        "timeMs": { "type": "integer", "minimum": 1 },
+        "concurrency": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "kind", "inputs", "outputs", "capabilities", "permissions", "sideEffectMode"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "kind": { "$ref": "#/definitions/nodeKind" },
+        "ref": { "$ref": "#/definitions/indexRef" },
+        "deterministic": { "const": true },
+        "description": { "type": "string", "minLength": 1 },
+        "phase": { "type": "string", "minLength": 1 },
+        "track": { "type": "string", "minLength": 1 },
+        "dependsOn": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/definitions/id" }
+        },
+        "activation": { "$ref": "#/definitions/predicate" },
+        "inputs": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/inputBinding" }
+        },
+        "outputs": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/outputBinding" }
+        },
+        "capabilities": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/definitions/id" }
+        },
+        "permissions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/definitions/permission" }
+        },
+        "sideEffectMode": { "$ref": "#/definitions/sideEffectMode" },
+        "idempotencyKey": { "type": "string", "minLength": 1 },
+        "approvalGate": { "$ref": "#/definitions/id" },
+        "retry": { "$ref": "#/definitions/retryPolicy" },
+        "fallback": { "$ref": "#/definitions/fallbackPolicy" },
+        "ceilings": { "$ref": "#/definitions/ceilings" }
+      }
+    },
+    "inputBinding": {
+      "type": "object",
+      "required": ["name", "schema"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/definitions/id" },
+        "schema": { "$ref": "#/definitions/jsonSchema" },
+        "from": { "type": "string", "pattern": "^[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*$" },
+        "state": { "$ref": "#/definitions/id" },
+        "value": {}
+      },
+      "oneOf": [
+        { "required": ["from"] },
+        { "required": ["state"] },
+        { "required": ["value"] }
+      ]
+    },
+    "outputBinding": {
+      "type": "object",
+      "required": ["name", "schema"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/definitions/id" },
+        "schema": { "$ref": "#/definitions/jsonSchema" },
+        "state": { "$ref": "#/definitions/id" }
+      }
+    },
+    "route": {
+      "type": "object",
+      "required": ["from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "from": { "$ref": "#/definitions/id" },
+        "to": { "$ref": "#/definitions/id" },
+        "when": { "$ref": "#/definitions/predicate" },
+        "guard": { "$ref": "#/definitions/predicate" },
+        "maxIterations": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "join": {
+      "type": "object",
+      "required": ["id", "sources", "target", "policy"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/definitions/id" }
+        },
+        "target": { "$ref": "#/definitions/id" },
+        "policy": {
+          "type": "object",
+          "required": ["mode"],
+          "additionalProperties": false,
+          "properties": {
+            "mode": { "enum": ["all", "quorum", "fixed", "lcm", "converged", "budget"] },
+            "quorum": { "type": "integer", "minimum": 1 },
+            "count": { "type": "integer", "minimum": 1 },
+            "periods": {
+              "type": "array",
+              "minItems": 2,
+              "items": { "type": "integer", "minimum": 1 }
+            },
+            "predicate": { "$ref": "#/definitions/predicate" },
+            "maxIterations": { "type": "integer", "minimum": 1 },
+            "maxCostUsd": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        }
+      }
+    },
+    "failurePolicy": {
+      "type": "object",
+      "required": ["onNodeFailure", "maxFailures"],
+      "additionalProperties": false,
+      "properties": {
+        "onNodeFailure": { "enum": ["fail", "continue", "fallback", "partial-synthesis"] },
+        "maxFailures": { "type": "integer", "minimum": 0 },
+        "terminalSchema": { "$ref": "#/definitions/jsonSchema" }
+      }
+    },
+    "outputPolicy": {
+      "type": "object",
+      "required": ["mode", "from", "schema"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["final-only", "progressive", "typed-terminal-failure"] },
+        "from": { "type": "string", "pattern": "^[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*$" },
+        "schema": { "$ref": "#/definitions/jsonSchema" },
+        "failureSchema": { "$ref": "#/definitions/jsonSchema" }
+      }
+    },
+    "tracePolicy": {
+      "type": "object",
+      "required": ["level", "redact"],
+      "additionalProperties": false,
+      "properties": {
+        "level": { "enum": ["metadata", "bindings", "full-io"] },
+        "redact": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^/" }
+        }
+      }
+    },
+    "retryPolicy": {
+      "type": "object",
+      "required": ["limit", "backoff", "on"],
+      "additionalProperties": false,
+      "properties": {
+        "limit": { "type": "integer", "minimum": 0 },
+        "backoff": { "enum": ["none", "linear", "exponential"] },
+        "on": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["failure", "timeout", "rate-limit"] }
+        }
+      }
+    },
+    "fallbackPolicy": {
+      "type": "object",
+      "required": ["node"],
+      "additionalProperties": false,
+      "properties": {
+        "node": { "$ref": "#/definitions/id" },
+        "allowPartial": { "type": "boolean" }
+      }
+    },
+    "predicate": {
+      "type": "object",
+      "required": ["expression"],
+      "additionalProperties": false,
+      "properties": {
+        "language": { "const": "cel" },
+        "expression": { "type": "string", "minLength": 1 }
+      }
+    },
+    "jsonSchema": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "nodeKind": {
+      "enum": ["agent", "skill", "prompt", "evaluator", "tool", "function", "gate"]
+    },
+    "artifactKind": {
+      "enum": ["agent", "skill", "prompt", "evaluator", "tool", "function"]
+    },
+    "sideEffectMode": {
+      "enum": ["none", "idempotent", "exactly-once", "approval-required"]
+    },
+    "permission": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$"
+    },
+    "indexRef": {
+      "type": "string",
+      "pattern": "^aiwg:(agent|skill|prompt|evaluator|tool|function):[a-f0-9]{16}$"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "dnsLabel": {
+      "type": "string",
+      "pattern": "^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
+      "maxLength": 63
+    },
+    "stringMap": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  }
+}

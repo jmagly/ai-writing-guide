@@ -1,0 +1,57 @@
+{
+  "apiVersion": "flow.aiwg.io/v1alpha1",
+  "kind": "FlowGraph",
+  "metadata": { "name": "parallel-fanout" },
+  "spec": {
+    "entry": ["collect"],
+    "candidates": [
+      { "id": "aiwg:skill:3333333333333333", "kind": "skill" },
+      { "id": "aiwg:agent:4444444444444444", "kind": "agent" },
+      { "id": "aiwg:agent:5555555555555555", "kind": "agent" },
+      { "id": "aiwg:evaluator:6666666666666666", "kind": "evaluator" }
+    ],
+    "state": { "fields": [] },
+    "permissions": [],
+    "capabilities": [],
+    "ceilings": { "activations": 8, "tokens": 24000, "costUsd": 4, "timeMs": 120000, "concurrency": 2 },
+    "nodes": [
+      {
+        "id": "collect", "kind": "skill", "ref": "aiwg:skill:3333333333333333",
+        "inputs": [{ "name": "request", "schema": { "type": "string" }, "value": "Review this change" }],
+        "outputs": [{ "name": "brief", "schema": { "type": "string" } }],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      },
+      {
+        "id": "review-a", "kind": "agent", "ref": "aiwg:agent:4444444444444444",
+        "inputs": [{ "name": "brief", "schema": { "type": "string" }, "from": "collect.brief" }],
+        "outputs": [{ "name": "review", "schema": { "type": "string" } }],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      },
+      {
+        "id": "review-b", "kind": "agent", "ref": "aiwg:agent:5555555555555555",
+        "inputs": [{ "name": "brief", "schema": { "type": "string" }, "from": "collect.brief" }],
+        "outputs": [{ "name": "review", "schema": { "type": "string" } }],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      },
+      {
+        "id": "synthesize", "kind": "evaluator", "ref": "aiwg:evaluator:6666666666666666",
+        "inputs": [
+          { "name": "left", "schema": { "type": "string" }, "from": "review-a.review" },
+          { "name": "right", "schema": { "type": "string" }, "from": "review-b.review" }
+        ],
+        "outputs": [{ "name": "result", "schema": { "type": "string" } }],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      }
+    ],
+    "routes": [
+      { "from": "collect", "to": "review-a" },
+      { "from": "collect", "to": "review-b" }
+    ],
+    "joins": [
+      { "id": "reviews-complete", "sources": ["review-a", "review-b"], "target": "synthesize", "policy": { "mode": "all" } }
+    ],
+    "failure": { "onNodeFailure": "partial-synthesis", "maxFailures": 1 },
+    "output": { "mode": "progressive", "from": "synthesize.result", "schema": { "type": "string" } },
+    "trace": { "level": "bindings", "redact": ["/spec/nodes/0/inputs/0/value"] }
+  }
+}

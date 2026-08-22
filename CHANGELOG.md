@@ -7,6 +7,15 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Provider-neutral Flow graph composition contract** - The new
+  `composition-engine` addon defines strict `flow.aiwg.io/v1alpha1`
+  `FlowGraph` schema and generated TypeScript types, semantic diagnostics,
+  normalized adapter input, five conformance fixtures, and
+  `aiwg composition validate`. The profile extends the existing Flow
+  metalanguage without requiring fourth-level DNS or provider fields (#2115).
+
 ### Fixed
 
 - **Python-aware built-in codebase indexing** - `aiwg index build` now detects

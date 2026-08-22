@@ -1,0 +1,62 @@
+{
+  "id": "composition-engine",
+  "type": "addon",
+  "name": "Composition Engine",
+  "version": "2026.8.0",
+  "description": "Provider-neutral Flow graph composition contracts, validation, execution, and conformance tooling.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "composition",
+    "flow",
+    "graph",
+    "orchestration",
+    "provider-neutral",
+    "validation"
+  ],
+  "entry": {
+    "commands": "commands/",
+    "skills": "skills/",
+    "schemas": "schemas/",
+    "fixtures": "fixtures/"
+  },
+  "agents": [],
+  "commands": [],
+  "skills": ["composition-validate"],
+  "schemas": ["flow-graph.schema"],
+  "fixtures": [
+    "linear-flow",
+    "parallel-fanout",
+    "agent-tool-flow",
+    "phased-multi-track",
+    "lcm-4x5"
+  ],
+  "cli_commands": {
+    "namespace": "composition",
+    "description": "Validate and inspect provider-neutral Flow graph manifests",
+    "entry": "commands/",
+    "subcommands": {
+      "validate": {
+        "file": "composition.mjs",
+        "description": "Validate and normalize one FlowGraph manifest"
+      }
+    }
+  },
+  "dependencies": {
+    "required": ["aiwg-utils"],
+    "optional": ["mission-control", "orchestration-topology-lab"]
+  },
+  "flowProfile": {
+    "apiVersion": "flow.aiwg.io/v1alpha1",
+    "kind": "FlowGraph",
+    "baseApiVersion": "flow.aiwg.io/v1",
+    "baseKind": "FlowPlaybook"
+  },
+  "researchFoundation": {
+    "issue": "#2115",
+    "parent": "#2114"
+  }
+}

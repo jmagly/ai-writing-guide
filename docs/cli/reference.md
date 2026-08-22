@@ -5305,6 +5305,28 @@ State source: `.aiwg/ralph/rlm-state.json`.
 
 Commands contributed by installed addons. Available after running `aiwg use <addon>`.
 
+### composition
+
+Validate and normalize provider-neutral Flow execution graphs from the
+`composition-engine` addon:
+
+~~~bash
+aiwg use composition-engine
+aiwg composition validate <manifest.yaml|json> [--format human|json] [--catalog <index.json>]
+~~~
+
+The manifest uses `apiVersion: flow.aiwg.io/v1alpha1` and `kind: FlowGraph`.
+The graph kind distinguishes the profile without a fourth-level DNS group.
+Validation is strict: unknown fields, unresolved stable AIWG references,
+incompatible schemas, unreachable nodes, duplicate IDs, unbounded cycles,
+impossible joins, undeclared capabilities, permission widening, and unsafe
+retry modes are errors.
+
+`--format json` emits a stable `FlowGraphValidationReport`. A valid report
+includes the provider-neutral normalized graph with graph, node, and edge
+identities. `--catalog` additionally proves the manifest's authorized stable
+IDs against a captured AIWG index export.
+
 ## Extension System
 
 ### Unified Extension Schema

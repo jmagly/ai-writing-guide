@@ -1,0 +1,47 @@
+{
+  "apiVersion": "flow.aiwg.io/v1alpha1",
+  "kind": "FlowGraph",
+  "metadata": { "name": "lcm-4x5" },
+  "spec": {
+    "entry": ["period-four", "period-five"],
+    "candidates": [
+      { "id": "aiwg:function:dddddddddddddddd", "kind": "function" },
+      { "id": "aiwg:function:eeeeeeeeeeeeeeee", "kind": "function" },
+      { "id": "aiwg:evaluator:ffffffffffffffff", "kind": "evaluator" }
+    ],
+    "state": { "fields": [] },
+    "permissions": [],
+    "capabilities": [],
+    "ceilings": { "activations": 20, "tokens": 20000, "costUsd": 3, "timeMs": 120000, "concurrency": 2 },
+    "nodes": [
+      {
+        "id": "period-four", "kind": "function", "ref": "aiwg:function:dddddddddddddddd", "deterministic": true,
+        "inputs": [{ "name": "period", "schema": { "type": "integer" }, "value": 4 }],
+        "outputs": [{ "name": "pulse", "schema": { "type": "integer" } }],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      },
+      {
+        "id": "period-five", "kind": "function", "ref": "aiwg:function:eeeeeeeeeeeeeeee", "deterministic": true,
+        "inputs": [{ "name": "period", "schema": { "type": "integer" }, "value": 5 }],
+        "outputs": [{ "name": "pulse", "schema": { "type": "integer" } }],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      },
+      {
+        "id": "synchronize", "kind": "evaluator", "ref": "aiwg:evaluator:ffffffffffffffff",
+        "inputs": [
+          { "name": "four", "schema": { "type": "integer" }, "from": "period-four.pulse" },
+          { "name": "five", "schema": { "type": "integer" }, "from": "period-five.pulse" }
+        ],
+        "outputs": [{ "name": "activation", "schema": { "type": "integer" } }],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      }
+    ],
+    "routes": [],
+    "joins": [
+      { "id": "twentieth-activation", "sources": ["period-four", "period-five"], "target": "synchronize", "policy": { "mode": "lcm", "periods": [4, 5] } }
+    ],
+    "failure": { "onNodeFailure": "fail", "maxFailures": 0 },
+    "output": { "mode": "final-only", "from": "synchronize.activation", "schema": { "type": "integer" } },
+    "trace": { "level": "metadata", "redact": [] }
+  }
+}
