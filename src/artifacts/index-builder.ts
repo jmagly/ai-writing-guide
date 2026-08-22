@@ -31,13 +31,13 @@ import {
 import { parseCitationSidecar, citationResultToEdges, buildRefToPathMap } from './citation-parser.js';
 import { writeIndexFile, resolveIndexDir, loadGraphIndexFile } from './index-reader.js';
 import { loadManifest, writeManifest, statMatches, makeEntry, type ChecksumManifest, type ManifestStats } from './checksum-manifest.js';
-import { workspaceLinkedFiles } from '../smiths/context-pipeline/workspace-context.js';
 import { normalizeOperationalState } from './operational-state.js';
 import {
   DEFAULT_PROJECT_AIWG_DIR,
   resolveProjectAiwgDir,
 } from '../config/project-artifacts.js';
 import { normalizeStateTransferProjection } from './state-transfer.js';
+import { collectGraphIndexFiles, findArtifactFiles, indexPathFor } from './index-files.js';
 
 export interface BuildOptions {
   force?: boolean;
@@ -46,28 +46,6 @@ export interface BuildOptions {
   outputDir?: string; // Override index output directory (default: <cwd>/.aiwg/.index/)
   graph?: GraphType;  // Target a specific graph (default: project for backward compat)
   explicit?: boolean; // true when graph was requested via --graph flag; false for auto-selected defaultBuild graphs
-}
-
-function pathContains(parent: string, child: string): boolean {
-  const relative = path.relative(parent, child);
-  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
-}
-
-function toPosixPath(value: string): string {
-  return value.split(path.sep).join('/');
-}
-
-function indexPathFor(cwd: string, fullPath: string, graph?: GraphType): string {
-  if (!graph || graph === 'project') {
-    const artifactRoot = resolveProjectAiwgDir(cwd);
-    if (pathContains(artifactRoot, fullPath)) {
-      const relative = toPosixPath(path.relative(artifactRoot, fullPath));
-      return relative ? `${DEFAULT_PROJECT_AIWG_DIR}/${relative}` : DEFAULT_PROJECT_AIWG_DIR;
-    }
-  }
-  const rel = path.relative(cwd, fullPath);
-  if (!rel.startsWith('..') && !path.isAbsolute(rel)) return toPosixPath(rel);
-  return fullPath;
 }
 
 function absoluteEntryPath(cwd: string, entryPath: string, graph?: GraphType): string {
@@ -654,30 +632,6 @@ function applyMetadataSupplements(
 }
 
 /**
- * Recursively find all indexable files under a directory
- */
-function findArtifactFiles(dir: string, extensions: string[] = [...DEFAULT_INDEX_EXTENSIONS]): string[] {
-  const results: string[] = [];
-  if (!fs.existsSync(dir)) return results;
-
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.isSymbolicLink() && !fs.existsSync(fullPath)) {
-      continue;
-    }
-    if (entry.isDirectory()) {
-      // Skip hidden dirs and .index
-      if (entry.name.startsWith('.')) continue;
-      results.push(...findArtifactFiles(fullPath, extensions));
-    } else if (extensions.some(ext => entry.name.endsWith(ext))) {
-      results.push(fullPath);
-    }
-  }
-  return results;
-}
-
-/**
  * Build the artifact index
  */
 /**
@@ -873,24 +827,9 @@ export async function buildIndex(
   };
 
   // Collect files from all scan directories
-  const files: string[] = [];
-  for (const dir of existingDirs) {
-    files.push(...findArtifactFiles(dir, fileExtensions));
-  }
-  // WORKSPACE.md is the root of the project context graph. Index it and its
-  // local Markdown-linked nodes without copying them into provider trees.
-  if (!scope && (!graph || graph === 'project')) {
-    const workspacePath = path.join(cwd, 'WORKSPACE.md');
-    const contextFiles = [
-      ...(fs.existsSync(workspacePath) ? [workspacePath] : []),
-      ...await workspaceLinkedFiles(cwd),
-    ];
-    for (const contextFile of contextFiles) {
-      if (fileExtensions.some((extension) => contextFile.endsWith(extension)) && !files.includes(contextFile)) {
-        files.push(contextFile);
-      }
-    }
-  }
+  const files = scope
+    ? existingDirs.flatMap(dir => findArtifactFiles(dir, fileExtensions))
+    : await collectGraphIndexFiles(cwd, graph);
   const entries: Record<string, MetadataEntry> = {};
   const tagIndex: TagIndex = {};
   const depGraph: DependencyGraph = {};

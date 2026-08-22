@@ -8,47 +8,42 @@
  * @tests @test/unit/artifacts/stats.test.ts
  */
 
-import fs from 'fs';
-import path from 'path';
-import type { GraphType, IndexStats } from './types.js';
-import { GRAPH_CONFIGS, loadUserGraphConfigs, resolveGraphScanDir } from './types.js';
+import type { ArtifactIndex, GraphType, IndexStats } from './types.js';
+import { GRAPH_CONFIGS, loadUserGraphConfigs } from './types.js';
 import { loadIndexStats, loadGraphIndexFile } from './index-reader.js';
+import { collectGraphIndexFiles, indexPathFor } from './index-files.js';
 
 export interface StatsOptions {
   json?: boolean;
   graph?: GraphType;
 }
 
-/**
- * Count total indexable files under scan directories (excluding .index/)
- */
-function countArtifactFiles(cwd: string, graphType?: GraphType): number {
-  const config = graphType ? GRAPH_CONFIGS[graphType] : undefined;
-  const scanDirs = config
-    ? config.scanDirs.map(d => resolveGraphScanDir(cwd, d))
-    : [resolveGraphScanDir(cwd, '.aiwg')];
-  const extensions = config?.extensions ?? ['.md', '.yaml', '.json'];
+export interface IndexCoverage {
+  indexed: number;
+  totalFiles: number;
+  percentage: number;
+}
 
-  let count = 0;
-
-  function walk(dir: string): void {
-    if (!fs.existsSync(dir)) return;
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        if (entry.name.startsWith('.')) continue; // Skip .index, etc.
-        walk(full);
-      } else if (extensions.some(ext => entry.name.endsWith(ext))) {
-        count++;
-      }
-    }
-  }
-
-  for (const dir of scanDirs) {
-    walk(dir);
-  }
-  return count;
+/** Calculate coverage over the same current file set used by the index builder. */
+async function calculateCoverage(
+  cwd: string,
+  stats: IndexStats,
+  graphType?: GraphType,
+): Promise<IndexCoverage> {
+  const sourcePaths = new Set(
+    (await collectGraphIndexFiles(cwd, graphType))
+      .map(file => indexPathFor(cwd, file, graphType)),
+  );
+  const index = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', graphType);
+  const indexed = index
+    ? Object.keys(index.entries).filter(entryPath => sourcePaths.has(entryPath)).length
+    : Math.min(stats.totalArtifacts, sourcePaths.size);
+  const totalFiles = sourcePaths.size;
+  return {
+    indexed,
+    totalFiles,
+    percentage: totalFiles > 0 ? Math.round((indexed / totalFiles) * 100) : 100,
+  };
 }
 
 /**
@@ -99,14 +94,10 @@ export async function showStats(
     // JSON mode: aggregate all graphs into one response
     const combined: Record<string, unknown> = {};
     for (const { type, stats: s } of availableGraphs) {
-      const totalFiles = countArtifactFiles(cwd, type);
+      const coverage = await calculateCoverage(cwd, s, type);
       combined[type] = {
         ...s,
-        coverage: {
-          indexed: s.totalArtifacts,
-          totalFiles,
-          percentage: totalFiles > 0 ? Math.round((s.totalArtifacts / totalFiles) * 100) : 100,
-        },
+        coverage,
       };
     }
     console.log(JSON.stringify(combined, null, 2));
@@ -130,14 +121,10 @@ async function renderStats(
   graphType?: GraphType
 ): Promise<void> {
   if (options.json) {
-    const totalFiles = countArtifactFiles(cwd, graphType);
+    const coverage = await calculateCoverage(cwd, stats, graphType);
     console.log(JSON.stringify({
       ...stats,
-      coverage: {
-        indexed: stats.totalArtifacts,
-        totalFiles,
-        percentage: totalFiles > 0 ? Math.round((stats.totalArtifacts / totalFiles) * 100) : 100,
-      },
+      coverage,
     }, null, 2));
     return;
   }
@@ -195,10 +182,7 @@ async function renderStats(
   console.log('');
 
   // Coverage
-  const totalFiles = countArtifactFiles(cwd, graphType);
-  const coverage = totalFiles > 0
-    ? Math.round((stats.totalArtifacts / totalFiles) * 100)
-    : 100;
+  const coverage = await calculateCoverage(cwd, stats, graphType);
   console.log('Index Health:');
-  console.log(`  Coverage: ${stats.totalArtifacts}/${totalFiles} artifacts indexed (${coverage}%)`);
+  console.log(`  Coverage: ${coverage.indexed}/${coverage.totalFiles} artifacts indexed (${coverage.percentage}%)`);
 }

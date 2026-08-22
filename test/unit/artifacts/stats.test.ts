@@ -113,7 +113,54 @@ describe('Artifact Index Statistics', () => {
     expect(parsed.totalArtifacts).toBe(15);
     expect(parsed.byPhase.requirements).toBe(5);
     expect(parsed.coverage).toBeDefined();
-    expect(parsed.coverage.indexed).toBe(15);
+    expect(parsed.coverage.indexed).toBe(0);
+    expect(parsed.coverage.totalFiles).toBe(0);
+    expect(parsed.coverage.percentage).toBe(100);
+  });
+
+  it('reports project graph coverage over WORKSPACE context and .aiwg files', async () => {
+    const artifactPath = path.join(tmpDir, '.aiwg', 'requirements', 'one.md');
+    fs.mkdirSync(path.dirname(artifactPath), { recursive: true });
+    fs.writeFileSync(artifactPath, '# One\n');
+    fs.writeFileSync(path.join(tmpDir, 'WORKSPACE.md'), '[AIWG](./AIWG.md)\n');
+    fs.writeFileSync(path.join(tmpDir, 'AIWG.md'), '# Context\n');
+
+    const graphIndexDir = path.join(tmpDir, INDEX_DIR, 'project');
+    fs.mkdirSync(graphIndexDir, { recursive: true });
+    fs.writeFileSync(path.join(graphIndexDir, 'stats.json'), JSON.stringify({
+      ...mockStats,
+      totalArtifacts: 3,
+    }));
+    const writeMetadata = (paths: string[]): void => {
+      fs.writeFileSync(path.join(graphIndexDir, 'metadata.json'), JSON.stringify({
+        version: '1.0.0',
+        builtAt: '2026-01-15T12:00:00Z',
+        buildTimeMs: 42,
+        entries: Object.fromEntries(paths.map(entryPath => [entryPath, {}])),
+      }));
+    };
+
+    writeMetadata(['.aiwg/requirements/one.md', 'WORKSPACE.md', 'AIWG.md']);
+    await showStats(tmpDir, { json: true, graph: 'project' });
+    let parsed = JSON.parse(consoleSpy.mock.calls.at(-1)?.[0] as string);
+    expect(parsed.coverage).toEqual({ indexed: 3, totalFiles: 3, percentage: 100 });
+
+    writeMetadata(['.aiwg/requirements/one.md', 'WORKSPACE.md', 'AIWG.md', '.aiwg/removed.md']);
+    await showStats(tmpDir, { json: true, graph: 'project' });
+    parsed = JSON.parse(consoleSpy.mock.calls.at(-1)?.[0] as string);
+    expect(parsed.coverage).toEqual({ indexed: 3, totalFiles: 3, percentage: 100 });
+
+    // A current source file omitted from the index must reduce coverage rather
+    // than allowing root context entries to produce a value above 100%.
+    writeMetadata(['WORKSPACE.md', 'AIWG.md', '.aiwg/removed.md']);
+    await showStats(tmpDir, { json: true, graph: 'project' });
+    parsed = JSON.parse(consoleSpy.mock.calls.at(-1)?.[0] as string);
+    expect(parsed.coverage).toEqual({ indexed: 2, totalFiles: 3, percentage: 67 });
+
+    consoleSpy.mockClear();
+    await showStats(tmpDir, { graph: 'project' });
+    const output = consoleSpy.mock.calls.map(call => call[0]).join('\n');
+    expect(output).toContain('Coverage: 2/3 artifacts indexed (67%)');
   });
 
   it('should show tag distribution', async () => {
