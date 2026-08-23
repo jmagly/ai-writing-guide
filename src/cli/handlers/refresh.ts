@@ -261,7 +261,10 @@ export const refreshHandler: CommandHandler = {
         if (updateResult.exitCode === 0) {
           if (!quiet) ui.success('Package up to date');
         } else {
-          if (!quiet) ui.warn('Update check returned non-zero (may already be current)');
+          return {
+            exitCode: updateResult.exitCode,
+            message: 'Installation update failed; refresh stopped before re-deployment. Run `aiwg installation show` for canonical-install diagnostics.',
+          };
         }
       }
     } else {

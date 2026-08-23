@@ -10,6 +10,12 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { getPackageRoot, loadConfig } from '../channel/manager.mjs';
+import {
+  assertCanonicalInstallation,
+  createInstallationIdentity,
+  loadInstallationIdentity,
+  saveInstallationIdentity,
+} from '../installation/manager.mjs';
 
 const VALID_MODES = new Set(['npm', 'web', 'source']);
 
@@ -24,14 +30,42 @@ function readPackageName(packageRoot) {
 export async function detectInstallMode(options = {}) {
   const packageRoot = options.packageRoot ?? getPackageRoot();
   const override = options.env?.AIWG_INSTALL_MODE ?? process.env.AIWG_INSTALL_MODE;
+  const config = options.config ?? await loadConfig(options);
+  let identity = options.identity ?? config.installation ?? null;
+  let identityPersistent = Boolean(config.installation) || options.identityPersistent === true;
+  if (!identity && options.config) {
+    const method = override ?? (readPackageName(packageRoot) === '@aiwg/cli'
+      ? 'web'
+      : (config.devMode || config.channel === 'edge' || existsSync(path.join(packageRoot, '.git'))) ? 'source' : 'npm');
+    identity = createInstallationIdentity({
+      ...options,
+      actualRoot: packageRoot,
+      method,
+      channel: config.channel,
+      runMode: config.devMode ? 'development' : undefined,
+    });
+  } else if (!identity) {
+    identity = loadInstallationIdentity({ ...options, actualRoot: packageRoot });
+    identityPersistent = Boolean(identity);
+  }
+
+  if (override && !VALID_MODES.has(override)) {
+    throw new Error(`AIWG_INSTALL_MODE must be one of: ${[...VALID_MODES].join(', ')}`);
+  }
+  if (override && identity && override !== identity.method) {
+    throw new Error(`AIWG_INSTALL_MODE=${override} conflicts with the canonical installation method ${identity.method}. Use \`aiwg installation switch\` instead.`);
+  }
+  if (identity) {
+    const status = assertCanonicalInstallation({ ...options, actualRoot: packageRoot, identity });
+    return { mode: identity.method, packageRoot, packageName: readPackageName(packageRoot), identity, identityPersistent, installation: status };
+  }
+
   if (override) {
     if (!VALID_MODES.has(override)) {
       throw new Error(`AIWG_INSTALL_MODE must be one of: ${[...VALID_MODES].join(', ')}`);
     }
     return { mode: override, packageRoot, packageName: readPackageName(packageRoot) };
   }
-
-  const config = options.config ?? await loadConfig();
   const packageName = readPackageName(packageRoot);
   if (packageName === '@aiwg/cli') return { mode: 'web', packageRoot, packageName };
   if (config.devMode || config.channel === 'edge' || existsSync(path.join(packageRoot, '.git'))) {
@@ -56,7 +90,7 @@ function npmTag(channel) {
 export async function updateInstallation(options = {}) {
   const config = options.config ?? await loadConfig();
   const detected = await detectInstallMode({ ...options, config });
-  const channel = options.channel ?? config.channel ?? 'stable';
+  const channel = options.channel ?? detected.identity?.channel ?? config.channel ?? 'stable';
   const dryRun = options.dryRun === true;
   const offline = options.offline === true;
 
@@ -84,6 +118,9 @@ export async function updateInstallation(options = {}) {
       return resolveWebRelease({ selector });
     });
     const release = await refreshWebResources(channel);
+    if (detected.identity && detected.identityPersistent && options.persistIdentity !== false) {
+      saveInstallationIdentity({ ...detected.identity, channel }, options);
+    }
     return {
       ...detected,
       channel,
@@ -106,16 +143,23 @@ export async function updateInstallation(options = {}) {
 
   const tag = npmTag(channel);
   const command = ['install', '--global', `aiwg@${tag}`];
+  const managerExecutable = detected.identity?.managerExecutable;
+  if (!managerExecutable) {
+    throw new Error('Canonical npm installation has no package-manager executable. Run `aiwg installation adopt --manager <absolute-path-to-npm>`.');
+  }
   if (!dryRun) {
     const execute = options.execute ?? ((file, args) => execFileSync(file, args, { stdio: 'inherit' }));
-    execute('npm', command);
+    execute(managerExecutable, command);
+    if (detected.identity && detected.identityPersistent && options.persistIdentity !== false) {
+      saveInstallationIdentity({ ...detected.identity, channel }, options);
+    }
   }
   return {
     ...detected,
     channel,
     status: dryRun ? 'dry-run' : 'updated',
     changed: !dryRun,
-    command: `npm ${command.join(' ')}`,
+    command: `${managerExecutable} ${command.join(' ')}`,
     message: dryRun
       ? `Would update the full AIWG npm distribution on the '${tag}' channel.`
       : `Updated the full AIWG npm distribution on the '${tag}' channel.`,

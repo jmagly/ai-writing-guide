@@ -89,10 +89,18 @@ Use this recovery ladder:
 2. Establish the actual workspace state:
 
    ```bash
+   aiwg installation show --json
    aiwg status --probe --json
    aiwg doctor
    aiwg runtime-info
    ```
+
+   Treat `installation.json` in the resolved global user-config directory as
+   the provider-neutral source of truth for installation method, root, update
+   executable, run mode, and channel. Never infer a replacement from the first
+   `npm` or `aiwg` on `PATH`. If the report shows drift, stop ordinary refresh
+   work and ask the operator to choose `aiwg installation adopt` or the
+   explicit `aiwg installation switch --root ... --method ...` recovery path.
 
 3. Preview cleanup before changing files:
 

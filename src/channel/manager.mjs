@@ -13,8 +13,17 @@ import fs from 'fs/promises';
 import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { execSync, spawn } from 'child_process';
+import { execFileSync, execSync, spawn } from 'child_process';
 import os from 'os';
+import { resolveUserConfigDir } from '../config/user-config-dir.mjs';
+import {
+  assertCanonicalInstallation,
+  createInstallationIdentity,
+  inferInstallationMethod,
+  inspectInstallation,
+  loadInstallationIdentity,
+  saveInstallationIdentity,
+} from '../installation/manager.mjs';
 
 /**
  * Run a command with inherited stdio, applying a wall-clock timeout so a
@@ -80,8 +89,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Configuration paths
-const CONFIG_DIR = path.join(os.homedir(), '.aiwg');
-const CONFIG_FILE = path.join(CONFIG_DIR, 'channel.json');
 const EDGE_INSTALL_PATH = path.join(os.homedir(), '.local', 'share', 'ai-writing-guide');
 const REPO_URL = 'https://github.com/jmagly/aiwg.git';
 
@@ -132,22 +139,65 @@ export function getPackageRoot() {
  * Load channel configuration
  * @returns {Promise<object>} Channel configuration
  */
-export async function loadConfig() {
+export async function loadConfig(options = {}) {
+  const configDir = resolveUserConfigDir(options);
+  const configFile = path.join(configDir, 'channel.json');
+  let legacy = {};
   try {
-    const data = await fs.readFile(CONFIG_FILE, 'utf8');
-    return { ...DEFAULT_CONFIG, ...JSON.parse(data) };
+    const data = await fs.readFile(configFile, 'utf8');
+    legacy = JSON.parse(data);
   } catch {
-    return { ...DEFAULT_CONFIG };
+    // Legacy state is optional. The canonical identity below is authoritative.
   }
+  const actualRoot = options.actualRoot ?? getPackageRoot();
+  const identity = loadInstallationIdentity({ ...options, actualRoot, legacyConfig: legacy });
+  if (!identity) return { ...DEFAULT_CONFIG, ...legacy };
+  return {
+    ...DEFAULT_CONFIG,
+    ...legacy,
+    channel: identity.channel,
+    edgePath: identity.edgePath ?? legacy.edgePath ?? EDGE_INSTALL_PATH,
+    devMode: identity.runMode === 'development',
+    lastUpdateCheck: identity.lastUpdateCheck,
+    updateCheckInterval: identity.updateCheckInterval,
+    checkOnStartup: identity.checkOnStartup,
+    installation: identity,
+  };
 }
 
 /**
  * Save channel configuration
  * @param {object} config - Configuration to save
  */
-export async function saveConfig(config) {
-  await fs.mkdir(CONFIG_DIR, { recursive: true });
-  await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2));
+export async function saveConfig(config, options = {}) {
+  const configDir = resolveUserConfigDir(options);
+  const configFile = path.join(configDir, 'channel.json');
+  await fs.mkdir(configDir, { recursive: true });
+  const { installation: _installation, ...legacyConfig } = config;
+  await fs.writeFile(configFile, `${JSON.stringify(legacyConfig, null, 2)}\n`);
+
+  const actualRoot = options.actualRoot ?? getPackageRoot();
+  const previous = loadInstallationIdentity({ ...options, actualRoot, legacyConfig: config });
+  if (previous) {
+    const development = config.devMode === true;
+    const root = development && config.edgePath ? config.edgePath : previous.root;
+    const method = development ? 'source' : previous.method;
+    saveInstallationIdentity(createInstallationIdentity({
+      ...options,
+      actualRoot,
+      root,
+      method,
+      runMode: development ? 'development' : 'normal',
+      channel: config.channel ?? previous.channel,
+      edgePath: config.edgePath ?? previous.edgePath,
+      managerExecutable: development ? undefined : previous.managerExecutable,
+      updateStrategy: development ? 'source-git' : previous.updateStrategy,
+      lastUpdateCheck: config.lastUpdateCheck ?? previous.lastUpdateCheck,
+      updateCheckInterval: config.updateCheckInterval ?? previous.updateCheckInterval,
+      checkOnStartup: config.checkOnStartup ?? previous.checkOnStartup,
+      recordedAt: previous.recordedAt,
+    }), options);
+  }
 }
 
 /**
@@ -178,7 +228,7 @@ export async function getFrameworkRoot() {
     }
   }
 
-  return getPackageRoot();
+  return config.installation?.root ?? getPackageRoot();
 }
 
 /**
@@ -316,12 +366,16 @@ export async function switchToDev(devPath) {
  */
 export async function switchToNext() {
   const config = await loadConfig();
+  const status = assertCanonicalInstallation({ actualRoot: getPackageRoot() });
+  if (status.identity.method !== 'npm' || !status.identity.managerExecutable) {
+    throw new Error('The next channel requires a canonical npm installation with a recorded package-manager executable.');
+  }
 
   console.log('Switching to next channel (alpha/beta/RC — latest pre-release)...');
   console.log('');
 
   try {
-    execSync('npm install -g aiwg@next', { stdio: 'inherit' });
+    execFileSync(status.identity.managerExecutable, ['install', '--global', 'aiwg@next'], { stdio: 'inherit' });
   } catch (error) {
     console.error('Failed to install aiwg@next:', error.message);
     console.error('Check that npm is available and you have write access to the global prefix.');
@@ -346,12 +400,16 @@ export async function switchToNext() {
  */
 export async function switchToNightly() {
   const config = await loadConfig();
+  const status = assertCanonicalInstallation({ actualRoot: getPackageRoot() });
+  if (status.identity.method !== 'npm' || !status.identity.managerExecutable) {
+    throw new Error('The nightly channel requires a canonical npm installation with a recorded package-manager executable.');
+  }
 
   console.log('Switching to nightly channel (latest automated snapshot)...');
   console.log('');
 
   try {
-    execSync('npm install -g aiwg@nightly', { stdio: 'inherit' });
+    execFileSync(status.identity.managerExecutable, ['install', '--global', 'aiwg@nightly'], { stdio: 'inherit' });
   } catch (error) {
     console.error('Failed to install aiwg@nightly:', error.message);
     console.error('Check that npm is available and you have write access to the global prefix.');
@@ -376,17 +434,29 @@ export async function switchToNightly() {
 export async function switchToStable() {
   const config = await loadConfig();
 
-  console.log('Switching to stable channel (npm package)...');
+  console.log('Switching to the stable channel...');
   console.log('');
 
   config.channel = 'stable';
   config.devMode = false;
   await saveConfig(config);
+  const actualRoot = getPackageRoot();
+  saveInstallationIdentity(createInstallationIdentity({
+    actualRoot,
+    root: actualRoot,
+    method: inferInstallationMethod(actualRoot),
+    runMode: 'normal',
+    channel: 'stable',
+    edgePath: config.edgePath,
+    lastUpdateCheck: config.lastUpdateCheck,
+    updateCheckInterval: config.updateCheckInterval,
+    checkOnStartup: config.checkOnStartup,
+  }));
 
   console.log('Switched to stable channel.');
-  console.log('You are now using the npm-installed package.');
+  console.log('You are now using the canonical installed package.');
   console.log('');
-  console.log('To update: npm install -g aiwg@latest');
+  console.log('To update: aiwg refresh --channel latest');
   console.log('To switch to edge: aiwg --use-main');
 }
 
@@ -415,6 +485,7 @@ function normalizeRepoUrl(repository) {
 export async function getVersionInfo() {
   const config = await loadConfig();
   const packageRoot = getPackageRoot();
+  const installation = inspectInstallation({ actualRoot: packageRoot, identity: config.installation });
 
   // Read package.json version
   const packageJsonPath = path.join(packageRoot, 'package.json');
@@ -441,6 +512,7 @@ export async function getVersionInfo() {
     version,
     channel,
     packageRoot,
+    installation,
     devMode: config.devMode || false,
     // Public-facing URLs — single source of truth is package.json, so user-visible
     // stamps/links never hardcode the internal build origin. The published package
@@ -480,7 +552,7 @@ export async function updateEdge() {
   const config = await loadConfig();
 
   if (config.channel !== 'edge') {
-    console.log('Not in edge channel. Use npm install -g aiwg@latest for stable channel.');
+    console.log('Not in edge channel. Use `aiwg update` for the canonical installed channel.');
     return;
   }
 

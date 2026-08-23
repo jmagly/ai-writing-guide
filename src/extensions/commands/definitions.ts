@@ -175,6 +175,25 @@ export const updateCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const installationCommand: Extension = {
+  id: 'installation',
+  type: 'command',
+  name: 'Installation Identity',
+  description: 'Inspect, adopt, or deliberately switch the canonical global AIWG installation',
+  version: '1.0.0',
+  capabilities: ['cli', 'installation', 'update', 'diagnostics', 'recovery'],
+  keywords: ['installation', 'canonical', 'adopt', 'switch', 'package-manager', 'drift'],
+  category: 'maintenance',
+  platforms: { claude: 'full', generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: {
+    type: 'command',
+    template: 'utility',
+    argumentHint: '<show|adopt|switch> [--root <path>] [--method <npm|web|source>] [--manager <absolute-path>] [--json]',
+    allowedTools: ['Read', 'Write'],
+  } satisfies CommandMetadata,
+};
+
 // Renamed from `refreshCommand` as part of #694 (avoid collision with git sync
 // semantics) and re-linked to `refreshHandler` in #919. Users who type
 // `aiwg sync` still reach this handler via its 'sync' alias and see a
@@ -3734,6 +3753,7 @@ export const commandDefinitions: Extension[] = [
   doctorCommand,
   contextFirewallCommand,
   updateCommand,
+  installationCommand,
   refreshCommand,
   regenerateCommand,
   workspaceContextCommand,

@@ -312,6 +312,10 @@ aiwg -update
 - Source/dev checkouts receive a non-destructive Git/build workflow
 - Re-deploys installed frameworks and add-ons after the distribution update step
 
+Updates use the canonical installation identity and its recorded absolute
+package-manager executable. A root/method mismatch stops the update before
+re-deployment.
+
 **Channel switching:**
 
 ```bash
@@ -321,6 +325,25 @@ aiwg --use-main
 # Switch back to stable
 aiwg --use-stable
 ```
+
+---
+
+### installation
+
+Inspect or explicitly recover the provider-neutral global installation
+identity.
+
+```bash
+aiwg installation show [--json]
+aiwg installation adopt [--method <npm|web|source>] [--manager <absolute-path>]
+aiwg installation switch --root <path> --method <npm|web|source> \
+  [--manager <absolute-path>] [--run-mode <normal|development>]
+```
+
+`show` reports canonical and actual method/path, run mode, update strategy,
+release channel, and drift. `adopt` deliberately makes the package currently
+handling the command canonical. `switch` records another verified root. These
+recovery actions remain available when drift blocks ordinary commands.
 
 ---
 
@@ -5388,7 +5411,7 @@ All commands are registered as extensions in the unified schema. This enables:
 
 | Category                | Count | Commands                                                                                                                                                                                              |
 | ----------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Maintenance**         | 12    | help, version, doctor, update, refresh, regenerate, workspace-context, steward, cleanup-audit, features, diagnose, feedback                                                                           |
+| **Maintenance**         | 13    | help, version, doctor, update, installation, refresh, regenerate, workspace-context, steward, cleanup-audit, features, diagnose, feedback                                                             |
 | **Framework**           | 7     | use, list, remove, promote, install, packages, marketplace                                                                                                                                            |
 | **Catalog**             | 3     | models, catalog, skills                                                                                                                                                                               |
 | **Utility**             | 17    | cockpit, run, prefill-cards, contribute-start, validate-metadata, skill-lint, repo-access, lint, storage, activity-log, command-log, skill-usage, kb, memory, reflections, provenance, research-store |

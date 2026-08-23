@@ -43,12 +43,52 @@ points:
 aiwg status
 aiwg doctor
 aiwg refresh
+aiwg installation show
 ```
 
 - `status` reports what AIWG can see without changing the installation.
 - `doctor` diagnoses installation and provider wiring problems.
 - `refresh` updates and redeploys managed AIWG context. Review its plan before
   approving changes when prompted.
+- `installation show` reports the provider-neutral canonical installation,
+  the package-manager executable used for updates, the currently executing
+  installation, and any drift between them.
+
+## Canonical installation and recovery
+
+AIWG records the first resolved global installation in `installation.json`
+under the global user-config directory. The directory follows the standard
+resolution contract: `AIWG_CONFIG`, an existing `~/.aiwg`, an existing
+`~/.config/aiwg`, then `~/.aiwg`. Provider directories and project `.aiwg/`
+directories never own this record.
+
+Updates use the recorded method and executable. For example, an AIWG installed
+by npm under nvm continues using that npm even if Homebrew later appears first
+on `PATH`. AIWG stops with a diagnostic if another package root handles the
+command; it does not silently change ownership.
+
+After intentionally reinstalling or changing Node managers, adopt the
+installation that currently handles the command:
+
+```bash
+aiwg installation show
+aiwg installation adopt --manager /absolute/path/to/npm
+```
+
+To select a different known installation explicitly:
+
+```bash
+aiwg installation switch \
+  --root /absolute/path/to/aiwg \
+  --method npm \
+  --manager /absolute/path/to/npm
+```
+
+Use `--method web` for the signed lightweight web CLI and `--method source
+--run-mode development` for a source checkout. `show`, `adopt`, and `switch`
+remain available when drift blocks ordinary commands. Existing `channel.json`
+state is migrated on first use, including channel, development path, and
+update-check timestamps.
 
 Exact flags, machine-readable output, and automation contracts belong in the
 [agent and automation CLI reference](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md), not in ordinary user

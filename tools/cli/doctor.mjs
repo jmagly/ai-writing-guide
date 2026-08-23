@@ -15,9 +15,13 @@ import { importImpl } from '../_resolve-impl.mjs';
 import { scanStartupContext } from '../lint/claude-context-inventory.mjs';
 import { scanContextMemoryFirewall } from '../security/context-memory-firewall.mjs';
 
-const { getFrameworkRoot, getVersionInfo } = await importImpl(
+const { getFrameworkRoot, getPackageRoot, getVersionInfo } = await importImpl(
   import.meta.url,
   'channel/manager.mjs'
+);
+const { inspectInstallation } = await importImpl(
+  import.meta.url,
+  'installation/manager.mjs'
 );
 const { communityDataPath, loadCommunityLinks, validateCommunityLinks } = await importImpl(
   import.meta.url,
@@ -628,6 +632,19 @@ async function runDoctor() {
   } else {
     check('AIWG Installation', 'error', `AIWG not found at ${AIWG_ROOT}. Run: npm install -g aiwg`);
   }
+
+  const installation = inspectInstallation({ actualRoot: getPackageRoot() });
+  const installationDetail = [
+    `canonical=${installation.identity?.method ?? 'unrecorded'}:${installation.identity?.root ?? '(none)'}`,
+    `actual=${installation.actualMethod}:${installation.actualRoot}`,
+    `mode=${installation.identity?.runMode ?? 'unrecorded'}`,
+    `state=${installation.state}`,
+  ].join(' | ');
+  check(
+    'Installation Identity',
+    installation.state === 'aligned' ? 'ok' : 'error',
+    installation.state === 'aligned' ? installationDetail : `${installationDetail}. ${installation.drift.join('; ')}`,
+  );
 
   // 1b. Build state — surface a missing/incomplete dist/ as a clear error with
   // remediation instead of letting consumers hit cryptic MODULE_NOT_FOUND at

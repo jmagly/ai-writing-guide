@@ -53,6 +53,7 @@ interface VersionFingerprint {
     logFileSize?: number;
   };
   invocation_id: string;
+  installation: Awaited<ReturnType<typeof getVersionInfo>>['installation'];
 }
 
 function collectFingerprint(versionInfo: Awaited<ReturnType<typeof getVersionInfo>>): VersionFingerprint {
@@ -78,6 +79,7 @@ function collectFingerprint(versionInfo: Awaited<ReturnType<typeof getVersionInf
       logFile: loggerInfo.logFile,
     },
     invocation_id: loggerInfo.provenance.invocation_id,
+    installation: versionInfo.installation,
   };
 
   if (versionInfo.gitHash) {
@@ -145,6 +147,9 @@ async function displayVersion(opts: { verbose: boolean; json: boolean }): Promis
     ui.dim(`    path:      ${fp.packageRoot}`);
   }
   ui.dim(`    channel:   ${fp.channel}`);
+  ui.dim(`    install:   ${fp.installation.identity?.method ?? 'unrecorded'} (${fp.installation.state})`);
+  ui.dim(`    canonical: ${fp.installation.identity?.root ?? '(unrecorded)'}`);
+  ui.dim(`    actual:    ${fp.installation.actualRoot}`);
   ui.dim(`    node:      ${fp.node}`);
   ui.dim(`    platform:  ${fp.platform.os} ${fp.platform.arch} (${fp.platform.release})`);
   ui.dim(`    tty:       stdin=${fp.tty.stdin} stdout=${fp.tty.stdout} stderr=${fp.tty.stderr}`);

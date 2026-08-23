@@ -15,6 +15,7 @@ import https from 'https';
 import { execSync } from 'child_process';
 import { createInterface } from 'readline';
 import { loadConfig, saveConfig, getChannel, getPackageRoot } from '../channel/manager.mjs';
+import { updateInstallation } from './service.mjs';
 
 const NPM_REGISTRY = 'https://registry.npmjs.org/aiwg';
 
@@ -212,13 +213,13 @@ async function checkStableUpdates(config) {
         console.log('');
         console.log('Updating aiwg...');
         try {
-          execSync('npm install -g aiwg@latest', { stdio: 'inherit' });
+          await updateInstallation({ config, channel: 'stable' });
           console.log('Update complete! Please restart your terminal.');
         } catch (error) {
-          console.error('Update failed. Run manually: npm install -g aiwg@latest');
+          console.error('Update failed. Run manually: aiwg update');
         }
       } else {
-        console.log('Update skipped. Run `npm install -g aiwg@latest` when ready.');
+        console.log('Update skipped. Run `aiwg update` when ready.');
       }
       console.log('');
     }
@@ -251,13 +252,13 @@ async function checkNextUpdates(config) {
         console.log('');
         console.log('Updating aiwg@next...');
         try {
-          execSync('npm install -g aiwg@next', { stdio: 'inherit' });
+          await updateInstallation({ config, channel: 'next' });
           console.log('Update complete! Please restart your terminal.');
         } catch {
-          console.error('Update failed. Run manually: npm install -g aiwg@next');
+          console.error('Update failed. Run manually: aiwg update');
         }
       } else {
-        console.log('Update skipped. Run `npm install -g aiwg@next` when ready.');
+        console.log('Update skipped. Run `aiwg update` when ready.');
       }
       console.log('');
     }
@@ -290,13 +291,13 @@ async function checkNightlyUpdates(config) {
         console.log('');
         console.log('Updating aiwg@nightly...');
         try {
-          execSync('npm install -g aiwg@nightly', { stdio: 'inherit' });
+          await updateInstallation({ config, channel: 'nightly' });
           console.log('Update complete! Please restart your terminal.');
         } catch {
-          console.error('Update failed. Run manually: npm install -g aiwg@nightly');
+          console.error('Update failed. Run manually: aiwg update');
         }
       } else {
-        console.log('Update skipped. Run `npm install -g aiwg@nightly` when ready.');
+        console.log('Update skipped. Run `aiwg update` when ready.');
       }
       console.log('');
     }
@@ -348,13 +349,13 @@ export async function forceUpdateCheck() {
     console.log('Checking for updates on next channel...');
     const latestVersion = await fetchNpmDistTag('next');
     if (!latestVersion) {
-      console.log('Could not check npm registry. Try: npm install -g aiwg@next');
+      console.log('Could not check npm registry. Try: aiwg update');
       return;
     }
     if (currentVersion !== latestVersion) {
       console.log(`Update available: ${currentVersion} → ${latestVersion}`);
       console.log('');
-      console.log('Run: npm install -g aiwg@next');
+      console.log('Run: aiwg update');
     } else {
       console.log(`You are on the latest next release: ${currentVersion}`);
     }
@@ -362,13 +363,13 @@ export async function forceUpdateCheck() {
     console.log('Checking for updates on nightly channel...');
     const latestVersion = await fetchNpmDistTag('nightly');
     if (!latestVersion) {
-      console.log('Could not check npm registry. Try: npm install -g aiwg@nightly');
+      console.log('Could not check npm registry. Try: aiwg update');
       return;
     }
     if (currentVersion !== latestVersion) {
       console.log(`Update available: ${currentVersion} → ${latestVersion}`);
       console.log('');
-      console.log('Run: npm install -g aiwg@nightly');
+      console.log('Run: aiwg update');
     } else {
       console.log(`You are on the latest nightly snapshot: ${currentVersion}`);
     }
@@ -381,14 +382,14 @@ export async function forceUpdateCheck() {
     const latestVersion = await fetchLatestNpmVersion();
 
     if (!latestVersion) {
-      console.log('Could not check npm registry. Try: npm install -g aiwg@latest');
+      console.log('Could not check npm registry. Try: aiwg update');
       return;
     }
 
     if (isNewerVersion(currentVersion, latestVersion)) {
       console.log(`Update available: ${currentVersion} → ${latestVersion}`);
       console.log('');
-      console.log('Run: npm install -g aiwg@latest');
+      console.log('Run: aiwg update');
     } else {
       console.log(`You are on the latest version: ${currentVersion}`);
     }

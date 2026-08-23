@@ -340,6 +340,18 @@ describe('Utility Command Handlers', () => {
       expect(result.exitCode).toBe(0);
     });
 
+    it('should fail safely on canonical installation drift', async () => {
+      const { updateInstallation } = await import('../../../../src/update/service.mjs');
+      const error = Object.assign(new Error('canonical root mismatch'), { code: 'AIWG_INSTALLATION_DRIFT' });
+      (updateInstallation as any).mockRejectedValueOnce(error);
+
+      const result = await updateHandler.execute(mockContext);
+
+      expect(result.exitCode).toBe(78);
+      expect(result.message).toContain('canonical root mismatch');
+      expect(mockUseExecute).not.toHaveBeenCalled();
+    });
+
     it('should skip update check when --skip-check is passed', async () => {
       const { updateInstallation } = await import('../../../../src/update/service.mjs');
       mockContext.args = ['--skip-check'];

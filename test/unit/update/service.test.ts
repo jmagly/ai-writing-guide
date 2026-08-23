@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { detectInstallMode, updateInstallation } from '../../../src/update/service.mjs';
+import { createInstallationIdentity } from '../../../src/installation/manager.mjs';
 
 const roots: string[] = [];
 
@@ -40,13 +41,49 @@ describe('install-aware update service', () => {
     ['nightly', 'aiwg@nightly'],
   ])('preserves the %s npm channel', async (channel, expectedPackage) => {
     const execute = vi.fn();
+    const root = packageRoot('aiwg');
+    const managerExecutable = path.join(root, 'canonical-npm');
+    fs.writeFileSync(managerExecutable, '');
+    fs.chmodSync(managerExecutable, 0o755);
     const result = await updateInstallation({
-      packageRoot: packageRoot('aiwg'),
+      packageRoot: root,
       config: { channel },
+      managerExecutable,
       execute,
     });
-    expect(execute).toHaveBeenCalledWith('npm', ['install', '--global', expectedPackage]);
+    expect(execute).toHaveBeenCalledWith(managerExecutable, ['install', '--global', expectedPackage]);
     expect(result).toMatchObject({ mode: 'npm', channel, status: 'updated' });
+  });
+
+  it('uses the recorded package manager when PATH points at another manager', async () => {
+    const root = packageRoot('aiwg');
+    const canonicalManager = path.join(root, 'nvm', 'bin', 'npm');
+    fs.mkdirSync(path.dirname(canonicalManager), { recursive: true });
+    fs.writeFileSync(canonicalManager, '');
+    fs.chmodSync(canonicalManager, 0o755);
+    const execute = vi.fn();
+    await updateInstallation({
+      packageRoot: root,
+      config: { channel: 'stable' },
+      managerExecutable: canonicalManager,
+      env: { PATH: '/opt/homebrew/bin' },
+      execute,
+    });
+    expect(execute).toHaveBeenCalledWith(canonicalManager, ['install', '--global', 'aiwg@latest']);
+  });
+
+  it('blocks an npm update when a different global package root wins PATH', async () => {
+    const canonicalRoot = packageRoot('aiwg');
+    const actualRoot = packageRoot('aiwg');
+    const managerExecutable = path.join(canonicalRoot, 'npm');
+    fs.writeFileSync(managerExecutable, '');
+    fs.chmodSync(managerExecutable, 0o755);
+    const identity = createInstallationIdentity({ actualRoot: canonicalRoot, managerExecutable });
+    await expect(updateInstallation({
+      packageRoot: actualRoot,
+      config: { channel: 'stable', installation: identity },
+      execute: vi.fn(),
+    })).rejects.toMatchObject({ code: 'AIWG_INSTALLATION_DRIFT' });
   });
 
   it('refreshes signed resources without npm self-install for web-backed mode', async () => {
@@ -66,6 +103,18 @@ describe('install-aware update service', () => {
       changed: true,
       version: 'v2026.7.24',
     });
+  });
+
+  it('does not persist a transient test/embedded config as global identity', async () => {
+    const configDir = packageRoot('config-holder');
+    const refreshWebResources = vi.fn().mockResolvedValue({ version: 'v2026.7.24' });
+    await updateInstallation({
+      packageRoot: packageRoot('@aiwg/cli'),
+      configDir,
+      config: { channel: 'stable' },
+      refreshWebResources,
+    });
+    expect(fs.existsSync(path.join(configDir, 'installation.json'))).toBe(false);
   });
 
   it('does not fetch or self-install during a web-backed dry run', async () => {

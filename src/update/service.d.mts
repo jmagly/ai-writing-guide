@@ -10,6 +10,8 @@ export interface UpdateResult {
   version?: string;
   command?: string;
   message: string;
+  identity?: import('../installation/manager.mjs').InstallationIdentity;
+  identityPersistent?: boolean;
 }
 
 export function detectInstallMode(options?: Record<string, unknown>): Promise<{

@@ -12,6 +12,7 @@ import type { HandlerContext } from '../../../../src/cli/handlers/types.js';
 const {
   mockSpawnSync,
   mockForceUpdateCheck,
+  mockUpdateInstallation,
   mockReadAiwgConfig,
   mockGetDeploymentSummary,
   mockGetProviderConfig,
@@ -21,6 +22,7 @@ const {
 } = vi.hoisted(() => ({
   mockSpawnSync: vi.fn(),
   mockForceUpdateCheck: vi.fn().mockResolvedValue(undefined),
+  mockUpdateInstallation: vi.fn().mockResolvedValue({ status: 'updated' }),
   mockReadAiwgConfig: vi.fn().mockResolvedValue(null),
   mockGetDeploymentSummary: vi.fn().mockReturnValue({ agents: 1, commands: 1, skills: 1, rules: 1 }),
   mockGetProviderConfig: vi.fn().mockReturnValue({
@@ -39,6 +41,10 @@ vi.mock('child_process', () => ({
 
 vi.mock('../../../../src/update/checker.mjs', () => ({
   forceUpdateCheck: mockForceUpdateCheck,
+}));
+
+vi.mock('../../../../src/update/service.mjs', () => ({
+  updateInstallation: mockUpdateInstallation,
 }));
 
 vi.mock('../../../../src/config/aiwg-config.js', () => ({
@@ -204,13 +210,11 @@ describe('sessionHandler.execute — version check', () => {
     expect(mockForceUpdateCheck).not.toHaveBeenCalled();
   });
 
-  it('attempts npm install when forceUpdateCheck throws', async () => {
+  it('uses the canonical update service when forceUpdateCheck throws', async () => {
     mockForceUpdateCheck.mockRejectedValue(new Error('network error'));
     await sessionHandler.execute(makeCtx([]));
-    const npmCall = mockSpawnSync.mock.calls.find(
-      (c: unknown[]) => c[0] === 'npm' && Array.isArray(c[1]) && c[1].includes('aiwg@latest'),
-    );
-    expect(npmCall).toBeDefined();
+    expect(mockUpdateInstallation).toHaveBeenCalled();
+    expect(mockSpawnSync.mock.calls.some((c: unknown[]) => c[0] === 'npm')).toBe(false);
   });
 });
 
@@ -249,7 +253,7 @@ describe('sessionHandler.execute — doctor and repair', () => {
     expect(syncCall).toBeDefined();
   });
 
-  it('escalates to npm reinstall when sync does not fix doctor', async () => {
+  it('does not bypass a failed canonical sync with npm from PATH', async () => {
     let doctorCallCount = 0;
     mockSpawnSync.mockImplementation((_cmd: string, args: string[]) => {
       if (Array.isArray(args) && args.includes('doctor')) {
@@ -263,10 +267,7 @@ describe('sessionHandler.execute — doctor and repair', () => {
 
     await sessionHandler.execute(makeCtx([]));
 
-    const npmCall = mockSpawnSync.mock.calls.find(
-      (c: unknown[]) => c[0] === 'npm' && Array.isArray(c[1]) && c[1].includes('install'),
-    );
-    expect(npmCall).toBeDefined();
+    expect(mockSpawnSync.mock.calls.some((c: unknown[]) => c[0] === 'npm')).toBe(false);
   });
 
   it('warns but continues when --no-repair and doctor fails', async () => {

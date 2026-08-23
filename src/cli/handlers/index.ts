@@ -140,6 +140,7 @@ import { costReportHandler } from './cost-report.js';
 import { evidenceHandler } from './evidence.js';
 import { artifactVerifyHandler } from './artifact-verify.js';
 import { outputModeHandler } from './output-mode.js';
+import { installationHandler } from './installation.js';
 
 import type { CommandHandler } from './types.js';
 
@@ -177,6 +178,7 @@ export {
   evidenceHandler,
   artifactVerifyHandler,
   outputModeHandler,
+  installationHandler,
 
   // Project
   newBundleHandler,
@@ -332,6 +334,7 @@ export const allHandlers: CommandHandler[] = [
   contextFirewallHandler,
   updateHandler,
   refreshHandler,
+  installationHandler,
   regenerateHandler,
   workspaceContextHandler,
 

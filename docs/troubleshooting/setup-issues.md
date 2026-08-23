@@ -29,15 +29,18 @@ aiwg -version
 **Solution**:
 
 ```bash
-# Check where AIWG is installed
-ls ~/.local/share/ai-writing-guide/
-
-# If installed elsewhere, set environment variable
-export AIWG_ROOT=/path/to/ai-writing-guide
-
-# Add to shell profile for persistence
-echo 'export AIWG_ROOT=/path/to/ai-writing-guide' >> ~/.bashrc
+# Compare the canonical and currently executing installations
+aiwg installation show
 ```
+
+If you intentionally changed Node managers, npm prefixes, Homebrew ownership,
+or installation roots, make that change explicit with `aiwg installation
+adopt --manager /absolute/path/to/npm`. To return to another installation, use
+`aiwg installation switch --root <path> --method <npm|web|source>` and include
+`--manager <absolute-path>` for npm/source. Then run `aiwg doctor`.
+
+Do not repair drift only by reordering `PATH`: updates intentionally remain
+bound to the recorded package manager until an explicit adopt or switch.
 
 ## Corrupt Installation
 

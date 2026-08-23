@@ -26,7 +26,7 @@ let packMetadata: { name: string; version: string; size: number; unpackedSize: n
 function isolatedNpmEnv(): NodeJS.ProcessEnv {
   return Object.fromEntries(
     Object.entries(process.env).filter(([key]) =>
-      !key.toLowerCase().startsWith('npm_config_') && key !== 'AIWG_ROOT'),
+      !key.toLowerCase().startsWith('npm_config_') && key !== 'AIWG_ROOT' && key !== 'AIWG_CONFIG'),
   );
 }
 
@@ -38,6 +38,7 @@ function runtimeEnv(): NodeJS.ProcessEnv {
     XDG_CACHE_HOME: path.join(home, '.cache'),
     XDG_CONFIG_HOME: path.join(home, '.config'),
     XDG_DATA_HOME: path.join(home, '.local', 'share'),
+    AIWG_CONFIG: path.join(home, '.aiwg'),
     AIWG_RESOURCE_BASE_URL: fixture.baseUrl,
     AIWG_RESOURCE_CACHE_ROOT: path.join(home, '.cache', 'aiwg-web'),
     AIWG_RESOURCE_TRUST_ROOT_FILE: trustRootFile,

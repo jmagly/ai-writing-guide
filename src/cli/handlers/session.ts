@@ -23,6 +23,7 @@ import { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { ensureRuntimeHome, writeProfileConfig, launchWithProfile } from '../../mcp/adapters/codex-runtime.js';
 import { getFrameworkRoot } from '../../channel/manager.mjs';
 import { forceUpdateCheck } from '../../update/checker.mjs';
+import { updateInstallation } from '../../update/service.mjs';
 import {
   readAiwgConfig,
   getDeploymentSummary,
@@ -118,8 +119,10 @@ async function checkAndUpdateVersion(noRepair: boolean): Promise<boolean> {
     debug('cli:session:update', 'forceUpdateCheck failed', err);
     if (!noRepair) {
       console.log('  Version check failed — attempting sync...');
-      const r = spawnSync('npm', ['install', '-g', 'aiwg@latest'], { stdio: 'inherit' });
-      if (r.status !== 0) {
+      try {
+        await updateInstallation();
+      } catch (updateError) {
+        debug('cli:session:update', 'canonical installation update failed', updateError);
         console.warn('  WARN  Could not update aiwg — continuing with current version.');
         return false;
       }
@@ -143,14 +146,14 @@ function runDoctor(_frameworkRoot: string, cwd: string): boolean {
 
 /**
  * Attempt to repair a failed doctor result.
- * Strategy: `aiwg sync` first; if that fails, offer full reinstall.
+ * Strategy: `aiwg sync`; package repair remains bound to the canonical update
+ * strategy and never falls through to an arbitrary npm on PATH.
  * Returns true if repair succeeded (doctor now passes).
  */
 function repairInstallation(
   frameworkRoot: string,
   cwd: string,
   provider: string,
-  installedFrameworks: string[],
 ): boolean {
   // Strategy 1: sync (update + redeploy)
   console.log('\n  Attempting auto-repair via `aiwg sync`...');
@@ -169,40 +172,13 @@ function repairInstallation(
     }
   }
 
-  // Strategy 2: full reinstall
-  console.log('\n  Sync did not fully resolve the issue. Attempting full reinstall...');
-  const reinstallResult = spawnSync(
-    'npm',
-    ['install', '-g', 'aiwg@latest'],
-    { stdio: 'inherit' },
-  );
-
-  if (reinstallResult.status === 0 && installedFrameworks.length > 0) {
-    // Redeploy all installed frameworks for this provider
-    console.log(`\n  Redeploying frameworks to ${provider}...`);
-    for (const fw of installedFrameworks) {
-      spawnSync(
-        process.execPath,
-        [process.argv[1]!, 'use', fw, '--provider', provider],
-        { stdio: 'inherit', cwd },
-      );
-    }
-
-    // Final doctor check
-    const finalOk = runDoctor(frameworkRoot, cwd);
-    if (finalOk) {
-      console.log('  OK  Full reinstall + redeploy succeeded.');
-      return true;
-    }
-  }
-
   // Could not auto-repair
   console.log(`
   ✗  Auto-repair could not resolve all issues.
 
   Manual options:
-    aiwg sync                       — sync and redeploy
-    npm install -g aiwg@latest      — reinstall package
+    aiwg installation show          — inspect canonical install drift
+    aiwg refresh                    — update and redeploy canonically
     aiwg use all --provider ${provider.padEnd(10)} — redeploy all frameworks
 
   Report this issue:
@@ -417,11 +393,7 @@ export const sessionHandler: CommandHandler = {
     const doctorOk = runDoctor(frameworkRoot, cwd);
 
     if (!doctorOk && !noRepair) {
-      // Read installed frameworks before attempting repair (needed for redeploy)
-      const config = await readAiwgConfig(cwd);
-      const installedFrameworks = Object.keys(config?.installed ?? {});
-
-      const repaired = repairInstallation(frameworkRoot, cwd, provider, installedFrameworks);
+      const repaired = repairInstallation(frameworkRoot, cwd, provider);
       if (!repaired) {
         // Repair failed — still continue (user was already informed)
       }

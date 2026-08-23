@@ -1,9 +1,12 @@
 export function getPackageRoot(): string;
-export function loadConfig(): Promise<any>;
-export function saveConfig(config: any): Promise<void>;
+export function loadConfig(options?: Record<string, unknown>): Promise<any>;
+export function saveConfig(config: any, options?: Record<string, unknown>): Promise<void>;
 export function getChannel(): Promise<string>;
 export function getFrameworkRoot(): Promise<string>;
 export function switchToEdge(): Promise<void>;
 export function switchToStable(): Promise<void>;
+export function switchToDev(devPath: string): Promise<void>;
+export function switchToNext(): Promise<void>;
+export function switchToNightly(): Promise<void>;
 export function getVersionInfo(): Promise<any>;
 export function updateEdge(): Promise<void>;

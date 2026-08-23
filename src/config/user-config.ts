@@ -17,9 +17,9 @@
  */
 
 import { readFile, writeFile, mkdir, access } from 'fs/promises';
-import { resolve } from 'path';
-import { homedir } from 'os';
 import { existsSync } from 'fs';
+import { resolve } from 'path';
+import { resolveUserConfigDir } from './user-config-dir.mjs';
 
 /**
  * Top-level user preferences schema
@@ -62,6 +62,7 @@ export const KNOWN_CONFIG_FILES: ConfigFileSpec[] = [
   { filename: 'ops.json', description: 'Ops workspace registry' },
   { filename: 'mcp-servers.json', description: 'MCP server registry (single source of truth)' },
   { filename: 'packages.yaml', description: 'Installed remote packages (aiwg install)' },
+  { filename: 'installation.json', description: 'Canonical global installation identity' },
 ];
 
 /**
@@ -96,29 +97,7 @@ export const DEFAULT_USER_CONFIG: UserConfigData = {
  *   4. ~/.aiwg (default if neither exists)
  */
 export function resolveConfigDir(overridePath?: string): string {
-  // 1. Explicit override from env or CLI flag
-  const envOverride = process.env.AIWG_CONFIG;
-  if (overridePath) {
-    return resolve(overridePath);
-  }
-  if (envOverride) {
-    return resolve(envOverride);
-  }
-
-  // 2. Check primary path: ~/.aiwg
-  const primaryPath = resolve(homedir(), '.aiwg');
-  if (existsSync(primaryPath)) {
-    return primaryPath;
-  }
-
-  // 3. Check fallback path: ~/.config/aiwg
-  const fallbackPath = resolve(homedir(), '.config/aiwg');
-  if (existsSync(fallbackPath)) {
-    return fallbackPath;
-  }
-
-  // 4. Default to primary if neither exists
-  return primaryPath;
+  return resolveUserConfigDir({ configDir: overridePath });
 }
 
 /**

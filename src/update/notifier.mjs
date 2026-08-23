@@ -27,12 +27,13 @@
 
 import https from 'https';
 import path from 'path';
-import os from 'os';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
+import { resolveUserConfigDir } from '../config/user-config-dir.mjs';
+import { loadInstallationIdentity } from '../installation/manager.mjs';
 
-const CACHE_DIR = path.join(os.homedir(), '.aiwg');
+const CACHE_DIR = resolveUserConfigDir();
 const CACHE_FILE = path.join(CACHE_DIR, 'update-notifier.json');
 
 /**
@@ -191,11 +192,13 @@ async function runCheck(packageRoot) {
  */
 export function scheduleBackgroundCheck(packageRoot) {
   if (isDisabled()) return;
+  const installation = loadInstallationIdentity({ actualRoot: packageRoot, createIfMissing: false });
+  if (installation?.checkOnStartup === false) return;
 
   const cache = readCache();
   if (cacheMatchesPackage(cache, packageRoot) && cache?.lastCheckAt) {
     const age = Date.now() - new Date(cache.lastCheckAt).getTime();
-    if (age < CHECK_INTERVAL_MS) return; // recent enough — skip
+    if (age < (installation?.updateCheckInterval ?? CHECK_INTERVAL_MS)) return; // recent enough — skip
   }
 
   try {
@@ -225,6 +228,8 @@ export function scheduleBackgroundCheck(packageRoot) {
  */
 export function maybePrintNotice(packageRoot) {
   if (isDisabled()) return;
+  const installation = loadInstallationIdentity({ actualRoot: packageRoot, createIfMissing: false });
+  if (installation?.checkOnStartup === false) return;
   const cache = readCache();
   if (!cacheMatchesPackage(cache, packageRoot)) return;
   if (!cache?.hasUpdate || !cache.current || !cache.latest) return;
