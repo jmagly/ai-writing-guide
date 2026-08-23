@@ -106,13 +106,81 @@ not stored in this repository.
 | Shared host port | `80`, already owned by `roctinam/serve-static:static-server` |
 | Site volume | `/home/roctinam/production-deploy/flow.aiwg.io -> /srv/flow.aiwg.io:ro` |
 
+### Cloudflare configuration to supply
+
+You need the following account-side configuration. Replace `<TUNNEL-UUID>`
+with the ID of the existing approved tunnel; do not create a second tunnel for
+this site unless the shared tunnel cannot reach the origin host.
+
+**Public hostname / tunnel route** (Zero Trust dashboard → Networks → Tunnels →
+the approved tunnel → Public Hostnames):
+
+| Field | Value |
+|---|---|
+| Subdomain | `flow` |
+| Domain | `aiwg.io` |
+| Path | empty |
+| Service type | `HTTP` |
+| URL | `127.0.0.1:80` |
+| HTTP Host Header | `flow.aiwg.io` |
+
+For a locally managed tunnel, the equivalent ingress fragment is:
+
+~~~yaml
+ingress:
+  - hostname: flow.aiwg.io
+    service: http://127.0.0.1:80
+    originRequest:
+      httpHostHeader: flow.aiwg.io
+  - service: http_status:404
+~~~
+
+Keep the terminal `http_status:404` catch-all after every existing hostname
+route. Validate a local configuration before reload with
+`cloudflared tunnel ingress validate` and confirm the match with
+`cloudflared tunnel ingress rule https://flow.aiwg.io/graph/`.
+
+**DNS** (created automatically when the dashboard public hostname is saved, or
+created manually in the `aiwg.io` zone):
+
+| Field | Value |
+|---|---|
+| Type | `CNAME` |
+| Name | `flow` |
+| Target | `<TUNNEL-UUID>.cfargotunnel.com` |
+| Proxy status | Proxied |
+| TTL | Auto |
+
+Do not add a separate `graph.aiwg.io` or `docs.graph.aiwg.io` record. `/graph/`
+is a path on `flow.aiwg.io`.
+
+**TLS and Access:** ensure the zone's Universal SSL certificate covers
+`flow.aiwg.io`. The origin leg intentionally uses HTTP inside Cloudflare
+Tunnel. For a public documentation site, do not attach a Cloudflare Access
+application; if the selected tunnel has an account-wide or wildcard Access
+policy, add/review the explicit public exception before cutover. No WAF bypass
+or broad cache-everything rule is required.
+
+**Optional cache purge:** create a Cloudflare API token restricted to the
+`aiwg.io` zone with only `Cache Purge: Purge` permission, then store its value
+as the Gitea protected secret `CF_CACHE_PURGE`; store the zone identifier as
+protected secret `CF_ZONE_ID`. These are optional—the deployment succeeds
+without them and skips purge. The workflow purges only the
+`flow.aiwg.io` host.
+
+The only values the operator must choose or retrieve are the existing tunnel
+ID/CNAME target, whether the site is public or Access-protected, and—if purge
+is desired—the scoped token and zone ID. Do not paste any of those protected
+values into an issue, repository file, or workflow log.
+
 Operational change order:
 
 1. Create `roctinam/flow.aiwg.io` as private and copy the reviewed bootstrap.
 2. Configure the named repository interfaces without exposing their values.
 3. Deploy and verify `dist/index.html`, `dist/graph/index.html`, and the commit
    marker before changing ingress.
-4. Review every route and access policy on the selected Cloudflare tunnel.
+4. Review every route and access policy on the selected Cloudflare tunnel,
+   then apply the exact public-hostname and DNS fields above.
 5. Add the proxied DNS record and tunnel ingress route, then verify the public
    hostname and `/graph/` path.
 6. Enable optional host-scoped purge only after its configuration is approved.

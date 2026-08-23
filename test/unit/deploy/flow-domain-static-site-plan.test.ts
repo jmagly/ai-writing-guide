@@ -122,5 +122,10 @@ describe('Flow domain static deployment plan (#2125)', () => {
     for (const phrase of ['shared `serve-static`', 'Per-site container fallback', 'Final operator handoff', 'does not create the repository', 'does not create the repository or change live']) {
       expect(guidance).toContain(phrase);
     }
+    for (const phrase of [
+      'HTTP Host Header', 'flow.aiwg.io', 'http://127.0.0.1:80',
+      '<TUNNEL-UUID>.cfargotunnel.com', 'http_status:404',
+      'cloudflared tunnel ingress validate', 'CF_CACHE_PURGE', 'CF_ZONE_ID',
+    ]) expect(guidance).toContain(phrase);
   });
 });
