@@ -41,3 +41,8 @@ index traversal. It is unrelated to Flow execution. Install this addon—not the
 
 See [the decision guide](docs/decision-guide.md) and the repository
 [architecture decision](../../../docs/architecture/adr-graph-as-flow-profile.md).
+Security-sensitive deployments must also follow the repository
+[threat model and degraded-mode matrix](../../../docs/security/flow-graph-threat-model.md):
+node tool/capability authority can only narrow, checkpoint restore is
+identity-bound, and invalid predicate, metadata, or unknown Sandbox state
+fails closed.

@@ -73,12 +73,47 @@ describe('GraphPlaybook planning, execution projection, and replay', () => {
     expect(incompatible.reasons.join(' ')).toContain('does not match');
     const compatible = assessGraphReplay(manifest, {
       graphId: 'examples/sandbox-task-with-retry',
+      graphVersion: manifest.metadata.graphVersion,
       runId: 'old-run',
       state: {},
       events: [],
     });
     expect(compatible.replayable).toBe(true);
     expect(compatible.resumeFrom.runId).toBe('old-run');
+  });
+
+  it('fails closed before dispatch on widened authority and incompatible replay', async () => {
+    const manifest = fixture('sandbox-task-with-retry');
+    manifest.spec.failure = { onNodeFailure: 'fail', maxFailures: 0 };
+    delete manifest.spec.nodes[0].fallback;
+    const invokeNode = vi.fn(async () => ({ outputs: {}, usage: {} }));
+    const denied = await executeGraphPlaybook(manifest, {
+      runId: 'authority-denied',
+      allowedCapabilities: [],
+      allowedPermissions: [],
+      invokeNode,
+    });
+    expect(denied.status).toBe('failed');
+    expect(denied.trace.some((event: any) => ['CAPABILITY_DENIED', 'PERMISSION_DENIED'].includes(event.code))).toBe(true);
+    expect(invokeNode).not.toHaveBeenCalled();
+
+    await expect(executeGraphPlaybook(manifest, {
+      runId: 'new-run',
+      resumeFrom: { graphId: manifest.metadata.graphId, graphVersion: 'tampered', runId: 'old-run', state: {}, events: [] },
+      invokeNode,
+    })).rejects.toMatchObject({ code: 'CHECKPOINT_RESTORE_REJECTED' });
+  });
+
+  it('fails closed when a route predicate evaluator fails', async () => {
+    const manifest = fixture('screen-fanout-synthesize');
+    await expect(executeGraphPlaybook(manifest, {
+      runId: 'predicate-failure',
+      evaluatePredicate: async () => { throw Object.assign(new Error('predicate unavailable'), { code: 'ROUTE_PREDICATE_FAILURE' }); },
+      invokeNode: async ({ node }: any) => ({
+        outputs: Object.fromEntries(node.outputs.map((output: any) => [output.name, output.schema.type === 'array' ? [] : 'value'])),
+        usage: { tokens: 0, costUsd: 0, timeMs: 0 },
+      }),
+    })).rejects.toMatchObject({ code: 'ROUTE_PREDICATE_FAILURE' });
   });
 
   it('projects a denied HITL decision onto the declared guarded rework route', async () => {

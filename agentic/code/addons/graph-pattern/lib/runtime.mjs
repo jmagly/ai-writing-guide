@@ -57,6 +57,7 @@ export function assessGraphReplay(manifest, checkpoint) {
   const reasons = [];
   if (!checkpoint || typeof checkpoint !== 'object') reasons.push('checkpoint is not an object');
   if (checkpoint?.graphId !== graphId) reasons.push(`checkpoint graphId '${checkpoint?.graphId ?? ''}' does not match '${graphId}'`);
+  if (checkpoint?.graphVersion !== manifest.metadata.graphVersion) reasons.push(`checkpoint graphVersion '${checkpoint?.graphVersion ?? ''}' does not match '${manifest.metadata.graphVersion}'`);
   if (!checkpoint?.runId) reasons.push('checkpoint runId is missing');
   if (manifest.spec.checkpoint.mode === 'none') reasons.push('GraphPlaybook checkpoint mode is none');
   if (!checkpoint?.state || !checkpoint?.events) reasons.push('checkpoint is missing state or event evidence');
@@ -79,6 +80,15 @@ export async function executeGraphPlaybook(manifest, options = {}) {
   const graphId = validation.normalized.identity.graphId;
   const graphVersion = manifest.metadata.graphVersion;
   const runId = options.runId ?? `${graphId}:run`;
+  if (options.resumeFrom) {
+    const replay = assessGraphReplay(manifest, options.resumeFrom);
+    if (!replay.replayable || replay.sourceRunId !== runId) {
+      throw Object.assign(new Error(`Checkpoint restore rejected: ${[
+        ...replay.reasons,
+        ...(replay.sourceRunId && replay.sourceRunId !== runId ? [`checkpoint runId '${replay.sourceRunId}' does not match '${runId}'`] : []),
+      ].join('; ')}`), { code: 'CHECKPOINT_RESTORE_REJECTED', details: replay });
+    }
+  }
   const profileNodes = new Map(manifest.spec.nodes.map((node) => [node.id, node]));
   const incoming = new Map(manifest.spec.routes.map((route) => [route.to, route]));
   const metadataFor = (nodeId, nodeRunId, state) => {
@@ -170,6 +180,7 @@ export async function executeGraphPlaybook(manifest, options = {}) {
       schemaVersion: 'graph.flow.aiwg.io/v1',
       kind: 'GraphPlaybookCheckpoint',
       graphId,
+      graphVersion,
       events: report.checkpoint.events.map((event) => ({ ...event, graphId })),
     },
   };

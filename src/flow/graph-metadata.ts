@@ -41,6 +41,8 @@ export interface GraphRunIdentity {
   replayOfRunId?: string;
 }
 
+export type GraphMetadataAudience = 'internal' | 'cockpit' | 'public';
+
 function nonEmpty(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0;
 }
@@ -63,4 +65,37 @@ export function graphMetadataRecord(value: GraphExecutionMetadata): Record<strin
 export function extractGraphMetadata(metadata: Record<string, JsonValue> | undefined): GraphExecutionMetadata | undefined {
   const value = metadata?.[AIWG_GRAPH_METADATA_KEY];
   return isGraphExecutionMetadata(value) ? value : undefined;
+}
+
+/**
+ * Project graph metadata to an explicitly named audience. Public projection
+ * removes execution identifiers and decision evidence. Cockpit receives only
+ * the declared route-decision summary; arbitrary user/task context is never a
+ * member of this contract and is therefore dropped by construction.
+ */
+export function projectGraphMetadata(
+  value: GraphExecutionMetadata,
+  audience: GraphMetadataAudience,
+): Partial<GraphExecutionMetadata> {
+  if (!isGraphExecutionMetadata(value)) throw new Error('Invalid graph execution metadata.');
+  if (audience === 'internal') return structuredClone(value);
+  const common: Partial<GraphExecutionMetadata> = {
+    schemaVersion: value.schemaVersion,
+    graphVersion: value.graphVersion,
+    nodeId: value.nodeId,
+    ...(value.edgeId ? { edgeId: value.edgeId } : {}),
+    ...(value.routeName ? { routeName: value.routeName } : {}),
+    ...(value.runtimeBinding ? { runtimeBinding: value.runtimeBinding } : {}),
+    ...(value.nodeState ? { nodeState: value.nodeState } : {}),
+  };
+  if (audience === 'public') return common;
+  return {
+    ...common,
+    graphId: value.graphId,
+    runId: value.runId,
+    nodeRunId: value.nodeRunId,
+    ...(value.checkpointId ? { checkpointId: value.checkpointId } : {}),
+    ...(value.routeReason ? { routeReason: value.routeReason } : {}),
+    ...(value.routeEvidence === undefined ? {} : { routeEvidence: structuredClone(value.routeEvidence) }),
+  };
 }
