@@ -1,0 +1,22 @@
+{
+  "source": "https://a2a-protocol.org/v0.3.0/specification/",
+  "message": {
+    "messageId": "msg-v03",
+    "role": "user",
+    "parts": [
+      { "kind": "text", "text": "hello" },
+      { "kind": "file", "bytes": "aGVsbG8=", "mimeType": "text/plain" },
+      { "kind": "file", "uri": "https://example.test/report.pdf", "mimeType": "application/pdf" },
+      { "kind": "data", "data": { "approved": true } }
+    ]
+  },
+  "task": {
+    "id": "task-v03",
+    "contextId": "ctx-v03",
+    "status": { "state": "working", "timestamp": "2026-08-23T12:00:00Z" }
+  },
+  "stream": [
+    { "kind": "task-state", "task": { "id": "task-v03", "contextId": "ctx-v03", "status": { "state": "working" } } },
+    { "kind": "status-update", "taskId": "task-v03", "status": { "state": "completed" }, "final": true }
+  ]
+}

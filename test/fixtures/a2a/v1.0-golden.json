@@ -1,0 +1,37 @@
+{
+  "source": "https://a2a-protocol.org/v1.0.0/specification/#41-core-objects",
+  "message": {
+    "messageId": "msg-v1",
+    "contextId": "ctx-v1",
+    "role": "ROLE_USER",
+    "parts": [
+      { "text": "hello", "mediaType": "text/plain" },
+      { "raw": "aGVsbG8=", "filename": "hello.txt", "mediaType": "text/plain" },
+      { "url": "https://example.test/report.pdf", "filename": "report.pdf", "mediaType": "application/pdf" },
+      { "data": { "approved": true }, "mediaType": "application/json" }
+    ],
+    "extensions": ["https://example.test/extensions/trace/v1"],
+    "metadata": { "aiwg.flow.graph": { "graphId": "g-1", "nodeId": "n-1" } }
+  },
+  "task": {
+    "id": "task-v1",
+    "contextId": "ctx-v1",
+    "status": {
+      "state": "TASK_STATE_WORKING",
+      "timestamp": "2026-08-23T12:00:00Z"
+    },
+    "artifacts": [
+      {
+        "artifactId": "artifact-v1",
+        "parts": [{ "text": "partial result" }],
+        "extensions": ["https://example.test/extensions/trace/v1"]
+      }
+    ],
+    "metadata": { "aiwg.flow.graph": { "graphId": "g-1", "nodeId": "n-1" } }
+  },
+  "stream": [
+    { "task": { "id": "task-v1", "contextId": "ctx-v1", "status": { "state": "TASK_STATE_WORKING" } } },
+    { "artifactUpdate": { "taskId": "task-v1", "contextId": "ctx-v1", "artifact": { "artifactId": "artifact-v1", "parts": [{ "text": "done" }] }, "lastChunk": true } },
+    { "statusUpdate": { "taskId": "task-v1", "contextId": "ctx-v1", "status": { "state": "TASK_STATE_COMPLETED", "timestamp": "2026-08-23T12:01:00Z" } } }
+  ]
+}

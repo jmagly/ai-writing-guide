@@ -16,6 +16,8 @@
 // @issue #1256
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import { decodeStreamResponse, A2AEventReconciler } from './events.js';
+import type { A2AProtocolVersion, StreamEvent } from './types.js';
 
 /** Header name (case-insensitive). */
 export const SIGNATURE_HEADER = 'x-aiwg-signature';
@@ -156,6 +158,7 @@ function constantTimeHexEqual(a: string, b: string): boolean {
 export class IdempotencyCache {
   private readonly capacity: number;
   private readonly seen = new Set<string>();
+  private readonly pending = new Set<string>();
   private readonly order: string[] = [];
 
   constructor(capacity: number = DEFAULT_IDEMPOTENCY_CAPACITY) {
@@ -165,13 +168,33 @@ export class IdempotencyCache {
   /** Returns true if `id` is new (and stores it); false if it's a duplicate. */
   markFresh(id: string): boolean {
     if (this.seen.has(id)) return false;
+    this.commit(id);
+    return true;
+  }
+
+  /** Reserve an event before parsing/routing so concurrent deliveries cannot race. */
+  begin(id: string): 'fresh' | 'pending' | 'duplicate' {
+    if (this.seen.has(id)) return 'duplicate';
+    if (this.pending.has(id)) return 'pending';
+    this.pending.add(id);
+    return 'fresh';
+  }
+
+  /** Mark a successfully routed reservation as completed. */
+  commit(id: string): void {
+    this.pending.delete(id);
+    if (this.seen.has(id)) return;
     this.seen.add(id);
     this.order.push(id);
     while (this.order.length > this.capacity) {
       const evicted = this.order.shift();
       if (evicted !== undefined) this.seen.delete(evicted);
     }
-    return true;
+  }
+
+  /** Release a failed reservation so a later retry can be processed. */
+  release(id: string): void {
+    this.pending.delete(id);
   }
 
   size(): number {
@@ -198,15 +221,29 @@ export interface PushSecretRegistryEntry {
   missionId?: string;
   /** Task this config belongs to — used to scope StreamEvent application. */
   taskId?: string;
+  contextId?: string;
+  protocolVersion?: A2AProtocolVersion;
+  /** Executor/tenant ownership key included in routing scope. */
+  taskOwner?: string;
   /** Free-form metadata returned alongside the entry on lookup. */
   metadata?: Record<string, unknown>;
 }
 
 export class PushSecretRegistry {
   private readonly entries = new Map<string, PushSecretRegistryEntry>();
+  private readonly reconcilers = new Map<string, A2AEventReconciler>();
 
   register(entry: PushSecretRegistryEntry): void {
+    if (entry.protocolVersion === '1.0' && !entry.taskId) {
+      throw new Error('A2A 1.0 push config registration requires taskId ownership scope');
+    }
     this.entries.set(entry.configId, entry);
+    if (entry.taskId) {
+      this.reconcilers.set(entry.configId, new A2AEventReconciler({
+        taskId: entry.taskId,
+        ...(entry.contextId ? { contextId: entry.contextId } : {}),
+      }));
+    }
   }
 
   lookup(configId: string): PushSecretRegistryEntry | null {
@@ -214,7 +251,18 @@ export class PushSecretRegistry {
   }
 
   unregister(configId: string): boolean {
+    this.reconcilers.delete(configId);
     return this.entries.delete(configId);
+  }
+
+  reconcile(configId: string, event: StreamEvent): StreamEvent | null {
+    const entry = this.entries.get(configId);
+    const eventOwner = ownerOf(event);
+    if (entry?.taskOwner && eventOwner && entry.taskOwner !== eventOwner) {
+      throw new Error(`A2A event belongs to owner ${eventOwner}, expected ${entry.taskOwner}`);
+    }
+    const reconciler = this.reconcilers.get(configId);
+    return reconciler ? reconciler.accept(event) : event;
   }
 
   /** Test/debug helper. */
@@ -233,9 +281,10 @@ export interface WebhookHandlerOptions {
    * machine. Implementations typically forward to the same event handler
    * SSE uses.
    */
-  route: (entry: PushSecretRegistryEntry, event: unknown) => void | Promise<void>;
+  route: (entry: PushSecretRegistryEntry, event: StreamEvent) => void | Promise<void>;
   toleranceSeconds?: number;
   now?: () => number;
+  contentType?: string;
 }
 
 export interface HandleResult {
@@ -299,9 +348,24 @@ export async function handleWebhook(
   // Idempotency check — duplicate event-ids are accepted with 200 but
   // not re-routed. The executor's retry logic depends on a 2xx response
   // to mark delivery complete; failing here would cause infinite retry.
-  const fresh = opts.idempotency.markFresh(eventId);
-  if (!fresh) {
+  const entryForScope = opts.registry.lookup(configId);
+  const protocolVersion = entryForScope?.protocolVersion ?? '0.3';
+  const scopedEventId = [
+    configId,
+    protocolVersion,
+    entryForScope?.taskOwner ?? '',
+    entryForScope?.taskId ?? '',
+    eventId,
+  ].join('|');
+  const reservation = opts.idempotency.begin(scopedEventId);
+  if (reservation === 'duplicate') {
     return { status: 200, body: { ok: true, deduped: true } };
+  }
+  if (reservation === 'pending') {
+    return {
+      status: 409,
+      body: errorBody('aiwg.webhook_event_in_progress', 'a concurrent delivery is still being processed'),
+    };
   }
 
   // Route the verified payload. Errors thrown here become 500 so the
@@ -310,9 +374,18 @@ export async function handleWebhook(
   const entry = opts.registry.lookup(configId);
   if (!entry) {
     // Edge case: secret was unregistered between verify and route.
+    opts.idempotency.release(scopedEventId);
     return {
       status: 404,
       body: errorBody('aiwg.webhook_secret_unknown', `configId='${configId}' no longer registered`),
+    };
+  }
+
+  if (protocolVersion === '1.0' && opts.contentType?.split(';')[0]?.trim().toLowerCase() !== 'application/a2a+json') {
+    opts.idempotency.release(scopedEventId);
+    return {
+      status: 415,
+      body: errorBody('aiwg.webhook_content_type_invalid', 'A2A 1.0 push requires application/a2a+json'),
     };
   }
 
@@ -320,21 +393,41 @@ export async function handleWebhook(
   try {
     parsed = JSON.parse(body.toString('utf8'));
   } catch (e) {
+    opts.idempotency.release(scopedEventId);
     return {
       status: 400,
       body: errorBody('aiwg.webhook_body_not_json', (e as Error).message),
     };
   }
 
+  let event: StreamEvent;
   try {
-    await opts.route(entry, parsed);
+    event = decodeStreamResponse(protocolVersion, parsed, { eventId });
+    const accepted = opts.registry.reconcile(configId, event);
+    if (!accepted) {
+      opts.idempotency.commit(scopedEventId);
+      return { status: 200, body: { ok: true, deduped: true } };
+    }
+    event = accepted;
   } catch (e) {
+    opts.idempotency.release(scopedEventId);
+    return {
+      status: 400,
+      body: errorBody('aiwg.webhook_event_invalid', (e as Error).message),
+    };
+  }
+
+  try {
+    await opts.route(entry, event);
+  } catch (e) {
+    opts.idempotency.release(scopedEventId);
     return {
       status: 500,
       body: errorBody('aiwg.webhook_route_failed', (e as Error).message),
     };
   }
 
+  opts.idempotency.commit(scopedEventId);
   return { status: 200, body: { ok: true } };
 }
 
@@ -345,4 +438,17 @@ function errorBody(code: string, detail: string): Record<string, unknown> {
     code,
     detail,
   };
+}
+
+function ownerOf(event: StreamEvent): string | undefined {
+  const metadata = event.type === 'task'
+    ? event.task.metadata
+    : event.type === 'message'
+      ? event.message.metadata
+      : event.metadata;
+  const owner = metadata?.['task_owner']
+    ?? metadata?.['taskOwner']
+    ?? metadata?.['tenant_id']
+    ?? metadata?.['tenantId'];
+  return typeof owner === 'string' && owner ? owner : undefined;
 }

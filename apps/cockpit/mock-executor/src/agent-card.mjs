@@ -1,4 +1,4 @@
-// Builds an A2A v1.0.0 AgentCard for a mock agentic-sandbox per-instance surface,
+// Builds truthful 0.3, 1.0, or dual-version AgentCards for the mock executor.
 // declaring the five extensions Cockpit binds to. Wire-faithful to
 // docs/contracts/extensions/*/v1/spec.md in the agentic-sandbox repo.
 // Exact field tuning is driven by running agentic-sandbox-conformance against this mock.
@@ -13,26 +13,20 @@ export const EXT = {
 
 /**
  * @param {string} instanceId UUID v4 — stable for the instance lifetime.
- * @param {{ baseUrl: string, runtime?: 'vm'|'container', loadout?: string, imageRef?: string }} opts
+ * @param {{ baseUrl: string, runtime?: 'vm'|'container', loadout?: string, imageRef?: string, protocolMode?: '0.3'|'1.0'|'dual' }} opts
  */
 export function buildAgentCard(instanceId, opts) {
   const runtime = opts.runtime ?? 'container';
   const loadout = opts.loadout ?? 'agentic-dev';
+  const protocolMode = opts.protocolMode ?? '0.3';
   const runtimeParams = { runtime, loadout, instance_id: instanceId };
   if (opts.imageRef) runtimeParams.image_ref = opts.imageRef;
 
-  return {
-    protocolVersion: '1.0.0',
+  const card = {
     name: `agentic-sandbox-mock/${instanceId}`,
     description: 'Mock agentic-sandbox per-instance A2A executor (AIWG Cockpit dev fixture).',
     version: '2.0.0-mock',
-    url: opts.baseUrl,
-    preferredTransport: 'JSONRPC',
-    // A2A interface advertisement (per-instance REST + the pty-ws custom binding).
-    supportedInterfaces: [
-      { url: opts.baseUrl, transport: 'JSONRPC' },
-      { url: opts.baseUrl.replace(/^http/, 'ws') + '/pty', transport: 'pty-ws/v1' },
-    ],
+    supportedInterfaces: [],
     capabilities: {
       streaming: true,
       pushNotifications: false,
@@ -92,4 +86,25 @@ export function buildAgentCard(instanceId, opts) {
     },
     security: [{ bearer: [] }],
   };
+
+  if (protocolMode === '0.3' || protocolMode === 'dual') {
+    card.protocolVersion = '0.3.0';
+    card.url = opts.baseUrl;
+    card.preferredTransport = 'REST';
+    card.supportedInterfaces.push(
+      protocolMode === 'dual'
+        ? { url: opts.baseUrl, transport: 'REST', protocolBinding: 'REST', protocolVersion: '0.3' }
+        : { url: opts.baseUrl, transport: 'REST' }
+    );
+  }
+  if (protocolMode === '1.0' || protocolMode === 'dual') {
+    card.supportedInterfaces.unshift({
+      url: opts.baseUrl,
+      protocolBinding: 'HTTP+JSON',
+      protocolVersion: '1.0',
+    });
+  }
+  // Custom PTY is not an A2A core binding and does not imply a protocol version.
+  card.metadata = { mockProtocolMode: protocolMode, ptyUrl: opts.baseUrl.replace(/^http/, 'ws') + '/pty' };
+  return card;
 }

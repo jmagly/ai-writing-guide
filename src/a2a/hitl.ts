@@ -140,7 +140,7 @@ export function buildHitlResponseMessage(opts: {
     role: 'user',
     parts: [
       {
-        kind: 'data',
+        type: 'data',
         data: opts.response,
       },
     ],

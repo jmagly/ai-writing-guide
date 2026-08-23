@@ -532,6 +532,52 @@ describe('cockpit Bridge — control surface', () => {
   });
 });
 
+describe('cockpit Bridge — A2A 1.0 normalized projections', () => {
+  let v1Mock, v1Bridge, v1Base, v1Token;
+  beforeAll(async () => {
+    v1Mock = createExecutor({ protocolMode: 'dual' });
+    await new Promise((resolve) => v1Mock.listen(0, '127.0.0.1', resolve));
+    v1Bridge = createBridge({
+      executorUrl: `http://127.0.0.1:${v1Mock.address().port}`,
+      allowMockExecutor: true,
+      a2aProtocolPolicy: '1.0',
+    });
+    await new Promise((resolve) => v1Bridge.listen(0, '127.0.0.1', resolve));
+    v1Base = `http://127.0.0.1:${v1Bridge.address().port}`;
+    v1Token = v1Bridge.cockpitToken;
+  });
+  afterAll(() => { v1Bridge?.close(); v1Mock?.close(); });
+  const v1Fetch = (path, options = {}) => fetch(v1Base + path, {
+    ...options,
+    headers: { ...(options.headers || {}), authorization: `Bearer ${v1Token}` },
+  });
+
+  it('normalizes 1.0 task enums for inventory, running, cancel, and HITL views', async () => {
+    const inventory = await (await v1Fetch('/api/inventory')).json();
+    expect(inventory.instances[0].a2a_protocol.selected_version).toBe('1.0');
+
+    const running = await (await v1Fetch('/api/running')).json();
+    expect(running.running[0]).toMatchObject({ state: 'working', task_id: expect.any(String) });
+    const victim = running.running[0];
+    const canceledResponse = await v1Fetch(
+      `/api/tasks/${encodeURIComponent(victim.instance_id)}/${encodeURIComponent(victim.task_id)}/cancel`,
+      { method: 'POST' }
+    );
+    const canceled = await canceledResponse.json();
+    expect(canceledResponse.status, JSON.stringify(canceled)).toBe(200);
+    expect(canceled).toHaveProperty('status');
+    expect(canceled.status.state).toBe('canceled');
+
+    const approvals = await (await v1Fetch('/api/approvals?status=pending')).json();
+    expect(approvals.approvals[0]).toMatchObject({ status: 'pending', task_id: expect.any(String) });
+    const approved = await (await v1Fetch(
+      `/api/approvals/${encodeURIComponent(approvals.approvals[0].id)}?decision=approve`,
+      { method: 'POST' }
+    )).json();
+    expect(approved.status.state).toBe('completed');
+  });
+});
+
 describe('cockpit Bridge — mock executor guard', () => {
   let guardedMock, guardedBridge, guardedBase, guardedToken;
   beforeAll(async () => {
@@ -1081,7 +1127,7 @@ describe('cockpit mock — admin-surface contract guard (#1636)', () => {
   it('serves the real A2A agent surface the Bridge derives from (v2-aligned)', async () => {
     const inst = '550e8400-e29b-41d4-a716-446655440000';
     expect((await g(`/agents/${inst}/sessions`)).status).toBe(200);
-    expect((await g(`/agents/${inst}/tasks`)).status).toBe(200);
+    expect((await g(`/agents/${inst}/v1/tasks`)).status).toBe(200);
     expect((await g(`/agents/${inst}/.well-known/agent-card.json`)).status).toBe(200);
   });
 });

@@ -58,18 +58,29 @@ const samplePayload: V1DispatchPayload = {
 
 describe('routeDispatch — v2 happy path', () => {
   it('POSTs to the registered A2A instance when it differs from executorId', async () => {
+    const selections: unknown[] = [];
     const { fetch: stub, calls } = makeStub(() =>
       new Response(
         JSON.stringify({ id: 'task-a', status: { state: 'submitted' } }),
         { status: 202, headers: { 'content-type': 'application/json' } }
       )
     );
-    const opts: DispatchRouterOptions = { fetch: stub };
+    const opts: DispatchRouterOptions = {
+      fetch: stub,
+      onA2AProtocolSelection: info => selections.push(info),
+    };
     const result = await routeDispatch(mkExecutor({ a2aInstanceId: 'inst-1' }), samplePayload, opts);
     expect(result.dispatchPath).toBe('v2');
     expect(result.missionId).toBe('m-1');
     expect(result.executorId).toBe('exec-1');
     expect(result.a2aInstanceId).toBe('inst-1');
+    expect(result.a2aProtocolVersion).toBe('0.3');
+    expect(result.a2aInterface).toMatchObject({
+      url: 'https://exec.test/agents/inst-1',
+      protocolBinding: 'REST',
+      protocolVersion: '0.3',
+    });
+    expect(selections).toHaveLength(1);
     expect(result.task?.id).toBe('task-a');
     expect(calls[0]!.url).toBe('https://exec.test/agents/inst-1/v1/messages:send');
     const body = JSON.parse((calls[0]!.init.body as string) ?? '{}') as {
@@ -216,6 +227,35 @@ describe('routeDispatch — v1 fallback on 404', () => {
 });
 
 describe('routeDispatch — error propagation', () => {
+  it('never falls back to the legacy executor API in strict A2A 1.0 mode', async () => {
+    const { fetch: stub, calls } = makeStub((call) => {
+      if (call.url.includes('.well-known')) {
+        return new Response(JSON.stringify({
+          name: 'strict-v1',
+          version: '1.0.0',
+          supportedInterfaces: [{
+            url: 'https://exec.test/agents/exec-1',
+            protocolBinding: 'HTTP+JSON',
+            protocolVersion: '1.0',
+          }],
+        }), { headers: { 'content-type': 'application/json' } });
+      }
+      return new Response(JSON.stringify({ type: 'about:blank', title: 'Not found' }), {
+        status: 404,
+        headers: { 'content-type': 'application/problem+json' },
+      });
+    });
+    await expect(routeDispatch(mkExecutor(), samplePayload, {
+      fetch: stub,
+      a2aProtocolPolicy: '1.0',
+      allowLegacyExecutorFallback: true,
+    })).rejects.toMatchObject({ status: 404 });
+    expect(calls.map(call => call.url)).toEqual([
+      'https://exec.test/agents/exec-1/.well-known/agent-card.json',
+      'https://exec.test/agents/exec-1/message:send',
+    ]);
+  });
+
   it('propagates non-404 A2AError without falling back', async () => {
     const { fetch: stub, calls } = makeStub(() =>
       new Response(

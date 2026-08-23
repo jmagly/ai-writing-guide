@@ -22,6 +22,35 @@ function notFound(res, path) {
   return json(res, 404, { jsonrpc: '2.0', id: null, error: { code: -32601, message: 'Not implemented in this increment', data: { path } } });
 }
 
+function a2aProblem(res, status, type, title, detail, extra = {}) {
+  return json(res, status, { type, title, status, detail, ...extra }, { 'content-type': 'application/problem+json' });
+}
+
+function validateA2ARequest(req, res, protocolVersion, protocolMode) {
+  if (protocolMode !== 'dual' && protocolMode !== protocolVersion) {
+    a2aProblem(res, 400, 'https://a2a-protocol.org/errors/version-not-supported', 'Protocol Version Not Supported', `mock is running in ${protocolMode} mode`, { supportedVersions: [protocolMode] });
+    return false;
+  }
+  const header = req.headers['a2a-version'];
+  const selected = Array.isArray(header) ? header[0] : header;
+  if (protocolVersion === '1.0' && selected !== '1.0') {
+    a2aProblem(res, 400, 'https://a2a-protocol.org/errors/version-not-supported', 'Protocol Version Not Supported', 'A2A 1.0 requires A2A-Version: 1.0', { supportedVersions: protocolMode === 'dual' ? ['1.0', '0.3'] : ['1.0'] });
+    return false;
+  }
+  if (protocolVersion === '0.3' && selected && !String(selected).startsWith('0.3')) {
+    a2aProblem(res, 400, 'https://a2a-protocol.org/errors/version-not-supported', 'Protocol Version Not Supported', `legacy route does not support ${selected}`, { supportedVersions: ['0.3'] });
+    return false;
+  }
+  if (protocolVersion === '1.0' && ['POST', 'PUT', 'PATCH'].includes(req.method ?? '')) {
+    const mediaType = String(req.headers['content-type'] ?? '').split(';')[0].trim();
+    if (mediaType !== 'application/a2a+json') {
+      a2aProblem(res, 415, 'https://a2a-protocol.org/errors/content-type-not-supported', 'Content Type Not Supported', 'A2A 1.0 mock requires application/a2a+json');
+      return false;
+    }
+  }
+  return true;
+}
+
 const operations = new Map();
 let operationSeq = 1;
 
@@ -209,7 +238,9 @@ const FLEET_INVENTORY = {
   ],
 };
 
-export function createExecutor() {
+export function createExecutor(options = {}) {
+  const protocolMode = options.protocolMode ?? process.env.A2A_MOCK_PROTOCOL_MODE ?? '0.3';
+  if (!['0.3', '1.0', 'dual'].includes(protocolMode)) throw new Error(`invalid A2A mock protocol mode: ${protocolMode}`);
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
     const path = url.pathname;
@@ -309,9 +340,26 @@ export function createExecutor() {
 
       if (rest === '.well-known/agent-card.json' && req.method === 'GET') {
         const baseUrl = `${url.protocol}//${req.headers.host}/agents/${encodeURIComponent(instanceId)}`;
-        return json(res, 200, buildAgentCard(instanceId, { baseUrl, runtime: inst.runtime, loadout: inst.loadout }), echoExtensions(req));
+        return json(res, 200, buildAgentCard(instanceId, { baseUrl, runtime: inst.runtime, loadout: inst.loadout, protocolMode }), echoExtensions(req));
       }
-      if (rest === 'messages:send' && req.method === 'POST') return handleSend(req, res, instanceId, inst);
+      const legacyRest = rest.startsWith('v1/') ? rest.slice(3) : null;
+      const isLegacySend = legacyRest === 'messages:send' && req.method === 'POST';
+      const isV1Send = rest === 'message:send' && req.method === 'POST';
+      if (isLegacySend || isV1Send) {
+        const version = isV1Send ? '1.0' : '0.3';
+        if (!validateA2ARequest(req, res, version, protocolMode)) return;
+        return handleSend(req, res, instanceId, inst, version);
+      }
+      if ((legacyRest === 'extendedAgentCard' || legacyRest === 'card') && req.method === 'GET') {
+        if (!validateA2ARequest(req, res, '0.3', protocolMode)) return;
+        const baseUrl = `${url.protocol}//${req.headers.host}/agents/${encodeURIComponent(instanceId)}`;
+        return json(res, 200, buildAgentCard(instanceId, { baseUrl, runtime: inst.runtime, loadout: inst.loadout, protocolMode }));
+      }
+      if (rest === 'extendedAgentCard' && req.method === 'GET') {
+        if (!validateA2ARequest(req, res, '1.0', protocolMode)) return;
+        const baseUrl = `${url.protocol}//${req.headers.host}/agents/${encodeURIComponent(instanceId)}`;
+        return json(res, 200, buildAgentCard(instanceId, { baseUrl, runtime: inst.runtime, loadout: inst.loadout, protocolMode }));
+      }
       if (rest === 'sessions' && req.method === 'GET') return json(res, 200, { sessions: listSessions(instanceId) });
       let sm;
       if ((sm = rest.match(/^sessions\/([^/]+)\/screen(?:-state)?$/)) && req.method === 'GET') {
@@ -329,12 +377,33 @@ export function createExecutor() {
           sessionName: body.session_name || body.sessionName,
         }));
       }
-      if (rest === 'tasks' && req.method === 'GET') return handleListTasks(req, res, instanceId);
+      if ((legacyRest === 'tasks' || rest === 'tasks') && req.method === 'GET') {
+        const version = legacyRest === 'tasks' ? '0.3' : '1.0';
+        if (!validateA2ARequest(req, res, version, protocolMode)) return;
+        return handleListTasks(req, res, instanceId, version);
+      }
       let tm;
-      if ((tm = rest.match(/^tasks\/(.+):cancel$/)) && req.method === 'POST') return handleCancel(req, res, instanceId, decodeURIComponent(tm[1]));
-      if ((tm = rest.match(/^tasks\/(.+):respond$/)) && req.method === 'POST') return handleRespond(req, res, instanceId, decodeURIComponent(tm[1]));
-      if ((tm = rest.match(/^tasks\/([^/]+)\/subscribe$/)) && req.method === 'GET') return handleSubscribe(req, res, instanceId, decodeURIComponent(tm[1]));
-      if ((tm = rest.match(/^tasks\/([^/:]+)$/)) && req.method === 'GET') return handleGetTask(req, res, instanceId, decodeURIComponent(tm[1]));
+      const taskRest = legacyRest ?? rest;
+      const taskVersion = legacyRest !== null ? '0.3' : '1.0';
+      if ((tm = taskRest.match(/^tasks\/(.+?)(?::cancel|\/cancel)$/)) && req.method === 'POST') {
+        if (!validateA2ARequest(req, res, taskVersion, protocolMode)) return;
+        return handleCancel(req, res, instanceId, decodeURIComponent(tm[1]), taskVersion);
+      }
+      if ((tm = taskRest.match(/^tasks\/(.+):respond$/)) && req.method === 'POST') {
+        if (!validateA2ARequest(req, res, taskVersion, protocolMode)) return;
+        return handleRespond(req, res, instanceId, decodeURIComponent(tm[1]), taskVersion);
+      }
+      const subscribeMatch = taskVersion === '1.0'
+        ? taskRest.match(/^tasks\/([^/:]+):subscribe$/)
+        : taskRest.match(/^tasks\/([^/]+)\/subscribe$/);
+      if (subscribeMatch && req.method === (taskVersion === '1.0' ? 'POST' : 'GET')) {
+        if (!validateA2ARequest(req, res, taskVersion, protocolMode)) return;
+        return handleSubscribe(req, res, instanceId, decodeURIComponent(subscribeMatch[1]), taskVersion);
+      }
+      if ((tm = taskRest.match(/^tasks\/([^/:]+)$/)) && req.method === 'GET') {
+        if (!validateA2ARequest(req, res, taskVersion, protocolMode)) return;
+        return handleGetTask(req, res, instanceId, decodeURIComponent(tm[1]), taskVersion);
+      }
     }
 
     return notFound(res, path);

@@ -401,18 +401,22 @@ The executor contract gives `aiwg serve` a way to **dispatch missions** to the s
 ```
 GET  /api/v2/admin/instances
 GET  /agents/{instance_id}/.well-known/agent-card.json
-GET  /agents/{instance_id}/v1/extendedAgentCard
-POST /agents/{instance_id}/v1/messages:send
-GET  /agents/{instance_id}/v1/tasks/{task_id}
-GET  /agents/{instance_id}/v1/tasks/{task_id}/subscribe
+SELECT an advertised A2A 0.3 or 1.0 interface
+CALL the version-specific message, task, and subscription operations
 ```
+
+Configure selection with `--a2a-protocol 0.3|1.0|auto`. Protocol fallback
+(`--a2a-protocol-fallback`) and fallback to the local executor `/dispatch` API
+are independent controls. Strict 1.0 mode permits neither downgrade. See
+[A2A protocol compatibility](./a2a-protocol-compatibility.md) for headers,
+routes, configuration, and qualification lanes.
 
 `executor_id` identifies the management executor registration. `instance_id`
 identifies the routable A2A sandbox instance. They may be different; dispatch
 payloads may pass `a2a_instance_id` when a concrete sandbox instance is known.
 `aiwg serve` reports the selected `a2a_instance_id` in dispatch responses.
-For v2 A2A dispatch, the returned sandbox task is not fire-and-forget:
-`aiwg serve` follows the task through `GET /agents/{instance_id}/v1/tasks/{task_id}`
+For A2A dispatch, the returned sandbox task is not fire-and-forget:
+`aiwg serve` follows the task through the selected version's task operation
 until it reaches a terminal A2A state, then projects that state into the AIWG
 mission record. Completed A2A tasks become `mission.completed`; failed or
 rejected tasks become `mission.failed`; canceled tasks become `mission.aborted`.

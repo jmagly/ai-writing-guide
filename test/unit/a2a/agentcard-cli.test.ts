@@ -134,7 +134,7 @@ describe('agentcardHandler', () => {
   });
 
   it('--skip-verify returns 0 without JWKS', async () => {
-    const card = { protocolVersion: '0.3.0', name: 'unverified', url: '', version: '1' };
+    const card = { protocolVersion: '0.3.0', name: 'unverified', url: 'https://exec.test/agents/inst-1', version: '1' };
     globalThis.fetch = (async () =>
       new Response(JSON.stringify(card), {
         status: 200,

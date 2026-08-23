@@ -12,7 +12,7 @@
  *   v1 payload                       →  A2A Message
  *   --------------------------------    --------------------------------------
  *   mission_id                          message.messageId (idempotency key)
- *   objective                           parts[0] = { kind: 'text', text: ... }
+ *   objective                           parts[0] = normalized text content
  *   completion                          metadata.completion
  *   executor_filter                     metadata.executor_filter
  *   long_running                        metadata.long_running
@@ -28,6 +28,7 @@ import {
 } from '../a2a/client.js';
 import { A2AError, type DeprecationInfo } from '../a2a/http.js';
 import type { JsonValue, Message, Task } from '../a2a/types.js';
+import type { A2AProtocolPolicy, A2AProtocolVersion, NormalizedAgentInterface } from '../a2a/types.js';
 
 import type { ExecutorRegistration } from './executor-registry.js';
 
@@ -48,6 +49,16 @@ export interface DispatchRouterOptions {
   optionalExtensions?: readonly string[];
   /** Explicit A2A sandbox instance id. Overrides payload/register defaults. */
   a2aInstanceId?: string;
+  /** A2A wire negotiation is independent from executor-v1 fallback. */
+  a2aProtocolPolicy?: A2AProtocolPolicy;
+  allowA2AProtocolFallback?: boolean;
+  allowLegacyExecutorFallback?: boolean;
+  onA2AProtocolSelection?: (info: {
+    selected: A2AProtocolVersion;
+    interface?: NormalizedAgentInterface;
+    policy: A2AProtocolPolicy;
+  }) => void;
+  onA2AProtocolFallback?: (info: { from: '1.0'; to: '0.3'; reason: string }) => void;
 }
 
 /** Wire shape of the v1 dispatch payload AIWG accepts on
@@ -76,6 +87,9 @@ export interface DispatchResult {
   estimatedStart?: string;
   /** True when the executor served an idempotency replay (v2 only). */
   idempotentReplayed: boolean;
+  a2aProtocolVersion?: A2AProtocolVersion;
+  a2aInterface?: NormalizedAgentInterface;
+  a2aFallbackReason?: string;
 }
 
 /**
@@ -99,7 +113,10 @@ export async function routeDispatch(
     return v2;
   } catch (err) {
     // Only fall back on a 404 from the v2 path. Everything else propagates.
-    if (err instanceof A2AError && err.status === 404) {
+    const policy = opts.a2aProtocolPolicy ?? '0.3';
+    const allowLegacyFallback = policy !== '1.0'
+      && (opts.allowLegacyExecutorFallback ?? true);
+    if (allowLegacyFallback && err instanceof A2AError && err.status === 404) {
       // Capture sunset for the telemetry event if any was attached.
       const sunset = err.problem.code === 'aiwg.deprecation_strict' ? undefined : undefined;
       if (opts.onV1Fallback) {
@@ -127,12 +144,34 @@ async function dispatchV2(
     bearer: executor.token,
     instanceId: a2aInstanceId,
     requiredExtensions: opts.requiredExtensions ?? [A2A_RUNTIME_V1, A2A_IDEMPOTENCY_V1],
+    protocolPolicy: opts.a2aProtocolPolicy ?? '0.3',
+    allowProtocolFallback: opts.allowA2AProtocolFallback ?? false,
   };
   if (opts.fetch) clientOpts.fetch = opts.fetch;
   if (opts.optionalExtensions) clientOpts.optionalExtensions = opts.optionalExtensions;
   if (opts.onDeprecation) clientOpts.onDeprecation = opts.onDeprecation;
+  if (opts.onA2AProtocolFallback) clientOpts.onProtocolFallback = opts.onA2AProtocolFallback;
+  if (opts.onA2AProtocolSelection) {
+    clientOpts.onProtocolSelection = info => opts.onA2AProtocolSelection?.(info);
+  }
 
-  const client = new A2AClient(clientOpts);
+  // The deployed 0.3 compatibility route predates AgentCard negotiation. Model
+  // it as an explicit interface so headerless legacy selection is observable
+  // in registry, telemetry, audit, and dispatch results without adding a new
+  // discovery dependency to the compatibility path.
+  if (clientOpts.protocolPolicy === '0.3') {
+    clientOpts.selectedInterface = {
+      url: `${executor.transportEndpoints.rest.replace(/\/+$/, '')}/agents/${encodeURIComponent(a2aInstanceId)}`,
+      protocolBinding: 'REST',
+      protocolVersion: '0.3',
+      preference: 0,
+      legacy: true,
+    };
+  }
+
+  const client = clientOpts.protocolPolicy === '0.3'
+    ? new A2AClient(clientOpts)
+    : await A2AClient.negotiate(clientOpts);
   const message = payloadToMessage(payload);
   const result = await client.sendMessage(message);
   return {
@@ -142,6 +181,9 @@ async function dispatchV2(
     dispatchPath: 'v2',
     task: result.task,
     idempotentReplayed: result.idempotentReplayed,
+    a2aProtocolVersion: result.protocolVersion,
+    ...(result.selectedInterface ? { a2aInterface: result.selectedInterface } : {}),
+    ...(result.fallbackReason ? { a2aFallbackReason: result.fallbackReason } : {}),
   };
 }
 
@@ -219,7 +261,7 @@ function payloadToMessage(payload: V1DispatchPayload): Message {
   return {
     messageId: payload.mission_id,
     role: 'user',
-    parts: [{ kind: 'text', text: payload.objective }],
+    parts: [{ type: 'text', text: payload.objective }],
     metadata,
   };
 }

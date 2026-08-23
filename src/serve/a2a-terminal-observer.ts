@@ -12,6 +12,8 @@
 import { A2AClient } from '../a2a/client.js';
 import {
   isTerminalTaskState,
+  type A2AProtocolVersion,
+  type NormalizedAgentInterface,
   type Task,
   type TaskState,
 } from '../a2a/types.js';
@@ -27,6 +29,8 @@ export interface A2ATerminalObserverOptions {
   pollIntervalMs?: number;
   maxPolls?: number;
   onError?: (err: unknown) => void;
+  protocolVersion?: A2AProtocolVersion;
+  selectedInterface?: NormalizedAgentInterface;
 }
 
 const DEFAULT_POLL_INTERVAL_MS = 1000;
@@ -45,7 +49,10 @@ export async function observeA2ATerminalState(
       baseUrl: executor.transportEndpoints.rest,
       bearer: executor.token,
       instanceId: a2aInstanceId,
+      protocolVersion: opts.protocolVersion ?? '0.3',
+      protocolPolicy: opts.protocolVersion ?? '0.3',
     };
+    if (opts.selectedInterface) clientOpts.selectedInterface = opts.selectedInterface;
     if (opts.fetch) clientOpts.fetch = opts.fetch;
     const client = new A2AClient(clientOpts);
 
@@ -176,13 +183,11 @@ function taskStateToGraphState(state: TaskState): string {
 }
 
 function taskStatusSummary(task: Task): string | undefined {
-  const status = task.status as Task['status'] & { summary?: unknown };
-  return typeof status.summary === 'string' ? status.summary : undefined;
+  return task.status.summary;
 }
 
 function exitCodeData(task: Task): { exit_code?: number } {
-  const status = task.status as Task['status'] & { exit_code?: unknown };
-  return typeof status.exit_code === 'number' ? { exit_code: status.exit_code } : {};
+  return task.status.exitCode !== undefined ? { exit_code: task.status.exitCode } : {};
 }
 
 function sleep(ms: number): Promise<void> {

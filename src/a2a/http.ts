@@ -12,7 +12,7 @@
 //     telemetry module)
 //   - Optional fail-on-deprecated mode (AIWG_FAIL_ON_DEPRECATED=true)
 
-import type { ProblemDetails } from './types.js';
+import type { A2AProtocolVersion, ProblemDetails } from './types.js';
 
 export interface DeprecationInfo {
   /** Request path that triggered the deprecation headers (e.g. `/api/v1/sessions/xyz/dispatch`). */
@@ -42,6 +42,8 @@ export interface A2ARequestOptions {
   signal?: AbortSignal;
   /** Don't parse the body — return the raw Response (used by SSE). */
   raw?: boolean;
+  /** Override the client's negotiated A2A version for this request. */
+  protocolVersion?: A2AProtocolVersion;
 }
 
 export interface A2AResponse<T = unknown> {
@@ -66,13 +68,30 @@ export class A2AError extends Error {
   readonly status: number;
   readonly problem: ProblemDetails;
   readonly path: string;
+  readonly category: 'negotiation' | 'authorization' | 'application' | 'transport';
+  readonly versionNotSupported: boolean;
 
-  constructor(status: number, path: string, problem: ProblemDetails) {
+  constructor(
+    status: number,
+    path: string,
+    problem: ProblemDetails,
+    category?: 'negotiation' | 'authorization' | 'application' | 'transport'
+  ) {
     super(`${status} ${problem.code ?? problem.title}: ${problem.detail ?? problem.title}`);
     this.name = 'A2AError';
     this.status = status;
     this.problem = problem;
     this.path = path;
+    this.versionNotSupported = isVersionNotSupportedProblem(problem);
+    this.category = category ?? (this.versionNotSupported
+      ? 'negotiation'
+      : status === 401 || status === 403
+        ? 'authorization'
+        : status === 0
+          ? 'transport'
+        : status >= 400
+          ? 'application'
+          : 'transport');
   }
 }
 
@@ -90,6 +109,8 @@ export interface A2AHttpClientOptions {
   onDeprecation?: (info: DeprecationInfo) => void;
   /** Called when an expected extension is requested but not echoed in the response. */
   onExtensionEchoMissing?: (expected: string[], echoed: string[], path: string) => void;
+  /** Selected wire version. 0.3 intentionally omits A2A-Version. */
+  protocolVersion?: A2AProtocolVersion;
 }
 
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -108,6 +129,7 @@ export class A2AHttpClient {
   ) => void;
   /** Per-process dedupe set: one log per (path, sunset_date). */
   private readonly seenDeprecations = new Set<string>();
+  private readonly protocolVersion: A2AProtocolVersion;
 
   constructor(opts: A2AHttpClientOptions) {
     this.baseUrl = opts.baseUrl.replace(/\/+$/, '');
@@ -117,6 +139,7 @@ export class A2AHttpClient {
     this.fetchImpl = opts.fetch ?? fetch;
     this.onDeprecation = opts.onDeprecation;
     this.onExtensionEchoMissing = opts.onExtensionEchoMissing;
+    this.protocolVersion = opts.protocolVersion ?? '0.3';
   }
 
   async request<T = unknown>(
@@ -125,13 +148,17 @@ export class A2AHttpClient {
   ): Promise<A2AResponse<T>> {
     const method = (options.method ?? 'GET').toUpperCase();
     const url = path.startsWith('http') ? path : this.baseUrl + path;
+    const protocolVersion = options.protocolVersion ?? this.protocolVersion;
+    const mediaType = protocolVersion === '1.0' ? 'application/a2a+json' : 'application/json';
     const headers: Record<string, string> = {
       authorization: `Bearer ${options.bearer ?? this.bearer}`,
-      accept: 'application/json',
+      accept: mediaType,
     };
 
+    if (protocolVersion === '1.0') headers['a2a-version'] = '1.0';
+
     if (options.body !== undefined && options.bodyRaw === undefined) {
-      headers['content-type'] = 'application/json';
+      headers['content-type'] = mediaType;
     }
 
     // Inject A2A-Extensions on mutating calls. Caller can override with
@@ -157,7 +184,17 @@ export class A2AHttpClient {
       init.body = JSON.stringify(options.body);
     }
 
-    const resp = await this.fetchImpl(url, init);
+    let resp: Response;
+    try {
+      resp = await this.fetchImpl(url, init);
+    } catch (error) {
+      throw new A2AError(0, path, {
+        type: 'about:blank',
+        title: 'A2A transport failure',
+        detail: error instanceof Error ? error.message : String(error),
+        code: 'aiwg.transport_failure',
+      }, 'transport');
+    }
 
     // Capture deprecation headers regardless of status.
     const deprecation = captureDeprecation(path, resp.headers);
@@ -209,6 +246,20 @@ export class A2AHttpClient {
     // Parse body (JSON, problem+json, or empty).
     let body: T | undefined;
     const ct = resp.headers.get('content-type') ?? '';
+    if (
+      protocolVersion === '1.0'
+      && resp.status < 400
+      && resp.status !== 204
+      && resp.status !== 205
+      && !ct.toLowerCase().includes('application/a2a+json')
+    ) {
+      throw new A2AError(502, path, {
+        type: 'about:blank',
+        title: 'Invalid A2A 1.0 content type',
+        detail: `Expected application/a2a+json, received ${ct || '(missing)'}`,
+        code: 'aiwg.invalid_content_type',
+      }, 'transport');
+    }
     if (resp.status !== 204 && resp.status !== 205) {
       const text = await resp.text();
       if (text.length > 0) {
@@ -230,7 +281,7 @@ export class A2AHttpClient {
     }
 
     if (resp.status >= 400) {
-      const problem = (body as unknown as ProblemDetails) ?? {
+      const problem = normalizeProblemDetails(resp.status, body) ?? {
         type: 'about:blank',
         title: `HTTP ${resp.status}`,
       };
@@ -246,6 +297,46 @@ export class A2AHttpClient {
       ...(deprecation ? { deprecation } : {}),
     };
   }
+}
+
+export function isVersionNotSupportedProblem(problem: ProblemDetails): boolean {
+  const type = problem.type?.toLowerCase() ?? '';
+  const code = problem.code?.toLowerCase() ?? '';
+  return type.includes('version-not-supported')
+    || code === 'versionnotsupportederror'
+    || code === 'version_not_supported'
+    || code === 'a2a.version_not_supported'
+    || code === '-32009';
+}
+
+function normalizeProblemDetails(status: number, body: unknown): ProblemDetails | undefined {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return undefined;
+  const obj = body as Record<string, unknown>;
+  // HTTP+JSON uses RFC 7807. JSON-RPC bindings may nest the standard code.
+  const nested = obj.error && typeof obj.error === 'object' && !Array.isArray(obj.error)
+    ? obj.error as Record<string, unknown>
+    : undefined;
+  const source = nested ?? obj;
+  const codeValue = source.code;
+  const code = typeof codeValue === 'string' || typeof codeValue === 'number'
+    ? String(codeValue)
+    : undefined;
+  const title = typeof obj.title === 'string'
+    ? obj.title
+    : typeof source.message === 'string'
+      ? source.message
+      : `HTTP ${status}`;
+  const problem: ProblemDetails = {
+    type: typeof obj.type === 'string' ? obj.type : 'about:blank',
+    title,
+    status,
+    ...(typeof obj.detail === 'string' ? { detail: obj.detail } : {}),
+    ...(code ? { code } : {}),
+    ...(Array.isArray(obj.supportedVersions) && obj.supportedVersions.every(v => typeof v === 'string')
+      ? { supportedVersions: obj.supportedVersions as string[] }
+      : {}),
+  };
+  return problem;
 }
 
 // ---------- header helpers ----------

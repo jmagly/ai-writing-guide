@@ -243,7 +243,7 @@ describe('handleWebhook', () => {
 
   it('dedupes by event-id: second delivery returns 200 deduped=true', async () => {
     const ctx = setup();
-    const bodyStr = '{"kind":"status-update","taskId":"t-1"}';
+    const bodyStr = '{"kind":"status-update","taskId":"t-1","status":{"state":"working"}}';
     const body = Buffer.from(bodyStr, 'utf8');
     const sig = signBody(body, secret, ts);
     const first = await handleWebhook('cfg-1', body, sig, 'evt-dup', ctx);
@@ -253,6 +253,128 @@ describe('handleWebhook', () => {
     expect(second.status).toBe(200);
     expect(second.body['deduped']).toBe(true);
     expect(ctx.routed).toHaveLength(1);
+  });
+
+  it('accepts a signed 1.0 wrapper only with the 1.0 media type', async () => {
+    const registry = new PushSecretRegistry();
+    registry.register({ configId: 'cfg-v1', secret, taskId: 't-v1', protocolVersion: '1.0' });
+    const routed: unknown[] = [];
+    const ctx = {
+      registry,
+      idempotency: new IdempotencyCache(),
+      route: (_entry: unknown, event: unknown) => { routed.push(event); },
+      contentType: 'application/a2a+json; charset=utf-8',
+    };
+    const body = Buffer.from(JSON.stringify({
+      statusUpdate: {
+        taskId: 't-v1',
+        contextId: 'ctx-v1',
+        status: { state: 'TASK_STATE_WORKING' },
+      },
+    }));
+    const sig = signBody(body, secret, ts);
+    const result = await handleWebhook('cfg-v1', body, sig, 'evt-v1', ctx);
+    expect(result.status).toBe(200);
+    expect(routed).toEqual([expect.objectContaining({ type: 'status', protocolVersion: '1.0' })]);
+
+    const wrongMedia = await handleWebhook('cfg-v1', body, sig, 'evt-v1-media', {
+      ...ctx,
+      contentType: 'application/json',
+    });
+    expect(wrongMedia.status).toBe(415);
+  });
+
+  it('rejects invalid 1.0 unions and cross-task events without consuming the event id', async () => {
+    const registry = new PushSecretRegistry();
+    registry.register({ configId: 'cfg-v1', secret, taskId: 't-v1', protocolVersion: '1.0' });
+    const ctx = {
+      registry,
+      idempotency: new IdempotencyCache(),
+      route: () => undefined,
+      contentType: 'application/a2a+json',
+    };
+    const invalid = Buffer.from(JSON.stringify({
+      task: { id: 't-v1', status: { state: 'TASK_STATE_WORKING' } },
+      message: { messageId: 'm', role: 'ROLE_AGENT', parts: [{ text: 'x' }] },
+    }));
+    expect((await handleWebhook('cfg-v1', invalid, signBody(invalid, secret, ts), 'evt-retry', ctx)).status)
+      .toBe(400);
+
+    const valid = Buffer.from(JSON.stringify({
+      task: { id: 't-v1', status: { state: 'TASK_STATE_WORKING' } },
+    }));
+    expect((await handleWebhook('cfg-v1', valid, signBody(valid, secret, ts), 'evt-retry', ctx)).status)
+      .toBe(200);
+
+    const crossTask = Buffer.from(JSON.stringify({
+      statusUpdate: {
+        taskId: 'other', contextId: 'ctx-v1', status: { state: 'TASK_STATE_WORKING' },
+      },
+    }));
+    const result = await handleWebhook(
+      'cfg-v1', crossTask, signBody(crossTask, secret, ts), 'evt-cross', ctx
+    );
+    expect(result.status).toBe(400);
+    expect(result.body['code']).toBe('aiwg.webhook_event_invalid');
+  });
+
+  it('rejects a valid task event attributed to a different configured owner', async () => {
+    const registry = new PushSecretRegistry();
+    registry.register({
+      configId: 'cfg-owner',
+      secret,
+      taskId: 't-owner',
+      protocolVersion: '1.0',
+      taskOwner: 'tenant-a',
+    });
+    const body = Buffer.from(JSON.stringify({
+      task: {
+        id: 't-owner',
+        status: { state: 'TASK_STATE_WORKING' },
+        metadata: { tenant_id: 'tenant-b' },
+      },
+    }));
+    const result = await handleWebhook(
+      'cfg-owner', body, signBody(body, secret, ts), 'evt-owner', {
+        registry,
+        idempotency: new IdempotencyCache(),
+        route: () => undefined,
+        contentType: 'Application/A2A+JSON',
+      }
+    );
+    expect(result.status).toBe(400);
+    expect(result.body['code']).toBe('aiwg.webhook_event_invalid');
+    expect(result.body['detail']).toMatch(/tenant-b.*tenant-a/);
+  });
+
+  it('scopes duplicate ids by config and returns retryable conflict for concurrent delivery', async () => {
+    const registry = new PushSecretRegistry();
+    registry.register({ configId: 'cfg-a', secret, taskId: 't-1' });
+    registry.register({ configId: 'cfg-b', secret, taskId: 't-1' });
+    let releaseRoute!: () => void;
+    const routeGate = new Promise<void>((resolve) => { releaseRoute = resolve; });
+    const idempotency = new IdempotencyCache();
+    const body = Buffer.from('{"kind":"status-update","taskId":"t-1","status":{"state":"working"}}');
+    const sig = signBody(body, secret, ts);
+    const first = handleWebhook('cfg-a', body, sig, 'shared', {
+      registry,
+      idempotency,
+      route: async () => routeGate,
+    });
+    await Promise.resolve();
+    const concurrent = await handleWebhook('cfg-a', body, sig, 'shared', {
+      registry,
+      idempotency,
+      route: () => undefined,
+    });
+    expect(concurrent.status).toBe(409);
+    releaseRoute();
+    expect((await first).status).toBe(200);
+    expect((await handleWebhook('cfg-b', body, sig, 'shared', {
+      registry,
+      idempotency,
+      route: () => undefined,
+    })).status).toBe(200);
   });
 
   it('returns 400 when body is not JSON', async () => {
@@ -274,7 +396,7 @@ describe('handleWebhook', () => {
         throw new Error('mission state not initialized');
       },
     };
-    const body = Buffer.from('{"kind":"status-update"}', 'utf8');
+    const body = Buffer.from('{"kind":"status-update","taskId":"t-1","status":{"state":"working"}}', 'utf8');
     const sig = signBody(body, secret, ts);
     const result = await handleWebhook('cfg-1', body, sig, 'evt-route-fail', failingCtx);
     expect(result.status).toBe(500);

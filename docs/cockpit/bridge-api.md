@@ -33,7 +33,7 @@ executor failures preserve 401 `executor_unauthenticated` and 403
 | Method & path | Purpose |
 |---|---|
 | `GET /healthz` | Unauthenticated liveness (`{status:'ok'}`) |
-| `GET /api/health` | Bridge health + config echo (`executor_url`, `mock_executor_allowed`, boolean `executor_auth_configured`) |
+| `GET /api/health` | Bridge health + config echo (`executor_url`, auth posture, and A2A protocol/fallback policy) |
 | `GET /api/executor/capabilities` | Deep-probe the executor (`host_runtime_enabled`, raw status; `unreachable` on failure) |
 | `GET /api/bootstrap/readiness` | Client-safe sandbox CA/bootstrap readiness posture; no PEMs, keys, CSRs, bearer values, or raw credential paths |
 
@@ -50,7 +50,7 @@ executor failures preserve 401 `executor_unauthenticated` and 403
 
 | Method & path | Purpose |
 |---|---|
-| `GET /api/inventory` | Normalized instance inventory (runtime/transport/daemon posture per instance); agent-registry fallback; degraded envelope instead of hard failure |
+| `GET /api/inventory` | Normalized instance inventory (runtime/transport/daemon and selected A2A protocol posture per instance); agent-registry fallback; degraded envelope instead of hard failure |
 | `GET /api/loadouts` | Loadout catalog passthrough |
 | `POST /api/instances` | Launch a runtime target via the executor's v2 admin API. VM requests may include `provider` and `runtime_options` (`kind`, `provider`, `required_capabilities`, `excluded_capabilities`, `launch_strategy`, and `constraints`). `runtime:'qemu'` requires a resolvable SSH public key (400 `ssh_public_key_required` / `ssh_public_key_not_found`) |
 | `GET /api/operations/:id` | Poll an async provisioning operation |

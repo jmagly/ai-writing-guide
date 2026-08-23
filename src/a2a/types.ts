@@ -1,17 +1,6 @@
-// A2A protocol types — the subset AIWG needs to talk to an agentic-sandbox v2
-// executor. Modelled from the executor's wire surface
-// (`agentic-sandbox/management/agentic-sandbox-executor`):
-//
-//   - send_message.rs   — POST /agents/{id}/v1/messages:send
-//   - get_task.rs       — GET  /agents/{id}/v1/tasks/{tid}
-//   - cancel_task.rs    — POST /agents/{id}/v1/tasks/{tid}/cancel
-//   - subscribe_task    — GET  /agents/{id}/v1/tasks/{tid}/subscribe (SSE)
-//   - push_delivery.rs  — *   /agents/{id}/v1/tasks/{tid}/pushNotificationConfigs/*
-//   - agent_card.rs     — GET  /agents/{id}/.well-known/agent-card.json
-//                          GET  /agents/{id}/v1/extendedAgentCard
-//
-// Types are intentionally permissive (extra fields allowed). We track only
-// what the AIWG orchestrator inspects; the rest is forwarded opaquely.
+// Normalized A2A domain types. Protocol 0.3 and 1.0 wire values are decoded
+// into these types at the boundary in codecs.ts. Application code must not
+// depend on either version's enum spellings, kind fields, or oneof layout.
 
 import type { JsonValue } from './jcs.js';
 export type { GraphExecutionMetadata, GraphRunIdentity } from '../flow/graph-metadata.js';
@@ -47,17 +36,29 @@ export function isTerminalTaskState(s: TaskState): boolean {
 
 // ---------- A2A Message ----------
 
-export interface MessagePart {
-  kind: 'text' | 'data' | 'file';
-  text?: string;
-  data?: JsonValue;
-  /** Mime type when `kind === 'file'`. */
-  mimeType?: string;
-  /** Base64-encoded bytes when `kind === 'file'`. */
-  bytes?: string;
-  /** URI reference when `kind === 'file'` and content is external. */
-  uri?: string;
-}
+export type MessagePart =
+  | {
+      type: 'text';
+      text: string;
+      mediaType?: string;
+      metadata?: Record<string, JsonValue>;
+    }
+  | {
+      type: 'data';
+      data: JsonValue;
+      mediaType?: string;
+      metadata?: Record<string, JsonValue>;
+    }
+  | {
+      type: 'file';
+      /** Base64-encoded bytes. Exactly one of raw/url is present. */
+      raw?: string;
+      /** External URL for the file. Exactly one of raw/url is present. */
+      url?: string;
+      filename?: string;
+      mediaType?: string;
+      metadata?: Record<string, JsonValue>;
+    };
 
 export interface Message {
   /**
@@ -70,6 +71,8 @@ export interface Message {
   contextId?: string;
   taskId?: string;
   metadata?: Record<string, JsonValue>;
+  extensions?: string[];
+  referenceTaskIds?: string[];
 }
 
 // ---------- A2A Task ----------
@@ -81,6 +84,11 @@ export interface TaskStatus {
   message?: Message;
   /** RFC 3339 timestamp of the last state transition. */
   timestamp?: string;
+  /** Normalized extension payload retained across version adapters. */
+  extensions?: string[];
+  /** Normalized sandbox execution detail (0.3 extension fields). */
+  summary?: string;
+  exitCode?: number;
 }
 
 export interface Task {
@@ -90,6 +98,7 @@ export interface Task {
   artifacts?: Artifact[];
   metadata?: Record<string, JsonValue>;
   history?: Message[];
+  extensions?: string[];
 }
 
 export interface Artifact {
@@ -98,16 +107,39 @@ export interface Artifact {
   name?: string;
   description?: string;
   metadata?: Record<string, JsonValue>;
+  extensions?: string[];
 }
 
 // ---------- Streaming envelope (SSE + push notifications) ----------
 
-/** Server-sent stream events sent over both SSE (`tasks/{tid}/subscribe`)
- *  and push-notification webhooks. Tagged by `kind`. */
+/** Normalized events emitted by both version-specific SSE and push decoders. */
 export type StreamEvent =
-  | { kind: 'task-state'; task: Task }
-  | { kind: 'status-update'; taskId: string; status: TaskStatus; final?: boolean }
-  | { kind: 'artifact-update'; taskId: string; artifact: Artifact; append?: boolean };
+  | StreamEventBase & { type: 'task'; task: Task }
+  | StreamEventBase & { type: 'message'; message: Message }
+  | StreamEventBase & {
+      type: 'status';
+      taskId: string;
+      contextId?: string;
+      status: TaskStatus;
+      metadata?: Record<string, JsonValue>;
+    }
+  | StreamEventBase & {
+      type: 'artifact';
+      taskId: string;
+      contextId?: string;
+      artifact: Artifact;
+      append?: boolean;
+      lastChunk?: boolean;
+      metadata?: Record<string, JsonValue>;
+    };
+
+export interface StreamEventBase {
+  protocolVersion: A2AProtocolVersion;
+  /** Binding-provided sequence, when available. */
+  sequence?: number;
+  /** Binding-provided event identifier, when available. */
+  eventId?: string;
+}
 
 // ---------- AgentCard ----------
 
@@ -134,7 +166,13 @@ export interface AgentCardSkill {
 
 export interface AgentCardInterface {
   url: string;
-  transport: 'JSONRPC' | 'GRPC' | 'REST' | string;
+  /** 0.3 name for protocolBinding. */
+  transport?: 'JSONRPC' | 'GRPC' | 'REST' | string;
+  /** 1.0 binding name (HTTP+JSON, JSONRPC, GRPC, or extension URI). */
+  protocolBinding?: string;
+  /** Required per interface in 1.0; normalized from the card in protocol.ts. */
+  protocolVersion?: string;
+  tenant?: string;
 }
 
 export interface AgentCardSignature {
@@ -143,9 +181,11 @@ export interface AgentCardSignature {
 }
 
 export interface AgentCard {
-  protocolVersion: string;
+  /** 0.3 top-level protocol declaration. Removed in 1.0. */
+  protocolVersion?: string;
   name: string;
-  url: string;
+  /** 0.3 top-level service URL. Removed in 1.0. */
+  url?: string;
   version: string;
   preferredTransport?: string;
   capabilities?: AgentCardCapabilities;
@@ -165,10 +205,13 @@ export interface PushNotificationConfig {
   /** Subscriber webhook URL — where the executor POSTs `StreamEvent` payloads. */
   url: string;
   /** Symmetric secret for HMAC-SHA256 signature (`X-AIWG-Signature: t=,v1=`). */
-  secret: string;
+  secret?: string;
   /** Optional event filter (e.g. `["status-update"]`). */
-  eventTypes?: Array<StreamEvent['kind']>;
+  eventTypes?: Array<StreamEvent['type']>;
   metadata?: Record<string, JsonValue>;
+  /** A2A 1.0 token echoed in X-A2A-Notification-Token. */
+  token?: string;
+  authentication?: { scheme: string; credentials?: string };
 }
 
 // ---------- Error model (RFC 7807) ----------
@@ -181,4 +224,28 @@ export interface ProblemDetails {
   /** Sandbox-specific machine code, e.g. `request.invalid_params`. */
   code?: string;
   instance?: string;
+  /** Standard VersionNotSupportedError detail. */
+  supportedVersions?: string[];
+  [key: string]: JsonValue | undefined;
+}
+
+// ---------- Protocol negotiation ----------
+
+export type A2AProtocolVersion = '0.3' | '1.0';
+export type A2AProtocolPolicy = A2AProtocolVersion | 'auto';
+
+export interface NormalizedAgentInterface {
+  url: string;
+  protocolBinding: string;
+  protocolVersion: A2AProtocolVersion;
+  tenant?: string;
+  /** Ordered position from supportedInterfaces. */
+  preference: number;
+  /** True when synthesized from a 0.3 top-level card URL. */
+  legacy: boolean;
+}
+
+export interface NormalizedAgentCard {
+  card: AgentCard;
+  interfaces: NormalizedAgentInterface[];
 }

@@ -202,6 +202,7 @@
           "description": "Routable A2A sandbox instance id, when known. This may differ from executor_id.",
           "minLength": 1
         },
+        "a2a_protocol": { "$ref": "#/$defs/a2a_protocol_status" },
         "name": { "type": "string" },
         "version": { "type": "string" },
         "spec_version": { "$ref": "#/$defs/spec_version" },
@@ -329,6 +330,17 @@
           "description": "Routable A2A sandbox instance id used for the dispatch, when dispatched via A2A.",
           "minLength": 1
         },
+        "a2a_protocol_version": {
+          "type": "string",
+          "enum": ["0.3", "1.0"]
+        },
+        "a2a_protocol_binding": { "type": "string", "minLength": 1 },
+        "a2a_interface_url": { "type": "string", "format": "uri" },
+        "a2a_fallback_reason": { "type": "string", "minLength": 1 },
+        "dispatch_path": {
+          "type": "string",
+          "enum": ["v2", "v1-fallback"]
+        },
         "status": {
           "type": "string",
           "const": "assigned",
@@ -338,6 +350,21 @@
           "$ref": "#/$defs/ts",
           "description": "Executor-provided optimistic start time. Informational only."
         }
+      }
+    },
+    "a2a_protocol_status": {
+      "type": "object",
+      "title": "A2AProtocolStatus",
+      "description": "The most recently negotiated A2A protocol interface for this executor. This is independent of the local executor contract spec_version.",
+      "required": ["policy", "selected_version", "protocol_binding", "interface_url", "selected_at"],
+      "additionalProperties": false,
+      "properties": {
+        "policy": { "type": "string", "enum": ["0.3", "1.0", "auto"] },
+        "selected_version": { "type": "string", "enum": ["0.3", "1.0"] },
+        "protocol_binding": { "type": "string", "minLength": 1 },
+        "interface_url": { "type": "string", "format": "uri" },
+        "fallback_reason": { "type": "string", "minLength": 1 },
+        "selected_at": { "$ref": "#/$defs/ts" }
       }
     },
     "mission_status_response": {

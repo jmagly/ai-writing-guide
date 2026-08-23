@@ -47,8 +47,14 @@ const webhookIdempotency = new IdempotencyCache();
 const DEFAULT_PORT = 7337;
 const DEFAULT_HOST = '127.0.0.1';
 
+function readA2AProtocolPolicy(value: string | undefined): '0.3' | '1.0' | 'auto' {
+  const policy = value ?? '0.3';
+  if (policy === '0.3' || policy === '1.0' || policy === 'auto') return policy;
+  throw new Error(`AIWG_A2A_PROTOCOL_POLICY must be 0.3, 1.0, or auto (received '${policy}')`);
+}
+
 /**
- * Parse --port, --bind, --no-open, --read-only flags from args
+ * Parse dashboard and A2A negotiation flags from args.
  */
 function parseServeArgs(args: string[]): {
   port: number;
@@ -56,12 +62,18 @@ function parseServeArgs(args: string[]): {
   open: boolean;
   readOnly: boolean;
   sandbox: string | null;
+  a2aProtocolPolicy?: '0.3' | '1.0' | 'auto';
+  allowA2AProtocolFallback?: boolean;
+  allowLegacyExecutorFallback?: boolean;
 } {
   let port = DEFAULT_PORT;
   let host = DEFAULT_HOST;
   let open = true;
   let readOnly = false;
   let sandbox: string | null = null;
+  let a2aProtocolPolicy: '0.3' | '1.0' | 'auto' | undefined;
+  let allowA2AProtocolFallback: boolean | undefined;
+  let allowLegacyExecutorFallback: boolean | undefined;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -79,10 +91,30 @@ function parseServeArgs(args: string[]): {
       open = false;
     } else if (arg === '--read-only') {
       readOnly = true;
+    } else if (arg === '--a2a-protocol' && args[i + 1]) {
+      a2aProtocolPolicy = readA2AProtocolPolicy(args[i + 1]);
+      i++;
+    } else if (arg === '--a2a-protocol-fallback') {
+      allowA2AProtocolFallback = true;
+    } else if (arg === '--no-a2a-protocol-fallback') {
+      allowA2AProtocolFallback = false;
+    } else if (arg === '--a2a-legacy-executor-fallback') {
+      allowLegacyExecutorFallback = true;
+    } else if (arg === '--no-a2a-legacy-executor-fallback') {
+      allowLegacyExecutorFallback = false;
     }
   }
 
-  return { port, host, open, readOnly, sandbox };
+  return {
+    port,
+    host,
+    open,
+    readOnly,
+    sandbox,
+    ...(a2aProtocolPolicy ? { a2aProtocolPolicy } : {}),
+    ...(allowA2AProtocolFallback !== undefined ? { allowA2AProtocolFallback } : {}),
+    ...(allowLegacyExecutorFallback !== undefined ? { allowLegacyExecutorFallback } : {}),
+  };
 }
 
 // ============================================================
@@ -501,7 +533,17 @@ export async function startServer(opts: {
   host: string;
   readOnly: boolean;
   frameworkRoot: string;
+  a2aProtocolPolicy?: '0.3' | '1.0' | 'auto';
+  allowA2AProtocolFallback?: boolean;
+  allowLegacyExecutorFallback?: boolean;
 }): Promise<{ url: string; close: () => void }> {
+  const configuredA2AProtocolPolicy = opts.a2aProtocolPolicy
+    ?? readA2AProtocolPolicy(process.env['AIWG_A2A_PROTOCOL_POLICY']);
+  const configuredA2AProtocolFallback = opts.allowA2AProtocolFallback
+    ?? process.env['AIWG_A2A_PROTOCOL_FALLBACK'] === 'true';
+  const configuredLegacyExecutorFallback = configuredA2AProtocolPolicy !== '1.0'
+    && (opts.allowLegacyExecutorFallback
+      ?? process.env['AIWG_A2A_LEGACY_EXECUTOR_FALLBACK'] !== 'false');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let honoMod: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -785,8 +827,32 @@ export async function startServer(opts: {
     let a2aInstanceId: string | undefined;
     let dispatchPath: 'v2' | 'v1-fallback' = 'v2';
     let a2aTask = undefined as Awaited<ReturnType<typeof routeDispatch>>['task'] | undefined;
+    let a2aProtocolVersion: '0.3' | '1.0' | undefined;
+    let a2aInterface: Awaited<ReturnType<typeof routeDispatch>>['a2aInterface'] | undefined;
+    let a2aFallbackReason: string | undefined;
+    const a2aProtocolPolicy = configuredA2AProtocolPolicy;
     try {
       const result = await routeDispatch(executor, payload as V1DispatchPayload, {
+        a2aProtocolPolicy,
+        allowA2AProtocolFallback: configuredA2AProtocolFallback,
+        allowLegacyExecutorFallback: configuredLegacyExecutorFallback,
+        onA2AProtocolSelection: (info) => {
+          telemetryStore.ingest(createEvent('a2a.protocol.selected', sessionId, {
+            selected_version: info.selected,
+            policy: info.policy,
+            ...(info.interface ? {
+              protocol_binding: info.interface.protocolBinding,
+              interface_url: info.interface.url,
+            } : {}),
+          }, missionId));
+        },
+        onA2AProtocolFallback: (info) => {
+          telemetryStore.ingest(createEvent('a2a.protocol.fallback', sessionId, {
+            from_version: info.from,
+            to_version: info.to,
+            reason: info.reason,
+          }, missionId));
+        },
         onV1Fallback: (info) => {
           logServeWarn(
             'dispatch',
@@ -815,6 +881,9 @@ export async function startServer(opts: {
       dispatchPath = result.dispatchPath;
       a2aInstanceId = result.a2aInstanceId;
       a2aTask = result.task;
+      a2aProtocolVersion = result.a2aProtocolVersion;
+      a2aInterface = result.a2aInterface;
+      a2aFallbackReason = result.a2aFallbackReason;
       if (result.estimatedStart) estimatedStart = result.estimatedStart;
     } catch (err) {
       const msg = (err as Error).message ?? String(err);
@@ -840,6 +909,14 @@ export async function startServer(opts: {
     }
 
     // 4. Record the mission and emit telemetry
+    if (a2aProtocolVersion && a2aInterface) {
+      executorRegistry.recordA2AProtocolSelection(executor.executorId, {
+        policy: a2aProtocolPolicy,
+        selectedVersion: a2aProtocolVersion,
+        interface: a2aInterface,
+        ...(a2aFallbackReason ? { fallbackReason: a2aFallbackReason } : {}),
+      });
+    }
     executorRegistry.assignMission(missionId, executor.executorId);
     if (dispatchPath === 'v2' && a2aTask && a2aInstanceId) {
       void observeA2ATerminalState(
@@ -855,6 +932,8 @@ export async function startServer(opts: {
               `A2A terminal observer failed for mission ${missionId}: ${(err as Error).message ?? String(err)}`
             );
           },
+          ...(a2aProtocolVersion ? { protocolVersion: a2aProtocolVersion } : {}),
+          ...(a2aInterface ? { selectedInterface: a2aInterface } : {}),
         }
       );
     }
@@ -863,6 +942,8 @@ export async function startServer(opts: {
       executorId: executor.executorId,
       objective: payload.objective,
       completion: payload.completion,
+      ...(a2aProtocolVersion ? { a2a_protocol_version: a2aProtocolVersion } : {}),
+      ...(a2aFallbackReason ? { a2a_fallback_reason: a2aFallbackReason } : {}),
     }, missionId));
 
     // 5. Return 202 Accepted
@@ -873,6 +954,12 @@ export async function startServer(opts: {
       dispatch_path: dispatchPath,
     };
     if (a2aInstanceId) dispatchResp.a2a_instance_id = a2aInstanceId;
+    if (a2aProtocolVersion) dispatchResp.a2a_protocol_version = a2aProtocolVersion;
+    if (a2aInterface) {
+      dispatchResp.a2a_protocol_binding = a2aInterface.protocolBinding;
+      dispatchResp.a2a_interface_url = a2aInterface.url;
+    }
+    if (a2aFallbackReason) dispatchResp.a2a_fallback_reason = a2aFallbackReason;
     if (estimatedStart) dispatchResp.estimated_start = estimatedStart;
     return c.json(dispatchResp, 202);
   });
@@ -1014,6 +1101,7 @@ export async function startServer(opts: {
     const result = await handleWebhook(configId, bodyBuf, signature, eventId, {
       registry: pushSecretRegistry,
       idempotency: webhookIdempotency,
+      contentType: c.req.header('content-type') ?? undefined,
       route: async (entry, event) => {
         // Append to mission recentEvents via a synthesized envelope.
         // The 'mission.webhook' event type falls through the registry's
@@ -1027,7 +1115,7 @@ export async function startServer(opts: {
               executor_id: mission.executorId,
               mission_id: entry.missionId,
               ts: new Date().toISOString(),
-              data: { stream_event: event as Record<string, unknown> },
+              data: { stream_event: event as unknown as Record<string, unknown> },
             });
           }
         }
@@ -1057,6 +1145,9 @@ export async function startServer(opts: {
       secret?: string;
       missionId?: string;
       taskId?: string;
+      contextId?: string;
+      protocolVersion?: '0.3' | '1.0';
+      taskOwner?: string;
       metadata?: Record<string, unknown>;
     };
     if (!p.configId || typeof p.configId !== 'string') {
@@ -1065,11 +1156,17 @@ export async function startServer(opts: {
     if (!p.secret || typeof p.secret !== 'string' || p.secret.length < 16) {
       return c.json({ error: 'secret is required and must be ≥16 chars' }, 400);
     }
+    if (p.protocolVersion === '1.0' && !p.taskId) {
+      return c.json({ error: 'taskId is required for A2A 1.0 push ownership scope' }, 400);
+    }
     pushSecretRegistry.register({
       configId: p.configId,
       secret: p.secret,
       ...(p.missionId ? { missionId: p.missionId } : {}),
       ...(p.taskId ? { taskId: p.taskId } : {}),
+      ...(p.contextId ? { contextId: p.contextId } : {}),
+      ...(p.protocolVersion ? { protocolVersion: p.protocolVersion } : {}),
+      ...(p.taskOwner ? { taskOwner: p.taskOwner } : {}),
       ...(p.metadata ? { metadata: p.metadata } : {}),
     });
     return c.json({ ok: true, configId: p.configId }, 201);
@@ -1833,12 +1930,28 @@ export const serveHandler: CommandHandler = {
   aliases: [],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
-    const { port, host, open, readOnly } = parseServeArgs(ctx.args);
+    const {
+      port,
+      host,
+      open,
+      readOnly,
+      a2aProtocolPolicy,
+      allowA2AProtocolFallback,
+      allowLegacyExecutorFallback,
+    } = parseServeArgs(ctx.args);
 
     let server: { url: string; close: () => void } | undefined;
 
     try {
-      server = await startServer({ port, host, readOnly, frameworkRoot: ctx.frameworkRoot });
+      server = await startServer({
+        port,
+        host,
+        readOnly,
+        frameworkRoot: ctx.frameworkRoot,
+        ...(a2aProtocolPolicy ? { a2aProtocolPolicy } : {}),
+        ...(allowA2AProtocolFallback !== undefined ? { allowA2AProtocolFallback } : {}),
+        ...(allowLegacyExecutorFallback !== undefined ? { allowLegacyExecutorFallback } : {}),
+      });
     } catch (error) {
       const { handlerResultFromError } = await import('../errors.js');
       return handlerResultFromError(error);

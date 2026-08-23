@@ -102,6 +102,34 @@ describe('ExecutorRegistry', () => {
       expect(summary?.a2a_instance_id).toBe('sandbox-inst-1');
     });
 
+    it('records the negotiated A2A interface in status and clears it on re-registration', () => {
+      registry.register(VALID_REGISTER_REQUEST);
+      expect(registry.recordA2AProtocolSelection(VALID_EXECUTOR_ID, {
+        policy: 'auto',
+        selectedVersion: '1.0',
+        interface: {
+          url: 'https://sandbox.test/agents/one',
+          protocolBinding: 'HTTP+JSON',
+          protocolVersion: '1.0',
+          preference: 0,
+          legacy: false,
+        },
+        fallbackReason: 'version probe selected 1.0',
+        selectedAt: '2026-08-23T12:00:00Z',
+      })).toBe(true);
+      expect(registry.get(VALID_EXECUTOR_ID)?.a2a_protocol).toEqual({
+        policy: 'auto',
+        selected_version: '1.0',
+        protocol_binding: 'HTTP+JSON',
+        interface_url: 'https://sandbox.test/agents/one',
+        fallback_reason: 'version probe selected 1.0',
+        selected_at: '2026-08-23T12:00:00Z',
+      });
+
+      registry.register({ ...VALID_REGISTER_REQUEST, version: '0.4.0' });
+      expect(registry.get(VALID_EXECUTOR_ID)?.a2a_protocol).toBeUndefined();
+    });
+
     it('issues unique tokens for different executor_ids', () => {
       const r1 = registry.register(VALID_REGISTER_REQUEST) as { token: string };
       const r2 = registry.register({ ...VALID_REGISTER_REQUEST, executor_id: VALID_EXECUTOR_ID_2 }) as { token: string };

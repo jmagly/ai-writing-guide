@@ -12,7 +12,8 @@
 // and skills.
 
 import { loadJwkSet, verifyAgentCardSignature, type JwkSet } from './jws.js';
-import type { AgentCard } from './types.js';
+import { normalizeAgentCard } from './protocol.js';
+import type { AgentCard, NormalizedAgentCard } from './types.js';
 
 export interface FetchAgentCardOptions {
   /** Pre-loaded JWKS — preferred when the JWKS path is known up-front. */
@@ -32,6 +33,8 @@ export interface FetchAgentCardOptions {
 
 export interface VerifiedAgentCard {
   card: AgentCard;
+  /** Strict normalized discovery model used for interface selection. */
+  normalized: NormalizedAgentCard;
   /** RFC 3339 timestamp of when this card was fetched and verified. */
   verifiedAt: string;
   /** The `kid` from the JWS header used to verify; undefined when skipVerify. */
@@ -126,9 +129,10 @@ export async function fetchAgentCard(
   } catch (err) {
     throw new Error(`fetchAgentCard: invalid JSON from ${url}: ${(err as Error).message}`);
   }
+  const normalized = normalizeAgentCard(card);
 
   if (opts.skipVerify) {
-    return { card, raw, verifiedAt: new Date().toISOString() };
+    return { card, normalized, raw, verifiedAt: new Date().toISOString() };
   }
 
   let jwks = opts.jwks;
@@ -144,6 +148,7 @@ export async function fetchAgentCard(
   verifyAgentCardSignature(raw, jwks);
   const verified: VerifiedAgentCard = {
     card,
+    normalized,
     raw,
     verifiedAt: new Date().toISOString(),
   };

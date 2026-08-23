@@ -442,12 +442,12 @@ export async function driveOnePrompt(opts: {
 // ── helpers ────────────────────────────────────────────────────────────
 
 function extractEnvelopeFromEvent(event: StreamEvent): HitlPromptEnvelope | null {
-  if (event.kind === 'task-state') {
+  if (event.type === 'task') {
     const result = extractHitlEnvelope(event.task);
     if (result?.ok) return result.envelope;
     return null;
   }
-  if (event.kind === 'status-update') {
+  if (event.type === 'status') {
     const result = extractHitlEnvelope(event.status);
     if (result?.ok) return result.envelope;
     return null;
@@ -456,14 +456,16 @@ function extractEnvelopeFromEvent(event: StreamEvent): HitlPromptEnvelope | null
 }
 
 function inferEventContext(event: StreamEvent): { contextId?: string } {
-  if (event.kind === 'task-state') {
+  if (event.type === 'task') {
     return event.task.contextId !== undefined
       ? { contextId: event.task.contextId }
       : {};
   }
-  // status-update / artifact-update don't carry a contextId; the caller
-  // can pass one through `driveOnePrompt` directly if it has one cached.
-  return {};
+  return event.type === 'status' || event.type === 'artifact'
+    ? event.contextId !== undefined ? { contextId: event.contextId } : {}
+    : event.type === 'message' && event.message.contextId !== undefined
+      ? { contextId: event.message.contextId }
+      : {};
 }
 
 function parseDeadline(deadline: string | undefined): number | null {

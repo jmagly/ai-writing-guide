@@ -36,6 +36,8 @@ export type TelemetryEventType =
   | 'scope.unit.complete'
   | 'v1.deprecation.observed'
   | 'v1.dispatch.fallback'
+  | 'a2a.protocol.selected'
+  | 'a2a.protocol.fallback'
   | 'a2a.webhook.received'
   | 'graph.node.state'
   | 'graph.route.decision'

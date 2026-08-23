@@ -137,6 +137,11 @@ No request body. Response: `204 No Content`. Executor SHOULD also call this on g
 Schema: `schemas/executor-v1.json#/$defs/executors_list_response`.
 
 Lists registered executors with current status. Response includes `connected: bool`, `last_event_ts`, current mission count.
+After an A2A dispatch, `a2a_protocol` reports the selected protocol version,
+binding, interface URL, policy, fallback reason (if any), and selection time.
+This runtime state is independent of the executor contract `spec_version` and
+is cleared when the executor re-registers so a rotated AgentCard cannot reuse
+a stale interface.
 
 ### `POST /api/v1/sessions/:id/dispatch`
 

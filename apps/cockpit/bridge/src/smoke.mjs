@@ -3,7 +3,12 @@
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { createExecutor, DEFAULT_INSTANCE } from '../../mock-executor/src/server.mjs';
-import { createBridge, localLibvirtFallbackAllowed, normalizeSessionRows } from './server.mjs';
+import {
+  createBridge,
+  localLibvirtFallbackAllowed,
+  normalizeSessionRows,
+  selectCockpitA2AInterface,
+} from './server.mjs';
 
 const mock = createExecutor();
 await new Promise((r) => mock.listen(0, '127.0.0.1', r));
@@ -37,6 +42,17 @@ try {
   assert.equal(i0.storage?.persistent, true, 'storage persistence surfaced');
   assert.equal(i0.storage?.delete_on_destroy, true, 'storage delete-on-destroy surfaced');
   assert.ok(['vm', 'container', 'host', 'wasm-edge'].includes(i0.runtime), 'runtime kind');
+  assert.equal(i0.a2a_protocol?.selected_version, '0.3', 'inventory exposes the selected A2A protocol');
+  assert.equal(selectCockpitA2AInterface({
+    name: 'dual',
+    version: '1',
+    protocolVersion: '0.3.0',
+    url: 'https://legacy.test/agent',
+    supportedInterfaces: [
+      { url: 'https://v1.test/agent', protocolBinding: 'HTTP+JSON', protocolVersion: '1.0' },
+      { url: 'https://legacy.test/agent', transport: 'REST', protocolVersion: '0.3' },
+    ],
+  }, 'auto').protocol_version, '1.0', 'Cockpit auto selects the preferred 1.0 interface');
 
   // A transient executor outage must not poison Bridge state or require a
   // Bridge restart. Every poll is a fresh upstream request, so the same Bridge

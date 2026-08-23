@@ -16,7 +16,9 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore — .mjs without bundled types
 import { spawnAiwgServe, waitForHttp } from '../integration/_serve-harness.mjs';
-import { A2A_IDEMPOTENCY_V1, A2A_RUNTIME_V1 } from '../../src/a2a/client.js';
+import { A2AClient } from '../../src/a2a/client.js';
+import { normalizeAgentCard } from '../../src/a2a/protocol.js';
+import type { AgentCard, A2AProtocolVersion } from '../../src/a2a/types.js';
 
 const SANDBOX_ENDPOINT = process.env.AIWG_SANDBOX_ENDPOINT || 'http://127.0.0.1:8122';
 
@@ -233,7 +235,7 @@ describe('aiwg serve — live UAT vs real agentic-sandbox', () => {
     // /api/v1/vms route (some builds gate it behind a libvirt connection).
   }, 30_000);
 
-  liveIt('sandbox v2 A2A smoke covers admin instances, AgentCard, message dispatch, and task status', async () => {
+  liveIt('sandbox A2A 0.3/1.0 smoke covers discovery, negotiated dispatch, and normalized task status', async () => {
     const inventory = await fetch(`${SANDBOX_ENDPOINT}/api/v2/admin/instances`);
     if (inventory.status === 404) {
       // eslint-disable-next-line no-console
@@ -256,6 +258,11 @@ describe('aiwg serve — live UAT vs real agentic-sandbox', () => {
     expect(card.status).toBe(200);
     const cardBody = asRecord(await card.json());
     expect(typeof cardBody?.name).toBe('string');
+    const normalizedCard = normalizeAgentCard(cardBody as unknown as AgentCard);
+    const availableVersions = [...new Set(normalizedCard.interfaces.map(entry => entry.protocolVersion))];
+    if (process.env.AIWG_A2A_LIVE_REQUIRE_BOTH === '1') {
+      expect(availableVersions.sort()).toEqual(['0.3', '1.0']);
+    }
 
     if (process.env.AIWG_A2A_LIVE_DISPATCH !== '1') {
       // eslint-disable-next-line no-console
@@ -263,33 +270,25 @@ describe('aiwg serve — live UAT vs real agentic-sandbox', () => {
       return;
     }
 
-    const messageId = `uat-a2a-${Date.now()}`;
-    const send = await fetch(`${SANDBOX_ENDPOINT}/agents/${encodeURIComponent(instanceId)}/v1/messages:send`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'A2A-Extensions': `${A2A_RUNTIME_V1}, ${A2A_IDEMPOTENCY_V1}`,
-      },
-      body: JSON.stringify({
-        message: {
-          messageId,
-          role: 'user',
-          parts: [{ kind: 'text', text: 'AIWG live A2A smoke test. Report readiness only.' }],
-          metadata: { source: 'aiwg-uat', issue: 1372 },
-        },
-      }),
-    });
-    expect([200, 202]).toContain(send.status);
-    const task = asRecord(await send.json());
-    const taskId = task?.id ?? task?.taskId;
-    expect(typeof taskId).toBe('string');
-
-    const status = await fetch(
-      `${SANDBOX_ENDPOINT}/agents/${encodeURIComponent(instanceId)}/v1/tasks/${encodeURIComponent(String(taskId))}`,
-    );
-    expect(status.status).toBe(200);
-    const statusBody = asRecord(await status.json());
-    expect(statusBody?.status).toBeDefined();
+    const outcomes: Array<{ version: A2AProtocolVersion; state: string }> = [];
+    for (const protocolPolicy of availableVersions) {
+      const client = await A2AClient.negotiate({
+        baseUrl: SANDBOX_ENDPOINT,
+        bearer: process.env.AIWG_SANDBOX_TOKEN ?? '',
+        instanceId,
+        protocolPolicy,
+      });
+      const sent = await client.sendMessage({
+        messageId: `uat-a2a-${protocolPolicy}-${Date.now()}`,
+        role: 'user',
+        parts: [{ type: 'text', text: 'AIWG live A2A smoke test. Report readiness only.' }],
+        metadata: { source: 'aiwg-uat', issue: 2140 },
+      });
+      expect(sent.protocolVersion).toBe(protocolPolicy);
+      const status = await client.getTask(sent.task.id);
+      outcomes.push({ version: protocolPolicy, state: status.status.state });
+    }
+    expect(outcomes.map(outcome => outcome.version).sort()).toEqual(availableVersions.sort());
   }, 45_000);
 
   // ── Deferred to cycle 3 ─────────────────────────────────────────

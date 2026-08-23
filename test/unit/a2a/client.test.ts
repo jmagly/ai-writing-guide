@@ -66,7 +66,7 @@ describe('A2AClient.sendMessage', () => {
     const result = await client.sendMessage({
       messageId: 'msg-1',
       role: 'user',
-      parts: [{ kind: 'text', text: 'hi' }],
+      parts: [{ type: 'text', text: 'hi' }],
     });
     expect(calls[0]!.url).toBe('https://exec.test/agents/inst-1/v1/messages:send');
     expect(calls[0]!.init!.method).toBe('POST');
@@ -98,7 +98,7 @@ describe('A2AClient.sendMessage', () => {
     await client.sendMessage({
       messageId: 'msg-1',
       role: 'user',
-      parts: [{ kind: 'text', text: 'hi' }],
+      parts: [{ type: 'text', text: 'hi' }],
     });
     const headers = calls[0]!.init!.headers as Record<string, string>;
     expect(headers['a2a-extensions']).toContain('hitl-prompt/v1');
@@ -114,9 +114,162 @@ describe('A2AClient.sendMessage', () => {
     const result = await client.sendMessage({
       messageId: 'msg-1',
       role: 'user',
-      parts: [{ kind: 'text', text: 'hi' }],
+      parts: [{ type: 'text', text: 'hi' }],
     });
     expect(result.idempotentReplayed).toBe(true);
+  });
+});
+
+describe('A2AClient protocol negotiation', () => {
+  const dualCard = {
+    protocolVersion: '0.3.0',
+    name: 'dual agent',
+    version: '2.0.0',
+    url: 'https://legacy.test/agents/inst-1',
+    supportedInterfaces: [
+      {
+        url: 'https://v1.test/agents/inst-1',
+        protocolBinding: 'HTTP+JSON',
+        protocolVersion: '1.0',
+      },
+      {
+        url: 'https://legacy.test/agents/inst-1',
+        protocolBinding: 'REST',
+        protocolVersion: '0.3',
+      },
+    ],
+  };
+  const v1Task = {
+    task: {
+      id: 'task-v1',
+      contextId: 'ctx-v1',
+      status: { state: 'TASK_STATE_SUBMITTED', timestamp: '2026-08-23T12:00:00Z' },
+    },
+  };
+
+  it('selects the advertised 1.0 base URL and sends the required service headers and enums', async () => {
+    const calls: FetchCall[] = [];
+    const selections: unknown[] = [];
+    const stub: typeof fetch = async (input, init) => {
+      const call = { url: typeof input === 'string' ? input : (input as Request).url, init };
+      calls.push(call);
+      if (call.url.includes('.well-known')) {
+        return new Response(JSON.stringify(dualCard), { headers: { 'content-type': 'application/json' } });
+      }
+      return new Response(JSON.stringify(v1Task), {
+        headers: { 'content-type': 'application/a2a+json' },
+      });
+    };
+    const client = await A2AClient.negotiate({
+      baseUrl: 'https://discovery.test',
+      bearer: 'tok',
+      instanceId: 'inst-1',
+      protocolPolicy: 'auto',
+      fetch: stub,
+      onProtocolSelection: info => selections.push(info),
+    });
+    const result = await client.sendMessage({
+      messageId: 'm-v1', role: 'user', parts: [{ type: 'text', text: 'hello' }],
+    });
+    expect(calls[1]!.url).toBe('https://v1.test/agents/inst-1/message:send');
+    const headers = calls[1]!.init!.headers as Record<string, string>;
+    expect(headers['a2a-version']).toBe('1.0');
+    expect(headers.accept).toBe('application/a2a+json');
+    expect(headers['content-type']).toBe('application/a2a+json');
+    expect(JSON.parse(String(calls[1]!.init!.body))).toMatchObject({
+      message: { role: 'ROLE_USER', parts: [{ text: 'hello' }] },
+    });
+    expect(result).toMatchObject({ protocolVersion: '1.0', task: { status: { state: 'submitted' } } });
+    expect(selections).toHaveLength(1);
+  });
+
+  it('falls back only after VersionNotSupportedError when explicitly enabled', async () => {
+    const calls: FetchCall[] = [];
+    const fallbacks: unknown[] = [];
+    const stub: typeof fetch = async (input, init) => {
+      const call = { url: typeof input === 'string' ? input : (input as Request).url, init };
+      calls.push(call);
+      if (call.url.includes('.well-known')) {
+        return new Response(JSON.stringify(dualCard), { headers: { 'content-type': 'application/json' } });
+      }
+      if (call.url.includes('v1.test')) {
+        return new Response(JSON.stringify({
+          type: 'https://a2a-protocol.org/errors/version-not-supported',
+          title: 'Protocol Version Not Supported',
+          supportedVersions: ['0.3'],
+        }), { status: 400, headers: { 'content-type': 'application/problem+json' } });
+      }
+      return new Response(JSON.stringify(sampleTask), {
+        status: 202,
+        headers: { 'content-type': 'application/json' },
+      });
+    };
+    const client = await A2AClient.negotiate({
+      baseUrl: 'https://discovery.test', bearer: 'tok', instanceId: 'inst-1',
+      protocolPolicy: 'auto', allowProtocolFallback: true, fetch: stub,
+      onProtocolFallback: info => fallbacks.push(info),
+    });
+    const result = await client.sendMessage({
+      messageId: 'm-fallback', role: 'user', parts: [{ type: 'text', text: 'hello' }],
+    });
+    expect(calls.map(call => call.url)).toEqual([
+      'https://discovery.test/agents/inst-1/.well-known/agent-card.json',
+      'https://v1.test/agents/inst-1/message:send',
+      'https://legacy.test/agents/inst-1/v1/messages:send',
+    ]);
+    expect((calls[2]!.init!.headers as Record<string, string>)['a2a-version']).toBeUndefined();
+    expect(result.protocolVersion).toBe('0.3');
+    expect(result.fallbackReason).toContain('version-not-supported');
+    expect(fallbacks).toHaveLength(1);
+  });
+
+  it.each([
+    [401, { type: 'about:blank', title: 'Unauthorized' }],
+    [422, { type: 'about:blank', title: 'Invalid mission' }],
+  ])('does not downgrade auto mode on HTTP %s', async (status, problem) => {
+    const calls: FetchCall[] = [];
+    const stub: typeof fetch = async (input, init) => {
+      const call = { url: typeof input === 'string' ? input : (input as Request).url, init };
+      calls.push(call);
+      if (call.url.includes('.well-known')) {
+        return new Response(JSON.stringify(dualCard), { headers: { 'content-type': 'application/json' } });
+      }
+      return new Response(JSON.stringify(problem), {
+        status,
+        headers: { 'content-type': 'application/problem+json' },
+      });
+    };
+    const client = await A2AClient.negotiate({
+      baseUrl: 'https://discovery.test', bearer: 'tok', instanceId: 'inst-1',
+      protocolPolicy: 'auto', allowProtocolFallback: true, fetch: stub,
+    });
+    await expect(client.sendMessage({
+      messageId: `m-${status}`, role: 'user', parts: [{ type: 'text', text: 'hello' }],
+    })).rejects.toMatchObject({ status });
+    expect(calls).toHaveLength(2);
+  });
+
+  it('keeps strict 1.0 mode strict after an unsupported-version response', async () => {
+    const calls: FetchCall[] = [];
+    const stub: typeof fetch = async (input, init) => {
+      const call = { url: typeof input === 'string' ? input : (input as Request).url, init };
+      calls.push(call);
+      if (call.url.includes('.well-known')) {
+        return new Response(JSON.stringify(dualCard), { headers: { 'content-type': 'application/json' } });
+      }
+      return new Response(JSON.stringify({
+        type: 'https://a2a-protocol.org/errors/version-not-supported',
+        title: 'Protocol Version Not Supported',
+      }), { status: 400, headers: { 'content-type': 'application/problem+json' } });
+    };
+    const client = await A2AClient.negotiate({
+      baseUrl: 'https://discovery.test', bearer: 'tok', instanceId: 'inst-1',
+      protocolPolicy: '1.0', allowProtocolFallback: true, fetch: stub,
+    });
+    await expect(client.sendMessage({
+      messageId: 'm-strict', role: 'user', parts: [{ type: 'text', text: 'hello' }],
+    })).rejects.toMatchObject({ versionNotSupported: true });
+    expect(calls).toHaveLength(2);
   });
 });
 
@@ -177,6 +330,47 @@ describe('A2AClient push notification configs', () => {
       'https://exec.test/agents/inst-1/v1/tasks/task-1/pushNotificationConfigs'
     );
     expect(cfg.configId).toBe('cfg-1');
+  });
+
+  it('maps normalized push config fields to the 1.0 resource shape', async () => {
+    const calls: FetchCall[] = [];
+    const stub: typeof fetch = async (input, init) => {
+      calls.push(init
+        ? { url: typeof input === 'string' ? input : (input as Request).url, init }
+        : { url: typeof input === 'string' ? input : (input as Request).url });
+      return new Response(JSON.stringify({
+        id: 'cfg-v1',
+        url: 'https://hook.test/a2a',
+        token: 'hmac-secret',
+        authentication: { scheme: 'Bearer', credentials: 'push-token' },
+      }), { status: 201, headers: { 'content-type': 'application/a2a+json' } });
+    };
+    const client = new A2AClient({
+      baseUrl: 'https://discovery.test',
+      bearer: 'tok',
+      instanceId: 'inst-1',
+      protocolPolicy: '1.0',
+      selectedInterface: {
+        url: 'https://v1.test/agents/inst-1',
+        protocolBinding: 'HTTP+JSON',
+        protocolVersion: '1.0',
+        preference: 0,
+        legacy: false,
+      },
+      fetch: stub,
+    });
+    const config = await client.createPushNotificationConfig('task-v1', {
+      url: 'https://hook.test/a2a',
+      secret: 'hmac-secret',
+      authentication: { scheme: 'Bearer', credentials: 'push-token' },
+    });
+    expect(calls[0]!.url).toBe('https://v1.test/agents/inst-1/tasks/task-v1/pushNotificationConfigs');
+    expect(JSON.parse(String(calls[0]!.init!.body))).toEqual({
+      url: 'https://hook.test/a2a',
+      token: 'hmac-secret',
+      authentication: { scheme: 'Bearer', credentials: 'push-token' },
+    });
+    expect(config).toMatchObject({ configId: 'cfg-v1', secret: 'hmac-secret' });
   });
 
   it('deletePushNotificationConfig DELETEs the right path', async () => {
@@ -351,7 +545,45 @@ describe('A2AClient.subscribeToTask', () => {
       events.push(evt);
     }
     expect(events).toHaveLength(2);
-    expect((events[0] as { kind: string }).kind).toBe('task-state');
-    expect((events[1] as { kind: string; final?: boolean }).final).toBe(true);
+    expect((events[0] as { type: string }).type).toBe('task');
+    expect((events[1] as { type: string }).type).toBe('status');
+    expect((events[1] as { status: Task['status'] }).status.state).toBe('completed');
+  });
+
+  it('uses the 1.0 subscribe operation, requires the snapshot, and closes at terminal status', async () => {
+    const calls: FetchCall[] = [];
+    const sseBody =
+      'id: 1\ndata: {"task":{"id":"t1","contextId":"c1","status":{"state":"TASK_STATE_WORKING"}}}\n\n' +
+      'id: 2\ndata: {"statusUpdate":{"taskId":"t1","contextId":"c1","status":{"state":"TASK_STATE_COMPLETED"}}}\n\n' +
+      'id: 3\ndata: {"artifactUpdate":{"taskId":"t1","contextId":"c1","artifact":{"artifactId":"late","parts":[{"text":"late"}]}}}\n\n';
+    const stub: typeof fetch = async (input, init) => {
+      calls.push(init
+        ? { url: typeof input === 'string' ? input : (input as Request).url, init }
+        : { url: typeof input === 'string' ? input : (input as Request).url });
+      return new Response(sseBody, {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream' },
+      });
+    };
+    const client = new A2AClient({
+      baseUrl: 'https://discovery.test',
+      bearer: 'tok',
+      instanceId: 'inst-1',
+      protocolPolicy: '1.0',
+      selectedInterface: {
+        url: 'https://v1.test/agents/inst-1',
+        protocolBinding: 'HTTP+JSON',
+        protocolVersion: '1.0',
+        preference: 0,
+        legacy: false,
+      },
+      fetch: stub,
+    });
+    const events: unknown[] = [];
+    for await (const event of client.subscribeToTask('t1')) events.push(event);
+    expect(events).toHaveLength(2);
+    expect(calls[0]!.url).toBe('https://v1.test/agents/inst-1/tasks/t1:subscribe');
+    expect(calls[0]!.init!.method).toBe('POST');
+    expect((calls[0]!.init!.headers as Record<string, string>)['a2a-version']).toBe('1.0');
   });
 });

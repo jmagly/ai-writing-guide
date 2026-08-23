@@ -2,6 +2,11 @@
 
 # AIWG Cockpit
 
+Cockpit's agentic-sandbox management API version, upstream A2A protocol
+version, and extension `/v1` URI suffixes are independent. See
+[A2A protocol compatibility](../../docs/a2a-protocol-compatibility.md) for the
+0.3/1.0 selection and qualification contract.
+
 **Local control plane for AIWG and multi-stack agentic sessions**
 
 Observe live agent work, attach to sessions, handle approvals, launch runtime

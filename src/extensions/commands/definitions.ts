@@ -952,7 +952,7 @@ export const serveCommand: Extension = {
     triggerPhrases: ['serve dashboard', 'start server', 'open dashboard', 'aiwg serve'],
     commandHint: {
       template: 'utility',
-      argumentHint: '[--port <n>] [--bind <host>] [--no-open] [--read-only]',
+      argumentHint: '[--port <n>] [--bind <host>] [--no-open] [--read-only] [--a2a-protocol <0.3|1.0|auto>] [--a2a-protocol-fallback] [--no-a2a-legacy-executor-fallback]',
       allowedTools: ['Bash'],
     },
   } satisfies SkillMetadata,

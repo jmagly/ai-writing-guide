@@ -65,7 +65,7 @@ function setupRegistry(): { registry: ExecutorRegistry; executor: ExecutorRegist
 describe('observeA2ATerminalState', () => {
   it('projects graph node terminal state when namespaced A2A metadata is present', async () => {
     const { registry, executor } = setupRegistry();
-    const task = mkTask('completed', { summary: 'node done', exit_code: 0 });
+    const task = mkTask('completed', { summary: 'node done', exitCode: 0 });
     task.metadata = {
       [AIWG_GRAPH_METADATA_KEY]: {
         schemaVersion: 'graph.flow.aiwg.io/v1',
@@ -91,7 +91,7 @@ describe('observeA2ATerminalState', () => {
       executor,
       'mission-1',
       'instance-1',
-      mkTask('completed', { summary: 'command exited 0', exit_code: 0 }),
+      mkTask('completed', { summary: 'command exited 0', exitCode: 0 }),
       { pollIntervalMs: 1, maxPolls: 0 }
     );
 

@@ -8,6 +8,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { A2A_HITL_PROMPT_V1 } from '../../../src/a2a/client.js';
+import { encodeMessage } from '../../../src/a2a/codecs.js';
 import {
   buildHitlResponseMessage,
   extractHitlEnvelope,
@@ -26,7 +27,7 @@ function makeTask(overrides: Partial<Task> = {}, envelope?: Record<string, JsonV
       message: {
         messageId: 'agent-m-1',
         role: 'agent',
-        parts: [{ kind: 'text', text: 'Need your input' }],
+        parts: [{ type: 'text', text: 'Need your input' }],
         metadata: envelope
           ? { [A2A_HITL_PROMPT_V1]: envelope as unknown as JsonValue }
           : {},
@@ -178,7 +179,7 @@ describe('buildHitlResponseMessage', () => {
       messageId: fixture.response.messageId,
       taskId: fixture.response.taskId,
     });
-    expect(built).toEqual(fixture.response);
+    expect(encodeMessage('0.3', built)).toEqual(fixture.response);
   });
 
   it('produces a Message with hitl_response_for correlation', () => {

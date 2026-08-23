@@ -18,6 +18,7 @@ import {
   requiredExtensionUris,
 } from '../../../src/a2a/agent-card.js';
 import { canonicalizeJson } from '../../../src/a2a/jcs.js';
+import { agentInterfaceCacheKey, selectAgentInterface } from '../../../src/a2a/protocol.js';
 import type { Jwk, JwkSet } from '../../../src/a2a/jws.js';
 import type { AgentCard, JsonValue } from '../../../src/a2a/types.js';
 
@@ -237,6 +238,44 @@ describe('AgentCardCache', () => {
       fetch: stub,
     });
     expect(calls).toBe(2);
+  });
+
+  it('does not reuse a selected interface after signed-card rotation and invalidation', async () => {
+    const cache = new AgentCardCache(10_000);
+    const { jwk, sign } = makeKeypair('rotate-k');
+    let signedJson = makeSignedCard(jwk, sign, {
+      supportedInterfaces: [{
+        url: 'https://old.test/agents/inst-1',
+        protocolBinding: 'HTTP+JSON',
+        protocolVersion: '1.0',
+      }] as unknown as JsonValue,
+    });
+    const stub: typeof fetch = async () => new Response(signedJson, {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+    const first = await fetchAgentCardCached(cache, 'https://exec.test', 'inst-1', {
+      jwks: { keys: [jwk] } as JwkSet,
+      fetch: stub,
+    });
+    const firstInterface = selectAgentInterface(first.normalized, { policy: '1.0' });
+
+    signedJson = makeSignedCard(jwk, sign, {
+      supportedInterfaces: [{
+        url: 'https://rotated.test/agents/inst-1',
+        protocolBinding: 'HTTP+JSON',
+        protocolVersion: '1.0',
+      }] as unknown as JsonValue,
+    });
+    cache.invalidate('https://exec.test|inst-1');
+    const rotated = await fetchAgentCardCached(cache, 'https://exec.test', 'inst-1', {
+      jwks: { keys: [jwk] } as JwkSet,
+      fetch: stub,
+    });
+    const rotatedInterface = selectAgentInterface(rotated.normalized, { policy: '1.0' });
+    expect(rotatedInterface.url).toBe('https://rotated.test/agents/inst-1');
+    expect(agentInterfaceCacheKey('https://exec.test', 'inst-1', rotatedInterface))
+      .not.toBe(agentInterfaceCacheKey('https://exec.test', 'inst-1', firstInterface));
   });
 });
 

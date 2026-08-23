@@ -146,6 +146,61 @@ describe('A2AHttpClient', () => {
     }
   });
 
+  it('enforces 1.0 headers and successful response media type', async () => {
+    const { fetch: stub, calls } = makeFetchStub(() =>
+      new Response('{"ok":true}', {
+        status: 200,
+        headers: { 'content-type': 'application/a2a+json' },
+      })
+    );
+    const http = new A2AHttpClient({
+      baseUrl: 'https://x.test', bearer: 't', fetch: stub, protocolVersion: '1.0',
+    });
+    await http.request('/message:send', { method: 'POST', body: {} });
+    const headers = calls[0]!.init!.headers as Record<string, string>;
+    expect(headers).toMatchObject({
+      'a2a-version': '1.0',
+      accept: 'application/a2a+json',
+      'content-type': 'application/a2a+json',
+    });
+
+    const invalid = new A2AHttpClient({
+      baseUrl: 'https://x.test',
+      bearer: 't',
+      protocolVersion: '1.0',
+      fetch: async () => new Response('{}', { headers: { 'content-type': 'application/json' } }),
+    });
+    await expect(invalid.request('/tasks/t')).rejects.toMatchObject({
+      category: 'transport',
+      problem: { code: 'aiwg.invalid_content_type' },
+    });
+  });
+
+  it('classifies version, authorization, application, and transport failures separately', async () => {
+    const responseFor = (status: number, body: object) => new A2AHttpClient({
+      baseUrl: 'https://x.test',
+      bearer: 't',
+      fetch: async () => new Response(JSON.stringify(body), {
+        status,
+        headers: { 'content-type': 'application/problem+json' },
+      }),
+    });
+    await expect(responseFor(400, {
+      type: 'https://a2a-protocol.org/errors/version-not-supported',
+      title: 'Version unsupported',
+    }).request('/x')).rejects.toMatchObject({ category: 'negotiation' });
+    await expect(responseFor(401, { title: 'Unauthorized' }).request('/x'))
+      .rejects.toMatchObject({ category: 'authorization' });
+    await expect(responseFor(422, { title: 'Invalid' }).request('/x'))
+      .rejects.toMatchObject({ category: 'application' });
+    const transport = new A2AHttpClient({
+      baseUrl: 'https://x.test',
+      bearer: 't',
+      fetch: async () => { throw new TypeError('connection reset'); },
+    });
+    await expect(transport.request('/x')).rejects.toMatchObject({ category: 'transport', status: 0 });
+  });
+
   it('captures Sunset / Deprecated / Link successor-version', async () => {
     const captured: DeprecationInfo[] = [];
     const { fetch: stub } = makeFetchStub(() =>

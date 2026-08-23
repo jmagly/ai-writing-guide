@@ -16,9 +16,21 @@
 //   GET    /agents/{id}/v1/card                         (legacy extended card)
 
 import { A2AError, A2AHttpClient, type A2AHttpClientOptions, type A2AResponse } from './http.js';
+import {
+  decodePushNotificationConfig,
+  decodeSendMessageResponse,
+  decodeTask,
+  encodeMessage,
+  encodePushNotificationConfig,
+} from './codecs.js';
+import { A2AEventReconciler, decodeStreamResponse } from './events.js';
+import { normalizeAgentCard, selectAgentInterface } from './protocol.js';
 import type {
+  A2AProtocolPolicy,
+  A2AProtocolVersion,
   AgentCard,
   Message,
+  NormalizedAgentInterface,
   PushNotificationConfig,
   StreamEvent,
   Task,
@@ -44,6 +56,18 @@ export interface A2AClientOptions extends Omit<A2AHttpClientOptions, 'defaultExt
   /** Optional extensions to include in the `A2A-Extensions` header (toggled
    *  by AIWG config flags upstream). */
   optionalExtensions?: readonly string[];
+  /** Explicit wire policy. `auto` requires negotiate(); constructor defaults to 0.3. */
+  protocolPolicy?: A2AProtocolPolicy;
+  /** Interface selected from a normalized AgentCard. */
+  selectedInterface?: NormalizedAgentInterface;
+  /** Auto mode may fall back only after a standard VersionNotSupportedError. */
+  allowProtocolFallback?: boolean;
+  onProtocolSelection?: (info: {
+    selected: A2AProtocolVersion;
+    interface: NormalizedAgentInterface;
+    policy: A2AProtocolPolicy;
+  }) => void;
+  onProtocolFallback?: (info: { from: '1.0'; to: '0.3'; reason: string }) => void;
 }
 
 export interface SendMessageOptions {
@@ -57,26 +81,98 @@ export interface SendMessageResult {
   /** True when the executor served this from the idempotency cache. */
   idempotentReplayed: boolean;
   activatedExtensions: string[];
+  protocolVersion: A2AProtocolVersion;
+  selectedInterface?: NormalizedAgentInterface;
+  fallbackReason?: string;
 }
 
 export class A2AClient {
   readonly instanceId: string;
+  readonly protocolVersion: A2AProtocolVersion;
+  readonly protocolPolicy: A2AProtocolPolicy;
+  readonly selectedInterface?: NormalizedAgentInterface;
   private readonly http: A2AHttpClient;
   private readonly extensionSet: string[];
+  private fallbackClient?: A2AClient;
+  private readonly allowProtocolFallback: boolean;
+  private readonly onProtocolFallback?: A2AClientOptions['onProtocolFallback'];
 
   constructor(opts: A2AClientOptions) {
     this.instanceId = opts.instanceId;
+    this.protocolPolicy = opts.protocolPolicy ?? opts.protocolVersion ?? '0.3';
+    if (this.protocolPolicy === 'auto' && !opts.selectedInterface) {
+      throw new Error('A2AClient protocolPolicy=auto requires A2AClient.negotiate() or selectedInterface');
+    }
+    this.selectedInterface = opts.selectedInterface;
+    this.protocolVersion = opts.selectedInterface?.protocolVersion ?? opts.protocolVersion ?? '0.3';
+    this.allowProtocolFallback = opts.allowProtocolFallback ?? false;
+    this.onProtocolFallback = opts.onProtocolFallback;
     const required = opts.requiredExtensions ?? DEFAULT_REQUIRED_EXTENSIONS;
     const optional = opts.optionalExtensions ?? [];
     this.extensionSet = [...required, ...optional];
     this.http = new A2AHttpClient({
       ...opts,
+      baseUrl: opts.selectedInterface?.url ?? opts.baseUrl,
+      protocolVersion: this.protocolVersion,
       defaultExtensions: this.extensionSet,
     });
+    if (opts.selectedInterface && opts.onProtocolSelection) {
+      opts.onProtocolSelection({
+        selected: this.protocolVersion,
+        interface: opts.selectedInterface,
+        policy: this.protocolPolicy,
+      });
+    }
+  }
+
+  /** Discover, normalize, and select an AgentCard interface deterministically. */
+  static async negotiate(opts: A2AClientOptions): Promise<A2AClient> {
+    const policy = opts.protocolPolicy ?? 'auto';
+    const {
+      selectedInterface: _ignoredSelectedInterface,
+      protocolVersion: _ignoredProtocolVersion,
+      onProtocolSelection,
+      ...negotiationOpts
+    } = opts;
+    const discovery = new A2AClient({ ...negotiationOpts, protocolPolicy: '0.3', protocolVersion: '0.3' });
+    const card = await discovery.getAgentCard();
+    const normalized = normalizeAgentCard(card);
+    const selected = selectAgentInterface(normalized, { policy });
+    const client = new A2AClient({
+      ...negotiationOpts,
+      protocolPolicy: policy,
+      protocolVersion: selected.protocolVersion,
+      selectedInterface: selected,
+    });
+    if (policy === 'auto' && selected.protocolVersion === '1.0' && opts.allowProtocolFallback) {
+      try {
+        const fallback = selectAgentInterface(normalized, { policy: '0.3' });
+        client.fallbackClient = new A2AClient({
+          ...negotiationOpts,
+          protocolPolicy: '0.3',
+          protocolVersion: '0.3',
+          selectedInterface: fallback,
+          allowProtocolFallback: false,
+        });
+      } catch {
+        // No compatible 0.3 interface; auto remains 1.0-only.
+      }
+    }
+    // Fire once for the interface actually selected for use; the dormant
+    // downgrade adapter is not itself a selection event.
+    onProtocolSelection?.({ selected: selected.protocolVersion, interface: selected, policy });
+    return client;
   }
 
   private agentPath(): string {
     return `/agents/${encodeURIComponent(this.instanceId)}/v1`;
+  }
+
+  private operationPath(v1Path: string, legacyPath: string): string {
+    if (this.selectedInterface) {
+      return this.protocolVersion === '1.0' ? `/${v1Path}` : `/v1/${legacyPath}`;
+    }
+    return `${this.agentPath()}/${legacyPath}`;
   }
 
   // ---------- AgentCard ----------
@@ -156,14 +252,32 @@ export class A2AClient {
    * `idempotentReplayed: true`.
    */
   async sendMessage(message: Message, opts: SendMessageOptions = {}): Promise<SendMessageResult> {
-    const path = `${this.agentPath()}/messages:send`;
+    const path = this.operationPath('message:send', 'messages:send');
     const requestOptions: Parameters<A2AHttpClient['request']>[1] = {
       method: 'POST',
-      body: { message },
+      body: { message: encodeMessage(this.protocolVersion, message) },
       extensions: opts.extensions ? [...opts.extensions] : this.extensionSet,
     };
     if (opts.signal) requestOptions.signal = opts.signal;
-    const resp = await this.http.request<Task>(path, requestOptions);
+    let resp: A2AResponse<unknown>;
+    try {
+      resp = await this.http.request<unknown>(path, requestOptions);
+    } catch (error) {
+      if (
+        error instanceof A2AError
+        && error.versionNotSupported
+        && this.protocolVersion === '1.0'
+        && this.protocolPolicy === 'auto'
+        && this.allowProtocolFallback
+        && this.fallbackClient
+      ) {
+        const reason = `${error.problem.type}: ${error.problem.detail ?? error.problem.title}`;
+        this.onProtocolFallback?.({ from: '1.0', to: '0.3', reason });
+        const fallback = await this.fallbackClient.sendMessage(message, opts);
+        return { ...fallback, fallbackReason: reason };
+      }
+      throw error;
+    }
     if (!resp.body) {
       throw new A2AError(resp.status, path, {
         type: 'about:blank',
@@ -171,20 +285,23 @@ export class A2AClient {
         code: 'aiwg.empty_send_message',
       });
     }
+    const task = decodeSendMessageResponse(this.protocolVersion, resp.body);
     return {
-      task: resp.body,
+      task,
       idempotentReplayed: resp.idempotentReplayed,
       activatedExtensions: resp.activatedExtensions,
+      protocolVersion: this.protocolVersion,
+      ...(this.selectedInterface ? { selectedInterface: this.selectedInterface } : {}),
     };
   }
 
   // ---------- Tasks ----------
 
   async getTask(taskId: string, opts: { signal?: AbortSignal } = {}): Promise<Task> {
-    const path = `${this.agentPath()}/tasks/${encodeURIComponent(taskId)}`;
+    const path = this.operationPath(`tasks/${encodeURIComponent(taskId)}`, `tasks/${encodeURIComponent(taskId)}`);
     const requestOptions: Parameters<A2AHttpClient['request']>[1] = { method: 'GET' };
     if (opts.signal) requestOptions.signal = opts.signal;
-    const resp = await this.http.request<Task>(path, requestOptions);
+    const resp = await this.http.request<unknown>(path, requestOptions);
     if (!resp.body) {
       throw new A2AError(resp.status, path, {
         type: 'about:blank',
@@ -192,30 +309,33 @@ export class A2AClient {
         code: 'aiwg.empty_get_task',
       });
     }
-    return resp.body;
+    return decodeTask(this.protocolVersion, resp.body);
   }
 
   /** List tasks for this instance, optionally filtered by state. */
   async listTasks(filter: { state?: string; limit?: number } = {}): Promise<Task[]> {
     const params = new URLSearchParams();
-    if (filter.state) params.set('state', filter.state);
-    if (filter.limit !== undefined) params.set('limit', String(filter.limit));
+    if (filter.state) params.set(this.protocolVersion === '1.0' ? 'status' : 'state', filter.state);
+    if (filter.limit !== undefined) params.set(this.protocolVersion === '1.0' ? 'pageSize' : 'limit', String(filter.limit));
     const query = params.toString();
-    const path = `${this.agentPath()}/tasks${query ? '?' + query : ''}`;
-    const resp = await this.http.request<{ tasks: Task[] } | Task[]>(path, { method: 'GET' });
+    const basePath = this.operationPath('tasks', 'tasks');
+    const path = `${basePath}${query ? '?' + query : ''}`;
+    const resp = await this.http.request<{ tasks?: unknown[] } | unknown[]>(path, { method: 'GET' });
     if (!resp.body) return [];
-    return Array.isArray(resp.body) ? resp.body : resp.body.tasks ?? [];
+    const raw = Array.isArray(resp.body) ? resp.body : resp.body.tasks ?? [];
+    return raw.map((task, index) => decodeTask(this.protocolVersion, task, `$.tasks[${index}]`));
   }
 
   async cancelTask(taskId: string, opts: SendMessageOptions = {}): Promise<Task> {
-    const path = `${this.agentPath()}/tasks/${encodeURIComponent(taskId)}/cancel`;
+    const encoded = encodeURIComponent(taskId);
+    const path = this.operationPath(`tasks/${encoded}:cancel`, `tasks/${encoded}/cancel`);
     const requestOptions: Parameters<A2AHttpClient['request']>[1] = {
       method: 'POST',
       body: {},
       extensions: opts.extensions ? [...opts.extensions] : this.extensionSet,
     };
     if (opts.signal) requestOptions.signal = opts.signal;
-    const resp = await this.http.request<Task>(path, requestOptions);
+    const resp = await this.http.request<unknown>(path, requestOptions);
     if (!resp.body) {
       throw new A2AError(resp.status, path, {
         type: 'about:blank',
@@ -223,7 +343,11 @@ export class A2AClient {
         code: 'aiwg.empty_cancel_task',
       });
     }
-    return resp.body;
+    const body = this.protocolVersion === '1.0'
+      && resp.body && typeof resp.body === 'object' && 'task' in resp.body
+      ? (resp.body as { task: unknown }).task
+      : resp.body;
+    return decodeTask(this.protocolVersion, body);
   }
 
   // ---------- Task subscription (SSE) ----------
@@ -249,7 +373,9 @@ export class A2AClient {
       params.set('replay_from', String(opts.replayFromSeq));
     }
     const query = params.toString();
-    const path = `${this.agentPath()}/tasks/${encodeURIComponent(taskId)}/subscribe${query ? '?' + query : ''}`;
+    const encoded = encodeURIComponent(taskId);
+    const basePath = this.operationPath(`tasks/${encoded}:subscribe`, `tasks/${encoded}/subscribe`);
+    const path = `${basePath}${query ? '?' + query : ''}`;
 
     const controller = new AbortController();
     const externalSignal = opts.signal;
@@ -259,11 +385,12 @@ export class A2AClient {
     }
 
     const http = this.http;
+    const protocolVersion = this.protocolVersion;
     let cancelled = false;
 
     async function* iterate(): AsyncGenerator<StreamEvent, void, void> {
       const resp: A2AResponse = await http.request(path, {
-        method: 'GET',
+        method: protocolVersion === '1.0' ? 'POST' : 'GET',
         headers: { accept: 'text/event-stream' },
         signal: controller.signal,
         raw: true,
@@ -283,10 +410,17 @@ export class A2AClient {
           code: 'aiwg.subscribe_empty_body',
         });
       }
+      const reconciler = new A2AEventReconciler({
+        taskId,
+        requireInitialSnapshot: protocolVersion === '1.0',
+      });
       for await (const frame of parseEventStream(resp.rawBody)) {
         if (cancelled) return;
-        const event = decodeStreamEvent(frame);
-        if (event) yield event;
+        const event = decodeStreamEvent(protocolVersion, frame);
+        if (!event) continue;
+        const accepted = reconciler.accept(event);
+        if (accepted) yield accepted;
+        if (reconciler.isTerminal()) return;
       }
     }
 
@@ -308,10 +442,13 @@ export class A2AClient {
     taskId: string,
     config: PushNotificationConfig
   ): Promise<PushNotificationConfig> {
-    const path = `${this.agentPath()}/tasks/${encodeURIComponent(taskId)}/pushNotificationConfigs`;
-    const resp = await this.http.request<PushNotificationConfig>(path, {
+    const path = this.operationPath(
+      `tasks/${encodeURIComponent(taskId)}/pushNotificationConfigs`,
+      `tasks/${encodeURIComponent(taskId)}/pushNotificationConfigs`
+    );
+    const resp = await this.http.request<unknown>(path, {
       method: 'POST',
-      body: config,
+      body: encodePushNotificationConfig(this.protocolVersion, config),
       extensions: [...this.extensionSet],
     });
     if (!resp.body) {
@@ -321,15 +458,16 @@ export class A2AClient {
         code: 'aiwg.empty_push_config_create',
       });
     }
-    return resp.body;
+    return decodePushNotificationConfig(this.protocolVersion, resp.body);
   }
 
   async getPushNotificationConfig(
     taskId: string,
     configId: string
   ): Promise<PushNotificationConfig> {
-    const path = `${this.agentPath()}/tasks/${encodeURIComponent(taskId)}/pushNotificationConfigs/${encodeURIComponent(configId)}`;
-    const resp = await this.http.request<PushNotificationConfig>(path, { method: 'GET' });
+    const suffix = `tasks/${encodeURIComponent(taskId)}/pushNotificationConfigs/${encodeURIComponent(configId)}`;
+    const path = this.operationPath(suffix, suffix);
+    const resp = await this.http.request<unknown>(path, { method: 'GET' });
     if (!resp.body) {
       throw new A2AError(resp.status, path, {
         type: 'about:blank',
@@ -337,11 +475,12 @@ export class A2AClient {
         code: 'aiwg.empty_push_config_get',
       });
     }
-    return resp.body;
+    return decodePushNotificationConfig(this.protocolVersion, resp.body);
   }
 
   async deletePushNotificationConfig(taskId: string, configId: string): Promise<void> {
-    const path = `${this.agentPath()}/tasks/${encodeURIComponent(taskId)}/pushNotificationConfigs/${encodeURIComponent(configId)}`;
+    const suffix = `tasks/${encodeURIComponent(taskId)}/pushNotificationConfigs/${encodeURIComponent(configId)}`;
+    const path = this.operationPath(suffix, suffix);
     await this.http.request<void>(path, {
       method: 'DELETE',
       extensions: [...this.extensionSet],
@@ -419,51 +558,28 @@ export async function* parseEventStream(
   }
 }
 
-function decodeStreamEvent(frame: SseFrame): StreamEvent | null {
+export function decodeStreamEvent(
+  protocolVersion: A2AProtocolVersion,
+  frame: SseFrame
+): StreamEvent | null {
   if (!frame.data) return null;
+  let obj: unknown;
   try {
-    const obj = JSON.parse(frame.data) as Record<string, unknown>;
-    // Prefer the `kind` field if present (matches StreamEvent discriminator).
-    // Otherwise fall back to `event:` header from the frame.
-    const kindFromBody = typeof obj['kind'] === 'string' ? (obj['kind'] as string) : undefined;
-    const kind = kindFromBody ?? frame.event;
-    if (!kind) return null;
-    switch (kind) {
-      case 'task-state':
-        if (obj['task']) {
-          return { kind: 'task-state', task: obj['task'] as Task };
-        }
-        return null;
-      case 'status-update':
-        if (typeof obj['taskId'] === 'string' && obj['status']) {
-          const out: StreamEvent = {
-            kind: 'status-update',
-            taskId: obj['taskId'] as string,
-            status: obj['status'] as Task['status'],
-          };
-          if (typeof obj['final'] === 'boolean') {
-            (out as { final?: boolean }).final = obj['final'] as boolean;
-          }
-          return out;
-        }
-        return null;
-      case 'artifact-update':
-        if (typeof obj['taskId'] === 'string' && obj['artifact']) {
-          const out: StreamEvent = {
-            kind: 'artifact-update',
-            taskId: obj['taskId'] as string,
-            artifact: obj['artifact'] as Task['artifacts'] extends (infer A)[] | undefined ? A : never,
-          };
-          if (typeof obj['append'] === 'boolean') {
-            (out as { append?: boolean }).append = obj['append'] as boolean;
-          }
-          return out;
-        }
-        return null;
-      default:
-        return null;
-    }
-  } catch {
-    return null;
+    obj = JSON.parse(frame.data);
+  } catch (error) {
+    throw new A2AError(502, 'sse', {
+      type: 'about:blank',
+      title: 'Invalid SSE JSON',
+      detail: (error as Error).message,
+      code: 'aiwg.invalid_stream_json',
+    });
   }
+  const sequence = frame.id !== undefined && /^\d+$/.test(frame.id)
+    ? Number(frame.id)
+    : undefined;
+  return decodeStreamResponse(protocolVersion, obj, {
+    ...(frame.event ? { eventName: frame.event } : {}),
+    ...(frame.id ? { eventId: frame.id } : {}),
+    ...(sequence !== undefined ? { sequence } : {}),
+  });
 }
