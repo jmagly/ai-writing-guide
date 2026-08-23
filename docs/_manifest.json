@@ -293,6 +293,7 @@
     "cockpit/development",
     "cockpit/releases",
     "serve-guide",
+    "a2a-protocol-compatibility",
     "concierge-guide",
     "customization",
     "customization/README",
@@ -2302,6 +2303,13 @@
       "title": "Serve Guide",
       "summary": "Run AIWG as a long-lived daemon",
       "file": "serve-guide.md"
+    },
+    {
+      "id": "a2a-protocol-compatibility",
+      "title": "A2A Protocol Compatibility",
+      "summary": "Negotiate A2A 0.3 compatibility and 1.0 HTTP+JSON",
+      "file": "a2a-protocol-compatibility.md",
+      "parent": "serve-guide"
     },
     {
       "id": "concierge-guide",
