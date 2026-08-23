@@ -44,7 +44,8 @@
         "session_id": { "$ref": "#/$defs/id" },
         "runtime_binding": { "const": "a2a-sandbox" },
         "idempotency_key": { "$ref": "#/$defs/id" },
-        "replay_of_task_id": { "$ref": "#/$defs/id" }
+        "replay_of_task_id": { "$ref": "#/$defs/id" },
+        "checkpoint_id": { "$ref": "#/$defs/id" }
       }
     },
     "evidenceRef": {

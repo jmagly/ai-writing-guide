@@ -40,10 +40,14 @@ describe('Flow graph Sandbox node event contract', () => {
   });
 
   it('accepts checkpoint lineage and rejects ambiguous terminal facts', () => {
-    expect(validate({ ...base, task: { ...base.task, replay_of_task_id: 'task-0' }, event: {
+    expect(validate({ ...base, task: { ...base.task, replay_of_task_id: 'task-0', checkpoint_id: 'cp-1' }, event: {
       type: 'checkpoint', state: 'restored', observed_at: '2026-08-22T20:00:00Z',
       resumability: 'resumable', checkpoint_id: 'cp-1', checkpoint_digest: digest,
     } })).toBe(true);
+
+    expect(validate({ ...base, task: { ...base.task, checkpoint_id: 'cp-1', ambiguous: true }, event: {
+      type: 'lifecycle', state: 'queued', observed_at: '2026-08-22T20:00:00Z',
+    } })).toBe(false);
 
     expect(validate({ ...base, event: {
       type: 'terminal', state: 'failed', started_at: '2026-08-22T20:00:00Z', ended_at: '2026-08-22T20:00:01Z',

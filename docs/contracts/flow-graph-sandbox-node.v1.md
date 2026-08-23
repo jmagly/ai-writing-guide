@@ -81,9 +81,10 @@ one of them to `failed` or `unknown`.
 
 - Created/restored checkpoints carry a stable ID and digest. Restore failure
   carries a reason and is distinguishable from node execution failure.
-- Resumed dispatch links `replay_of_task_id` and the checkpoint event to the
-  new task. Graph/run/node identity remains unchanged; task/session identity
-  may change.
+- Resumed dispatch supplies exact `flow_graph.resume` metadata containing only
+  `replay_of_task_id` and `checkpoint_id`. Both values are copied into the new
+  task identity. Graph/run/node identity remains unchanged; task/session
+  identity may change.
 - `non_resumable` and `unknown` never fall back to a fresh side-effecting run
   without an operator-visible reconciliation decision.
 
