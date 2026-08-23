@@ -143,6 +143,7 @@
     "schemas/providers/",
     "schemas/activity/",
     "schemas/deploy/",
+    "schemas/flow/",
     "test/conformance/activity-v1/fixtures/",
     "schemas/marketplace/",
     "vscode-extension/schemas/aiwg.config.v1.json",

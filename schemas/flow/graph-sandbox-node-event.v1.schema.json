@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.aiwg.io/flow/graph-sandbox-node-event.v1.schema.json",
+  "title": "AIWG Flow graph Sandbox node event",
+  "type": "object",
+  "required": ["api_version", "kind", "metadata", "task", "event"],
+  "additionalProperties": false,
+  "properties": {
+    "api_version": { "const": "flow.aiwg.io/v1alpha1" },
+    "kind": { "const": "GraphSandboxNodeEvent" },
+    "metadata": { "$ref": "#/$defs/graphMetadata" },
+    "task": { "$ref": "#/$defs/taskIdentity" },
+    "event": {
+      "oneOf": [
+        { "$ref": "#/$defs/lifecycleEvent" },
+        { "$ref": "#/$defs/terminalEvent" },
+        { "$ref": "#/$defs/checkpointEvent" }
+      ]
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "graphMetadata": {
+      "type": "object",
+      "required": ["namespace", "graph_id", "graph_version", "run_id", "node_id", "node_run_id"],
+      "additionalProperties": false,
+      "properties": {
+        "namespace": { "const": "https://aiwg.io/extensions/flow-graph/v1" },
+        "graph_id": { "$ref": "#/$defs/id" },
+        "graph_version": { "$ref": "#/$defs/id" },
+        "run_id": { "$ref": "#/$defs/id" },
+        "node_id": { "$ref": "#/$defs/id" },
+        "node_run_id": { "$ref": "#/$defs/id" },
+        "edge_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "taskIdentity": {
+      "type": "object",
+      "required": ["task_id", "runtime_binding", "idempotency_key"],
+      "additionalProperties": false,
+      "properties": {
+        "task_id": { "$ref": "#/$defs/id" },
+        "session_id": { "$ref": "#/$defs/id" },
+        "runtime_binding": { "const": "a2a-sandbox" },
+        "idempotency_key": { "$ref": "#/$defs/id" },
+        "replay_of_task_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "evidenceRef": {
+      "type": "object",
+      "required": ["kind", "availability", "redaction_status"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["stdout", "stderr", "log", "result", "attachment", "runtime"] },
+        "availability": { "enum": ["available", "missing", "withheld", "unknown"] },
+        "uri": { "type": "string", "minLength": 1 },
+        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "redaction_status": { "enum": ["not_required", "redacted", "unredacted", "unknown"] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "availability": { "const": "available" } } },
+          "then": { "required": ["uri", "digest"] }
+        }
+      ]
+    },
+    "lifecycleEvent": {
+      "type": "object",
+      "required": ["type", "state", "observed_at"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "lifecycle" },
+        "state": { "enum": ["queued", "running", "blocked", "retrying"] },
+        "observed_at": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "exit": {
+      "type": "object",
+      "required": ["status"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "enum": ["code", "not_applicable", "unknown"] },
+        "code": { "type": "integer" },
+        "reason": { "type": "string", "minLength": 1 },
+        "signal": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "code" } } },
+          "then": { "required": ["code"] },
+          "else": { "required": ["reason"] }
+        }
+      ]
+    },
+    "terminalEvent": {
+      "type": "object",
+      "required": ["type", "state", "started_at", "ended_at", "duration_ms", "exit", "evidence"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "terminal" },
+        "state": { "enum": ["succeeded", "failed", "canceled", "timed_out", "interrupted", "lost", "unknown"] },
+        "started_at": { "$ref": "#/$defs/timestamp" },
+        "ended_at": { "$ref": "#/$defs/timestamp" },
+        "duration_ms": { "type": "integer", "minimum": 0 },
+        "termination_reason": { "type": "string", "minLength": 1 },
+        "exit": { "$ref": "#/$defs/exit" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidenceRef" } }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "state": { "const": "succeeded" } } },
+          "then": {
+            "properties": {
+              "exit": {
+                "allOf": [
+                  { "$ref": "#/$defs/exit" },
+                  { "properties": { "status": { "const": "code" }, "code": { "const": 0 } } }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "checkpointEvent": {
+      "type": "object",
+      "required": ["type", "state", "observed_at", "resumability"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "checkpoint" },
+        "state": { "enum": ["created", "restored", "restore_failed"] },
+        "observed_at": { "$ref": "#/$defs/timestamp" },
+        "resumability": { "enum": ["resumable", "non_resumable", "unknown"] },
+        "checkpoint_id": { "$ref": "#/$defs/id" },
+        "checkpoint_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "reason": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "state": { "enum": ["created", "restored"] } } },
+          "then": { "required": ["checkpoint_id", "checkpoint_digest"] },
+          "else": { "required": ["reason"] }
+        }
+      ]
+    }
+  }
+}

@@ -4,7 +4,7 @@
 |---|---|---|---|---|
 | GRAPH-REQ-001 | graph ADR and decision guide | graph-pattern manifest | graph-pattern schema tests | Implemented; optional addon only |
 | GRAPH-REQ-002 | graph-pattern README | graph schema and validator | graph-pattern invalid fixtures/tests | Implemented |
-| GRAPH-REQ-003 | metadata namespace docs | graph metadata, Mission, telemetry, observer, Cockpit | metadata/Mission/observer/Cockpit tests | AIWG path implemented; Sandbox pass-through remains external |
+| GRAPH-REQ-003 | metadata namespace and Sandbox node wire contract | graph metadata, Mission, telemetry, observer, Cockpit | metadata/Mission/observer/Cockpit and wire-schema tests | AIWG path and cross-repo contract implemented; Sandbox pass-through remains external |
 | GRAPH-REQ-004 | addon adapter guidance | graph runtime, MissionConductor, stack adapters | runtime and Mission tests | Core bindings represented; live external adapters qualification-gated |
 | GRAPH-REQ-005 | ADR, profile README, and threat model | inherited Flow rules plus reducer/HITL/authority/replay checks | validator/runtime/security tests | Implemented; live adapter qualification remains external |
 | GRAPH-REQ-006 | Cockpit surfaces doc | read-only bridge and Missions view | Cockpit web/bridge tests | Implemented; visual editor deferred |
