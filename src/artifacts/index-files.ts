@@ -43,22 +43,44 @@ export function indexPathFor(cwd: string, fullPath: string, graph?: GraphType): 
   return fullPath;
 }
 
-/** Recursively find indexable files, excluding hidden directories such as .index. */
 export function findArtifactFiles(
   dir: string,
   extensions: readonly string[] = DEFAULT_INDEX_EXTENSIONS,
 ): string[] {
+  return walkArtifactFiles(dir, extensions, new Set());
+}
+
+/** Recursively find indexable files, excluding hidden directories such as .index. */
+function walkArtifactFiles(
+  dir: string,
+  extensions: readonly string[],
+  seenRealDirs: Set<string>,
+): string[] {
   const results: string[] = [];
   if (!fs.existsSync(dir)) return results;
+
+  let realDir: string;
+  try {
+    realDir = fs.realpathSync(dir);
+  } catch {
+    return results;
+  }
+  if (seenRealDirs.has(realDir)) return results;
+  seenRealDirs.add(realDir);
 
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
-    if (entry.isSymbolicLink() && !fs.existsSync(fullPath)) continue;
-    if (entry.isDirectory()) {
+    let stat: fs.Stats;
+    try {
+      stat = fs.statSync(fullPath);
+    } catch {
+      continue;
+    }
+    if (stat.isDirectory()) {
       if (entry.name.startsWith('.')) continue;
-      results.push(...findArtifactFiles(fullPath, extensions));
-    } else if (extensions.some(extension => entry.name.endsWith(extension))) {
+      results.push(...walkArtifactFiles(fullPath, extensions, seenRealDirs));
+    } else if (stat.isFile() && extensions.some(extension => entry.name.endsWith(extension))) {
       results.push(fullPath);
     }
   }
@@ -68,6 +90,9 @@ export function findArtifactFiles(
 /** Return the exact current source-file set used by a standard graph build. */
 export async function collectGraphIndexFiles(cwd: string, graph?: GraphType): Promise<string[]> {
   const config = graph ? GRAPH_CONFIGS[graph] : undefined;
+  if (graph && !config) {
+    throw new Error(`Unknown graph: ${graph}`);
+  }
   const scanDirs = config
     ? config.scanDirs.map(directory => resolveGraphScanDir(cwd, directory))
     : [resolveProjectAiwgDir(cwd)];

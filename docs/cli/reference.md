@@ -4231,6 +4231,13 @@ Fields:
 
 User-defined graph names cannot override built-in names (`project`, `codebase`, `framework`).
 
+The same `index.graphs` contract is accepted in `~/.aiwg/aiwg.config` for shared
+user-level graphs; those graphs also default `defaultBuild` to `true` and are
+reported by bare `aiwg index stats` after they have been built. The concise
+`indices.user.roots` form is different: it creates explicit-build user roots
+with `defaultBuild: false`; use `index.graphs` when a user-level graph should be
+part of the default build/stats set.
+
 To replace only the built-in `codebase` graph's scan roots or extension allow-list, use the bounded `index.graphOverrides.codebase` contract. Present fields replace the detected/default value; omitted fields retain it. The graph identity, storage location, sharing mode, build policy, and backend cannot be widened through an override.
 
 ```json
@@ -4561,7 +4568,7 @@ aiwg index deps <path> [options]
 
 **Behavior:**
 
-- `upstream` - What this artifact depends on (its @-mentions)
+- `upstream` - What this artifact depends on (its @-mentions and scoped Markdown links)
 - `downstream` - What depends on this artifact (mentions it)
 - `both` - Both directions
 

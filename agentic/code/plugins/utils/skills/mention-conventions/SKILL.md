@@ -126,6 +126,18 @@ Add a References section:
 - @.aiwg/security/threat-model.md - Security considerations
 ```
 
+Ordinary relative Markdown links are also indexed as graph edges when they
+resolve to another indexed artifact in the same active graph:
+
+```markdown
+See [ADR-005](./ADR-005-jwt-strategy.md) for the decision context.
+```
+
+Use @-mentions in `References` when you intend durable traceability or
+provenance. Use Markdown links for reader navigation. External URLs,
+anchor-only links, images, and links to files outside the active graph do not
+create artifact dependency edges.
+
 ### In Inline Comments
 
 For specific code sections:

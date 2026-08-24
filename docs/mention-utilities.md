@@ -112,6 +112,17 @@ Authentication Service
 - @.aiwg/security/threat-model.md - Security considerations
 ```
 
+Relative Markdown links are indexed as typed `markdown-link` graph edges when
+they resolve to another indexed artifact in the same active graph:
+
+```markdown
+See [ADR-005](./ADR-005-jwt-strategy.md) for the decision context.
+```
+
+Use @-mentions for durable traceability and provenance. Use Markdown links for
+reader navigation. External URLs, anchor-only links, images, and links to files
+outside the active graph do not create dependency edges.
+
 ### Inline Comments
 
 ```typescript

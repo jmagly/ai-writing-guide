@@ -2,7 +2,7 @@
  * Artifact Index Builder
  *
  * Scans .aiwg/ directories, extracts metadata from artifact frontmatter,
- * computes checksums, extracts @-mention dependencies, and builds a
+ * computes checksums, extracts @-mention and Markdown-link dependencies, and builds a
  * structured index at .aiwg/.index/.
  *
  * @implements #415
@@ -93,6 +93,64 @@ export function extractMentions(content: string): string[] {
     mentions.add(match[1]);
   }
   return Array.from(mentions);
+}
+
+/**
+ * Extract relative Markdown links that may resolve to graph-local artifacts.
+ *
+ * External URLs, absolute paths, and anchor-only links are intentionally absent
+ * from the accepted pattern. Resolution still happens later against indexed
+ * nodes, so a parsed link outside the active graph cannot create an edge.
+ */
+export function extractMarkdownLinks(content: string): string[] {
+  const links = new Set<string>();
+  const pattern = /(!?)\[[^\]]+\]\((\.\/?[^)#\s]+)(?:#[^)]+)?\)/g;
+  let match;
+  while ((match = pattern.exec(content)) !== null) {
+    if (match[1] === '!') continue;
+    links.add(match[2]);
+  }
+  return Array.from(links);
+}
+
+function resolveMarkdownLinkDependency(
+  cwd: string,
+  sourcePath: string,
+  rawLink: string,
+  entries: Record<string, MetadataEntry>,
+  graph?: GraphType,
+): string | null {
+  const target = rawLink.split('#')[0]?.trim();
+  if (!target) return null;
+  const sourceFullPath = absoluteEntryPath(cwd, sourcePath, graph);
+  const targetFullPath = path.resolve(path.dirname(sourceFullPath), target);
+  let stat: fs.Stats;
+  try {
+    stat = fs.statSync(targetFullPath);
+  } catch {
+    return null;
+  }
+  if (!stat.isFile()) return null;
+  const indexedPath = indexPathFor(cwd, targetFullPath, graph);
+  return entries[indexedPath] ? indexedPath : null;
+}
+
+function addDependencyEdge(
+  depGraph: DependencyGraph,
+  entries: Record<string, MetadataEntry>,
+  sourcePath: string,
+  targetPath: string,
+  type: TypedEdge['type'],
+): boolean {
+  if (sourcePath === targetPath) return false;
+  if (!depGraph[sourcePath]) depGraph[sourcePath] = { upstream: [], downstream: [] };
+  if (!depGraph[targetPath]) depGraph[targetPath] = { upstream: [], downstream: [] };
+  if (depGraph[sourcePath].upstream.some(edge => edge.path === targetPath)) return false;
+
+  depGraph[sourcePath].upstream.push({ path: targetPath, type });
+  depGraph[targetPath].downstream.push({ path: sourcePath, type });
+  if (entries[targetPath]) entries[targetPath].dependents.push(sourcePath);
+  return true;
 }
 
 /**
@@ -926,6 +984,7 @@ export async function buildIndex(
       const tags = flow ? flow.tags : (Array.isArray(data.tags) ? data.tags.map(String) : []);
       const summary = flow?.description ?? schemaDoc?.capability ?? runbook?.capability ?? extractSummary(data, body);
       const dependencies = extractMentions(content);
+      const markdownLinks = extractMarkdownLinks(content);
 
       // Discovery metadata (#1214, #1540, #1792) — meaningful for operational
       // AIWG artifact kinds. Kept undefined on document types so the index file
@@ -964,6 +1023,7 @@ export async function buildIndex(
         checksum,
         summary,
         dependencies,
+        ...(markdownLinks.length > 0 ? { markdownLinks } : {}),
         dependents: [], // Computed after all entries are processed
         ...(name ? { name } : {}),
         ...(triggers && triggers.length > 0 ? { triggers } : {}),
@@ -1001,6 +1061,7 @@ export async function buildIndex(
   }
 
   // Build dependency graph and compute dependents
+  let markdownLinkEdgeCount = 0;
   for (const entry of Object.values(entries)) {
     if (!depGraph[entry.path]) {
       depGraph[entry.path] = { upstream: [], downstream: [] };
@@ -1012,19 +1073,14 @@ export async function buildIndex(
         p => p === dep || p.endsWith(dep)
       );
       if (normalizedDep && normalizedDep !== entry.path) {
-        const upEdge: TypedEdge = { path: normalizedDep, type: 'depends-on' };
-        depGraph[entry.path].upstream.push(upEdge);
+        addDependencyEdge(depGraph, entries, entry.path, normalizedDep, 'depends-on');
+      }
+    }
 
-        if (!depGraph[normalizedDep]) {
-          depGraph[normalizedDep] = { upstream: [], downstream: [] };
-        }
-        const downEdge: TypedEdge = { path: entry.path, type: 'depends-on' };
-        depGraph[normalizedDep].downstream.push(downEdge);
-
-        // Also update the dependents field on the target entry
-        if (entries[normalizedDep]) {
-          entries[normalizedDep].dependents.push(entry.path);
-        }
+    for (const link of entry.markdownLinks ?? []) {
+      const normalizedDep = resolveMarkdownLinkDependency(cwd, entry.path, link, entries, graph);
+      if (normalizedDep && addDependencyEdge(depGraph, entries, entry.path, normalizedDep, 'markdown-link')) {
+        markdownLinkEdgeCount++;
       }
     }
   }
@@ -1188,6 +1244,7 @@ export async function buildIndex(
     tagDistribution: tagDist,
     graphMetrics: {
       totalEdges,
+      markdownLinkEdges: markdownLinkEdgeCount,
       ...(citationMetrics ? {
         canonicalEdges: citationMetrics.canonicalEdges,
         outgoingDeclarations: citationMetrics.outgoingDeclarations,

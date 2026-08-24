@@ -9,7 +9,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { parseFrontmatter, extractMentions, buildIndex, normalizeNamedCaptures, buildFilenameMetadataEntry } from '../../../src/artifacts/index-builder.js';
+import { parseFrontmatter, extractMentions, extractMarkdownLinks, buildIndex, normalizeNamedCaptures, buildFilenameMetadataEntry } from '../../../src/artifacts/index-builder.js';
 import { INDEX_DIR, GRAPH_CONFIGS, loadUserGraphConfigs, loadModuleGraphConfigs, loadGlobalGraphConfigs, normalizeEdge, normalizeEdges, getGraphIndexDir } from '../../../src/artifacts/types.js';
 import type { TypedEdge, DependencyGraph } from '../../../src/artifacts/types.js';
 
@@ -509,6 +509,19 @@ References:
     });
   });
 
+  describe('extractMarkdownLinks', () => {
+    it('extracts relative Markdown links and excludes external, anchor-only, and image links', () => {
+      const content = `
+[target](./target.md)
+[parent](../parent.md#section)
+[external](https://example.test/doc.md)
+[anchor](#local)
+![image](./target.md)
+`;
+      expect(extractMarkdownLinks(content)).toEqual(['./target.md', '../parent.md']);
+    });
+  });
+
   describe('buildIndex', () => {
     let tmpDir: string;
 
@@ -569,7 +582,7 @@ New users can register.
       // Check metadata content
       const metadata = JSON.parse(fs.readFileSync(path.join(indexDir, 'metadata.json'), 'utf-8'));
       expect(metadata.version).toBe('1.0.0');
-      expect(metadata.extractorVersion).toBe('2026.07.21.2');
+      expect(metadata.extractorVersion).toBe('2026.08.24.1');
       expect(Object.keys(metadata.entries)).toHaveLength(2);
 
       const uc001 = metadata.entries['.aiwg/requirements/UC-001.md'];
@@ -767,7 +780,7 @@ state_transfer:
       logSpy.mockRestore();
       const rebuilt = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
       expect(rebuilt.version).toBe('1.0.0');
-      expect(rebuilt.extractorVersion).toBe('2026.07.21.2');
+      expect(rebuilt.extractorVersion).toBe('2026.08.24.1');
       expect(rebuilt.entries[entryPath].type).toBe('runbook');
       expect(rebuilt.entries[entryPath].kind).toBe('Runbook');
     });
@@ -988,6 +1001,52 @@ Depends on @.aiwg/requirements/UC-001.md
       expect(uc001).toBeDefined();
       expect(uc001.downstream).toHaveLength(1);
       expect(uc001.downstream[0]).toEqual({ path: '.aiwg/requirements/UC-002.md', type: 'depends-on' });
+    });
+
+    it('builds scoped markdown-link edges and reports their count (#147)', async () => {
+      const workingDir = path.join(tmpDir, '.aiwg', 'working');
+      const outsideDir = path.join(tmpDir, 'outside');
+      fs.mkdirSync(workingDir, { recursive: true });
+      fs.mkdirSync(outsideDir, { recursive: true });
+
+      fs.writeFileSync(path.join(workingDir, 'target.md'), '# Target\n');
+      fs.writeFileSync(path.join(outsideDir, 'outside.md'), '# Outside\n');
+      fs.writeFileSync(path.join(workingDir, 'source.md'), `---
+title: Source
+---
+# Source
+
+[target](./target.md)
+[external](https://example.test/target.md)
+[anchor](#local)
+[outside](../../outside/outside.md)
+`);
+
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      await buildIndex(tmpDir, { force: true, graph: 'project' });
+
+      consoleSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
+
+      const indexDir = path.join(tmpDir, INDEX_DIR, 'project');
+      const metadata = JSON.parse(fs.readFileSync(path.join(indexDir, 'metadata.json'), 'utf-8'));
+      const deps: DependencyGraph = JSON.parse(
+        fs.readFileSync(path.join(indexDir, 'dependencies.json'), 'utf-8')
+      );
+      const stats = JSON.parse(fs.readFileSync(path.join(indexDir, 'stats.json'), 'utf-8'));
+
+      const sourcePath = '.aiwg/working/source.md';
+      const targetPath = '.aiwg/working/target.md';
+      expect(metadata.entries[sourcePath].dependencies).toEqual([]);
+      expect(metadata.entries[sourcePath].markdownLinks).toEqual(['./target.md', '../../outside/outside.md']);
+      expect(deps[sourcePath].upstream).toEqual([{ path: targetPath, type: 'markdown-link' }]);
+      expect(deps[targetPath].downstream).toEqual([{ path: sourcePath, type: 'markdown-link' }]);
+      expect(Object.keys(deps).some(key => key.includes('outside.md'))).toBe(false);
+      expect(stats.graphMetrics.totalEdges).toBe(1);
+      expect(stats.graphMetrics.markdownLinkEdges).toBe(1);
+      expect(stats.graphMetrics.orphanedArtifacts).toBe(0);
     });
   });
 

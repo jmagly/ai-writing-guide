@@ -82,6 +82,12 @@ For lower-level graph options, use `index.graphs`:
 }
 ```
 
+`indices.user.roots` entries are explicit-build user roots and are not included
+in bare `aiwg index build` unless you also declare a full `index.graphs` entry.
+Full graph definitions under `index.graphs` follow the normal graph policy:
+`defaultBuild` defaults to `true`, so set `"defaultBuild": false` when the graph
+should be built only by name.
+
 Then build or query the graph from any project:
 
 ```bash

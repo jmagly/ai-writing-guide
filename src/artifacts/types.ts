@@ -80,6 +80,9 @@ export interface MetadataEntry {
   /** Outbound @-mention references (paths this artifact depends on) */
   dependencies: string[];
 
+  /** Raw relative Markdown link targets parsed from this artifact. */
+  markdownLinks?: string[];
+
   /** Computed: paths that reference this artifact */
   dependents: string[];
 
@@ -337,6 +340,8 @@ export interface IndexStats {
     incomingDeclarations?: number;
     /** Stored upstream plus downstream adjacency entries. */
     adjacencyEntries?: number;
+    /** Edges derived from relative Markdown links that resolve to indexed nodes. */
+    markdownLinkEdges?: number;
     /** Canonical outgoing citations without a matching incoming declaration. */
     unmirroredOutgoing?: number;
     /** Incoming declarations without a matching canonical outgoing citation. */
@@ -420,7 +425,7 @@ export const INDEX_VERSION = '1.0.0';
  * making the serialized index schema incompatible; a mismatch simply forces a
  * one-time content re-extraction during the next incremental build.
  */
-export const INDEX_EXTRACTOR_VERSION = '2026.07.21.2';
+export const INDEX_EXTRACTOR_VERSION = '2026.08.24.1';
 
 /**
  * Built-in graph type identifiers
