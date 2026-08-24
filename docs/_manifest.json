@@ -106,6 +106,8 @@
     "configuration/model-configuration",
     "hook-patterns",
     "mcp/README",
+    "uhp-client",
+    "security/uhp-client-threat-model",
     "plugin-marketplace-guide",
     "daemon-guide",
     "soul-md-guide",
@@ -992,6 +994,20 @@
       "title": "MCP Server",
       "summary": "Model Context Protocol integration",
       "file": "mcp/README.md",
+      "parent": "reference"
+    },
+    {
+      "id": "uhp-client",
+      "title": "Experimental UHP Client",
+      "summary": "Configure, operate, recover, and safely qualify remote UHP harness execution",
+      "file": "uhp-client.md",
+      "parent": "reference"
+    },
+    {
+      "id": "security/uhp-client-threat-model",
+      "title": "UHP Client Threat Model",
+      "summary": "Trust boundaries, controls, residual risks, and operator review for UHP client transport",
+      "file": "security/uhp-client-threat-model.md",
       "parent": "reference"
     },
     {

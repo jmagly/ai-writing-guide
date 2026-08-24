@@ -52,9 +52,65 @@ Writes are atomic: the loader writes to a randomly-suffixed temp sibling, then
 | `remotes`       | `RemotesConfig`                  | optional | Repo origin topology. When absent, agents treat `origin` as primary. See [Remotes Block](#remotes-block).                                             |
 | `delivery`      | `DeliveryConfig`                 | optional | Repo control / delivery policy. When absent, runtime defaults apply. See [Delivery Block](#delivery-block).                                           |
 | `build`         | `BuildConfig`                    | optional | Project build policy, including large-build host resource preflight. See [Build Block](#build-block).                                                 |
+| `uhp`           | `UhpConfig`                      | optional | Explicit experimental UHP client profiles. See [UHP Client Profiles](#uhp-client-profiles).                                                           |
 
 Valid `providers` values: `claude`, `factory`, `codex`, `opencode`, `copilot`, `cursor`,
 `warp`, `windsurf`, `hermes`, `openclaw`.
+
+## UHP Client Profiles
+
+The optional `uhp` block configures the experimental, client-only Unified
+Harness Protocol transport. UHP profiles are not AIWG providers and are never
+selected implicitly by provider, A2A, or MCP routing.
+
+```json
+{
+  "uhp": {
+    "enabled": true,
+    "profiles": {
+      "research": {
+        "endpoint": "https://harness.example.com",
+        "version": "2026-08-11",
+        "credential": { "source": "env", "name": "AIWG_UHP_RESEARCH_TOKEN" },
+        "defaultHarness": "chrn_research",
+        "defaultModel": "example-model",
+        "experimental": true,
+        "trust": {
+          "allowedHosts": ["harness.example.com"],
+          "allowPrivateNetwork": false,
+          "allowInsecureLoopback": false,
+          "allowRedirects": false
+        },
+        "limits": {
+          "requestTimeoutMs": 600000,
+          "inactivityTimeoutMs": 45000,
+          "maxTaskSeconds": 3600,
+          "maxUploadBytes": 52428800,
+          "maxArtifactBytes": 104857600,
+          "maxArtifactCount": 100,
+          "maxRetries": 3
+        }
+      }
+    }
+  }
+}
+```
+
+Profile names begin with a lowercase letter and contain at most 64 lowercase
+letters, digits, underscores, or hyphens. `version` must be `2026-08-11` and
+`experimental` must be `true`. The only credential form is an environment
+locator with an uppercase variable name; inline `token`, `bearer`, `apiKey`,
+and `authorization` fields are rejected. Every configured limit is a positive
+integer and unknown limit names are rejected.
+
+HTTPS is required except when a loopback address and
+`trust.allowInsecureLoopback: true` are both present. Private addresses require
+`allowPrivateNetwork`; redirects default to denied; `allowedHosts` restricts the
+resolved endpoint host. Authenticated cross-origin redirects always fail before
+credential forwarding.
+
+See the [experimental UHP client guide](../uhp-client.md) for routing, operation,
+recovery, artifacts, security, limitations, and upgrades.
 
 ## Threat Assessment
 

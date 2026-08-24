@@ -2755,6 +2755,38 @@ aiwg daemon-init [profile-name] [--force]
 
 ---
 
+## Remote Transport Commands
+
+### uhp
+
+Inspect or smoke-test an explicitly selected experimental UHP endpoint profile.
+AIWG is a UHP client only and does not claim server conformance.
+
+```bash
+aiwg uhp discover --profile <name>
+aiwg uhp harnesses --profile <name>
+aiwg uhp models --profile <name> [--harness <id>]
+aiwg uhp run --profile <name> --input <text> \
+  [--harness <id>] [--model <id>] [--stream]
+```
+
+Every operation requires `--profile`; endpoint and bearer overrides are not
+accepted. `discover` is unauthenticated. Other operations resolve the profile's
+environment secret locator only at request time. The client pins UHP
+`2026-08-11` and does not fall back to A2A or another version.
+
+The CLI covers discovery, catalogues, and task smoke tests. Stored reads,
+continuation, cancellation, uploads, and artifact retrieval are available from
+the exported `UhpClient` package API. See the [experimental UHP client
+guide](../uhp-client.md) for configuration, complete examples, recovery,
+security, limitations, and upgrades.
+
+**Capabilities:** cli, transport, uhp, remote-harness, experimental
+**Platforms:** All
+**Tools:** Network
+
+---
+
 ## Mission Control Commands
 
 Mission Control provides multi-loop background orchestration for parallel long-running agents.

@@ -94,7 +94,36 @@ remote-state semantics without returning upstream secrets or raw bodies.
 - Two-principal object isolation and server retention need live endpoint tests.
 - A malicious but schema-valid server can lie about capabilities; qualification
   must exercise behavior rather than trusting discovery alone.
-- UHP remains experimental until #2174 qualification and #2175 documentation
-  gates are complete. This client implementation is not a server conformance
+- Deterministic CI does not prove two-principal object isolation, remote
+  provider-key isolation, or server retention/deletion behavior. Those claims
+  require an explicitly authorized live environment and endpoint-operator
+  evidence.
+- Prompt injection remains possible through task input, repository content,
+  model output, tool output, events, errors, and downloaded files. Normalizing
+  an object into Mission evidence does not make its content trusted and cannot
+  authorize a policy, routing, tool, or filesystem change.
+- UHP remains experimental after its client qualification and documentation
+  gates. Graduation requires a separate release decision based on deployed
+  endpoint evidence. This client implementation is not a server conformance
   claim.
 
+## Operator review checklist
+
+Before enabling a profile, record and review:
+
+- the endpoint owner, allowed host, TLS termination, egress path, and whether
+  private-network or redirect exceptions are actually necessary;
+- the secret locator and its least-privilege principal, rotation process, and
+  revocation path without copying the bearer into the review record;
+- server-side harness tool restrictions, workspace isolation, provider-key
+  handling, object authorization, transcript/artifact retention, and deletion
+  behavior;
+- local request/task/upload/download ceilings and the approved artifact
+  destination and scanning workflow;
+- the pinned UHP date and immutable live-qualification target, with skipped
+  and cost-bearing checks distinguished from executed checks; and
+- the response to unknown state, `session_busy`, substitution, incomplete work,
+  hostile output, and suspected prompt injection.
+
+Re-run this review when the endpoint, credential principal, harness/tool policy,
+retention terms, UHP date, or AIWG client version changes.
