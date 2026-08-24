@@ -85,7 +85,8 @@ When a user asks whether AIWG is active or engaged in this project, run or read 
 ### Tracker Authority Protocol
 
 - Source of truth: [.aiwg/aiwg.config](./.aiwg/aiwg.config)
-- Canonical tracker: `origin` (gitea; git@git.integrolabs.net:roctinam/aiwg.git)
+- Internal/canonical tracker: `origin` (gitea; git@git.integrolabs.net:roctinam/aiwg.git)
+- Customer issue tracker: `github` (github; https://github.com/jmagly/aiwg.git)
 - Primary repo remote: `origin`; CI remote: `origin`
 - Secondary/mirror remotes: github (public-mirror)
 - Issue storage mode: not configured
@@ -97,6 +98,8 @@ Tracker access order for issue, PR, release, and CI-sensitive tracker operations
 4. Stop and report a blocker.
 
 - Project config decides tracker authority; installed/authenticated CLIs do not.
+- Route internal engineering, delivery, and CI-sensitive issue work to the internal tracker.
+- Route customer acknowledgements, follow-up, and closure to the customer tracker when configured.
 - Git SSH remote access is repository sync, not issue-tracker API access.
 - Do not file on mirror or secondary remotes just because their CLI is authenticated.
 - Treat an unauthenticated tracker CLI as one failed access path, then continue probing MCP/app/API before blocking.
