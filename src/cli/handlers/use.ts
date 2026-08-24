@@ -2171,6 +2171,7 @@ async function deploySourceDirectory(opts: {
   verbose: boolean;
   force: boolean;
   copyAll: boolean;
+  kernelOnly?: boolean;
   quiet: boolean;
   modelArgs: string[];
 }): Promise<HandlerResult> {
@@ -2187,6 +2188,7 @@ async function deploySourceDirectory(opts: {
   if (opts.verbose) args.push('--verbose');
   if (opts.force) args.push('--force');
   if (opts.copyAll) args.push('--copy-all');
+  if (opts.kernelOnly) args.push('--kernel-only');
   if (opts.quiet) args.unshift('--quiet');
 
   const runner = createScriptRunner(opts.frameworkRoot);
@@ -2195,7 +2197,7 @@ async function deploySourceDirectory(opts: {
     args,
     opts.quiet ? { capture: true } : {},
   );
-  if (result.exitCode === 0) {
+  if (result.exitCode === 0 && !opts.kernelOnly) {
     try {
       await registerSourceCliCommands({
         source: opts.source,
@@ -2780,6 +2782,7 @@ export class UseHandler implements CommandHandler {
       ui.dim('  Use `aiwg use all` for the full deployment.');
 
       for (const providerName of providersForFiltered) {
+        const kernelOnly = !copyAll;
         for (const selected of selectedFrameworks) {
           const frameworkDir = resolveFrameworkDir(selected);
           if (!frameworkDir) continue;
@@ -2793,6 +2796,7 @@ export class UseHandler implements CommandHandler {
             verbose,
             force,
             copyAll,
+            kernelOnly,
             quiet,
             modelArgs: modelDeployArgs,
           });
@@ -2810,6 +2814,7 @@ export class UseHandler implements CommandHandler {
             verbose,
             force,
             copyAll,
+            kernelOnly,
             quiet,
             modelArgs: modelDeployArgs,
           });
@@ -2827,6 +2832,7 @@ export class UseHandler implements CommandHandler {
             verbose,
             force,
             copyAll,
+            kernelOnly,
             quiet,
             modelArgs: modelDeployArgs,
           });
@@ -3353,6 +3359,10 @@ export class UseHandler implements CommandHandler {
     const providerDeployArgs = builtInProviderResolution.requestedProvider
       ? withProviderOverride(deployFilteredArgs, provider)
       : deployFilteredArgs;
+    const bulkKernelOnly = framework === 'all'
+      && !remainingArgs.includes('--copy-all')
+      && !remainingArgs.includes('--copy-standard-skills');
+    if (bulkKernelOnly) providerDeployArgs.push('--kernel-only');
     const targetIdx = remainingArgs.findIndex(a => a === '--target');
     const target = targetIdx >= 0 && remainingArgs[targetIdx + 1] ? remainingArgs[targetIdx + 1] : process.cwd();
 
@@ -3459,9 +3469,11 @@ export class UseHandler implements CommandHandler {
 
     // Build common args for addon deployments (inherit provider and target)
     const addonBaseArgs = ['--deploy-commands', '--deploy-skills', '--deploy-rules'];
+    if (bulkKernelOnly) addonBaseArgs.push('--kernel-only');
     addonBaseArgs.push(...modelDeployArgs);
     if (provider) addonBaseArgs.push('--provider', provider);
     if (target) addonBaseArgs.push('--target', target);
+    if (dryRun) addonBaseArgs.push('--dry-run');
     if (verbose) addonBaseArgs.push('--verbose');
     // Forward --copy-all to addon deploys so the legacy mirror behavior
     // is consistent across the framework + every addon (#1219).
@@ -3557,7 +3569,7 @@ export class UseHandler implements CommandHandler {
     await ensureProviderGeneratedDirsIgnored(target, provider, { dryRun, verbose });
 
     const paths = getProviderPaths(provider);
-    if (!dryRun && !skipUtils) {
+    if (!dryRun && !skipUtils && !bulkKernelOnly) {
       const wrapperValidation = await validateDeployedModelWrappers({
         provider,
         target,
@@ -3575,7 +3587,7 @@ export class UseHandler implements CommandHandler {
 
     // Translate deployed skills to commands for providers that require legacy command format.
     // (#550) Skills are canonical; commands are generated deployment artifacts.
-    if (providerNeedsCommands(provider) && targetCommandsDir) {
+    if (!bulkKernelOnly && providerNeedsCommands(provider) && targetCommandsDir) {
       try {
         const translationResult = await translateSkillsToCommands(targetSkillsDir, {
           provider,
@@ -3597,7 +3609,7 @@ export class UseHandler implements CommandHandler {
     // provider loads skills natively: users still expect setup, update,
     // status, intake, and flow workflows to show up in the provider's `/`
     // command picker where supported.
-    if (targetCommandsDir) {
+    if (!bulkKernelOnly && targetCommandsDir) {
       try {
         const standardMirrored = await mirrorStandardCommandSkills({
           provider,

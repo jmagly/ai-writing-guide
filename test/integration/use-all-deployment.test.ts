@@ -304,9 +304,13 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', { timeou
     }
   });
 
-  it('keeps Codex kernel skills available after the full addon sweep', async () => {
+  it('keeps Codex bulk deployment kernel-only by default', async () => {
     const homeDir = mkdtempSync(path.join(os.tmpdir(), 'aiwg-use-all-codex-home-'));
     try {
+      const agentsDir = path.join(projectDir, '.codex', 'agents');
+      await fs.mkdir(agentsDir, { recursive: true });
+      await fs.writeFile(path.join(agentsDir, 'stale-aiwg.toml'), '# aiwg:managed v0 test\nname = "stale"\n');
+      await fs.writeFile(path.join(agentsDir, 'operator.toml'), 'name = "operator"\n');
       const result = runAiwgWithEnv(
         ['use', 'all', '--provider', 'codex', '--target', projectDir],
         projectDir,
@@ -323,6 +327,12 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', { timeou
       const skillDirs = await fs.readdir(path.join(projectDir, '.agents', 'skills'), { withFileTypes: true });
       expect(skillDirs.filter(entry => entry.isDirectory()).length).toBeLessThan(100);
 
+      const codexAgentsDir = path.join(projectDir, '.codex', 'agents');
+      const codexAgents = existsSync(codexAgentsDir)
+        ? (await fs.readdir(codexAgentsDir)).filter(name => name.endsWith('.toml'))
+        : [];
+      expect(codexAgents).toEqual(['operator.toml']);
+
       const gitignore = await fs.readFile(path.join(projectDir, '.gitignore'), 'utf-8');
       expect(gitignore).toContain('.codex/');
       expect(gitignore).toContain('.agents/');
@@ -330,6 +340,45 @@ describe.skipIf(!GIT_AVAILABLE)('aiwg use all — deployment coverage', { timeou
     } finally {
       rmSync(homeDir, { recursive: true, force: true });
     }
+  }, 60_000);
+
+  it('keeps Claude bulk deployment kernel-only by default', async () => {
+    const homeDir = mkdtempSync(path.join(os.tmpdir(), 'aiwg-use-all-claude-home-'));
+    try {
+      const agentsDir = path.join(projectDir, '.claude', 'agents');
+      await fs.mkdir(agentsDir, { recursive: true });
+      await fs.writeFile(path.join(agentsDir, 'stale-aiwg.md'), '<!-- aiwg:managed v0 test -->\n# stale\n');
+      await fs.writeFile(path.join(agentsDir, 'operator.md'), '# operator\n');
+      const result = runAiwgWithEnv(
+        ['use', 'all', '--provider', 'claude', '--target', projectDir],
+        projectDir,
+        { HOME: homeDir, USERPROFILE: homeDir },
+      );
+      expect(result.exitCode, `aiwg use all --provider claude failed:\nstdout: ${result.stdout}\nstderr: ${result.stderr}`).toBe(0);
+      expect(existsSync(path.join(projectDir, '.claude', 'skills', 'aiwg-utils-quickref', 'SKILL.md'))).toBe(true);
+      expect(existsSync(path.join(projectDir, '.claude', 'skills', 'voice-apply', 'SKILL.md'))).toBe(false);
+      const agents = existsSync(agentsDir)
+        ? (await fs.readdir(agentsDir)).filter(name => name.endsWith('.md'))
+        : [];
+      expect(agents).toEqual(['operator.md']);
+    } finally {
+      rmSync(homeDir, { recursive: true, force: true });
+    }
+  }, 60_000);
+
+  it('keeps managed bulk artifacts intact during a kernel-only dry run', async () => {
+    const agentsDir = path.join(projectDir, '.codex', 'agents');
+    await fs.mkdir(agentsDir, { recursive: true });
+    const staleAgent = path.join(agentsDir, 'stale-aiwg.toml');
+    await fs.writeFile(staleAgent, '# aiwg:managed v0 test\nname = "stale"\n');
+
+    const result = runAiwgWithEnv(
+      ['use', 'all', '--provider', 'codex', '--target', projectDir, '--dry-run'],
+      projectDir,
+      {},
+    );
+    expect(result.exitCode, result.stderr || result.stdout).toBe(0);
+    expect(existsSync(staleAgent)).toBe(true);
   }, 60_000);
 
   it('deploys explicit testing-quality skills to the Codex native skill surface', async () => {

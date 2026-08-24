@@ -340,7 +340,7 @@ function mirrorSkillsAsCommands(provider, target, srcRoot, opts) {
  * @param {string|null} explicitSource the raw `--source` value (null when unset)
  */
 function pruneStaleAiwgArtifacts(provider, target, srcRoot, opts, explicitSource) {
-  if (opts.skillsOnly) return; // skills run their own prune in the provider
+  if (opts.skillsOnly && !opts.kernelOnly) return; // skills run their own prune in the provider
 
   const aiwgRoot = resolveAiwgRoot(srcRoot);
   if (!aiwgRoot) return; // no AIWG tree → bundle/standalone deploy; never prune
@@ -353,6 +353,20 @@ function pruneStaleAiwgArtifacts(provider, target, srcRoot, opts, explicitSource
     const rel = path.relative(codeRoot, path.resolve(explicitSource));
     const underCode = !!rel && !rel.startsWith('..') && !path.isAbsolute(rel);
     if (!underCode) return; // project-local bundle / external source → skip
+  }
+
+  if (opts.kernelOnly) {
+    for (const type of ['agents', 'commands', 'rules']) {
+      const relPath = provider.paths?.[type];
+      if (!relPath || relPath.endsWith('.md')) continue;
+      const destDir = path.isAbsolute(relPath) ? relPath : path.join(target, relPath);
+      pruneStaleAiwgFiles(destDir, new Set(), {
+        dryRun: opts.dryRun,
+        verbose: opts.verbose,
+        artifactExtensions: ['.md', '.mdc', '.toml'],
+      });
+    }
+    return;
   }
 
   const typesThisRun = [];
@@ -406,6 +420,7 @@ function parseArgs() {
     commandsOnly: false,
     skillsOnly: false,
     rulesOnly: false,
+    kernelOnly: false,
     filter: null,           // Glob pattern for agent names
     filterRole: null,       // Filter by role: reasoning|coding|efficiency
     save: false,            // Save model config to project models.json
@@ -438,6 +453,7 @@ function parseArgs() {
     else if (a === '--commands-only') cfg.commandsOnly = true;
     else if (a === '--skills-only') cfg.skillsOnly = true;
     else if (a === '--rules-only') cfg.rulesOnly = true;
+    else if (a === '--kernel-only') cfg.kernelOnly = true;
     else if (a === '--deploy-behaviors') cfg.deployBehaviors = true;
     else if (a === '--filter' && args[i + 1]) cfg.filter = args[++i];
     else if (a === '--filter-role' && args[i + 1]) cfg.filterRole = args[++i];
@@ -474,6 +490,7 @@ Options:
   --commands-only          Deploy only commands (skip agents)
   --skills-only            Deploy only skills (skip agents)
   --rules-only             Deploy only rules (skip agents)
+  --kernel-only            Deploy kernel skills only and prune managed bulk artifacts
   --dry-run                Show what would be deployed without writing
   --force                  Overwrite existing files
   --provider <name>        Target provider (see below)
@@ -490,7 +507,9 @@ Options:
   --create-agents-md           Create/update AGENTS.md template
   --skip-commands-migration    Skip deleting the commands directory before skills deployment
   --copy-all                   Copy ALL skills per-project (legacy mirror at <provider>/.aiwg/skills/).
-                               Default is kernel-only + index-driven discovery for the rest (#1217).
+                               For aiwg use all, this also restores the legacy full agent,
+                               command, and expanded-rule copy. Default bulk deployment is
+                               kernel-only + index-driven discovery for the rest (#1217).
                                Use this for sandboxed runtimes / air-gapped corpora where
                                $AIWG_ROOT isn't readable from the agent's working dir.
                                Alias: --copy-standard-skills — rc.29 era).
@@ -879,13 +898,14 @@ export async function main() {
     modelsConfig,
     asAgentsMd: cfg.asAgentsMd,
     createAgentsMd: cfg.createAgentsMd,
-    deployCommands: cfg.deployCommands,
-    deploySkills: cfg.deploySkills,
-    deployRules: cfg.deployRules,
-    deployBehaviors: cfg.deployBehaviors,
+    deployCommands: cfg.kernelOnly ? false : cfg.deployCommands,
+    deploySkills: cfg.kernelOnly ? true : cfg.deploySkills,
+    deployRules: cfg.kernelOnly ? false : cfg.deployRules,
+    deployBehaviors: cfg.kernelOnly ? false : cfg.deployBehaviors,
     commandsOnly: cfg.commandsOnly,
-    skillsOnly: cfg.skillsOnly,
+    skillsOnly: cfg.skillsOnly || cfg.kernelOnly,
     rulesOnly: cfg.rulesOnly,
+    kernelOnly: cfg.kernelOnly,
     filter: cfg.filter,
     filterRole: cfg.filterRole,
     save: cfg.save,
@@ -893,7 +913,7 @@ export async function main() {
     verbose: cfg.verbose,
     quiet: cfg.quiet,
     asPlugin: cfg.asPlugin,
-    deployBehaviors: cfg.deployBehaviors,
+    deployBehaviors: cfg.kernelOnly ? false : cfg.deployBehaviors,
     skipCommandsMigration: cfg.skipCommandsMigration,
     // #1217 / #1219: --copy-all flag forces legacy per-project mirror
     // for the standard tier. Default is no-copy + index-driven discovery.

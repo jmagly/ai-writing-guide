@@ -1183,7 +1183,7 @@ export function computeAllKernelNames(srcRoot) {
  *   located — see `computeAllKernelNames`), pruning is skipped entirely so a
  *   project-local-bundle deploy without AIWG_ROOT never empties the kernel
  *   skills directory (#123).
- * @param {object} opts `{ dryRun, verbose }`
+ * @param {object} opts `{ dryRun, verbose, artifactExtensions }`
  * @returns {number} count of pruned entries
  */
 export function pruneStaleAiwgSkills(kernelDestDir, desiredKernelNames, opts = {}) {
@@ -1348,7 +1348,8 @@ export function resolveAiwgRoot(srcRoot) {
  * `pruneStaleAiwgSkills`.
  *
  * Removes a file from `destDir` only when ALL hold:
- *   1. It is a deployed artifact file (`.md` / `.mdc`), not `RULES-INDEX.md`
+ *   1. It has an allowed deployed-artifact extension (`.md` / `.mdc` by
+ *      default; callers may include `.toml`), is not `RULES-INDEX.md`,
  *      and not the sidecar manifest.
  *   2. Its stem is NOT in `desiredStems` (the source no longer ships it).
  *   3. It carries an AIWG ownership signal — either a `.aiwg-manifest.json`
@@ -1369,6 +1370,7 @@ export function resolveAiwgRoot(srcRoot) {
  */
 export function pruneStaleAiwgFiles(destDir, desiredStems, opts = {}) {
   const { dryRun = false, verbose = false } = opts;
+  const artifactExtensions = opts.artifactExtensions || ['.md', '.mdc'];
   const removed = [];
   if (!destDir || !fs.existsSync(destDir)) return removed;
 
@@ -1391,7 +1393,7 @@ export function pruneStaleAiwgFiles(destDir, desiredStems, opts = {}) {
     if (name === 'RULES-INDEX.md') continue;
     if (name === 'RULES-ONDEMAND.md') continue; // generated on-demand index (#1673)
     const lower = name.toLowerCase();
-    if (!lower.endsWith('.md') && !lower.endsWith('.mdc')) continue;
+    if (!artifactExtensions.some(extension => lower.endsWith(extension))) continue;
 
     if (desired.has(artifactStem(name))) continue;
 

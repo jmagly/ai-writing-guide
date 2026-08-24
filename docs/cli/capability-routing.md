@@ -199,7 +199,7 @@ aiwg use sdlc --copy-all          # preferred — explicit CLI flag
 aiwg use all --copy-all           # works for `aiwg use all` too
 ```
 
-The `--copy-all` flag (alias `--copy-standard-skills`) restores the legacy copy behavior and writes all skills (kernel + standard) into the per-project tree at `<provider>/.aiwg/skills/` (and where applicable, `.agents/skills/`).
+The `--copy-all` flag (alias `--copy-standard-skills`) restores the legacy copy behavior and writes all skills (kernel + standard) into the per-project tree at `<provider>/.aiwg/skills/` (and where applicable, `.agents/skills/`). With `aiwg use all`, it also opts into the legacy full agent, command, and expanded-rule copy. Without that flag, bulk deployment keeps every provider's startup surface kernel-only and uses `aiwg discover` / `aiwg show` for the broader catalog.
 
 ## The kernel set today (21 skills, ~15-25k tokens total)
 

@@ -30,7 +30,10 @@ are already covered. Existing tracked files remain tracked, and `--dry-run`
 does not change `.gitignore`. Reopen Codex at the target project root so it can
 discover `.codex/agents/` and the native kernel skills in `.agents/skills/`.
 Standard AIWG skills remain available through discovery and natural-language
-routing unless deployment is explicitly run with `--copy-all`.
+routing unless deployment is explicitly run with `--copy-all`. This applies to
+the whole bulk surface: `aiwg use all` defaults to kernel skills only across
+providers, while `--copy-all` opts into the legacy full agent, command, skill,
+and expanded-rule copy.
 
 ## Choose a starting point
 

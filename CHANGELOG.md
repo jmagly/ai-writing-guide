@@ -11,6 +11,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Changed
 
+- **Bulk provider installs are kernel-only by default** - `aiwg use all` now
+  installs the compact kernel skill set on every provider and relies on
+  discovery for the broader catalog. Operators who need the former fully
+  copied agent, command, skill, and rule surface can request it explicitly
+  with `--copy-all` (jmagly/aiwg#152).
+
 - **Markdown links now participate in artifact graph traversal** - Indexed
   relative Markdown links create typed `markdown-link` edges when the target
   resolves to another indexed artifact in the active graph. External URLs,
@@ -19,6 +25,11 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   and provenance syntax (jmagly/aiwg#147).
 
 ### Fixed
+
+- **Kernel-only installs remove stale managed bulk artifacts** - Re-running
+  `aiwg use all` prunes legacy AIWG-managed agents, commands, and expanded
+  rules—including Codex TOML agents—while preserving unmarked operator-owned
+  files (jmagly/aiwg#152).
 
 - **Global graph statistics are visible by default** - `aiwg index stats`
   now loads default-built global graph definitions before reporting aggregate
