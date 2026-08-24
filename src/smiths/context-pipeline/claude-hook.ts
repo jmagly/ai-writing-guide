@@ -27,6 +27,7 @@ import {
   PROVIDER_BOOTSTRAP_START,
   PROVIDER_BOOTSTRAP_END,
 } from './workspace-context.js';
+import { dominantLineEnding, withLineEnding } from './line-endings.js';
 
 export const CLAUDE_HOOK_START = '<!-- AIWG:claude-md-hook:start -->';
 export const CLAUDE_HOOK_END = '<!-- AIWG:claude-md-hook:end -->';
@@ -114,7 +115,7 @@ export async function ensureClaudeMdHook(
   } catch {
     // Missing/legacy/temporarily malformed config receives the safe default.
   }
-  const block = buildClaudeHookBlock(policy);
+  let block = buildClaudeHookBlock(policy);
 
   // Case 1: CLAUDE.md does not exist — create a minimal one with just the block.
   let existing: string;
@@ -129,6 +130,9 @@ export async function ensureClaudeMdHook(
     }
     throw err;
   }
+
+  const lineEnding = dominantLineEnding(existing);
+  block = withLineEnding(block, lineEnding);
 
   const startIdx = existing.indexOf(CLAUDE_HOOK_START);
   const endIdx = existing.indexOf(CLAUDE_HOOK_END);
@@ -162,8 +166,8 @@ export async function ensureClaudeMdHook(
     }
 
     // Ensure the file ends with a single newline before appending.
-    const trimmed = existing.replace(/\n+$/, '\n');
-    const updated = `${trimmed}\n${block}\n`;
+    const trimmed = existing.replace(/(?:\r?\n)+$/, lineEnding);
+    const updated = `${trimmed}${lineEnding}${block}${lineEnding}`;
     await fs.writeFile(claudeMdPath, updated, 'utf8');
     result.action = 'inserted';
     return result;
@@ -183,8 +187,8 @@ export async function ensureClaudeMdHook(
       await fs.writeFile(backupPath, existing, 'utf8');
       result.backupPath = backupPath;
     }
-    const trimmed = existing.replace(/\n+$/, '\n');
-    const updated = `${trimmed}\n${block}\n`;
+    const trimmed = existing.replace(/(?:\r?\n)+$/, lineEnding);
+    const updated = `${trimmed}${lineEnding}${block}${lineEnding}`;
     await fs.writeFile(claudeMdPath, updated, 'utf8');
     result.action = 'inserted';
     return result;

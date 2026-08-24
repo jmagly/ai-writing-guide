@@ -24,6 +24,7 @@ import {
   projectControlPath,
   resolveProjectAiwgDir,
 } from '../../config/project-artifacts.js';
+import { dominantLineEnding, withLineEnding } from './line-endings.js';
 
 export const WORKSPACE_MANAGED_START = '<!-- AIWG:workspace-context:start -->';
 export const WORKSPACE_MANAGED_END = '<!-- AIWG:workspace-context:end -->';
@@ -184,7 +185,8 @@ function replaceBlock(content: string, start: string, end: string, block: string
   const endIndex = content.indexOf(end);
   if (startIndex < 0 && endIndex < 0) return null;
   if (startIndex < 0 || endIndex < startIndex) throw new Error(`Malformed managed block: ${start} / ${end}`);
-  return content.slice(0, startIndex) + block + content.slice(endIndex + end.length);
+  const renderedBlock = withLineEnding(block, dominantLineEnding(content));
+  return content.slice(0, startIndex) + renderedBlock + content.slice(endIndex + end.length);
 }
 
 function stripGeneratedBlocks(content: string): string {

@@ -46,6 +46,39 @@ describe('WORKSPACE.md canonical context graph (#1811)', () => {
     expect(await readFile(join(root, 'WORKSPACE.md'), 'utf8')).toContain('Operator convention: use fixtures.');
   });
 
+  it('preserves dominant CRLF endings while refreshing managed blocks (#152)', async () => {
+    const root = await project();
+    await ensureWorkspaceContext(root);
+    const workspacePath = join(root, 'WORKSPACE.md');
+    const original = await readFile(workspacePath, 'utf8');
+    const crlf = original
+      .replace('This file is the canonical provider-neutral home', 'Stale managed text')
+      .replace(/\n/g, '\r\n');
+    await writeFile(workspacePath, crlf, 'utf8');
+
+    const result = await ensureWorkspaceContext(root);
+    const refreshed = await readFile(workspacePath, 'utf8');
+
+    expect(result.action).toBe('updated');
+    expect(refreshed).toContain('This file is the canonical provider-neutral home');
+    expect(refreshed.match(/\r\n/g)?.length).toBe(refreshed.match(/\n/g)?.length);
+  });
+
+  it('uses the majority line ending for a mixed WORKSPACE.md (#152)', async () => {
+    const root = await project();
+    await ensureWorkspaceContext(root);
+    const workspacePath = join(root, 'WORKSPACE.md');
+    const original = await readFile(workspacePath, 'utf8');
+    const mixed = original.replace(/\n/g, '\r\n').replace('\r\n', '\n');
+    await writeFile(workspacePath, mixed.replace('This file is the canonical provider-neutral home', 'Stale managed text'), 'utf8');
+
+    await ensureWorkspaceContext(root);
+    const refreshed = await readFile(workspacePath, 'utf8');
+    expect((refreshed.match(/\r\n/g)?.length ?? 0)).toBeGreaterThan(
+      (refreshed.match(/(?<!\r)\n/g)?.length ?? 0),
+    );
+  });
+
   it('links repository control files locally when the artifact corpus is external', async () => {
     const root = await project();
     await writeFile(join(root, '.aiwg-location'), '../private-corpus/.aiwg\n');

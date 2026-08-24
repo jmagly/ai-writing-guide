@@ -14,6 +14,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { buildProviderBootstrapBlock } from './workspace-context.js';
+import { dominantLineEnding, withLineEnding } from './line-endings.js';
 
 export const CONTEXT_HOOK_START = '<!-- AIWG:context-hook:start -->';
 export const CONTEXT_HOOK_END = '<!-- AIWG:context-hook:end -->';
@@ -55,7 +56,7 @@ export function hasContextHook(content: string): boolean {
  */
 export async function ensureManagedHook(filePath: string, opts: { force?: boolean; provider?: string } = {}): Promise<ManagedHookResult> {
   const base = path.basename(filePath);
-  const block = buildContextHookBlock(opts.provider);
+  let block = buildContextHookBlock(opts.provider);
   const result: ManagedHookResult = { path: filePath, action: 'skipped', warnings: [] };
 
   let existing: string;
@@ -70,6 +71,9 @@ export async function ensureManagedHook(filePath: string, opts: { force?: boolea
     throw err;
   }
 
+  const lineEnding = dominantLineEnding(existing);
+  block = withLineEnding(block, lineEnding);
+
   // Already has both bare includes (operator wired them by hand) — nothing to do.
   if (!existing.includes(CONTEXT_HOOK_START) && /^[ \t]*@WORKSPACE\.md[ \t]*$/m.test(existing) && /^[ \t]*@AIWG\.md[ \t]*$/m.test(existing)) {
     result.action = 'unchanged';
@@ -81,8 +85,8 @@ export async function ensureManagedHook(filePath: string, opts: { force?: boolea
 
   // No managed block — append it to the end, preserving everything above.
   if (s === -1 && e === -1) {
-    const trimmed = existing.replace(/\n+$/, '\n');
-    await fs.writeFile(filePath, `${trimmed}\n${block}\n`, 'utf8');
+    const trimmed = existing.replace(/(?:\r?\n)+$/, lineEnding);
+    await fs.writeFile(filePath, `${trimmed}${lineEnding}${block}${lineEnding}`, 'utf8');
     result.action = 'inserted';
     return result;
   }
@@ -90,8 +94,8 @@ export async function ensureManagedHook(filePath: string, opts: { force?: boolea
   // Malformed (one marker only) — repair only with --force to avoid clobbering.
   if (s === -1 || e === -1) {
     if (opts.force) {
-      const trimmed = existing.replace(/\n+$/, '\n');
-      await fs.writeFile(filePath, `${trimmed}\n${block}\n`, 'utf8');
+      const trimmed = existing.replace(/(?:\r?\n)+$/, lineEnding);
+      await fs.writeFile(filePath, `${trimmed}${lineEnding}${block}${lineEnding}`, 'utf8');
       result.action = 'inserted';
       return result;
     }
