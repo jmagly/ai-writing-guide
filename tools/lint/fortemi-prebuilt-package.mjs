@@ -65,10 +65,10 @@ if (!existsSync(manifestPath)) fail(`${manifestRel} is missing`);
 const exportText = readFileSync(exportPath, 'utf8');
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 const exported = JSON.parse(exportText);
-// The optional graph-pattern capability adds one discoverable skill/schema and
-// its operator-facing examples. Keep a tight, explicit package budget while
-// accommodating that reviewed corpus growth (#2126–#2134).
-const maxExportBytes = Number.parseInt(process.env.AIWG_FORTEMI_PREBUILT_MAX_BYTES ?? '12100000', 10);
+// The optional graph-pattern capability and scoped Markdown-link edge metadata
+// add discoverable corpus structure. Keep a tight, explicit package budget
+// while accommodating reviewed index growth (#2126-#2134, #147).
+const maxExportBytes = Number.parseInt(process.env.AIWG_FORTEMI_PREBUILT_MAX_BYTES ?? '12250000', 10);
 
 if (manifest.schema_version !== 'aiwg.fortemi.prebuilt.v1') {
   fail(`manifest schema_version is ${manifest.schema_version}`);

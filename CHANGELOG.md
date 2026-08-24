@@ -7,6 +7,35 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.19] - 2026-08-24 - "Scoped graph links, complete index visibility"
+
+### Changed
+
+- **Markdown links now participate in artifact graph traversal** - Indexed
+  relative Markdown links create typed `markdown-link` edges when the target
+  resolves to another indexed artifact in the active graph. External URLs,
+  anchor-only links, image links, and files outside the active graph remain
+  reader navigation only, preserving @-mentions as the durable traceability
+  and provenance syntax (jmagly/aiwg#147).
+
+### Fixed
+
+- **Global graph statistics are visible by default** - `aiwg index stats`
+  now loads default-built global graph definitions before reporting aggregate
+  or single-graph statistics, so graphs declared in the user AIWG config appear
+  with coverage computed from their configured scan roots (jmagly/aiwg#148).
+
+- **Symlinked artifact directories are indexed consistently** -
+  `findArtifactFiles` now follows symlinked and junctioned directories with
+  realpath cycle protection, skips broken links cleanly, and rejects unknown
+  graph names instead of silently falling back to the project graph
+  (jmagly/aiwg#149).
+
+- **GitHub trusted-publish checkout keeps the workspace trusted** - The
+  npmjs.org publish workflow preserves Git's safe-directory trust after its
+  isolated package-publish checkout so follow-on release steps can continue to
+  inspect the workspace.
+
 ## [2026.8.18] - 2026-08-23 - "Negotiated agents, canonical installs"
 
 ### Added
