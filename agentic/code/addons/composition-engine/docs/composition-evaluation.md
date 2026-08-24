@@ -82,6 +82,15 @@ injection, denied tools, duplicate retry, and exhausted budget. Each case has an
 expected terminal outcome and recovery action. Injection records are excluded
 from normal-policy means and retained in the raw evidence stream.
 
+Every benchmark must also declare at least one **negative control**. A negative
+control keeps the task, model settings, metrics, thresholds, and evaluation
+instrument fixed while applying a deliberately wrong policy patch. Choose a
+mutation that targets the rule being compared—not an unrelated rule or a
+different application. If the unchanged instrument accepts that control, or
+the observed outcome differs from its expectation, the summary reports
+`measurement_valid: false`, explains the invalid measurement, and the CLI exits
+non-zero. Candidate policy runs and control records are reported separately.
+
 ## Composition versus alternative control structures
 
 | Structure | Appropriate baseline | What must be measured |

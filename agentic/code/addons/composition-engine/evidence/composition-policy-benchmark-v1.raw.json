@@ -2,7 +2,7 @@
   "schemaVersion": "flow.aiwg.io/v1alpha1",
   "kind": "CompositionPolicyBenchmarkRawEvidence",
   "benchmark_id": "composition-policy-benchmark-v1",
-  "manifest_digest": "b402841c71e2e54b",
+  "manifest_digest": "10f8b2346edb55bd",
   "evidence_mode": "synthetic-conformance",
   "records": [
     {
@@ -2162,6 +2162,101 @@
       "observed": {
         "outcome": "partial",
         "recovery": "resume-with-new-budget",
+        "matched": true
+      }
+    },
+    {
+      "record_id": "control-613b97803ba95e1b",
+      "record_type": "negative-control",
+      "evidence_mode": "synthetic-conformance",
+      "task_id": "sandboxed-side-effect",
+      "task_family": "practical",
+      "tool_mode": "side-effect-fixture",
+      "policy_id": "single-pass:negative-control:wrong-side-effect-policy",
+      "seed": 17,
+      "model_settings_id": "deterministic-policy-fixture-v1",
+      "success": false,
+      "outcome": "rejected",
+      "metrics": {
+        "quality_score": 0.64,
+        "constraint_satisfaction": 0.42,
+        "calibration_error": 0.05,
+        "self_judge_score": 0.69,
+        "independent_score": 0.64,
+        "human_preference": {
+          "state": "NOT RUN",
+          "reason": "synthetic conformance fixture; human evaluation is required for empirical claims"
+        }
+      },
+      "requested_resources": {
+        "tokens": 5000,
+        "tool_calls": 10,
+        "cost_usd": 0.1,
+        "latency_ms": 5000,
+        "activations": 20,
+        "retries": 3
+      },
+      "realized_resources": {
+        "tokens": 1100,
+        "tool_calls": 2,
+        "cost_usd": 0.0032,
+        "latency_ms": 700,
+        "activations": 1,
+        "retries": 0
+      },
+      "budget_adherence": true,
+      "budget_utilization": 0.22,
+      "convergence_reason": "single-pass-complete",
+      "hitl_burden": "none",
+      "observability": "final-only",
+      "recovery": "rerun",
+      "evaluation_provenance": [
+        "self-judge-fixture-v1",
+        "independent-rubric-fixture-v1"
+      ],
+      "control_id": "wrong-side-effect-policy",
+      "base_policy_id": "single-pass",
+      "control_contract": {
+        "workload_id": "sandboxed-side-effect",
+        "model_settings_id": "deterministic-policy-fixture-v1",
+        "instrumentation": [
+          "task_success",
+          "independent_quality",
+          "constraint_satisfaction",
+          "calibration_error",
+          "self_judge_bias",
+          "human_preference_state",
+          "tokens",
+          "tool_calls",
+          "cost_usd",
+          "latency_ms",
+          "activations",
+          "retries",
+          "convergence_reason",
+          "failure_rate",
+          "hitl_burden",
+          "observability",
+          "recovery"
+        ],
+        "thresholds": {
+          "quality": 0.7,
+          "constraint_satisfaction": 0.8,
+          "speed_of_accuracy": [
+            0.65,
+            0.75,
+            0.85
+          ]
+        },
+        "mutation": {
+          "constraint_delta": -0.5
+        },
+        "rationale": "Deliberately weakens the policy applied to the same side-effect workload; the unchanged constraint instrument must reject it."
+      },
+      "expected": {
+        "outcome": "rejected"
+      },
+      "observed": {
+        "outcome": "rejected",
         "matched": true
       }
     }

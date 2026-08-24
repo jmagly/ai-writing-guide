@@ -169,6 +169,7 @@
         "sideEffectMode": { "$ref": "#/definitions/sideEffectMode" },
         "idempotencyKey": { "type": "string", "minLength": 1 },
         "approvalGate": { "$ref": "#/definitions/id" },
+        "scope": { "$ref": "#/definitions/observationScope" },
         "retry": { "$ref": "#/definitions/retryPolicy" },
         "fallback": { "$ref": "#/definitions/fallbackPolicy" },
         "ceilings": { "$ref": "#/definitions/ceilings" }
@@ -211,7 +212,25 @@
         "to": { "$ref": "#/definitions/id" },
         "when": { "$ref": "#/definitions/predicate" },
         "guard": { "$ref": "#/definitions/predicate" },
+        "progress": { "$ref": "#/definitions/progressMeasure" },
         "maxIterations": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "progressMeasure": {
+      "type": "object",
+      "required": ["state", "direction"],
+      "additionalProperties": false,
+      "properties": {
+        "state": { "$ref": "#/definitions/id" },
+        "direction": { "const": "decrease" }
+      }
+    },
+    "observationScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "files": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "resources": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
       }
     },
     "join": {

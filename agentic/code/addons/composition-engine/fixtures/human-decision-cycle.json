@@ -1,0 +1,45 @@
+{
+  "apiVersion": "flow.aiwg.io/v1alpha1",
+  "kind": "FlowGraph",
+  "metadata": { "name": "human-decision-cycle" },
+  "spec": {
+    "description": "Check waiting work, pause for approval, fix, and recheck while waiting strictly decreases.",
+    "entry": ["check"],
+    "candidates": [
+      { "id": "aiwg:function:1111111111111111", "kind": "function" },
+      { "id": "aiwg:tool:2222222222222222", "kind": "tool" }
+    ],
+    "state": { "fields": [{ "name": "waiting", "schema": { "type": "integer" }, "reducer": "replace", "initial": 2 }] },
+    "permissions": ["records:write"],
+    "capabilities": [{ "id": "fix-record", "permissions": ["records:write"], "sideEffectMode": "approval-required", "approvalGate": "approve" }],
+    "ceilings": { "activations": 12, "tokens": 8000, "costUsd": 1, "timeMs": 60000, "concurrency": 1 },
+    "nodes": [
+      {
+        "id": "check", "kind": "function", "ref": "aiwg:function:1111111111111111", "deterministic": true,
+        "inputs": [{ "name": "previous", "schema": { "type": "integer" }, "state": "waiting" }],
+        "outputs": [{ "name": "waiting", "schema": { "type": "integer" }, "state": "waiting" }],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      },
+      {
+        "id": "approve", "kind": "gate", "inputs": [], "outputs": [],
+        "capabilities": [], "permissions": [], "sideEffectMode": "none"
+      },
+      {
+        "id": "fix", "kind": "tool", "ref": "aiwg:tool:2222222222222222",
+        "inputs": [{ "name": "waiting", "schema": { "type": "integer" }, "state": "waiting" }],
+        "outputs": [{ "name": "fixed", "schema": { "type": "integer" } }],
+        "capabilities": ["fix-record"], "permissions": ["records:write"],
+        "sideEffectMode": "approval-required", "approvalGate": "approve"
+      }
+    ],
+    "routes": [
+      { "id": "needs-decision", "from": "check", "to": "approve", "when": { "language": "cel", "expression": "state.waiting > 0" } },
+      { "id": "approved-fix", "from": "approve", "to": "fix" },
+      { "id": "recheck", "from": "fix", "to": "check", "guard": { "language": "cel", "expression": "state.waiting > 0" }, "progress": { "state": "waiting", "direction": "decrease" }, "maxIterations": 5 }
+    ],
+    "joins": [],
+    "failure": { "onNodeFailure": "fail", "maxFailures": 0 },
+    "output": { "mode": "final-only", "from": "check.waiting", "schema": { "type": "integer" } },
+    "trace": { "level": "metadata", "redact": [] }
+  }
+}

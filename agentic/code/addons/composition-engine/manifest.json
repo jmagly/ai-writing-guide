@@ -38,7 +38,8 @@
     "phased-multi-track",
     "lcm-4x5",
     "polyrhythmic-strict-lcm",
-    "polyrhythmic-adaptive"
+    "polyrhythmic-adaptive",
+    "human-decision-cycle"
   ],
   "examples": [
     "polyrhythmic-technical-troubleshooting",
@@ -54,12 +55,16 @@
   ],
   "cli_commands": {
     "namespace": "composition",
-    "description": "Validate and execute provider-neutral Flow graph manifests",
+    "description": "Validate and execute provider-neutral Flow graphs; installed contracts: schemas/flow-graph.schema.json, fixtures/, examples/",
     "entry": "commands/",
     "subcommands": {
       "validate": {
         "file": "composition.mjs",
         "description": "Validate and normalize one FlowGraph manifest"
+      },
+      "example": {
+        "file": "composition-example.mjs",
+        "description": "Print or copy a shipped, validated FlowGraph example"
       },
       "run": {
         "file": "composition-run.mjs",

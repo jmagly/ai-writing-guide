@@ -68,7 +68,7 @@ This section is synthesized after template emission from the current workspace s
 ### Workspace Snapshot
 
 - Configured providers: claude, codex
-- Installed frameworks/addons: all, testing-quality
+- Installed frameworks/addons: all, testing-quality, composition-engine
 - Recorded deployments: claude, codex
 - Normalized project context: `.aiwg/AIWG.md`
 

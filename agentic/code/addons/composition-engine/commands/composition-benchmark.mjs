@@ -31,7 +31,7 @@ async function writeJson(file, value) {
 export default async function compositionBenchmark(args, context) {
   if (args.includes('--help') || args.includes('-h')) {
     return {
-      exitCode: 0,
+      exitCode: report.summary.measurement_valid ? 0 : 1,
       message: [
         'Usage: aiwg composition benchmark <benchmark.json> [options]',
         '',

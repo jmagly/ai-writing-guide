@@ -67,6 +67,9 @@ export function validateBenchmarkManifest(manifest) {
   if (!Array.isArray(manifest.tasks) || manifest.tasks.length < 6) throw new Error('Benchmark requires at least six fixed tasks.');
   if (!Array.isArray(manifest.policies)) throw new Error('Benchmark requires policies[].');
   if (!Array.isArray(manifest.failure_injections)) throw new Error('Benchmark requires failure_injections[].');
+  if (!Array.isArray(manifest.negative_controls) || manifest.negative_controls.length === 0) {
+    throw new Error('Benchmark requires at least one negative_controls[] entry.');
+  }
   if (!Array.isArray(manifest.ablations)) throw new Error('Benchmark requires ablations[].');
   if (!Array.isArray(manifest.seeds) || manifest.seeds.length === 0) throw new Error('Benchmark requires at least one seed.');
   if (!manifest.model_settings?.provider || !manifest.model_settings?.model) {
@@ -76,6 +79,7 @@ export function validateBenchmarkManifest(manifest) {
   const tasks = byId(manifest.tasks, 'Task');
   const policies = byId(manifest.policies, 'Policy');
   const failures = byId(manifest.failure_injections, 'Failure injection');
+  const controls = byId(manifest.negative_controls, 'Negative control');
   const ablations = byId(manifest.ablations, 'Ablation');
   for (const id of REQUIRED_POLICIES) if (!policies.has(id)) throw new Error(`Missing required policy '${id}'.`);
   for (const id of REQUIRED_FAILURES) if (!failures.has(id)) throw new Error(`Missing required failure injection '${id}'.`);
@@ -115,12 +119,23 @@ export function validateBenchmarkManifest(manifest) {
       throw new Error(`Failure '${injection.id}' requires expected_outcome and expected_recovery.`);
     }
   }
+  for (const control of manifest.negative_controls) {
+    if (!tasks.has(control.task_id)) throw new Error(`Negative control '${control.id}' references unknown task.`);
+    if (!policies.has(control.base_policy_id)) throw new Error(`Negative control '${control.id}' references unknown base policy.`);
+    if (!control.policy_patch || typeof control.policy_patch !== 'object' || Array.isArray(control.policy_patch)) {
+      throw new Error(`Negative control '${control.id}' requires policy_patch.`);
+    }
+    if (!['accepted', 'rejected'].includes(control.expected_outcome)) {
+      throw new Error(`Negative control '${control.id}' expected_outcome must be accepted or rejected.`);
+    }
+    if (!control.rationale) throw new Error(`Negative control '${control.id}' requires rationale.`);
+  }
   const independent = manifest.evaluators?.find((entry) => entry.independence === 'independent');
   if (!independent) throw new Error('Benchmark requires an independent evaluation path.');
   if (!manifest.thresholds?.quality || !Array.isArray(manifest.thresholds.speed_of_accuracy)) {
     throw new Error('Benchmark requires quality and speed_of_accuracy thresholds.');
   }
-  return { valid: true, tasks, policies, failures, ablations };
+  return { valid: true, tasks, policies, failures, controls, ablations };
 }
 
 function requestedResources(manifest) {
@@ -215,6 +230,32 @@ function failureRecord(manifest, injection) {
   };
 }
 
+function negativeControlRecord(manifest, control) {
+  const task = manifest.tasks.find((entry) => entry.id === control.task_id);
+  const basePolicy = manifest.policies.find((entry) => entry.id === control.base_policy_id);
+  const mutatedPolicy = { ...basePolicy, ...control.policy_patch, id: `${basePolicy.id}:negative-control:${control.id}` };
+  const base = normalRecord(manifest, task, mutatedPolicy, manifest.seeds[0]);
+  const matched = base.outcome === control.expected_outcome;
+  return {
+    ...base,
+    record_id: `control-${stableId({ benchmark: manifest.benchmark_id, control: control.id })}`,
+    record_type: 'negative-control',
+    control_id: control.id,
+    base_policy_id: control.base_policy_id,
+    policy_id: mutatedPolicy.id,
+    control_contract: {
+      workload_id: task.id,
+      model_settings_id: manifest.model_settings.id,
+      instrumentation: [...manifest.metrics],
+      thresholds: manifest.thresholds,
+      mutation: control.policy_patch,
+      rationale: control.rationale,
+    },
+    expected: { outcome: control.expected_outcome },
+    observed: { outcome: base.outcome, matched },
+  };
+}
+
 function speedOfAccuracy(records, thresholds) {
   return thresholds.map((threshold) => {
     const eligible = records.filter((record) => record.success && record.metrics.independent_score >= threshold);
@@ -276,7 +317,9 @@ export function runCompositionBenchmark(manifest) {
     manifest.seeds.map((seed) => normalRecord(manifest, task, policy, seed))
   )));
   const failureRecords = manifest.failure_injections.map((injection) => failureRecord(manifest, injection));
-  const records = [...policyRecords, ...failureRecords];
+  const controlRecords = manifest.negative_controls.map((control) => negativeControlRecord(manifest, control));
+  const invalidControls = controlRecords.filter((record) => !record.observed.matched || record.outcome === 'accepted');
+  const records = [...policyRecords, ...failureRecords, ...controlRecords];
   const policies = manifest.policies.map((policy) => summarizePolicy(
     policy.id,
     policyRecords.filter((record) => record.policy_id === policy.id),
@@ -302,6 +345,11 @@ export function runCompositionBenchmark(manifest) {
       task_count: manifest.tasks.length,
       policy_run_count: policyRecords.length,
       failure_injection_count: failureRecords.length,
+      negative_control_count: controlRecords.length,
+      measurement_valid: invalidControls.length === 0,
+      invalid_reasons: invalidControls.map((record) => (
+        `negative control '${record.control_id}' produced '${record.outcome}' (expected '${record.expected.outcome}')`
+      )),
       model_settings: manifest.model_settings,
       policies,
       baseline_comparisons: policies
@@ -317,6 +365,14 @@ export function runCompositionBenchmark(manifest) {
         id: record.injection_id,
         outcome: record.outcome,
         recovery: record.recovery,
+        matched: record.observed.matched,
+      })),
+      negative_controls: controlRecords.map((record) => ({
+        id: record.control_id,
+        base_policy_id: record.base_policy_id,
+        task_id: record.task_id,
+        expected_outcome: record.expected.outcome,
+        observed_outcome: record.observed.outcome,
         matched: record.observed.matched,
       })),
       ablations: manifest.ablations.map((entry) => ({ id: entry.id, variants: entry.variants, state: entry.state })),
@@ -349,6 +405,7 @@ export function formatBenchmarkMarkdown(summary) {
     ...rows,
     '',
     `Claim gate: **${summary.claim_gate.state}** — ${summary.claim_gate.reason}`,
+    `Measurement validity: **${summary.measurement_valid ? 'VALID' : 'INVALID'}**${summary.invalid_reasons.length ? ` — ${summary.invalid_reasons.join('; ')}` : ''}`,
     '',
     summary.claim_gate.supported_positioning,
   ].join('\n');

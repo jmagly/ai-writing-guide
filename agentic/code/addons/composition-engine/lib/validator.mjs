@@ -33,6 +33,13 @@ function pointer(error) {
   return at;
 }
 
+function schemaErrorMessage(error) {
+  if (error.keyword === 'const') {
+    return `must be equal to constant ${JSON.stringify(error.params.allowedValue)}.`;
+  }
+  return error.message ?? 'Schema validation failed.';
+}
+
 function duplicates(items, key, pathName, diagnostics) {
   const seen = new Map();
   for (const [index, item] of items.entries()) {
@@ -346,6 +353,33 @@ function semanticDiagnostics(manifest, options) {
     }
   }
 
+  for (const [index, route] of spec.routes.entries()) {
+    if (!route.progress) continue;
+    const field = stateByName.get(route.progress.state);
+    if (!field) {
+      diagnostics.push(diagnostic(
+        'UNRESOLVED_PROGRESS_STATE',
+        `/spec/routes/${index}/progress/state`,
+        `Progress state '${route.progress.state}' is not declared.`,
+      ));
+    } else if (field.schema?.type !== 'integer' || field.reducer !== 'replace' || !Number.isInteger(field.initial)) {
+      diagnostics.push(diagnostic(
+        'INVALID_PROGRESS_MEASURE',
+        `/spec/routes/${index}/progress`,
+        `Progress state '${route.progress.state}' must have an integer initial value and use the replace reducer.`,
+        'Use an integer state snapshot so strict decrease can be checked between cycle activations.',
+      ));
+    }
+    if (!route.guard || !route.maxIterations) {
+      diagnostics.push(diagnostic(
+        'INVALID_PROGRESS_MEASURE',
+        `/spec/routes/${index}/progress`,
+        'A progress-guarded route also requires guard and maxIterations.',
+        'Keep maxIterations as the overall safety ceiling.',
+      ));
+    }
+  }
+
   const edges = [];
   for (const [index, route] of spec.routes.entries()) {
     if (!nodeById.has(route.from)) diagnostics.push(diagnostic('UNRESOLVED_REFERENCE', `/spec/routes/${index}/from`, `Route source '${route.from}' is not declared.`));
@@ -462,7 +496,7 @@ export function validateFlowGraph(manifest, options = {}) {
     : (validateSchema.errors ?? []).map((error) => diagnostic(
         'SCHEMA_INVALID',
         pointer(error),
-        error.message ?? 'Schema validation failed.',
+        schemaErrorMessage(error),
         error.keyword === 'additionalProperties' ? 'Remove unknown fields; v1alpha1 is closed by default.' : undefined,
         { keyword: error.keyword, params: error.params },
       ));

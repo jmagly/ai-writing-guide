@@ -48,7 +48,17 @@ order even when workers finish in another order.
 An idempotent or exactly-once node receives the same invocation key across
 bounded retries. Successful receipts are checkpointed and replayed without a
 second adapter call. Approval-required work cannot be retried automatically,
-and a gate must appear in the approved gate set before execution.
+and a gate must appear in the approved gate set before execution. The runtime
+never prompts on its own: without approval it emits `run-paused`, persists the
+checkpoint, and returns `status: paused` before invoking the gated node. Resume
+with that checkpoint and `approvedGates`; a cancelled gate returns
+`status: cancelled`, while adapter failure after approval follows the declared
+node failure policy. `operatorAction: stop` cancels before another node starts.
+
+Exactly-once is reported as observed behavior, not inferred from declaration.
+Per-node evidence counts attempts, duplicate detections, and receipt-based
+suppressions. Public invocation keys contain digests of declared idempotency
+material; the declared key itself is never emitted.
 
 Authority is intersected at runtime. **allowedCapabilities** and
 **allowedPermissions** may narrow the graph declaration but never widen it.
@@ -62,6 +72,12 @@ advance a deterministic activation clock; periods four and five therefore meet
 at activation 20. Converged and budget joins always stop at their declared
 iteration or resource boundary even if a predicate never succeeds.
 
+A feedback route may declare `progress: { state, direction: decrease }` for an
+initialized integer state using the `replace` reducer. Every active feedback
+edge must then observe a strict decrease. Flat or increasing state stops with
+`CYCLE_PROGRESS_STALLED` before the broader `maxIterations` or graph ceiling;
+the hard bounds remain mandatory as an independent safety control.
+
 Failure policy selects fail-fast, continue, optional-skip, fallback, or typed
 partial synthesis. A typed-terminal-failure output returns a stable error
 object. Final-only mode emits no draft to the CLI; approved progress and
@@ -74,6 +90,22 @@ to continue it. Keep the same run ID and adapter contract. Completed nodes are
 not called again. The checkpoint records only public execution metadata,
 declared state/results, resource usage, and mutation receipts—not private
 chain-of-thought.
+
+## Outcome evidence and observation limits
+
+Nodes can declare exact file/resource scope and adapters can return normalized
+`observedTouches` arrays plus `observationComplete`. Reports compare declared
+and observed sets and classify coverage as `empty`, `reduced`, `complete`, or
+`divergent`; undeclared and unobserved entries remain directly queryable for
+policy assertions. Only string identifiers are retained—tool payloads,
+credentials, and file contents are not evidence fields.
+
+Resource evidence attributes adapter-reported tokens, cost, and elapsed
+`timeMs` to nodes and tracks (branches), and snapshots source totals at joins.
+These are additive work totals, not wall-clock critical-path duration. Complete
+touch observation depends on the adapter/platform: runtimes without filesystem
+or resource telemetry must return `observationComplete: false`, and consumers
+must not interpret an empty set as proof that nothing was touched.
 
 ## Trace safety
 

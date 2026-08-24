@@ -27,12 +27,14 @@
         "id": "architecture", "kind": "agent", "ref": "aiwg:agent:aaaaaaaaaaaaaaaa", "phase": "analyze", "track": "architecture",
         "inputs": [{ "name": "brief", "schema": { "type": "string" }, "from": "intake.brief" }],
         "outputs": [{ "name": "finding", "schema": { "type": "array" }, "state": "findings" }],
+        "scope": { "files": ["architecture.md"], "resources": ["repository:read"] },
         "capabilities": [], "permissions": [], "sideEffectMode": "none"
       },
       {
         "id": "security", "kind": "agent", "ref": "aiwg:agent:bbbbbbbbbbbbbbbb", "phase": "analyze", "track": "security",
         "inputs": [{ "name": "brief", "schema": { "type": "string" }, "from": "intake.brief" }],
         "outputs": [{ "name": "finding", "schema": { "type": "array" }, "state": "findings" }],
+        "scope": { "files": ["security.md"], "resources": ["repository:read"] },
         "capabilities": [], "permissions": [], "sideEffectMode": "none"
       },
       {

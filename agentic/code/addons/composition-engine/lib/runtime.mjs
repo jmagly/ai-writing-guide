@@ -108,6 +108,56 @@ function resourcesExceeded(realized, ceilings) {
   return RESOURCE_KEYS.find((key) => realized[key] >= ceilings[key]);
 }
 
+function publicTouches(value) {
+  const normalize = (items) => [...new Set((Array.isArray(items) ? items : [])
+    .filter((item) => typeof item === 'string' && item.length > 0))].sort();
+  return { files: normalize(value?.files), resources: normalize(value?.resources) };
+}
+
+function scopeEvidence(declaredValue, observedValue, complete = true) {
+  const declared = publicTouches(declaredValue);
+  const observed = publicTouches(observedValue);
+  const compare = (kind) => ({
+    declared: declared[kind],
+    observed: observed[kind],
+    undeclared: observed[kind].filter((item) => !declared[kind].includes(item)),
+    unobserved: declared[kind].filter((item) => !observed[kind].includes(item)),
+  });
+  const files = compare('files');
+  const resources = compare('resources');
+  const observedCount = observed.files.length + observed.resources.length;
+  const declaredCount = declared.files.length + declared.resources.length;
+  const undeclaredCount = files.undeclared.length + resources.undeclared.length;
+  return {
+    files,
+    resources,
+    coverage: observedCount === 0 ? 'empty'
+      : undeclaredCount > 0 ? 'divergent'
+      : observedCount < declaredCount ? 'reduced'
+        : 'complete',
+    observationComplete: Boolean(complete),
+  };
+}
+
+function mergedScopeEvidence(previous, declared, observed, complete) {
+  const aggregate = {
+    files: [...(previous?.files?.observed ?? []), ...(observed?.files ?? [])],
+    resources: [...(previous?.resources?.observed ?? []), ...(observed?.resources ?? [])],
+  };
+  return scopeEvidence(declared, aggregate, previous ? previous.observationComplete && complete : complete);
+}
+
+function emptyUsage() {
+  return { runs: 0, tokens: 0, costUsd: 0, timeMs: 0 };
+}
+
+function addUsage(target, usage) {
+  target.runs += 1;
+  target.tokens += usage.tokens;
+  target.costUsd += usage.costUsd;
+  target.timeMs += usage.timeMs;
+}
+
 export class FlowGraphRuntimeError extends Error {
   constructor(code, message, details = {}) {
     super(message);
@@ -151,6 +201,7 @@ export async function executeFlowGraph(manifest, options = {}) {
   const skipped = new Set(resume.skipped ?? []);
   const activatedRoutes = new Set(resume.activatedRoutes ?? []);
   const routeActivations = clone(resume.routeActivations) ?? {};
+  const routeProgress = clone(resume.routeProgress) ?? {};
   const reactivatedNodes = new Set(resume.reactivatedNodes ?? []);
   const events = clone(resume.events) ?? [];
   const realized = {
@@ -163,6 +214,7 @@ export async function executeFlowGraph(manifest, options = {}) {
     retries: Number(resume.realized?.retries ?? 0),
   };
   const joinState = clone(resume.joins) ?? {};
+  const evidence = clone(resume.evidence) ?? { nodes: {}, branches: {}, sideEffects: {}, joins: {} };
   let sequence = events.length;
   let terminal;
 
@@ -186,9 +238,11 @@ export async function executeFlowGraph(manifest, options = {}) {
       skipped: [...skipped].sort((a, b) => nodeOrder.get(a) - nodeOrder.get(b)),
       activatedRoutes: [...activatedRoutes].sort(),
       routeActivations: clone(routeActivations),
+      routeProgress: clone(routeProgress),
       reactivatedNodes: [...reactivatedNodes].sort(),
       joins: clone(joinState),
       realized: clone(realized),
+      evidence: clone(evidence),
       events: clone(events),
     };
   }
@@ -228,8 +282,19 @@ export async function executeFlowGraph(manifest, options = {}) {
     if (missingCapability) throw new FlowGraphRuntimeError('CAPABILITY_DENIED', `Node '${node.id}' is not authorized for capability '${missingCapability}'.`);
     const missingPermission = node.permissions.find((id) => !allowedPermissions.has(id));
     if (missingPermission) throw new FlowGraphRuntimeError('PERMISSION_DENIED', `Node '${node.id}' is not authorized for permission '${missingPermission}'.`);
+    if (node.kind === 'gate' && new Set(options.cancelledGates ?? []).has(node.id)) {
+      throw new FlowGraphRuntimeError('APPROVAL_CANCELLED', `Approval gate '${node.id}' was cancelled.`);
+    }
     if (node.kind === 'gate' && !approvedGates.has(node.id)) {
       throw new FlowGraphRuntimeError('APPROVAL_REQUIRED', `Gate '${node.id}' has not been approved.`);
+    }
+    if (node.sideEffectMode === 'approval-required') {
+      if (new Set(options.cancelledGates ?? []).has(node.approvalGate)) {
+        throw new FlowGraphRuntimeError('APPROVAL_CANCELLED', `Approval gate '${node.approvalGate}' was cancelled.`);
+      }
+      if (!approvedGates.has(node.approvalGate)) {
+        throw new FlowGraphRuntimeError('APPROVAL_REQUIRED', `Node '${node.id}' is waiting for approval gate '${node.approvalGate}'.`);
+      }
     }
   }
 
@@ -251,11 +316,22 @@ export async function executeFlowGraph(manifest, options = {}) {
     const inputSnapshot = clone(inputs);
     const nodeRunId = `${runId}:${node.id}:${activationTick}:${iteration}`;
     const invocationKey = node.idempotencyKey
-      ? `${graphId}:${node.id}:${node.idempotencyKey}:${digest(inputSnapshot).slice(7, 23)}`
+      ? `${graphId}:${node.id}:${digest(node.idempotencyKey).slice(7, 23)}:${digest(inputSnapshot).slice(7, 23)}`
       : nodeRunId;
     const existing = receipts[invocationKey];
+    const sideEffect = evidence.sideEffects[node.id] ?? {
+      mode: node.sideEffectMode,
+      attempts: 0,
+      duplicateDetections: 0,
+      suppressions: 0,
+      successes: 0,
+    };
+    evidence.sideEffects[node.id] = sideEffect;
     if (existing && ['idempotent', 'exactly-once'].includes(node.sideEffectMode)) {
-      await emit('node-replayed', { nodeId: node.id, nodeRunId, activation: activationTick, invocationKey });
+      sideEffect.attempts += 1;
+      sideEffect.duplicateDetections += 1;
+      sideEffect.suppressions += 1;
+      await emit('node-replayed', { nodeId: node.id, nodeRunId, activation: activationTick, invocationKey, duplicateDetected: true, suppressed: true });
       results[node.id] = clone(existing.result);
       completed.add(node.id);
       return existing.result;
@@ -264,6 +340,7 @@ export async function executeFlowGraph(manifest, options = {}) {
     const attempts = (node.retry?.limit ?? 0) + 1;
     let lastError;
     for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      sideEffect.attempts += 1;
       await emit('node-started', {
         nodeId: node.id,
         nodeRunId,
@@ -307,6 +384,23 @@ export async function executeFlowGraph(manifest, options = {}) {
         realized.tokens += usage.tokens;
         realized.costUsd += usage.costUsd;
         realized.timeMs += usage.timeMs;
+        const nodeUsage = evidence.nodes[node.id]?.resources ?? emptyUsage();
+        addUsage(nodeUsage, usage);
+        const branchId = node.track ?? 'default';
+        const branchUsage = evidence.branches[branchId] ?? emptyUsage();
+        addUsage(branchUsage, usage);
+        evidence.branches[branchId] = branchUsage;
+        evidence.nodes[node.id] = {
+          ...(evidence.nodes[node.id] ?? {}),
+          resources: nodeUsage,
+          scope: mergedScopeEvidence(
+            evidence.nodes[node.id]?.scope,
+            node.scope,
+            publicTouches(raw?.observedTouches),
+            raw?.observationComplete === true,
+          ),
+        };
+        sideEffect.successes += 1;
         const result = {
           outputs,
           usage,
@@ -380,7 +474,21 @@ export async function executeFlowGraph(manifest, options = {}) {
         && Number(routeActivations[routeId] ?? 0) >= route.maxIterations,
       );
       const active = guardMatched && !exhausted;
-      if (active) {
+      let progress;
+      if (active && route.progress) {
+        const current = state[route.progress.state];
+        const previous = routeProgress[routeId];
+        const progressed = previous === undefined || current < previous;
+        progress = { state: route.progress.state, direction: 'decrease', previous, current, progressed };
+        routeProgress[routeId] = current;
+        if (!progressed) {
+          terminal = {
+            code: 'CYCLE_PROGRESS_STALLED',
+            reason: `route '${routeId}' progress state '${route.progress.state}' did not strictly decrease (${previous} -> ${current})`,
+          };
+        }
+      }
+      if (active && !terminal) {
         activatedRoutes.add(routeId);
         routeActivations[routeId] = Number(routeActivations[routeId] ?? 0) + 1;
         // Guarded finite routes are explicit feedback edges. A completed target
@@ -403,7 +511,9 @@ export async function executeFlowGraph(manifest, options = {}) {
         exhausted,
         iteration: Number(routeActivations[routeId] ?? 0),
         maxIterations: route.maxIterations,
+        progress,
       });
+      if (terminal?.code === 'CYCLE_PROGRESS_STALLED') return;
       if (exhausted) {
         terminal = {
           code: 'CYCLE_GUARD_EXHAUSTED',
@@ -426,6 +536,19 @@ export async function executeFlowGraph(manifest, options = {}) {
 
   function joinFor(nodeId) {
     return manifest.spec.joins.find((join) => join.target === nodeId);
+  }
+
+  function recordJoinEvidence(join) {
+    if (!join) return;
+    const resources = join.sources.reduce((total, source) => {
+      const usage = evidence.nodes[source]?.resources ?? emptyUsage();
+      total.runs += usage.runs;
+      total.tokens += usage.tokens;
+      total.costUsd += usage.costUsd;
+      total.timeMs += usage.timeMs;
+      return total;
+    }, emptyUsage());
+    evidence.joins[join.id] = { sources: [...join.sources], resources };
   }
 
   function ordinaryJoinReady(join) {
@@ -460,6 +583,7 @@ export async function executeFlowGraph(manifest, options = {}) {
       nodeIds: nodesToRun.map((node) => node.id),
       inputSnapshotDigests: Object.fromEntries(nodesToRun.map((node) => [node.id, digest(inputsFor(node))])),
     });
+    for (const node of nodesToRun) recordJoinEvidence(joinFor(node.id));
     let settled;
     if (parallelEligible) {
       const requests = nodesToRun.map((node) => {
@@ -518,6 +642,22 @@ export async function executeFlowGraph(manifest, options = {}) {
           realized.tokens += usage.tokens;
           realized.costUsd += usage.costUsd;
           realized.timeMs += usage.timeMs;
+          const nodeUsage = evidence.nodes[node.id]?.resources ?? emptyUsage();
+          addUsage(nodeUsage, usage);
+          const branchId = node.track ?? 'default';
+          const branchUsage = evidence.branches[branchId] ?? emptyUsage();
+          addUsage(branchUsage, usage);
+          evidence.branches[branchId] = branchUsage;
+          evidence.nodes[node.id] = {
+            ...(evidence.nodes[node.id] ?? {}),
+            resources: nodeUsage,
+            scope: mergedScopeEvidence(
+              evidence.nodes[node.id]?.scope,
+              node.scope,
+              publicTouches(raw?.observedTouches),
+              raw?.observationComplete === true,
+            ),
+          };
           const result = {
             outputs,
             usage,
@@ -566,6 +706,20 @@ export async function executeFlowGraph(manifest, options = {}) {
   }
 
   async function handleFailure(node, error, tick) {
+    if (error?.code === 'APPROVAL_REQUIRED') {
+      failed.delete(node.id);
+      await emit('run-paused', { nodeId: node.id, activation: tick, code: error.code, reason: error.message });
+      terminal = { code: error.code, reason: error.message, status: 'paused' };
+      await persist();
+      return;
+    }
+    if (error?.code === 'APPROVAL_CANCELLED') {
+      failed.delete(node.id);
+      await emit('run-cancelled', { nodeId: node.id, activation: tick, code: error.code, reason: error.message });
+      terminal = { code: error.code, reason: error.message, status: 'cancelled' };
+      await persist();
+      return;
+    }
     if (manifest.spec.failure.onNodeFailure === 'skip-optional' && node.optional === true) {
       failed.delete(node.id);
       skipped.add(node.id);
@@ -641,12 +795,29 @@ export async function executeFlowGraph(manifest, options = {}) {
         policy: policy.mode,
         satisfied,
         reason,
+        resources: join.sources.reduce((total, source) => {
+          const usage = evidence.nodes[source]?.resources ?? emptyUsage();
+          total.runs += usage.runs;
+          total.tokens += usage.tokens;
+          total.costUsd += usage.costUsd;
+          total.timeMs += usage.timeMs;
+          return total;
+        }, emptyUsage()),
       });
       if (satisfied) break;
       const exceeded = resourcesExceeded(realized, manifest.spec.ceilings);
       if (exceeded) break;
     }
-    joinState[join.id] = { satisfied, reason, activation: realized.activations };
+    const joinResources = join.sources.reduce((total, source) => {
+      const usage = evidence.nodes[source]?.resources ?? emptyUsage();
+      total.runs += usage.runs;
+      total.tokens += usage.tokens;
+      total.costUsd += usage.costUsd;
+      total.timeMs += usage.timeMs;
+      return total;
+    }, emptyUsage());
+    evidence.joins[join.id] = { sources: [...join.sources], resources: joinResources };
+    joinState[join.id] = { satisfied, reason, activation: realized.activations, resources: joinResources };
     if (satisfied) {
       const target = nodes.get(join.target);
       completed.delete(target.id);
@@ -666,6 +837,10 @@ export async function executeFlowGraph(manifest, options = {}) {
     adapter: options.adapterId ?? 'unspecified',
     resumed: Boolean(options.resumeFrom),
   });
+  if (options.operatorAction === 'stop') {
+    await emit('run-cancelled', { code: 'OPERATOR_STOPPED', reason: 'operator requested stop' });
+    terminal = { code: 'OPERATOR_STOPPED', reason: 'operator requested stop', status: 'cancelled' };
+  }
 
   const temporal = manifest.spec.joins.filter((join) => ['lcm', 'converged', 'budget'].includes(join.policy.mode));
   const temporalSources = new Set(temporal.flatMap((join) => join.sources));
@@ -700,8 +875,8 @@ export async function executeFlowGraph(manifest, options = {}) {
   }
 
   const output = resultOutput(results, manifest.spec.output.from);
-  let status = terminal ? 'failed' : 'completed';
-  if (terminal && manifest.spec.failure.onNodeFailure === 'partial-synthesis') status = 'partial';
+  let status = terminal?.status ?? (terminal ? 'failed' : 'completed');
+  if (terminal && !terminal.status && manifest.spec.failure.onNodeFailure === 'partial-synthesis') status = 'partial';
   const publicOutput = status === 'completed' && output !== undefined
     ? clone(output)
     : manifest.spec.output.mode === 'typed-terminal-failure'
@@ -715,6 +890,7 @@ export async function executeFlowGraph(manifest, options = {}) {
     stopReason: terminal?.reason ?? 'completed',
     requestedResources: clone(manifest.spec.ceilings),
     realizedResources: clone(realized),
+    evidence: clone(evidence),
     outputDigest: publicOutput === undefined ? undefined : digest(publicOutput),
   });
   await persist();
@@ -731,6 +907,7 @@ export async function executeFlowGraph(manifest, options = {}) {
     results: clone(results),
     requestedResources: clone(manifest.spec.ceilings),
     realizedResources: clone(realized),
+    evidence: clone(evidence),
     trace: events,
     checkpoint: checkpoint(),
   };

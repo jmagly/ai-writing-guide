@@ -26,6 +26,7 @@ describe('composition policy evaluation harness (#2118)', () => {
     expect([...validation.failures.keys()].sort()).toEqual([
       'budget-exhaustion', 'denied-tool', 'duplicate-retry', 'evaluator-error', 'non-convergence', 'prompt-injection',
     ]);
+    expect([...validation.controls.keys()]).toEqual(['wrong-side-effect-policy']);
     expect([...validation.ablations.keys()].sort()).toEqual([
       'budget', 'evaluator-identity', 'join-policy', 'model-sharing', 'track-count',
     ]);
@@ -78,6 +79,29 @@ describe('composition policy evaluation harness (#2118)', () => {
     ]);
   });
 
+  it('rejects the deliberately wrong policy with the same workload and instrument', async () => {
+    const manifest = await json(manifestPath);
+    const report = runCompositionBenchmark(manifest);
+    const controls = report.raw.records.filter((record: {record_type: string}) => record.record_type === 'negative-control');
+    expect(controls).toHaveLength(1);
+    expect(controls[0]).toMatchObject({
+      control_id: 'wrong-side-effect-policy',
+      task_id: 'sandboxed-side-effect',
+      base_policy_id: 'single-pass',
+      observed: {outcome: 'rejected', matched: true},
+    });
+    expect(controls[0].control_contract.instrumentation).toEqual(manifest.metrics);
+    expect(report.summary).toMatchObject({measurement_valid: true, invalid_reasons: []});
+  });
+
+  it('invalidates a benchmark when an expected negative control passes', async () => {
+    const manifest = await json(manifestPath);
+    manifest.negative_controls[0].policy_patch = {quality_delta: 0.5, constraint_delta: 0.5};
+    const report = runCompositionBenchmark(manifest);
+    expect(report.summary.measurement_valid).toBe(false);
+    expect(report.summary.invalid_reasons[0]).toContain('wrong-side-effect-policy');
+  });
+
   it('keeps the empirical claim gate blocked for synthetic conformance records', async () => {
     const report = runCompositionBenchmark(await json(manifestPath));
     expect(report.summary.claim_gate).toEqual(expect.objectContaining({
@@ -108,7 +132,7 @@ describe('composition policy evaluation harness (#2118)', () => {
       const result = await compositionBenchmark([manifestPath, '--raw-out', raw, '--summary-out', summary, '--format', 'markdown'], {cwd: root});
       expect(result.exitCode).toBe(0);
       expect(result.message).toContain('Claim gate: **BLOCKED**');
-      expect((await json(raw)).records).toHaveLength(42);
+      expect((await json(raw)).records).toHaveLength(43);
       expect((await json(summary)).strict_lcm_vs_adaptive).toBeTruthy();
     } finally {
       await rm(temporary, {recursive: true, force: true});

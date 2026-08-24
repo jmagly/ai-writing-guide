@@ -7,7 +7,25 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Composition graphs now support guarded human-decision cycles and outcome evidence** -
+  Feedback routes can require strict-decrease integer progress in addition to a
+  hard iteration ceiling; approval-required nodes pause and resume from
+  checkpoints; and reports expose normalized scope, duplicate-suppression, and
+  node/branch/join resource evidence (roctinam/aiwg#2184, #2186).
+
+- **Composition benchmarks now require negative controls** - Benchmark records
+  keep the workload and instrument fixed while applying a deliberately wrong
+  policy, and mark the measurement invalid when that control unexpectedly
+  passes (roctinam/aiwg#2183).
+
 ### Fixed
+
+- **The first valid composition graph is discoverable from the CLI** -
+  Validation diagnostics print expected constants, help locates installed
+  contracts and fixtures, and `aiwg composition example` prints or copies a
+  known-valid starter (roctinam/aiwg#2185).
 
 - **Stable release discussions are now verified as publication artifacts** -
   The AIWG release-plan reference requires exactly one GitHub Announcements

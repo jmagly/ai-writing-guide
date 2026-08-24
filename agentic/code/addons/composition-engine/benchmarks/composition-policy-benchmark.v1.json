@@ -79,5 +79,15 @@
     {"id": "denied-tool", "policy_id": "strict-lcm", "task_id": "sandboxed-side-effect", "expected_outcome": "denied", "expected_recovery": "skip-or-approved-gate"},
     {"id": "duplicate-retry", "policy_id": "self-refine", "task_id": "technical-debug", "expected_outcome": "deduplicated", "expected_recovery": "reuse-receipt"},
     {"id": "budget-exhaustion", "policy_id": "budget-partial", "task_id": "practical-plan", "expected_outcome": "partial", "expected_recovery": "resume-with-new-budget"}
+  ],
+  "negative_controls": [
+    {
+      "id": "wrong-side-effect-policy",
+      "task_id": "sandboxed-side-effect",
+      "base_policy_id": "single-pass",
+      "policy_patch": {"constraint_delta": -0.5},
+      "expected_outcome": "rejected",
+      "rationale": "Deliberately weakens the policy applied to the same side-effect workload; the unchanged constraint instrument must reject it."
+    }
   ]
 }

@@ -6,6 +6,9 @@
   "task_count": 6,
   "policy_run_count": 36,
   "failure_injection_count": 6,
+  "negative_control_count": 1,
+  "measurement_valid": true,
+  "invalid_reasons": [],
   "model_settings": {
     "id": "deterministic-policy-fixture-v1",
     "provider": "fixture",
@@ -486,6 +489,16 @@
       "id": "budget-exhaustion",
       "outcome": "partial",
       "recovery": "resume-with-new-budget",
+      "matched": true
+    }
+  ],
+  "negative_controls": [
+    {
+      "id": "wrong-side-effect-policy",
+      "base_policy_id": "single-pass",
+      "task_id": "sandboxed-side-effect",
+      "expected_outcome": "rejected",
+      "observed_outcome": "rejected",
       "matched": true
     }
   ],

@@ -83,6 +83,7 @@ export interface Node {
   sideEffectMode: SideEffectMode;
   idempotencyKey?: string;
   approvalGate?: Id;
+  scope?: ObservationScope;
   retry?: RetryPolicy;
   fallback?: FallbackPolicy;
   ceilings?: Ceilings;
@@ -108,7 +109,18 @@ export interface Route {
   to: Id;
   when?: Predicate;
   guard?: Predicate;
+  progress?: ProgressMeasure;
   maxIterations?: number;
+}
+
+export interface ProgressMeasure {
+  state: Id;
+  direction: "decrease";
+}
+
+export interface ObservationScope {
+  files?: Array<string>;
+  resources?: Array<string>;
 }
 
 export interface Join {

@@ -1,7 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { parse as parseYaml } from 'yaml';
 import { validateFlowGraph } from '../lib/validator.mjs';
+
+const addonRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 function option(args, name, fallback) {
   const index = args.indexOf(name);
@@ -53,6 +56,11 @@ export default async function compositionValidate(args, context) {
         '',
         'The optional catalog proves authorized candidate IDs against an external AIWG index export.',
         'JSON output is a stable FlowGraphValidationReport and includes the normalized provider-neutral graph when valid.',
+        '',
+        `Installed schema: ${path.join(addonRoot, 'schemas', 'flow-graph.schema.json')}`,
+        `Valid fixtures: ${path.join(addonRoot, 'fixtures')}`,
+        `Examples: ${path.join(addonRoot, 'examples')}`,
+        'Print or copy a known-valid starter with: aiwg composition example linear-flow',
       ].join('\n'),
     };
   }

@@ -113,6 +113,62 @@ describe('composition-engine deterministic runtime', () => {
     expect(report.trace.find((event: any) => event.type === 'route-evaluated' && event.exhausted)).toMatchObject({ routeId: 'polish-to-draft', iteration: 2, maxIterations: 2 });
   });
 
+  it('stops a guarded cycle before its budget ceiling when progress is flat', async () => {
+    const graph = fixture('human-decision-cycle');
+    const first = await executeFlowGraph(graph, {
+      runId: 'flat-progress',
+      invokeNode: async ({node}: any) => ({outputs: valuesFor(node, node.id === 'check' ? 2 : 1), usage: {tokens: 1, costUsd: 0, timeMs: 1}}),
+    });
+    expect(first.status).toBe('paused');
+    const resumed = await executeFlowGraph(graph, {
+      runId: 'flat-progress', resumeFrom: first.checkpoint, approvedGates: ['approve'],
+      invokeNode: async ({node}: any) => ({outputs: valuesFor(node, node.id === 'check' ? 2 : 1), usage: {tokens: 1, costUsd: 0, timeMs: 1}}),
+    });
+    expect(resumed.status).toBe('failed');
+    expect(resumed.stopReason).toContain('did not strictly decrease');
+    expect(resumed.realizedResources.activations).toBeLessThan(graph.spec.ceilings.activations);
+    expect(resumed.trace.find((event: any) => event.type === 'route-evaluated' && event.progress?.progressed === false)).toBeTruthy();
+  });
+
+  it('pauses approval-required work, resumes from checkpoint, and supports operator cancellation', async () => {
+    const graph = fixture('human-decision-cycle');
+    const first = await executeFlowGraph(graph, {
+      runId: 'human-decision',
+      invokeNode: async ({node}: any) => ({outputs: valuesFor(node, 2), usage: {tokens: 1, costUsd: 0, timeMs: 1}}),
+    });
+    expect(first.status).toBe('paused');
+    expect(first.trace.some((event: any) => event.type === 'run-paused' && event.nodeId === 'approve')).toBe(true);
+
+    const waiting = [1, 0];
+    const resumed = await executeFlowGraph(graph, {
+      runId: 'human-decision', resumeFrom: first.checkpoint, approvedGates: ['approve'],
+      invokeNode: async ({node}: any) => ({
+        outputs: valuesFor(node, node.id === 'check' ? waiting.shift() : 1),
+        usage: {tokens: 1, costUsd: 0, timeMs: 1},
+      }),
+    });
+    expect(resumed.status).toBe('completed');
+    expect(resumed.output).toBe(0);
+
+    const cancelled = await executeFlowGraph(graph, {
+      runId: 'human-decision', resumeFrom: first.checkpoint, cancelledGates: ['approve'],
+      invokeNode: echoAdapter,
+    });
+    expect(cancelled.status).toBe('cancelled');
+    expect(cancelled.stopReason).toContain('cancelled');
+  });
+
+  it('honors an operator stop before invoking any node', async () => {
+    let calls = 0;
+    const report = await executeFlowGraph(fixture(), {
+      operatorAction: 'stop',
+      invokeNode: async (request: any) => { calls += 1; return echoAdapter(request); },
+    });
+    expect(report.status).toBe('cancelled');
+    expect(report.stopReason).toBe('operator requested stop');
+    expect(calls).toBe(0);
+  });
+
   it('never exceeds a convergence hard ceiling and returns the declared partial shape', async () => {
     const graph = fixture();
     graph.spec.ceilings.activations = 3;
@@ -200,6 +256,18 @@ describe('composition-engine deterministic runtime', () => {
     expect(Object.keys(report.checkpoint.receipts)).toEqual([keys[0]]);
   });
 
+  it('records duplicate exactly-once attempts and suppressions without exposing the declared key', async () => {
+    const graph = fixture();
+    graph.spec.ceilings.activations = 10;
+    graph.spec.nodes[0].sideEffectMode = 'exactly-once';
+    graph.spec.nodes[0].idempotencyKey = 'private-business-key';
+    graph.spec.routes.push({id: 'repeat', from: 'polish', to: 'draft', guard: {language: 'cel', expression: 'true'}, maxIterations: 1});
+    const report = await executeFlowGraph(graph, {invokeNode: echoAdapter});
+    expect(report.evidence.sideEffects.draft).toMatchObject({attempts: 2, duplicateDetections: 1, suppressions: 1});
+    expect(report.trace.some((event: any) => event.type === 'node-replayed' && event.suppressed)).toBe(true);
+    expect(JSON.stringify(report)).not.toContain('private-business-key');
+  });
+
   it('fails closed before adapter invocation when runtime authority is narrower', async () => {
     const graph = fixture('agent-tool-flow');
     const called: string[] = [];
@@ -227,6 +295,38 @@ describe('composition-engine deterministic runtime', () => {
     expect(report.realizedResources).toMatchObject({ tokens: 8, costUsd: 0.2, timeMs: 6 });
     expect(JSON.stringify(report.trace)).not.toContain('"secret":"token"');
     expect(JSON.stringify(report.trace)).toContain('[REDACTED]');
+  });
+
+  it('records declared versus observed scope, empty coverage, and observation limitations', async () => {
+    const graph = fixture();
+    graph.spec.nodes[0].scope = {files: ['a.md', 'b.md'], resources: ['repo:read']};
+    graph.spec.nodes[1].scope = {files: ['result.md']};
+    const report = await executeFlowGraph(graph, {
+      invokeNode: async ({node}: any) => ({
+        outputs: valuesFor(node, 'safe'), usage: {tokens: 1, costUsd: 0, timeMs: 1},
+        observedTouches: node.id === 'draft' ? {files: ['a.md', 'outside.md'], resources: ['repo:read']} : {},
+        observationComplete: node.id === 'draft',
+      }),
+    });
+    expect(report.evidence.nodes.draft.scope).toMatchObject({
+      files: {undeclared: ['outside.md'], unobserved: ['b.md']},
+      resources: {undeclared: [], unobserved: []},
+      observationComplete: true,
+    });
+    expect(report.evidence.nodes.polish.scope).toMatchObject({coverage: 'empty', observationComplete: false});
+  });
+
+  it('attributes resources per node, branch, and join', async () => {
+    const report = await executeFlowGraph(fixture('phased-multi-track'), {
+      invokeNode: echoAdapter,
+      parallelDispatch: async (requests: any[], invoke: any) => Promise.all(requests.map(invoke)),
+    });
+    expect(report.evidence.nodes.architecture.resources).toEqual({runs: 1, tokens: 10, costUsd: 0.01, timeMs: 2});
+    expect(report.evidence.branches.architecture.timeMs).toBe(2);
+    expect(report.evidence.branches.security.timeMs).toBe(2);
+    expect(report.evidence.joins['analysis-quorum']).toMatchObject({
+      sources: ['architecture', 'security'], resources: {runs: 2, tokens: 20, costUsd: 0.02, timeMs: 4},
+    });
   });
 
   it('keeps core semantics equivalent across the Codex and Claude Code adapters', async () => {

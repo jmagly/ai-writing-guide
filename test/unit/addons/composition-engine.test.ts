@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import Ajv from 'ajv';
 import { describe, expect, it } from 'vitest';
 import compositionValidate from '../../../agentic/code/addons/composition-engine/commands/composition.mjs';
+import compositionExample from '../../../agentic/code/addons/composition-engine/commands/composition-example.mjs';
 import {
   flowGraphSchema,
   normalizeFlowGraph,
@@ -18,6 +19,7 @@ const FIXTURES = [
   'lcm-4x5',
   'polyrhythmic-strict-lcm',
   'polyrhythmic-adaptive',
+  'human-decision-cycle',
 ];
 
 function fixture(name = 'linear-flow'): any {
@@ -53,6 +55,13 @@ describe('composition-engine FlowGraph contract', () => {
     const report = validateFlowGraph(value);
     expect(report.valid).toBe(false);
     expect(codes(report)).toContain('SCHEMA_INVALID');
+  });
+
+  it('prints the expected constant in apiVersion diagnostics', () => {
+    const value = fixture();
+    value.apiVersion = 'flow.aiwg.io/v0';
+    const diagnostic = validateFlowGraph(value).diagnostics.find((item: any) => item.path === '/apiVersion');
+    expect(diagnostic?.message).toContain('flow.aiwg.io/v1alpha1');
   });
 
   it('rejects duplicate identifiers', () => {
@@ -98,6 +107,13 @@ describe('composition-engine FlowGraph contract', () => {
     value.spec.routes[1].guard = { language: 'cel', expression: 'state.iterations < 3' };
     value.spec.routes[1].maxIterations = 3;
     expect(validateFlowGraph(value).valid).toBe(true);
+  });
+
+  it('requires guarded cycle progress to be an initialized replace-integer state', () => {
+    const value = fixture('human-decision-cycle');
+    expect(validateFlowGraph(value).valid).toBe(true);
+    value.spec.state.fields[0].reducer = 'sum';
+    expect(codes(validateFlowGraph(value))).toContain('INVALID_PROGRESS_MEASURE');
   });
 
   it('rejects impossible joins, including an LCM beyond the activation ceiling', () => {
@@ -177,10 +193,25 @@ describe('composition-engine FlowGraph contract', () => {
     expect(JSON.parse(invalid.message).diagnostics[0].code).toBe('UNRESOLVED_INDEX_REFERENCE');
   });
 
+  it('makes installed contracts and a valid starter discoverable from CLI help', async () => {
+    const help = await compositionValidate(['--help'], { cwd: process.cwd() });
+    expect(help.message).toContain('flow-graph.schema.json');
+    expect(help.message).toContain('fixtures');
+    expect(help.message).toContain('composition example linear-flow');
+
+    const example = await compositionExample(['linear-flow'], { cwd: process.cwd() });
+    expect(example.exitCode).toBe(0);
+    expect(validateFlowGraph(JSON.parse(example.message)).valid).toBe(true);
+  });
+
   it('registers CLI, schema, fixtures, and discovery metadata', () => {
     const manifest = JSON.parse(readFileSync(resolve(ROOT, 'manifest.json'), 'utf8'));
     expect(manifest.cli_commands.namespace).toBe('composition');
+    expect(manifest.cli_commands.description).toContain('schemas/flow-graph.schema.json');
+    expect(manifest.cli_commands.description).toContain('fixtures/');
+    expect(manifest.cli_commands.description).toContain('examples/');
     expect(manifest.cli_commands.subcommands.validate.file).toBe('composition.mjs');
+    expect(manifest.cli_commands.subcommands.example.file).toBe('composition-example.mjs');
     expect(manifest.cli_commands.subcommands.run.file).toBe('composition-run.mjs');
     expect(manifest.cli_commands.subcommands.benchmark.file).toBe('composition-benchmark.mjs');
     expect(manifest.schemas).toContain('flow-graph.schema');

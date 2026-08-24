@@ -22,8 +22,15 @@ aiwg use composition-engine
 aiwg composition validate path/to/graph.yaml
 aiwg composition validate path/to/graph.yaml --format json
 aiwg composition validate path/to/graph.yaml --catalog index-export.json --format json
+aiwg composition example linear-flow
+aiwg composition example linear-flow --output ./my-first-graph.json
 aiwg composition run path/to/graph.yaml --adapter ./composition-adapter.mjs
 ~~~
+
+Run `aiwg composition validate --help` to print the installed schema, fixture,
+and example locations. `aiwg composition example` defaults to the valid
+`linear-flow` starter; use `--help` to list every shipped fixture that can be
+printed or copied.
 
 The optional catalog accepts an array of stable IDs or an object containing
 **artifacts[]**, **results[]**, or **candidates[]**. It proves that the
@@ -97,12 +104,14 @@ The strict schema covers:
 - stable AIWG index references and an authorized candidate set;
 - typed input/output bindings, graph state, and explicit reducers;
 - phases, tracks, dependencies, conditional routes, and guarded finite cycles;
+- strict-decrease progress measures layered with finite cycle ceilings;
 - all, quorum, fixed, lcm, converged, and budget joins;
 - activation, token, cost, time, and concurrency ceilings;
 - retry, optional-skip, fallback, failure, and partial-synthesis policies;
 - declared capabilities, permissions, and four side-effect modes;
 - final-only, progressive, and typed terminal-failure outputs; and
-- metadata/binding/full-I/O traces with JSON-pointer redaction.
+- metadata/binding/full-I/O traces with JSON-pointer redaction; and
+- declared/observed scope, side-effect outcomes, and node/branch/join resource evidence.
 
 Trace settings never request, store, or expose private chain-of-thought. They
 cover execution metadata and declared input/output bindings only.
@@ -149,6 +158,7 @@ assigns runId when execution begins; validation leaves it null.
 - lcm-4x5.json — periods four and five synchronize at activation 20
 - polyrhythmic-strict-lcm.json — the safe strict profile aligns at activation 20
 - polyrhythmic-adaptive.json — the same contract may converge before its hard ceiling
+- human-decision-cycle.json — check → approve/fix → recheck with strict-decrease progress and a hard iteration ceiling
 
 See [docs/schema-evolution.md](docs/schema-evolution.md) for compatibility and
 unknown-field policy, and
