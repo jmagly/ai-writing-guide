@@ -564,6 +564,81 @@ triggers:
     }
   });
 
+  it('does not dilute a relevant capability match with unmatched query terms (#154)', async () => {
+    writeSkill(
+      'product-designer',
+      'design',
+      `---\nname: product-designer\ndescription: Crafts user experience flows, interface designs, and interaction specs that align with product objectives\n---\n`,
+    );
+    writeSkill(
+      'generic-reviewer',
+      'design',
+      `---\nname: generic-reviewer\ndescription: Reviews existing project screens\n---\n`,
+    );
+
+    const setupSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const setupErrSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
+    setupSpy.mockRestore();
+    setupErrSpy.mockRestore();
+
+    const captured: string[] = [];
+    const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) =>
+      captured.push(args.join(' ')),
+    );
+    await discoverCapability(cwd, {
+      phrase: 'design a user interface, information architecture, UX review of an existing screen',
+      graph: 'framework',
+      json: true,
+      backend: 'local',
+      limit: 3,
+    });
+    logSpy.mockRestore();
+
+    const parsed = JSON.parse(captured.join('\n'));
+    const productDesigner = parsed.results.find((result: { path: string }) =>
+      result.path.includes('/product-designer/SKILL.md'));
+    expect(productDesigner).toBeDefined();
+    expect(productDesigner.ranking.lexical_score).toBeGreaterThanOrEqual(0.2);
+  });
+
+  it('matches short acronyms on token boundaries rather than inside words (#154)', async () => {
+    writeSkill(
+      'linux-forensics',
+      'forensics',
+      `---\nname: linux-forensics\ndescription: Investigate Linux hosts and filesystems\n---\n`,
+    );
+    writeSkill(
+      'native-ux-tools',
+      'design',
+      `---\nname: native-ux-tools\ndescription: Use native UX tools for interface design\n---\n`,
+    );
+
+    const setupSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const setupErrSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await buildIndex(cwd, { graph: 'framework', force: true, explicit: true });
+    setupSpy.mockRestore();
+    setupErrSpy.mockRestore();
+
+    const captured: string[] = [];
+    const logSpy = vi.spyOn(console, 'log').mockImplementation((...args) =>
+      captured.push(args.join(' ')),
+    );
+    await discoverCapability(cwd, {
+      phrase: 'UX',
+      graph: 'framework',
+      json: true,
+      backend: 'local',
+      limit: 5,
+    });
+    logSpy.mockRestore();
+
+    const parsed = JSON.parse(captured.join('\n'));
+    expect(parsed.results[0]?.path).toContain('/native-ux-tools/SKILL.md');
+    expect(parsed.results.some((result: { path: string }) =>
+      result.path.includes('/linux-forensics/SKILL.md'))).toBe(false);
+  });
+
   // #1230 — kernel-marked skills used to short-circuit path anchoring,
   // emitting the stored relative path (`agentic/code/.../SKILL.md`).
   // `aiwg show` then resolved against cwd → ENOENT from any non-AIWG

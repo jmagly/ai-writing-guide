@@ -240,8 +240,20 @@ const SCORE_STOPWORDS = new Set([
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
-    .split(/[^a-z0-9-]+/)
-    .filter(t => t.length > 1 && !SCORE_STOPWORDS.has(t));
+    .split(/[^a-z0-9]+/)
+    .filter(t => t.length > 1 && !SCORE_STOPWORDS.has(t))
+    .map(token => token.length > 4 && token.endsWith('s') && !token.endsWith('ss')
+      ? token.slice(0, -1)
+      : token);
+}
+
+function matchedFieldTokens(queryTokens: string[], field: string): string[] {
+  const fieldTokens = new Set(tokenize(field));
+  return queryTokens.filter(token => fieldTokens.has(token));
+}
+
+function fieldContainsQuery(field: string, queryTokens: string[]): boolean {
+  return containsTokenSequence(tokenize(field), queryTokens);
 }
 
 /**
@@ -364,6 +376,7 @@ function scoreEntryDetailed(
   );
   let score = 0;
   const matches: LexicalMatchDiagnostic[] = [];
+  const creditedTokens = new Set<string>();
   const finish = (uncappedScore = score, cap = 1): DetailedScore => ({
     score: Math.min(uncappedScore, cap),
     diagnostic: {
@@ -380,6 +393,20 @@ function scoreEntryDetailed(
   ): void => {
     score += contribution;
     matches.push({ ...match, contribution });
+  };
+  const addTokenMatch = (
+    contributionPerToken: number,
+    hits: string[],
+    match: Omit<LexicalMatchDiagnostic, 'contribution' | 'matched_tokens' | 'query_token_coverage'>,
+  ): void => {
+    const newlyMatched = hits.filter(token => !creditedTokens.has(token));
+    if (newlyMatched.length === 0) return;
+    newlyMatched.forEach(token => creditedTokens.add(token));
+    addMatch(contributionPerToken * newlyMatched.length, {
+      ...match,
+      matched_tokens: newlyMatched,
+      query_token_coverage: tokens.length > 0 ? newlyMatched.length / tokens.length : 0,
+    });
   };
 
   // Exact-name floor (#1233) — if the query (normalized) exactly matches
@@ -497,14 +524,12 @@ function scoreEntryDetailed(
           query_token_coverage: queryCoverage,
         });
       } else if (useMultiToken) {
-        const hits = tokens.filter(t => trigger.includes(t));
+        const hits = matchedFieldTokens(tokens, trigger);
         if (overlapOK(hits.length)) {
-          addMatch(0.06 * 4 * (hits.length / tokens.length), {
+          addTokenMatch(0.06 * 4, hits, {
             field: 'trigger',
             match: 'token-overlap',
             value: trigger,
-            matched_tokens: hits,
-            query_token_coverage: hits.length / tokens.length,
           });
         }
       }
@@ -513,28 +538,26 @@ function scoreEntryDetailed(
 
   // Capability description (2x weight) — full phrase first, then tokens
   if (capabilityLower) {
-    if (capabilityLower.includes(lower)) {
+    if (fieldContainsQuery(capabilityLower, tokens)) {
       addMatch(0.2 * 2, {
         field: 'capability',
         match: 'contained-phrase',
         value: entry.capability,
       });
     } else if (useMultiToken) {
-      const hits = tokens.filter(t => capabilityLower.includes(t));
+      const hits = matchedFieldTokens(tokens, capabilityLower);
       if (overlapOK(hits.length)) {
-        addMatch(0.1 * 2 * (hits.length / tokens.length), {
+        addTokenMatch(0.1 * 2, hits, {
           field: 'capability',
           match: 'token-overlap',
           value: entry.capability,
-          matched_tokens: hits,
-          query_token_coverage: hits.length / tokens.length,
         });
       }
     }
   }
 
   // Title (3x weight)
-  if (titleLower.includes(lower)) {
+  if (fieldContainsQuery(titleLower, tokens)) {
     addMatch(0.3 * 3, {
       field: 'title',
       match: titleLower === lower ? 'exact' : 'contained-phrase',
@@ -544,31 +567,27 @@ function scoreEntryDetailed(
       addMatch(0.2, { field: 'title', match: 'exact', value: entry.title });
     }
   } else if (useMultiToken) {
-    const hits = tokens.filter(t => titleLower.includes(t));
+    const hits = matchedFieldTokens(tokens, titleLower);
     if (overlapOK(hits.length)) {
-      addMatch(0.08 * 3 * (hits.length / tokens.length), {
+      addTokenMatch(0.08 * 3, hits, {
         field: 'title',
         match: 'token-overlap',
         value: entry.title,
-        matched_tokens: hits,
-        query_token_coverage: hits.length / tokens.length,
       });
     }
   }
 
   // Tags (2x weight)
   for (const tag of tagsLower) {
-    if (tag.includes(lower)) {
+    if (fieldContainsQuery(tag, tokens)) {
       addMatch(0.2 * 2, { field: 'tag', match: 'contained-phrase', value: tag });
     } else if (useMultiToken) {
-      const hits = tokens.filter(t => tag.includes(t));
+      const hits = matchedFieldTokens(tokens, tag);
       if (overlapOK(hits.length)) {
-        addMatch(0.05 * 2 * (hits.length / tokens.length), {
+        addTokenMatch(0.05 * 2, hits, {
           field: 'tag',
           match: 'token-overlap',
           value: tag,
-          matched_tokens: hits,
-          query_token_coverage: hits.length / tokens.length,
         });
       }
     }
@@ -576,16 +595,14 @@ function scoreEntryDetailed(
 
   // Structure-aware language terms (1.5x weight). These are deliberately
   // below declared triggers/capabilities but above generic body summaries.
-  if (searchTermsLower.includes(lower)) {
+  if (fieldContainsQuery(searchTermsLower, tokens)) {
     addMatch(0.18 * 1.5, { field: 'search_terms', match: 'contained-phrase' });
   } else if (useMultiToken) {
-    const hits = tokens.filter(t => searchTermsLower.includes(t));
+    const hits = matchedFieldTokens(tokens, searchTermsLower);
     if (overlapOK(hits.length)) {
-      addMatch(0.06 * 1.5 * (hits.length / tokens.length), {
+      addTokenMatch(0.06 * 1.5, hits, {
         field: 'search_terms',
         match: 'token-overlap',
-        matched_tokens: hits,
-        query_token_coverage: hits.length / tokens.length,
       });
     }
   }
@@ -593,46 +610,42 @@ function scoreEntryDetailed(
   // Exact declarative kind and physical source classification are compact,
   // useful routing signals (e.g. FlowPlaybook vs OpsInventory; runbook that
   // originated under templates/).
-  if (kindLower.includes(lower)) {
+  if (fieldContainsQuery(kindLower, tokens)) {
     addMatch(0.15, { field: 'kind', match: 'contained-phrase', value: entry.kind });
   }
-  if (sourceTypeLower.includes(lower)) {
+  if (fieldContainsQuery(sourceTypeLower, tokens)) {
     addMatch(0.08, { field: 'source_type', match: 'contained-phrase', value: entry.sourceType });
   }
 
   // Summary (1x weight)
-  if (summaryLower.includes(lower)) {
+  if (fieldContainsQuery(summaryLower, tokens)) {
     addMatch(0.15, { field: 'summary', match: 'contained-phrase' });
   } else if (useMultiToken) {
-    const hits = tokens.filter(t => summaryLower.includes(t));
+    const hits = matchedFieldTokens(tokens, summaryLower);
     if (overlapOK(hits.length)) {
-      addMatch(0.04 * (hits.length / tokens.length), {
+      addTokenMatch(0.04, hits, {
         field: 'summary',
         match: 'token-overlap',
-        matched_tokens: hits,
-        query_token_coverage: hits.length / tokens.length,
       });
     }
   }
 
   // Path (0.5x weight)
-  if (pathLower.includes(lower)) {
+  if (fieldContainsQuery(pathLower, tokens)) {
     addMatch(0.1, { field: 'path', match: 'contained-phrase', value: entry.path });
   } else if (useMultiToken) {
-    const hits = tokens.filter(t => pathLower.includes(t));
+    const hits = matchedFieldTokens(tokens, pathLower);
     if (overlapOK(hits.length)) {
-      addMatch(0.03 * (hits.length / tokens.length), {
+      addTokenMatch(0.03, hits, {
         field: 'path',
         match: 'token-overlap',
         value: entry.path,
-        matched_tokens: hits,
-        query_token_coverage: hits.length / tokens.length,
       });
     }
   }
 
   // Type (0.5x weight)
-  if (typeLower.includes(lower)) {
+  if (fieldContainsQuery(typeLower, tokens)) {
     addMatch(0.1, { field: 'type', match: 'contained-phrase', value: entry.type });
   }
 
@@ -1215,41 +1228,32 @@ export async function discoverCapability(
   // lexical ranking so canonical domain phrases rank their owning capability
   // top-K instead of being out-scored by artifacts that merely mention the
   // word. Facet activation can also rescue an otherwise-empty strict pass.
-  let scored = dedupeDiscoverResults(
-    await applyFacetFusion(strictScored, candidates, params.phrase),
-  ).slice(0, limit);
-
-  // #1561 — verbose-query fallback. A wordy full-sentence query
-  // ("find me a skill that handles intake forms") dilutes the token hit ratio
-  // below the strict ceil(n/2) overlap gate and returns nothing, training
-  // agents to conclude "no skill exists" — the exact decline-without-search
-  // failure the skill-discovery rule guards against. When the strict pass
-  // dead-ends, re-score with a relaxed (single-hit) overlap so the meaningful
-  // tokens still surface ranked candidates rather than an empty set.
-  let relaxed = false;
-  if (scored.length === 0) {
-    // Floor the relaxed pass so a single incidental path/summary token hit
-    // (~0.006–0.008) doesn't surface as noise. Capability/title/trigger field
-    // hits land ~0.04+, so this keeps meaningful matches while dropping junk —
-    // if nothing clears the floor, we fall through to the no-match hint, which
-    // is more honest than surfacing a 0.01 path match.
-    const RELAXED_MIN_SCORE = 0.02;
-    const relaxedFull = candidates
-      .map(entry => {
-        const detailed = scoreEntryDetailed(entry, params.phrase, { relaxOverlap: true });
-        lexicalDiagnostics.set(entry.path, detailed.diagnostic);
-        return { entry, score: detailed.score };
-      })
-      .filter(r => r.score >= RELAXED_MIN_SCORE)
-      .sort(compareDiscoverResults);
-    const relaxedScored = dedupeDiscoverResults(
-      await applyFacetFusion(relaxedFull, candidates, params.phrase),
-    ).slice(0, limit);
-    if (relaxedScored.length > 0) {
-      scored = relaxedScored;
-      relaxed = true;
+  // #154 — a strict result anywhere in the corpus must not suppress relevant
+  // partial matches for a natural-language query. Score the relaxed pass on
+  // matched terms (unmatched terms do not divide the score), apply a noise
+  // floor, and union it with strict matches before ranking. Word-boundary
+  // token matching keeps this from resurrecting substring noise such as UX in
+  // Linux.
+  const RELAXED_MIN_SCORE = 0.02;
+  const strictPaths = new Set(strictScored.map(result => result.entry.path));
+  const combinedByPath = new Map(strictScored.map(result => [result.entry.path, result]));
+  for (const entry of candidates) {
+    const detailed = scoreEntryDetailed(entry, params.phrase, { relaxOverlap: true });
+    if (detailed.score < RELAXED_MIN_SCORE) continue;
+    const existing = combinedByPath.get(entry.path);
+    if (!existing || detailed.score > existing.score) {
+      combinedByPath.set(entry.path, { entry, score: detailed.score });
+      lexicalDiagnostics.set(entry.path, detailed.diagnostic);
     }
   }
+  const scored = dedupeDiscoverResults(
+    await applyFacetFusion(
+      Array.from(combinedByPath.values()).sort(compareDiscoverResults),
+      candidates,
+      params.phrase,
+    ),
+  ).slice(0, limit);
+  const relaxed = scored.some(result => !strictPaths.has(result.entry.path));
 
   const queryTimeMs = Date.now() - startTime;
 
