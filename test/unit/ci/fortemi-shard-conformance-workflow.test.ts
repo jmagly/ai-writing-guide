@@ -16,7 +16,13 @@ describe('Fortemi shard conformance workflow', () => {
       'container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb',
     )
     expect(workflow).not.toContain('runs-on: matric-builder')
-    expect(workflow).toContain("apt-get install -y --no-install-recommends docker.io")
+    expect(workflow).toContain('DOCKER_VERSION=27.5.1')
+    expect(workflow).toContain(
+      'DOCKER_ARCHIVE_SHA256=4f798b3ee1e0140eab5bf30b0edc4e84f4cdb53255a429dc3bbae9524845d640',
+    )
+    expect(workflow).toContain('https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz')
+    expect(workflow).toContain("docker --version | grep -F 'Docker version 27.5.1,'")
+    expect(workflow).not.toContain('apt-get install -y --no-install-recommends docker.io')
     expect(workflow).toContain("docker version --format 'client={{.Client.Version}} server={{.Server.Version}}'")
     expect(workflow).toContain('docker info >/dev/null')
     expect(workflow).toContain('RUSTUP_INIT_SHA256=4acc9acc76d5079515b46346a485974457b5a79893cfb01112423c89aeb5aa10')

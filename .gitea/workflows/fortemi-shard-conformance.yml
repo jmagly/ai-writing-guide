@@ -35,7 +35,7 @@ jobs:
   producer-consumer-receipt:
     name: Published Core receipts → full-v1 clean PGlite and Fortemi
     # Use the shared Node job image and the host Docker socket. The preflight
-    # provides the Docker CLI and pinned Rust toolchain when the image omits them.
+    # provides pinned Docker and Rust clients when the image omits them.
     runs-on: ubuntu-latest
     container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb  # node 24.15.0 / npm 11.12.1 (see ci/digests.txt)
     timeout-minutes: 30
@@ -47,11 +47,16 @@ jobs:
           set -euo pipefail
           node -e "const major = Number(process.versions.node.split('.')[0]); if (major < 20) throw new Error('Node 20 or newer is required')"
           git --version
-          if ! command -v docker >/dev/null 2>&1; then
-            export DEBIAN_FRONTEND=noninteractive
-            apt-get update -qq
-            apt-get install -y --no-install-recommends docker.io >/dev/null
-          fi
+          DOCKER_VERSION=27.5.1
+          DOCKER_ARCHIVE=/tmp/docker.tgz
+          DOCKER_ARCHIVE_SHA256=4f798b3ee1e0140eab5bf30b0edc4e84f4cdb53255a429dc3bbae9524845d640
+          curl --fail --silent --show-error --location \
+            "https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz" \
+            --output "$DOCKER_ARCHIVE"
+          echo "${DOCKER_ARCHIVE_SHA256}  ${DOCKER_ARCHIVE}" | sha256sum --check --strict
+          tar --extract --gzip --file "$DOCKER_ARCHIVE" --directory /usr/local/bin \
+            --strip-components=1 docker/docker
+          docker --version | grep -F 'Docker version 27.5.1,'
           docker version --format 'client={{.Client.Version}} server={{.Server.Version}}'
           docker info >/dev/null
 
