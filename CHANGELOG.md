@@ -7,6 +7,40 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.18] - 2026-08-23 - "Negotiated agents, canonical installs"
+
+### Added
+
+- **Optional Flow graph execution profile** - The `graph-pattern` addon now
+  layers validated graph playbooks, scaffold/explain/dry-run/replay commands,
+  adapter-backed execution, deterministic conformance fixtures, and Cockpit
+  projection over AIWG's existing Flow and Mission substrate. Graph nodes can
+  dispatch agent, tool, Sandbox, and durable-code work without introducing a
+  second orchestration language (#2127-#2134).
+
+- **Negotiated A2A 1.0 compatibility** - A2A clients, Bridge routing, mock
+  executors, and terminal observers now negotiate 1.0 interfaces while
+  retaining explicit 0.3 compatibility. Versioned codecs normalize messages,
+  tasks, status updates, artifacts, streaming events, and webhook payloads into
+  one internal mission model with downgrade-resistant interface selection.
+
+### Changed
+
+- **Explicit graph degraded modes and Sandbox lineage** - Graph execution now
+  records policy-bound degraded outcomes, validates Sandbox retry and resume
+  lineage through a versioned event contract, and documents the controlled
+  Cloudflare tunnel handoff for the Flow static-site surface.
+
+### Fixed
+
+- **Canonical global installation preservation** - AIWG now records one
+  provider-neutral installation identity with its method, root, update
+  strategy, manager executable, channel, and run mode. Update, refresh,
+  background maintenance, Doctor, Steward, and runtime reporting use that
+  identity, fail safely on path drift, and require explicit
+  `aiwg installation adopt|switch` recovery instead of silently switching
+  between nvm, Homebrew, source, npm, or signed-web installations (#2157).
+
 ## [2026.8.17] - 2026-08-22 - "Runnable graphs, useful release conversations"
 
 ### Added
