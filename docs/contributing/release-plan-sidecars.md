@@ -56,6 +56,13 @@ A sidecar can define:
 - post-release verification commands
 - delivery override behavior
 
+For a stable release mirrored to GitHub, post-release verification must fail
+until exactly one Announcements discussion exists for the version and links the
+GitHub release, npm package, versioned release notes, and CHANGELOG. AIWG's
+reference sidecar enforces this with
+`tools/release/verify-github-release-discussion.mjs`; `--no-mirror` is the only
+configured skip path.
+
 The shipped, schema-validated reference examples are:
 
 - `agentic/code/frameworks/sdlc-complete/schemas/flows/examples/aiwg.release.config.yaml`

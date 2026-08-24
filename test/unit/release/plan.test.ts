@@ -180,6 +180,26 @@ describe('release plan sidecars', () => {
     expect(validate(config), JSON.stringify(validate.errors, null, 2)).toBe(true);
   });
 
+  it('requires stable GitHub discussion verification in the shipped release plan', () => {
+    const planPath = join(
+      REPO_ROOT,
+      'agentic/code/frameworks/sdlc-complete/schemas/flows/examples/aiwg-npm.release-plan.yaml',
+    );
+    const plan = yaml.load(readFileSync(planPath, 'utf8')) as {
+      post_release_verification?: Array<Record<string, unknown>>;
+    };
+    const discussion = plan.post_release_verification
+      ?.find(({ id }) => id === 'github-announcement-discussion');
+
+    expect(discussion).toEqual({
+      id: 'github-announcement-discussion',
+      run: 'node tools/release/verify-github-release-discussion.mjs --version {version}',
+      expect_exit: 0,
+      required_for_channels: ['stable'],
+      skip_when_flag: '--no-mirror',
+    });
+  });
+
   it('keeps the stable GitHub announcement discussion contract in the shipped release config', () => {
     const configPath = join(
       REPO_ROOT,

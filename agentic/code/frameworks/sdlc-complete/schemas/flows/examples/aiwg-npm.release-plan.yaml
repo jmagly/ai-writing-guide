@@ -89,3 +89,8 @@ post_release_verification:
   - id: publication-proof
     run: aiwg show skill release-publication-verify
     expect_exit: 0
+  - id: github-announcement-discussion
+    run: node tools/release/verify-github-release-discussion.mjs --version {version}
+    expect_exit: 0
+    required_for_channels: [stable]
+    skip_when_flag: --no-mirror

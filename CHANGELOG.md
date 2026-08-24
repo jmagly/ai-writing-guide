@@ -7,6 +7,13 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Fixed
+
+- **Stable release discussions are now verified as publication artifacts** -
+  The AIWG release-plan reference requires exactly one GitHub Announcements
+  discussion for each stable mirrored release and verifies that it links the
+  release, npm package, versioned release notes, and CHANGELOG.
+
 ## [2026.8.19] - 2026-08-24 - "Scoped graph links, complete index visibility"
 
 ### Changed
