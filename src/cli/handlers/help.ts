@@ -82,6 +82,8 @@ function displayHelp(): void {
     ['runtime-info', 'Show runtime environment summary'],
     ['runtime-info --discover', 'Full tool discovery and catalog generation'],
     ['runtime-info --check <tool>', 'Check specific tool availability'],
+    ['runtime-info --transports', 'Show configured transport capabilities separately from providers'],
+    ['uhp <operation> --profile <name>', 'Inspect or smoke-test an explicit experimental UHP endpoint profile'],
   ]);
 
   helpGroup('CATALOG', [

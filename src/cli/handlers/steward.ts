@@ -240,6 +240,7 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
     aiwg steward capabilities --feature <name>    Provider support matrix for a feature
     aiwg steward capabilities --all               Full matrix (all providers x features)
     aiwg steward find --capability <name>         Routing advice for your current provider
+    aiwg steward transports                       Report transport capabilities separately from providers
     aiwg steward models [--complex|--high-impact] Model policy/discovery routing advice
     aiwg steward models --route --capability-type <agent|skill|rule|workflow>
       --capability <id> --assignment <text> [--provider <name>] [--json]
@@ -315,6 +316,18 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
       hint: 'Use audit or migrate --dry-run|--apply.',
       exitCode: EXIT_CODES.USAGE,
     });
+  }
+
+  if (subcommand === 'transports') {
+    const projectDir = ctx ? getProjectDir(ctx, args) : process.cwd();
+    const config = await readAiwgConfig(projectDir);
+    const profiles = Object.keys(config?.uhp?.profiles ?? {});
+    console.log('\n  Remote execution transports');
+    console.log('  ───────────────────────────');
+    console.log(`  UHP ${config?.uhp?.enabled ? 'enabled' : 'disabled'} (experimental client transport; not a provider capability)`);
+    console.log(`  Profiles: ${profiles.length ? profiles.join(', ') : 'none'}`);
+    console.log('  Routing: explicit `aiwg uhp <operation> --profile <name>`; no UHP↔A2A fallback.');
+    return;
   }
 
   const matrix = loadCapabilityMatrix();

@@ -97,6 +97,62 @@
         }
       }
     },
+    "uhp": {
+      "type": "object",
+      "description": "Experimental Unified Harness Protocol client configuration. Credentials are references only and are resolved at request time.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "profiles": {
+          "type": "object",
+          "propertyNames": { "pattern": "^[a-z][a-z0-9_-]{0,63}$" },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["endpoint", "version", "credential", "experimental"],
+            "properties": {
+              "endpoint": { "type": "string", "format": "uri", "pattern": "^https?://" },
+              "version": { "const": "2026-08-11" },
+              "credential": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["source", "name"],
+                "properties": {
+                  "source": { "const": "env" },
+                  "name": { "type": "string", "pattern": "^[A-Z_][A-Z0-9_]*$" }
+                }
+              },
+              "defaultHarness": { "type": "string", "pattern": "^chrn_[A-Za-z0-9_-]+$" },
+              "defaultModel": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+              "experimental": { "const": true },
+              "trust": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "allowedHosts": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+                  "allowPrivateNetwork": { "type": "boolean", "default": false },
+                  "allowInsecureLoopback": { "type": "boolean", "default": false },
+                  "allowRedirects": { "type": "boolean", "default": false }
+                }
+              },
+              "limits": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "requestTimeoutMs": { "type": "integer", "minimum": 1 },
+                  "inactivityTimeoutMs": { "type": "integer", "minimum": 1 },
+                  "maxTaskSeconds": { "type": "integer", "minimum": 1 },
+                  "maxUploadBytes": { "type": "integer", "minimum": 1 },
+                  "maxArtifactBytes": { "type": "integer", "minimum": 1 },
+                  "maxArtifactCount": { "type": "integer", "minimum": 1 },
+                  "maxRetries": { "type": "integer", "minimum": 1 }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "workspace": {
       "$ref": "#/definitions/Workspace",
       "description": "General multi-repository workspace metadata. Root manifests pair this with repos; external members may use member_of to discover their workspace."

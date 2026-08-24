@@ -28,6 +28,18 @@ npm ls @fortemi/core @bytecask/core
 
 Each installed dependency package includes its own `LICENSE` and `package.json`. To inspect the exact source reference for a different resolved version, run `npm view @fortemi/core@<version> repository license` or `npm view @bytecask/core@<version> repository license`.
 
+## Unified Harness Protocol schema
+
+- Vendored file: `schemas/uhp/uhp-2026-08-11.schema.json`
+- Upstream: <https://github.com/HarnessRouter/harnessrouter/blob/db78b957492766a5a5c76bc9981a9234f4546f5f/protocol/schema/uhp-2026-08-11.schema.json>
+- Protocol version: `2026-08-11`
+- Upstream license: Apache-2.0
+- Vendored SHA-256: `c9a22b0e4752bfe407c08930dec9b4f1f6aaa862878c4e540a75274241b31c3a`
+
+The schema is vendored unchanged to make UHP fixture and compatibility tests
+offline and version-pinned. AIWG's experimental client does not imply UHP
+server conformance.
+
 ## Distribution boundary
 
 The `aiwg` and `@aiwg/cli` npm archives do not copy Fortemi or Bytecask object code into their own tarballs. npm resolves those packages separately during installation. AIWG does, however, intentionally import Fortemi in-process at runtime, so separate archive delivery is not by itself a legal conclusion about whether execution forms a combined work.

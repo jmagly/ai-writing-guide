@@ -1742,6 +1742,25 @@ export const agentcardCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const uhpCommand: Extension = {
+  id: 'uhp',
+  type: 'command',
+  name: 'Unified Harness Protocol',
+  description: 'Inspect discovery and run smoke tasks through an explicit experimental UHP endpoint profile',
+  version: '1.0.0',
+  capabilities: ['cli', 'uhp', 'remote-harness', 'transport'],
+  keywords: ['uhp', 'unified harness protocol', 'remote harness', 'responses'],
+  category: 'toolsmith',
+  platforms: { claude: 'full', generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: {
+    type: 'command',
+    template: 'utility',
+    argumentHint: '<discover|harnesses|models|run> --profile <name> [--harness <id>] [--model <id>] [--input <text>] [--stream]',
+    allowedTools: ['Read', 'Bash'],
+  } satisfies CommandMetadata,
+};
+
 // Utility Commands
 
 export const prefillCardsCommand: Extension = {
@@ -3803,6 +3822,7 @@ export const commandDefinitions: Extension[] = [
   // Toolsmith (1)
   runtimeInfoCommand,
   agentcardCommand,
+  uhpCommand,
 
   // Utility (5)
   prefillCardsCommand,

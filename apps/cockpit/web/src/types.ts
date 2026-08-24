@@ -257,6 +257,11 @@ export interface MissionProjection {
   schedule?: string;
   graph?: GraphRunProjection;
   graph_nodes?: GraphNodeProjection[];
+  transport?: 'uhp' | 'a2a' | (string & {});
+  protocol_version?: string;
+  endpoint_profile?: string;
+  response_id?: string;
+  remote_session_id?: string;
 }
 export interface MissionSession {
   id: string;

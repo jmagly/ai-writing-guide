@@ -1,0 +1,20 @@
+{
+  "object": "uhp.discovery",
+  "protocol": "uhp",
+  "versions": ["2026-08-11"],
+  "default_version": "2026-08-11",
+  "conformance_class": "extended",
+  "capabilities": {
+    "streaming": true,
+    "sessions": true,
+    "cancellation": true,
+    "files_input": true,
+    "files_output": true,
+    "session_listing": true,
+    "harness_management": false,
+    "session_sharing": false,
+    "idempotency": true
+  },
+  "implementation": { "name": "fixture", "version": "1.0.0" },
+  "fixture_vendor_region": "test"
+}

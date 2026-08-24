@@ -305,6 +305,8 @@ function loopText(mission: MissionProjection) {
 }
 
 function backingText(mission: MissionProjection) {
+  if (mission.transport === 'uhp') return `UHP ${mission.endpoint_profile ?? 'profile unknown'} · ${mission.protocol_version ?? 'version unknown'}`;
+  if (mission.transport === 'a2a') return `A2A${mission.task_id ? ` ${fmtId(mission.task_id)}` : ''}`;
   if (mission.ralph_loop_id) return `Ralph ${fmtId(mission.ralph_loop_id)}`;
   if (mission.task_id && mission.instance_id) return `${fmtId(mission.instance_id)} / ${fmtId(mission.task_id)}`;
   if (mission.target_agent) return fmtId(mission.target_agent);

@@ -1,0 +1,9 @@
+{
+  "error": {
+    "type": "invalid_request_error",
+    "code": "harness_not_found",
+    "message": "No harness with that id.",
+    "param": "metadata.harness_id",
+    "detail": null
+  }
+}

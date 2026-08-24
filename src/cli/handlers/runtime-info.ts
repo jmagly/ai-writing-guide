@@ -60,8 +60,35 @@ async function handleRuntimeInfo(args: string[], cwd = process.cwd()): Promise<v
   const hasCheck = checkIndex >= 0;
   const hasCapabilities = args.includes('--capabilities');
   const hasProviders = args.includes('--providers');
+  const hasTransports = args.includes('--transports');
   const featureIndex = args.indexOf('--feature');
   const hasFeature = featureIndex >= 0;
+
+  if (hasTransports) {
+    const { readAiwgConfig } = await import('../../config/aiwg-config.js');
+    const config = await readAiwgConfig(cwd);
+    const profiles = Object.entries(config?.uhp?.profiles ?? {}).map(([name, profile]) => ({
+      name,
+      transport: 'uhp' as const,
+      protocolVersion: profile.version,
+      experimental: true,
+      configured: true,
+      enabled: config?.uhp?.enabled === true,
+      endpointOrigin: new URL(profile.endpoint).origin,
+      credentialSource: profile.credential.source,
+      credentialReference: profile.credential.name,
+    }));
+    const output = { providersAreTransports: false, transports: { uhp: { experimental: true, enabled: config?.uhp?.enabled === true, profiles } } };
+    if (hasJson) console.log(JSON.stringify(output, null, 2));
+    else {
+      console.log('\nTransport Inventory');
+      console.log('===================');
+      console.log('UHP is a remote execution transport, not an AIWG provider.');
+      if (!profiles.length) console.log('  UHP: not configured (experimental)');
+      for (const profile of profiles) console.log(`  UHP/${profile.name}: ${profile.enabled ? 'enabled' : 'disabled'}, ${profile.protocolVersion}, ${profile.endpointOrigin}`);
+    }
+    return;
+  }
 
   // --- Capability matrix queries (no RuntimeDiscovery needed) ---
   if (hasProviders) {

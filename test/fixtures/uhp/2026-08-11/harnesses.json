@@ -1,0 +1,14 @@
+{
+  "harnesses": [
+    {
+      "id": "chrn_fixture",
+      "object": "harness",
+      "name": "Fixture Codex",
+      "base": "codex",
+      "baseLabel": "Codex",
+      "defaultModel": "gpt-5.6-codex",
+      "createdAt": 1787600000000,
+      "fixture_vendor_field": { "retained": true }
+    }
+  ]
+}

@@ -15,6 +15,7 @@ export * from '../security/artifact-attestation.js';
 export * from '../providers/transformation-receipt.js';
 export * from '../providers/transformation-receipt-integration.js';
 export * from '../marketplace/artifact-attestation.js';
+export * from '../uhp/index.js';
 export {
   ARTIFACT_TRUST_ROOT_MEDIA_TYPE,
   ARTIFACT_TRUST_ROOT_SCHEMA_VERSION,

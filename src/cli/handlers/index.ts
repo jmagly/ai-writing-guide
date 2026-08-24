@@ -141,6 +141,7 @@ import { evidenceHandler } from './evidence.js';
 import { artifactVerifyHandler } from './artifact-verify.js';
 import { outputModeHandler } from './output-mode.js';
 import { installationHandler } from './installation.js';
+import { uhpHandler } from './uhp.js';
 
 import type { CommandHandler } from './types.js';
 
@@ -219,6 +220,7 @@ export {
   researchQueryHandler,
   runtimeInfoHandler,
   agentcardHandler,
+  uhpHandler,
 
   // Agentic Tools (RLM)
   chunkHandler,
@@ -382,6 +384,7 @@ export const allHandlers: CommandHandler[] = [
   skillsHandler,
   runtimeInfoHandler,
   agentcardHandler,
+  uhpHandler,
 
   // Utilities
   prefillCardsHandler,

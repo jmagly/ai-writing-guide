@@ -36,6 +36,9 @@ import {
   type SecurityConfig,
 } from '../security/threat-assessment-config.js';
 import { defaultArtifactOutputs, validateArtifactOutputs, type ArtifactOutputsConfig } from '../artifacts/output-policy.js';
+import { validateUhpConfig } from '../uhp/config.js';
+import type { UhpConfig } from '../uhp/types.js';
+export type { UhpConfig, UhpEndpointProfile } from '../uhp/types.js';
 export type { ArtifactOutputsConfig } from '../artifacts/output-policy.js';
 
 export type {
@@ -384,6 +387,9 @@ export interface AiwgConfig {
 
   /** Canonical artifact storage and optional provider-native presentation/export policy. */
   artifact_outputs?: ArtifactOutputsConfig;
+
+  /** Experimental remote Unified Harness Protocol client profiles. */
+  uhp?: UhpConfig;
 
   /**
    * General multi-repository workspace metadata. Root manifests pair this
@@ -1532,6 +1538,9 @@ export async function readAiwgConfig(projectDir: string): Promise<AiwgConfig | n
   const artifactOutputErrors = validateArtifactOutputs(parsed.artifact_outputs);
   if (artifactOutputErrors.length > 0) throw new Error(`Invalid .aiwg/aiwg.config:\n${artifactOutputErrors.join('\n')}`);
 
+  const uhpErrors = validateUhpConfig(parsed.uhp);
+  if (uhpErrors.length > 0) throw new Error(`Invalid .aiwg/aiwg.config:\n${uhpErrors.join('\n')}`);
+
   return parsed;
 }
 
@@ -1547,6 +1556,8 @@ export async function writeAiwgConfig(projectDir: string, config: AiwgConfig): P
   }
   const artifactOutputErrors = validateArtifactOutputs(config.artifact_outputs);
   if (artifactOutputErrors.length > 0) throw new Error(`Invalid .aiwg/aiwg.config:\n${artifactOutputErrors.join('\n')}`);
+  const uhpErrors = validateUhpConfig(config.uhp);
+  if (uhpErrors.length > 0) throw new Error(`Invalid .aiwg/aiwg.config:\n${uhpErrors.join('\n')}`);
   const localPath = getConfigPath(projectDir);
   const artifactDir = resolveProjectAiwgDir(projectDir);
   const artifactPath = join(artifactDir, CONFIG_FILENAME);

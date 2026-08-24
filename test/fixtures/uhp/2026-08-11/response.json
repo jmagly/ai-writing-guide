@@ -1,0 +1,42 @@
+{
+  "id": "resp_fixture",
+  "object": "response",
+  "created_at": 1787600000,
+  "status": "completed",
+  "model": "gpt-5.6-codex",
+  "previous_response_id": null,
+  "output": [
+    {
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "done",
+          "annotations": [
+            {
+              "type": "container_file_citation",
+              "container_id": "cntr_fixture",
+              "file_id": "file_fixture",
+              "filename": "report.md",
+              "download_url": "https://uhp.example/v1/containers/cntr_fixture/files/file_fixture/content",
+              "start_index": 0,
+              "end_index": 4
+            }
+          ]
+        }
+      ]
+    },
+    { "type": "fixture_vendor_output", "fixture_payload": true }
+  ],
+  "error": null,
+  "metadata": {
+    "harness_id": "chrn_fixture",
+    "session_id": "hsessfixture",
+    "container_id": "cntr_fixture",
+    "requested_model": "gpt-5.5-codex",
+    "model_substitution_reason": "requested model unavailable"
+  },
+  "usage": null,
+  "fixture_vendor_receipt": { "retained": true }
+}

@@ -1,0 +1,10 @@
+{
+  "harness_id": "chrn_fixture",
+  "backend": "openai",
+  "default": "gpt-5.6-codex",
+  "fallback": "gpt-5.5-codex",
+  "models": [
+    { "id": "gpt-5.6-codex", "label": "GPT-5.6 Codex", "backend": "openai", "available": true, "default": true },
+    { "id": "gpt-5.5-codex", "available": false, "default": false }
+  ]
+}

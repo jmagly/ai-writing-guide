@@ -1,0 +1,5 @@
+data: {"type":"response.created","sequence_number":0,"response":{"id":"resp_fixture","object":"response","created_at":1787600000,"status":"in_progress","model":"gpt-5.6-codex","output":[],"metadata":{"harness_id":"chrn_fixture","session_id":"hsessfixture"}}}
+
+data: {"type":"fixture.vendor.progress","sequence_number":1,"fixture_payload":{"unknown":true}}
+
+data: {"type":"response.completed","sequence_number":2,"response":{"id":"resp_fixture","object":"response","created_at":1787600000,"status":"completed","model":"gpt-5.6-codex","output":[],"metadata":{"harness_id":"chrn_fixture","session_id":"hsessfixture"},"usage":null}}
