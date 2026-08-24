@@ -1,5 +1,6 @@
 import type { UhpEvent, UhpMissionEvidence, UhpResponse, UhpResponseRequest } from './types.js';
 import { UHP_VERSION } from './types.js';
+import { decodeMission, type MissionDecodeResult } from '../mission-protocol/index.js';
 
 function collectArtifacts(response: UhpResponse): UhpMissionEvidence['artifacts'] {
   const artifacts = new Map<string, UhpMissionEvidence['artifacts'][number]>();
@@ -88,4 +89,26 @@ export function unknownUhpMissionEvidence(profile: string, diagnostic: string, r
     harness: {}, model: {}, eventSequence: lastSequence, artifactIds: [], inputFiles: [], artifacts: [], partialOutput: false,
     extensions: {}, diagnostic,
   };
+}
+
+/** Canonical Mission adapter consumed by UHP; the legacy evidence projection remains a compatibility view. */
+export function projectUhpResponseToCanonicalMission(
+  profile: string,
+  response: UhpResponse,
+  request: UhpResponseRequest = { input: '' },
+  event?: UhpEvent,
+): MissionDecodeResult {
+  const evidence = projectUhpResponseToMission(profile, response, request, event);
+  return decodeMission({
+    ...evidence,
+    objective: typeof request.input === 'string' && request.input.length ? request.input : 'UHP task',
+    status: evidence.nativeState,
+    artifacts: evidence.artifacts.map(artifact => ({
+      id: artifact.fileId,
+      kind: 'uhp-file',
+      ...(artifact.mediaType ? { mediaType: artifact.mediaType } : {}),
+      ...((artifact.source as Record<string, unknown>).sha256 ? { sha256: (artifact.source as Record<string, unknown>).sha256 } : {}),
+      extensions: { 'uhp.file': artifact.source },
+    })),
+  }, 'uhp-2026-08-11');
 }

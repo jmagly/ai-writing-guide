@@ -1,0 +1,1441 @@
+{
+  "schemaVersion": "mission-inventory.aiwg.io/v1",
+  "generatedBy": "tools/mission-protocol/inventory.mjs",
+  "entries": [
+    {
+      "path": "agentic/code/addons/agent-loop/agents/mc-conductor.md",
+      "owner": "agentic/code/addons/agent-loop",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "agentic/code/addons/agent-loop/skills/mission-control/SKILL.md",
+      "owner": "agentic/code/addons/agent-loop",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "agentic/code/addons/agent-loop/skills/mission-control/manifest.json",
+      "owner": "agentic/code/addons/agent-loop",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "json",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "agentic/code/addons/aiwg-utils/skills/aiwg-language-map/SKILL.md",
+      "owner": "agentic/code/addons/aiwg-utils",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "agentic/code/addons/aiwg-utils/skills/daemon-init/SKILL.md",
+      "owner": "agentic/code/addons/aiwg-utils",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "agentic/code/addons/aiwg-utils/skills/team/SKILL.md",
+      "owner": "agentic/code/addons/aiwg-utils",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "agentic/code/addons/aiwg-utils/workflow/README.md",
+      "owner": "agentic/code/addons/aiwg-utils",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "agentic/code/agents/personas/mc-conductor.md",
+      "owner": "agentic/code/agents/personas",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "agentic/code/frameworks/sdlc-complete/rules/lfd-control-tiers.md",
+      "owner": "agentic/code/frameworks/sdlc-complete",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "agentic/code/frameworks/sdlc-complete/rules/self-maintenance.md",
+      "owner": "agentic/code/frameworks/sdlc-complete",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "agentic/code/frameworks/sdlc-complete/templates/aiwg-sections/05-self-maintenance.md",
+      "owner": "agentic/code/frameworks/sdlc-complete",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "agentic/code/frameworks/sdlc-complete/templates/aiwg-sections/manifest.json",
+      "owner": "agentic/code/frameworks/sdlc-complete",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "json",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "agentic/code/frameworks/sdlc-complete/templates/project/AIWG-sdlc-fragment.md",
+      "owner": "agentic/code/frameworks/sdlc-complete",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "agentic/code/frameworks/sdlc-complete/templates/project/AIWG.md",
+      "owner": "agentic/code/frameworks/sdlc-complete",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "agentic/code/plugins/agent-loop/agents/mc-conductor.md",
+      "owner": "agentic/code/plugins/agent-loop",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "retain",
+      "canonicalSource": "agentic/code/addons/agent-loop/agents/mc-conductor.md"
+    },
+    {
+      "path": "agentic/code/plugins/agent-loop/skills/mission-control/SKILL.md",
+      "owner": "agentic/code/plugins/agent-loop",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "retain",
+      "canonicalSource": "agentic/code/addons/agent-loop/skills/mission-control/SKILL.md"
+    },
+    {
+      "path": "agentic/code/plugins/agent-loop/skills/mission-control/manifest.json",
+      "owner": "agentic/code/plugins/agent-loop",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "json",
+      "migrationAction": "retain",
+      "canonicalSource": "agentic/code/addons/agent-loop/skills/mission-control/manifest.json"
+    },
+    {
+      "path": "agentic/code/plugins/utils/skills/aiwg-language-map/SKILL.md",
+      "owner": "agentic/code/plugins/utils",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "retain",
+      "canonicalSource": "agentic/code/addons/aiwg-utils/skills/aiwg-language-map/SKILL.md"
+    },
+    {
+      "path": "agentic/code/plugins/utils/skills/daemon-init/SKILL.md",
+      "owner": "agentic/code/plugins/utils",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "retain",
+      "canonicalSource": "agentic/code/addons/aiwg-utils/skills/daemon-init/SKILL.md"
+    },
+    {
+      "path": "agentic/code/plugins/utils/skills/team/SKILL.md",
+      "owner": "agentic/code/plugins/utils",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "retain",
+      "canonicalSource": "agentic/code/addons/aiwg-utils/skills/team/SKILL.md"
+    },
+    {
+      "path": "agentic/code/providers/capability-matrix.yaml",
+      "owner": "agentic/code/providers/capability-matrix.yaml",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "apps/cockpit/README.md",
+      "owner": "apps/cockpit",
+      "role": "consumer-projection",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "apps/cockpit/bridge/contracts/activity-event-v1.schema.json",
+      "owner": "apps/cockpit",
+      "role": "schema",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "unknown"
+      ],
+      "serialization": "json",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "apps/cockpit/bridge/src/server.mjs",
+      "owner": "apps/cockpit",
+      "role": "consumer-projection",
+      "currentVersion": "mission.aiwg.io/v1",
+      "statusVocabulary": [
+        "aborted",
+        "canceled",
+        "cancelled",
+        "completed",
+        "done",
+        "failed",
+        "incomplete",
+        "input-required",
+        "operator-review-required",
+        "pending",
+        "running",
+        "unknown",
+        "working"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "apps/cockpit/mock-executor/src/server.mjs",
+      "owner": "apps/cockpit",
+      "role": "consumer-projection",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "apps/cockpit/web/src/App.test.tsx",
+      "owner": "apps/cockpit",
+      "role": "consumer-projection",
+      "currentVersion": "graph.flow.aiwg.io/v1",
+      "statusVocabulary": [
+        "completed",
+        "failed",
+        "operator-review-required",
+        "pending",
+        "running",
+        "working"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "apps/cockpit/web/src/components/Memory.tsx",
+      "owner": "apps/cockpit",
+      "role": "consumer-projection",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "apps/cockpit/web/src/components/Missions.tsx",
+      "owner": "apps/cockpit",
+      "role": "consumer-projection",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted",
+        "completed",
+        "done",
+        "failed",
+        "input-required",
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "apps/cockpit/web/src/types.ts",
+      "owner": "apps/cockpit",
+      "role": "consumer-projection",
+      "currentVersion": "graph.flow.aiwg.io/v1",
+      "statusVocabulary": [
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "apps/web/src/app/App.tsx",
+      "owner": "apps/web",
+      "role": "consumer-projection",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "apps/web/src/features/memory/MemoryPanel.tsx",
+      "owner": "apps/web",
+      "role": "consumer-projection",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "pending"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "apps/web/src/features/missions/MissionControl.tsx",
+      "owner": "apps/web",
+      "role": "consumer-projection",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted",
+        "failed",
+        "pending",
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "apps/web/src/features/onboarding/Onboarding.tsx",
+      "owner": "apps/web",
+      "role": "consumer-projection",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "apps/web/src/features/telemetry/TelemetryDashboard.tsx",
+      "owner": "apps/web",
+      "role": "consumer-projection",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "schemas/activity/activity-event-v1.schema.json",
+      "owner": "schemas/activity",
+      "role": "schema",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "unknown"
+      ],
+      "serialization": "json",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "schemas/executor-v1.json",
+      "owner": "schemas/executor-v1.json",
+      "role": "schema",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [
+        "aborted",
+        "done",
+        "failed",
+        "running"
+      ],
+      "serialization": "json",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "schemas/fleet-workload-v1.schema.json",
+      "owner": "schemas/fleet-workload-v1.schema.json",
+      "role": "schema",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "cancelled",
+        "failed",
+        "operator-review-required",
+        "pending",
+        "running",
+        "unknown"
+      ],
+      "serialization": "json",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "schemas/mission-protocol/consumer-matrix-v1.json",
+      "owner": "schemas/mission-protocol",
+      "role": "schema",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "json",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "schemas/mission-protocol/schema-baseline-v1.json",
+      "owner": "schemas/mission-protocol",
+      "role": "schema",
+      "currentVersion": "mission.aiwg.io/v1",
+      "statusVocabulary": [
+        "cancelled",
+        "completed",
+        "failed",
+        "incomplete",
+        "pending",
+        "running",
+        "unknown"
+      ],
+      "serialization": "json",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "schemas/mission-v1.schema.json",
+      "owner": "schemas/mission-v1.schema.json",
+      "role": "schema",
+      "currentVersion": "mission.aiwg.io/v1",
+      "statusVocabulary": [
+        "cancelled",
+        "completed",
+        "failed",
+        "incomplete",
+        "pending",
+        "running",
+        "unknown"
+      ],
+      "serialization": "json",
+      "migrationAction": "canonicalize"
+    },
+    {
+      "path": "src/a2a/types.ts",
+      "owner": "src/a2a",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "canceled",
+        "completed",
+        "failed",
+        "input-required",
+        "working"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/a2a/webhook.ts",
+      "owner": "src/a2a",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "pending"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/audit/operator-decision.ts",
+      "owner": "src/audit",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/cli/handlers/index.ts",
+      "owner": "src/cli",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/cli/handlers/mc.ts",
+      "owner": "src/cli",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted",
+        "completed",
+        "done",
+        "failed",
+        "running",
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/cli/handlers/runtime-info.ts",
+      "owner": "src/cli",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/cli/handlers/serve.ts",
+      "owner": "src/cli",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted",
+        "running",
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/cli/handlers/team.ts",
+      "owner": "src/cli",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/cli/handlers/types.ts",
+      "owner": "src/cli",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/cli/help-generator.ts",
+      "owner": "src/cli",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/config/aiwg-config.ts",
+      "owner": "src/config",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/extensions/commands/definitions.ts",
+      "owner": "src/extensions",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/flow/graph-metadata.ts",
+      "owner": "src/flow",
+      "role": "producer-consumer",
+      "currentVersion": "graph.flow.aiwg.io/v1",
+      "statusVocabulary": [
+        "canceled",
+        "failed",
+        "pending",
+        "running",
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/mcp/tools/agentic-sandbox.mjs",
+      "owner": "src/mcp",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/mcp/tools/orchestration.mjs",
+      "owner": "src/mcp",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/mcp/tools/subsystems.mjs",
+      "owner": "src/mcp",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/mission-protocol/codecs.ts",
+      "owner": "src/mission-protocol",
+      "role": "producer-consumer",
+      "currentVersion": "mission.aiwg.io/v1",
+      "statusVocabulary": [
+        "aborted",
+        "canceled",
+        "cancelled",
+        "completed",
+        "done",
+        "failed",
+        "incomplete",
+        "input-required",
+        "operator-review-required",
+        "pending",
+        "running",
+        "unknown",
+        "working"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "canonicalize"
+    },
+    {
+      "path": "src/mission-protocol/types.ts",
+      "owner": "src/mission-protocol",
+      "role": "producer-consumer",
+      "currentVersion": "mission.aiwg.io/v1",
+      "statusVocabulary": [
+        "cancelled",
+        "completed",
+        "failed",
+        "incomplete",
+        "pending",
+        "running",
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "canonicalize"
+    },
+    {
+      "path": "src/serve/a2a-terminal-observer.ts",
+      "owner": "src/serve",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted",
+        "canceled",
+        "completed",
+        "done",
+        "failed",
+        "input-required",
+        "pending",
+        "running",
+        "unknown",
+        "working"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/serve/agentic-sandbox-fleet-client.ts",
+      "owner": "src/serve",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "canceled",
+        "cancelled",
+        "completed",
+        "failed",
+        "input-required",
+        "operator-review-required",
+        "pending",
+        "running",
+        "unknown",
+        "working"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/serve/dispatch-router.ts",
+      "owner": "src/serve",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/serve/executor-registry.ts",
+      "owner": "src/serve",
+      "role": "producer-consumer",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [
+        "aborted",
+        "done",
+        "failed",
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/serve/fleet-mission-conductor.ts",
+      "owner": "src/serve",
+      "role": "producer-consumer",
+      "currentVersion": "fleet-workload/v1",
+      "statusVocabulary": [
+        "cancelled",
+        "completed",
+        "failed",
+        "operator-review-required",
+        "pending",
+        "running",
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/serve/mission-conductor.ts",
+      "owner": "src/serve",
+      "role": "producer-consumer",
+      "currentVersion": "graph.flow.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/serve/telemetry.ts",
+      "owner": "src/serve",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/uhp/mission.ts",
+      "owner": "src/uhp",
+      "role": "producer-consumer",
+      "currentVersion": "UHP 2026-08-11",
+      "statusVocabulary": [
+        "cancelled",
+        "completed",
+        "failed",
+        "incomplete",
+        "running",
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "src/uhp/types.ts",
+      "owner": "src/uhp",
+      "role": "producer-consumer",
+      "currentVersion": "UHP 2026-08-11",
+      "statusVocabulary": [
+        "cancelled",
+        "completed",
+        "failed",
+        "incomplete",
+        "running",
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt"
+    },
+    {
+      "path": "test/conformance/activity-v1/fixtures/valid-event.json",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/executor-v1/auth/auth.test.mjs",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/executor-v1/client.mjs",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/executor-v1/dispatch/dispatch.test.mjs",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/executor-v1/events/events.test.mjs",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/executor-v1/fixtures/dispatch-aborted.json",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted",
+        "running"
+      ],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/executor-v1/fixtures/dispatch-failed.json",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "failed",
+        "running"
+      ],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/executor-v1/fixtures/dispatch-happy.json",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "done",
+        "running"
+      ],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/executor-v1/fixtures/hitl-roundtrip.json",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "done",
+        "running"
+      ],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/executor-v1/fixtures/register-happy.json",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/executor-v1/fixtures/resumable-suspend-resume.json",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "done",
+        "running"
+      ],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/executor-v1/hitl/hitl.test.mjs",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [
+        "done",
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/executor-v1/lifecycle/lifecycle.test.mjs",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [
+        "aborted",
+        "done",
+        "failed"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/executor-v1/register/register.test.mjs",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/executor-v1/resumable/resumable.test.mjs",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [
+        "done",
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/executor-v1/runner.mjs",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/fleet-workload-v1/fixtures/invalid-credential-material.json",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "pending",
+        "running"
+      ],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/fleet-workload-v1/fixtures/mixed-workload-inventory.json",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "running"
+      ],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/conformance/mission-v1/mission-protocol.test.ts",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "graph.flow.aiwg.io/v1",
+      "statusVocabulary": [
+        "aborted",
+        "cancelled",
+        "completed",
+        "done",
+        "failed",
+        "incomplete",
+        "input-required",
+        "operator-review-required",
+        "running",
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/fixtures/sandbox-api/executor-v1/dispatch/dispatch-request.json",
+      "owner": "test/fixtures",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/fixtures/sandbox-api/executor-v1/dispatch/dispatch-response.json",
+      "owner": "test/fixtures",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/fixtures/sandbox-api/executor-v1/events/mission-aborted.json",
+      "owner": "test/fixtures",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted"
+      ],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/fixtures/sandbox-api/executor-v1/events/mission-assigned.json",
+      "owner": "test/fixtures",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/fixtures/sandbox-api/executor-v1/events/mission-completed.json",
+      "owner": "test/fixtures",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "done"
+      ],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/fixtures/sandbox-api/executor-v1/events/mission-failed.json",
+      "owner": "test/fixtures",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "failed"
+      ],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/fixtures/sandbox-api/executor-v1/events/mission-hitl-required.json",
+      "owner": "test/fixtures",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/fixtures/sandbox-api/executor-v1/events/mission-hitl-responded.json",
+      "owner": "test/fixtures",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/fixtures/sandbox-api/executor-v1/events/mission-progress.json",
+      "owner": "test/fixtures",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/fixtures/sandbox-api/executor-v1/events/mission-reconnected.json",
+      "owner": "test/fixtures",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/fixtures/sandbox-api/executor-v1/events/mission-resumed.json",
+      "owner": "test/fixtures",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "running"
+      ],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/fixtures/sandbox-api/executor-v1/events/mission-started.json",
+      "owner": "test/fixtures",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "running"
+      ],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/fixtures/sandbox-api/executor-v1/events/mission-suspended.json",
+      "owner": "test/fixtures",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/fixtures/sandbox-api/executor-v1/resync/executor-resync.json",
+      "owner": "test/fixtures",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "json",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/integration/cockpit-bridge.test.js",
+      "owner": "test/integration",
+      "role": "fixture-or-test",
+      "currentVersion": "mission.aiwg.io/v1",
+      "statusVocabulary": [
+        "canceled",
+        "completed",
+        "done",
+        "incomplete",
+        "input-required",
+        "pending",
+        "running",
+        "working"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/integration/mc-bridge-flow.test.ts",
+      "owner": "test/integration",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "done",
+        "failed",
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/integration/serve-executor-flow.test.ts",
+      "owner": "test/integration",
+      "role": "fixture-or-test",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [
+        "done",
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/integration/serve-sandbox-fake.test.ts",
+      "owner": "test/integration",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/integration/uhp-fake-server.test.ts",
+      "owner": "test/integration",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "cancelled",
+        "done",
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/uat/fleet-sandbox-live.uat.ts",
+      "owner": "test/uat",
+      "role": "fixture-or-test",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [
+        "completed",
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/a2a/dispatch-router.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/a2a/webhook.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "working"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/audit/operator-decision.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/cli/handlers/mc.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "done",
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/cli/handlers/steward.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/cli/handlers/uhp.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "mission.aiwg.io/v1",
+      "statusVocabulary": [
+        "completed"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/mc-bridge/dispatch-client.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted",
+        "failed"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/mc-bridge/executor-ws-client.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted",
+        "done",
+        "failed",
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/mc-bridge/queue-tailer.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "done",
+        "failed",
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/mc-bridge/status-writer.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "failed",
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/mcp/orchestration.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/ralph-external/executor-shim.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted",
+        "done",
+        "failed",
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/serve/a2a-terminal-observer.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "graph.flow.aiwg.io/v1",
+      "statusVocabulary": [
+        "completed",
+        "done",
+        "failed"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/serve/agentic-sandbox-fleet-client.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [
+        "completed",
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/serve/executor-registry.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted",
+        "done",
+        "failed",
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/serve/fleet-mission-conductor.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [
+        "completed",
+        "failed",
+        "operator-review-required",
+        "pending"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/serve/mission-conductor.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/serve/telemetry.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "graph.flow.aiwg.io/v1",
+      "statusVocabulary": [
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    },
+    {
+      "path": "test/unit/uhp/sse-mission.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "mission.aiwg.io/v1",
+      "statusVocabulary": [
+        "cancelled",
+        "completed",
+        "failed",
+        "incomplete",
+        "running",
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain"
+    }
+  ]
+}

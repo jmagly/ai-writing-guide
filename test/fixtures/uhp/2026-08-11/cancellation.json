@@ -1,0 +1,9 @@
+{
+  "id": "resp_cancelled",
+  "object": "response",
+  "created_at": 1787600200,
+  "status": "cancelled",
+  "model": "fixture-model",
+  "output": [{ "type": "message", "status": "incomplete", "content": [{ "type": "output_text", "text": "partial" }] }],
+  "metadata": { "session_id": "hsessfixture", "harness_id": "chrn_fixture" }
+}

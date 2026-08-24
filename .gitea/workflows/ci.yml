@@ -100,6 +100,11 @@ jobs:
         # violates the declared _validates_as shape. (#1178)
         run: npm run lint:schemas
 
+      - name: Enforce Mission Protocol inventory and compatibility (#2178/#2180)
+        # Fails when a new Mission producer/consumer is unclassified or when
+        # mission.aiwg.io/v1 changes without an explicit version-policy verdict.
+        run: npm run lint:mission-inventory && npm run lint:mission-contract
+
       - name: Lint tracked generated artifacts
         # Keeps local build outputs, provider exports, indexes, caches,
         # coverage, and test results out of git unless explicitly allowlisted.

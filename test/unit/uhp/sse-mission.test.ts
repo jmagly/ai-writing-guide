@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseUhpEventStream } from '../../../src/uhp/sse.js';
-import { projectUhpResponseToMission, unknownUhpMissionEvidence } from '../../../src/uhp/mission.js';
+import { projectUhpResponseToCanonicalMission, projectUhpResponseToMission, unknownUhpMissionEvidence } from '../../../src/uhp/mission.js';
 import type { UhpResponse } from '../../../src/uhp/types.js';
 
 function stream(text: string): ReadableStream<Uint8Array> {
@@ -62,5 +62,17 @@ describe('UHP Mission evidence adapter', () => {
 
   it('represents disconnect as unknown observation, never cancellation', () => {
     expect(unknownUhpMissionEvidence('test', 'disconnected', 'resp_fixture', 4)).toMatchObject({ state: 'unknown', observationState: 'unknown', nativeState: 'unknown', responseId: 'resp_fixture', eventSequence: 4 });
+  });
+
+  it('consumes the canonical Mission adapter without losing native UHP evidence', async () => {
+    const response = JSON.parse(await readFile(join(process.cwd(), 'test/fixtures/uhp/2026-08-11/response.json'), 'utf8')) as UhpResponse;
+    const decoded = projectUhpResponseToCanonicalMission('prod', response, { input: 'Produce a report', model: 'requested-model' });
+    expect(decoded.value).toMatchObject({
+      apiVersion: 'mission.aiwg.io/v1', kind: 'Mission',
+      metadata: { id: 'resp_fixture' }, spec: { objective: 'Produce a report' },
+      status: { state: 'completed', terminal: true, nativeState: 'completed', artifacts: [{ id: 'file_fixture', kind: 'uhp-file' }] },
+      provenance: { sourceContract: 'uhp-2026-08-11', sourceVersion: '2026-08-11', transport: 'uhp' },
+    });
+    expect(decoded.preservedExtensions.endpointProfile).toBe('prod');
   });
 });

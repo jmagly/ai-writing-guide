@@ -1,7 +1,7 @@
 import { readAiwgConfig } from '../../config/aiwg-config.js';
 import { resolveUhpProfile } from '../../uhp/config.js';
 import { UhpClient } from '../../uhp/client.js';
-import { projectUhpResponseToMission, unknownUhpMissionEvidence } from '../../uhp/mission.js';
+import { projectUhpResponseToCanonicalMission, projectUhpResponseToMission, unknownUhpMissionEvidence } from '../../uhp/mission.js';
 import { UhpError } from '../../uhp/errors.js';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 
@@ -54,7 +54,8 @@ async function executeUhp(ctx: HandlerContext): Promise<HandlerResult> {
         events.push(event);
         if (event.response) terminal = event.response;
       }
-      return { exitCode: 0, message: JSON.stringify({ events, evidence: terminal ? projectUhpResponseToMission(profileName, terminal, request, events.at(-1)) : unknownUhpMissionEvidence(profileName, 'Stream ended without a response') }, null, 2), rawOutput: true };
+      const canonical = terminal ? projectUhpResponseToCanonicalMission(profileName, terminal, request, events.at(-1)) : undefined;
+      return { exitCode: 0, message: JSON.stringify({ events, evidence: terminal ? projectUhpResponseToMission(profileName, terminal, request, events.at(-1)) : unknownUhpMissionEvidence(profileName, 'Stream ended without a response'), ...(canonical ? { mission: canonical.value, adapter: { sourceVersion: canonical.sourceVersion, warnings: canonical.warnings, lossReport: canonical.lossReport } } : {}) }, null, 2), rawOutput: true };
     } catch (error) {
       if (error instanceof UhpError && error.options.remoteState === 'unknown') {
         return { exitCode: 1, message: JSON.stringify({ error: { code: error.code, message: error.message }, evidence: unknownUhpMissionEvidence(profileName, error.message, terminal?.id, events.at(-1)?.sequence_number) }, null, 2), rawOutput: true };
@@ -63,7 +64,8 @@ async function executeUhp(ctx: HandlerContext): Promise<HandlerResult> {
     }
   }
   const response = await client.createResponse(request, { signal: ctx.signal });
-  return { exitCode: 0, message: JSON.stringify({ response, evidence: projectUhpResponseToMission(profileName, response, request) }, null, 2), rawOutput: true };
+  const canonical = projectUhpResponseToCanonicalMission(profileName, response, request);
+  return { exitCode: 0, message: JSON.stringify({ response, evidence: projectUhpResponseToMission(profileName, response, request), mission: canonical.value, adapter: { sourceVersion: canonical.sourceVersion, warnings: canonical.warnings, lossReport: canonical.lossReport } }, null, 2), rawOutput: true };
 }
 
 export const uhpHandler: CommandHandler = {
@@ -79,4 +81,3 @@ export const uhpHandler: CommandHandler = {
     }
   },
 };
-

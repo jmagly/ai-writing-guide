@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/mission.aiwg.io/v1",
+  "title": "AIWG Mission Protocol v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec", "status", "provenance"],
+  "properties": {
+    "apiVersion": { "const": "mission.aiwg.io/v1" },
+    "kind": { "const": "Mission" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "parentId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "previousId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "lineage": {
+          "type": "array", "maxItems": 1024,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["relation", "id"],
+            "properties": { "relation": { "type": "string", "minLength": 1 }, "id": { "type": "string", "minLength": 1 } }
+          }
+        }
+      }
+    },
+    "spec": {
+      "type": "object", "additionalProperties": false, "required": ["objective"],
+      "properties": {
+        "objective": { "type": "string", "minLength": 1 },
+        "completionCriterion": { "type": "string", "minLength": 1 },
+        "budgets": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "maxAttempts": { "type": "integer", "minimum": 1 },
+            "timeoutSeconds": { "type": "integer", "minimum": 1 },
+            "maxCostUsd": { "type": "number", "minimum": 0 },
+            "maxTokens": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "terminal", "artifacts"],
+      "properties": {
+        "state": { "enum": ["pending", "running", "blocked", "operator-review", "completed", "failed", "incomplete", "cancelled", "unknown"] },
+        "terminal": { "type": "boolean" },
+        "nativeState": { "type": "string" },
+        "sourceUpdatedAt": { "type": "string", "format": "date-time" },
+        "partialOutput": true,
+        "error": {
+          "type": "object", "additionalProperties": false, "required": ["message"],
+          "properties": { "code": { "type": "string" }, "message": { "type": "string" }, "retryable": { "type": "boolean" } }
+        },
+        "completion": {
+          "type": "object", "additionalProperties": false, "required": ["satisfied"],
+          "properties": { "satisfied": { "type": "boolean" }, "reason": { "type": "string" } }
+        },
+        "artifacts": {
+          "type": "array", "maxItems": 10000,
+          "items": {
+            "type": "object", "additionalProperties": false, "required": ["id", "kind"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 }, "kind": { "type": "string", "minLength": 1 },
+              "uri": { "type": "string" }, "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+              "mediaType": { "type": "string" }, "sizeBytes": { "type": "integer", "minimum": 0 },
+              "extensions": { "$ref": "#/$defs/extensions" }
+            }
+          }
+        },
+        "verification": {
+          "type": "array", "maxItems": 1000,
+          "items": {
+            "type": "object", "additionalProperties": false, "required": ["name", "status"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "status": { "enum": ["passed", "failed", "skipped", "unknown"] },
+              "evidence": { "type": "string", "maxLength": 4096 }
+            }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sourceContract", "sourceVersion"],
+      "properties": {
+        "sourceContract": { "type": "string", "minLength": 1 }, "sourceVersion": { "type": "string", "minLength": 1 },
+        "transport": { "type": "string" }, "sourceId": { "type": "string" }
+      }
+    },
+    "extensions": { "$ref": "#/$defs/extensions" }
+  },
+  "$defs": {
+    "extensions": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z0-9][a-z0-9.-]*\\.[a-z0-9][a-z0-9._-]*$" },
+      "additionalProperties": true,
+      "maxProperties": 256
+    }
+  }
+}

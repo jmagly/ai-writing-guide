@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "mission-consumer-matrix.aiwg.io/v1",
+  "consumers": [
+    { "id": "mc-cli", "inventoryMatch": "src/cli/handlers/mc.ts", "contract": "mission-control-session", "mode": "dual-read-legacy-write" },
+    { "id": "mission-conductor", "inventoryMatch": "src/serve/mission-conductor.ts", "contract": "MissionPlan/MissionLedger", "mode": "adapter" },
+    { "id": "fleet-conductor", "inventoryMatch": "src/serve/fleet-mission-conductor.ts", "contract": "fleet-workload/v1", "mode": "adapter" },
+    { "id": "serve-executor", "inventoryMatch": "schemas/executor-v1.json", "contract": "executor.aiwg.io/v1", "mode": "adapter" },
+    { "id": "a2a", "inventoryMatch": "src/a2a/types.ts", "contract": "A2A task", "mode": "adapter" },
+    { "id": "uhp", "inventoryMatch": "src/uhp/mission.ts", "contract": "UHP 2026-08-11", "mode": "adapter" },
+    { "id": "graph", "inventoryMatch": "src/flow/graph-metadata.ts", "contract": "graph.flow.aiwg.io/v1", "mode": "adapter" },
+    { "id": "cockpit-web", "inventoryMatch": "apps/cockpit/web/src/types.ts", "contract": "MissionProjection", "mode": "read-projection" },
+    { "id": "mcp", "inventoryMatch": "src/mcp/tools/agentic-sandbox.mjs", "contract": "executor/fleet projection", "mode": "adapter" },
+    { "id": "audit", "inventoryMatch": "src/audit/operator-decision.ts", "contract": "operator decision", "mode": "evidence-projection" },
+    { "id": "activity", "inventoryMatch": "schemas/activity/activity-event-v1.schema.json", "contract": "activity.aiwg.io/v1", "mode": "evidence-projection" }
+  ]
+}

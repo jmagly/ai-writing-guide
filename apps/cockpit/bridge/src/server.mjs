@@ -2207,7 +2207,7 @@ async function getApprovals(executorUrl, status) {
   };
 }
 
-const TERMINAL_MISSION_STATES = new Set(['done', 'completed', 'complete', 'failed', 'aborted', 'canceled', 'cancelled', 'rejected']);
+const TERMINAL_MISSION_STATES = new Set(['done', 'completed', 'complete', 'failed', 'incomplete', 'aborted', 'canceled', 'cancelled', 'rejected']);
 
 function normalizeMissionStatus(status) {
   const value = String(status ?? 'unknown').toLowerCase();
@@ -2217,12 +2217,18 @@ function normalizeMissionStatus(status) {
   return value;
 }
 
-function missionSummary(mission) {
-  const status = normalizeMissionStatus(mission.status);
+export function missionSummary(mission) {
+  const canonical = mission?.apiVersion === 'mission.aiwg.io/v1' && mission?.kind === 'Mission';
+  const canonicalStatus = canonical ? mission.status ?? {} : {};
+  const canonicalMetadata = canonical ? mission.metadata ?? {} : {};
+  const canonicalSpec = canonical ? mission.spec ?? {} : {};
+  const canonicalProvenance = canonical ? mission.provenance ?? {} : {};
+  const uhp = canonical ? mission.extensions?.['aiwg.source.uhp-2026-08-11'] ?? {} : {};
+  const status = normalizeMissionStatus(canonical ? canonicalStatus.state : mission.status);
   return {
-    id: String(mission.id ?? mission.mission_id ?? mission.missionId ?? ''),
-    title: mission.objective ?? mission.goal ?? mission.task ?? mission.title ?? 'Untitled mission',
-    completion: mission.completion ?? mission.completionCriterion ?? mission.completion_criterion,
+    id: String(canonicalMetadata.id ?? mission.id ?? mission.mission_id ?? mission.missionId ?? ''),
+    title: canonicalSpec.objective ?? mission.objective ?? mission.goal ?? mission.task ?? mission.title ?? 'Untitled mission',
+    completion: canonicalSpec.completionCriterion ?? mission.completion ?? mission.completionCriterion ?? mission.completion_criterion,
     status,
     loop: mission.loop ?? mission.iteration ?? mission.currentIteration ?? 0,
     max_iterations: mission.maxIterations ?? mission.max_iterations ?? mission.maxIterations ?? 0,
@@ -2231,10 +2237,20 @@ function missionSummary(mission) {
     target_agent: mission.targetAgent ?? mission.target_agent,
     ralph_loop_id: mission.ralphLoopId ?? mission.ralph_loop_id,
     ralph_pid: mission.ralphPid ?? mission.ralph_pid,
-    started_at: mission.startedAt ?? mission.started_at,
-    completed_at: mission.completedAt ?? mission.completed_at,
-    error: mission.error,
-    terminal: TERMINAL_MISSION_STATES.has(status),
+    started_at: canonicalMetadata.createdAt ?? mission.startedAt ?? mission.started_at,
+    completed_at: canonicalStatus.terminal ? canonicalMetadata.updatedAt : mission.completedAt ?? mission.completed_at,
+    error: canonicalStatus.error?.message ?? mission.error,
+    terminal: canonical ? canonicalStatus.terminal === true : TERMINAL_MISSION_STATES.has(status),
+    ...(canonical ? {
+      canonical_version: mission.apiVersion,
+      native_state: canonicalStatus.nativeState,
+      transport: canonicalProvenance.transport,
+      protocol_version: canonicalProvenance.sourceVersion,
+      endpoint_profile: uhp.endpointProfile,
+      response_id: uhp.responseId,
+      remote_session_id: uhp.sessionId,
+      artifacts: canonicalStatus.artifacts,
+    } : {}),
     ...(graphMissionProjection(mission) ?? {}),
   };
 }

@@ -30,6 +30,11 @@ describe('pinned UHP 2026-08-11 fixtures', () => {
     validate('HarnessModels', await json('models.json'));
     validate('Response', await json('response.json'));
     validate('ErrorEnvelope', await json('error.json'));
+    const continuation = await json('continuation.json');
+    validate('CreateResponseRequest', continuation.request);
+    validate('Response', continuation.response);
+    validate('Response', await json('cancellation.json'));
+    for (const file of (await json('files.json')).files) validate('File', file);
   });
 
   it('validates every deterministic stream event including unknown additive types', async () => {

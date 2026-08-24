@@ -1,0 +1,6 @@
+{
+  "files": [
+    { "id": "file_fixture", "object": "file", "bytes": 12, "created_at": 1787600000, "filename": "report.md", "purpose": "assistants", "status": "processed", "container_id": "cntr_fixture" }
+  ],
+  "hostile_names": ["../../outside.txt", "..%252foutside.txt", "C:\\outside.txt", "link-target"]
+}

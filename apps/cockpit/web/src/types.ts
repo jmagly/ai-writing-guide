@@ -215,7 +215,7 @@ export interface GraphNodeProjection {
   budget_remaining?: { tokens?: number; cost_usd?: number; duration_ms?: number };
   checkpoint_id?: string;
   replay_of_node_run_id?: string;
-  artifacts?: Array<{ kind: string; uri: string; sha256: string }>;
+  artifacts?: Array<{ id?: string; kind: string; uri?: string; sha256?: string; mediaType?: string; sizeBytes?: number }>;
 }
 export interface MissionProjection {
   id: string;
@@ -262,6 +262,8 @@ export interface MissionProjection {
   endpoint_profile?: string;
   response_id?: string;
   remote_session_id?: string;
+  canonical_version?: string;
+  native_state?: string;
 }
 export interface MissionSession {
   id: string;

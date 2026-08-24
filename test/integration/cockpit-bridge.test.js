@@ -13,7 +13,18 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocket } from 'ws';
 import { createExecutor } from '../../apps/cockpit/mock-executor/src/server.mjs';
-import { activityRequest, createBridge, createUserIndexGraph, normalizeManagedDockerPosture, resolveBridgePort, DEFAULT_BRIDGE_PORT, EXECUTOR_RESERVED_PORTS, ensureExecutor, fetchJsonFirst, isDirectExecution, validateActivityEnvelope } from '../../apps/cockpit/bridge/src/server.mjs';
+import { activityRequest, createBridge, createUserIndexGraph, missionSummary, normalizeManagedDockerPosture, resolveBridgePort, DEFAULT_BRIDGE_PORT, EXECUTOR_RESERVED_PORTS, ensureExecutor, fetchJsonFirst, isDirectExecution, validateActivityEnvelope } from '../../apps/cockpit/bridge/src/server.mjs';
+
+it('normalizes canonical UHP Mission evidence without losing transport-native fields', () => {
+  const projected = missionSummary({
+    apiVersion: 'mission.aiwg.io/v1', kind: 'Mission',
+    metadata: { id: 'resp_fixture' }, spec: { objective: 'Remote task', completionCriterion: 'done' },
+    status: { state: 'incomplete', terminal: true, nativeState: 'incomplete', artifacts: [{ id: 'file_fixture', kind: 'uhp-file' }] },
+    provenance: { sourceContract: 'uhp-2026-08-11', sourceVersion: '2026-08-11', transport: 'uhp' },
+    extensions: { 'aiwg.source.uhp-2026-08-11': { endpointProfile: 'research', responseId: 'resp_fixture', sessionId: 'hsessfixture' } },
+  });
+  expect(projected).toMatchObject({ id: 'resp_fixture', status: 'incomplete', terminal: true, transport: 'uhp', protocol_version: '2026-08-11', endpoint_profile: 'research', response_id: 'resp_fixture', remote_session_id: 'hsessfixture', artifacts: [{ id: 'file_fixture' }] });
+});
 
 let mock, bridge, base, token;
 const testMcSessionId = `mc-cockpit-test-${Date.now()}`;

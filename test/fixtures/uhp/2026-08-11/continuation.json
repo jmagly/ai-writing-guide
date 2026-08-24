@@ -1,0 +1,4 @@
+{
+  "request": { "input": "continue", "previous_response_id": "resp_fixture", "metadata": { "harness_id": "chrn_fixture" } },
+  "response": { "id": "resp_continued", "object": "response", "created_at": 1787600100, "status": "completed", "model": "fixture-model", "previous_response_id": "resp_fixture", "output": [], "metadata": { "session_id": "hsessfixture", "harness_id": "chrn_fixture" } }
+}

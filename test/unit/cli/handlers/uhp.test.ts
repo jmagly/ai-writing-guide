@@ -69,6 +69,6 @@ describe('uhp CLI handler', () => {
     expect(calls[0]!.get('Authorization')).toBeNull();
     expect(calls[1]!.get('Authorization')).toBe('Bearer cli-secret');
     expect(run.message).not.toContain('cli-secret');
+    expect(JSON.parse(run.message).mission).toMatchObject({ apiVersion: 'mission.aiwg.io/v1', metadata: { id: 'resp_cli' }, provenance: { transport: 'uhp' } });
   });
 });
-
