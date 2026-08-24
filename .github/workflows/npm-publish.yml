@@ -237,6 +237,12 @@ jobs:
           AIWG_PERF_BUDGET_VERSION_MS: "300"
           AIWG_PERF_BUDGET_HELP_MS: "750"
           AIWG_PERF_SAMPLE_COUNT: "7"
+          # Deployment tests replace HOME to prove clean-user behavior. Pass
+          # the container workspace trust as command-level Git config so their
+          # nested Git probes retain it without polluting those isolated homes.
+          GIT_CONFIG_COUNT: "1"
+          GIT_CONFIG_KEY_0: safe.directory
+          GIT_CONFIG_VALUE_0: ${{ github.workspace }}
         run: npm test -- --run --testTimeout=120000
 
       - name: Extract and verify version against tag

@@ -12,6 +12,8 @@ describe('@aiwg/cli release workflow wiring', () => {
     expect(workflow).toContain('npm publish ./dist/packages/cli --provenance --access public');
     expect(workflow).toContain('npm view "@aiwg/cli@${VERSION}" --json');
     expect(workflow).toContain('npm view "@aiwg/cli@${NPM_TAG}" version');
+    expect(workflow).toContain('GIT_CONFIG_KEY_0: safe.directory');
+    expect(workflow).toContain('GIT_CONFIG_VALUE_0: ${{ github.workspace }}');
     expect(workflow).toContain('remove_cli_bootstrap_tag:');
     expect(workflow).toContain('npm dist-tag rm @aiwg/cli bootstrap');
     expect(workflow).toContain('Remove deprecated @aiwg/cli bootstrap tag');
