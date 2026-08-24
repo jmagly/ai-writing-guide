@@ -230,6 +230,7 @@ export const refreshHandler: CommandHandler = {
     // Step 2.5: Refresh remote packages (always, unless --packages-only skips npm)
     if (!quiet) ui.info(dryRun ? 'Would refresh remote packages...' : 'Refreshing remote packages...');
     const deploymentFailures: string[] = [];
+    let updateFailure: { exitCode: number } | null = null;
     if (!dryRun) {
       try {
         const refreshed = await refreshAllPackages();
@@ -261,10 +262,10 @@ export const refreshHandler: CommandHandler = {
         if (updateResult.exitCode === 0) {
           if (!quiet) ui.success('Package up to date');
         } else {
-          return {
-            exitCode: updateResult.exitCode,
-            message: 'Installation update failed; refresh stopped before re-deployment. Run `aiwg installation show` for canonical-install diagnostics.',
-          };
+          updateFailure = { exitCode: updateResult.exitCode };
+          if (!quiet) {
+            ui.warn('Installation update failed; continuing with re-deployment. Run `aiwg installation show` for canonical-install diagnostics.');
+          }
         }
       }
     } else {
@@ -473,6 +474,7 @@ export const refreshHandler: CommandHandler = {
         channel: channel || undefined,
         staleAgentRemovals,
         deploymentFailures,
+        updateFailure,
       });
       console.log(output);
     }

@@ -309,16 +309,16 @@ describe('syncHandler.execute — deployment resilience', () => {
     expect(result.message).toContain('sdlc');
   });
 
-  it('fails safely before deployment when update.mjs returns non-zero', async () => {
+  it('warns and continues deployment when update.mjs returns non-zero', async () => {
     mockRun.mockImplementation(async (script: string) => {
       if (script === 'tools/cli/update.mjs') return { exitCode: 1 };
       return { exitCode: 0 };
     });
 
     const result = await syncHandler.execute(makeCtx());
-    expect(result.exitCode).toBe(1);
-    expect(result.message).toContain('refresh stopped before re-deployment');
-    expect(mockUseExecute).not.toHaveBeenCalled();
+    expect(result.exitCode).toBe(0);
+    expect(mockUseExecute).toHaveBeenCalled();
+    expect(mockRun.mock.calls.map(([script]: [string]) => script)).toContain('tools/cli/doctor.mjs');
   });
 
   it('warns but returns exit 0 when doctor reports issues', async () => {

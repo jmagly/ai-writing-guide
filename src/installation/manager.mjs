@@ -12,6 +12,7 @@ import {
 } from 'node:fs';
 import path from 'node:path';
 import { resolveUserConfigDir } from '../config/user-config-dir.mjs';
+import { executeManagerCommand } from './manager-command.mjs';
 
 export const INSTALLATION_IDENTITY_VERSION = 1;
 export const INSTALLATION_FILE = 'installation.json';
@@ -188,6 +189,25 @@ export function inspectInstallation(options = {}) {
   if (identity.managerExecutable && !executableIsUsable(identity.managerExecutable)) {
     drift.push(`recorded manager executable is missing or not executable: ${identity.managerExecutable}`);
   }
+  let managerProbe = null;
+  if (
+    options.probeManager === true &&
+    identity.managerExecutable &&
+    executableIsUsable(identity.managerExecutable)
+  ) {
+    try {
+      executeManagerCommand(identity.managerExecutable, ['--version'], {
+        ...options,
+        execute: options.executeManager,
+        execOptions: { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 10_000 },
+      });
+      managerProbe = { state: 'usable' };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      managerProbe = { state: 'failed', error: message };
+      drift.push(`recorded manager executable cannot be invoked: ${message}`);
+    }
+  }
   return {
     state: drift.length === 0 ? 'aligned' : (existsSync(canonicalRoot) ? 'mismatch' : 'stale'),
     identity,
@@ -195,6 +215,7 @@ export function inspectInstallation(options = {}) {
     actualRoot,
     actualMethod,
     drift,
+    managerProbe,
   };
 }
 

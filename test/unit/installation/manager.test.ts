@@ -126,4 +126,23 @@ describe('canonical installation identity', () => {
       updateStrategy: 'source-git',
     });
   });
+
+  it('reports a manager that exists but cannot be invoked', () => {
+    const root = packageRoot();
+    const manager = path.join(root, 'npm');
+    fs.writeFileSync(manager, '');
+    fs.chmodSync(manager, 0o755);
+    const identity = createInstallationIdentity({ actualRoot: root, managerExecutable: manager });
+
+    const status = inspectInstallation({
+      actualRoot: root,
+      identity,
+      probeManager: true,
+      executeManager: () => { throw new Error('spawn failed'); },
+    });
+
+    expect(status.state).toBe('mismatch');
+    expect(status.managerProbe).toEqual({ state: 'failed', error: 'spawn failed' });
+    expect(status.drift).toContain('recorded manager executable cannot be invoked: spawn failed');
+  });
 });

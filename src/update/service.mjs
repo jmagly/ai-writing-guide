@@ -16,6 +16,7 @@ import {
   loadInstallationIdentity,
   saveInstallationIdentity,
 } from '../installation/manager.mjs';
+import { resolveManagerCommand } from '../installation/manager-command.mjs';
 
 const VALID_MODES = new Set(['npm', 'web', 'source']);
 
@@ -148,8 +149,9 @@ export async function updateInstallation(options = {}) {
     throw new Error('Canonical npm installation has no package-manager executable. Run `aiwg installation adopt --manager <absolute-path-to-npm>`.');
   }
   if (!dryRun) {
+    const invocation = resolveManagerCommand(managerExecutable, command, options);
     const execute = options.execute ?? ((file, args) => execFileSync(file, args, { stdio: 'inherit' }));
-    execute(managerExecutable, command);
+    execute(invocation.file, invocation.args);
     if (detected.identity && detected.identityPersistent && options.persistIdentity !== false) {
       saveInstallationIdentity({ ...detected.identity, channel }, options);
     }

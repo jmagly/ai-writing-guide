@@ -22,6 +22,7 @@ export interface InstallationStatus {
   actualRoot: string;
   actualMethod: InstallationMethod;
   drift: string[];
+  managerProbe: { state: 'usable' | 'failed'; error?: string } | null;
 }
 export const INSTALLATION_IDENTITY_VERSION: 1;
 export const INSTALLATION_FILE: string;

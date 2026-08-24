@@ -55,7 +55,7 @@ export const installationHandler: CommandHandler = {
 
     if (action === 'show') {
       const identity = loadInstallationIdentity({ ...common, createIfMissing: true });
-      display(inspectInstallation({ ...common, identity }), json);
+      display(inspectInstallation({ ...common, identity, probeManager: true }), json);
       return { exitCode: 0 };
     }
     if (action === 'adopt') {

@@ -220,7 +220,7 @@ const SCORE_STOPWORDS = new Set([
   'with', 'into', 'from', 'is', 'are', 'be', 'i', 'we', 'my',
   // pronouns / determiners / fillers
   'it', 'you', 'me', 'us', 'your', 'our', 'this', 'that', 'these', 'those',
-  'there', 'here', 'some', 'any', 'all', 'also', 'please', 'about',
+  'there', 'here', 'some', 'any', 'all', 'also', 'please', 'about', 'project',
   // question words
   'how', 'what', 'which', 'where', 'when', 'who', 'why',
   // asking / request verbs ("find a skill that handles …")
@@ -230,6 +230,7 @@ const SCORE_STOPWORDS = new Set([
   // AIWG meta-type nouns — zero discriminating signal in a discover query
   'aiwg', 'skill', 'skills', 'agent', 'agents', 'command', 'commands',
   'rule', 'rules', 'schema', 'schemas', 'flow', 'flows', 'workflow', 'workflows',
+  'template', 'templates',
 ]);
 
 /**
@@ -526,7 +527,7 @@ function scoreEntryDetailed(
       } else if (useMultiToken) {
         const hits = matchedFieldTokens(tokens, trigger);
         if (overlapOK(hits.length)) {
-          addTokenMatch(0.06 * 4, hits, {
+          addTokenMatch(0.1 * 4, hits, {
             field: 'trigger',
             match: 'token-overlap',
             value: trigger,

@@ -72,6 +72,30 @@ describe('install-aware update service', () => {
     expect(execute).toHaveBeenCalledWith(canonicalManager, ['install', '--global', 'aiwg@latest']);
   });
 
+  it('routes a Windows npm.cmd path with spaces through the command interpreter', async () => {
+    const root = packageRoot('aiwg');
+    const managerExecutable = path.join(root, 'Program Files', 'nodejs', 'npm.cmd');
+    fs.mkdirSync(path.dirname(managerExecutable), { recursive: true });
+    fs.writeFileSync(managerExecutable, '');
+    fs.chmodSync(managerExecutable, 0o755);
+    const execute = vi.fn();
+
+    await updateInstallation({
+      packageRoot: root,
+      config: { channel: 'stable' },
+      managerExecutable,
+      platform: 'win32',
+      env: { ComSpec: 'C:\\Windows\\System32\\cmd.exe' },
+      execute,
+    });
+
+    expect(execute).toHaveBeenCalledWith(
+      'C:\\Windows\\System32\\cmd.exe',
+      ['/d', '/s', '/c', expect.stringContaining(`"${managerExecutable}"`)],
+    );
+    expect(execute.mock.calls[0][1][3]).toContain('"aiwg@latest"');
+  });
+
   it('blocks an npm update when a different global package root wins PATH', async () => {
     const canonicalRoot = packageRoot('aiwg');
     const actualRoot = packageRoot('aiwg');
