@@ -15,6 +15,15 @@ describe('Mission protocol inventory', () => {
     for (const entry of generated) expect(existsSync(entry.canonicalSource), entry.path).toBe(true);
   });
 
+  it('falls back to the Git index when ripgrep is unavailable', () => {
+    const output = execFileSync(process.execPath, [script], {
+      cwd: process.cwd(),
+      encoding: 'utf8',
+      env: { ...process.env, AIWG_RG_BIN: 'aiwg-rg-is-intentionally-absent' },
+    });
+    expect(output).toMatch(/Mission inventory: OK/);
+  });
+
   it('discovers only bounded version counts without exposing persisted mission content', async () => {
     const fixtureRoot = path.join(process.cwd(), `test-temp-mission-inventory-${process.pid}`);
     const sessions = path.join(fixtureRoot, '.aiwg/ralph-external/mc/sessions/fixture');

@@ -16,7 +16,14 @@ const requiredSurfaces = new Set([
 ]);
 
 function trackedFiles() {
-  return execFileSync('rg', ['--files', ...roots], { cwd: root, encoding: 'utf8' })
+  let output;
+  try {
+    output = execFileSync(process.env.AIWG_RG_BIN || 'rg', ['--files', ...roots], { cwd: root, encoding: 'utf8' });
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+    output = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '--', ...roots], { cwd: root, encoding: 'utf8' });
+  }
+  return output
     .split('\n').filter(Boolean)
     .filter(file => file !== 'schemas/mission-protocol/inventory-v1.json')
     .filter(file => /\.(?:ts|tsx|js|mjs|json|md|ya?ml)$/.test(file))
