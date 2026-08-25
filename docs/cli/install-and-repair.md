@@ -93,3 +93,25 @@ update-check timestamps.
 Exact flags, machine-readable output, and automation contracts belong in the
 [agent and automation CLI reference](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md), not in ordinary user
 journeys.
+
+## Update notifications
+
+Eligible interactive CLI invocations check a local cache at startup and may
+write an update notice to stderr before command output. The notice identifies
+the installed and available versions, routes every installation type through
+`aiwg update`, and asks you to rerun the prior command without echoing its
+arguments. The foreground command never contacts the registry: a detached,
+timeout-bounded child refreshes the cache for a later invocation.
+
+Notices and background refreshes are suppressed for non-TTY use, `CI`,
+`GITHUB_ACTIONS`, `GITLAB_CI`, `NO_UPDATE_NOTIFIER`,
+`AIWG_NO_UPDATE_CHECK`, and installations with `checkOnStartup: false`.
+Successful notices and refresh attempts are rate-limited by the installation's
+`updateCheckInterval` (24 hours by default). Fast help/version and channel
+commands participate in the same bootstrap behavior; notifier failures remain
+best-effort and never change the requested command's exit status.
+
+The bootstrap depends on the packaged notifier module. If `dist/` itself is
+missing or incomplete, the CLI emits the existing build/reinstall diagnostic
+first because no notifier implementation is available to load; this recovery
+exception never performs a network request.

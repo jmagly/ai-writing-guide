@@ -203,13 +203,6 @@ function maybeHandleFastHelp(args) {
   return true;
 }
 
-if (maybeHandleFastVersion(process.argv.slice(2))) {
-  process.exit(0);
-}
-if (maybeHandleFastHelp(process.argv.slice(2))) {
-  process.exit(0);
-}
-
 // Preflight: verify dist/ is built before any of the dynamic imports below
 // try to resolve files that don't exist. Without this, a missing/incomplete
 // dist/ surfaces as a raw `Cannot find module '.../dist/src/.../*.mjs'` from
@@ -239,6 +232,31 @@ function maybeWarnUnbuiltDist() {
   process.exit(1);
 }
 maybeWarnUnbuiltDist();
+
+// Display a cached notice and schedule its refresh before every eligible CLI
+// path, including fast help/version, channel recovery, and later preflight
+// failures. This local-only bootstrap never waits on the registry and failures
+// are deliberately ignored so update advice cannot change command behavior.
+async function runUpdateNotifierBootstrap() {
+  try {
+    const notifierPath = path.join(packageRoot, 'dist', 'src', 'update', 'notifier.mjs');
+    const notifier = await import(pathToFileURL(notifierPath).href);
+    const activePackageRoot = notifier.resolveActivePackageRoot(packageRoot);
+    notifier.maybePrintNotice(activePackageRoot);
+    notifier.scheduleBackgroundCheck(activePackageRoot);
+  } catch {
+    // Best effort: installation/router diagnostics retain authority.
+  }
+}
+
+await runUpdateNotifierBootstrap();
+
+if (maybeHandleFastVersion(process.argv.slice(2))) {
+  process.exit(0);
+}
+if (maybeHandleFastHelp(process.argv.slice(2))) {
+  process.exit(0);
+}
 
 // Mint or inherit an invocation ID before anything else loads. Child processes
 // spawned by handlers (detached update-notifier, aiwg exec, etc.) inherit the
@@ -397,15 +415,6 @@ async function main() {
   // handler runs, and stamp the top-level invocation ID so the logger can
   // tag every record with it.
   await applyVerbosityFromArgs(args, routerPath);
-
-  // Update notifier: print any pending notice from the previous run's
-  // background check, then schedule the next background check. Both are
-  // non-blocking — the current command never waits on the network.
-  // Honors NO_UPDATE_NOTIFIER, CI=*, and non-TTY stderr.
-  const notifierPath = path.join(activePackageRoot, 'dist', 'src', 'update', 'notifier.mjs');
-  const { scheduleBackgroundCheck, maybePrintNotice } = await import(pathToFileURL(notifierPath).href);
-  maybePrintNotice(activePackageRoot);
-  scheduleBackgroundCheck(activePackageRoot);
 
   // Top-level cancellation controller. SIGINT / SIGTERM flip it, long-running
   // handlers plumb ctx.signal through fetches and loops so Ctrl-C cancels

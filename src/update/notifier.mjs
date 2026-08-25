@@ -41,6 +41,7 @@ const CACHE_FILE = path.join(CACHE_DIR, 'update-notifier.json');
  * `lastCheckAt` timestamp in the cache file.
  */
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const NOTICE_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Hard timeout for the npm registry HTTPS request. Keeps the spawned
@@ -51,8 +52,8 @@ const NETWORK_TIMEOUT_MS = 10_000;
 /**
  * Read an env var and return true iff it's set to a truthy value.
  */
-function envFlag(name) {
-  const v = process.env[name];
+function envFlag(name, env = process.env) {
+  const v = env[name];
   if (!v) return false;
   return v !== '0' && v.toLowerCase() !== 'false';
 }
@@ -60,15 +61,19 @@ function envFlag(name) {
 /**
  * True iff update checking is currently disabled by env / CI conventions.
  */
-function isDisabled() {
-  if (envFlag('NO_UPDATE_NOTIFIER')) return true;
-  if (envFlag('AIWG_NO_UPDATE_CHECK')) return true;
-  if (envFlag('CI')) return true;
-  if (envFlag('GITHUB_ACTIONS')) return true;
-  if (envFlag('GITLAB_CI')) return true;
+export function notificationDisabled(env = process.env, isTTY = process.stdout.isTTY) {
+  if (envFlag('NO_UPDATE_NOTIFIER', env)) return true;
+  if (envFlag('AIWG_NO_UPDATE_CHECK', env)) return true;
+  if (envFlag('CI', env)) return true;
+  if (envFlag('GITHUB_ACTIONS', env)) return true;
+  if (envFlag('GITLAB_CI', env)) return true;
   // Non-interactive terminals shouldn't get a notice they can't act on.
-  if (!process.stdout.isTTY) return true;
+  if (!isTTY) return true;
   return false;
+}
+
+function isDisabled() {
+  return notificationDisabled();
 }
 
 /**
@@ -168,6 +173,35 @@ export function cacheMatchesPackage(cache, packageRoot) {
   return !!(currentVersion && cache?.current === currentVersion);
 }
 
+export function formatUpdateNotice(current, latest) {
+  return (
+    `aiwg: update available ${current} → ${latest}\n` +
+    'Update: aiwg update\n' +
+    'Then rerun your command.\n'
+  );
+}
+
+export function noticeIsRateLimited(cache, intervalMs, now = Date.now()) {
+  if (!cache?.lastNotifiedAt) return false;
+  const age = now - new Date(cache.lastNotifiedAt).getTime();
+  return Number.isFinite(age) && age >= 0 && age < intervalMs;
+}
+
+/** Resolve the package that the canonical installation record says is active. */
+export function resolveActivePackageRoot(launcherPackageRoot) {
+  try {
+    const installation = loadInstallationIdentity({
+      actualRoot: launcherPackageRoot,
+      createIfMissing: false,
+    });
+    return installation?.root ?? launcherPackageRoot;
+  } catch {
+    // A broken installation identity is diagnosed by the installation
+    // preflight. The best-effort notifier must never mask that recovery path.
+    return launcherPackageRoot;
+  }
+}
+
 /**
  * Run the actual update check and write the cache file. Invoked by the
  * spawned background child via `node src/update/notifier.mjs --check`.
@@ -192,7 +226,12 @@ async function runCheck(packageRoot) {
  */
 export function scheduleBackgroundCheck(packageRoot) {
   if (isDisabled()) return;
-  const installation = loadInstallationIdentity({ actualRoot: packageRoot, createIfMissing: false });
+  let installation;
+  try {
+    installation = loadInstallationIdentity({ actualRoot: packageRoot, createIfMissing: false });
+  } catch {
+    return;
+  }
   if (installation?.checkOnStartup === false) return;
 
   const cache = readCache();
@@ -228,14 +267,20 @@ export function scheduleBackgroundCheck(packageRoot) {
  */
 export function maybePrintNotice(packageRoot) {
   if (isDisabled()) return;
-  const installation = loadInstallationIdentity({ actualRoot: packageRoot, createIfMissing: false });
+  let installation;
+  try {
+    installation = loadInstallationIdentity({ actualRoot: packageRoot, createIfMissing: false });
+  } catch {
+    return;
+  }
   if (installation?.checkOnStartup === false) return;
   const cache = readCache();
   if (!cacheMatchesPackage(cache, packageRoot)) return;
   if (!cache?.hasUpdate || !cache.current || !cache.latest) return;
-  // One-line, non-intrusive. Users who want to update run `aiwg update`.
-  const msg = `aiwg: update available ${cache.current} → ${cache.latest} (run: aiwg update)`;
-  process.stderr.write(`\n${msg}\n`);
+  const noticeInterval = installation?.updateCheckInterval ?? NOTICE_INTERVAL_MS;
+  if (noticeIsRateLimited(cache, noticeInterval)) return;
+  process.stderr.write(formatUpdateNotice(cache.current, cache.latest));
+  writeCache({ ...cache, lastNotifiedAt: new Date().toISOString() });
 }
 
 // ── Child-process entry ────────────────────────────────────────────────
