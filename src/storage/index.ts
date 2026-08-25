@@ -67,6 +67,26 @@ export {
   type SnapshotHandle,
   type ChangePage,
 } from './backend-contract.js';
+export {
+  STORAGE_MIGRATION_PROTOCOL,
+  MigrationProtocolError,
+  StorageMigrationCoordinator,
+  approvalDigest,
+  digestRecords,
+  validateManifest,
+  type MigrationMode,
+  type MigrationState,
+  type MigrationEndpointIdentity,
+  type MigrationRecordReceipt,
+  type MigrationManifest,
+  type MigrationSnapshot,
+  type MigrationChangePage,
+  type MigrationEndpoint,
+  type MigrationManifestStore,
+  type MigrationRoutingControl,
+  type MigrationRunOptions,
+  type MigrationVerification,
+} from './migration-protocol.js';
 
 interface RegistryState {
   projectRoot: string;

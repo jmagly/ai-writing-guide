@@ -311,6 +311,7 @@
     "storage/overview",
     "storage/backend-contract",
     "storage/migration",
+    "storage/migration-protocol",
     "storage/security",
     "providers",
     "providers/capability-matrix",
@@ -2426,6 +2427,13 @@
       "title": "Scalable Backend Contract",
       "summary": "Versioned capabilities, consistency, and scaling semantics",
       "file": "storage/backend-contract.md",
+      "parent": "storage"
+    },
+    {
+      "id": "storage/migration-protocol",
+      "title": "Scalable Migration Protocol",
+      "summary": "Checksum-backed offline and online migration safety contract",
+      "file": "storage/migration-protocol.md",
       "parent": "storage"
     },
     {
