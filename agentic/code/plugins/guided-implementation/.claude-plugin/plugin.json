@@ -1,6 +1,6 @@
 {
   "name": "guided-implementation",
-  "version": "2026.8.19",
+  "version": "2026.8.20",
   "description": "Bounded iteration control for autonomous issue-to-code implementation",
   "author": {
     "name": "AIWG Contributors",

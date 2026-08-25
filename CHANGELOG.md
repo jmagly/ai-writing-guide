@@ -7,7 +7,29 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.20] - 2026-08-24 - "Portable missions, verified storage migrations"
+
 ### Added
+
+- **Universal Harness Protocol client transport** - The experimental UHP client
+  now provides validated discovery, model and harness inventory, request and
+  streaming execution, cancellation, continuation, file exchange, structured
+  errors, and Cockpit projection over the versioned `2026-08-11` contract.
+
+- **One versioned Mission contract across execution surfaces** - Mission
+  inventory, codecs, schema baselines, migration tooling, consumer matrices,
+  and reversible backend routing now make protocol drift explicit across CLI,
+  Cockpit, Flow, and persistence consumers.
+
+- **Scalable storage backend and migration contracts** - A fail-closed
+  capability matrix and `aiwg.storage-migration/v1` coordinator define logical
+  identities, snapshots, atomic receipts, revision/digest resume, tombstones,
+  bounded replay, parity verification, approval-bound cutover, and rollback.
+
+- **Common storage conformance corpus** - The versioned golden dataset proves
+  local JSON, Graphology, and SQLite parity for typed topology, Unicode/null
+  attributes, updates, deletion/reload, traversal, and set operations with
+  `npm run test:conformance:storage`.
 
 - **Composition graphs now support guarded human-decision cycles and outcome evidence** -
   Feedback routes can require strict-decrease integer progress in addition to a
@@ -21,6 +43,17 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   passes (roctinam/aiwg#2183).
 
 ### Fixed
+
+- **SQLite graph persistence is hardened for sustained local use** - The
+  backend now enforces safe WAL engine versions, transactional schema upgrades,
+  native set operations and recursive traversal, deterministic reconciliation,
+  bounded busy handling, checkpoint metrics, online backup, and multi-process
+  concurrency/crash-reopen coverage.
+
+- **Configured graph backends are exercised through the real CLI path** -
+  Subprocess integration tests verify JSON, Graphology, and SQLite selection,
+  status/stats visibility, persistence, and unavailable-backend failure without
+  silently falling back.
 
 - **The first valid composition graph is discoverable from the CLI** -
   Validation diagnostics print expected constants, help locates installed
