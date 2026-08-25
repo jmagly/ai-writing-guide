@@ -505,6 +505,10 @@ export const doctorHandler: CommandHandler = {
   category: 'maintenance',
   aliases: ['-doctor', '--doctor'],
 
+  async help(): Promise<HandlerResult> {
+    return { exitCode: 0, message: DOCTOR_HELP, rawOutput: true };
+  },
+
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
     if (ctx.args.includes('--help') || ctx.args.includes('-h')) {
       return { exitCode: 0, message: DOCTOR_HELP, rawOutput: true };

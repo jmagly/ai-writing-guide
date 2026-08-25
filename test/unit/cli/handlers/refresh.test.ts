@@ -3,6 +3,7 @@
  *
  * @issue #685, #694
  * @parent #684
+ * @issue #174
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -122,6 +123,19 @@ describe('refreshHandler metadata', () => {
     expect(syncHandler.category).toBe('maintenance');
     expect(syncHandler.description).toMatch(/refresh/i);
     expect(typeof syncHandler.execute).toBe('function');
+  });
+
+  it('declares non-executing help with the refresh safety flags', async () => {
+    const result = await syncHandler.help!(makeCtx(['--help']));
+
+    expect(result).toMatchObject({ exitCode: 0, rawOutput: true });
+    expect(result.message).toContain('Usage: aiwg refresh [options]');
+    expect(result.message).toContain('--dry-run');
+    expect(result.message).toContain('--skip-update');
+    expect(result.message).toContain('--packages-only');
+    expect(mockRun).not.toHaveBeenCalled();
+    expect(mockRefreshAllPackages).not.toHaveBeenCalled();
+    expect(mockUseExecute).not.toHaveBeenCalled();
   });
 
   it('has sync as a deprecated alias', () => {

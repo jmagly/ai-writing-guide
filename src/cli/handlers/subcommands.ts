@@ -1258,6 +1258,29 @@ export const pluginStatusHandler: CommandHandler = {
  *
  * Delegates to tools/plugin/package-plugins.mjs
  */
+function packagePluginHelp(): HandlerResult {
+  return {
+    exitCode: 0,
+    message: [
+      "aiwg package-plugin — package a project-local or built-in marketplace wrapper",
+      "",
+      "Usage:",
+      "  aiwg package-plugin <name> [--source <path>] [--output <path>] [--provider <name>] [--clean] [--dry-run]",
+      "  aiwg package-plugin --plugin <name> [options]  # compatibility form",
+      "",
+      "Options:",
+      "  --source <path>    explicit project-local wrapper source (must stay inside the project)",
+      "  --output <path>    standalone archive output (default: dist/plugins)",
+      "  --provider <name>  claude, codex, or all for standalone wrappers; built-ins retain all formats",
+      "  --clean            clean generated plugin output before packaging",
+      "  --dry-run, -n      preview without writing",
+      "  --help, -h         show this help",
+      "",
+      "Project-local wrappers are discovered under .aiwg/plugins and packaged as deterministic archives.",
+    ].join("\n"),
+  };
+}
+
 export const packagePluginHandler: CommandHandler = {
   id: "package-plugin",
   name: "Package Plugin",
@@ -1265,28 +1288,13 @@ export const packagePluginHandler: CommandHandler = {
   category: "plugin",
   aliases: ["-package-plugin", "--package-plugin"],
 
+  async help(): Promise<HandlerResult> {
+    return packagePluginHelp();
+  },
+
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
     if (ctx.args.includes("--help") || ctx.args.includes("-h")) {
-      return {
-        exitCode: 0,
-        message: [
-          "aiwg package-plugin — package a project-local or built-in marketplace wrapper",
-          "",
-          "Usage:",
-          "  aiwg package-plugin <name> [--source <path>] [--output <path>] [--provider <name>] [--clean] [--dry-run]",
-          "  aiwg package-plugin --plugin <name> [options]  # compatibility form",
-          "",
-          "Options:",
-          "  --source <path>    explicit project-local wrapper source (must stay inside the project)",
-          "  --output <path>    standalone archive output (default: dist/plugins)",
-          "  --provider <name>  claude, codex, or all for standalone wrappers; built-ins retain all formats",
-          "  --clean            clean generated plugin output before packaging",
-          "  --dry-run, -n      preview without writing",
-          "  --help, -h         show this help",
-          "",
-          "Project-local wrappers are discovered under .aiwg/plugins and packaged as deterministic archives.",
-        ].join("\n"),
-      };
+      return packagePluginHelp();
     }
 
     const hasExplicitPlugin = ctx.args.includes("--plugin") || ctx.args.includes("-p");

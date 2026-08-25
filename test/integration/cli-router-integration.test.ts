@@ -11,6 +11,7 @@
  * @source @src/cli/router.ts
  * @tests Integration tests for registry-based CLI routing
  * @issue #33 - Unified extension system
+ * @issue #174 - Router-level help interception
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -375,6 +376,66 @@ describe('CLI Router Integration Tests', () => {
     it('should include Examples section', () => {
       expect(helpOutput).toMatch(/Examples/i);
       expect(helpOutput).toMatch(/aiwg use/i);
+    });
+  });
+
+  describe('Per-command help interception', () => {
+    it('preserves detailed help for a command that declares it', async () => {
+      const rawOutput: string[] = [];
+      const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(((chunk: unknown) => {
+        rawOutput.push(String(chunk));
+        return true;
+      }) as typeof process.stdout.write);
+      try {
+        const output = await runCli(['doctor', '--help']);
+
+        expect(output.exitCode).toBeUndefined();
+        expect(rawOutput.join('')).toContain('aiwg doctor — check AIWG installation health');
+        expect(rawOutput.join('')).toContain('--deployment');
+      } finally {
+        stdoutSpy.mockRestore();
+      }
+    });
+
+    it.each(['--help', '-h'])('does not invoke a handler without declared help for %s', async (flag) => {
+      const execute = vi.fn(async (): Promise<HandlerResult> => ({ exitCode: 0 }));
+      const handler: CommandHandler = {
+        id: 'version',
+        name: 'Version',
+        description: 'Test handler without detailed help',
+        category: 'maintenance',
+        aliases: [],
+        execute,
+      };
+
+      const output = await runCliWithMockHandler('version', handler, ['version', flag]);
+
+      expect(execute).not.toHaveBeenCalled();
+      expect(output.exitCode).toBeUndefined();
+      expect(output.stdout.join('\n')).toContain('No detailed help for `aiwg version`');
+    });
+
+    it('uses declared help without invoking the command handler', async () => {
+      const execute = vi.fn(async (): Promise<HandlerResult> => ({ exitCode: 0 }));
+      const help = vi.fn(async (): Promise<HandlerResult> => ({
+        exitCode: 0,
+        message: 'command-specific help',
+      }));
+      const handler: CommandHandler = {
+        id: 'version',
+        name: 'Version',
+        description: 'Test handler with detailed help',
+        category: 'maintenance',
+        aliases: [],
+        help,
+        execute,
+      };
+
+      const output = await runCliWithMockHandler('version', handler, ['version', '--help']);
+
+      expect(help).toHaveBeenCalledOnce();
+      expect(execute).not.toHaveBeenCalled();
+      expect(output.stdout.join('\n')).toContain('command-specific help');
     });
   });
 

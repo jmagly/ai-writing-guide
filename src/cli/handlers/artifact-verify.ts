@@ -112,6 +112,10 @@ export const artifactVerifyHandler: CommandHandler = {
   category: 'utility',
   aliases: [],
 
+  async help(): Promise<HandlerResult> {
+    return { exitCode: 0, message: usage() };
+  },
+
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
     if (ctx.args.includes('--help') || ctx.args.includes('-h') || ctx.args.length === 0) return { exitCode: 0, message: usage() };
     try {

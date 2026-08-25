@@ -78,6 +78,14 @@ export interface CommandHandler {
   /** Command aliases (e.g., ['-new', '--new'] for 'new') */
   aliases: string[];
 
+  /**
+   * Display command-specific help without entering the command execution path.
+   *
+   * The router calls this callback when `--help` or `-h` is present. Handlers
+   * that omit it receive a generic, non-executing fallback instead.
+   */
+  help?(ctx: HandlerContext): Promise<HandlerResult>;
+
   /** Execute the handler */
   execute(ctx: HandlerContext): Promise<HandlerResult>;
 }
