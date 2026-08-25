@@ -281,6 +281,13 @@ New capabilities available:
 Session ready - new features are now available!
 ```
 
+If the installation update fails but re-deployment completes, do not use the
+unqualified `AIWG Refresh Complete` summary above. Report **AIWG Refresh
+Partial Recovery**, repeat the update failure, and warn that AIWG may remain on
+the previous version. When relaying quiet output, preserve the CLI status
+`refreshed-with-update-failure` so automation can distinguish this result from
+a successful package update.
+
 ## Examples
 
 ```bash
@@ -336,7 +343,7 @@ This command should activate when user says:
 | Condition | Action |
 |-----------|--------|
 | AIWG CLI not found | Error: "AIWG CLI not installed. Run: curl -fsSL ... \| bash" |
-| Network error on update | Warn and continue with existing version |
+| Network or package error on update | Warn, continue re-deployment, and report partial recovery with `refreshed-with-update-failure` |
 | Framework not installed | Offer to install: "SDLC not installed. Install now? [y/N]" |
 | Permission denied | Error with specific file/directory that failed |
 | Invalid provider | Error listing valid providers |

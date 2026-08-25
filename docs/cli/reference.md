@@ -163,7 +163,14 @@ Display comprehensive CLI help information.
 aiwg help
 aiwg -help
 aiwg --help
+aiwg <command> --help
+aiwg <command> -h
 ```
+
+Per-command help is intercepted before command hooks and normal handler
+execution, so requesting help does not enter a state-changing command path.
+Commands that declare detailed help return it; all other registered commands
+return a non-executing pointer to `aiwg help`.
 
 **Capabilities:** cli, help, documentation
 **Platforms:** All
@@ -316,6 +323,10 @@ Updates use the canonical installation identity and its recorded absolute
 package-manager executable. A root/method mismatch stops the update before
 re-deployment.
 
+On Windows, recorded `.cmd` and `.bat` manager wrappers run through `cmd.exe`.
+AIWG quotes the wrapper path and arguments once, then passes that command payload
+verbatim so Node does not re-escape paths containing spaces.
+
 **Channel switching:**
 
 ```bash
@@ -375,14 +386,25 @@ exit-0 resilience path for a successful package update.
 
 **Flags:**
 
-| Flag                  | Description                                      |
-| --------------------- | ------------------------------------------------ |
-| `--dry-run`           | Show what would change without making changes    |
-| `--quiet`             | Machine-readable JSON output (for orchestration) |
-| `--skip-update`       | Skip npm update, only re-deploy frameworks       |
-| `--provider <name>`   | Target specific provider (default: auto-detect)  |
-| `--channel <name>`    | Update channel (stable, main)                    |
-| `--frameworks <list>` | Comma-separated frameworks to re-deploy          |
+| Flag                        | Description                                      |
+| --------------------------- | ------------------------------------------------ |
+| `--dry-run`                 | Show what would change without making changes    |
+| `--quiet`                   | Machine-readable JSON output (for orchestration) |
+| `--skip-update`             | Skip the installation update                     |
+| `--packages-only`           | Refresh remote packages only                     |
+| `--provider <name>`         | Target specific provider (default: auto-detect)  |
+| `--channel <name>`          | Update channel (stable, main)                    |
+| `--frameworks <list>`       | Comma-separated frameworks to re-deploy          |
+| `--model <name>`            | Override all deployed agent model tiers          |
+| `--reasoning-model <name>`  | Override the reasoning model tier                |
+| `--coding-model <name>`     | Override the coding model tier                   |
+| `--efficiency-model <name>` | Override the efficiency model tier               |
+| `--filter <pattern>`        | Limit model deployment by agent name             |
+| `--filter-role <role>`      | Limit model deployment by role                   |
+| `--model-tier <tier>`       | Limit model deployment by tier                   |
+| `--save`                    | Save model overrides to the project              |
+| `--save-user`               | Save model overrides to user configuration       |
+| `-h`, `--help`              | Show help without running refresh                |
 
 **Examples:**
 
@@ -5430,7 +5452,8 @@ All commands are registered as extensions in the unified schema. This enables:
 
 - **Dynamic discovery**: Commands found via semantic search
 - **Capability-based routing**: Match commands by what they do
-- **Auto-generated help**: Help text always in sync
+- **Safe help routing**: Registry overviews plus optional command-owned detail
+  and a non-executing fallback
 - **Platform awareness**: Deploy to correct platform paths
 
 **Extension properties:**

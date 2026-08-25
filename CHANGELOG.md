@@ -7,6 +7,33 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.25] - 2026-08-25 - "Safe help, reliable Windows refresh"
+
+### Fixed
+
+- **Per-command help no longer enters command execution paths** - The CLI
+  router intercepts `--help` and `-h` before hooks or handlers can mutate
+  installation or project state. Refresh, Doctor, artifact verification, and
+  plugin packaging keep detailed help, while commands without dedicated help
+  return a safe generic fallback (jmagly/aiwg#174).
+
+- **Windows package-manager wrappers preserve their native quoting** - Global
+  updates routed through `cmd.exe` now pass `.cmd` and `.bat` payloads with
+  verbatim Windows arguments, including manager paths containing spaces. This
+  prevents Node from re-escaping an already quoted wrapper command
+  (jmagly/aiwg#173).
+
+- **Refresh makes package-update failures visible after recovery work** - When
+  an installation update fails but framework re-deployment continues, the
+  final interactive summary warns that the previous AIWG version may remain,
+  and quiet mode reports `refreshed-with-update-failure` instead of a false
+  success (jmagly/aiwg#173).
+
+- **Release publication allows cold runners to finish** - Stable and
+  prerelease npm publication jobs now have enough timeout headroom for
+  dependency installation, the full release gate set, signing audits, and all
+  three package publishes.
+
 ## [2026.8.20] - 2026-08-24 - "Portable missions, verified storage migrations"
 
 ### Added
@@ -3417,7 +3444,9 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
 - New unit tests: 7 for `aiwg skill-lint` rubric (perfect/stub/no-triggers/agent-only/broken-YAML fixtures + threshold modes). Behavior-loader and concierge integration tests updated for canonical metadata.* shape.
 - `.agents/` deployment directory is now gitignored, mirroring `.claude/` and `.codex/` (#949). 395 generated files removed from the index; regenerable via `aiwg use`.
 
-[Unreleased]: https://github.com/jmagly/aiwg/compare/v2026.8.10...HEAD
+[Unreleased]: https://github.com/jmagly/aiwg/compare/v2026.8.25...HEAD
+[2026.8.25]: https://github.com/jmagly/aiwg/compare/v2026.8.20...v2026.8.25
+[2026.8.20]: https://github.com/jmagly/aiwg/compare/v2026.8.19...v2026.8.20
 [2026.8.10]: https://github.com/jmagly/aiwg/compare/v2026.8.9...v2026.8.10
 [2026.6.2]: https://github.com/jmagly/aiwg/compare/v2026.6.1...v2026.6.2
 [2026.6.1]: https://github.com/jmagly/aiwg/compare/v2026.6.0...v2026.6.1
