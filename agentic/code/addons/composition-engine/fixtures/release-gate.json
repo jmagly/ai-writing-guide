@@ -1,0 +1,35 @@
+{
+  "apiVersion": "flow.aiwg.io/v1alpha1",
+  "kind": "FlowGraph",
+  "metadata": { "name": "release-gate" },
+  "spec": {
+    "description": "Fail-closed release gate with independent tests, schema inventory, and a fresh Markdown-to-HTML-to-PDF chain.",
+    "entry": ["tests", "render-html", "schema-inventory"],
+    "candidates": [
+      { "id": "aiwg:function:1000000000000001", "kind": "function" },
+      { "id": "aiwg:tool:1000000000000002", "kind": "tool" },
+      { "id": "aiwg:evaluator:1000000000000003", "kind": "evaluator" }
+    ],
+    "state": { "fields": [] },
+    "permissions": ["artifacts:write", "release:decide"],
+    "capabilities": [
+      { "id": "render-docs", "permissions": ["artifacts:write"], "sideEffectMode": "idempotent" },
+      { "id": "print-pdf", "permissions": ["artifacts:write"], "sideEffectMode": "idempotent" },
+      { "id": "release-decision", "permissions": ["release:decide"], "sideEffectMode": "approval-required", "approvalGate": "release" }
+    ],
+    "ceilings": { "activations": 8, "tokens": 12000, "costUsd": 2, "timeMs": 120000, "concurrency": 3 },
+    "nodes": [
+      { "id": "tests", "kind": "function", "ref": "aiwg:function:1000000000000001", "phase": "verify", "track": "tests", "deterministic": true, "inputs": [], "outputs": [{ "name": "receipt", "schema": { "type": "object", "required": ["passed", "digest"] } }], "scope": { "resources": ["test-suite"] }, "capabilities": [], "permissions": [], "sideEffectMode": "none" },
+      { "id": "render-html", "kind": "tool", "ref": "aiwg:tool:1000000000000002", "phase": "verify", "track": "documents", "inputs": [{ "name": "markdown", "schema": { "type": "string" }, "value": "release-notes.md" }], "outputs": [{ "name": "render", "schema": { "type": "object", "required": ["artifact", "sourceDigest", "renderDigest"] } }], "scope": { "files": ["release-notes.md", "release-notes.html"] }, "capabilities": ["render-docs"], "permissions": ["artifacts:write"], "sideEffectMode": "idempotent", "idempotencyKey": "release-render-v1" },
+      { "id": "print-pdf", "kind": "tool", "ref": "aiwg:tool:1000000000000002", "phase": "verify", "track": "documents", "dependsOn": ["render-html"], "inputs": [{ "name": "fresh-render", "schema": { "type": "object", "required": ["artifact", "sourceDigest", "renderDigest"] }, "from": "render-html.render" }], "outputs": [{ "name": "pdf", "schema": { "type": "object", "required": ["artifact", "renderDigest", "pdfDigest"] } }], "scope": { "files": ["release-notes.html", "release-notes.pdf"] }, "capabilities": ["print-pdf"], "permissions": ["artifacts:write"], "sideEffectMode": "idempotent", "idempotencyKey": "release-pdf-v1" },
+      { "id": "schema-inventory", "kind": "function", "ref": "aiwg:function:1000000000000001", "phase": "verify", "track": "schema", "deterministic": true, "inputs": [], "outputs": [{ "name": "receipt", "schema": { "type": "object", "required": ["passed", "digest"] } }], "scope": { "resources": ["schema-inventory"] }, "capabilities": [], "permissions": [], "sideEffectMode": "none" },
+      { "id": "release", "kind": "gate", "phase": "release", "track": "control", "inputs": [{ "name": "tests", "schema": { "type": "object" }, "from": "tests.receipt" }, { "name": "pdf", "schema": { "type": "object" }, "from": "print-pdf.pdf" }, { "name": "schemas", "schema": { "type": "object" }, "from": "schema-inventory.receipt" }], "outputs": [], "capabilities": [], "permissions": [], "sideEffectMode": "none" },
+      { "id": "decision", "kind": "evaluator", "ref": "aiwg:evaluator:1000000000000003", "phase": "release", "track": "control", "dependsOn": ["release"], "inputs": [{ "name": "tests", "schema": { "type": "object" }, "from": "tests.receipt" }, { "name": "pdf", "schema": { "type": "object" }, "from": "print-pdf.pdf" }, { "name": "schemas", "schema": { "type": "object" }, "from": "schema-inventory.receipt" }], "outputs": [{ "name": "decision", "schema": { "type": "object", "required": ["release", "evidence"] } }], "capabilities": ["release-decision"], "permissions": ["release:decide"], "sideEffectMode": "approval-required", "approvalGate": "release" }
+    ],
+    "routes": [{ "from": "render-html", "to": "print-pdf" }, { "from": "release", "to": "decision" }],
+    "joins": [{ "id": "all-release-evidence", "sources": ["tests", "print-pdf", "schema-inventory"], "target": "release", "policy": { "mode": "all" } }],
+    "failure": { "onNodeFailure": "fail", "maxFailures": 0 },
+    "output": { "mode": "typed-terminal-failure", "from": "decision.decision", "schema": { "type": "object", "required": ["release", "evidence"] }, "failureSchema": { "type": "object", "required": ["code"] } },
+    "trace": { "level": "metadata", "redact": [] }
+  }
+}

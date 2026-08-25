@@ -24,6 +24,8 @@ aiwg composition validate path/to/graph.yaml --format json
 aiwg composition validate path/to/graph.yaml --catalog index-export.json --format json
 aiwg composition example linear-flow
 aiwg composition example linear-flow --output ./my-first-graph.json
+aiwg composition example release-gate --output ./release-gate.json
+aiwg composition example storage-migration-fortemi --output ./storage-migration.json
 aiwg composition run path/to/graph.yaml --adapter ./composition-adapter.mjs
 ~~~
 
@@ -31,6 +33,15 @@ Run `aiwg composition validate --help` to print the installed schema, fixture,
 and example locations. `aiwg composition example` defaults to the valid
 `linear-flow` starter; use `--help` to list every shipped fixture that can be
 printed or copied.
+
+`release-gate` is the six-node release safety reference: independent tests and
+schema inventory join a Markdown → fresh HTML render → PDF chain at a
+fail-closed `all` gate. The PDF input carries the render digest, so an adapter
+must reject stale-render execution. `storage-migration-fortemi` is the migration
+reference: filesystem snapshot, bounded parallel copy, idempotent reconciliation
+with strictly decreasing lag, parity verification, human approval, routing
+cutover, smoke tests, and a retained-source rollback window. Fortemi Server is
+the primary destination and direct PostgreSQL is the advanced variant.
 
 The optional catalog accepts an array of stable IDs or an object containing
 **artifacts[]**, **results[]**, or **candidates[]**. It proves that the

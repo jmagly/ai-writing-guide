@@ -13,6 +13,7 @@ User-facing documentation for AIWG's pluggable storage adapter system (#934).
   data classes, consistency, and backend maturity
 - **[Scalable migration protocol](migration-protocol.md)** — checksum-backed
   offline/online migration, approval, cutover, and rollback
+- **[Qualification evidence](qualification.md)** — correctness-first concurrency, fault, recovery, and benchmark reports
 
 ## Per-backend pages
 

@@ -104,6 +104,18 @@ export {
   type PostgrestHealth,
 } from './backends/postgrest.js';
 export { POSTGREST_SCHEMA_V1_SQL, installPostgrestSchemaV1 } from './backends/postgrest-schema.js';
+export {
+  STORAGE_QUALIFICATION_REPORT,
+  StorageQualificationError,
+  qualifyStorageBackend,
+  verifyExactRecords,
+  assertCurrentStorageEvidence,
+  type StorageQualificationScope,
+  type StorageResourceObservation,
+  type StorageQualificationReport,
+  type QualifiableStorageEndpoint,
+  type QualificationOptions,
+} from './qualification.js';
 
 interface RegistryState {
   projectRoot: string;
