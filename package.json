@@ -53,6 +53,7 @@
     "lint:session-fixtures": "node tools/ci/session-fixture-sanitize.mjs",
     "test:sessions:sqlite": "npm run build:cli && node tools/ci/session-sqlite-gate.mjs",
     "benchmark:sessions": "tsx tools/benchmarks/session-production.ts",
+    "benchmark:index:sqlite": "tsx tools/benchmarks/sqlite-graph.ts",
     "test:integration": "vitest run --config config/vitest.config.js test/integration/cli-startup.test.ts test/integration/cli-perf.test.ts",
     "test:perf": "vitest run --config config/vitest.config.js test/integration/cli-perf.test.ts",
     "test:ci": "vitest run --config config/vitest.config.js && vitest run --config config/vitest.uat.config.js",

@@ -167,25 +167,55 @@ EXCEPT
 SELECT source FROM edges WHERE target = 'REF-001' AND edge_type = 'cites';
 ```
 
-The public set-query surface currently preserves the shared deterministic
-JavaScript semantics; it does not yet execute these expressions as native SQL.
+The SQLite backend executes union, intersection, and difference with native
+`UNION`, `INTERSECT`, and `EXCEPT`, returning identity-sorted results.
 
-### Cross-graph federation (illustrative SQL; not currently exposed)
+### Cross-graph federation
 
-```sql
-ATTACH DATABASE '.aiwg/.index/summaries/graph.db' AS summaries;
-ATTACH DATABASE '.aiwg/.index/citation-network/graph.db' AS cn;
+Cross-database `ATTACH` is explicitly out of scope. AIWG does not expose it
+because attached-file authorization, lifecycle, and consistent-snapshot
+semantics are not defined. Use the existing multi-graph query surface and
+combine its deterministic identity results instead.
 
-SELECT s.id, s.title
-FROM summaries.nodes s
-JOIN cn.edges e ON e.source = s.id
-WHERE e.target = 'REF-008' AND e.edge_type = 'cites';
-```
+### Incremental updates
 
-### Incremental updates (planned)
+Rebuild reconciliation runs in one transaction, upserts desired nodes and
+typed edges, and removes stale rows. Node `type`, `phase`, `title`, `summary`,
+and `checksum` are queryable columns while the complete attribute object is
+retained for compatibility.
 
-Current builds transactionally replace the selected graph contents. Row-level
-incremental reconciliation is planned and must not be assumed by operators.
+### WAL, concurrency, and recovery policy
+
+On-disk graphs require verified WAL mode, `synchronous=NORMAL` by default, a
+5-second busy timeout, and a 1,000-frame automatic checkpoint. `SQLITE_BUSY`
+and `SQLITE_LOCKED` exhaustion is surfaced as `AIWG_SQLITE_BUSY`; it is not
+reported as an empty result. `walMetrics()` exposes busy, log-frame, and
+checkpointed-frame counts, and callers can request bounded passive, restart,
+or truncate checkpoints. Backup uses SQLite's online backup API.
+
+WAL is a same-host feature: it supports concurrent readers and one writer and
+must not be placed on a network filesystem. AIWG rejects SQLite releases
+affected by the upstream WAL-reset corruption defect, accepting the official
+patched lines 3.44.6, 3.50.7, and 3.51.3 or later (excluding withdrawn 3.52).
+See the [SQLite WAL documentation](https://www.sqlite.org/wal.html#walreset).
+
+The backend uses schema `user_version=1`; migrations run transactionally and
+an unknown newer schema fails closed.
+
+Run the reproducible local benchmark with `npm run benchmark:index:sqlite`.
+Its JSON reports binding/engine versions, corpus shape, database size,
+throughput, and event-loop delay. A 2026-08-24 reference-host observation on
+Linux x64, Node 24.12.0, better-sqlite3 12.8.0, and SQLite 3.51.3 measured:
+
+| Nodes / edges | Write throughput | Query + traversal pairs | Event-loop delay p95 | DB bytes |
+| ---: | ---: | ---: | ---: | ---: |
+| 10,000 / 9,999 | 4,589 ops/s | 890 pairs/s | 281 ms | 2,379,776 |
+
+This is a qualification point, not a universal capacity limit. The high p95
+delay reflects synchronous native calls and is part of the selection decision:
+keep latency-sensitive event loops isolated from bulk SQLite graph builds.
+Operators must run the benchmark on their own hardware and workload before
+declaring a support envelope; #2191 owns the comparative release gate.
 
 ### Combining backends
 
@@ -269,13 +299,13 @@ Incremental rebuilds only re-embed nodes whose content checksum changed.
 | Feature | JSON | Graphology | SQLite |
 |---------|:----:|:----------:|:------:|
 | Typed edges | ✓ | ✓ | ✓ |
-| Bounded traversal | ✓ | ✓ | one hop |
-| Set intersection/difference | ✓ (JS) | ✓ (JS) | ✓ (JS) |
+| Bounded traversal | ✓ | ✓ | ✓ (recursive CTE) |
+| Set intersection/difference | ✓ (JS) | ✓ (JS) | ✓ (native SQL) |
 | Cross-graph joins | shell `comm` | manual merge | — |
 | Shortest path | — | ✓ | — |
 | Community detection | — | ✓ (Louvain) | — |
 | Persistent (survives rebuild) | — | — | ✓ |
-| Incremental row-level updates | — | — | — |
+| Incremental row-level updates | — | — | ✓ (transactional reconcile) |
 | Zero native deps | ✓ | ✓ | — |
 | Measured support envelope | not published | not published | not published |
 
