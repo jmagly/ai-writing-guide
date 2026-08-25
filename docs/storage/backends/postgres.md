@@ -50,6 +50,27 @@ use distinct operator credentials; the runtime role receives neither DDL nor
 database-wide backup privileges. Tenant/subsystem predicates are mandatory in
 every backend query. Deployments requiring hostile-tenant isolation should add
 database-enforced RLS policies and qualify them before sharing one database.
+Generate the exact quoted grant script with
+`postgresLeastPrivilegeSql('aiwg_runtime')`; role creation and credential
+assignment intentionally remain operator-owned.
+
+## Schema upgrade and rollback
+
+`upgradePostgresSchemaV1(client)` takes a transaction-scoped schema advisory
+lock, inspects the current version, installs v1, verifies it, and commits. It is
+idempotent at v1 and rejects unknown versions. `inspectPostgresSchema(client)`
+returns the version plus exact record, receipt, and edge counts.
+
+Rollback to an empty v0 schema is intentionally destructive and migration-role
+only. `rollbackPostgresSchemaV1(client, approval)` requires all three of:
+
+- `expectedVersion: 1`;
+- `allowDataLoss: true`;
+- exact counts copied from a fresh inspection.
+
+Any drift rolls the transaction back without dropping objects. Take and verify
+a backup first. PostgREST functions are removed in dependency order before the
+tables, and the empty-schema result is verified before commit.
 
 ## Transaction and migration semantics
 
@@ -86,8 +107,9 @@ its advertised capability receipt.
 
 ## Failure behavior
 
-Serialization failures, deadlocks, lock cancellation, and connection-class
-errors are classified as bounded-retry candidates. Revision conflicts and
+Serialization failures, deadlocks, lock cancellation, administrative
+shutdown/restart states, and connection-class errors are classified as
+bounded-retry candidates. Revision conflicts and
 idempotency mismatches are semantic failures and must not be retried with a
 changed payload. Pool exhaustion is visible through `waiting`; callers apply
 backpressure rather than opening unbounded clients.

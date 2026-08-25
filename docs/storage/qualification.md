@@ -20,6 +20,9 @@ throughput, CPU, RSS, and optional database size, write amplification, WAL,
 lock waits, pool saturation, migration/recovery time, and HTTP transport
 overhead. `assertCurrentStorageEvidence` rejects invalid, incomplete, or stale
 records before a performance statement is published.
+The runner uses bounded exponential backoff for classified transient failures;
+the configured retry ceiling and observed retry/error rates remain part of the
+evidence rather than being hidden by the benchmark.
 
 The gate deliberately injects omitted, unexpected, and corrupt records. Each
 negative control must invalidate the report. The migration protocol suite adds

@@ -41,12 +41,16 @@ retry the identical batch. The advisory transaction lock serializes concurrent
 delivery of that batch ID; the durable receipt proves one logical commit.
 Reusing the ID with a different payload fails closed.
 
-Bulk JSON writes are the `p_mutations` array accepted by
-`aiwg_commit_batch_v1`. This is the canonical deterministic upsert path and its
-conflict target is explicitly `(tenant, subsystem, path)`. PostgREST's native
-JSON or CSV table bulk endpoints may be enabled for controlled bootstrap jobs,
-but they do not create migration receipts and must not be used for reconcile or
-cutover.
+Bulk JSON writes in the canonical path are the `p_mutations` array accepted by
+`aiwg_commit_batch_v1`. `bulkBootstrapJson()` and `bulkBootstrapCsv()` also
+expose PostgREST's native table bulk mode for controlled bootstrap jobs. Both
+fix `on_conflict=tenant,subsystem,path`, request deterministic merge-duplicate
+resolution, enforce the same tenant/subsystem and batch/body ceilings, and
+return the server representation. CSV parsing validates quoting, row width,
+and required columns before transport. Native bootstrap does not create
+migration receipts and must not be used for reconcile or cutover.
+PostgREST applies PostgreSQL's CSV field coercions; use JSON bootstrap when a
+`value` must remain a structured JSON object rather than its CSV text form.
 
 ## Authentication, TLS, and RLS
 
@@ -71,6 +75,13 @@ tables, sequence `USAGE`, and `EXECUTE` only on the `aiwg_*_v1` functions.
 Keep schema installation, role administration, backup, restore, and direct DDL
 outside the requester role. RLS is defense in depth: the adapter also rejects
 cross-tenant or cross-subsystem mutations before transport.
+
+`postgrestLeastPrivilegeSql('aiwg_requester')` generates the complete quoted
+grant/revoke/RLS policy script. It revokes public table and function access,
+grants only the v1 RPC surface, forces RLS on all tenant-bearing tables, and
+binds both `USING` and `WITH CHECK` to trusted JWT `tenant` and `subsystem`
+claims. Role creation, membership, JWT signing keys, and login credentials stay
+outside the generated script and remain operator-owned.
 
 ## Qualification
 

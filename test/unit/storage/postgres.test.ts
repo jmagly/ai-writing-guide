@@ -129,7 +129,7 @@ describe('direct PostgreSQL storage backend (#2195)', () => {
     expect(pool.client.released).toBe(true);
   });
 
-  it.each(['40001', '40P01', '55P03', '57014', '08000', '08003', '08006', '08001'])(
+  it.each(['40001', '40P01', '55P03', '57014', '57P01', '57P02', '57P03', '08000', '08003', '08006', '08001'])(
     'classifies PostgreSQL fault %s for bounded retry',
     async (code) => {
       const failure = Object.assign(new Error('injected fault'), { code });
@@ -142,6 +142,15 @@ describe('direct PostgreSQL storage backend (#2195)', () => {
       });
     },
   );
+
+  it('classifies connection loss on non-transactional reads for caller reconnect/retry', async () => {
+    const failure = Object.assign(new Error('connection terminated'), { code: '08006' });
+    const { backend: store } = backend((sql) => {
+      if (sql.includes('WHERE tenant=$1 AND subsystem=$2 AND path=$3')) throw failure;
+      return { rows: [], rowCount: 0 };
+    });
+    await expect(store.get('a.md')).rejects.toMatchObject({ code: 'AIWG_POSTGRES_RETRYABLE', retryable: true });
+  });
 
   it('resolves an ambiguous commit by reading the durable receipt on replay', async () => {
     const durable = { batchId: 'durable', committed: true, highWaterMark: '8', recordReceipts: [] };

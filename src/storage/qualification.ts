@@ -62,6 +62,8 @@ export interface QualificationOptions<T> {
   records: readonly VersionedRecord<T>[];
   now?: () => Date;
   resourceObservation?: () => Partial<StorageResourceObservation>;
+  maxRetries?: number;
+  baseBackoffMs?: number;
 }
 
 /**
@@ -84,28 +86,33 @@ export async function qualifyStorageBackend<T>(
   const sideEffects: StorageQualificationReport['sideEffects'] = [];
   let errors = 0;
   let retries = 0;
+  const maxRetries = bounded(options.maxRetries, 5, 0, 20, 'maxRetries');
+  const baseBackoffMs = bounded(options.baseBackoffMs, 2, 0, 60_000, 'baseBackoffMs');
 
   const batches = distribute(options.records, options.scope.writers);
   await Promise.all(batches.map(async (records, writer) => {
     for (const record of records) {
       const mutation = mutationFor(record, `qualification:${writer}:${record.identity.path}:${record.sourceRevision}`);
       const operationStart = performance.now();
-      try {
-        const receipt = await endpoint.commitBatch([mutation]);
-        latencies.push(performance.now() - operationStart);
-        sideEffects.push({ operation: `write:${record.identity.path}`, outcome: 'committed', batchId: receipt.batchId });
-      } catch (error) {
-        errors += 1;
-        if (isRetryable(error)) {
+      let receipt;
+      let replayed = false;
+      for (let attempt = 0; ; attempt += 1) {
+        try {
+          receipt = await endpoint.commitBatch([mutation]);
+          break;
+        } catch (error) {
+          errors += 1;
+          if (!isRetryable(error) || attempt >= maxRetries) {
+            sideEffects.push({ operation: `write:${record.identity.path}`, outcome: 'failed' });
+            throw error;
+          }
           retries += 1;
-          const receipt = await endpoint.commitBatch([mutation]);
-          latencies.push(performance.now() - operationStart);
-          sideEffects.push({ operation: `write:${record.identity.path}`, outcome: 'replayed', batchId: receipt.batchId });
-        } else {
-          sideEffects.push({ operation: `write:${record.identity.path}`, outcome: 'failed' });
-          throw error;
+          replayed = true;
+          if (baseBackoffMs > 0) await new Promise(resolve => setTimeout(resolve, baseBackoffMs * 2 ** attempt));
         }
       }
+      latencies.push(performance.now() - operationStart);
+      sideEffects.push({ operation: `write:${record.identity.path}`, outcome: replayed ? 'replayed' : 'committed', batchId: receipt.batchId });
     }
   }));
 
@@ -187,4 +194,10 @@ function percentiles(values: number[]) {
 
 function isRetryable(error: unknown): boolean {
   return typeof error === 'object' && error !== null && 'retryable' in error && error.retryable === true;
+}
+
+function bounded(value: number | undefined, fallback: number, min: number, max: number, label: string): number {
+  const resolved = value ?? fallback;
+  if (!Number.isInteger(resolved) || resolved < min || resolved > max) throw new Error(`${label} must be an integer from ${min} through ${max}`);
+  return resolved;
 }

@@ -13,6 +13,7 @@ import type {
   MigrationEndpointIdentity,
   MigrationSnapshot,
 } from '../migration-protocol.js';
+import { POSTGRES_SCHEMA_V1_SQL } from './postgres-schema.js';
 
 const SCHEMA_VERSION = '1';
 const DEFAULT_POOL_MAX = 10;
@@ -162,7 +163,7 @@ export class PostgresStorageBackend<T = unknown> implements MigrationEndpoint<T>
   async init(): Promise<void> {
     if (!this.pool) this.pool = await createPool(this.options);
     if (this.options.schemaMode !== 'migrate') {
-      const schema = await this.requiredPool().query<{ schema_version: number }>(
+      const schema = await this.runQuery<{ schema_version: number }>(
         'SELECT schema_version FROM aiwg_storage_schema WHERE singleton = true',
       );
       if (Number(schema.rows[0]?.schema_version) !== 1) {
@@ -174,52 +175,7 @@ export class PostgresStorageBackend<T = unknown> implements MigrationEndpoint<T>
       return;
     }
     await this.withTransaction(async client => {
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS aiwg_storage_schema (
-          singleton boolean PRIMARY KEY DEFAULT true CHECK (singleton),
-          schema_version integer NOT NULL
-        );
-        INSERT INTO aiwg_storage_schema(singleton, schema_version)
-        VALUES (true, 1) ON CONFLICT (singleton) DO NOTHING;
-        CREATE TABLE IF NOT EXISTS aiwg_storage_records (
-          tenant text NOT NULL,
-          subsystem text NOT NULL,
-          path text NOT NULL,
-          source_revision text NOT NULL,
-          digest text NOT NULL,
-          value jsonb,
-          tombstone boolean NOT NULL DEFAULT false,
-          deleted_at timestamptz,
-          delete_reason text,
-          idempotency_key text NOT NULL,
-          change_seq bigserial NOT NULL,
-          updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-          PRIMARY KEY (tenant, subsystem, path),
-          UNIQUE (tenant, subsystem, idempotency_key)
-        );
-        CREATE INDEX IF NOT EXISTS aiwg_storage_records_change
-          ON aiwg_storage_records(tenant, subsystem, change_seq, path);
-        CREATE TABLE IF NOT EXISTS aiwg_storage_batch_receipts (
-          tenant text NOT NULL,
-          subsystem text NOT NULL,
-          batch_id uuid NOT NULL,
-          payload_digest text NOT NULL,
-          high_water_mark bigint NOT NULL,
-          receipt jsonb NOT NULL,
-          committed_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-          PRIMARY KEY (tenant, subsystem, batch_id)
-        );
-        CREATE TABLE IF NOT EXISTS aiwg_storage_edges (
-          tenant text NOT NULL,
-          subsystem text NOT NULL,
-          source_path text NOT NULL,
-          target_path text NOT NULL,
-          edge_type text NOT NULL,
-          PRIMARY KEY (tenant, subsystem, source_path, target_path, edge_type)
-        );
-        CREATE INDEX IF NOT EXISTS aiwg_storage_edges_target
-          ON aiwg_storage_edges(tenant, subsystem, target_path, edge_type);
-      `);
+      await client.query(POSTGRES_SCHEMA_V1_SQL);
       const schema = await client.query<{ schema_version: number }>(
         'SELECT schema_version FROM aiwg_storage_schema WHERE singleton = true',
       );
@@ -297,7 +253,7 @@ export class PostgresStorageBackend<T = unknown> implements MigrationEndpoint<T>
   }
 
   async get(path: string): Promise<VersionedRecord<T> | null> {
-    const result = await this.requiredPool().query<RecordRow>(
+    const result = await this.runQuery<RecordRow>(
       `SELECT tenant, subsystem, path, source_revision, digest, value,
               tombstone, deleted_at, delete_reason, change_seq
        FROM aiwg_storage_records WHERE tenant=$1 AND subsystem=$2 AND path=$3`,
@@ -307,7 +263,7 @@ export class PostgresStorageBackend<T = unknown> implements MigrationEndpoint<T>
   }
 
   async readAll(): Promise<readonly VersionedRecord<T>[]> {
-    const result = await this.requiredPool().query<RecordRow>(
+    const result = await this.runQuery<RecordRow>(
       `SELECT tenant, subsystem, path, source_revision, digest, value,
               tombstone, deleted_at, delete_reason, change_seq
        FROM aiwg_storage_records WHERE tenant=$1 AND subsystem=$2 ORDER BY path`,
@@ -318,7 +274,7 @@ export class PostgresStorageBackend<T = unknown> implements MigrationEndpoint<T>
 
   async query(filters: Record<string, unknown>, limit = 100, cursor?: string): Promise<PostgresPage<T>> {
     const boundedLimit = bounded(limit, 100, 1, 10_000, 'limit');
-    const result = await this.requiredPool().query<RecordRow>(
+    const result = await this.runQuery<RecordRow>(
       `SELECT tenant, subsystem, path, source_revision, digest, value,
               tombstone, deleted_at, delete_reason, change_seq
        FROM aiwg_storage_records
@@ -416,7 +372,7 @@ export class PostgresStorageBackend<T = unknown> implements MigrationEndpoint<T>
 
   async changes(cursor: string | undefined): Promise<MigrationChangePage<T>> {
     const after = parseCursor(cursor);
-    const result = await this.requiredPool().query<RecordRow>(
+    const result = await this.runQuery<RecordRow>(
       `SELECT tenant, subsystem, path, source_revision, digest, value,
               tombstone, deleted_at, delete_reason, change_seq
        FROM aiwg_storage_records
@@ -453,7 +409,7 @@ export class PostgresStorageBackend<T = unknown> implements MigrationEndpoint<T>
     const depth = bounded(maxDepth, 10, 1, 100, 'maxDepth');
     const from = direction === 'out' ? 'source_path' : 'target_path';
     const to = direction === 'out' ? 'target_path' : 'source_path';
-    const result = await this.requiredPool().query<{ path: string; depth: number }>(`
+    const result = await this.runQuery<{ path: string; depth: number }>(`
       WITH RECURSIVE walk(path, depth, visited) AS (
         SELECT $3::text, 0, ARRAY[$3::text]
         UNION ALL
@@ -472,7 +428,7 @@ export class PostgresStorageBackend<T = unknown> implements MigrationEndpoint<T>
 
   async setOperation(operation: 'union' | 'intersection' | 'difference', left: readonly string[], right: readonly string[]): Promise<string[]> {
     const sqlOperation = operation === 'union' ? 'UNION' : operation === 'intersection' ? 'INTERSECT' : 'EXCEPT';
-    const result = await this.requiredPool().query<{ path: string }>(
+    const result = await this.runQuery<{ path: string }>(
       `SELECT unnest($1::text[]) AS path ${sqlOperation} SELECT unnest($2::text[]) AS path ORDER BY path`,
       [left, right],
     );
@@ -480,7 +436,7 @@ export class PostgresStorageBackend<T = unknown> implements MigrationEndpoint<T>
   }
 
   async health(): Promise<PostgresHealth> {
-    const result = await this.requiredPool().query<{ server_version: string; schema_version: number; high_water_mark: string }>(`
+    const result = await this.runQuery<{ server_version: string; schema_version: number; high_water_mark: string }>(`
       SELECT current_setting('server_version') AS server_version,
              (SELECT schema_version FROM aiwg_storage_schema WHERE singleton=true) AS schema_version,
              COALESCE((SELECT MAX(change_seq) FROM aiwg_storage_records WHERE tenant=$1 AND subsystem=$2),0)::text AS high_water_mark`,
@@ -538,6 +494,11 @@ export class PostgresStorageBackend<T = unknown> implements MigrationEndpoint<T>
   private requiredPool(): PostgresPoolLike {
     if (!this.pool) throw new PostgresBackendError('AIWG_POSTGRES_NOT_INITIALIZED', 'call init() before using the PostgreSQL backend');
     return this.pool;
+  }
+
+  private async runQuery<Row = Record<string, unknown>>(text: string, values?: readonly unknown[]): Promise<PostgresQueryResult<Row>> {
+    try { return await this.requiredPool().query<Row>(text, values); }
+    catch (error) { throw classifyPostgresError(error); }
   }
 }
 
@@ -635,7 +596,7 @@ function bounded(value: number | undefined, fallback: number, min: number, max: 
 function classifyPostgresError(error: unknown): Error {
   if (error instanceof PostgresBackendError) return error;
   const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
-  if (['40001', '40P01', '55P03', '57014', '08000', '08003', '08006', '08001'].includes(code)) {
+  if (['40001', '40P01', '55P03', '57014', '57P01', '57P02', '57P03', '08000', '08003', '08006', '08001'].includes(code)) {
     return new PostgresBackendError('AIWG_POSTGRES_RETRYABLE', `retryable PostgreSQL failure (${code})`, true);
   }
   return error instanceof Error ? error : new Error(String(error));

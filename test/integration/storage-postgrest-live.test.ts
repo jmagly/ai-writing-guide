@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { PostgrestStorageBackend } from '../../src/storage/backends/postgrest.js';
+import { assertCurrentStorageEvidence, qualifyStorageBackend } from '../../src/storage/qualification.js';
 
 const live = process.env.AIWG_POSTGREST_LIVE_URL;
 const describeLive = live ? describe : describe.skip;
@@ -73,6 +74,47 @@ describeLive('PostgREST transport live qualification (#2196)', () => {
     },
     30_000,
   );
+
+  it('emits a correctness-qualified HTTP operating-envelope record', async () => {
+    const tenant = `postgrest-envelope-${randomUUID()}`;
+    const authorizationEnv = process.env.AIWG_POSTGREST_AUTHORIZATION ? 'AIWG_POSTGREST_AUTHORIZATION' : undefined;
+    const store = new PostgrestStorageBackend<{ kind: string; text: string }>({
+      baseUrl: live!, tenant, subsystem: 'memory', authorizationEnv, maxBatchSize: 1000,
+    });
+    await store.init();
+    const corpus = Array.from({ length: 64 }, (_, index) => ({
+      identity: { tenant, subsystem: 'memory', path: `record-${String(index).padStart(4, '0')}.md` },
+      sourceRevision: '1', digest: createHash('sha256').update(`value-${index}`).digest('hex'),
+      value: { kind: 'note', text: `value-${index}` },
+    }));
+    const report = await qualifyStorageBackend(store, {
+      scope: { backend: 'postgres-postgrest', branch: 'qualification', commit: 'live', datasetId: 'postgrest-envelope-v1', declaredRecords: corpus.length, readers: 4, writers: 4, operations: corpus.length + 4 },
+      records: corpus,
+    });
+    expect(report).toMatchObject({ verification: { valid: true }, scope: { observedRecords: 64 } });
+    expect(report.latencyMs.p95).toBeGreaterThanOrEqual(report.latencyMs.p50);
+    expect(report.throughputPerSecond).toBeGreaterThan(0);
+    expect(() => assertCurrentStorageEvidence(report, 'live')).not.toThrow();
+  }, 30_000);
+
+  it('accepts native JSON and CSV bootstrap rows through the fixed conflict target', async () => {
+    const tenant = `postgrest-bootstrap-${randomUUID()}`;
+    const authorizationEnv = process.env.AIWG_POSTGREST_AUTHORIZATION ? 'AIWG_POSTGREST_AUTHORIZATION' : undefined;
+    const store = new PostgrestStorageBackend({ baseUrl: live!, tenant, subsystem: 'memory', authorizationEnv });
+    await store.init();
+    await store.bulkBootstrapJson([{
+      tenant, subsystem: 'memory', path: 'json.md', source_revision: '1', digest: 'sha256:json',
+      value: { kind: 'note', text: 'json' }, tombstone: false, idempotency_key: 'bootstrap:json:1',
+    }]);
+    const csv = [
+      'tenant,subsystem,path,source_revision,digest,value,tombstone,idempotency_key',
+      `${tenant},memory,csv.md,1,sha256:csv,"{""kind"":""note"",""text"":""csv""}",false,bootstrap:csv:1`,
+      '',
+    ].join('\r\n');
+    await store.bulkBootstrapCsv(csv);
+    await expect(store.get('json.md')).resolves.toMatchObject({ value: { text: 'json' } });
+    await expect(store.get('csv.md')).resolves.toMatchObject({ value: '{"kind":"note","text":"csv"}' });
+  }, 30_000);
 });
 
 function mutation(tenant: string, path: string, revision: string, text: string, expectedRevision?: string) {

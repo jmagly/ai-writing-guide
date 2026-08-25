@@ -159,3 +159,33 @@ export async function installPostgrestSchemaV1(client: PostgresClientLike): Prom
     throw error;
   }
 }
+
+/** Generate the requester-role grants and JWT-claim RLS policies for v1. */
+export function postgrestLeastPrivilegeSql(requesterRole: string): string {
+  const role = quoteIdentifier(requesterRole);
+  const predicate = `(tenant=current_setting('request.jwt.claims',true)::jsonb->>'tenant' AND subsystem=current_setting('request.jwt.claims',true)::jsonb->>'subsystem')`;
+  return `REVOKE ALL ON aiwg_storage_records, aiwg_storage_batch_receipts, aiwg_storage_edges FROM PUBLIC;
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC;
+GRANT USAGE ON SCHEMA public TO ${role};
+GRANT SELECT, INSERT, UPDATE, DELETE ON aiwg_storage_records, aiwg_storage_batch_receipts, aiwg_storage_edges TO ${role};
+GRANT SELECT ON aiwg_storage_schema TO ${role};
+GRANT USAGE, SELECT ON SEQUENCE aiwg_storage_records_change_seq_seq TO ${role};
+GRANT EXECUTE ON FUNCTION aiwg_record_v1(aiwg_storage_records), aiwg_commit_batch_v1(text,text,uuid,text,jsonb), aiwg_get_record_v1(text,text,text), aiwg_query_records_v1(text,text,jsonb,text,integer,boolean), aiwg_snapshot_v1(text,text,integer), aiwg_changes_v1(text,text,bigint,integer), aiwg_health_v1(text,text), aiwg_reload_schema_v1() TO ${role};
+ALTER TABLE aiwg_storage_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE aiwg_storage_records FORCE ROW LEVEL SECURITY;
+ALTER TABLE aiwg_storage_batch_receipts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE aiwg_storage_batch_receipts FORCE ROW LEVEL SECURITY;
+ALTER TABLE aiwg_storage_edges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE aiwg_storage_edges FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aiwg_records_tenant_v1 ON aiwg_storage_records;
+CREATE POLICY aiwg_records_tenant_v1 ON aiwg_storage_records FOR ALL TO ${role} USING ${predicate} WITH CHECK ${predicate};
+DROP POLICY IF EXISTS aiwg_receipts_tenant_v1 ON aiwg_storage_batch_receipts;
+CREATE POLICY aiwg_receipts_tenant_v1 ON aiwg_storage_batch_receipts FOR ALL TO ${role} USING ${predicate} WITH CHECK ${predicate};
+DROP POLICY IF EXISTS aiwg_edges_tenant_v1 ON aiwg_storage_edges;
+CREATE POLICY aiwg_edges_tenant_v1 ON aiwg_storage_edges FOR ALL TO ${role} USING ${predicate} WITH CHECK ${predicate};`;
+}
+
+function quoteIdentifier(value: string): string {
+  if (!value || value.length > 63 || /[\u0000-\u001f]/.test(value)) throw new Error('requester role must be a printable PostgreSQL identifier up to 63 characters');
+  return `"${value.replaceAll('"', '""')}"`;
+}

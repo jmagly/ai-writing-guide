@@ -98,12 +98,23 @@ export {
   type PostgresSnapshotLease,
 } from './backends/postgres.js';
 export {
+  POSTGRES_SCHEMA_VERSION,
+  POSTGRES_SCHEMA_V1_SQL,
+  inspectPostgresSchema,
+  upgradePostgresSchemaV1,
+  rollbackPostgresSchemaV1,
+  postgresLeastPrivilegeSql,
+  type PostgresSchemaInspection,
+  type PostgresSchemaRollbackApproval,
+} from './backends/postgres-schema.js';
+export {
   PostgrestStorageBackend,
   PostgrestBackendError,
   type PostgrestBackendOptions,
   type PostgrestHealth,
+  type PostgrestBootstrapRow,
 } from './backends/postgrest.js';
-export { POSTGREST_SCHEMA_V1_SQL, installPostgrestSchemaV1 } from './backends/postgrest-schema.js';
+export { POSTGREST_SCHEMA_V1_SQL, installPostgrestSchemaV1, postgrestLeastPrivilegeSql } from './backends/postgrest-schema.js';
 export {
   STORAGE_QUALIFICATION_REPORT,
   StorageQualificationError,

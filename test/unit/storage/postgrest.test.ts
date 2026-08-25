@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PostgrestBackendError, PostgrestStorageBackend } from '../../../src/storage/backends/postgrest.js';
-import { installPostgrestSchemaV1, POSTGREST_SCHEMA_V1_SQL } from '../../../src/storage/backends/postgrest-schema.js';
+import { installPostgrestSchemaV1, postgrestLeastPrivilegeSql, POSTGREST_SCHEMA_V1_SQL } from '../../../src/storage/backends/postgrest-schema.js';
 import type { PostgresClientLike, PostgresQueryResult } from '../../../src/storage/backends/postgres.js';
 
 const identity = { tenant: 'tenant-a', subsystem: 'memory', path: 'a.md' };
@@ -45,6 +45,29 @@ describe('PostgREST PostgreSQL access mode (#2196)', () => {
       p_tenant: 'tenant-a', p_subsystem: 'memory', p_mutations: [mutation],
     });
     expect(((first[1] as RequestInit).headers as Record<string, string>).Prefer).toBe('return=representation');
+  });
+
+  it('supports bounded native JSON and CSV bootstrap with an explicit unique conflict target', async () => {
+    const request = vi.fn(async () => json([]));
+    const store = backend(request as typeof fetch);
+    const row = {
+      tenant: 'tenant-a', subsystem: 'memory', path: 'a.md', source_revision: '1',
+      digest: 'sha256:a', value: { kind: 'note' }, tombstone: false, idempotency_key: 'bootstrap:a:1',
+    };
+    await store.bulkBootstrapJson([row]);
+    const jsonCall = request.mock.calls[0];
+    expect(jsonCall[0]).toBe('https://storage.example.test/api/aiwg_storage_records?on_conflict=tenant%2Csubsystem%2Cpath');
+    expect((jsonCall[1] as RequestInit).headers).toMatchObject({ Prefer: 'resolution=merge-duplicates,return=representation', 'Content-Type': 'application/json' });
+
+    const csv = 'tenant,subsystem,path,source_revision,digest,value,tombstone,idempotency_key\r\ntenant-a,memory,a.md,1,sha256:a,"{""kind"":""note""}",false,bootstrap:a:1\r\n';
+    await store.bulkBootstrapCsv(csv);
+    const csvCall = request.mock.calls[1];
+    expect((csvCall[1] as RequestInit).headers).toMatchObject({ 'Content-Type': 'text/csv' });
+    expect((csvCall[1] as RequestInit).body).toBe(csv);
+
+    await expect(store.bulkBootstrapJson([{ ...row, tenant: 'other' }])).rejects.toMatchObject({ code: 'AIWG_POSTGREST_IDENTITY_MISMATCH' });
+    await expect(store.bulkBootstrapCsv('tenant,path\ntenant-a,a.md')).rejects.toMatchObject({ code: 'AIWG_POSTGREST_CSV_INVALID' });
+    expect(request).toHaveBeenCalledTimes(2);
   });
 
   it('maps get, paged query, snapshot, changes, health, and cache reload RPCs', async () => {
@@ -138,6 +161,16 @@ describe('PostgREST PostgreSQL access mode (#2196)', () => {
     const broken = new SchemaClient(true);
     await expect(installPostgrestSchemaV1(broken)).rejects.toThrow('install failed');
     expect(broken.queries.at(-1)).toBe('ROLLBACK');
+  });
+
+  it('generates fail-closed requester grants and JWT tenant/subsystem RLS policies', () => {
+    const sql = postgrestLeastPrivilegeSql('aiwg-requester');
+    expect(sql).toContain('TO "aiwg-requester"');
+    expect(sql).toContain('REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC');
+    expect(sql).toContain('FORCE ROW LEVEL SECURITY');
+    expect(sql).toContain("current_setting('request.jwt.claims',true)");
+    expect(sql).toContain('WITH CHECK');
+    expect(() => postgrestLeastPrivilegeSql('bad\nrole')).toThrow(/printable/);
   });
 });
 

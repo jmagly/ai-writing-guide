@@ -30,6 +30,19 @@ export interface PostgrestHealth {
   engine: 'postgres';
 }
 
+export interface PostgrestBootstrapRow {
+  tenant: string;
+  subsystem: string;
+  path: string;
+  source_revision: string;
+  digest: string;
+  value: unknown;
+  tombstone: boolean;
+  deleted_at?: string | null;
+  delete_reason?: string | null;
+  idempotency_key: string;
+}
+
 interface PostgrestSnapshot<T> {
   snapshot_id: string;
   high_water_mark: string;
@@ -189,17 +202,43 @@ export class PostgrestStorageBackend<T = unknown> implements MigrationEndpoint<T
     });
   }
 
+  /** Receipt-less native JSON bulk upsert for controlled bootstrap only. */
+  async bulkBootstrapJson(rows: readonly PostgrestBootstrapRow[]): Promise<unknown[]> {
+    this.assertBootstrapCount(rows.length);
+    for (const row of rows) this.assertBootstrapIdentity(row.tenant, row.subsystem);
+    return this.request('/aiwg_storage_records?on_conflict=tenant%2Csubsystem%2Cpath', {
+      method: 'POST', body: rows, prefer: 'resolution=merge-duplicates,return=representation',
+    });
+  }
+
+  /** Receipt-less native CSV bulk upsert for controlled bootstrap only. */
+  async bulkBootstrapCsv(csv: string): Promise<unknown[]> {
+    const parsed = parseCsv(csv);
+    const required = ['tenant', 'subsystem', 'path', 'source_revision', 'digest', 'value', 'tombstone', 'idempotency_key'];
+    for (const column of required) {
+      if (!parsed.header.includes(column)) throw new PostgrestBackendError('AIWG_POSTGREST_CSV_INVALID', `CSV header is missing ${column}`);
+    }
+    this.assertBootstrapCount(parsed.rows.length);
+    const tenantIndex = parsed.header.indexOf('tenant');
+    const subsystemIndex = parsed.header.indexOf('subsystem');
+    for (const row of parsed.rows) this.assertBootstrapIdentity(row[tenantIndex] ?? '', row[subsystemIndex] ?? '');
+    return this.request('/aiwg_storage_records?on_conflict=tenant%2Csubsystem%2Cpath', {
+      method: 'POST', rawBody: csv, contentType: 'text/csv',
+      prefer: 'resolution=merge-duplicates,return=representation',
+    });
+  }
+
   private async rpc<R>(name: string, body: Record<string, unknown>, prefer?: string): Promise<R> {
     return this.request<R>(`/rpc/${name}`, { method: 'POST', body, ...(prefer ? { prefer } : {}) });
   }
 
-  private async request<R>(pathname: string, options: { method?: string; body?: unknown; prefer?: string } = {}): Promise<R> {
-    const body = options.body === undefined ? undefined : JSON.stringify(options.body);
+  private async request<R>(pathname: string, options: { method?: string; body?: unknown; rawBody?: string; contentType?: string; prefer?: string } = {}): Promise<R> {
+    const body = options.rawBody ?? (options.body === undefined ? undefined : JSON.stringify(options.body));
     if (body && Buffer.byteLength(body) > this.maxPayloadBytes) {
       throw new PostgrestBackendError('AIWG_POSTGREST_PAYLOAD_TOO_LARGE', `request exceeds ${this.maxPayloadBytes} byte ceiling`);
     }
     const headers: Record<string, string> = { Accept: 'application/json' };
-    if (body) headers['Content-Type'] = 'application/json';
+    if (body) headers['Content-Type'] = options.contentType ?? 'application/json';
     if (options.prefer) headers.Prefer = options.prefer;
     const authorization = this.authorization();
     if (authorization) headers.Authorization = authorization;
@@ -251,6 +290,46 @@ export class PostgrestStorageBackend<T = unknown> implements MigrationEndpoint<T
       throw new PostgrestBackendError('AIWG_POSTGREST_IDENTITY_MISMATCH', 'mutation identity is outside this backend tenant/subsystem');
     }
   }
+
+  private assertBootstrapCount(count: number): void {
+    if (count < 1) throw new PostgrestBackendError('AIWG_POSTGREST_EMPTY_BATCH', 'bootstrap batch must contain at least one row');
+    if (count > this.maxBatchSize) throw new PostgrestBackendError('AIWG_POSTGREST_BATCH_TOO_LARGE', `batch exceeds ${this.maxBatchSize} row ceiling`);
+  }
+
+  private assertBootstrapIdentity(tenant: string, subsystem: string): void {
+    if (tenant !== this.options.tenant || subsystem !== this.options.subsystem) {
+      throw new PostgrestBackendError('AIWG_POSTGREST_IDENTITY_MISMATCH', 'bootstrap row is outside this backend tenant/subsystem');
+    }
+  }
+}
+
+function parseCsv(input: string): { header: string[]; rows: string[][] } {
+  const output: string[][] = [];
+  let row: string[] = [];
+  let field = '';
+  let quoted = false;
+  for (let index = 0; index < input.length; index += 1) {
+    const character = input[index];
+    if (character === '"') {
+      if (quoted && input[index + 1] === '"') { field += '"'; index += 1; }
+      else quoted = !quoted;
+    } else if (character === ',' && !quoted) { row.push(field); field = ''; }
+    else if ((character === '\n' || character === '\r') && !quoted) {
+      if (character === '\r' && input[index + 1] === '\n') index += 1;
+      row.push(field); field = '';
+      if (row.some(value => value.length > 0)) output.push(row);
+      row = [];
+    } else field += character;
+  }
+  if (quoted) throw new PostgrestBackendError('AIWG_POSTGREST_CSV_INVALID', 'CSV contains an unterminated quoted field');
+  row.push(field);
+  if (row.some(value => value.length > 0)) output.push(row);
+  const header = output.shift();
+  if (!header) throw new PostgrestBackendError('AIWG_POSTGREST_CSV_INVALID', 'CSV must contain a header');
+  for (const candidate of output) {
+    if (candidate.length !== header.length) throw new PostgrestBackendError('AIWG_POSTGREST_CSV_INVALID', 'CSV row width does not match header');
+  }
+  return { header, rows: output };
 }
 
 function parseDatabaseError(body: string): { databaseCode?: string; message?: string } {
