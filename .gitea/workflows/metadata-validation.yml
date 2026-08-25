@@ -35,7 +35,10 @@ jobs:
     name: Validate Plugin Metadata
     runs-on: ubuntu-latest
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
-    timeout-minutes: 10
+    # Cold runners can spend most of the previous 10-minute budget installing
+    # and building the full CLI before validation starts. Keep the gate strict,
+    # but allow enough time for the validator to report an actual result.
+    timeout-minutes: 20
 
     steps:
       - name: Checkout code
