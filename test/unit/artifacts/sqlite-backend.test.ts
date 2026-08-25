@@ -305,5 +305,52 @@ describe.skipIf(!sqliteAvailable)('SqliteGraphBackend', () => {
         await rm(root, { recursive: true, force: true });
       }
     });
+
+    it('reports bounded lock exhaustion with a distinct error code', async () => {
+      const root = await mkdtemp(join(tmpdir(), 'aiwg-sqlite-busy-'));
+      const dbPath = join(root, 'graph.db');
+      const seed = new SqliteGraphBackend(dbPath);
+      seed.close();
+      const Database = require('better-sqlite3') as new (path: string) => {
+        exec(sql: string): void;
+        close(): void;
+      };
+      const locker = new Database(dbPath);
+      const contender = new SqliteGraphBackend(dbPath, { busyTimeoutMs: 20 });
+      try {
+        locker.exec('BEGIN IMMEDIATE');
+        let failure: unknown;
+        try {
+          contender.addNode('blocked');
+        } catch (error) {
+          failure = error;
+        }
+        expect(failure).toMatchObject({ code: 'AIWG_SQLITE_BUSY' });
+      } finally {
+        locker.exec('ROLLBACK');
+        locker.close();
+        contender.close();
+        await rm(root, { recursive: true, force: true });
+      }
+    });
+
+    it('fails closed when a database schema is newer than the runtime', async () => {
+      const root = await mkdtemp(join(tmpdir(), 'aiwg-sqlite-schema-'));
+      const dbPath = join(root, 'graph.db');
+      const first = new SqliteGraphBackend(dbPath);
+      first.close();
+      const Database = require('better-sqlite3') as new (path: string) => {
+        pragma(sql: string): unknown;
+        close(): void;
+      };
+      const future = new Database(dbPath);
+      future.pragma('user_version = 999');
+      future.close();
+      try {
+        expect(() => new SqliteGraphBackend(dbPath)).toThrow(/newer than supported schema/);
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    });
   });
 });
