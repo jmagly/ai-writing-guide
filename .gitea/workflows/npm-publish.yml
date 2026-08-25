@@ -61,7 +61,11 @@ jobs:
     if: ${{ contains(github.ref, '-') && github.event_name == 'push' && secrets.VAULT_CI_ROLE_ID != '' && secrets.VAULT_CI_SECRET_ID != '' }}
     runs-on: ubuntu-latest
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
-    timeout-minutes: 15
+    # Cold self-hosted runners need roughly 14 minutes for dependency install,
+    # the full test suite, signature audits, and all three package publishes.
+    # Keep enough headroom for registry latency so the runner does not terminate
+    # successful work at the old 15-minute boundary.
+    timeout-minutes: 30
     # Force bash so `set -o pipefail` works (gitea-runner-host default is sh/dash).
     defaults:
       run:
@@ -302,7 +306,9 @@ jobs:
     if: ${{ !contains(github.ref, '-') && secrets.VAULT_CI_ROLE_ID != '' && secrets.VAULT_CI_SECRET_ID != '' }}
     runs-on: ubuntu-latest
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2 (see ci/digests.txt)
-    timeout-minutes: 15
+    # Stable publication performs the same release gates as the prerelease
+    # lane; allow cold runners and registry verification adequate headroom.
+    timeout-minutes: 30
     defaults:
       run:
         shell: bash
