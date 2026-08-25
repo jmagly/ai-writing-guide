@@ -21,11 +21,20 @@ export function resolveManagerCommand(file, args, options = {}) {
   return {
     file: commandInterpreter,
     args: ['/d', '/s', '/c', command],
+    // The payload above already contains cmd.exe-native quoting. Instruct
+    // Node not to apply MSVCRT escaping to those embedded quotes (#173).
+    windowsVerbatimArguments: true,
   };
 }
 
 export function executeManagerCommand(file, args, options = {}) {
   const invocation = resolveManagerCommand(file, args, options);
   const execute = options.execute ?? execFileSync;
-  return execute(invocation.file, invocation.args, options.execOptions ?? { stdio: 'inherit' });
+  const execOptions = options.execOptions
+    ? { ...options.execOptions }
+    : { stdio: 'inherit' };
+  if (invocation.windowsVerbatimArguments === true) {
+    execOptions.windowsVerbatimArguments = true;
+  }
+  return execute(invocation.file, invocation.args, execOptions);
 }

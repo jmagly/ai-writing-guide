@@ -368,6 +368,11 @@ aiwg --refresh
 - Re-deploys all installed frameworks (or specific ones)
 - Runs health check via `aiwg doctor`
 
+If the package update fails, refresh still attempts re-deployment but repeats the
+failure in its final summary. Quiet mode reports
+`"status":"refreshed-with-update-failure"` so automation cannot mistake the
+exit-0 resilience path for a successful package update.
+
 **Flags:**
 
 | Flag                  | Description                                      |

@@ -51,7 +51,11 @@ describe('install-aware update service', () => {
       managerExecutable,
       execute,
     });
-    expect(execute).toHaveBeenCalledWith(managerExecutable, ['install', '--global', expectedPackage]);
+    expect(execute).toHaveBeenCalledWith(
+      managerExecutable,
+      ['install', '--global', expectedPackage],
+      { stdio: 'inherit' },
+    );
     expect(result).toMatchObject({ mode: 'npm', channel, status: 'updated' });
   });
 
@@ -69,7 +73,11 @@ describe('install-aware update service', () => {
       env: { PATH: '/opt/homebrew/bin' },
       execute,
     });
-    expect(execute).toHaveBeenCalledWith(canonicalManager, ['install', '--global', 'aiwg@latest']);
+    expect(execute).toHaveBeenCalledWith(
+      canonicalManager,
+      ['install', '--global', 'aiwg@latest'],
+      { stdio: 'inherit' },
+    );
   });
 
   it('routes a Windows npm.cmd path with spaces through the command interpreter', async () => {
@@ -91,9 +99,9 @@ describe('install-aware update service', () => {
 
     expect(execute).toHaveBeenCalledWith(
       'C:\\Windows\\System32\\cmd.exe',
-      ['/d', '/s', '/c', expect.stringContaining(`"${managerExecutable}"`)],
+      ['/d', '/s', '/c', `""${managerExecutable}" "install" "--global" "aiwg@latest""`],
+      { stdio: 'inherit', windowsVerbatimArguments: true },
     );
-    expect(execute.mock.calls[0][1][3]).toContain('"aiwg@latest"');
   });
 
   it('blocks an npm update when a different global package root wins PATH', async () => {

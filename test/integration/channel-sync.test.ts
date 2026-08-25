@@ -148,6 +148,18 @@ describe('sync --channel next', () => {
   });
 });
 
+describe('sync --channel stable', () => {
+  beforeEach(() => { vi.clearAllMocks(); mockRun.mockResolvedValue({ exitCode: 0 }); });
+
+  it('passes --channel stable to update.mjs', async () => {
+    const result = await syncHandler.execute(makeCtx(['--channel', 'stable']));
+    expect(result.exitCode).toBe(0);
+    const updateCall = mockRun.mock.calls.find(([script]: [string]) => script === 'tools/cli/update.mjs');
+    expect(updateCall).toBeDefined();
+    expect(updateCall![1]).toEqual(['--channel', 'stable']);
+  });
+});
+
 describe('sync --channel latest', () => {
   beforeEach(() => { vi.clearAllMocks(); mockRun.mockResolvedValue({ exitCode: 0 }); });
 

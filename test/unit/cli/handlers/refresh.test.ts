@@ -3,7 +3,7 @@
  *
  * @issue #685, #694
  * @parent #684
- * @issue #174
+ * @issue #173, #174
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -62,6 +62,7 @@ vi.mock('../../../../src/cli/ui.js', () => ({
 import {
   collectModelDeployArgs, refreshHandler, pruneStaleManagedAgentFiles,
 } from '../../../../src/cli/handlers/refresh.js';
+import * as ui from '../../../../src/cli/ui.js';
 // Backward-compat alias for existing test references
 const syncHandler = refreshHandler;
 
@@ -323,7 +324,7 @@ describe('syncHandler.execute — deployment resilience', () => {
     expect(result.message).toContain('sdlc');
   });
 
-  it('warns and continues deployment when update.mjs returns non-zero', async () => {
+  it('reports an update failure again in the final summary while continuing deployment', async () => {
     mockRun.mockImplementation(async (script: string) => {
       if (script === 'tools/cli/update.mjs') return { exitCode: 1 };
       return { exitCode: 0 };
@@ -333,6 +334,33 @@ describe('syncHandler.execute — deployment resilience', () => {
     expect(result.exitCode).toBe(0);
     expect(mockUseExecute).toHaveBeenCalled();
     expect(mockRun.mock.calls.map(([script]: [string]) => script)).toContain('tools/cli/doctor.mjs');
+    expect(ui.warn).toHaveBeenCalledWith(expect.stringContaining('Installation update failed'));
+    expect(ui.warn).toHaveBeenCalledWith(
+      expect.stringContaining('Refresh completed with installation update failure (exit 1)'),
+    );
+    expect(ui.success).not.toHaveBeenCalledWith('Refresh complete');
+  });
+
+  it('reports an update failure in the final quiet JSON status', async () => {
+    mockRun.mockImplementation(async (script: string) => {
+      if (script === 'tools/cli/update.mjs') return { exitCode: 7 };
+      return { exitCode: 0 };
+    });
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    try {
+      const result = await syncHandler.execute(makeCtx(['--quiet']));
+      expect(result.exitCode).toBe(0);
+      const output = consoleSpy.mock.calls
+        .map(([value]) => value)
+        .find((value) => typeof value === 'string' && value.startsWith('{'));
+      expect(JSON.parse(output as string)).toMatchObject({
+        status: 'refreshed-with-update-failure',
+        updateFailure: { exitCode: 7 },
+      });
+    } finally {
+      consoleSpy.mockRestore();
+    }
   });
 
   it('warns but returns exit 0 when doctor reports issues', async () => {

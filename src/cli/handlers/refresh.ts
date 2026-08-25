@@ -10,7 +10,7 @@
  *
  * @implements @agentic/code/frameworks/sdlc-complete/rules/self-maintenance.md
  * @source @src/cli/router.ts
- * @issue #174, #482, #557, #694
+ * @issue #173, #174, #482, #557, #694
  */
 
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
@@ -487,6 +487,11 @@ export const refreshHandler: CommandHandler = {
       ui.rule();
       if (dryRun) {
         ui.info('Dry run complete — no changes made');
+      } else if (updateFailure) {
+        ui.warn(
+          `Refresh completed with installation update failure (exit ${updateFailure.exitCode}); ` +
+          're-deployment continued, but AIWG may still be on the previous version.',
+        );
       } else {
         ui.success('Refresh complete');
       }
@@ -496,7 +501,11 @@ export const refreshHandler: CommandHandler = {
     // Quiet mode: JSON output
     if (quiet) {
       const output = JSON.stringify({
-        status: dryRun ? 'dry-run' : 'refreshed',
+        status: dryRun
+          ? 'dry-run'
+          : updateFailure
+            ? 'refreshed-with-update-failure'
+            : 'refreshed',
         provider: detectedProvider,
         frameworks,
         skipUpdate,

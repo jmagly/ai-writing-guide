@@ -6,7 +6,6 @@
  * the calling handlers.
  */
 
-import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { getPackageRoot, loadConfig } from '../channel/manager.mjs';
@@ -16,7 +15,7 @@ import {
   loadInstallationIdentity,
   saveInstallationIdentity,
 } from '../installation/manager.mjs';
-import { resolveManagerCommand } from '../installation/manager-command.mjs';
+import { executeManagerCommand } from '../installation/manager-command.mjs';
 
 const VALID_MODES = new Set(['npm', 'web', 'source']);
 
@@ -149,9 +148,7 @@ export async function updateInstallation(options = {}) {
     throw new Error('Canonical npm installation has no package-manager executable. Run `aiwg installation adopt --manager <absolute-path-to-npm>`.');
   }
   if (!dryRun) {
-    const invocation = resolveManagerCommand(managerExecutable, command, options);
-    const execute = options.execute ?? ((file, args) => execFileSync(file, args, { stdio: 'inherit' }));
-    execute(invocation.file, invocation.args);
+    executeManagerCommand(managerExecutable, command, options);
     if (detected.identity && detected.identityPersistent && options.persistIdentity !== false) {
       saveInstallationIdentity({ ...detected.identity, channel }, options);
     }
