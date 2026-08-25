@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "aiwg.storage-backend-golden/v1",
+  "datasetId": "core-parity-v1",
+  "declared": {
+    "nodes": 8,
+    "edges": 9,
+    "edgeTypes": { "depends-on": 5, "references": 3, "blocks": 1 },
+    "updates": 2,
+    "deletes": 1
+  },
+  "nodes": [
+    { "id": "root", "attrs": { "type": "epic", "phase": "construction", "title": "Scale ramp", "summary": null } },
+    { "id": "alpha", "attrs": { "type": "feature", "phase": "construction", "title": "Alpha" } },
+    { "id": "beta", "attrs": { "type": "feature", "phase": "elaboration", "title": "Béta" } },
+    { "id": "東京", "attrs": { "type": "feature", "phase": "construction", "title": "東京" } },
+    { "id": "emoji-🧪", "attrs": { "type": "test", "phase": "construction", "title": "🧪" } },
+    { "id": "null-value", "attrs": { "type": "test", "phase": null, "title": null } },
+    { "id": "updated", "attrs": { "type": "draft", "phase": "inception", "title": "Before" } },
+    { "id": "delete-me", "attrs": { "type": "temporary", "phase": "inception", "title": "Delete" } }
+  ],
+  "edges": [
+    { "source": "root", "target": "alpha", "type": "depends-on" },
+    { "source": "root", "target": "beta", "type": "depends-on" },
+    { "source": "alpha", "target": "東京", "type": "depends-on" },
+    { "source": "beta", "target": "東京", "type": "depends-on" },
+    { "source": "東京", "target": "emoji-🧪", "type": "depends-on" },
+    { "source": "alpha", "target": "null-value", "type": "references" },
+    { "source": "beta", "target": "null-value", "type": "references" },
+    { "source": "emoji-🧪", "target": "root", "type": "references" },
+    { "source": "updated", "target": "delete-me", "type": "blocks" }
+  ],
+  "updates": [
+    { "id": "updated", "attrs": { "type": "feature", "phase": "construction", "title": "After" } },
+    { "id": "東京", "attrs": { "summary": "Unicode retained" } }
+  ],
+  "delete": { "id": "delete-me" },
+  "expected": {
+    "rootOutDependsOn": ["alpha", "beta"],
+    "tokyoInDependsOn": ["alpha", "beta"],
+    "intersection": ["beta", "東京"],
+    "difference": ["alpha"],
+    "union": ["alpha", "beta", "emoji-🧪", "東京"]
+  }
+}
