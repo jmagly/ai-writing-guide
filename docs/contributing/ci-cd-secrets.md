@@ -1,7 +1,7 @@
 # CI/CD Secrets Configuration
 
-**Version:** 3.0
-**Last Updated:** 2026-07-20
+**Version:** 3.1
+**Last Updated:** 2026-08-24
 **Target Audience:** Repository maintainers and administrators
 
 AIWG's Gitea CI/CD workflows use vault for repository-managed secrets. Gitea
@@ -117,14 +117,23 @@ Validate and apply the Gitea handoff without printing values:
 
 ```bash
 npm run configure:gitea-vault -- \
-  --bootstrap-env ~/.config/vault/handoff/aiwg-ci.env \
+  --bootstrap-env /path/from/private-itops-runbook/aiwg-ci.env \
   --vars-env /path/to/private-routing-and-deploy.env
 
 npm run configure:gitea-vault -- \
-  --bootstrap-env ~/.config/vault/handoff/aiwg-ci.env \
+  --bootstrap-env /path/from/private-itops-runbook/aiwg-ci.env \
   --vars-env /path/to/private-routing-and-deploy.env \
   --apply
 ```
+
+## Local Release-Tag Signing
+
+The private itops release-signing runbook is authoritative for the local
+mode-0600 `ci-aiwg` handoff, provider endpoint, trust bundle, and concrete route
+metadata. This public repository intentionally documents only the required
+environment-variable interface. Use the value-safe sequence in
+[`versioning.md`](versioning.md); never call `git tag` directly or import the
+release key into the persistent operator keyring.
 
 ## AppRole Recovery Custody
 
