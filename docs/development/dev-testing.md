@@ -52,6 +52,21 @@ ls .claude/rules/
 ls .claude/commands/
 ```
 
+## Storage backend conformance
+
+Changes to scalable storage contracts, graph backends, or migration behavior
+should run the common zero-service gate:
+
+```bash
+npm run test:conformance:storage
+```
+
+It executes the versioned golden dataset across the available JSON,
+Graphology, and SQLite implementations, then runs backend-contract and
+migration-protocol tests. Remote database/server certification is separate and
+must run in a declared integration job against the corresponding adapter; a
+local engine smoke test alone is not backend certification.
+
 ## Channel Comparison
 
 | Flag | Channel | Source | Use Case |

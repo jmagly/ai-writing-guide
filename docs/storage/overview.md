@@ -157,6 +157,7 @@ See `docs/storage/security.md` for the full security model — credential handli
 
 - `docs/storage/security.md` — credential handling, path safety, doctor validation
 - `docs/storage/migration.md` — `aiwg storage migrate` walkthrough
+- `docs/storage/backend-contract.md` — scalable backend capabilities and maturity matrix
 - `docs/storage/migration-protocol.md` — scalable offline/online migration contract and safety boundaries
 - `docs/storage/backends/<type>.md` — per-backend setup, env vars, caveats
 - `docs/fortemi-core-prebuilt-indices.md` — Fortemi Core prebuilt framework index packaged with npm releases

@@ -40,7 +40,8 @@ backend fails with an installation diagnostic and does not silently use JSON.
 
 **Limitations:**
 - Graph rebuilt in memory on every `aiwg index` invocation
-- Set operations on large neighbor lists are O(n×m)
+- Set operations use JavaScript `Set` membership and are O(n+m) for two input
+  lists
 - No cross-graph SQL joins (compose with shell `comm` instead)
 
 ---
@@ -134,8 +135,9 @@ const path = bidirectional(graph, 'REF-001', 'REF-234');
 
 ## Optional: SQLite Backend
 
-Use SQLite when a graph must persist on the same host. A measured support
-envelope has not yet been published.
+Use SQLite when a graph must persist on the same host. A reproducible
+reference-host observation is published below, but it is not a universal
+support envelope.
 
 ### Install
 
@@ -216,6 +218,17 @@ delay reflects synchronous native calls and is part of the selection decision:
 keep latency-sensitive event loops isolated from bulk SQLite graph builds.
 Operators must run the benchmark on their own hardware and workload before
 declaring a support envelope; #2191 owns the comparative release gate.
+
+Run the common local correctness gate with:
+
+```bash
+npm run test:conformance:storage
+```
+
+The versioned `aiwg.storage-backend-golden/v1` corpus checks declared topology,
+Unicode and null attributes, typed directional traversal, set parity,
+incremental updates, deletion/reload, and exact counts across JSON, Graphology,
+and SQLite. It does not certify remote PostgreSQL, MySQL, or Fortemi services.
 
 ### Combining backends
 

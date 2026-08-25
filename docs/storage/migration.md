@@ -1,5 +1,15 @@
 # Storage Backends — Migration Guide
 
+> **Current CLI versus scalable protocol:** This page documents the currently
+> shipped path-oriented `aiwg storage migrate` command. Its JSONL receipt and
+> pathname-only resume behavior do not satisfy the scalable migration contract.
+> The versioned `aiwg.storage-migration/v1` coordinator is documented in
+> [Scalable Storage Migration Protocol](migration-protocol.md); it provides
+> revision/digest receipts, tombstones, atomic batches, online replay, parity
+> verification, approval-bound cutover, and rollback, but is not yet wired into
+> this CLI command. Do not use the legacy command as scale-out certification
+> evidence.
+
 `aiwg storage migrate` copies entries from one backend to another. Use it when you decide to move a subsystem's persistence — for example, AIWG memory was on the local filesystem, you've now installed Obsidian, and you want the existing pages in your vault.
 
 ## Synopsis
@@ -127,6 +137,11 @@ Long migrations can be interrupted (Ctrl-C, a network hiccup, a backend rate lim
 - Retries the rest
 
 This means you can safely run a migration in chunks, or re-run after fixing a backend issue. The command prints `skipped=N` in the summary so you can see what the resume picked up.
+
+Because completion is keyed only by pathname, changing an already-receipted
+source entry or deleting it does not update the destination on rerun. Use this
+legacy path only for quiesced, backup-first copies and perform an independent
+source/destination comparison before changing configuration.
 
 ## Dry-run mode
 
