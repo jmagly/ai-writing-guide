@@ -49,6 +49,24 @@ export { ObsidianAdapter } from './backends/obsidian.js';
 export { LogseqAdapter } from './backends/logseq.js';
 export { FortemiAdapter } from './backends/fortemi.js';
 export type { McpClientLike, McpClientFactory, FortemiAdapterOptions } from './backends/fortemi.js';
+export {
+  STORAGE_BACKEND_CONTRACT,
+  STORAGE_BACKEND_MATRIX,
+  StorageCapabilityError,
+  negotiateStorageCapabilities,
+  type StorageBackendContractVersion,
+  type StorageBackendKind,
+  type StorageCapability,
+  type StorageBackendDescriptor,
+  type CapabilityRequest,
+  type CapabilityReceipt,
+  type LogicalRecordIdentity,
+  type VersionedRecord,
+  type AtomicMutation,
+  type BatchReceipt,
+  type SnapshotHandle,
+  type ChangePage,
+} from './backend-contract.js';
 
 interface RegistryState {
   projectRoot: string;
