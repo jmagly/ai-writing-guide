@@ -1,7 +1,7 @@
 # Storage Backends — Overview
 
 The versioned scalable-backend semantics and conservative capability matrix are
-defined in [`Scalable Storage Backend Contract v1`](../architecture/scalable-storage-backend-contract.md).
+defined in [`Scalable Storage Backend Contract v1`](backend-contract.md).
 
 AIWG persists artifacts (memory pages, knowledge-base entries, activity log, reflections, provenance records, research corpus, sandbox identities) through a **pluggable storage adapter system**. By default everything lives on the local filesystem under `.aiwg/`. With one config file you can route any subsystem to:
 

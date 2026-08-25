@@ -309,6 +309,7 @@
     "storage",
     "storage/README",
     "storage/overview",
+    "storage/backend-contract",
     "storage/migration",
     "storage/security",
     "providers",
@@ -2418,6 +2419,13 @@
       "title": "Storage Migration",
       "summary": "Migrate between storage backends",
       "file": "storage/migration.md",
+      "parent": "storage"
+    },
+    {
+      "id": "storage/backend-contract",
+      "title": "Scalable Backend Contract",
+      "summary": "Versioned capabilities, consistency, and scaling semantics",
+      "file": "storage/backend-contract.md",
       "parent": "storage"
     },
     {
