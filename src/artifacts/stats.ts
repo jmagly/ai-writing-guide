@@ -9,7 +9,7 @@
  */
 
 import type { ArtifactIndex, GraphType, IndexStats } from './types.js';
-import { GRAPH_CONFIGS, loadGlobalGraphConfigs, loadUserGraphConfigs } from './types.js';
+import { GRAPH_CONFIGS, loadGlobalGraphConfigs, loadUserGraphConfigs, resolveGraphBackendType } from './types.js';
 import { loadIndexStats, loadGraphIndexFile } from './index-reader.js';
 import { collectGraphIndexFiles, indexPathFor } from './index-files.js';
 
@@ -98,6 +98,7 @@ export async function showStats(
       const coverage = await calculateCoverage(cwd, s, type);
       combined[type] = {
         ...s,
+        backend: resolveGraphBackendType(type),
         coverage,
       };
     }
@@ -125,6 +126,7 @@ async function renderStats(
     const coverage = await calculateCoverage(cwd, stats, graphType);
     console.log(JSON.stringify({
       ...stats,
+      backend: resolveGraphBackendType(graphType),
       coverage,
     }, null, 2));
     return;
@@ -136,6 +138,7 @@ async function renderStats(
   console.log(`Index version: ${stats.version}`);
   console.log(`Last built:    ${stats.builtAt}`);
   console.log(`Build time:    ${stats.buildTimeMs}ms`);
+  console.log(`Graph backend: ${resolveGraphBackendType(graphType)}`);
   console.log('');
 
   // By phase

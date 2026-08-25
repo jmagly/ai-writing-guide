@@ -9,7 +9,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "markdown",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "agentic/code/addons/agent-loop/skills/mission-control/SKILL.md",
@@ -18,7 +19,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "markdown",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "agentic/code/addons/agent-loop/skills/mission-control/manifest.json",
@@ -27,7 +29,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "json",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "agentic/code/addons/aiwg-utils/skills/aiwg-language-map/SKILL.md",
@@ -36,7 +39,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "markdown",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "agentic/code/addons/aiwg-utils/skills/daemon-init/SKILL.md",
@@ -45,7 +49,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "markdown",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "agentic/code/addons/aiwg-utils/skills/team/SKILL.md",
@@ -54,7 +59,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "markdown",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "agentic/code/addons/aiwg-utils/workflow/README.md",
@@ -63,7 +69,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "markdown",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "agentic/code/agents/personas/mc-conductor.md",
@@ -72,7 +79,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "markdown",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "agentic/code/frameworks/sdlc-complete/rules/lfd-control-tiers.md",
@@ -81,7 +89,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "markdown",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "agentic/code/frameworks/sdlc-complete/rules/self-maintenance.md",
@@ -90,7 +99,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "markdown",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "agentic/code/frameworks/sdlc-complete/templates/aiwg-sections/05-self-maintenance.md",
@@ -99,7 +109,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "markdown",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "agentic/code/frameworks/sdlc-complete/templates/aiwg-sections/manifest.json",
@@ -108,7 +119,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "json",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "agentic/code/frameworks/sdlc-complete/templates/project/AIWG-sdlc-fragment.md",
@@ -117,7 +129,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "markdown",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "agentic/code/frameworks/sdlc-complete/templates/project/AIWG.md",
@@ -126,7 +139,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "markdown",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "agentic/code/plugins/agent-loop/agents/mc-conductor.md",
@@ -136,6 +150,7 @@
       "statusVocabulary": [],
       "serialization": "markdown",
       "migrationAction": "retain",
+      "migrationReason": "Generated provider copy remains byte-derived from its canonical source and is not edited independently.",
       "canonicalSource": "agentic/code/addons/agent-loop/agents/mc-conductor.md"
     },
     {
@@ -146,6 +161,7 @@
       "statusVocabulary": [],
       "serialization": "markdown",
       "migrationAction": "retain",
+      "migrationReason": "Generated provider copy remains byte-derived from its canonical source and is not edited independently.",
       "canonicalSource": "agentic/code/addons/agent-loop/skills/mission-control/SKILL.md"
     },
     {
@@ -156,6 +172,7 @@
       "statusVocabulary": [],
       "serialization": "json",
       "migrationAction": "retain",
+      "migrationReason": "Generated provider copy remains byte-derived from its canonical source and is not edited independently.",
       "canonicalSource": "agentic/code/addons/agent-loop/skills/mission-control/manifest.json"
     },
     {
@@ -166,6 +183,7 @@
       "statusVocabulary": [],
       "serialization": "markdown",
       "migrationAction": "retain",
+      "migrationReason": "Generated provider copy remains byte-derived from its canonical source and is not edited independently.",
       "canonicalSource": "agentic/code/addons/aiwg-utils/skills/aiwg-language-map/SKILL.md"
     },
     {
@@ -176,6 +194,7 @@
       "statusVocabulary": [],
       "serialization": "markdown",
       "migrationAction": "retain",
+      "migrationReason": "Generated provider copy remains byte-derived from its canonical source and is not edited independently.",
       "canonicalSource": "agentic/code/addons/aiwg-utils/skills/daemon-init/SKILL.md"
     },
     {
@@ -186,6 +205,7 @@
       "statusVocabulary": [],
       "serialization": "markdown",
       "migrationAction": "retain",
+      "migrationReason": "Generated provider copy remains byte-derived from its canonical source and is not edited independently.",
       "canonicalSource": "agentic/code/addons/aiwg-utils/skills/team/SKILL.md"
     },
     {
@@ -195,7 +215,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "apps/cockpit/README.md",
@@ -204,7 +225,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "markdown",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "apps/cockpit/bridge/contracts/activity-event-v1.schema.json",
@@ -215,7 +237,8 @@
         "unknown"
       ],
       "serialization": "json",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "apps/cockpit/bridge/src/server.mjs",
@@ -238,7 +261,8 @@
         "working"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "apps/cockpit/mock-executor/src/server.mjs",
@@ -249,7 +273,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "apps/cockpit/web/src/App.test.tsx",
@@ -265,7 +290,8 @@
         "working"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "apps/cockpit/web/src/components/Memory.tsx",
@@ -274,7 +300,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "apps/cockpit/web/src/components/Missions.tsx",
@@ -290,7 +317,8 @@
         "unknown"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "apps/cockpit/web/src/types.ts",
@@ -301,7 +329,8 @@
         "unknown"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "apps/web/src/app/App.tsx",
@@ -310,7 +339,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "apps/web/src/features/memory/MemoryPanel.tsx",
@@ -321,7 +351,8 @@
         "pending"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "apps/web/src/features/missions/MissionControl.tsx",
@@ -335,7 +366,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "apps/web/src/features/onboarding/Onboarding.tsx",
@@ -344,7 +376,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "apps/web/src/features/telemetry/TelemetryDashboard.tsx",
@@ -355,7 +388,298 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/_manifest.json",
+      "owner": "docs/_manifest.json",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "json",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/agents/providers/factory.md",
+      "owner": "docs/agents",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/architecture-overview.md",
+      "owner": "docs/architecture-overview.md",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/architecture/adr-mission-protocol-v1.md",
+      "owner": "docs/architecture",
+      "role": "documentation-example",
+      "currentVersion": "mission.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/blog/2026-6-aiwg-cockpit-desktop-control-plane.md",
+      "owner": "docs/blog",
+      "role": "consumer-projection",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/cli/reference.md",
+      "owner": "docs/cli",
+      "role": "documentation-example",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/cockpit/bridge-api.md",
+      "owner": "docs/cockpit",
+      "role": "consumer-projection",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/cockpit/surfaces.md",
+      "owner": "docs/cockpit",
+      "role": "consumer-projection",
+      "currentVersion": "graph.flow.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/contracts/conformance.md",
+      "owner": "docs/contracts",
+      "role": "documentation-example",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/contracts/executor.v1.md",
+      "owner": "docs/contracts",
+      "role": "documentation-example",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/contracts/shared-host-admission.v1.md",
+      "owner": "docs/contracts",
+      "role": "documentation-example",
+      "currentVersion": "fleet-workload/v1",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/daemon-guide.md",
+      "owner": "docs/daemon-guide.md",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/extensions/creating-extensions.md",
+      "owner": "docs/extensions",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/extensions/extension-types.md",
+      "owner": "docs/extensions",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/extensions/overview.md",
+      "owner": "docs/extensions",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/fleet/status-export-schema.md",
+      "owner": "docs/fleet",
+      "role": "schema",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/getting-started/start-here.md",
+      "owner": "docs/getting-started",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/integrations/mcp-capability-audit.md",
+      "owner": "docs/integrations",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/mcp/README.md",
+      "owner": "docs/mcp",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/mission-protocol-migration.md",
+      "owner": "docs/mission-protocol-migration.md",
+      "role": "documentation-example",
+      "currentVersion": "mission.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/providers/behavior-artifacts.md",
+      "owner": "docs/providers",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/releases/v2026.3.3-announcement.md",
+      "owner": "docs/releases",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/releases/v2026.3.4-announcement.md",
+      "owner": "docs/releases",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/releases/v2026.4.0-announcement.md",
+      "owner": "docs/releases",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/releases/v2026.5.4-announcement.md",
+      "owner": "docs/releases",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/reports/graph-development-pattern-gap-audit-2026-08-21.md",
+      "owner": "docs/reports",
+      "role": "documentation-example",
+      "currentVersion": "graph.flow.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/serve-guide.md",
+      "owner": "docs/serve-guide.md",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/simple-language-translations.md",
+      "owner": "docs/simple-language-translations.md",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "docs/uhp-client.md",
+      "owner": "docs/uhp-client.md",
+      "role": "documentation-example",
+      "currentVersion": "mission.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "schemas/activity/activity-event-v1.schema.json",
@@ -366,7 +690,8 @@
         "unknown"
       ],
       "serialization": "json",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "schemas/executor-v1.json",
@@ -380,7 +705,8 @@
         "running"
       ],
       "serialization": "json",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "schemas/fleet-workload-v1.schema.json",
@@ -396,7 +722,8 @@
         "unknown"
       ],
       "serialization": "json",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "schemas/mission-protocol/consumer-matrix-v1.json",
@@ -405,7 +732,8 @@
       "currentVersion": "executor.aiwg.io/v1",
       "statusVocabulary": [],
       "serialization": "json",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "schemas/mission-protocol/schema-baseline-v1.json",
@@ -422,7 +750,8 @@
         "unknown"
       ],
       "serialization": "json",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "schemas/mission-v1.schema.json",
@@ -439,7 +768,8 @@
         "unknown"
       ],
       "serialization": "json",
-      "migrationAction": "canonicalize"
+      "migrationAction": "canonicalize",
+      "migrationReason": "Canonical Mission Protocol v1 source or contract."
     },
     {
       "path": "src/a2a/types.ts",
@@ -454,7 +784,8 @@
         "working"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/a2a/webhook.ts",
@@ -465,7 +796,8 @@
         "pending"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/audit/operator-decision.ts",
@@ -474,7 +806,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/cli/handlers/index.ts",
@@ -483,7 +816,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/cli/handlers/mc.ts",
@@ -499,7 +833,18 @@
         "unknown"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "src/cli/handlers/mission.ts",
+      "owner": "src/cli",
+      "role": "producer-consumer",
+      "currentVersion": "mission.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/cli/handlers/runtime-info.ts",
@@ -508,7 +853,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/cli/handlers/serve.ts",
@@ -521,7 +867,8 @@
         "unknown"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/cli/handlers/team.ts",
@@ -532,7 +879,8 @@
         "unknown"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/cli/handlers/types.ts",
@@ -541,7 +889,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/cli/help-generator.ts",
@@ -550,7 +899,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/config/aiwg-config.ts",
@@ -561,7 +911,8 @@
         "unknown"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/extensions/commands/definitions.ts",
@@ -570,7 +921,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/flow/graph-metadata.ts",
@@ -585,7 +937,8 @@
         "unknown"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/mcp/tools/agentic-sandbox.mjs",
@@ -596,7 +949,8 @@
         "unknown"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/mcp/tools/orchestration.mjs",
@@ -605,7 +959,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/mcp/tools/subsystems.mjs",
@@ -614,7 +969,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/mission-protocol/codecs.ts",
@@ -637,7 +993,8 @@
         "working"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "canonicalize"
+      "migrationAction": "canonicalize",
+      "migrationReason": "Canonical Mission Protocol v1 source or contract."
     },
     {
       "path": "src/mission-protocol/types.ts",
@@ -654,7 +1011,8 @@
         "unknown"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "canonicalize"
+      "migrationAction": "canonicalize",
+      "migrationReason": "Canonical Mission Protocol v1 source or contract."
     },
     {
       "path": "src/serve/a2a-terminal-observer.ts",
@@ -674,7 +1032,8 @@
         "working"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/serve/agentic-sandbox-fleet-client.ts",
@@ -694,7 +1053,8 @@
         "working"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/serve/dispatch-router.ts",
@@ -703,7 +1063,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/serve/executor-registry.ts",
@@ -717,7 +1078,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/serve/fleet-mission-conductor.ts",
@@ -734,7 +1096,8 @@
         "unknown"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/serve/mission-conductor.ts",
@@ -743,7 +1106,8 @@
       "currentVersion": "graph.flow.aiwg.io/v1",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/serve/telemetry.ts",
@@ -752,7 +1116,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/uhp/mission.ts",
@@ -768,7 +1133,8 @@
         "unknown"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "src/uhp/types.ts",
@@ -784,7 +1150,8 @@
         "unknown"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "adapt"
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
       "path": "test/conformance/activity-v1/fixtures/valid-event.json",
@@ -793,7 +1160,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/executor-v1/auth/auth.test.mjs",
@@ -802,7 +1170,8 @@
       "currentVersion": "executor.aiwg.io/v1",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/executor-v1/client.mjs",
@@ -811,7 +1180,8 @@
       "currentVersion": "executor.aiwg.io/v1",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/executor-v1/dispatch/dispatch.test.mjs",
@@ -820,7 +1190,8 @@
       "currentVersion": "executor.aiwg.io/v1",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/executor-v1/events/events.test.mjs",
@@ -829,7 +1200,8 @@
       "currentVersion": "executor.aiwg.io/v1",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/executor-v1/fixtures/dispatch-aborted.json",
@@ -841,7 +1213,8 @@
         "running"
       ],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/executor-v1/fixtures/dispatch-failed.json",
@@ -853,7 +1226,8 @@
         "running"
       ],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/executor-v1/fixtures/dispatch-happy.json",
@@ -865,7 +1239,8 @@
         "running"
       ],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/executor-v1/fixtures/hitl-roundtrip.json",
@@ -877,7 +1252,8 @@
         "running"
       ],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/executor-v1/fixtures/register-happy.json",
@@ -886,7 +1262,8 @@
       "currentVersion": "executor.aiwg.io/v1",
       "statusVocabulary": [],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/executor-v1/fixtures/resumable-suspend-resume.json",
@@ -898,7 +1275,8 @@
         "running"
       ],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/executor-v1/hitl/hitl.test.mjs",
@@ -910,7 +1288,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/executor-v1/lifecycle/lifecycle.test.mjs",
@@ -923,7 +1302,8 @@
         "failed"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/executor-v1/register/register.test.mjs",
@@ -932,7 +1312,8 @@
       "currentVersion": "executor.aiwg.io/v1",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/executor-v1/resumable/resumable.test.mjs",
@@ -944,7 +1325,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/executor-v1/runner.mjs",
@@ -953,7 +1335,8 @@
       "currentVersion": "executor.aiwg.io/v1",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/fleet-workload-v1/fixtures/invalid-credential-material.json",
@@ -965,7 +1348,8 @@
         "running"
       ],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/fleet-workload-v1/fixtures/mixed-workload-inventory.json",
@@ -976,7 +1360,8 @@
         "running"
       ],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/conformance/mission-v1/mission-protocol.test.ts",
@@ -996,7 +1381,8 @@
         "unknown"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/fixtures/sandbox-api/executor-v1/dispatch/dispatch-request.json",
@@ -1005,7 +1391,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/fixtures/sandbox-api/executor-v1/dispatch/dispatch-response.json",
@@ -1014,7 +1401,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/fixtures/sandbox-api/executor-v1/events/mission-aborted.json",
@@ -1025,7 +1413,8 @@
         "aborted"
       ],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/fixtures/sandbox-api/executor-v1/events/mission-assigned.json",
@@ -1034,7 +1423,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/fixtures/sandbox-api/executor-v1/events/mission-completed.json",
@@ -1045,7 +1435,8 @@
         "done"
       ],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/fixtures/sandbox-api/executor-v1/events/mission-failed.json",
@@ -1056,7 +1447,8 @@
         "failed"
       ],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/fixtures/sandbox-api/executor-v1/events/mission-hitl-required.json",
@@ -1065,7 +1457,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/fixtures/sandbox-api/executor-v1/events/mission-hitl-responded.json",
@@ -1074,7 +1467,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/fixtures/sandbox-api/executor-v1/events/mission-progress.json",
@@ -1083,7 +1477,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/fixtures/sandbox-api/executor-v1/events/mission-reconnected.json",
@@ -1092,7 +1487,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/fixtures/sandbox-api/executor-v1/events/mission-resumed.json",
@@ -1103,7 +1499,8 @@
         "running"
       ],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/fixtures/sandbox-api/executor-v1/events/mission-started.json",
@@ -1114,7 +1511,8 @@
         "running"
       ],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/fixtures/sandbox-api/executor-v1/events/mission-suspended.json",
@@ -1123,7 +1521,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/fixtures/sandbox-api/executor-v1/resync/executor-resync.json",
@@ -1132,7 +1531,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "json",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/integration/cockpit-bridge.test.js",
@@ -1150,7 +1550,8 @@
         "working"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/integration/mc-bridge-flow.test.ts",
@@ -1163,7 +1564,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/integration/serve-executor-flow.test.ts",
@@ -1175,7 +1577,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/integration/serve-sandbox-fake.test.ts",
@@ -1186,7 +1589,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/integration/uhp-fake-server.test.ts",
@@ -1199,7 +1603,8 @@
         "unknown"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/uat/fleet-sandbox-live.uat.ts",
@@ -1211,7 +1616,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/a2a/dispatch-router.test.ts",
@@ -1220,7 +1626,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/a2a/webhook.test.ts",
@@ -1231,7 +1638,8 @@
         "working"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/audit/operator-decision.test.ts",
@@ -1240,7 +1648,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/cli/handlers/mc.test.ts",
@@ -1252,7 +1661,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/cli/handlers/steward.test.ts",
@@ -1261,7 +1671,8 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/cli/handlers/uhp.test.ts",
@@ -1272,7 +1683,8 @@
         "completed"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/mc-bridge/dispatch-client.test.ts",
@@ -1284,7 +1696,8 @@
         "failed"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/mc-bridge/executor-ws-client.test.ts",
@@ -1298,7 +1711,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/mc-bridge/queue-tailer.test.ts",
@@ -1311,7 +1725,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/mc-bridge/status-writer.test.ts",
@@ -1323,7 +1738,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/mcp/orchestration.test.ts",
@@ -1332,7 +1748,24 @@
       "currentVersion": "unversioned",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
+    },
+    {
+      "path": "test/unit/mission-protocol/migration.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "mission.aiwg.io/v1",
+      "statusVocabulary": [
+        "aborted",
+        "completed",
+        "failed",
+        "incomplete",
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/ralph-external/executor-shim.test.ts",
@@ -1346,7 +1779,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/serve/a2a-terminal-observer.test.ts",
@@ -1359,7 +1793,8 @@
         "failed"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/serve/agentic-sandbox-fleet-client.test.ts",
@@ -1371,7 +1806,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/serve/executor-registry.test.ts",
@@ -1385,7 +1821,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/serve/fleet-mission-conductor.test.ts",
@@ -1399,7 +1836,8 @@
         "pending"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/serve/mission-conductor.test.ts",
@@ -1408,7 +1846,8 @@
       "currentVersion": "executor.aiwg.io/v1",
       "statusVocabulary": [],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/serve/telemetry.test.ts",
@@ -1419,7 +1858,8 @@
         "running"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
       "path": "test/unit/uhp/sse-mission.test.ts",
@@ -1435,7 +1875,143 @@
         "unknown"
       ],
       "serialization": "typescript/javascript",
-      "migrationAction": "retain"
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
+    },
+    {
+      "path": "tools/agents/providers/base.mjs",
+      "owner": "tools/agents",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "unknown",
+        "working"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "tools/mc-bridge/README.md",
+      "owner": "tools/mc-bridge",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "tools/mc-bridge/dispatch-client.mjs",
+      "owner": "tools/mc-bridge",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted",
+        "failed",
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "tools/mc-bridge/executor-ws-client.mjs",
+      "owner": "tools/mc-bridge",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted",
+        "done",
+        "failed",
+        "running",
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "tools/mc-bridge/queue-tailer.mjs",
+      "owner": "tools/mc-bridge",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted",
+        "done",
+        "failed",
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "tools/mc-bridge/status-writer.mjs",
+      "owner": "tools/mc-bridge",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "tools/mission-protocol/contract-diff.mjs",
+      "owner": "tools/mission-protocol",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "tools/mission-protocol/inventory.mjs",
+      "owner": "tools/mission-protocol",
+      "role": "producer-consumer",
+      "currentVersion": "mission.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "tools/mission-protocol/migrate.mjs",
+      "owner": "tools/mission-protocol",
+      "role": "producer-consumer",
+      "currentVersion": "mission.aiwg.io/v1",
+      "statusVocabulary": [
+        "unknown"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "tools/ralph-external/executor-shim.mjs",
+      "owner": "tools/ralph-external",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted",
+        "done",
+        "failed",
+        "running"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
+      "path": "tools/scripts/lint-schemas.mjs",
+      "owner": "tools/scripts",
+      "role": "schema",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     }
   ]
 }

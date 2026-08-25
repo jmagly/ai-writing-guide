@@ -811,6 +811,8 @@ export function resolveParallelism(
  * src/artifacts/types.ts).
  */
 export interface IndexConfig {
+  /** Default graph backend. Individual graph definitions take precedence. */
+  graphBackend?: 'json' | 'graphology' | 'sqlite';
   graphs?: Record<string, IndexGraphDef | IndexMarkdownIndices>;
   graphOverrides?: {
     codebase?: IndexBuiltinGraphOverride;
@@ -893,6 +895,9 @@ export function validateIndexConfig(index: unknown): string[] {
   }
 
   const indexObject = index as Record<string, unknown>;
+  if (indexObject.graphBackend !== undefined && !GRAPH_BACKENDS.includes(indexObject.graphBackend as string)) {
+    errors.push(`index.graphBackend: must be one of ${GRAPH_BACKENDS.join(' | ')}`);
+  }
   const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((x) => typeof x === 'string');
 
   const graphOverrides = indexObject.graphOverrides;

@@ -109,6 +109,7 @@ import { regenerateHandler, regenerateHandlers } from './regenerate.js';
 import { workspaceContextHandler, workspaceContextHandlers } from './workspace-context.js';
 import { artifactsHandler, artifactsHandlers } from './artifacts.js';
 import { mcHandler, mcHandlers } from './mc.js';
+import { missionHandlers } from './mission.js';
 import { sdlcAccelerateHandler } from './sdlc-accelerate.js';
 import { teamHandler, teamHandlers } from './team.js';
 import { installHandler } from './install.js';
@@ -312,6 +313,7 @@ export {
   ralphHandlers,
   subcommandHandlers,
   mcHandlers,
+  missionHandlers,
   teamHandlers,
   stewardHandlers,
   regenerateHandlers,
@@ -408,6 +410,7 @@ export const allHandlers: CommandHandler[] = [
 
   // Mission Control
   ...mcHandlers,
+  ...missionHandlers,
 
   // Agent Teams
   ...teamHandlers,

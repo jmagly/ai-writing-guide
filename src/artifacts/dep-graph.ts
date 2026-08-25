@@ -11,8 +11,9 @@
 
 import type { DependencyGraph, GraphType, TypedEdge } from './types.js';
 import { normalizeEdges } from './types.js';
-import { loadDependencyGraph, loadGraphIndexFile } from './index-reader.js';
+import { loadDependencyGraph } from './index-reader.js';
 import { buildFortemiCoreDependencyGraph } from './fortemi-core-query-adapter.js';
+import { closeGraphBackend, openGraphBackend } from './backend-runtime.js';
 
 export interface DepsOptions {
   direction?: 'upstream' | 'downstream' | 'both';
@@ -107,6 +108,7 @@ export async function showDeps(
   const { direction = 'both', depth = 3, json = false, graph: graphType, edgeType, backend = 'fortemi-core' } = options;
 
   let depGraph: DependencyGraph | null = null;
+  let graphBackend: string | undefined;
 
   if (backend === 'fortemi-core') {
     const loaded = buildFortemiCoreDependencyGraph(cwd, graphType ?? 'project');
@@ -130,7 +132,9 @@ export async function showDeps(
     }
     depGraph = loaded.graph;
   } else if (graphType) {
-    depGraph = loadGraphIndexFile<DependencyGraph>(cwd, 'dependencies.json', graphType);
+    const active = await openGraphBackend(cwd, graphType);
+    graphBackend = active.type;
+    try { depGraph = active.backend.serialize(); } finally { await closeGraphBackend(active); }
     if (!depGraph) {
       console.error(`Error: No artifact index found for graph '${graphType}'.`);
       console.log("Run 'aiwg index build' first to create the index.");
@@ -141,8 +145,14 @@ export async function showDeps(
     const graphTypes: GraphType[] = ['project', 'codebase'];
     const merged: DependencyGraph = {};
     for (const g of graphTypes) {
-      const partial = loadGraphIndexFile<DependencyGraph>(cwd, 'dependencies.json', g);
-      if (partial) Object.assign(merged, partial);
+      try {
+        const active = await openGraphBackend(cwd, g);
+        try { Object.assign(merged, active.backend.serialize()); } finally { await closeGraphBackend(active); }
+      } catch (error) {
+        // Missing optional graph data is ignorable; unavailable configured
+        // backends are actionable and must not silently fall back to JSON.
+        if ((error as Error).message.includes('backend is unavailable')) throw error;
+      }
     }
 
     if (Object.keys(merged).length > 0) {
@@ -178,6 +188,7 @@ export async function showDeps(
     console.log(JSON.stringify({
       artifact: artifactPath,
       backend,
+      ...(graphBackend ? { graphBackend } : {}),
       direction,
       depth,
       upstream: flattenResults(upstreamResults),

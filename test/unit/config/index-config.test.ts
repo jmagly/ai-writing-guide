@@ -11,6 +11,12 @@ import { join } from 'path';
 import { validateIndexConfig, readIndexConfig } from '../../../src/config/aiwg-config.js';
 
 describe('validateIndexConfig', () => {
+  it('accepts a project graph backend default and rejects unknown values', () => {
+    expect(validateIndexConfig({ graphBackend: 'sqlite', graphs: {} })).toEqual([]);
+    expect(validateIndexConfig({ graphBackend: 'redis', graphs: {} })).toContain(
+      'index.graphBackend: must be one of json | graphology | sqlite',
+    );
+  });
   it('accepts an absent/empty block', () => {
     expect(validateIndexConfig(undefined)).toEqual([]);
     expect(validateIndexConfig(null)).toEqual([]);

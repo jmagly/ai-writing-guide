@@ -11,8 +11,8 @@
 
 import type { DependencyGraph, GraphType, TypedEdge } from './types.js';
 import { normalizeEdges } from './types.js';
-import { loadGraphIndexFile } from './index-reader.js';
 import { buildFortemiCoreDependencyGraph } from './fortemi-core-query-adapter.js';
+import { closeGraphBackend, openGraphBackend } from './backend-runtime.js';
 
 export interface NeighborsOptions {
   /** Graph to query */
@@ -136,13 +136,6 @@ export function setDifference(a: string[], b: string[]): string[] {
 }
 
 /**
- * Load a dependency graph for a given graph type
- */
-function loadGraph(cwd: string, graphType: GraphType): DependencyGraph | null {
-  return loadGraphIndexFile<DependencyGraph>(cwd, 'dependencies.json', graphType);
-}
-
-/**
  * Execute the `neighbors` subcommand
  */
 export async function showNeighbors(
@@ -152,6 +145,7 @@ export async function showNeighbors(
   const { graph: graphType, node, direction = 'both', edgeType, json = false, backend = 'fortemi-core' } = options;
 
   let graph: DependencyGraph | null = null;
+  let graphBackend: string | undefined;
   if (backend === 'fortemi-core') {
     const loaded = buildFortemiCoreDependencyGraph(cwd, graphType);
     if (!loaded.graph) {
@@ -174,7 +168,9 @@ export async function showNeighbors(
     }
     graph = loaded.graph;
   } else {
-    graph = loadGraph(cwd, graphType);
+    const active = await openGraphBackend(cwd, graphType);
+    graphBackend = active.type;
+    try { graph = active.backend.serialize(); } finally { await closeGraphBackend(active); }
   }
   if (!graph) {
     console.error(`Error: No index found for graph '${graphType}'.`);
@@ -201,6 +197,7 @@ export async function showNeighbors(
     console.log(JSON.stringify({
       graph: graphType,
       backend,
+      ...(graphBackend ? { graphBackend } : {}),
       node: resolved,
       direction,
       edgeType: edgeType ?? null,
@@ -232,6 +229,7 @@ export async function executeSetQuery(
   const { graph: graphType, op, nodeA, nodeB, direction = 'in', edgeType, json = false, backend = 'fortemi-core' } = options;
 
   let graph: DependencyGraph | null = null;
+  let graphBackend: string | undefined;
   if (backend === 'fortemi-core') {
     const loaded = buildFortemiCoreDependencyGraph(cwd, graphType);
     if (!loaded.graph) {
@@ -254,7 +252,9 @@ export async function executeSetQuery(
     }
     graph = loaded.graph;
   } else {
-    graph = loadGraph(cwd, graphType);
+    const active = await openGraphBackend(cwd, graphType);
+    graphBackend = active.type;
+    try { graph = active.backend.serialize(); } finally { await closeGraphBackend(active); }
   }
   if (!graph) {
     console.error(`Error: No index found for graph '${graphType}'.`);
@@ -293,6 +293,7 @@ export async function executeSetQuery(
     console.log(JSON.stringify({
       graph: graphType,
       backend,
+      ...(graphBackend ? { graphBackend } : {}),
       op,
       nodeA: resolvedA,
       nodeB: resolvedB,

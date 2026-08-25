@@ -80,6 +80,8 @@ export interface GraphBackend {
 
   /** Number of edges in the graph */
   edgeCount(): number;
+  /** Release backend resources. In-memory implementations are no-ops. */
+  close?(): void | Promise<void>;
 }
 
 /**
@@ -97,7 +99,7 @@ export type GraphBackendType = 'json' | 'graphology' | 'sqlite';
  * @returns A new GraphBackend instance
  * @throws Error if the requested backend's dependencies are not installed
  */
-export async function createGraphBackend(type: GraphBackendType = 'json'): Promise<GraphBackend> {
+export async function createGraphBackend(type: GraphBackendType = 'json', persistentPath?: string): Promise<GraphBackend> {
   switch (type) {
     case 'json': {
       const { JsonGraphBackend } = await import('./backends/json-backend.js');
@@ -116,7 +118,7 @@ export async function createGraphBackend(type: GraphBackendType = 'json'): Promi
     case 'sqlite': {
       try {
         const { SqliteGraphBackend } = await import('./backends/sqlite-backend.js');
-        return new SqliteGraphBackend();
+        return new SqliteGraphBackend(persistentPath);
       } catch {
         throw new Error(
           'sqlite backend is unavailable; run `aiwg features install sqlite`'

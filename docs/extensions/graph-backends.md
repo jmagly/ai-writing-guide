@@ -11,19 +11,26 @@ The AIWG artifact index stores dependency and relationship data as a directed gr
 
 | Tier | Backend | Sweet spot | Extra deps |
 |------|---------|-----------|------------|
-| **Default** | `json` | All projects, <5k nodes | none |
-| **Optional** | `graphology` | Rich traversal, community detection, <50k nodes | `graphology` + ecosystem (~50KB) |
-| **Optional** | `sqlite` | Large corpora, SQL set ops, persistence | `better-sqlite3` (~200KB native) |
+| **Default** | `json` | Zero-dependency local graphs | none |
+| **Optional** | `graphology` | Rich in-process graph operations | `graphology` ecosystem |
+| **Optional** | `sqlite` | Persistent same-host graph storage | `better-sqlite3` (native) |
 
 A fourth, orthogonal capability — **semantic embeddings** — can be added to any tier for similarity search.
 
-All three tiers produce the same `dependencies.json` output format and support the same `aiwg index` CLI surface. The backend is an implementation detail.
+All three tiers produce the same `dependencies.json` compatibility output. The
+resolved backend is visible in `aiwg index status` and `aiwg index stats`.
 
 ---
 
 ## Default: JSON Backend
 
 No configuration needed. The JSON backend is always active unless overridden.
+
+Backend selection is deterministic: a graph's `graphBackend` overrides the
+project-level `index.graphBackend`; when neither is present, AIWG uses `json`.
+SQLite graphs persist at `.aiwg/.index/<graph>/graph.db` (shared graphs use
+their existing shared index directory). Selecting an unavailable optional
+backend fails with an installation diagnostic and does not silently use JSON.
 
 **Capabilities:**
 - Typed edges (`{ path, type }` via `EdgeRef`)
@@ -52,19 +59,25 @@ npm install graphology-shortest-path graphology-communities
 
 ### Activate
 
-```yaml
-# .aiwg/config.yaml
-index:
-  graphBackend: graphology
+```json
+{
+  "index": { "graphBackend": "graphology" }
+}
 ```
 
 Or per-graph:
 
-```yaml
-index:
-  graphs:
-    citation-network:
-      graphBackend: graphology
+```json
+{
+  "index": {
+    "graphs": {
+      "citation-network": {
+        "scanDirs": ["documentation/citations"],
+        "graphBackend": "graphology"
+      }
+    }
+  }
+}
 ```
 
 ### Staged Build Order
@@ -121,7 +134,8 @@ const path = bidirectional(graph, 'REF-001', 'REF-234');
 
 ## Optional: SQLite Backend
 
-Best for large corpora (5k+ nodes), teams running repeated cross-graph citation queries, or workflows where the graph must persist between runs without a full rebuild.
+Use SQLite when a graph must persist on the same host. A measured support
+envelope has not yet been published.
 
 ### Install
 
@@ -133,13 +147,13 @@ npm install better-sqlite3
 
 ### Activate
 
-```yaml
-# .aiwg/config.yaml
-index:
-  graphBackend: sqlite
+```json
+{
+  "index": { "graphBackend": "sqlite" }
+}
 ```
 
-### Set operations (native SQL)
+### SQL inspection
 
 ```sql
 -- Papers that cited both REF-008 and REF-016
@@ -153,9 +167,10 @@ EXCEPT
 SELECT source FROM edges WHERE target = 'REF-001' AND edge_type = 'cites';
 ```
 
-These run via `aiwg index query --set-query` or are composed by the `aiwg index neighbors` command when the SQLite backend is active.
+The public set-query surface currently preserves the shared deterministic
+JavaScript semantics; it does not yet execute these expressions as native SQL.
 
-### Cross-graph federation
+### Cross-graph federation (illustrative SQL; not currently exposed)
 
 ```sql
 ATTACH DATABASE '.aiwg/.index/summaries/graph.db' AS summaries;
@@ -167,9 +182,10 @@ JOIN cn.edges e ON e.source = s.id
 WHERE e.target = 'REF-008' AND e.edge_type = 'cites';
 ```
 
-### Incremental updates
+### Incremental updates (planned)
 
-The SQLite backend writes at the row level — only changed nodes and edges are updated. For large corpora where most files are unchanged between builds, this significantly reduces rebuild time.
+Current builds transactionally replace the selected graph contents. Row-level
+incremental reconciliation is planned and must not be assumed by operators.
 
 ### Combining backends
 
@@ -253,21 +269,21 @@ Incremental rebuilds only re-embed nodes whose content checksum changed.
 | Feature | JSON | Graphology | SQLite |
 |---------|:----:|:----------:|:------:|
 | Typed edges | ✓ | ✓ | ✓ |
-| BFS/DFS traversal | ✓ | ✓ (library) | ✓ (recursive CTE) |
-| Set intersection/difference | ✓ (JS) | ✓ (JS/operators) | ✓ (native SQL) |
-| Cross-graph joins | shell `comm` | manual merge | SQL `ATTACH` |
+| Bounded traversal | ✓ | ✓ | one hop |
+| Set intersection/difference | ✓ (JS) | ✓ (JS) | ✓ (JS) |
+| Cross-graph joins | shell `comm` | manual merge | — |
 | Shortest path | — | ✓ | — |
 | Community detection | — | ✓ (Louvain) | — |
 | Persistent (survives rebuild) | — | — | ✓ |
-| Incremental row-level updates | — | — | ✓ |
+| Incremental row-level updates | — | — | — |
 | Zero native deps | ✓ | ✓ | — |
-| Corpus sweet spot | <5k | <50k | 5k–500k |
+| Measured support envelope | not published | not published | not published |
 
 ---
 
 ## Module Graph Declarations
 
-Frameworks and addons can declare their own graph configurations in `manifest.json`. This means operators who install `aiwg use research` automatically get `papers`, `citation-network`, and `summaries` graphs — no manual `.aiwg/config.yaml` changes needed.
+Frameworks and addons can declare their own graph configurations in `manifest.json`. This means operators who install `aiwg use research` automatically get `papers`, `citation-network`, and `summaries` graphs — no manual `.aiwg/aiwg.config` changes needed.
 
 ### How it works
 
@@ -304,7 +320,7 @@ Each framework manifest may include an `index.graphs` section:
 
 ### Operator override
 
-Operator `.aiwg/config.yaml` always takes precedence over framework-declared graphs:
+Operator `.aiwg/aiwg.config` always takes precedence over framework-declared graphs:
 
 ```yaml
 index:

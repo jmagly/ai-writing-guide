@@ -7,11 +7,12 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const baselinePath = path.join(root, 'schemas/mission-protocol/inventory-v1.json');
 const marker = /\b(?:CanonicalMission|MissionPlan|MissionLedger|MissionProjection|UhpMissionEvidence|MISSION_API_VERSION|mission\.aiwg\.io\/v1|mission[_-]?id|missionId|mission control|executor\.aiwg\.io\/v1|fleet-workload\/v1)\b/i;
-const roots = ['src/', 'schemas/', 'test/', 'apps/', 'agentic/code/'];
+const roots = ['src/', 'schemas/', 'test/', 'tools/', 'docs/', 'apps/', 'agentic/code/'];
 const requiredSurfaces = new Set([
   'src/a2a/types.ts', 'src/flow/graph-metadata.ts', 'src/mission-protocol/types.ts', 'src/mission-protocol/codecs.ts',
   'schemas/mission-v1.schema.json', 'schemas/mission-protocol/consumer-matrix-v1.json',
   'tools/mission-protocol/inventory.mjs', 'tools/mission-protocol/contract-diff.mjs',
+  'tools/mission-protocol/migrate.mjs', 'docs/mission-protocol-migration.md',
   'docs/architecture/adr-mission-protocol-v1.md',
 ]);
 
@@ -45,6 +46,7 @@ function classify(file, text) {
         : text.includes('graph.flow.aiwg.io/v1') ? 'graph.flow.aiwg.io/v1'
           : text.includes('2026-08-11') && /uhp/i.test(text) ? 'UHP 2026-08-11' : 'unversioned';
   const vocabulary = [...new Set([...text.matchAll(/['"](pending|running|working|completed|done|failed|incomplete|cancelled|canceled|aborted|unknown|operator-review-required|input-required)['"]/g)].map(match => match[1]))].sort();
+  const migrationAction = generated ? 'retain' : canonical ? 'canonicalize' : role === 'documentation-example' ? 'adapt' : role === 'fixture-or-test' ? 'retain' : 'adapt';
   return {
     path: file,
     owner: file.split('/').slice(0, file.startsWith('agentic/') ? 4 : 2).join('/'),
@@ -52,7 +54,14 @@ function classify(file, text) {
     currentVersion: version,
     statusVocabulary: vocabulary,
     serialization: file.endsWith('.json') ? 'json' : file.endsWith('.jsonl') ? 'jsonl' : file.endsWith('.md') ? 'markdown' : 'typescript/javascript',
-    migrationAction: generated ? 'retain' : canonical ? 'canonicalize' : role === 'documentation-example' ? 'adapt' : role === 'fixture-or-test' ? 'retain' : 'adapt',
+    migrationAction,
+    migrationReason: migrationAction === 'canonicalize'
+      ? 'Canonical Mission Protocol v1 source or contract.'
+      : migrationAction === 'adapt'
+        ? 'Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window.'
+        : generated
+          ? 'Generated provider copy remains byte-derived from its canonical source and is not edited independently.'
+          : 'Compatibility fixture or test remains to prove legacy reads and mixed-version behavior.',
     ...(generated ? {
       canonicalSource: file
         .replace('/plugins/codex-sdlc/', '/frameworks/sdlc-complete/')

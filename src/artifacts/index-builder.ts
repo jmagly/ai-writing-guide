@@ -1193,6 +1193,20 @@ export async function buildIndex(
   writeIndexFile(effectiveOutputCwd, 'tags.json', tagIndex, indexOutputDir);
   writeIndexFile(effectiveOutputCwd, 'dependencies.json', depGraph, indexOutputDir);
 
+  // Materialize the configured backend and always retain dependencies.json as
+  // the stable compatibility/export contract.
+  const { createGraphBackend } = await import('./graph-backend.js');
+  const { resolveGraphBackendType } = await import('./types.js');
+  const backendType = resolveGraphBackendType(graph);
+  const persistentPath = backendType === 'sqlite' ? path.join(indexOutputDir, 'graph.db') : undefined;
+  let selectedBackend;
+  try {
+    selectedBackend = await createGraphBackend(backendType, persistentPath);
+    selectedBackend.deserialize(depGraph);
+  } finally {
+    await selectedBackend?.close?.();
+  }
+
   // Update and persist the checksum manifest for faster future builds (#794).
   // The next manifest contains entries for every file we processed this build.
   // Files that disappeared from disk are pruned; the resulting manifest is
@@ -1243,6 +1257,7 @@ export async function buildIndex(
     byType,
     tagDistribution: tagDist,
     graphMetrics: {
+      backend: backendType,
       totalEdges,
       markdownLinkEdges: markdownLinkEdgeCount,
       ...(citationMetrics ? {

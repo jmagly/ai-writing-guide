@@ -37,7 +37,7 @@ export function normalizeMissionState(nativeState: unknown): MissionState {
   if (['incomplete', 'budget-exhausted', 'max-iterations', 'max-tokens'].includes(state)) return 'incomplete';
   if (['running', 'in-progress', 'working', 'started', 'assigned', 'admitted', 'starting'].includes(state)) return 'running';
   if (['pending', 'submitted', 'queued', 'runnable', 'scheduled'].includes(state)) return 'pending';
-  if (['blocked', 'blocked-hitl', 'input-required', 'auth-required'].includes(state)) return 'blocked';
+  if (['blocked', 'blocked-hitl', 'input-required', 'auth-required', 'paused', 'suspended'].includes(state)) return 'blocked';
   if (['operator-review', 'operator-review-required', 'manual-review'].includes(state)) return 'operator-review';
   if (['unknown', 'disconnected', 'detached', 'unreachable'].includes(state)) return 'unknown';
   return 'unknown';

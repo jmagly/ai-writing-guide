@@ -2500,6 +2500,25 @@ export const mcCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const missionCommand: Extension = {
+  id: 'mission',
+  type: 'command',
+  name: 'Mission Protocol',
+  description: 'Preview, apply, verify, resume, and roll back versioned Mission workspace migrations',
+  version: '1.0.0',
+  capabilities: ['cli', 'orchestration', 'mission-protocol', 'migration', 'rollback'],
+  keywords: ['mission', 'migrate', 'migration', 'preview', 'resume', 'rollback'],
+  category: 'orchestration',
+  platforms: { claude: 'full', generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: {
+    type: 'command',
+    template: 'orchestration',
+    allowedTools: ['Bash', 'Read', 'Write'],
+    argumentHint: 'migrate [--dry-run|--apply|--verify|--resume|--rollback]',
+  } satisfies CommandMetadata,
+};
+
 // Steward Commands
 
 export const stewardCommand: Extension = {
@@ -3860,6 +3879,7 @@ export const commandDefinitions: Extension[] = [
 
   // Mission Control (1)
   mcCommand,
+  missionCommand,
 
   // Steward (1)
   stewardCommand,
