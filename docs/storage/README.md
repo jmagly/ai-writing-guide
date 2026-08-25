@@ -7,6 +7,8 @@ User-facing documentation for AIWG's pluggable storage adapter system (#934).
 - **[Overview](overview.md)** — what the storage system does, quick start, CLI surface, what's implemented vs deferred
 - **[Security](security.md)** — credential handling, path traversal rejection, atomic writes, doctor validation
 - **[Migration](migration.md)** — `aiwg storage migrate` command walkthrough
+- **[Direct PostgreSQL](backends/postgres.md)** — advanced canonical backend, roles, TLS, migration, and qualification
+- **[PostgreSQL through PostgREST](backends/postgrest.md)** — optional HTTP transport, RPC boundaries, RLS, and limits
 - **[Scalable backend contract](backend-contract.md)** — versioned capabilities,
   data classes, consistency, and backend maturity
 - **[Scalable migration protocol](migration-protocol.md)** — checksum-backed

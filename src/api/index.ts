@@ -9,6 +9,7 @@ export { run } from '../cli/router.js';
 export * from '../resources/index.js';
 export * from '../sessions/index.js';
 export * from '../memory/index.js';
+export * from '../storage/index.js';
 export * from '../security/threat-assessment-config.js';
 export * from '../security/artifact-verifier.js';
 export * from '../security/artifact-attestation.js';

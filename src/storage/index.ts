@@ -87,6 +87,23 @@ export {
   type MigrationRunOptions,
   type MigrationVerification,
 } from './migration-protocol.js';
+export {
+  PostgresStorageBackend,
+  PostgresBackendError,
+  type PostgresBackendOptions,
+  type PostgresClientLike,
+  type PostgresPoolLike,
+  type PostgresPage,
+  type PostgresHealth,
+  type PostgresSnapshotLease,
+} from './backends/postgres.js';
+export {
+  PostgrestStorageBackend,
+  PostgrestBackendError,
+  type PostgrestBackendOptions,
+  type PostgrestHealth,
+} from './backends/postgrest.js';
+export { POSTGREST_SCHEMA_V1_SQL, installPostgrestSchemaV1 } from './backends/postgrest-schema.js';
 
 interface RegistryState {
   projectRoot: string;

@@ -168,8 +168,17 @@ export const STORAGE_BACKEND_MATRIX: Readonly<Record<StorageBackendKind, Storage
   sqlite: descriptor('sqlite', 'supported', [...BASELINE, 'atomic-batch', 'consistent-snapshot', 'tombstones', 'idempotency-keys', 'filtered-query', 'cursor-pagination', 'backup', 'restore'], 'wal', 'single-host', 'serializable', 'regenerable-index'),
   'fortemi-core-static': descriptor('fortemi-core-static', 'supported', ['read', 'filtered-query', 'recursive-traversal', 'set-operations'], 'filesystem', 'single-host', 'snapshot', 'static-cache'),
   'fortemi-server': descriptor('fortemi-server', 'alpha', [...BASELINE, 'filtered-query', 'health', 'tls', 'tenant-isolation'], 'replicated', 'remote-service', 'none', 'remote-persistence'),
-  'postgres-direct': descriptor('postgres-direct', 'advanced', [], 'replicated', 'remote-service', 'none', 'canonical'),
-  'postgres-postgrest': descriptor('postgres-postgrest', 'advanced', [], 'replicated', 'remote-service', 'none', 'canonical'),
+  'postgres-direct': descriptor('postgres-direct', 'advanced', [
+    ...BASELINE, 'atomic-batch', 'consistent-snapshot', 'change-cursor',
+    'tombstones', 'idempotency-keys', 'recursive-traversal', 'set-operations',
+    'filtered-query', 'cursor-pagination', 'health', 'readiness', 'telemetry',
+    'tenant-isolation', 'tls',
+  ], 'replicated', 'remote-service', 'serializable', 'canonical'),
+  'postgres-postgrest': descriptor('postgres-postgrest', 'advanced', [
+    ...BASELINE, 'atomic-batch', 'consistent-snapshot', 'change-cursor',
+    'tombstones', 'idempotency-keys', 'filtered-query', 'cursor-pagination',
+    'health', 'readiness', 'tenant-isolation', 'tls',
+  ], 'replicated', 'remote-service', 'serializable', 'canonical'),
   mysql: descriptor('mysql', 'deferred', [], 'replicated', 'remote-service', 'none', 'canonical'),
 };
 

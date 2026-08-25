@@ -61,6 +61,17 @@ export const FEATURE_CATALOG: FeatureDefinition[] = [
     cost: '~5 MB — native compile via node-gyp',
   },
   {
+    name: 'postgres',
+    description: 'Advanced direct PostgreSQL canonical-storage backend',
+    packages: ['pg'],
+    packageSpecs: { pg: '8.23.0' },
+    enables: [
+      'aiwg.storage-backend/v1 direct PostgreSQL persistence',
+      'transactional migration batches, snapshots, cursors, and tombstones',
+    ],
+    cost: '~1 MB — pure JavaScript PostgreSQL client',
+  },
+  {
     name: 'pty',
     description: 'PTY bridge for daemon — pass-through interactive TUIs (Claude Code, Codex, etc.)',
     packages: ['node-pty'],

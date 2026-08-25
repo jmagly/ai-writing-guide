@@ -44,7 +44,12 @@ describe('scalable storage backend contract (#2193)', () => {
   it('does not advertise unproven live or future capabilities', () => {
     expect(STORAGE_BACKEND_MATRIX['fortemi-server'].maturity).toBe('alpha');
     expect(STORAGE_BACKEND_MATRIX['fortemi-server'].capabilities).not.toContain('atomic-batch');
-    expect(STORAGE_BACKEND_MATRIX['postgres-direct'].capabilities).toEqual([]);
+    expect(STORAGE_BACKEND_MATRIX['postgres-direct'].capabilities).toEqual(
+      expect.arrayContaining(['atomic-batch', 'consistent-snapshot', 'change-cursor', 'tls']),
+    );
+    expect(STORAGE_BACKEND_MATRIX['postgres-direct'].capabilities).not.toEqual(
+      expect.arrayContaining(['backup', 'restore']),
+    );
     expect(STORAGE_BACKEND_MATRIX.mysql.maturity).toBe('deferred');
   });
 });
