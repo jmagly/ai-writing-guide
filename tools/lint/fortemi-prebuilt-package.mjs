@@ -67,8 +67,8 @@ const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 const exported = JSON.parse(exportText);
 // The optional graph-pattern capability and scoped Markdown-link edge metadata
 // add discoverable corpus structure. Keep a tight, explicit package budget
-// while accommodating reviewed index growth (#2126-#2134, #147).
-const maxExportBytes = Number.parseInt(process.env.AIWG_FORTEMI_PREBUILT_MAX_BYTES ?? '12250000', 10);
+// while accommodating the reviewed 3,705-item release corpus.
+const maxExportBytes = Number.parseInt(process.env.AIWG_FORTEMI_PREBUILT_MAX_BYTES ?? '13250000', 10);
 
 if (manifest.schema_version !== 'aiwg.fortemi.prebuilt.v1') {
   fail(`manifest schema_version is ${manifest.schema_version}`);

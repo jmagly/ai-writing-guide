@@ -7,6 +7,50 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.26] - 2026-08-26 - "Verified dependency evidence"
+
+### Security
+
+- **Root, Droid Bridge, and evaluation dependency graphs resolve patched
+  releases** - Lockfiles now carry patched `nanoid`, `esbuild`, MCP/HTTP,
+  `js-yaml`, and related transitive packages, with protocol and YAML regression
+  tests guarding the upgraded boundaries (roctinam/aiwg#2199, #2200, #2201).
+
+- **Desktop XML dependencies clear the reported RustSec denial-of-service
+  findings** - The Tauri lock graph now resolves `quick-xml 0.41.0`, and the
+  desktop documentation records the application boundary and minimum safe
+  version (roctinam/aiwg#2202).
+
+- **Dependency alerts carry reproducible provenance** - Exported findings now
+  include commit, workspace, manifest, lockfile digest, dependency path,
+  ecosystem, direct/transitive classification, and artifact-integrity evidence.
+  Validation rejects duplicate identifiers, incomplete advisories, and invalid
+  patched-major claims (roctinam/aiwg#2204).
+
+- **Obfuscated-code findings require behavioral evidence** - Actionable alerts
+  must identify a file, symbol, rule, artifact hash, confidence, and excerpt or
+  trace. Code shape alone remains informational, and suppressions are bound to
+  an exact artifact hash plus rationale (roctinam/aiwg#2205).
+
+### Fixed
+
+- **Claude append-import fixture is independent of the calendar** - The
+  repository conformance test uses a deliberately long inactivity threshold so
+  its fixed historical timestamp cannot age into an inactive session and break
+  CI as wall time advances.
+
+- **Fortemi's package budget covers the reviewed release corpus** - The bounded
+  prebuilt-index gate now accommodates the 3,705-item framework corpus while
+  retaining an explicit size ceiling and packed-install smoke coverage.
+
+### Release boundaries
+
+- `RUSTSEC-2024-0429` remains in the optional Tauri GTK3 source graph through
+  `glib 0.18.5`. Issue #2203 is explicitly deferred pending a compatible GTK4
+  stack. This release does not qualify or publish Linux `.deb`, `.rpm`, or
+  `.AppImage` desktop bundles; the Cockpit Bridge, browser UI, VS Code shell,
+  and npm source package remain supported release surfaces.
+
 ## [2026.8.25] - 2026-08-25 - "Safe help, reliable Windows refresh"
 
 ### Fixed
@@ -3444,7 +3488,8 @@ The 2026.5.0 stable tag. The 2026.4.0 stable tag was never cut — the rc series
 - New unit tests: 7 for `aiwg skill-lint` rubric (perfect/stub/no-triggers/agent-only/broken-YAML fixtures + threshold modes). Behavior-loader and concierge integration tests updated for canonical metadata.* shape.
 - `.agents/` deployment directory is now gitignored, mirroring `.claude/` and `.codex/` (#949). 395 generated files removed from the index; regenerable via `aiwg use`.
 
-[Unreleased]: https://github.com/jmagly/aiwg/compare/v2026.8.25...HEAD
+[Unreleased]: https://github.com/jmagly/aiwg/compare/v2026.8.26...HEAD
+[2026.8.26]: https://github.com/jmagly/aiwg/compare/v2026.8.25...v2026.8.26
 [2026.8.25]: https://github.com/jmagly/aiwg/compare/v2026.8.20...v2026.8.25
 [2026.8.20]: https://github.com/jmagly/aiwg/compare/v2026.8.19...v2026.8.20
 [2026.8.10]: https://github.com/jmagly/aiwg/compare/v2026.8.9...v2026.8.10
