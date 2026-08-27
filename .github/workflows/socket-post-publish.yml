@@ -61,6 +61,13 @@ jobs:
           node tools/release/socket-post-publish-audit.mjs \
             --version "$VERSION" \
             --dependency-lock "$dependency_lock" \
+            --dependency-lock package-lock.json \
+            --dependency-lock agentic/code/addons/droid-bridge/package-lock.json \
+            --dependency-lock agentic/code/plugins/droid-bridge/package-lock.json \
+            --dependency-lock tools/eval/package-lock.json \
+            --dependency-lock apps/cockpit/desktop/src-tauri/Cargo.lock \
+            --commit "${{ github.event.workflow_run.head_sha || github.sha }}" \
+            --organization "${SOCKET_ORG_SLUG}" \
             --output-dir test-results/socket-post-publish
 
       - name: Upload Socket evidence

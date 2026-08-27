@@ -36,6 +36,22 @@ frontend splash, a locked Rust dependency graph, and the generated desktop icon
 set needed by Tauri. `cargo tauri build` has been verified on Linux to produce
 `.deb`, `.rpm`, and `.AppImage` bundles.
 
+## Linux dependency security boundary
+
+The desktop does not accept XML or plist input at its application boundary.
+Tauri's build/configuration stack brings in `plist` and `quick-xml`; the locked
+graph must retain `quick-xml >=0.41.0` so crafted duplicate attributes or
+namespace declarations cannot trigger the RustSec denial-of-service flaws even
+if that upstream boundary changes.
+
+Linux rendering remains owned by the Cockpit maintainers and currently follows
+Tauri/Wry's GTK backend. Tauri 2.11.5 and Wry 0.55.1 still require GTK3 bindings
+and `glib 0.18`; upgrading `glib` alone is ABI/API incompatible. The upstream
+GTK4 migration is tracked by `tauri-apps/tauri#12561` and the related Tao/Wry
+GTK4 work. Before the next desktop release, maintainers must either qualify an
+upstream GTK4 release that resolves `glib >=0.20` or hold the Linux bundle. A
+floating Git dependency or an audit ignore is not an accepted remediation.
+
 ## Why a token file (not a socket handshake)
 
 The runtime file is the cross-platform handshake every shell shares (see
