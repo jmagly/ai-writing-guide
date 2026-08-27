@@ -213,7 +213,7 @@ describe('Claude adapter repository conformance', () => {
       // The fixture carries a fixed historical event timestamp. Keep this
       // append/resume test independent of the wall clock while lifecycle
       // threshold behavior is covered by dedicated importer tests.
-      inactivityThresholdMs: 30 * 24 * 60 * 60 * 1_000,
+      inactivityThresholdMs: 10 * 365 * 24 * 60 * 60 * 1_000,
     };
     const first = await importer.import(request);
     expect(first.reduce((sum, receipt) => sum + receipt.eventsInserted, 0)).toBe(3);
