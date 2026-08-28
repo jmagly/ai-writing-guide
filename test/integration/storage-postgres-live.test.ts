@@ -170,6 +170,28 @@ describeLive('direct PostgreSQL live qualification (#2195)', () => {
         },
         async release(_boundary, outcome) { sourceBoundary.push(`released:${outcome}`); },
       },
+      verifier: {
+        async verify({ sourceRecords, destinationRecords }) {
+          const health = await destination.health();
+          const sourceCounts = countRecordKinds(sourceRecords);
+          const destinationCounts = countRecordKinds(destinationRecords);
+          const countsMatch = JSON.stringify(sourceCounts) === JSON.stringify(destinationCounts);
+          const expectedPaths = sourceRecords.filter(item => !item.tombstone).map(item => item.identity.path).sort();
+          const query = await destination.query({ kind: 'note' }, 100);
+          const observedPaths = query.records.map(item => item.identity.path).sort();
+          const queryMatches = JSON.stringify(expectedPaths) === JSON.stringify(observedPaths);
+          return {
+            schema: semanticCheck(3, health.schemaVersion === '1'),
+            constraints: semanticCheck(1, health.healthy && health.ready),
+            countsByType: {
+              ...semanticCheck(Object.keys(sourceCounts).length, countsMatch), sourceCounts, destinationCounts,
+            },
+            edgeIntegrity: semanticCheck(0, true),
+            queryParity: semanticCheck(1, queryMatches),
+            traversalParity: semanticCheck(0, true),
+          };
+        },
+      },
     });
     try {
       const applied = await coordinator.apply(await coordinator.preview());
@@ -338,6 +360,19 @@ function versioned(tenant: string, path: string, revision: string, text: string)
     identity: { tenant, subsystem: 'memory', path }, sourceRevision: revision,
     digest: createHash('sha256').update(text).digest('hex'), value: { kind: 'note', text },
   };
+}
+
+function semanticCheck(declared: number, valid: boolean) {
+  return { valid, declared, checked: declared, failures: valid ? [] : ['live semantic check failed'] };
+}
+
+function countRecordKinds(records: readonly VersionedRecord<{ kind: string; text: string }>[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const record of records) {
+    const kind = record.tombstone ? 'tombstone' : record.value?.kind ?? 'unknown';
+    counts[kind] = (counts[kind] ?? 0) + 1;
+  }
+  return Object.fromEntries(Object.entries(counts).sort(([left], [right]) => left.localeCompare(right)));
 }
 
 class MemorySource {

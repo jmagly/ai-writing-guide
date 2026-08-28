@@ -53,13 +53,14 @@ export interface MigrationManifest {
   snapshot: { id: string; highWaterMark: string; cursor?: string };
   checkpoint: { cursor?: string; highWaterMark: string; committedBatches: number; drained?: boolean };
   counts: { source: number; upserts: number; tombstones: number; committed: number };
-  digests: { source: string; destination?: string; approval?: string };
+  digests: { source: string; destination?: string; verification?: string; approval?: string };
   records: MigrationRecordReceipt[];
   boundaries: {
     initial: MigrationBoundaryReceipt;
     final?: MigrationBoundaryReceipt;
   };
   routingSwitch?: MigrationRoutingReceipt;
+  verification?: MigrationVerification;
   rollbackWindowEndsAt?: string;
   failure?: { stage: string; message: string };
 }
@@ -123,7 +124,40 @@ export interface MigrationRoutingControl {
   restoreSource(manifest: MigrationManifest): Promise<void>;
 }
 
-export interface MigrationRunOptions {
+export type MigrationSemanticDimension =
+  | 'schema'
+  | 'constraints'
+  | 'countsByType'
+  | 'edgeIntegrity'
+  | 'queryParity'
+  | 'traversalParity';
+
+export interface MigrationSemanticCheck {
+  valid: boolean;
+  declared: number;
+  checked: number;
+  failures: string[];
+  evidenceDigest?: string;
+  sourceCounts?: Record<string, number>;
+  destinationCounts?: Record<string, number>;
+}
+
+export type MigrationSemanticVerification = Record<MigrationSemanticDimension, MigrationSemanticCheck>;
+
+export interface MigrationVerifierContext<T> {
+  manifest: MigrationManifest;
+  source: MigrationEndpoint<T>;
+  destination: MigrationEndpoint<T>;
+  sourceRecords: readonly VersionedRecord<T>[];
+  destinationRecords: readonly VersionedRecord<T>[];
+  signal?: AbortSignal;
+}
+
+export interface MigrationSemanticVerifier<T> {
+  verify(context: MigrationVerifierContext<T>): Promise<MigrationSemanticVerification>;
+}
+
+export interface MigrationRunOptions<T = unknown> {
   mode: MigrationMode;
   toolVersion: string;
   batchSize?: number;
@@ -135,6 +169,9 @@ export interface MigrationRunOptions {
   now?: () => Date;
   random?: () => number;
   safety: MigrationSafetyControl;
+  verifier: MigrationSemanticVerifier<T>;
+  /** Required for online mode because source revisions are backend-defined opaque values. */
+  compareSourceRevisions?: (left: string, right: string) => number;
 }
 
 export interface MigrationVerification {
@@ -147,6 +184,8 @@ export interface MigrationVerification {
   unexpected: string[];
   corrupt: string[];
   lag: number;
+  chunks: { valid: boolean; source: string[]; destination: string[] };
+  semantic: MigrationSemanticVerification;
 }
 
 export class MigrationProtocolError extends Error {
@@ -175,7 +214,7 @@ export class StorageMigrationCoordinator<T> {
     private readonly destination: MigrationEndpoint<T>,
     private readonly store: MigrationManifestStore,
     private readonly routing: MigrationRoutingControl,
-    private readonly options: MigrationRunOptions,
+    private readonly options: MigrationRunOptions<T>,
   ) {
     this.batchSize = boundedInteger(options.batchSize, 100, 1, 10_000, 'batchSize');
     this.concurrency = boundedInteger(options.concurrency, 4, 1, 32, 'concurrency');
@@ -184,6 +223,12 @@ export class StorageMigrationCoordinator<T> {
     this.rollbackWindowMs = boundedInteger(options.rollbackWindowMs, 86_400_000, 1, 31_536_000_000, 'rollbackWindowMs');
     this.now = options.now ?? (() => new Date());
     this.random = options.random ?? Math.random;
+    if (options.mode === 'online' && !options.compareSourceRevisions) {
+      throw new MigrationProtocolError(
+        'AIWG_MIGRATION_REVISION_ORDER_REQUIRED',
+        'online migration requires a source-revision comparator',
+      );
+    }
   }
 
   async preview(): Promise<MigrationManifest> {
@@ -282,6 +327,8 @@ export class StorageMigrationCoordinator<T> {
         throw new MigrationProtocolError('AIWG_MIGRATION_PARITY_FAILED', summarizeVerificationFailure(verification));
       }
       manifest.digests.destination = verification.destinationDigest;
+      manifest.verification = verification;
+      manifest.digests.verification = sha256(stableStringify(verification));
       manifest.state = 'awaiting-approval';
       manifest.updatedAt = this.now().toISOString();
       manifest.digests.approval = approvalDigest(manifest);
@@ -317,6 +364,7 @@ export class StorageMigrationCoordinator<T> {
       .filter(([key, record]) => {
         const destination = destinationMap.get(key);
         return destination !== undefined && (
+          destination.sourceRevision !== record.sourceRevision ||
           destination.digest !== record.digest ||
           Boolean(destination.tombstone) !== Boolean(record.tombstone)
         );
@@ -327,8 +375,25 @@ export class StorageMigrationCoordinator<T> {
     const lag = Number(!boundaryReady || (manifest.mode === 'online' && !manifest.checkpoint.drained));
     const sourceDigest = digestRecords(sourceRecords);
     const destinationDigest = digestRecords(destinationRecords);
+    const sourceChunks = digestRecordChunks(sourceRecords, this.batchSize);
+    const destinationChunks = digestRecordChunks(destinationRecords, this.batchSize);
+    const chunks = {
+      valid: stableStringify(sourceChunks) === stableStringify(destinationChunks),
+      source: sourceChunks,
+      destination: destinationChunks,
+    };
+    const semantic = await this.options.verifier.verify({
+      manifest,
+      source: this.source,
+      destination: this.destination,
+      sourceRecords,
+      destinationRecords,
+      signal: this.options.signal,
+    });
+    validateSemanticVerification(semantic);
     return {
-      valid: missing.length === 0 && unexpected.length === 0 && corrupt.length === 0 && lag === 0,
+      valid: missing.length === 0 && unexpected.length === 0 && corrupt.length === 0 && lag === 0 &&
+        sourceDigest === destinationDigest && chunks.valid && semanticIsValid(semantic),
       sourceCount: sourceRecords.length,
       destinationCount: destinationRecords.length,
       sourceDigest,
@@ -337,6 +402,8 @@ export class StorageMigrationCoordinator<T> {
       unexpected,
       corrupt,
       lag,
+      chunks,
+      semantic,
     };
   }
 
@@ -352,6 +419,12 @@ export class StorageMigrationCoordinator<T> {
     const verification = await this.verify(manifest);
     if (!verification.valid) {
       throw new MigrationProtocolError('AIWG_MIGRATION_PARITY_FAILED', summarizeVerificationFailure(verification));
+    }
+    if (!manifest.digests.verification || sha256(stableStringify(verification)) !== manifest.digests.verification) {
+      throw new MigrationProtocolError(
+        'AIWG_MIGRATION_VERIFICATION_CHANGED',
+        'migration verification changed after approval; verify and approve a new manifest',
+      );
     }
     const finalBoundary = manifest.boundaries.final;
     if (!finalBoundary) {
@@ -398,7 +471,34 @@ export class StorageMigrationCoordinator<T> {
 
   private async copyRecords(records: readonly VersionedRecord<T>[], manifest: MigrationManifest): Promise<void> {
     const completed = new Set(manifest.records.map(receiptKey));
-    const pending = records.filter(record => !completed.has(recordKey(record)));
+    const latest = new Map<string, MigrationRecordReceipt>();
+    for (const receipt of manifest.records) latest.set(identityKey(receipt.identity), receipt);
+    const selected = new Map<string, VersionedRecord<T>>();
+    for (const record of records) {
+      if (completed.has(recordKey(record))) continue;
+      const key = identityKey(record.identity);
+      const receipt = latest.get(key);
+      if (receipt && this.options.compareSourceRevisions) {
+        const order = compareRevisions(this.options.compareSourceRevisions, record.sourceRevision, receipt.sourceRevision);
+        if (order < 0) continue;
+        if (order === 0) {
+          if (record.digest !== receipt.contentDigest) throw revisionConflict(key, record.sourceRevision);
+          continue;
+        }
+      }
+      const prior = selected.get(key);
+      if (!prior) {
+        selected.set(key, record);
+        continue;
+      }
+      if (!this.options.compareSourceRevisions) {
+        throw new MigrationProtocolError('AIWG_MIGRATION_DUPLICATE_IDENTITY', `snapshot contains multiple records for ${key}`);
+      }
+      const order = compareRevisions(this.options.compareSourceRevisions, record.sourceRevision, prior.sourceRevision);
+      if (order > 0) selected.set(key, record);
+      else if (order === 0 && record.digest !== prior.digest) throw revisionConflict(key, record.sourceRevision);
+    }
+    const pending = [...selected.values()].sort((left, right) => identityKey(left.identity).localeCompare(identityKey(right.identity)));
     const batches = chunk(pending, this.batchSize);
     let next = 0;
     const workers = Array.from({ length: Math.min(this.concurrency, batches.length) }, async () => {
@@ -406,7 +506,11 @@ export class StorageMigrationCoordinator<T> {
         const index = next++;
         if (index >= batches.length) return;
         const batch = batches[index];
-        const mutations = batch.map(record => mutationFor(manifest.migrationId, record));
+        const mutations = batch.map(record => mutationFor(
+          manifest.migrationId,
+          record,
+          latest.get(identityKey(record.identity))?.destinationRevision,
+        ));
         const receipt = await this.retry(
           () => this.destination.commitBatch(mutations, this.options.signal),
           `batch ${index}`,
@@ -522,6 +626,11 @@ export function digestRecords<T>(records: readonly VersionedRecord<T>[]): string
   return sha256(stableStringify(normalized));
 }
 
+export function digestRecordChunks<T>(records: readonly VersionedRecord<T>[], chunkSize: number): string[] {
+  const sorted = [...records].sort((left, right) => identityKey(left.identity).localeCompare(identityKey(right.identity)));
+  return chunk(sorted, chunkSize).map(recordsInChunk => digestRecords(recordsInChunk));
+}
+
 export function approvalDigest(manifest: MigrationManifest): string {
   const copy = structuredClone(manifest);
   delete copy.digests.approval;
@@ -568,12 +677,28 @@ function assertBoundaryState(
   }
 }
 
-function mutationFor<T>(migrationId: string, record: VersionedRecord<T>): AtomicMutation<T> {
+function mutationFor<T>(migrationId: string, record: VersionedRecord<T>, expectedRevision?: string): AtomicMutation<T> {
   return {
     operation: record.tombstone ? 'delete' : 'upsert',
     record,
     idempotencyKey: sha256(`${migrationId}\0${recordKey(record)}`),
+    ...(expectedRevision === undefined ? {} : { expectedRevision }),
   };
+}
+
+function revisionConflict(identity: string, revision: string): MigrationProtocolError {
+  return new MigrationProtocolError(
+    'AIWG_MIGRATION_REVISION_CONFLICT',
+    `source revision ${revision} has conflicting content for ${identity}`,
+  );
+}
+
+function compareRevisions(comparator: (left: string, right: string) => number, left: string, right: string): number {
+  const result = comparator(left, right);
+  if (!Number.isFinite(result)) {
+    throw new MigrationProtocolError('AIWG_MIGRATION_REVISION_ORDER_INVALID', 'source-revision comparator returned a non-finite result');
+  }
+  return Math.sign(result);
 }
 
 function recordMap<T>(records: readonly VersionedRecord<T>[]): Map<string, VersionedRecord<T>> {
@@ -623,7 +748,65 @@ function boundedInteger(raw: number | undefined, fallback: number, min: number, 
 }
 
 function summarizeVerificationFailure(verification: MigrationVerification): string {
-  return `migration parity failed: missing=${verification.missing.length} unexpected=${verification.unexpected.length} corrupt=${verification.corrupt.length} lag=${verification.lag}`;
+  const semanticFailures = Object.values(verification.semantic).filter(check => !check.valid).length;
+  return `migration parity failed: missing=${verification.missing.length} unexpected=${verification.unexpected.length} corrupt=${verification.corrupt.length} chunks=${verification.chunks.valid ? 'valid' : 'invalid'} semantic=${semanticFailures} lag=${verification.lag}`;
+}
+
+function validateSemanticVerification(verification: MigrationSemanticVerification): void {
+  for (const dimension of [
+    'schema', 'constraints', 'countsByType', 'edgeIntegrity', 'queryParity', 'traversalParity',
+  ] as const) {
+    const check = verification?.[dimension];
+    if (!check || typeof check.valid !== 'boolean' || !Number.isInteger(check.declared) || check.declared < 0 ||
+      !Number.isInteger(check.checked) || check.checked < 0 || check.checked !== check.declared || !Array.isArray(check.failures)) {
+      throw new MigrationProtocolError(
+        'AIWG_MIGRATION_SEMANTIC_VERIFICATION_INVALID',
+        `semantic verification is incomplete for ${dimension}`,
+      );
+    }
+    if (check.valid !== (check.failures.length === 0)) {
+      throw new MigrationProtocolError(
+        'AIWG_MIGRATION_SEMANTIC_VERIFICATION_INVALID',
+        `semantic verification validity disagrees with failures for ${dimension}`,
+      );
+    }
+    if (check.evidenceDigest !== undefined && !/^[0-9A-Za-z._:-]+$/.test(check.evidenceDigest)) {
+      throw new MigrationProtocolError(
+        'AIWG_MIGRATION_SEMANTIC_VERIFICATION_INVALID',
+        `semantic verification evidence digest is invalid for ${dimension}`,
+      );
+    }
+    if (['schema', 'constraints', 'queryParity'].includes(dimension) && check.declared < 1) {
+      throw new MigrationProtocolError(
+        'AIWG_MIGRATION_SEMANTIC_VERIFICATION_INVALID',
+        `semantic verification must exercise at least one ${dimension} check`,
+      );
+    }
+    if (dimension === 'countsByType') {
+      if (!isCountMap(check.sourceCounts) || !isCountMap(check.destinationCounts)) {
+        throw new MigrationProtocolError(
+          'AIWG_MIGRATION_SEMANTIC_VERIFICATION_INVALID',
+          'countsByType must include non-negative integer source and destination maps',
+        );
+      }
+      const declaredTypes = new Set([...Object.keys(check.sourceCounts), ...Object.keys(check.destinationCounts)]).size;
+      if (check.declared !== declaredTypes || (check.valid && stableStringify(check.sourceCounts) !== stableStringify(check.destinationCounts))) {
+        throw new MigrationProtocolError(
+          'AIWG_MIGRATION_SEMANTIC_VERIFICATION_INVALID',
+          'countsByType scope or validity does not match its declared maps',
+        );
+      }
+    }
+  }
+}
+
+function semanticIsValid(verification: MigrationSemanticVerification): boolean {
+  return Object.values(verification).every(check => check.valid);
+}
+
+function isCountMap(value: unknown): value is Record<string, number> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value) &&
+    Object.values(value).every(count => Number.isInteger(count) && count >= 0);
 }
 
 function errorMessage(error: unknown): string {

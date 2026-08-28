@@ -49,12 +49,22 @@ It restores source routing on failure and retains the source for the declared
 rollback window. `complete` retires the rollback state only after that
 observation workflow; `rollback` restores source routing.
 
-Callers remain responsible for backend-specific schema/constraint validation,
-counts by record type, edge integrity, and representative query/traversal parity
-before supplying human approval. The coordinator's mandatory baseline compares
-logical identities, tombstone state, record digests, total counts, whole-set
-digests, and online lag. Release qualification adds the backend-specific checks
-and fault/performance gates described by the release-gate graph.
+Every run requires a backend-aware semantic verifier. Its receipt declares and
+checks schema compatibility, constraints, counts by record type, edge integrity,
+representative query parity, and traversal parity. Empty edge or traversal
+scopes must be declared as zero rather than omitted. The coordinator separately
+compares logical identities, source revisions, tombstone state, record and
+chunk digests, aggregate counts/digests, and online lag. The complete semantic
+receipt is bound into the approval digest; a changed but still-valid result
+after approval requires a new approval before cutover.
+
+Online mode also requires a comparator for the source backend's opaque revision
+values. Exact duplicates are collapsed, older out-of-order revisions are
+ignored, and equal revisions with different content fail closed. Each update
+carries the last committed destination revision as its compare-and-set guard,
+so retries and resumed cursor pages cannot regress a newer record. Release
+qualification adds the backend-specific fault/performance gates described by
+the release-gate graph.
 
 ## Retry and cancellation
 
