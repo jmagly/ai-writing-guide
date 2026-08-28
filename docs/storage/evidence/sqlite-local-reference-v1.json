@@ -1,16 +1,16 @@
 {
   "schemaVersion": "aiwg.sqlite-graph-benchmark/v1",
   "evidenceId": "sqlite-local-reference-v1",
-  "observedAt": "2026-08-28T14:50:49.503Z",
-  "validUntil": "2026-11-26T14:50:49.503Z",
+  "observedAt": "2026-08-28T15:10:14.467Z",
+  "validUntil": "2026-11-26T15:10:14.467Z",
   "subject": {
     "branch": "main",
-    "commit": "734aa2e611de87eb8cece2796c56bbddfd60a5a7",
+    "commit": "48d33e51593fbda9d56aed66d20cf24d5c43e61b",
     "sourceFiles": [
       "src/artifacts/backends/sqlite-backend.ts",
       "tools/benchmarks/sqlite-graph.ts"
     ],
-    "sourceDigest": "daeaafd064cfd831d4cbf7edeab8dbd2463ef72a790cc71fbf67c9a52ba313a0"
+    "sourceDigest": "c20e52face9db5f5a8b77dbe2cf80de8877338a4c9c2b0defe9c56e737271e90"
   },
   "runtime": {
     "node": "v24.12.0",
@@ -40,32 +40,38 @@
     "observedDigest": "3961ba6906c85863dd1dd57f0ea4c5fab5b6b1038ab3b11cad174078e080ccce"
   },
   "measured": {
-    "writeMs": 3335.62,
-    "writesPerSecond": 5995.58,
+    "writeMs": 3587.59,
+    "writesPerSecond": 5574.5,
     "writeLatencyMs": {
-      "p50": 166.67,
-      "p95": 200.82,
-      "p99": 200.82
+      "p50": 175.23,
+      "p95": 210.54,
+      "p99": 210.54
     },
-    "queryMs": 1598.04,
-    "queryPairsPerSecond": 625.77,
+    "queryMs": 2046.36,
+    "queryPairsPerSecond": 488.67,
     "queryLatencyMs": {
-      "p50": 1.02,
-      "p95": 1.73,
-      "p99": 3.4
+      "p50": 1.31,
+      "p95": 1.98,
+      "p99": 4.14
     },
-    "eventLoopDelayMsP50": 170.76,
-    "eventLoopDelayMsP95": 204.31,
-    "eventLoopDelayMsP99": 204.31,
-    "eventLoopDelayMsMax": 204.31,
+    "eventLoopDelayMsP50": 183.59,
+    "eventLoopDelayMsP95": 210.71,
+    "eventLoopDelayMsP99": 210.71,
+    "eventLoopDelayMsMax": 210.71,
     "databaseBytes": 2379776,
     "walBytes": 4157112,
+    "writeAmplification": 5.63,
+    "lockWaits": 0,
+    "poolSaturation": null,
+    "migrationMs": null,
+    "recoveryMs": null,
+    "transportOverheadMs": null,
     "walBusy": 0,
     "walFrames": 609,
     "checkpointedFrames": 0,
-    "cpuUserMicros": 3119159,
-    "cpuSystemMicros": 522403,
-    "rssBytes": 427012096
+    "cpuUserMicros": 3743347,
+    "cpuSystemMicros": 687951,
+    "rssBytes": 376442880
   },
   "interpretation": "Reference-host observation only; not a universal support limit."
 }

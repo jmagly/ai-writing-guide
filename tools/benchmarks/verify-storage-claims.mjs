@@ -35,6 +35,13 @@ function validateEvidence(root, claim, evidence, now) {
   assert(evidence.verification.expectedEdges === evidence.verification.observedEdges, `${claim.id}: edge-count mismatch`);
   assert(Number.isInteger(evidence.verification.queryChecks) && evidence.verification.queryChecks > 0, `${claim.id}: query parity is absent`);
   assert(Number.isInteger(evidence.verification.traversalChecks) && evidence.verification.traversalChecks > 0, `${claim.id}: traversal parity is absent`);
+  for (const metric of [
+    'databaseBytes', 'writeAmplification', 'walBytes', 'lockWaits', 'poolSaturation',
+    'migrationMs', 'recoveryMs', 'transportOverheadMs', 'cpuUserMicros', 'cpuSystemMicros', 'rssBytes',
+  ]) {
+    const value = evidence.measured?.[metric];
+    assert(value === null || (typeof value === 'number' && Number.isFinite(value) && value >= 0), `${claim.id}: resource metric ${metric} is missing or invalid`);
+  }
   assert(Array.isArray(evidence.subject?.sourceFiles) && evidence.subject.sourceFiles.length > 0, `${claim.id}: source scope is absent`);
   assert(JSON.stringify(evidence.subject.sourceFiles) === JSON.stringify(claim.sourceFiles), `${claim.id}: source scope differs from registry`);
   assert(evidence.subject.sourceDigest === digestSources(root, claim.sourceFiles), `${claim.id}: evidence is stale for current benchmark sources`);

@@ -59,6 +59,23 @@ describe('storage qualification evidence (#2191)', () => {
       scope: { ...scope(), operations: 99 }, records,
     })).rejects.toThrow(/declared operation scope/);
   });
+
+  it('reports unavailable resource dimensions explicitly and rejects invalid observations', async () => {
+    const report = await qualifyStorageBackend(new MemoryEndpoint(), { scope: scope(), records });
+    expect(report.resources).toMatchObject({
+      databaseBytes: null,
+      writeAmplification: null,
+      walBytes: null,
+      lockWaits: null,
+      poolSaturation: null,
+      migrationMs: null,
+      recoveryMs: null,
+      transportOverheadMs: null,
+    });
+    await expect(qualifyStorageBackend(new MemoryEndpoint(), {
+      scope: scope(), records, resourceObservation: () => ({ lockWaits: -1 }),
+    })).rejects.toThrow(/lockWaits must be a finite non-negative number/);
+  });
 });
 
 class MemoryEndpoint {

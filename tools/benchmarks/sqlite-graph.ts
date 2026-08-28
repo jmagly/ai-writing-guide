@@ -22,6 +22,7 @@ try {
   const rssBefore = process.memoryUsage().rss;
   const delays: number[] = [];
   const writeLatencies: number[] = [];
+  let logicalBytes = 0;
   const started = performance.now();
   for (let batch = 0; batch < batches; batch++) {
     const batchStarted = performance.now();
@@ -33,11 +34,18 @@ try {
     const start = Math.floor((nodeCount * batch) / batches);
     const end = Math.floor((nodeCount * (batch + 1)) / batches);
     for (let index = start; index < end; index++) {
-      backend.addNode(`node-${index}`, {
+      const id = `node-${index}`;
+      const attrs = {
         type: index % 2 ? 'odd' : 'even',
         phase: `phase-${index % 4}`,
-      });
-      if (index > 0) backend.addEdge(`node-${index - 1}`, `node-${index}`, 'next');
+      };
+      backend.addNode(id, attrs);
+      logicalBytes += Buffer.byteLength(JSON.stringify({ id, attrs }));
+      if (index > 0) {
+        const source = `node-${index - 1}`;
+        backend.addEdge(source, id, 'next');
+        logicalBytes += Buffer.byteLength(JSON.stringify({ source, target: id, type: 'next' }));
+      }
     }
     writeLatencies.push(performance.now() - batchStarted);
     delays.push(await timer);
@@ -87,6 +95,7 @@ try {
   const now = new Date();
   const cpu = process.cpuUsage(cpuBefore);
   const repoRoot = process.cwd();
+  const databaseBytes = statSync(dbPath).size;
   const evidence = {
     schemaVersion: 'aiwg.sqlite-graph-benchmark/v1',
     evidenceId: 'sqlite-local-reference-v1',
@@ -128,8 +137,14 @@ try {
       eventLoopDelayMsP95: round(percentile(delays, 0.95)),
       eventLoopDelayMsP99: round(percentile(delays, 0.99)),
       eventLoopDelayMsMax: round(delays.at(-1) ?? 0),
-      databaseBytes: statSync(dbPath).size,
+      databaseBytes,
       walBytes,
+      writeAmplification: round((databaseBytes + walBytes) / Math.max(logicalBytes, 1)),
+      lockWaits: wal.busy,
+      poolSaturation: null,
+      migrationMs: null,
+      recoveryMs: null,
+      transportOverheadMs: null,
       walBusy: wal.busy,
       walFrames: wal.logFrames,
       checkpointedFrames: wal.checkpointedFrames,

@@ -21,9 +21,11 @@ evidence. These jobs do not run for pull requests or ordinary main pushes.
 The `aiwg.storage-qualification/v1` report records backend, branch, commit,
 dataset, declared and observed scope, readers/writers, operation count, exact
 record digests, side-effect outcomes, retries/errors, p50/p95/p99 latency,
-throughput, CPU, RSS, and optional database size, write amplification, WAL,
+throughput, CPU, RSS, and nullable backend-specific database size, write amplification, WAL,
 lock waits, pool saturation, migration/recovery time, and HTTP transport
-overhead. `assertCurrentStorageEvidence` rejects invalid, incomplete, or stale
+overhead. Backend-specific resource fields are always present as a nonnegative
+measurement or `null`, so an unavailable observation cannot be confused with a
+forgotten field. `assertCurrentStorageEvidence` rejects invalid, incomplete, or stale
 records before a performance statement is published. The declared reader count
 now drives actual concurrent reads while record writes are distributed across
 the declared bounded writer count; the report rejects any declared-versus-

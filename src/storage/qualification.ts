@@ -19,14 +19,14 @@ export interface StorageResourceObservation {
   cpuUserMicros: number;
   cpuSystemMicros: number;
   rssBytes: number;
-  databaseBytes?: number;
-  writeAmplification?: number;
-  walBytes?: number;
-  lockWaits?: number;
-  poolSaturation?: number;
-  migrationMs?: number;
-  recoveryMs?: number;
-  transportOverheadMs?: number;
+  databaseBytes: number | null;
+  writeAmplification: number | null;
+  walBytes: number | null;
+  lockWaits: number | null;
+  poolSaturation: number | null;
+  migrationMs: number | null;
+  recoveryMs: number | null;
+  transportOverheadMs: number | null;
 }
 
 export interface StorageQualificationReport {
@@ -156,7 +156,14 @@ export async function qualifyStorageBackend<T>(
     resources: {
       cpuUserMicros: cpu.user, cpuSystemMicros: cpu.system,
       rssBytes: Math.max(process.memoryUsage().rss, rssBefore),
-      ...supplied,
+      databaseBytes: resourceMetric(supplied.databaseBytes, 'databaseBytes'),
+      writeAmplification: resourceMetric(supplied.writeAmplification, 'writeAmplification'),
+      walBytes: resourceMetric(supplied.walBytes, 'walBytes'),
+      lockWaits: resourceMetric(supplied.lockWaits, 'lockWaits'),
+      poolSaturation: resourceMetric(supplied.poolSaturation, 'poolSaturation'),
+      migrationMs: resourceMetric(supplied.migrationMs, 'migrationMs'),
+      recoveryMs: resourceMetric(supplied.recoveryMs, 'recoveryMs'),
+      transportOverheadMs: resourceMetric(supplied.transportOverheadMs, 'transportOverheadMs'),
     },
     sideEffects: sideEffects.sort((a, b) => a.operation.localeCompare(b.operation)),
   };
@@ -218,4 +225,10 @@ function bounded(value: number | undefined, fallback: number, min: number, max: 
   const resolved = value ?? fallback;
   if (!Number.isInteger(resolved) || resolved < min || resolved > max) throw new Error(`${label} must be an integer from ${min} through ${max}`);
   return resolved;
+}
+
+function resourceMetric(value: number | null | undefined, label: string): number | null {
+  if (value === undefined || value === null) return null;
+  if (!Number.isFinite(value) || value < 0) throw new Error(`${label} must be a finite non-negative number`);
+  return value;
 }
