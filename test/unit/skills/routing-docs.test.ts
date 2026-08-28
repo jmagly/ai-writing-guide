@@ -31,6 +31,10 @@ describe('routing documentation regressions', () => {
     expect(skill).toContain('stays AIWG-native');
     const addressIssues = read('agentic/code/frameworks/sdlc-complete/skills/address-issues/SKILL.md');
     expect(addressIssues).toContain('Codex and Claude Code');
+    expect(addressIssues).toContain('MUST NOT author a free-form cycle comment');
+    expect(addressIssues).toContain('scripts/cycle-comment.mjs');
+    expect(addressIssues).toContain('templates/issue-comments/al-cycle.md');
+    expect(addressIssues).toContain('structured checkpoint is returned to address-issues');
     if (exists('.aiwg/research/codex-goal-integration.md')) {
       expect(exists('.aiwg/research/codex-goal-integration.md')).toBe(true);
     }

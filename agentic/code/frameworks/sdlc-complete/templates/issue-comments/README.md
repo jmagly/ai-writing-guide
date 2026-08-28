@@ -1,5 +1,15 @@
 # Issue Comment Templates
 
+## Canonical address-issues cycle status
+
+`al-cycle.md` is the single canonical tracker payload for every
+`address-issues` cycle, including Codex and Claude Code native-goal checkpoints
+and continuations after human feedback or authorization. Render and validate it
+with `skills/address-issues/scripts/cycle-comment.mjs` before tracker writes.
+The generic progress, feedback, blocker, and completion templates below remain
+available for non-cycle `issue-comment` operations; they must not replace the
+five-section AL CYCLE contract.
+
 Standardized templates for structured issue tracking communication.
 
 ## Overview

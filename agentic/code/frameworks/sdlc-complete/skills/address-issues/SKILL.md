@@ -177,10 +177,10 @@ Max cycles per issue: 6
 
 ### Phase 2: Issue-Driven Agent Loop (per issue)
 
-Before dispatching the cycle, detect the provider with `aiwg runtime-info` or the steward capability surface. On providers with native `/goal` (Codex and Claude Code), use `/goal` for the in-session iteration mechanism and keep `address-issues` responsible for issue-thread comments, activity-log entries, threat gates, and final verification. If the host cannot invoke `/goal` programmatically, pause and print the exact command for the operator:
+Before dispatching the cycle, detect the provider with `aiwg runtime-info` or the steward capability surface. On providers with native `/goal` (Codex and Claude Code), use `/goal` for the in-session iteration mechanism and keep `address-issues` responsible for issue-thread comments, activity-log entries, threat gates, and final verification. The native goal is a work/checkpoint mechanism only: it MUST NOT author a free-form cycle comment. After every native goal checkpoint or continuation, the parent orchestrator renders and validates the tracker payload through `scripts/cycle-comment.mjs` using the canonical `templates/issue-comments/al-cycle.md` field contract. If the host cannot invoke `/goal` programmatically, pause and print the exact command for the operator:
 
 ```text
-/goal "Address issue #N: <title>; completion: implementation verified, tests pass, and AL CYCLE status is posted"
+/goal "Address issue #N: <title>; completion: implementation verified, tests pass, and a structured checkpoint is returned to address-issues for canonical AL CYCLE rendering and validated tracker posting"
 ```
 
 Other providers continue with the AIWG AL CYCLE flow below. External/background loops remain out of scope for `/goal` and route to `agent-loop-ext` only when explicitly requested.
@@ -203,7 +203,22 @@ after assessment and before the tracker write. Audit records without
 interrupting; enforce-mode `flag`/`require-authorization` pauses the write and
 `reject` blocks it. Off mode disables only the AIWG classifier.
 
-Post a structured markdown comment to the issue thread:
+Render the comment from cycle-specific data, then validate that exact tracker
+payload before the policy/redaction/write steps:
+
+```bash
+node "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/address-issues/scripts/cycle-comment.mjs" render --input-json cycle.json > cycle-comment.md
+node "$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/skills/address-issues/scripts/cycle-comment.mjs" validate --comment-file cycle-comment.md
+```
+
+The input JSON supplies `cycle`, `status`, `actions`, `checklist`, `blockers`,
+`openQuestions`, and `nextSteps`. Missing sections, empty sections, and template
+placeholders fail validation; do not post or silently downgrade the comment.
+When `delivery.issue_comment_on_cycle` is `false`, skip both rendering and the
+tracker write intentionally. Native-goal resumes after authorization or human
+feedback use this same renderer and validator without exception.
+
+Post the validated canonical markdown comment to the issue thread:
 
 ```markdown
 **AL CYCLE #N – [Progress|Blocked|Review Needed]**

@@ -155,6 +155,12 @@ Based on `--type`, load appropriate template:
 | `blocker` | `blocker-found.md` | Report blocking issues |
 | `custom` | None | Freeform comment |
 
+`address-issues` cycle comments are not generic `progress` comments. They use
+the single canonical `templates/issue-comments/al-cycle.md` contract and
+`address-issues/scripts/cycle-comment.mjs` renderer/validator. The exact
+rendered payload must validate before any tracker write; native-goal and resumed
+cycles may not fall back to `custom` or an abbreviated free-form comment.
+
 **Load Template**:
 ```bash
 # Read template

@@ -85,14 +85,34 @@ Each cycle of the agent loop follows this protocol:
 
 **Step 1: Work** — Read issue context, implement fix/feature, run tests
 
-**Step 2: Post Status** — Post structured comment to the issue thread:
+**Step 2: Post Status** — Render and validate the complete tracker payload with
+`address-issues/scripts/cycle-comment.mjs` and the canonical
+`templates/issue-comments/al-cycle.md` contract before posting. This applies to
+initial, multi-cycle, native-goal, feedback-resume, and authorization-resume
+cycles. The required tracker payload is:
 ```
 **AL CYCLE #N – [Progress|Blocked|Review Needed]**
-- Actions taken this cycle
-- Task checklist (updated)
-- Blockers (if any)
-- Next steps
+
+### Actions This Cycle
+[Specific actions and verification evidence]
+
+### Task Checklist
+[Completed and remaining checklist items]
+
+### Blockers
+[Concrete blocker or `None.`]
+
+### Open Questions
+[Every human question and resume condition, or `None.`]
+
+### Next Steps
+[Next concrete action]
 ```
+
+The tracker payload must contain all five canonical headings with substantive
+cycle-specific content or an explicit `None.`; validation failure blocks the
+write. When `delivery.issue_comment_on_cycle` is `false`, skip rendering and
+posting.
 
 **Step 3: Scan & Respond** — Read all new thread comments, classify them (feedback/question/approval/correction), and incorporate into the next cycle. Never ignore human input.
 
