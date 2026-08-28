@@ -12,7 +12,7 @@
  * @tests @test/unit/artifacts/graphology-backend.test.ts
  */
 
-import type { GraphBackend } from '../graph-backend.js';
+import { compareGraphIds, pageGraphIds, type GraphBackend, type GraphNodeFilters, type GraphNodePage } from '../graph-backend.js';
 import type { DependencyGraph, TypedEdge } from '../types.js';
 import { normalizeEdges } from '../types.js';
 import { loadFeaturePackage } from '../../features/runtime.js';
@@ -83,7 +83,17 @@ export class GraphologyBackend implements GraphBackend {
   }
 
   nodes(): string[] {
-    return this.graph.nodes();
+    return this.graph.nodes().sort(compareGraphIds);
+  }
+
+  queryNodes(filters: GraphNodeFilters): string[] {
+    return this.graph.nodes()
+      .filter((id: string) => Object.entries(filters).every(([key, value]) => this.graph.getNodeAttribute(id, key) === value))
+      .sort(compareGraphIds);
+  }
+
+  pageNodes(limit: number, after?: string): GraphNodePage {
+    return pageGraphIds(this.graph.nodes(), limit, after);
   }
 
   // --- Traversal ---
@@ -108,7 +118,7 @@ export class GraphologyBackend implements GraphBackend {
       // Add the "other" node
       results.add(src === nodeId ? tgt : src);
     }
-    return [...results];
+    return [...results].sort(compareGraphIds);
   }
 
   // --- Set operations ---

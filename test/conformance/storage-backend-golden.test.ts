@@ -40,6 +40,15 @@ describe('versioned storage backend golden dataset (#2191)', () => {
         expect(graph.edgeCount()).toBe(fixture.declared.edges);
         expect(graph.getNodeAttrs('東京')).toMatchObject({ title: '東京', summary: 'Unicode retained' });
         expect(graph.getNodeAttrs('null-value')).toMatchObject({ phase: null, title: null });
+        expect(graph.nodes()).toEqual(fixture.expected.orderedIds);
+        expect(graph.queryNodes({ type: 'feature', phase: 'construction' })).toEqual(fixture.expected.constructionFeatures);
+        expect(graph.queryNodes({ phase: null })).toEqual(fixture.expected.nullPhase);
+        const first = graph.pageNodes(3);
+        const second = graph.pageNodes(3, first.nextCursor);
+        const third = graph.pageNodes(3, second.nextCursor);
+        expect(first).toEqual({ nodes: fixture.expected.orderedIds.slice(0, 3), nextCursor: 'delete-me' });
+        expect(second).toEqual({ nodes: fixture.expected.orderedIds.slice(3, 6), nextCursor: 'root' });
+        expect(third).toEqual({ nodes: fixture.expected.orderedIds.slice(6) });
         expect(sorted(graph.neighbors('root', 'out', 'depends-on'))).toEqual(fixture.expected.rootOutDependsOn);
         expect(sorted(graph.neighbors('東京', 'in', 'depends-on'))).toEqual(fixture.expected.tokyoInDependsOn);
         expect(sorted(graph.intersection(['alpha', 'beta', '東京'], ['beta', '東京']))).toEqual(fixture.expected.intersection);

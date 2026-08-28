@@ -10,7 +10,7 @@
  * @tests @test/unit/artifacts/graph-backend.test.ts
  */
 
-import type { GraphBackend } from '../graph-backend.js';
+import { compareGraphIds, pageGraphIds, type GraphBackend, type GraphNodeFilters, type GraphNodePage } from '../graph-backend.js';
 import type { DependencyGraph, TypedEdge } from '../types.js';
 import { normalizeEdges } from '../types.js';
 
@@ -72,7 +72,18 @@ export class JsonGraphBackend implements GraphBackend {
   }
 
   nodes(): string[] {
-    return [...this.graph.keys()];
+    return [...this.graph.keys()].sort(compareGraphIds);
+  }
+
+  queryNodes(filters: GraphNodeFilters): string[] {
+    return [...this.graph]
+      .filter(([, node]) => Object.entries(filters).every(([key, value]) => node.attrs[key] === value))
+      .map(([id]) => id)
+      .sort(compareGraphIds);
+  }
+
+  pageNodes(limit: number, after?: string): GraphNodePage {
+    return pageGraphIds([...this.graph.keys()], limit, after);
   }
 
   // --- Traversal ---
@@ -99,7 +110,7 @@ export class JsonGraphBackend implements GraphBackend {
       }
     }
 
-    return [...results];
+    return [...results].sort(compareGraphIds);
   }
 
   // --- Set operations ---

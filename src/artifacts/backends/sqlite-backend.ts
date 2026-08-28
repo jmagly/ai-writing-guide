@@ -14,7 +14,7 @@
  * @tests @test/unit/artifacts/sqlite-backend.test.ts
  */
 
-import type { GraphBackend } from '../graph-backend.js';
+import { compareGraphIds, pageGraphIds, type GraphBackend, type GraphNodeFilters, type GraphNodePage } from '../graph-backend.js';
 import type { DependencyGraph, TypedEdge } from '../types.js';
 import { normalizeEdges } from '../types.js';
 import { requireFeaturePackage } from '../../features/runtime.js';
@@ -164,23 +164,28 @@ export class SqliteGraphBackend implements GraphBackend {
   }
 
   nodes(): string[] {
-    return this.db.prepare('SELECT id FROM nodes').all().map((r: { id: string }) => r.id);
+    return this.db.prepare('SELECT id FROM nodes ORDER BY id COLLATE BINARY').all()
+      .map((r: { id: string }) => r.id);
   }
 
-  queryNodes(filters: { type?: string; phase?: string }): string[] {
+  queryNodes(filters: GraphNodeFilters): string[] {
     const clauses: string[] = [];
     const values: string[] = [];
     if (filters.type !== undefined) {
-      clauses.push('type = ?');
-      values.push(filters.type);
+      if (filters.type === null) clauses.push('type IS NULL');
+      else { clauses.push('type = ?'); values.push(filters.type); }
     }
     if (filters.phase !== undefined) {
-      clauses.push('phase = ?');
-      values.push(filters.phase);
+      if (filters.phase === null) clauses.push('phase IS NULL');
+      else { clauses.push('phase = ?'); values.push(filters.phase); }
     }
     const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
-    return this.db.prepare(`SELECT id FROM nodes ${where} ORDER BY id`).all(...values)
+    return this.db.prepare(`SELECT id FROM nodes ${where} ORDER BY id COLLATE BINARY`).all(...values)
       .map((row: { id: string }) => row.id);
+  }
+
+  pageNodes(limit: number, after?: string): GraphNodePage {
+    return pageGraphIds(this.nodes(), limit, after);
   }
 
   // --- Traversal ---
@@ -208,7 +213,7 @@ export class SqliteGraphBackend implements GraphBackend {
       for (const row of rows) results.add(row.target);
     }
 
-    return [...results];
+    return [...results].sort(compareGraphIds);
   }
 
   // --- Set operations (native SQL) ---

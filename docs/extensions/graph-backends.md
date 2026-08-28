@@ -214,7 +214,7 @@ A 2026-08-28 reference-host qualification on linux x64, Node 24.12.0, better-sql
 
 | Nodes / edges | Write throughput | Query + traversal pairs | Write latency p50/p95/p99 | Query latency p50/p95/p99 | Event-loop delay p95 | DB / peak WAL bytes |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 10,000 / 9,999 | 5,575 ops/s | 489 pairs/s | 175.23 / 210.54 / 210.54 ms | 1.31 / 1.98 / 4.14 ms | 210.71 ms | 2,379,776 / 4,157,112 |
+| 10,000 / 9,999 | 4,011 ops/s | 506 pairs/s | 254.77 / 378.22 / 378.22 ms | 1.2 / 1.97 / 2.74 ms | 378.27 ms | 2,379,776 / 4,157,112 |
 
 Evidence: [sqlite-local-reference-v1](../storage/evidence/sqlite-local-reference-v1.json). The release gate rejects this claim when its correctness digest, source digest, freshness window, or rendered values no longer match.
 <!-- aiwg-storage-benchmark-claim:sqlite-local-reference-v1:end -->

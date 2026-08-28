@@ -4,6 +4,9 @@
 runs the versioned graph corpus against JSON, Graphology, and SQLite; exercises
 the migration fault/recovery protocol; verifies the PostgreSQL transports; and
 tests the evidence reporter's negative controls.
+The common graph contract includes UTF-8 byte ordering, Unicode/null attribute
+parity, exact filters, and deterministic keyset pages in addition to CRUD,
+typed traversal, set operations, incremental reconciliation, and deletion.
 
 Server qualification jobs opt in with their declared service URLs. Correctness
 must pass before timing is evidence:

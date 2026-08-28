@@ -39,6 +39,9 @@
     "tokyoInDependsOn": ["alpha", "beta"],
     "intersection": ["beta", "東京"],
     "difference": ["alpha"],
-    "union": ["alpha", "beta", "emoji-🧪", "東京"]
+    "union": ["alpha", "beta", "emoji-🧪", "東京"],
+    "orderedIds": ["alpha", "beta", "delete-me", "emoji-🧪", "null-value", "root", "updated", "東京"],
+    "constructionFeatures": ["alpha", "updated", "東京"],
+    "nullPhase": ["null-value"]
   }
 }

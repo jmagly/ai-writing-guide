@@ -44,6 +44,12 @@ export interface GraphBackend {
   /** List all node IDs */
   nodes(): string[];
 
+  /** Deterministic exact-match query over common indexed attributes. */
+  queryNodes(filters: GraphNodeFilters): string[];
+
+  /** Deterministic keyset page ordered by the cross-backend UTF-8 collation. */
+  pageNodes(limit: number, after?: string): GraphNodePage;
+
   // --- Traversal ---
 
   /**
@@ -82,6 +88,34 @@ export interface GraphBackend {
   edgeCount(): number;
   /** Release backend resources. In-memory implementations are no-ops. */
   close?(): void | Promise<void>;
+}
+
+export interface GraphNodeFilters {
+  type?: string | null;
+  phase?: string | null;
+}
+
+export interface GraphNodePage {
+  nodes: string[];
+  nextCursor?: string;
+}
+
+/** SQLite BINARY collation and local backends share this UTF-8 byte order. */
+export function compareGraphIds(left: string, right: string): number {
+  return Buffer.compare(Buffer.from(left, 'utf8'), Buffer.from(right, 'utf8'));
+}
+
+export function pageGraphIds(ids: readonly string[], limit: number, after?: string): GraphNodePage {
+  if (!Number.isInteger(limit) || limit < 1 || limit > 10_000) {
+    throw new Error('graph page limit must be an integer from 1 through 10000');
+  }
+  const ordered = [...ids].sort(compareGraphIds);
+  const eligible = after === undefined ? ordered : ordered.filter(id => compareGraphIds(id, after) > 0);
+  const nodes = eligible.slice(0, limit);
+  return {
+    nodes,
+    ...(eligible.length > limit && nodes.length ? { nextCursor: nodes[nodes.length - 1] } : {}),
+  };
 }
 
 /**
