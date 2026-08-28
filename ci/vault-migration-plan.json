@@ -23,6 +23,12 @@
     "RELEASE_SIGNING_KEY_VAULT_FIELD",
     "RELEASE_SIGNING_PASSPHRASE_VAULT_PATH",
     "RELEASE_SIGNING_PASSPHRASE_VAULT_FIELD",
+    "AIWG_POSTGRES_LIVE_URL_VAULT_PATH",
+    "AIWG_POSTGRES_LIVE_URL_VAULT_FIELD",
+    "AIWG_POSTGREST_LIVE_URL_VAULT_PATH",
+    "AIWG_POSTGREST_LIVE_URL_VAULT_FIELD",
+    "AIWG_POSTGREST_AUTHORIZATION_VAULT_PATH",
+    "AIWG_POSTGREST_AUTHORIZATION_VAULT_FIELD",
     "DOCSITE_DEPLOY_HOST",
     "DOCSITE_DEPLOY_PORT",
     "DOCSITE_DEPLOY_USER",
@@ -92,6 +98,30 @@
       "env": "GPG_PASSPHRASE_FILE",
       "type": "passphrase",
       "purpose": "Release signing passphrase"
+    },
+    {
+      "id": "storage-postgres-live-url",
+      "path_variable": "AIWG_POSTGRES_LIVE_URL_VAULT_PATH",
+      "field_variable": "AIWG_POSTGRES_LIVE_URL_VAULT_FIELD",
+      "env": "AIWG_POSTGRES_LIVE_URL",
+      "type": "service-credential",
+      "purpose": "Direct PostgreSQL storage qualification endpoint"
+    },
+    {
+      "id": "storage-postgrest-live-url",
+      "path_variable": "AIWG_POSTGREST_LIVE_URL_VAULT_PATH",
+      "field_variable": "AIWG_POSTGREST_LIVE_URL_VAULT_FIELD",
+      "env": "AIWG_POSTGREST_LIVE_URL",
+      "type": "service-credential",
+      "purpose": "PostgREST storage qualification endpoint"
+    },
+    {
+      "id": "storage-postgrest-authorization",
+      "path_variable": "AIWG_POSTGREST_AUTHORIZATION_VAULT_PATH",
+      "field_variable": "AIWG_POSTGREST_AUTHORIZATION_VAULT_FIELD",
+      "env": "AIWG_POSTGREST_AUTHORIZATION",
+      "type": "api-token",
+      "purpose": "Authenticated PostgREST and RLS storage qualification"
     }
   ]
 }

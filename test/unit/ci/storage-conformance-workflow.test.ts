@@ -23,8 +23,13 @@ describe('storage conformance CI gate (#2191)', () => {
     expect(workflow).toContain('workflow_dispatch:');
     expect(workflow).not.toMatch(/\bpull_request:/);
     expect(workflow).not.toMatch(/\bpush:/);
-    expect(workflow).toContain("if: ${{ secrets.AIWG_POSTGRES_LIVE_URL != '' }}");
-    expect(workflow).toContain("if: ${{ secrets.AIWG_POSTGREST_LIVE_URL != '' }}");
+    expect(workflow).not.toMatch(/secrets\.AIWG_(?:POSTGRES|POSTGREST)/);
+    expect(workflow.match(/secrets\.VAULT_CI_ROLE_ID/g)).toHaveLength(5);
+    expect(workflow.match(/secrets\.VAULT_CI_SECRET_ID/g)).toHaveLength(5);
+    expect(workflow).toContain('ci/vault-fetch.storage-postgres.spec');
+    expect(workflow).toContain('ci/vault-fetch.storage-postgrest.spec');
+    expect(workflow).toContain('ci/vault-fetch.storage-postgrest-auth.spec');
+    expect(workflow.match(/bash ci\/vault-fetch\.sh --cleanup/g)).toHaveLength(2);
     expect(workflow).toContain('test/integration/storage-postgres-live.test.ts');
     expect(workflow).toContain('test/integration/storage-postgrest-live.test.ts');
     expect(workflow.match(/AIWG_STORAGE_QUALIFICATION_COMMIT/g)).toHaveLength(1);

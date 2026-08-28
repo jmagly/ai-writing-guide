@@ -1,0 +1,2 @@
+# Vault CI fetch spec for the PostgREST storage qualification job.
+env AIWG_POSTGREST_LIVE_URL ${AIWG_POSTGREST_LIVE_URL_VAULT_PATH} ${AIWG_POSTGREST_LIVE_URL_VAULT_FIELD}

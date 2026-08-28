@@ -1,7 +1,7 @@
 # CI/CD Secrets Configuration
 
-**Version:** 3.1
-**Last Updated:** 2026-08-24
+**Version:** 3.2
+**Last Updated:** 2026-08-28
 **Target Audience:** Repository maintainers and administrators
 
 AIWG's Gitea CI/CD workflows use vault for repository-managed secrets. Gitea
@@ -30,6 +30,9 @@ issued by the CI system and is still used by PR-comment workflows.
 | `.gitea/workflows/notify-site.yml`         | `ci/vault-fetch.notify-site.spec`         | `AIWG_IO_DISPATCH_TOKEN`  |
 | `.gitea/workflows/docsite-deploy.yml`      | `ci/vault-fetch.docsite-deploy.spec`      | `DOCSITE_DEPLOY_KEY_FILE` |
 | `.gitea/workflows/docsite-deploy.yml`      | `ci/vault-fetch.docsite-cloudflare.spec`  | `CLOUDFLARE_API_TOKEN`   |
+| `.gitea/workflows/storage-server-conformance.yml` | `ci/vault-fetch.storage-postgres.spec` | `AIWG_POSTGRES_LIVE_URL` |
+| `.gitea/workflows/storage-server-conformance.yml` | `ci/vault-fetch.storage-postgrest.spec` | `AIWG_POSTGREST_LIVE_URL` |
+| `.gitea/workflows/storage-server-conformance.yml` | `ci/vault-fetch.storage-postgrest-auth.spec` | `AIWG_POSTGREST_AUTHORIZATION` |
 
 The specs contain only `*_VAULT_PATH` and `*_VAULT_FIELD` placeholders. Concrete
 vault paths, metadata paths, hostnames, and fields are stored as private Gitea
@@ -64,6 +67,9 @@ npm run lint:vault-migration
 | `CLOUDFLARE_API_TOKEN_VAULT_PATH`, `CLOUDFLARE_API_TOKEN_VAULT_FIELD`                      | `ROUTE`         | Gitea Actions variables    |
 | `RELEASE_SIGNING_KEY_VAULT_PATH`, `RELEASE_SIGNING_KEY_VAULT_FIELD`                        | `ROUTE`         | Gitea Actions variables    |
 | `RELEASE_SIGNING_PASSPHRASE_VAULT_PATH`, `RELEASE_SIGNING_PASSPHRASE_VAULT_FIELD`          | `ROUTE`         | Gitea Actions variables    |
+| `AIWG_POSTGRES_LIVE_URL_VAULT_PATH`, `AIWG_POSTGRES_LIVE_URL_VAULT_FIELD`                  | `ROUTE`         | Gitea Actions variables    |
+| `AIWG_POSTGREST_LIVE_URL_VAULT_PATH`, `AIWG_POSTGREST_LIVE_URL_VAULT_FIELD`                | `ROUTE`         | Gitea Actions variables    |
+| `AIWG_POSTGREST_AUTHORIZATION_VAULT_PATH`, `AIWG_POSTGREST_AUTHORIZATION_VAULT_FIELD`      | `ROUTE`         | Gitea Actions variables    |
 | `VAULT_ADDR`                                                                               | `ROUTE`         | Gitea Actions variable     |
 | `DOCSITE_DEPLOY_HOST`, `DOCSITE_DEPLOY_PORT`, `DOCSITE_DEPLOY_USER`, `DOCSITE_DEPLOY_PATH` | `CONFIG`        | Gitea Actions variables    |
 
@@ -94,6 +100,9 @@ docsite-deploy-key.value
 cloudflare-api-token.value
 release-signing-key.value
 release-signing-passphrase.value
+storage-postgres-live-url.value
+storage-postgrest-live-url.value
+storage-postgrest-authorization.value
 ```
 
 Preview the vault writes without printing paths:

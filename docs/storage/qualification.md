@@ -17,9 +17,12 @@ AIWG_POSTGREST_LIVE_URL='https://…' npm run test:conformance:storage:server
 ```
 
 The Gitea `Storage Server Conformance` workflow exposes separate manual-only
-PostgreSQL Direct and PostgREST jobs. Each job is guarded by its service-URL
-secret, binds reports to the workflow commit/ref, and uploads sanitized JSON
-evidence. These jobs do not run for pull requests or ordinary main pushes.
+PostgreSQL Direct and PostgREST jobs. Each job is guarded by the Vault AppRole
+bootstrap pair and its service-URL Vault mapping, binds reports to the workflow
+commit/ref, and uploads sanitized JSON evidence. Gitea stores only
+`VAULT_CI_ROLE_ID` and `VAULT_CI_SECRET_ID`; repository variables select the
+Vault paths and fields for the URLs and optional PostgREST authorization. These
+jobs do not run for pull requests or ordinary main pushes.
 
 The `aiwg.storage-qualification/v1` report records backend, branch, commit,
 dataset, declared and observed scope, readers/writers, operation count, exact
