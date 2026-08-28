@@ -145,19 +145,39 @@ describeLive('direct PostgreSQL live qualification (#2195)', () => {
     const source = new MemorySource(tenant, records);
     const manifests: MigrationManifest[] = [];
     const routing: string[] = [];
+    const sourceBoundary: string[] = [];
     const coordinator = new StorageMigrationCoordinator(source, destination, {
       async save(manifest) { manifests.push(structuredClone(manifest)); },
     }, {
-      async switchReads() { routing.push('reads'); },
-      async switchWrites() { routing.push('writes'); },
+      async switchAtomically() {
+        routing.push('atomic-switch');
+        return {
+          switchId: 'postgres-live-switch', previousTarget: 'filesystem', activeTarget: 'postgres-direct',
+          committedAt: new Date().toISOString(),
+        };
+      },
       async restoreSource() { routing.push('restore'); },
-    }, { mode: 'offline', toolVersion: 'live-qualification', batchSize: 1, concurrency: 2 });
+    }, {
+      mode: 'offline', toolVersion: 'live-qualification', batchSize: 1, concurrency: 2,
+      safety: {
+        async prepare() {
+          sourceBoundary.push('quiesced');
+          return { boundaryId: 'postgres-live-offline', state: 'quiesced', establishedAt: new Date().toISOString() };
+        },
+        async freeze() {
+          sourceBoundary.push('frozen');
+          return { boundaryId: 'postgres-live-final', state: 'quiesced', establishedAt: new Date().toISOString() };
+        },
+        async release(_boundary, outcome) { sourceBoundary.push(`released:${outcome}`); },
+      },
+    });
     try {
       const applied = await coordinator.apply(await coordinator.preview());
       expect(applied).toMatchObject({ state: 'awaiting-approval', counts: { committed: 2 } });
       const cutover = await coordinator.cutover(applied, applied.digests.approval!);
       expect(cutover.state).toBe('observing');
-      expect(routing).toEqual(['reads', 'writes']);
+      expect(routing).toEqual(['atomic-switch']);
+      expect(sourceBoundary).toEqual(['quiesced', 'frozen', 'released:cutover']);
       expect(manifests.at(-1)?.state).toBe('observing');
     } finally {
       await destination.close();

@@ -7,6 +7,12 @@ consistent snapshot, optional change cursor, atomic idempotent batch commits,
 and logical reads; the coordinator supplies bounded parallel copy, durable
 receipts, exact resume, parity checks, approval binding, cutover, and rollback.
 
+Every run also requires a `MigrationSafetyControl`. Offline preparation must
+return a durable `quiesced` receipt before the snapshot is opened. Online
+preparation must return a `tracking` receipt, then return a second `quiesced`
+receipt for the final write freeze. A missing or contradictory receipt fails
+closed and is included in the approval digest.
+
 ## Manifest and receipt invariants
 
 The manifest binds the migration ID and mode to source and destination backend,
@@ -35,11 +41,13 @@ coordinator bulk-copies the snapshot, replays updates and tombstones
 idempotently, and will not approve a manifest until the cursor reports drained.
 The operator then applies a brief source-write freeze for final verification.
 
-Cutover accepts only the approval digest stored in the verified manifest. It
-switches reads before writes, records every state transition through the
-manifest store, restores source routing on failure, and retains the source for
-the declared rollback window. `complete` retires the rollback state only after
-that observation workflow; `rollback` restores source routing.
+Cutover accepts only the approval digest stored in the verified manifest. The
+routing adapter must commit the read/write target as one atomic operation and
+return a durable switch receipt naming the previous and active targets. The
+coordinator does not emulate atomicity with sequential read and write changes.
+It restores source routing on failure and retains the source for the declared
+rollback window. `complete` retires the rollback state only after that
+observation workflow; `rollback` restores source routing.
 
 Callers remain responsible for backend-specific schema/constraint validation,
 counts by record type, edge integrity, and representative query/traversal parity
@@ -50,11 +58,13 @@ and fault/performance gates described by the release-gate graph.
 
 ## Retry and cancellation
 
-Workers and batch size are bounded. Only errors explicitly classified as
-retryable are retried, with capped exponential backoff and jitter; permanent
-errors pass through unchanged. Retry count is bounded. An `AbortSignal` stops
-new work and interrupts backoff. Checkpoints are serialized so concurrent
-workers cannot regress the durable manifest.
+Workers and batch size are bounded. Errors explicitly classified as retryable
+by the protocol or a backend adapter are retried, including lock, deadlock,
+timeout, and rate-limit classes exposed by PostgreSQL and PostgREST. Retries use
+capped exponential backoff and jitter; permanent errors pass through unchanged.
+Retry count is bounded. An `AbortSignal` stops new work and interrupts backoff.
+Checkpoints are serialized so concurrent workers cannot regress the durable
+manifest.
 
 Fortemi Server remains an alpha target until the live certification issue has
 an approved endpoint, isolated tenant, backup/restore control, and load-test

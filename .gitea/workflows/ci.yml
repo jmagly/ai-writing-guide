@@ -145,6 +145,12 @@ jobs:
         # graph through the seven-day age filter; match the publish gate.
         run: npm install --no-save --save-dev --package-lock=false --min-release-age=0 better-sqlite3@12.8.0
 
+      - name: Run storage backend conformance gate (#2190/#2191)
+        # Enforces the zero-dependency golden corpus, migration safety/fault
+        # protocol, qualification negative controls, and PostgreSQL transport
+        # contracts. Live server suites remain isolated integration jobs.
+        run: npm run test:conformance:storage
+
       - name: Sanitize session regression corpus
         # Reject credential, personal-path, host-identity, and provenance drift
         # before any fixture reaches the mandatory session test layers.

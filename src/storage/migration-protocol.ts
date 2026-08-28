@@ -55,8 +55,29 @@ export interface MigrationManifest {
   counts: { source: number; upserts: number; tombstones: number; committed: number };
   digests: { source: string; destination?: string; approval?: string };
   records: MigrationRecordReceipt[];
+  boundaries: {
+    initial: MigrationBoundaryReceipt;
+    final?: MigrationBoundaryReceipt;
+  };
+  routingSwitch?: MigrationRoutingReceipt;
   rollbackWindowEndsAt?: string;
   failure?: { stage: string; message: string };
+}
+
+export type MigrationBoundaryState = 'tracking' | 'quiesced';
+
+export interface MigrationBoundaryReceipt {
+  boundaryId: string;
+  state: MigrationBoundaryState;
+  establishedAt: string;
+  highWaterMark?: string;
+}
+
+export interface MigrationRoutingReceipt {
+  switchId: string;
+  previousTarget: string;
+  activeTarget: string;
+  committedAt: string;
 }
 
 export interface MigrationSnapshot<T> {
@@ -84,9 +105,21 @@ export interface MigrationManifestStore {
   save(manifest: MigrationManifest): Promise<void>;
 }
 
+export interface MigrationSafetyControl {
+  prepare(
+    mode: MigrationMode,
+    source: MigrationEndpointIdentity,
+    signal?: AbortSignal,
+  ): Promise<MigrationBoundaryReceipt>;
+  freeze(manifest: MigrationManifest, signal?: AbortSignal): Promise<MigrationBoundaryReceipt>;
+  release(
+    boundary: MigrationBoundaryReceipt,
+    outcome: 'cutover' | 'rollback' | 'failed',
+  ): Promise<void>;
+}
+
 export interface MigrationRoutingControl {
-  switchReads(manifest: MigrationManifest): Promise<void>;
-  switchWrites(manifest: MigrationManifest): Promise<void>;
+  switchAtomically(manifest: MigrationManifest): Promise<MigrationRoutingReceipt>;
   restoreSource(manifest: MigrationManifest): Promise<void>;
 }
 
@@ -101,6 +134,7 @@ export interface MigrationRunOptions {
   signal?: AbortSignal;
   now?: () => Date;
   random?: () => number;
+  safety: MigrationSafetyControl;
 }
 
 export interface MigrationVerification {
@@ -154,7 +188,24 @@ export class StorageMigrationCoordinator<T> {
 
   async preview(): Promise<MigrationManifest> {
     this.throwIfAborted();
-    const snapshot = await this.source.snapshot(this.options.signal);
+    const boundary = await this.options.safety.prepare(
+      this.options.mode,
+      this.source.identity,
+      this.options.signal,
+    );
+    try {
+      assertBoundaryState(boundary, this.options.mode === 'offline' ? 'quiesced' : 'tracking', 'initial');
+    } catch (error) {
+      await this.options.safety.release(boundary, 'failed');
+      throw error;
+    }
+    let snapshot: MigrationSnapshot<T>;
+    try {
+      snapshot = await this.source.snapshot(this.options.signal);
+    } catch (error) {
+      await this.options.safety.release(boundary, 'failed');
+      throw error;
+    }
     const createdAt = this.now().toISOString();
     const sourceDigest = digestRecords(snapshot.records);
     const manifest: MigrationManifest = {
@@ -181,65 +232,76 @@ export class StorageMigrationCoordinator<T> {
       },
       digests: { source: sourceDigest },
       records: [],
+      boundaries: { initial: boundary },
     };
-    await this.store.save(manifest);
+    try {
+      await this.store.save(manifest);
+    } catch (error) {
+      await this.options.safety.release(boundary, 'failed');
+      throw error;
+    }
     return manifest;
   }
 
   async apply(manifest: MigrationManifest): Promise<MigrationManifest> {
     validateManifest(manifest, this.source.identity, this.destination.identity);
-    const snapshot = await this.source.snapshot(this.options.signal);
-    if (snapshot.id !== manifest.snapshot.id || digestRecords(snapshot.records) !== manifest.digests.source) {
-      throw new MigrationProtocolError(
-        'AIWG_MIGRATION_SNAPSHOT_CHANGED',
-        'source snapshot no longer matches the preview; create a new preview',
-      );
-    }
-    manifest.state = 'copying';
-    await this.persist(manifest);
-    await this.copyRecords(snapshot.records, manifest);
-
-    if (manifest.mode === 'online') {
-      if (!this.source.changes) {
+    try {
+      const snapshot = await this.source.snapshot(this.options.signal);
+      if (digestRecords(snapshot.records) !== manifest.digests.source) {
         throw new MigrationProtocolError(
-          'AIWG_MIGRATION_CURSOR_UNAVAILABLE',
-          'online migration requires a source change cursor',
+          'AIWG_MIGRATION_SNAPSHOT_CHANGED',
+          'source snapshot no longer matches the preview; create a new preview',
         );
       }
-      manifest.state = 'replaying';
+      manifest.state = 'copying';
       await this.persist(manifest);
-      let cursor = manifest.snapshot.cursor;
-      for (;;) {
-        this.throwIfAborted();
-        const page = await this.source.changes(cursor, this.options.signal);
-        await this.copyRecords(page.records, manifest);
-        cursor = page.nextCursor;
-        manifest.checkpoint = {
-          ...manifest.checkpoint,
-          ...(cursor === undefined ? {} : { cursor }),
-          highWaterMark: page.highWaterMark,
-          drained: page.records.length === 0 || cursor === undefined,
-        };
-        await this.persist(manifest);
-        if (page.records.length === 0 || cursor === undefined) break;
-      }
-    }
+      await this.copyRecords(snapshot.records, manifest);
 
-    manifest.state = 'verifying';
-    await this.persist(manifest);
-    const verification = await this.verify(manifest);
-    if (!verification.valid) {
-      manifest.state = 'failed';
-      manifest.failure = { stage: 'verify', message: summarizeVerificationFailure(verification) };
+      if (manifest.mode === 'online') {
+        if (!this.source.changes) {
+          throw new MigrationProtocolError(
+            'AIWG_MIGRATION_CURSOR_UNAVAILABLE',
+            'online migration requires a source change cursor',
+          );
+        }
+        manifest.state = 'replaying';
+        await this.persist(manifest);
+        await this.replayChanges(manifest);
+      }
+
+      const finalBoundary = await this.options.safety.freeze(manifest, this.options.signal);
+      manifest.boundaries.final = finalBoundary;
+      assertBoundaryState(finalBoundary, 'quiesced', 'final');
       await this.persist(manifest);
-      throw new MigrationProtocolError('AIWG_MIGRATION_PARITY_FAILED', manifest.failure.message);
+      if (manifest.mode === 'online') await this.replayChanges(manifest);
+
+      manifest.state = 'verifying';
+      await this.persist(manifest);
+      const verification = await this.verify(manifest);
+      if (!verification.valid) {
+        throw new MigrationProtocolError('AIWG_MIGRATION_PARITY_FAILED', summarizeVerificationFailure(verification));
+      }
+      manifest.digests.destination = verification.destinationDigest;
+      manifest.state = 'awaiting-approval';
+      manifest.updatedAt = this.now().toISOString();
+      manifest.digests.approval = approvalDigest(manifest);
+      await this.save(manifest);
+      return manifest;
+    } catch (error) {
+      const stage = manifest.state;
+      manifest.state = 'failed';
+      manifest.failure = { stage, message: errorMessage(error) };
+      try {
+        await this.persist(manifest);
+      } catch {
+        // Preserve the triggering failure; the manifest store error is already observable at its source.
+      }
+      await this.options.safety.release(
+        manifest.boundaries.final ?? manifest.boundaries.initial,
+        'failed',
+      );
+      throw error;
     }
-    manifest.digests.destination = verification.destinationDigest;
-    manifest.state = 'awaiting-approval';
-    manifest.updatedAt = this.now().toISOString();
-    manifest.digests.approval = approvalDigest(manifest);
-    await this.save(manifest);
-    return manifest;
   }
 
   async verify(manifest: MigrationManifest): Promise<MigrationVerification> {
@@ -261,7 +323,8 @@ export class StorageMigrationCoordinator<T> {
       })
       .map(([key]) => key)
       .sort();
-    const lag = manifest.mode === 'online' ? Number(!manifest.checkpoint.drained) : 0;
+    const boundaryReady = manifest.boundaries.final?.state === 'quiesced';
+    const lag = Number(!boundaryReady || (manifest.mode === 'online' && !manifest.checkpoint.drained));
     const sourceDigest = digestRecords(sourceRecords);
     const destinationDigest = digestRecords(destinationRecords);
     return {
@@ -290,13 +353,18 @@ export class StorageMigrationCoordinator<T> {
     if (!verification.valid) {
       throw new MigrationProtocolError('AIWG_MIGRATION_PARITY_FAILED', summarizeVerificationFailure(verification));
     }
+    const finalBoundary = manifest.boundaries.final;
+    if (!finalBoundary) {
+      throw new MigrationProtocolError('AIWG_MIGRATION_BOUNDARY_MISSING', 'migration has no final quiesced source boundary');
+    }
     manifest.state = 'cutover';
     await this.persist(manifest);
     try {
-      await this.routing.switchReads(manifest);
-      await this.routing.switchWrites(manifest);
+      manifest.routingSwitch = await this.routing.switchAtomically(manifest);
+      await this.options.safety.release(finalBoundary, 'cutover');
     } catch (error) {
       await this.routing.restoreSource(manifest);
+      await this.options.safety.release(finalBoundary, 'failed');
       manifest.state = 'failed';
       manifest.failure = { stage: 'cutover', message: errorMessage(error) };
       await this.persist(manifest);
@@ -322,6 +390,7 @@ export class StorageMigrationCoordinator<T> {
       throw new MigrationProtocolError('AIWG_MIGRATION_NOT_ROLLBACKABLE', `cannot roll back state ${manifest.state}`);
     }
     await this.routing.restoreSource(manifest);
+    await this.options.safety.release(manifest.boundaries.final ?? manifest.boundaries.initial, 'rollback');
     manifest.state = 'rolled-back';
     await this.persist(manifest);
     return manifest;
@@ -375,6 +444,30 @@ export class StorageMigrationCoordinator<T> {
     await Promise.all(workers);
   }
 
+  private async replayChanges(manifest: MigrationManifest): Promise<void> {
+    if (!this.source.changes) {
+      throw new MigrationProtocolError(
+        'AIWG_MIGRATION_CURSOR_UNAVAILABLE',
+        'online migration requires a source change cursor',
+      );
+    }
+    let cursor = manifest.checkpoint.cursor ?? manifest.snapshot.cursor;
+    for (;;) {
+      this.throwIfAborted();
+      const page = await this.source.changes(cursor, this.options.signal);
+      await this.copyRecords(page.records, manifest);
+      cursor = page.nextCursor ?? page.highWaterMark;
+      manifest.checkpoint = {
+        ...manifest.checkpoint,
+        cursor,
+        highWaterMark: page.highWaterMark,
+        drained: page.records.length === 0 || page.nextCursor === undefined,
+      };
+      await this.persist(manifest);
+      if (manifest.checkpoint.drained) break;
+    }
+  }
+
   private async retry<R>(operation: () => Promise<R>, label: string): Promise<R> {
     let attempt = 0;
     for (;;) {
@@ -382,7 +475,7 @@ export class StorageMigrationCoordinator<T> {
       try {
         return await operation();
       } catch (error) {
-        const retryable = error instanceof MigrationProtocolError && error.retryable;
+        const retryable = isRetryableError(error);
         if (!retryable) throw error;
         if (attempt >= this.maxRetries) {
           throw new MigrationProtocolError(
@@ -446,11 +539,32 @@ export function validateManifest(
   if (!manifest.migrationId || !manifest.snapshot?.id || !manifest.digests?.source) {
     throw new MigrationProtocolError('AIWG_MIGRATION_MANIFEST_CORRUPT', 'migration manifest is missing required identity or digest fields');
   }
+  if (!manifest.boundaries?.initial) {
+    throw new MigrationProtocolError('AIWG_MIGRATION_BOUNDARY_MISSING', 'migration manifest has no durable source boundary receipt');
+  }
+  assertBoundaryState(
+    manifest.boundaries.initial,
+    manifest.mode === 'offline' ? 'quiesced' : 'tracking',
+    'initial',
+  );
   if (source && stableStringify(manifest.source) !== stableStringify(source)) {
     throw new MigrationProtocolError('AIWG_MIGRATION_SOURCE_MISMATCH', 'manifest source does not match the active source');
   }
   if (destination && stableStringify(manifest.destination) !== stableStringify(destination)) {
     throw new MigrationProtocolError('AIWG_MIGRATION_DESTINATION_MISMATCH', 'manifest destination does not match the active destination');
+  }
+}
+
+function assertBoundaryState(
+  boundary: MigrationBoundaryReceipt,
+  expected: MigrationBoundaryState,
+  stage: 'initial' | 'final',
+): void {
+  if (!boundary.boundaryId || !boundary.establishedAt || boundary.state !== expected) {
+    throw new MigrationProtocolError(
+      'AIWG_MIGRATION_BOUNDARY_INVALID',
+      `${stage} source boundary must provide a durable ${expected} receipt`,
+    );
   }
 }
 
@@ -514,6 +628,10 @@ function summarizeVerificationFailure(verification: MigrationVerification): stri
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function isRetryableError(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'retryable' in error && error.retryable === true;
 }
 
 async function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> {
