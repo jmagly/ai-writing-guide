@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "aiwg.storage-server-benchmark/v1",
+  "evidenceId": "postgres-postgrest-reference-v1",
+  "observedAt": "2026-08-28T15:40:56.704Z",
+  "validUntil": "2026-11-26T15:40:56.704Z",
+  "subject": {
+    "branch": "main",
+    "commit": "1c114ffea97f56c629bcabd9d025b9c0c8c04e6f",
+    "sourceFiles": [
+      "src/storage/backends/postgrest.ts",
+      "src/storage/qualification.ts",
+      "test/integration/storage-postgrest-live.test.ts"
+    ],
+    "sourceDigest": "0fc3d645f8d941e928d044df01b4b49a01f98273c6d7c4bea9e5c29410883c3b"
+  },
+  "runtime": {
+    "node": "v24.12.0",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "server": {
+    "engine": "postgresql",
+    "engineVersion": "17.11",
+    "accessMode": "postgrest",
+    "transportVersion": "14.16",
+    "containerImage": "postgrest/postgrest:v14.16",
+    "containerDigest": "sha256:bea1c76a856fa39d1e542d25911cf95d02fe2bf971992d033044ff209f1504b8"
+  },
+  "qualification": {
+    "schemaVersion": "aiwg.storage-qualification/v1",
+    "runId": "9ab93361389052f61ae6920d9a2f4758bb76f1c0c91d5a8432f51f73e71edca2",
+    "startedAt": "2026-08-28T15:40:56.585Z",
+    "completedAt": "2026-08-28T15:40:56.704Z",
+    "scope": {
+      "backend": "postgres-postgrest",
+      "branch": "main",
+      "commit": "1c114ffea97f56c629bcabd9d025b9c0c8c04e6f",
+      "datasetId": "postgrest-envelope-v1",
+      "declaredRecords": 64,
+      "readers": 4,
+      "writers": 4,
+      "operations": 68,
+      "observedRecords": 64,
+      "observedOperations": 68
+    },
+    "verification": {
+      "valid": true,
+      "missing": [],
+      "unexpected": [],
+      "corrupt": [],
+      "expectedDigest": "d8aebe9883d18dcc12a37720776089a4081806635dc0be2a2e4867a39bd576c9",
+      "observedDigest": "d8aebe9883d18dcc12a37720776089a4081806635dc0be2a2e4867a39bd576c9"
+    },
+    "latencyMs": {
+      "p50": 6.167814000000021,
+      "p95": 9.060223999999948,
+      "p99": 13.902704999999969
+    },
+    "throughputPerSecond": 576.6905724414655,
+    "errors": 0,
+    "retries": 0,
+    "errorRate": 0,
+    "retryRate": 0,
+    "resources": {
+      "cpuUserMicros": 87699,
+      "cpuSystemMicros": 13414,
+      "rssBytes": 256917504,
+      "databaseBytes": null,
+      "writeAmplification": null,
+      "walBytes": null,
+      "lockWaits": null,
+      "poolSaturation": null,
+      "migrationMs": null,
+      "recoveryMs": null,
+      "transportOverheadMs": 6.1102811428571515
+    },
+    "sideEffectSummary": [
+      {
+        "outcome": "committed",
+        "count": 68
+      }
+    ]
+  },
+  "testGate": {
+    "passed": 4,
+    "failed": 0,
+    "skipped": 1,
+    "coverage": [
+      "duplicate delivery, reads, snapshots, changes, reconnect, and database rollback",
+      "ambiguous transport replay with one logical commit",
+      "correctness-qualified HTTP operating envelope",
+      "native JSON and CSV bootstrap"
+    ],
+    "skippedCoverage": [
+      "requester-role tenant isolation through authenticated RLS"
+    ]
+  },
+  "interpretation": "Disposable unauthenticated loopback reference-host observation only; not a universal capacity limit or production certification."
+}

@@ -143,8 +143,8 @@ The runtime matrix in `STORAGE_BACKEND_MATRIX` is conservative:
 | SQLite | Regenerable local index | Supported same-host tier; WAL/transaction capabilities |
 | Fortemi Core static | Static cache | Supported read/query plane, never live persistence evidence |
 | Fortemi Server | Remote persistence | Alpha until #2194 live conformance and recovery pass |
-| PostgreSQL direct | Canonical advanced backend | Implemented behind `aiwg features install postgres`; live production certification and backup/restore evidence remain gated |
-| PostgREST | PostgreSQL transport | Implemented as an optional versioned RPC access mode; production certification remains gated by #2191 |
+| PostgreSQL direct | Canonical advanced backend | Disposable PostgreSQL 17 reference-host conformance, migration, reconnect, and backup/restore evidence published; remote production certification remains gated |
+| PostgREST | PostgreSQL transport | Disposable PostgreSQL 17/PostgREST 14 reference-host conformance published; authenticated RLS and remote production certification remain gated |
 | MySQL | Canonical advanced backend | Deferred and demand-gated |
 
 ## Compatibility risks and rejected alternatives

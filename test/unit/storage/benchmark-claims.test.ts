@@ -18,7 +18,11 @@ describe('storage benchmark claim gate (#2191)', () => {
     expect(result).toEqual({
       schemaVersion: 'aiwg.storage-benchmark-claims/v1',
       valid: true,
-      claims: ['sqlite-local-reference-v1'],
+      claims: [
+        'postgres-direct-reference-v1',
+        'postgres-postgrest-reference-v1',
+        'sqlite-local-reference-v1',
+      ],
     });
   });
 
@@ -33,6 +37,24 @@ describe('storage benchmark claim gate (#2191)', () => {
     writeFileSync(document, readFileSync(document, 'utf8').replace('ops/s', 'records/s'));
     expect(() => execFileSync(process.execPath, [verifier, drifted], { encoding: 'utf8', stdio: 'pipe' }))
       .toThrow(/documented measurements do not match/);
+  });
+
+  it('rejects incomplete server metrics and qualification scope drift', () => {
+    const incomplete = fixtureRoot();
+    const directPath = join(incomplete, 'docs/storage/evidence/postgres-direct-reference-v1.json');
+    const direct = JSON.parse(readFileSync(directPath, 'utf8'));
+    direct.qualification.resources.walBytes = null;
+    writeFileSync(directPath, `${JSON.stringify(direct, null, 2)}\n`);
+    expect(() => execFileSync(process.execPath, [verifier, incomplete], { encoding: 'utf8', stdio: 'pipe' }))
+      .toThrow(/required metric walBytes is unavailable/);
+
+    const drifted = fixtureRoot();
+    const postgrestPath = join(drifted, 'docs/storage/evidence/postgres-postgrest-reference-v1.json');
+    const postgrest = JSON.parse(readFileSync(postgrestPath, 'utf8'));
+    postgrest.qualification.scope.observedOperations -= 1;
+    writeFileSync(postgrestPath, `${JSON.stringify(postgrest, null, 2)}\n`);
+    expect(() => execFileSync(process.execPath, [verifier, drifted], { encoding: 'utf8', stdio: 'pipe' }))
+      .toThrow(/operation scope mismatch/);
   });
 
   it('runs before storage claims can ship from CI and tag workflows', () => {
@@ -54,13 +76,17 @@ describe('storage benchmark claim gate (#2191)', () => {
 function fixtureRoot(): string {
   const temporary = mkdtempSync(join(tmpdir(), 'aiwg-storage-claim-'));
   temporaryRoots.push(temporary);
-  for (const path of [
-    'docs/storage/evidence/claims.v1.json',
-    'docs/storage/evidence/sqlite-local-reference-v1.json',
-    'docs/extensions/graph-backends.md',
-    'src/artifacts/backends/sqlite-backend.ts',
-    'tools/benchmarks/sqlite-graph.ts',
-  ]) {
+  const registryPath = 'docs/storage/evidence/claims.v1.json';
+  const registry = JSON.parse(readFileSync(resolve(root, registryPath), 'utf8')) as {
+    claims: Array<{ evidence: string; document: string; sourceFiles: string[] }>;
+  };
+  const paths = new Set([registryPath]);
+  for (const claim of registry.claims) {
+    paths.add(claim.evidence);
+    paths.add(claim.document);
+    for (const source of claim.sourceFiles) paths.add(source);
+  }
+  for (const path of paths) {
     cpSync(resolve(root, path), resolve(temporary, path), { recursive: true });
   }
   return temporary;

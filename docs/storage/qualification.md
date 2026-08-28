@@ -47,6 +47,32 @@ The runner uses bounded exponential backoff for classified transient failures;
 the configured retry ceiling and observed retry/error rates remain part of the
 evidence rather than being hidden by the benchmark.
 
+## Shared-server reference envelopes
+
+<!-- aiwg-storage-benchmark-claim:postgres-direct-reference-v1:start -->
+A 2026-08-28 disposable loopback reference-host qualification on linux x64, Node 24.12.0, and PostgreSQL 17.11 via pg 8.23.0 produced:
+
+| Records / readers / writers | Throughput | Latency p50/p95/p99 | Errors / retries | DB / WAL bytes | Write amplification | Pool saturation | HTTP overhead |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 128 / 4 / 4 | 325.21 ops/s | 5.13 / 49.98 / 111.66 ms | 40 / 40 | 8,410,803 / 314,216 | 9.58 | 0.75 | n/a |
+
+6 live tests passed with no skips. This is a reference-host envelope, not production or remote-service certification.
+
+Evidence: [postgres-direct-reference-v1](evidence/postgres-direct-reference-v1.json). The release gate rejects this claim when correctness, scope, source digest, required metrics, freshness, or rendered values no longer match.
+<!-- aiwg-storage-benchmark-claim:postgres-direct-reference-v1:end -->
+
+<!-- aiwg-storage-benchmark-claim:postgres-postgrest-reference-v1:start -->
+A 2026-08-28 disposable loopback reference-host qualification on linux x64, Node 24.12.0, and PostgreSQL 17.11 via PostgREST 14.16 produced:
+
+| Records / readers / writers | Throughput | Latency p50/p95/p99 | Errors / retries | DB / WAL bytes | Write amplification | Pool saturation | HTTP overhead |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 64 / 4 / 4 | 576.69 ops/s | 6.17 / 9.06 / 13.9 ms | 0 / 0 | n/a / n/a | n/a | n/a | 6.11 ms |
+
+4 live tests passed; 1 authenticated-RLS test was skipped because this loopback run had no JWT authority. This is a reference-host envelope, not production or remote-service certification.
+
+Evidence: [postgres-postgrest-reference-v1](evidence/postgres-postgrest-reference-v1.json). The release gate rejects this claim when correctness, scope, source digest, required metrics, freshness, or rendered values no longer match.
+<!-- aiwg-storage-benchmark-claim:postgres-postgrest-reference-v1:end -->
+
 The gate deliberately injects omitted, unexpected, and corrupt records. Each
 negative control must invalidate the report. The migration protocol suite adds
 crash-before-commit, lost acknowledgement after commit, duplicate replay,

@@ -10,6 +10,40 @@
         "tools/benchmarks/sqlite-graph.ts"
       ],
       "maxAgeDays": 90
+    },
+    {
+      "id": "postgres-direct-reference-v1",
+      "evidence": "docs/storage/evidence/postgres-direct-reference-v1.json",
+      "document": "docs/storage/qualification.md",
+      "backend": "postgres-direct",
+      "sourceFiles": [
+        "src/storage/backends/postgres.ts",
+        "src/storage/qualification.ts",
+        "test/integration/storage-postgres-live.test.ts"
+      ],
+      "requiredMetrics": [
+        "databaseBytes",
+        "writeAmplification",
+        "walBytes",
+        "lockWaits",
+        "poolSaturation"
+      ],
+      "maxAgeDays": 90
+    },
+    {
+      "id": "postgres-postgrest-reference-v1",
+      "evidence": "docs/storage/evidence/postgres-postgrest-reference-v1.json",
+      "document": "docs/storage/qualification.md",
+      "backend": "postgres-postgrest",
+      "sourceFiles": [
+        "src/storage/backends/postgrest.ts",
+        "src/storage/qualification.ts",
+        "test/integration/storage-postgrest-live.test.ts"
+      ],
+      "requiredMetrics": [
+        "transportOverheadMs"
+      ],
+      "maxAgeDays": 90
     }
   ]
 }
