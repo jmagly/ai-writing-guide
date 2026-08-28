@@ -35,6 +35,7 @@ export interface PostgresPoolLike {
   connect(): Promise<PostgresClientLike>;
   query<Row = Record<string, unknown>>(text: string, values?: readonly unknown[]): Promise<PostgresQueryResult<Row>>;
   end(): Promise<void>;
+  on?(event: 'error', listener: (error: Error) => void): void;
   totalCount?: number;
   idleCount?: number;
   waitingCount?: number;
@@ -518,7 +519,7 @@ async function createPool(options: PostgresBackendOptions): Promise<PostgresPool
   const defaultExport = pg.default as Record<string, unknown> | undefined;
   const Pool = (pg.Pool ?? defaultExport?.Pool) as new (config: Record<string, unknown>) => PostgresPoolLike;
   if (!Pool) throw new PostgresBackendError('AIWG_POSTGRES_DRIVER_INVALID', 'optional pg package does not export Pool');
-  return new Pool({
+  const pool = new Pool({
     connectionString,
     max: bounded(options.maxConnections, DEFAULT_POOL_MAX, 1, 100, 'maxConnections'),
     connectionTimeoutMillis: bounded(options.connectionTimeoutMs, DEFAULT_TIMEOUT_MS, 1, 600_000, 'connectionTimeoutMs'),
@@ -526,6 +527,11 @@ async function createPool(options: PostgresBackendOptions): Promise<PostgresPool
     application_name: options.applicationName ?? 'aiwg',
     ssl: options.ssl === 'disable' ? false : { rejectUnauthorized: options.ssl === 'verify-full' },
   });
+  // pg emits idle-client failures at pool scope. Registering a listener keeps
+  // server restarts from becoming uncaught process exceptions; failed clients
+  // are evicted by pg and the next backend operation reconnects normally.
+  pool.on?.('error', () => undefined);
+  return pool;
 }
 
 function isLoopbackPostgresUrl(connectionString: string): boolean {

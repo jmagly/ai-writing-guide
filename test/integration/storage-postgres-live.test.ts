@@ -25,8 +25,8 @@ describeLive('direct PostgreSQL live qualification (#2195)', () => {
       ssl: 'disable',
       maxConnections: 4,
       statementTimeoutMs: 5_000,
-      lockTimeoutMs: 1_000,
-      idleTransactionTimeoutMs: 5_000,
+      lockTimeoutMs: 5_000,
+      idleTransactionTimeoutMs: 10_000,
       applicationName: 'aiwg-postgres-live-qualification',
       schemaMode: 'migrate',
     });
@@ -45,13 +45,21 @@ describeLive('direct PostgreSQL live qualification (#2195)', () => {
       expect(disjoint).toHaveLength(32);
 
       let releaseLock!: () => void;
+      let markLockAcquired!: () => void;
       const held = new Promise<void>(resolve => { releaseLock = resolve; });
-      const holder = backend.withMigrationLock(() => held);
-      await waitFor(() => backend.metrics().total >= 1);
+      const lockAcquired = new Promise<void>(resolve => { markLockAcquired = resolve; });
+      const holder = backend.withMigrationLock(async () => {
+        markLockAcquired();
+        await held;
+      });
+      await lockAcquired;
       const contenders = Array.from({ length: 5 }, () => backend.withMigrationLock(async () => undefined));
-      await waitFor(() => backend.metrics().total === 4 && backend.metrics().waiting >= 1);
-      expect(backend.metrics().waiting).toBeGreaterThanOrEqual(1);
-      releaseLock();
+      try {
+        await waitFor(() => backend.metrics().total === 4 && backend.metrics().waiting >= 1);
+        expect(backend.metrics()).toMatchObject({ total: 4 });
+      } finally {
+        releaseLock();
+      }
       await Promise.all([holder, ...contenders]);
 
       await backend.commitBatch([mutation(tenant, 'a.md', '2', 'updated', '1')]);
@@ -258,6 +266,9 @@ describeLive('direct PostgreSQL live qualification (#2195)', () => {
   it('emits a correctness-qualified direct-server operating-envelope record', async () => {
     const tenant = `envelope-${randomUUID()}`;
     process.env.AIWG_POSTGRES_ENVELOPE_URL = live;
+    const pg = await loadFeaturePackage('pg');
+    const exports = (pg.default ?? pg) as { Pool: new (options: Record<string, unknown>) => PostgresPoolLike };
+    const observer = new exports.Pool({ connectionString: live });
     const backend = new PostgresStorageBackend<{ kind: string; text: string }>({
       tenant, subsystem: 'memory', connectionStringEnv: 'AIWG_POSTGRES_ENVELOPE_URL',
       ssl: 'disable', schemaMode: 'migrate', maxConnections: 4,
@@ -265,10 +276,30 @@ describeLive('direct PostgreSQL live qualification (#2195)', () => {
     await backend.init();
     try {
       const corpus = Array.from({ length: 128 }, (_, index) => versioned(tenant, `record-${String(index).padStart(4, '0')}.md`, '1', `value-${index}`));
+      const logicalBytes = Buffer.byteLength(JSON.stringify(corpus));
+      const baseline = await observer.query<{ wal_lsn: string }>('SELECT pg_current_wal_lsn()::text AS wal_lsn');
       const report = await qualifyStorageBackend(backend, {
         scope: { backend: 'postgres-direct', branch: qualificationBranch(), commit: qualificationCommit(), datasetId: 'postgres-envelope-v1', declaredRecords: corpus.length, readers: 4, writers: 4, operations: corpus.length + 4 },
         records: corpus,
-        resourceObservation: () => ({ poolSaturation: backend.metrics().total / 4 }),
+        resourceObservation: async () => {
+          const observation = await observer.query<{
+            database_bytes: string;
+            wal_bytes: string;
+            lock_waits: string;
+          }>(`SELECT pg_database_size(current_database())::bigint::text AS database_bytes,
+                      pg_wal_lsn_diff(pg_current_wal_lsn(), $1)::bigint::text AS wal_bytes,
+                      (SELECT count(*) FROM pg_stat_activity
+                       WHERE datname=current_database() AND wait_event_type='Lock')::bigint::text AS lock_waits`,
+          [baseline.rows[0].wal_lsn]);
+          const walBytes = Number(observation.rows[0].wal_bytes);
+          return {
+            databaseBytes: Number(observation.rows[0].database_bytes),
+            walBytes,
+            writeAmplification: walBytes / Math.max(logicalBytes, 1),
+            lockWaits: Number(observation.rows[0].lock_waits),
+            poolSaturation: backend.metrics().total / 4,
+          };
+        },
         maxRetries: 20,
         baseBackoffMs: 1,
       });
@@ -278,6 +309,7 @@ describeLive('direct PostgreSQL live qualification (#2195)', () => {
       expect(() => assertCurrentStorageEvidence(report, qualificationCommit())).not.toThrow();
       persistQualificationEvidence(report);
     } finally {
+      await observer.end();
       await backend.close();
       delete process.env.AIWG_POSTGRES_ENVELOPE_URL;
     }

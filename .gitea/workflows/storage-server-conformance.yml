@@ -42,6 +42,7 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends curl jq postgresql-client
           npm ci
+          npm install --no-save --save-dev --package-lock=false --min-release-age=0 pg@8.23.0
 
       - name: Fetch PostgreSQL qualification endpoint from Vault
         env:

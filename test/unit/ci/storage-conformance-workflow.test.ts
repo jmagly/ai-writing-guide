@@ -30,7 +30,10 @@ describe('storage conformance CI gate (#2191)', () => {
     expect(workflow).toContain('ci/vault-fetch.storage-postgrest.spec');
     expect(workflow).toContain('ci/vault-fetch.storage-postgrest-auth.spec');
     expect(workflow.match(/bash ci\/vault-fetch\.sh --cleanup/g)).toHaveLength(2);
-    expect(workflow).toContain('test/integration/storage-postgres-live.test.ts');
+    const postgresDriver = workflow.indexOf('pg@8.23.0');
+    const postgresSuite = workflow.indexOf('test/integration/storage-postgres-live.test.ts');
+    expect(postgresDriver).toBeGreaterThanOrEqual(0);
+    expect(postgresSuite).toBeGreaterThan(postgresDriver);
     expect(workflow).toContain('test/integration/storage-postgrest-live.test.ts');
     expect(workflow.match(/AIWG_STORAGE_QUALIFICATION_COMMIT/g)).toHaveLength(1);
     expect(workflow.match(/actions\/checkout@[0-9a-f]{40}/g)).toHaveLength(2);

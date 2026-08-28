@@ -61,7 +61,7 @@ export interface QualificationOptions<T> {
   scope: StorageQualificationScope;
   records: readonly VersionedRecord<T>[];
   now?: () => Date;
-  resourceObservation?: () => Partial<StorageResourceObservation>;
+  resourceObservation?: () => Partial<StorageResourceObservation> | Promise<Partial<StorageResourceObservation>>;
   maxRetries?: number;
   baseBackoffMs?: number;
 }
@@ -138,7 +138,7 @@ export async function qualifyStorageBackend<T>(
   const verification = verifyExactRecords(options.records, observed);
   const durationMs = Math.max(performance.now() - start, 0.001);
   const cpu = process.cpuUsage(cpuBefore);
-  const supplied = options.resourceObservation?.() ?? {};
+  const supplied = await options.resourceObservation?.() ?? {};
   const operations = options.records.length + readerCount;
   const report: StorageQualificationReport = {
     schemaVersion: STORAGE_QUALIFICATION_REPORT,

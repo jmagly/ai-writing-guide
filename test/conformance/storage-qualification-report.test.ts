@@ -24,7 +24,7 @@ describe('storage qualification evidence (#2191)', () => {
       scope: { backend: 'memory-fixture', branch: 'main', commit: 'abc123', datasetId: 'qualification-v1', declaredRecords: 4, readers: 3, writers: 2, operations: 7 },
       records,
       now: clock(),
-      resourceObservation: () => ({ databaseBytes: 4096, walBytes: 512, writeAmplification: 1.2, lockWaits: 0, poolSaturation: 0.5, migrationMs: 12, recoveryMs: 4, transportOverheadMs: 2 }),
+      resourceObservation: async () => ({ databaseBytes: 4096, walBytes: 512, writeAmplification: 1.2, lockWaits: 0, poolSaturation: 0.5, migrationMs: 12, recoveryMs: 4, transportOverheadMs: 2 }),
     });
     expect(report).toMatchObject({
       schemaVersion: 'aiwg.storage-qualification/v1',

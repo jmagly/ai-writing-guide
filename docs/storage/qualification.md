@@ -22,7 +22,9 @@ bootstrap pair and its service-URL Vault mapping, binds reports to the workflow
 commit/ref, and uploads sanitized JSON evidence. Gitea stores only
 `VAULT_CI_ROLE_ID` and `VAULT_CI_SECRET_ID`; repository variables select the
 Vault paths and fields for the URLs and optional PostgREST authorization. These
-jobs do not run for pull requests or ordinary main pushes.
+jobs do not run for pull requests or ordinary main pushes. The direct
+PostgreSQL job installs the feature catalog's exact `pg@8.23.0` driver before
+the live suite; deployed operators continue to use `aiwg features install postgres`.
 
 The `aiwg.storage-qualification/v1` report records backend, branch, commit,
 dataset, declared and observed scope, readers/writers, operation count, exact

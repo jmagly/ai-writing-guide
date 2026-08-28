@@ -80,8 +80,18 @@ describeLive('PostgREST transport live qualification (#2196)', () => {
   it('emits a correctness-qualified HTTP operating-envelope record', async () => {
     const tenant = `postgrest-envelope-${randomUUID()}`;
     const authorizationEnv = process.env.AIWG_POSTGREST_AUTHORIZATION ? 'AIWG_POSTGREST_AUTHORIZATION' : undefined;
+    let transportMs = 0;
+    let transportRequests = 0;
+    const measuredFetch: typeof fetch = async (input, init) => {
+      const startedAt = performance.now();
+      try { return await fetch(input, init); }
+      finally {
+        transportMs += performance.now() - startedAt;
+        transportRequests += 1;
+      }
+    };
     const store = new PostgrestStorageBackend<{ kind: string; text: string }>({
-      baseUrl: live!, tenant, subsystem: 'memory', authorizationEnv, maxBatchSize: 1000,
+      baseUrl: live!, tenant, subsystem: 'memory', authorizationEnv, maxBatchSize: 1000, fetch: measuredFetch,
     });
     await store.init();
     const corpus = Array.from({ length: 64 }, (_, index) => ({
@@ -92,6 +102,7 @@ describeLive('PostgREST transport live qualification (#2196)', () => {
     const report = await qualifyStorageBackend(store, {
       scope: { backend: 'postgres-postgrest', branch: qualificationBranch(), commit: qualificationCommit(), datasetId: 'postgrest-envelope-v1', declaredRecords: corpus.length, readers: 4, writers: 4, operations: corpus.length + 4 },
       records: corpus,
+      resourceObservation: () => ({ transportOverheadMs: transportMs / Math.max(transportRequests, 1) }),
     });
     expect(report).toMatchObject({ verification: { valid: true }, scope: { observedRecords: 64 } });
     expect(report.latencyMs.p95).toBeGreaterThanOrEqual(report.latencyMs.p50);
