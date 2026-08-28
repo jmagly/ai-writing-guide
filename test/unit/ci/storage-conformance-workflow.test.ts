@@ -17,4 +17,18 @@ describe('storage conformance CI gate (#2191)', () => {
     const workflow = readFileSync(resolve('.gitea/workflows/ci.yml'), 'utf8');
     expect(workflow).not.toContain('npm run test:conformance:storage:server');
   });
+
+  it('declares manual-only isolated PostgreSQL and PostgREST evidence jobs', () => {
+    const workflow = readFileSync(resolve('.gitea/workflows/storage-server-conformance.yml'), 'utf8');
+    expect(workflow).toContain('workflow_dispatch:');
+    expect(workflow).not.toMatch(/\bpull_request:/);
+    expect(workflow).not.toMatch(/\bpush:/);
+    expect(workflow).toContain("if: ${{ secrets.AIWG_POSTGRES_LIVE_URL != '' }}");
+    expect(workflow).toContain("if: ${{ secrets.AIWG_POSTGREST_LIVE_URL != '' }}");
+    expect(workflow).toContain('test/integration/storage-postgres-live.test.ts');
+    expect(workflow).toContain('test/integration/storage-postgrest-live.test.ts');
+    expect(workflow.match(/AIWG_STORAGE_QUALIFICATION_COMMIT/g)).toHaveLength(1);
+    expect(workflow.match(/actions\/checkout@[0-9a-f]{40}/g)).toHaveLength(2);
+    expect(workflow.match(/actions\/upload-artifact@[0-9a-f]{40}/g)).toHaveLength(2);
+  });
 });

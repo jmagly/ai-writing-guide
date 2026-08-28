@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { createHash, randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { PostgresStorageBackend, type PostgresPoolLike } from '../../src/storage/backends/postgres.js';
 import { inspectPostgresSchema, rollbackPostgresSchemaV1 } from '../../src/storage/backends/postgres-schema.js';
 import { loadFeaturePackage } from '../../src/features/runtime.js';
 import { StorageMigrationCoordinator, type MigrationManifest } from '../../src/storage/migration-protocol.js';
-import { assertCurrentStorageEvidence, qualifyStorageBackend } from '../../src/storage/qualification.js';
+import { assertCurrentStorageEvidence, qualifyStorageBackend, type StorageQualificationReport } from '../../src/storage/qualification.js';
 import type { AtomicMutation, BatchReceipt, VersionedRecord } from '../../src/storage/backend-contract.js';
 
 const live = process.env.AIWG_POSTGRES_LIVE_URL;
@@ -266,7 +266,7 @@ describeLive('direct PostgreSQL live qualification (#2195)', () => {
     try {
       const corpus = Array.from({ length: 128 }, (_, index) => versioned(tenant, `record-${String(index).padStart(4, '0')}.md`, '1', `value-${index}`));
       const report = await qualifyStorageBackend(backend, {
-        scope: { backend: 'postgres-direct', branch: 'qualification', commit: 'live', datasetId: 'postgres-envelope-v1', declaredRecords: corpus.length, readers: 4, writers: 4, operations: corpus.length + 4 },
+        scope: { backend: 'postgres-direct', branch: qualificationBranch(), commit: qualificationCommit(), datasetId: 'postgres-envelope-v1', declaredRecords: corpus.length, readers: 4, writers: 4, operations: corpus.length + 4 },
         records: corpus,
         resourceObservation: () => ({ poolSaturation: backend.metrics().total / 4 }),
         maxRetries: 20,
@@ -275,7 +275,8 @@ describeLive('direct PostgreSQL live qualification (#2195)', () => {
       expect(report).toMatchObject({ verification: { valid: true }, scope: { observedRecords: 128 } });
       expect(report.latencyMs.p95).toBeGreaterThanOrEqual(report.latencyMs.p50);
       expect(report.throughputPerSecond).toBeGreaterThan(0);
-      expect(() => assertCurrentStorageEvidence(report, 'live')).not.toThrow();
+      expect(() => assertCurrentStorageEvidence(report, qualificationCommit())).not.toThrow();
+      persistQualificationEvidence(report);
     } finally {
       await backend.close();
       delete process.env.AIWG_POSTGRES_ENVELOPE_URL;
@@ -373,6 +374,22 @@ function countRecordKinds(records: readonly VersionedRecord<{ kind: string; text
     counts[kind] = (counts[kind] ?? 0) + 1;
   }
   return Object.fromEntries(Object.entries(counts).sort(([left], [right]) => left.localeCompare(right)));
+}
+
+function qualificationCommit(): string {
+  return process.env.AIWG_STORAGE_QUALIFICATION_COMMIT ?? 'live';
+}
+
+function qualificationBranch(): string {
+  return process.env.AIWG_STORAGE_QUALIFICATION_BRANCH ?? 'qualification';
+}
+
+function persistQualificationEvidence(report: StorageQualificationReport): void {
+  const directory = process.env.AIWG_STORAGE_EVIDENCE_DIR;
+  if (!directory) return;
+  if (!/^[0-9a-f]{64}$/.test(report.runId)) throw new Error('qualification run id is unsafe for an evidence filename');
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(join(directory, `${report.scope.backend}-${report.runId}.json`), `${JSON.stringify(report, null, 2)}\n`, { mode: 0o600 });
 }
 
 class MemorySource {

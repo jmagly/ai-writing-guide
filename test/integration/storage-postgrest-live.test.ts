@@ -1,7 +1,9 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { PostgrestStorageBackend } from '../../src/storage/backends/postgrest.js';
-import { assertCurrentStorageEvidence, qualifyStorageBackend } from '../../src/storage/qualification.js';
+import { assertCurrentStorageEvidence, qualifyStorageBackend, type StorageQualificationReport } from '../../src/storage/qualification.js';
 
 const live = process.env.AIWG_POSTGREST_LIVE_URL;
 const describeLive = live ? describe : describe.skip;
@@ -88,13 +90,14 @@ describeLive('PostgREST transport live qualification (#2196)', () => {
       value: { kind: 'note', text: `value-${index}` },
     }));
     const report = await qualifyStorageBackend(store, {
-      scope: { backend: 'postgres-postgrest', branch: 'qualification', commit: 'live', datasetId: 'postgrest-envelope-v1', declaredRecords: corpus.length, readers: 4, writers: 4, operations: corpus.length + 4 },
+      scope: { backend: 'postgres-postgrest', branch: qualificationBranch(), commit: qualificationCommit(), datasetId: 'postgrest-envelope-v1', declaredRecords: corpus.length, readers: 4, writers: 4, operations: corpus.length + 4 },
       records: corpus,
     });
     expect(report).toMatchObject({ verification: { valid: true }, scope: { observedRecords: 64 } });
     expect(report.latencyMs.p95).toBeGreaterThanOrEqual(report.latencyMs.p50);
     expect(report.throughputPerSecond).toBeGreaterThan(0);
-    expect(() => assertCurrentStorageEvidence(report, 'live')).not.toThrow();
+    expect(() => assertCurrentStorageEvidence(report, qualificationCommit())).not.toThrow();
+    persistQualificationEvidence(report);
   }, 30_000);
 
   it('accepts native JSON and CSV bootstrap rows through the fixed conflict target', async () => {
@@ -127,4 +130,20 @@ function mutation(tenant: string, path: string, revision: string, text: string, 
       digest: createHash('sha256').update(text).digest('hex'), value: { kind: 'note', text },
     },
   };
+}
+
+function qualificationCommit(): string {
+  return process.env.AIWG_STORAGE_QUALIFICATION_COMMIT ?? 'live';
+}
+
+function qualificationBranch(): string {
+  return process.env.AIWG_STORAGE_QUALIFICATION_BRANCH ?? 'qualification';
+}
+
+function persistQualificationEvidence(report: StorageQualificationReport): void {
+  const directory = process.env.AIWG_STORAGE_EVIDENCE_DIR;
+  if (!directory) return;
+  if (!/^[0-9a-f]{64}$/.test(report.runId)) throw new Error('qualification run id is unsafe for an evidence filename');
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(join(directory, `${report.scope.backend}-${report.runId}.json`), `${JSON.stringify(report, null, 2)}\n`, { mode: 0o600 });
 }

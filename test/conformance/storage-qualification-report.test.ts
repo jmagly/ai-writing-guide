@@ -28,14 +28,16 @@ describe('storage qualification evidence (#2191)', () => {
     });
     expect(report).toMatchObject({
       schemaVersion: 'aiwg.storage-qualification/v1',
-      scope: { declaredRecords: 4, observedRecords: 4, readers: 3, writers: 2 },
+      scope: { declaredRecords: 4, observedRecords: 4, readers: 3, writers: 2, operations: 7, observedOperations: 7 },
       verification: { valid: true, missing: [], unexpected: [], corrupt: [] },
       errors: 1, retries: 1,
       resources: { databaseBytes: 4096, walBytes: 512, lockWaits: 0, transportOverheadMs: 2 },
     });
     expect(report.latencyMs.p99).toBeGreaterThanOrEqual(report.latencyMs.p50);
     expect(report.throughputPerSecond).toBeGreaterThan(0);
-    expect(report.sideEffects).toHaveLength(4);
+    expect(report.sideEffects).toHaveLength(7);
+    expect(report.sideEffects.filter(item => item.operation.startsWith('read:'))).toHaveLength(3);
+    expect(new Set(report.sideEffects.filter(item => item.operation.startsWith('write:')).map(item => item.operation)).size).toBe(4);
     expect(() => assertCurrentStorageEvidence(report, 'abc123')).not.toThrow();
     expect(() => assertCurrentStorageEvidence(report, 'new-head')).toThrow(/stale/);
   });
@@ -53,6 +55,9 @@ describe('storage qualification evidence (#2191)', () => {
     await expect(qualifyStorageBackend(new MemoryEndpoint(), {
       scope: { ...scope(), declaredRecords: 99 }, records,
     })).rejects.toThrow(/declared record scope/);
+    await expect(qualifyStorageBackend(new MemoryEndpoint(), {
+      scope: { ...scope(), operations: 99 }, records,
+    })).rejects.toThrow(/declared operation scope/);
   });
 });
 

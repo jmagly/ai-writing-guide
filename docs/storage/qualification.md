@@ -13,13 +13,21 @@ AIWG_POSTGRES_LIVE_URL='postgresql://…' npm run test:conformance:storage:serve
 AIWG_POSTGREST_LIVE_URL='https://…' npm run test:conformance:storage:server
 ```
 
+The Gitea `Storage Server Conformance` workflow exposes separate manual-only
+PostgreSQL Direct and PostgREST jobs. Each job is guarded by its service-URL
+secret, binds reports to the workflow commit/ref, and uploads sanitized JSON
+evidence. These jobs do not run for pull requests or ordinary main pushes.
+
 The `aiwg.storage-qualification/v1` report records backend, branch, commit,
 dataset, declared and observed scope, readers/writers, operation count, exact
 record digests, side-effect outcomes, retries/errors, p50/p95/p99 latency,
 throughput, CPU, RSS, and optional database size, write amplification, WAL,
 lock waits, pool saturation, migration/recovery time, and HTTP transport
 overhead. `assertCurrentStorageEvidence` rejects invalid, incomplete, or stale
-records before a performance statement is published.
+records before a performance statement is published. The declared reader count
+now drives actual concurrent reads while record writes are distributed across
+the declared bounded writer count; the report rejects any declared-versus-
+observed operation mismatch.
 Checked-in measurements are registered in
 `docs/storage/evidence/claims.v1.json`. `npm run verify:storage-claims` binds
 each rendered documentation block to exact correctness results, the benchmark

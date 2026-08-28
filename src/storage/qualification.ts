@@ -34,7 +34,7 @@ export interface StorageQualificationReport {
   runId: string;
   startedAt: string;
   completedAt: string;
-  scope: StorageQualificationScope & { observedRecords: number };
+  scope: StorageQualificationScope & { observedRecords: number; observedOperations: number };
   verification: {
     valid: boolean;
     expectedDigest: string;
@@ -77,6 +77,10 @@ export async function qualifyStorageBackend<T>(
   if (options.records.length !== options.scope.declaredRecords) {
     throw new Error('declared record scope does not match the qualification corpus');
   }
+  const readerCount = bounded(options.scope.readers, 1, 1, 32, 'readers');
+  if (options.scope.operations !== options.records.length + readerCount) {
+    throw new Error('declared operation scope must equal record writes plus concurrent readers');
+  }
   const now = options.now ?? (() => new Date());
   const startedAt = now().toISOString();
   const cpuBefore = process.cpuUsage();
@@ -90,7 +94,7 @@ export async function qualifyStorageBackend<T>(
   const baseBackoffMs = bounded(options.baseBackoffMs, 2, 0, 60_000, 'baseBackoffMs');
 
   const batches = distribute(options.records, options.scope.writers);
-  await Promise.all(batches.map(async (records, writer) => {
+  const writes = Promise.all(batches.map(async (records, writer) => {
     for (const record of records) {
       const mutation = mutationFor(record, `qualification:${writer}:${record.identity.path}:${record.sourceRevision}`);
       const operationStart = performance.now();
@@ -115,6 +119,19 @@ export async function qualifyStorageBackend<T>(
       sideEffects.push({ operation: `write:${record.identity.path}`, outcome: replayed ? 'replayed' : 'committed', batchId: receipt.batchId });
     }
   }));
+  const reads = Promise.all(Array.from({ length: readerCount }, async (_, reader) => {
+    const operationStart = performance.now();
+    try {
+      await endpoint.readAll();
+      latencies.push(performance.now() - operationStart);
+      sideEffects.push({ operation: `read:${reader}`, outcome: 'committed' });
+    } catch (error) {
+      errors += 1;
+      sideEffects.push({ operation: `read:${reader}`, outcome: 'failed' });
+      throw error;
+    }
+  }));
+  await Promise.all([writes, reads]);
 
   const expectedDigest = digestRecords(options.records);
   const observed = [...await endpoint.readAll()];
@@ -122,13 +139,13 @@ export async function qualifyStorageBackend<T>(
   const durationMs = Math.max(performance.now() - start, 0.001);
   const cpu = process.cpuUsage(cpuBefore);
   const supplied = options.resourceObservation?.() ?? {};
-  const operations = options.records.length + options.scope.readers;
+  const operations = options.records.length + readerCount;
   const report: StorageQualificationReport = {
     schemaVersion: STORAGE_QUALIFICATION_REPORT,
     runId: createHash('sha256').update(`${options.scope.commit}\0${options.scope.backend}\0${startedAt}`).digest('hex'),
     startedAt,
     completedAt: now().toISOString(),
-    scope: { ...options.scope, observedRecords: observed.length },
+    scope: { ...options.scope, observedRecords: observed.length, observedOperations: sideEffects.length },
     verification: { ...verification, expectedDigest, observedDigest: digestRecords(observed) },
     latencyMs: percentiles(latencies),
     throughputPerSecond: operations / (durationMs / 1000),
@@ -173,6 +190,7 @@ export function assertCurrentStorageEvidence(report: StorageQualificationReport,
   }
   if (report.scope.commit !== commit) throw new Error('storage qualification record is stale for the requested commit');
   if (report.scope.declaredRecords !== report.scope.observedRecords) throw new Error('storage qualification scope is incomplete');
+  if (report.scope.operations !== report.scope.observedOperations) throw new Error('storage qualification operation scope is incomplete');
 }
 
 function mutationFor<T>(record: VersionedRecord<T>, idempotencyKey: string): AtomicMutation<T> {

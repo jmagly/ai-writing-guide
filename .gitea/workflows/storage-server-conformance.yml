@@ -1,0 +1,77 @@
+# Live storage qualification is manual-only and consumes service endpoints from
+# repository secrets. It never runs for pull requests or ordinary main pushes.
+name: Storage Server Conformance
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: storage-server-conformance
+  cancel-in-progress: false
+
+env:
+  AIWG_STORAGE_EVIDENCE_DIR: test-results/storage
+  AIWG_STORAGE_QUALIFICATION_BRANCH: ${{ gitea.ref_name }}
+  AIWG_STORAGE_QUALIFICATION_COMMIT: ${{ gitea.sha }}
+
+jobs:
+  postgres-direct:
+    name: PostgreSQL Direct Live Qualification
+    if: ${{ secrets.AIWG_POSTGRES_LIVE_URL != '' }}
+    runs-on: ubuntu-latest
+    container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb  # node 24.15.0 / npm 11.12.1
+    timeout-minutes: 15
+    env:
+      AIWG_POSTGRES_LIVE_URL: ${{ secrets.AIWG_POSTGRES_LIVE_URL }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Install dependencies and PostgreSQL client
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends postgresql-client
+          npm ci
+
+      - name: Run direct PostgreSQL qualification
+        run: ./node_modules/.bin/vitest run --config config/vitest.config.js test/integration/storage-postgres-live.test.ts
+
+      - name: Preserve PostgreSQL qualification evidence
+        if: always()
+        uses: actions/upload-artifact@c24449f33cd45d4826c6702db7e49f7cdb9b551d  # v3.2.1-node20
+        with:
+          name: storage-postgres-${{ gitea.sha }}
+          path: test-results/storage/
+          if-no-files-found: warn
+
+  postgres-postgrest:
+    name: PostgREST Live Qualification
+    if: ${{ secrets.AIWG_POSTGREST_LIVE_URL != '' }}
+    runs-on: ubuntu-latest
+    container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb  # node 24.15.0 / npm 11.12.1
+    timeout-minutes: 15
+    env:
+      AIWG_POSTGREST_LIVE_URL: ${{ secrets.AIWG_POSTGREST_LIVE_URL }}
+      AIWG_POSTGREST_AUTHORIZATION: ${{ secrets.AIWG_POSTGREST_AUTHORIZATION }}
+      AIWG_POSTGREST_RLS_TENANT: ${{ vars.AIWG_POSTGREST_RLS_TENANT }}
+      AIWG_POSTGREST_RLS_FOREIGN_TENANT: ${{ vars.AIWG_POSTGREST_RLS_FOREIGN_TENANT }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run PostgREST qualification
+        run: ./node_modules/.bin/vitest run --config config/vitest.config.js test/integration/storage-postgrest-live.test.ts
+
+      - name: Preserve PostgREST qualification evidence
+        if: always()
+        uses: actions/upload-artifact@c24449f33cd45d4826c6702db7e49f7cdb9b551d  # v3.2.1-node20
+        with:
+          name: storage-postgrest-${{ gitea.sha }}
+          path: test-results/storage/
+          if-no-files-found: warn
