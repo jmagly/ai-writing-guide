@@ -7,6 +7,44 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.27] - 2026-08-28 - "Qualified storage scale-out"
+
+### Added
+
+- **Shared-server storage has executable qualification evidence** - Dedicated
+  PostgreSQL and PostgREST CI jobs obtain short-lived credentials from Vault,
+  run live conformance suites, and publish versioned reference evidence for
+  direct and REST-backed deployments. Performance claims now fail closed when
+  their evidence is stale, incomplete, or outside the declared qualification
+  scope.
+
+- **Storage migrations require semantic proof before cutover** - The migration
+  coordinator now verifies logical identity, snapshot and replay integrity,
+  tombstones, revision and digest continuity, parity, approval-bound cutover,
+  and rollback safety across local and shared-server backends.
+
+### Changed
+
+- **Artifact indexes share deterministic ordering and pagination semantics** -
+  Graphology, JSON, and SQLite backends now expose the same stable traversal
+  order and cursor behavior, backed by the common storage conformance corpus.
+
+### Fixed
+
+- **Address-issues cycles restore the complete templated tracker response** -
+  Native goal and resume flows now render and validate the canonical `AL CYCLE`
+  comment, including required status, evidence, verification, and continuation
+  details, before posting it to an issue (roctinam/aiwg#2206).
+
+### Release boundaries
+
+- Shared-server reference evidence covers the declared PostgreSQL and PostgREST
+  qualification environments. It is not a blanket performance guarantee for
+  undeclared database versions, extensions, network topologies, or workloads.
+- Migration cutover remains approval-bound. Qualification evidence does not
+  authorize an unattended production cutover or replace a deployment-specific
+  rollback plan.
+
 ## [2026.8.26] - 2026-08-26 - "Verified dependency evidence"
 
 ### Security

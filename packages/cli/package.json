@@ -1,6 +1,6 @@
 {
   "name": "@aiwg/cli",
-  "version": "2026.8.26",
+  "version": "2026.8.27",
   "description": "Lightweight AIWG CLI for signed, versioned web-backed resources.",
   "type": "module",
   "license": "MIT",

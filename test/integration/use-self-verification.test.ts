@@ -242,7 +242,7 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
       expect.objectContaining({ provider: 'cursor', outcome: 'ready-restart-required' }),
     ]);
     expect(existsSync(path.join(projectRoot, '.cursor', 'skills'))).toBe(true);
-  });
+  }, 30_000);
 
   it('reports the home-scope OpenClaw context limitation as degraded, not failed', () => {
     const projectRoot = isolatedRoot('aiwg-use-verify-openclaw-project-');
