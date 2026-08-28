@@ -205,13 +205,19 @@ The backend uses schema `user_version=1`; migrations run transactionally and
 an unknown newer schema fails closed.
 
 Run the reproducible local benchmark with `npm run benchmark:index:sqlite`.
-Its JSON reports binding/engine versions, corpus shape, database size,
-throughput, and event-loop delay. A 2026-08-24 reference-host observation on
-Linux x64, Node 24.12.0, better-sqlite3 12.8.0, and SQLite 3.51.3 measured:
+Its JSON reports binding/engine versions, corpus shape, exact correctness and
+source digests, database/WAL size, CPU/RSS, throughput, latency percentiles,
+and event-loop delay.
 
-| Nodes / edges | Write throughput | Query + traversal pairs | Event-loop delay p95 | DB bytes |
-| ---: | ---: | ---: | ---: | ---: |
-| 10,000 / 9,999 | 4,589 ops/s | 890 pairs/s | 281 ms | 2,379,776 |
+<!-- aiwg-storage-benchmark-claim:sqlite-local-reference-v1:start -->
+A 2026-08-28 reference-host qualification on linux x64, Node 24.12.0, better-sqlite3 12.8.0, and SQLite 3.51.3 produced:
+
+| Nodes / edges | Write throughput | Query + traversal pairs | Write latency p50/p95/p99 | Query latency p50/p95/p99 | Event-loop delay p95 | DB / peak WAL bytes |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 10,000 / 9,999 | 5,996 ops/s | 626 pairs/s | 166.67 / 200.82 / 200.82 ms | 1.02 / 1.73 / 3.4 ms | 204.31 ms | 2,379,776 / 4,157,112 |
+
+Evidence: [sqlite-local-reference-v1](../storage/evidence/sqlite-local-reference-v1.json). The release gate rejects this claim when its correctness digest, source digest, freshness window, or rendered values no longer match.
+<!-- aiwg-storage-benchmark-claim:sqlite-local-reference-v1:end -->
 
 This is a qualification point, not a universal capacity limit. The high p95
 delay reflects synchronous native calls and is part of the selection decision:
@@ -263,8 +269,8 @@ npm install @xenova/transformers hnswlib-node
 index:
   embedding:
     enabled: true
-    model: Xenova/all-MiniLM-L6-v2   # ~22MB, ~5ms/embedding on CPU
-    # model: Xenova/all-mpnet-base-v2  # ~110MB, higher quality
+    model: Xenova/all-MiniLM-L6-v2
+    # model: Xenova/all-mpnet-base-v2
     topK: 10
 ```
 
@@ -297,13 +303,9 @@ binary-like, AIWG falls back to the node's title and summary text.
 
 ### Corpus size guidance
 
-| Corpus | Model | One-time build | Query |
-|--------|-------|---------------|-------|
-| 234 nodes | all-MiniLM-L6-v2 | ~12s | <5ms |
-| 1,000 nodes | all-MiniLM-L6-v2 | ~50s | <5ms |
-| 5,000 nodes | all-MiniLM-L6-v2 | ~4 min | <5ms |
-
 Incremental rebuilds only re-embed nodes whose content checksum changed.
+No embedding support envelope is published without a source-bound benchmark
+record; measure the selected model and hardware before choosing a corpus tier.
 
 ---
 

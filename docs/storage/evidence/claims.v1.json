@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "aiwg.storage-benchmark-claims/v1",
+  "claims": [
+    {
+      "id": "sqlite-local-reference-v1",
+      "evidence": "docs/storage/evidence/sqlite-local-reference-v1.json",
+      "document": "docs/extensions/graph-backends.md",
+      "sourceFiles": [
+        "src/artifacts/backends/sqlite-backend.ts",
+        "tools/benchmarks/sqlite-graph.ts"
+      ],
+      "maxAgeDays": 90
+    }
+  ]
+}

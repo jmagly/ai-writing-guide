@@ -184,6 +184,9 @@ jobs:
           TAG='${{ steps.release_tag.outputs.release_tag }}'
           git checkout --detach "refs/tags/${TAG}"
 
+      - name: Verify source-bound storage benchmark claims (#2191)
+        run: npm run verify:storage-claims
+
       - name: Setup Node.js with npmjs.org registry
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444  # v5.0.0 (ci/digests.txt) — Node 24
         with:

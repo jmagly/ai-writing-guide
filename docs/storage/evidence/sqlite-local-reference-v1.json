@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "aiwg.sqlite-graph-benchmark/v1",
+  "evidenceId": "sqlite-local-reference-v1",
+  "observedAt": "2026-08-28T14:50:49.503Z",
+  "validUntil": "2026-11-26T14:50:49.503Z",
+  "subject": {
+    "branch": "main",
+    "commit": "734aa2e611de87eb8cece2796c56bbddfd60a5a7",
+    "sourceFiles": [
+      "src/artifacts/backends/sqlite-backend.ts",
+      "tools/benchmarks/sqlite-graph.ts"
+    ],
+    "sourceDigest": "daeaafd064cfd831d4cbf7edeab8dbd2463ef72a790cc71fbf67c9a52ba313a0"
+  },
+  "runtime": {
+    "node": "v24.12.0",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "sqlite": {
+    "engineVersion": "3.51.3",
+    "bindingVersion": "12.8.0",
+    "journalMode": "wal",
+    "schemaVersion": 1
+  },
+  "corpus": {
+    "nodes": 10000,
+    "edges": 9999,
+    "queries": 1000
+  },
+  "verification": {
+    "valid": true,
+    "expectedNodes": 10000,
+    "observedNodes": 10000,
+    "expectedEdges": 9999,
+    "observedEdges": 9999,
+    "queryChecks": 1000,
+    "traversalChecks": 1000,
+    "expectedDigest": "3961ba6906c85863dd1dd57f0ea4c5fab5b6b1038ab3b11cad174078e080ccce",
+    "observedDigest": "3961ba6906c85863dd1dd57f0ea4c5fab5b6b1038ab3b11cad174078e080ccce"
+  },
+  "measured": {
+    "writeMs": 3335.62,
+    "writesPerSecond": 5995.58,
+    "writeLatencyMs": {
+      "p50": 166.67,
+      "p95": 200.82,
+      "p99": 200.82
+    },
+    "queryMs": 1598.04,
+    "queryPairsPerSecond": 625.77,
+    "queryLatencyMs": {
+      "p50": 1.02,
+      "p95": 1.73,
+      "p99": 3.4
+    },
+    "eventLoopDelayMsP50": 170.76,
+    "eventLoopDelayMsP95": 204.31,
+    "eventLoopDelayMsP99": 204.31,
+    "eventLoopDelayMsMax": 204.31,
+    "databaseBytes": 2379776,
+    "walBytes": 4157112,
+    "walBusy": 0,
+    "walFrames": 609,
+    "checkpointedFrames": 0,
+    "cpuUserMicros": 3119159,
+    "cpuSystemMicros": 522403,
+    "rssBytes": 427012096
+  },
+  "interpretation": "Reference-host observation only; not a universal support limit."
+}

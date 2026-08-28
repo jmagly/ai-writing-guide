@@ -51,6 +51,9 @@ jobs:
         with:
           fetch-depth: 0  # full history so we can push to mirror
 
+      - name: Verify source-bound storage benchmark claims (#2191)
+        run: npm run verify:storage-claims
+
       - name: Install gh CLI + vault fetch dependencies
         run: |
           set -euo pipefail

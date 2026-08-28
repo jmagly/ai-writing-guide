@@ -40,6 +40,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
+      - name: Verify source-bound storage benchmark claims (#2191)
+        run: npm run verify:storage-claims
+
       - name: Fetch tag object for signature verification
         # actions/checkout@v4 on tag-push uses --no-tags by default
         # and writes refs/tags/<tag> as a commit ref, not the tag

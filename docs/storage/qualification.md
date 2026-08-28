@@ -20,6 +20,11 @@ throughput, CPU, RSS, and optional database size, write amplification, WAL,
 lock waits, pool saturation, migration/recovery time, and HTTP transport
 overhead. `assertCurrentStorageEvidence` rejects invalid, incomplete, or stale
 records before a performance statement is published.
+Checked-in measurements are registered in
+`docs/storage/evidence/claims.v1.json`. `npm run verify:storage-claims` binds
+each rendered documentation block to exact correctness results, the benchmark
+source digest, and a bounded validity window. Normal CI and every tag-driven
+publication path run the same dependency-free verifier.
 The runner uses bounded exponential backoff for classified transient failures;
 the configured retry ceiling and observed retry/error rates remain part of the
 evidence rather than being hidden by the benchmark.

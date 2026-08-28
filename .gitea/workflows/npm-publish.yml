@@ -98,6 +98,9 @@ jobs:
         # docs/contributing/versioning.md for the operator setup.
         run: bash tools/ci/verify-signed-tag.sh
 
+      - name: Verify source-bound storage benchmark claims (#2191)
+        run: npm run verify:storage-claims
+
       - name: Upgrade npm to ^11.5 for release-age gate (#1290 / A15)
         # node:20.20.2 base image ships npm 10.8.2; the `min-release-age`
         # config key from the repo-root .npmrc requires npm 11.5+. This is
@@ -355,6 +358,9 @@ jobs:
 
       - name: Checkout release tag
         run: git checkout --detach "refs/tags/${{ steps.release_tag.outputs.release_tag }}"
+
+      - name: Verify source-bound storage benchmark claims (#2191)
+        run: npm run verify:storage-claims
 
       - name: Upgrade npm to ^11.5 for release-age gate (#1290 / A15)
         # node:20.20.2 base image ships npm 10.8.2; the `min-release-age`

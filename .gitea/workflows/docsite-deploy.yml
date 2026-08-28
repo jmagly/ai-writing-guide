@@ -69,6 +69,9 @@ jobs:
       - name: Checkout AIWG
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
+      - name: Verify source-bound storage benchmark claims (#2191)
+        run: npm run verify:storage-claims
+
       # The doc-site publisher is consumed from npm as the `@pagenary/publisher`
       # devDependency (bin: `pagenary`); no git clone, no GT_ACCESS_TOKEN.
       # Migration: #1484. Output minification is built into pagenary as of
