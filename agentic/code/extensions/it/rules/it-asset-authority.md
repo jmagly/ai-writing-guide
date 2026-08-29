@@ -24,7 +24,7 @@ The Configuration Management Database (CMDB) is the authoritative source of trut
    - Revoke identity provider credentials and certificates
    - Remove DNS records
    - Update dependent service documentation
-   - Archive the asset record (set status to `retired`, do not delete)
+   - Archive the minimum durable asset record (set status to `retired`; dispose of expired sensitive fields under its lifecycle policy)
    - Record decommission date and reason
 
 4. **Status transitions must be documented**: Changing an asset's status (active to maintenance, active to retired) requires a change record. Status changes must include a reason and be traceable to an issue.
@@ -32,6 +32,10 @@ The Configuration Management Database (CMDB) is the authoritative source of trut
 5. **Periodic reconciliation**: The CMDB must be reconciled against live infrastructure at a regular cadence. Discrepancies (assets in CMDB not found on network, assets on network not in CMDB) must be investigated and resolved.
 
 6. **Asset records must be complete**: An asset record missing critical fields (hostname, IP, owner, SLA tier) is considered incomplete. Incomplete records must be flagged for remediation.
+
+7. **Authority does not mean indefinite retention**: Preserve the authoritative identity/status/history needed for CMDB traceability, while lifecycle policy may summarize, redact, archive, or dispose of expired sensitive fields and generated reconciliation evidence. A legal/compliance hold pauses disposition explicitly; it does not silently rewrite the policy.
+
+8. **Publication is gated**: Asset records default to `restricted-infrastructure`. Every repository, issue/PR/comment, cross-repo, or export sink must pass the ops information-governance boundary before disclosure.
 
 ## Validation
 

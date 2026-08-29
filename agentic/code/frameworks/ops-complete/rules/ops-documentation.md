@@ -9,7 +9,7 @@ enforcement: high
 
 ## Principle
 
-Every operational document must be executable, idempotent, and verified. A procedure that cannot be copy-pasted and run by an agent or operator — producing predictable, repeatable results — is not a procedure. It is a suggestion.
+Every operational document must be executable, idempotent, verified, classified, and destination-safe. Exact topology belongs only in a sink authorized for the document's classification; less-trusted destinations receive a sanitized summary.
 
 ## Mandatory Rules
 
@@ -181,6 +181,12 @@ Include a "What NOT to Fix" section for anything that looks wrong but is intenti
   Do not delete — legacy monitoring checks for it.
 ```
 
+### Rule 8: Classify and Gate the Document
+
+Every generated ops artifact MUST resolve governance metadata and lifecycle metadata before persistence. Sensitive host, network, identity, recovery, and raw audit artifacts default to non-public classifications. Repository visibility, issue/PR/comment visibility, cross-repo copies, and exports are distinct named sinks; do not infer authorization from repository ownership or local write access.
+
+Run `aiwg ops evidence prepare` or call `prepareEvidenceForSink`/`publishEvidence` before writing. A denied artifact is not publishable. If the boundary returns a sanitized summary, publish only that prepared summary and retain its payload-free decision record.
+
 ## Detection
 
 - Procedure missing any of the 8 required sections
@@ -189,6 +195,7 @@ Include a "What NOT to Fix" section for anything that looks wrong but is intenti
 - Procedure ending without a verification section
 - No idempotency declaration for destructive or stateful operations
 - Missing agent house rules in documents tagged for agent consumption
+- Missing classification/lifecycle metadata or a successful publication-gate decision
 
 ## Enforcement
 

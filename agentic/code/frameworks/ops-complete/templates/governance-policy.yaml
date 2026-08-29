@@ -1,0 +1,42 @@
+# Project copy target: .aiwg/ops/governance-policy.yaml
+# Schema: schemas/ops/governance-policy.schema.json
+redaction:
+  organizationPatterns:
+    - id: asset-reference
+      pattern: "\\bORG-ASSET-[0-9]{6}\\b"
+  sensitiveKeyPatterns:
+    - "(?:^|_)break_glass(?:_|$)"
+  includeLength: true
+
+classification:
+  defaultClassification: internal
+  classes:
+    regulated-record:
+      rank: 35
+      description: Organization-regulated operational record
+  defaultsByKind:
+    CustomIdentityExport: regulated-record
+  requireExplicitForKinds:
+    - CustomIdentityExport
+
+retention:
+  - id: regulated-private-retention
+    version: "1"
+    category: identity-audit
+    classification: regulated-record
+    sink: encrypted-artifact-store
+    tier: durable
+    duration: P30D
+    action: archive
+    archiveSink: encrypted-cold-archive
+    priority: 100
+
+sinks:
+  private-operations-repository:
+    id: private-operations-repository
+    visibility: private
+    external: false
+    persistent: true
+    mutable: true
+    maxClassification: restricted-infrastructure
+    repository: example/operations

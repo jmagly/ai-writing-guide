@@ -101,6 +101,7 @@ inputs:
 |------|-------------|---------|
 | `ops-documentation` | HIGH | Executable, idempotent, verified procedure format |
 | `ops-safety` | CRITICAL | Interactive command detection, destructive operation gates |
+| `ops-information-governance` | CRITICAL | Mandatory minimization, redaction, publication, retention, and disposal boundary |
 | `ops-cross-repo` | HIGH | Scope validation, cross-repo reference format |
 | `ops-issue-tracking` | MEDIUM | Label conventions, dependency tracking, phased work |
 
@@ -125,6 +126,8 @@ inputs:
 |-------|---------|
 | `ops-verify` | Post-procedure verification runner |
 | `ops-audit-trail` | Track files modified, backups created, commands run |
+
+All collected operational output and generated artifacts must cross the evidence boundary before an agent response, file write, repository action, tracker submission, cross-repo transfer, or export. Use `aiwg ops evidence prepare` or the public `aiwg/governance` API. See `docs/ops-evidence-governance.md` for policy schemas, sink defaults, overrides, and lifecycle handling.
 
 ## Creating Custom Extensions
 

@@ -5,6 +5,26 @@ metadata:
   labels:
     type: service
     environment: "{production|staging|dev}"
+  governance:
+    classification: restricted-infrastructure
+    owner: "{platform-operations-team}"
+    handling:
+      allowedSinks: [private-repository, encrypted-artifact-store]
+      crossRepo: approval-required
+      retentionPolicy: generic-durable
+  lifecycle:
+    schemaVersion: ops-evidence-lifecycle.aiwg.io/v1
+    artifactId: "{service-name}"
+    category: generic
+    classification: restricted-infrastructure
+    sinkId: private-repository
+    tier: durable
+    createdAt: "{ISO-8601-created-at}"
+    policyId: generic-durable
+    policyVersion: "1"
+    dispositionDeadline: "{ISO-8601-disposition-deadline}"
+    action: summarize
+    holds: []
 spec:
   deployment:
     host: "{hostname}"

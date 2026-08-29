@@ -94,3 +94,7 @@ nft add rule inet filter input tcp dport {port} accept
 - Network state comparison report
 - Drift summary (count of matches, drifts, missing items)
 - Optional remediation commands
+
+## Governance Boundary
+
+Network collection and comparison artifacts default to `restricted-infrastructure` with the `network-inventory` retention category. Raw firewall, routing, DNS, and interface output is short-lived and requires an explicit capture reason. Durable reports use minimum sufficient drift counts and redacted bounded excerpts. Invoke `aiwg ops evidence prepare` before a report/artifact write, agent response containing collected state, repository commit, export, or issue/PR/comment. Less-trusted destinations receive only the prepared payload-free summary.

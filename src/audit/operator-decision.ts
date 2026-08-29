@@ -11,6 +11,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { appendFile, chmod, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import { redactStructured } from '../governance/redaction.js';
 
 export const OPERATOR_DECISION_SCHEMA = 'operator-decision.aiwg.io/v1' as const;
 
@@ -98,9 +99,6 @@ export interface OperatorDecisionRecord {
 export interface RetentionPolicy {
   maxAgeDays: Partial<Record<DataClassification, number>>;
 }
-
-const secretKey = /token|secret|password|credential|authorization|cookie|csrf|api[_-]?key/i;
-const secretValue = /(?:bearer\s+\S+|\bsk-[a-z0-9_-]+|\bgh[pousr]_[a-z0-9_]+)/i;
 
 export function digestDecisionContext(context: unknown): string {
   const safe = redact(context).value;
@@ -261,25 +259,12 @@ function canonicalJson(value: unknown): string {
 }
 
 function redact(value: unknown, path = '$'): { value: unknown; paths: string[] } {
-  if (Array.isArray(value)) {
-    const rows = value.map((item, index) => redact(item, `${path}[${index}]`));
-    return { value: rows.map(row => row.value), paths: rows.flatMap(row => row.paths) };
-  }
-  if (value && typeof value === 'object') {
-    const output: Record<string, unknown> = {};
-    const paths: string[] = [];
-    for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
-      if (secretKey.test(key)) {
-        output[key] = '[redacted]';
-        paths.push(`${path}.${key}`);
-      } else {
-        const child = redact(item, `${path}.${key}`);
-        output[key] = child.value;
-        paths.push(...child.paths);
-      }
-    }
-    return { value: output, paths };
-  }
-  if (typeof value === 'string' && secretValue.test(value)) return { value: '[redacted]', paths: [path] };
-  return { value, paths: [] };
+  const result = redactStructured(value);
+  return {
+    value: result.value,
+    paths: result.findings.map((finding) => {
+      const suffix = finding.path?.replaceAll('/', '.').replace(/^\./, '') ?? '';
+      return suffix ? `${path}.${suffix}` : path;
+    }),
+  };
 }

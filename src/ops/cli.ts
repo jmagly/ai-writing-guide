@@ -12,6 +12,17 @@
  */
 
 import { OpsRegistry } from './registry.js';
+import { appendFile, chmod, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { randomUUID } from 'node:crypto';
+import { parse as parseYaml } from 'yaml';
+import {
+  prepareEvidenceForSink,
+  type GovernancePolicy,
+  type GovernedArtifact,
+  type PublicationApproval,
+  type RedactionOverride,
+} from '../governance/index.js';
 
 /**
  * Main CLI entry point for `aiwg ops <subcommand> [args]`
@@ -65,6 +76,10 @@ export async function main(args: string[]): Promise<void> {
       await handleAdopt(registry, subArgs);
       break;
 
+    case 'evidence':
+      await handleEvidence(subArgs);
+      break;
+
     default:
       printUsage();
       if (subcommand) {
@@ -72,6 +87,98 @@ export async function main(args: string[]): Promise<void> {
       }
       break;
   }
+}
+
+interface EvidencePrepareEnvelope {
+  artifact: GovernedArtifact;
+  sinkId: string;
+  sourceRepository?: string;
+  publicationApproval?: PublicationApproval;
+  redactionOverride?: RedactionOverride;
+}
+
+function flagValue(args: string[], name: string): string | undefined {
+  const index = args.indexOf(name);
+  if (index === -1) return undefined;
+  const value = args[index + 1];
+  if (!value || value.startsWith('--')) throw new Error(`${name} requires a value`);
+  return value;
+}
+
+function parseData<T>(source: string, label: string): T {
+  try {
+    return JSON.parse(source) as T;
+  } catch {
+    try {
+      return parseYaml(source) as T;
+    } catch {
+      throw new Error(`${label} must contain valid JSON or YAML`);
+    }
+  }
+}
+
+async function readStdin(maxBytes = 16 * 1024 * 1024): Promise<string> {
+  const chunks: Buffer[] = [];
+  let bytes = 0;
+  for await (const chunk of process.stdin) {
+    const value = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    bytes += value.length;
+    if (bytes > maxBytes) throw new Error('evidence input exceeds 16 MiB');
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+}
+
+async function readInput(args: string[]): Promise<string> {
+  const inputPath = flagValue(args, '--input');
+  return inputPath ? readFile(resolve(inputPath), 'utf8') : readStdin();
+}
+
+async function appendBoundaryAudit(cwd: string, value: unknown, configuredPath?: string): Promise<void> {
+  const path = resolve(configuredPath ?? `${cwd}/.aiwg/ops/audit/governance-boundary.jsonl`);
+  await mkdir(dirname(path), { recursive: true, mode: 0o700 });
+  await appendFile(path, `${JSON.stringify(value)}\n`, { encoding: 'utf8', mode: 0o600 });
+  await chmod(path, 0o600);
+}
+
+async function writePreparedOutput(pathValue: string, value: unknown): Promise<void> {
+  const path = resolve(pathValue);
+  const temporary = `${path}.tmp-${randomUUID()}`;
+  await mkdir(dirname(path), { recursive: true, mode: 0o700 });
+  await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, { encoding: 'utf8', mode: 0o600, flag: 'wx' });
+  await rename(temporary, path);
+  await chmod(path, 0o600);
+}
+
+async function handleEvidence(args: string[]): Promise<void> {
+  const action = args[0];
+  if (action !== 'prepare') {
+    throw new Error('Usage: aiwg ops evidence prepare [--input <json-or-yaml>] [--policy <json-or-yaml>] [--output <path>] [--audit <path>]');
+  }
+  const envelope = parseData<EvidencePrepareEnvelope>(await readInput(args), 'evidence input');
+  if (!envelope || typeof envelope !== 'object' || !envelope.artifact || typeof envelope.sinkId !== 'string') {
+    throw new Error('evidence input requires artifact and sinkId');
+  }
+  const policyPath = flagValue(args, '--policy');
+  const policy = policyPath
+    ? parseData<GovernancePolicy>(await readFile(resolve(policyPath), 'utf8'), 'governance policy')
+    : undefined;
+  const result = prepareEvidenceForSink({
+    ...envelope,
+    policy,
+  });
+  await appendBoundaryAudit(process.cwd(), result.audit, flagValue(args, '--audit'));
+  const response = result.allowed && result.prepared
+    ? { schemaVersion: 'ops-prepared-evidence.aiwg.io/v1', prepared: result.prepared, audit: result.audit, auditRecorded: true }
+    : { schemaVersion: 'ops-prepared-evidence.aiwg.io/v1', denied: true, audit: result.audit, auditRecorded: true };
+  const outputPath = flagValue(args, '--output');
+  if (outputPath) {
+    if (!result.allowed) throw new Error(`evidence publication denied: ${result.audit.reasonCodes.join(', ')}`);
+    await writePreparedOutput(outputPath, response);
+  } else {
+    process.stdout.write(`${JSON.stringify(response, null, 2)}\n`);
+  }
+  if (!result.allowed) process.exitCode = 2;
 }
 
 async function handleInit(registry: OpsRegistry, args: string[]): Promise<void> {
@@ -229,6 +336,7 @@ Subcommands:
   push [--workspace <n>]  Push workspace repos to remote
   discover [root...]      Scan filesystem for orphaned ops-workspace clones
   adopt <path>            Register an existing local clone as a repo entry
+  evidence prepare        Sanitize and policy-gate evidence before publication
 
 Init options:
   --silent                Skip interactive prompts
@@ -255,6 +363,7 @@ Examples:
   aiwg ops push --workspace personal
   aiwg ops discover ~/projects ~/work --max-depth 4
   aiwg ops discover --register --workspace home
+  aiwg ops evidence prepare --input request.yaml --policy .aiwg/ops/governance-policy.yaml
 
 Discover options:
   --max-depth <n>         Max walk depth from each root (default: 3)

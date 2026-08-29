@@ -4,6 +4,27 @@ metadata:
   name: "{network-name}"
   labels:
     type: network-state
+  governance:
+    classification: restricted-infrastructure
+    owner: "{network-operations-team}"
+    handling:
+      allowedSinks: [private-repository, encrypted-artifact-store]
+      crossRepo: approval-required
+      retentionPolicy: network-inventory-durable
+  lifecycle:
+    schemaVersion: ops-evidence-lifecycle.aiwg.io/v1
+    artifactId: "{network-name}"
+    category: network-inventory
+    classification: restricted-infrastructure
+    sinkId: encrypted-artifact-store
+    tier: durable
+    createdAt: "{ISO-8601-created-at}"
+    policyId: network-inventory-durable
+    policyVersion: "1"
+    dispositionDeadline: "{ISO-8601-disposition-deadline}"
+    action: archive
+    archiveSink: encrypted-artifact-store
+    holds: []
 spec:
   vlans:
     - id: "{vlan-id}"

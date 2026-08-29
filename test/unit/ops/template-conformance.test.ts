@@ -58,6 +58,24 @@ describe('ops extension template conformance', () => {
     expect(wrongShape.diagnostics).toContainEqual(expect.objectContaining({ path: '/spec/backup/enabled', keyword: 'type' }));
   });
 
+  it('requires valid governance and lifecycle metadata on sensitive IT records', () => {
+    const registry = buildOpsSchemaRegistry(root);
+    const missing = structuredClone(template('asset-record.yaml')) as any;
+    delete missing.metadata.governance;
+    const invalid = structuredClone(template('network-state.yaml')) as any;
+    invalid.metadata.governance.classification = 'PUBLIC';
+
+    const missingResult = validateOpsArtifact(missing, { filePath: 'asset-record.yaml', registry });
+    const invalidResult = validateOpsArtifact(invalid, { filePath: 'network-state.yaml', registry });
+
+    expect(missingResult.valid).toBe(false);
+    expect(missingResult.diagnostics).toContainEqual(expect.objectContaining({ path: '/metadata', keyword: 'required' }));
+    expect(invalidResult.valid).toBe(false);
+    expect(invalidResult.diagnostics).toContainEqual(expect.objectContaining({
+      path: '/metadata/governance/classification', keyword: 'pattern',
+    }));
+  });
+
   it('rejects unsupported and unresolved playbook references', () => {
     const registry = buildOpsSchemaRegistry(root);
     const unsupported = structuredClone(template('provisioning-playbook.yaml')) as any;

@@ -6,11 +6,15 @@ Rules owned by the ops-complete framework. Each entry provides a summary suffici
 
 ---
 
-## CRITICAL (1 rule)
+## CRITICAL (2 rules)
 
 #### ops-safety
 **Summary**: Interactive command detection and destructive operation gates.
 **Full rule**: @$AIWG_ROOT/agentic/code/frameworks/ops-complete/rules/ops-safety.md
+
+#### ops-information-governance
+**Summary**: Mandatory minimization, redaction, classification/publication, retention, and disposal boundary for every operational sink.
+**Full rule**: @$AIWG_ROOT/agentic/code/frameworks/ops-complete/rules/ops-information-governance.md
 
 ---
 
@@ -38,18 +42,18 @@ Rules owned by the ops-complete framework. Each entry provides a summary suffici
 
 | Task Type | Relevant Rules |
 |-----------|---------------|
-| **Executing commands on hosts** | ops-safety, ops-documentation |
-| **Writing runbooks/procedures** | ops-documentation, ops-safety |
+| **Executing commands on hosts** | ops-safety, ops-documentation, ops-information-governance |
+| **Writing runbooks/procedures** | ops-documentation, ops-safety, ops-information-governance |
 | **Destructive operations** | ops-safety |
 | **Cross-host config changes** | ops-safety, ops-cross-repo |
-| **Creating/triaging issues** | ops-issue-tracking, ops-cross-repo |
-| **Committing to ops repos** | ops-cross-repo, ops-issue-tracking |
+| **Creating/triaging issues** | ops-issue-tracking, ops-cross-repo, ops-information-governance |
+| **Committing to ops repos** | ops-cross-repo, ops-issue-tracking, ops-information-governance |
 | **Multi-step migrations** | ops-issue-tracking, ops-documentation, ops-safety |
-| **Cross-repo references** | ops-cross-repo, ops-issue-tracking |
+| **Cross-repo references** | ops-cross-repo, ops-issue-tracking, ops-information-governance |
 | **Host standup/decommission** | ops-documentation, ops-safety, ops-issue-tracking |
 | **Service impact assessment** | ops-cross-repo, ops-safety |
 
 ---
 
-*4 rules across 3 enforcement levels*
+*5 rules across 3 enforcement levels*
 *Full rule files: @$AIWG_ROOT/agentic/code/frameworks/ops-complete/rules/*

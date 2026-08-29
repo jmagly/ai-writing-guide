@@ -172,6 +172,12 @@ Blocked-by: roctinam/itops#12 (DNS record creation)
 Related: roctinam/sysops#18 (similar migration on compute-04)
 ```
 
+### Rule 6: Treat Tracker Content as an External Persistent Sink
+
+Issue, PR, and comment bodies MUST pass through `aiwg ops evidence prepare` (or `prepareEvidenceForSink`) before submission. Select `private-issue` or `public-issue` from verified tracker visibility; unknown visibility fails closed. Do not post raw output, named-user identity evidence, credentials, full topology, backup paths, or evidence that depends on later expiration.
+
+Tracker updates default to minimum sufficient status and bounded redacted excerpts. Because comments can be copied, notified, mirrored, or effectively immutable, publish only a non-expiring sanitized summary when the full artifact's classification or retention policy is incompatible with the tracker sink.
+
 ## Detection
 
 - Issues missing required labels (priority, area)
@@ -180,6 +186,7 @@ Related: roctinam/sysops#18 (similar migration on compute-04)
 - Commits touching ops repos without issue references
 - Large issues with no progress comments over 48 hours
 - Inconsistent label format (wrong casing, missing category prefix)
+- Tracker content submitted without a successful sink-boundary decision
 
 ## Enforcement
 

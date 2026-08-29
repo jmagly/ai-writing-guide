@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/ops/artifact-governance.v1.schema.json",
+  "title": "AIWG Ops Artifact Governance Metadata",
+  "type": "object",
+  "required": ["governance", "lifecycle"],
+  "additionalProperties": false,
+  "properties": {
+    "governance": { "$ref": "#/$defs/governance" },
+    "lifecycle": { "$ref": "#/$defs/lifecycle" }
+  },
+  "$defs": {
+    "stableId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{0,127}$" },
+    "governance": {
+      "type": "object",
+      "required": ["classification", "handling"],
+      "additionalProperties": false,
+      "properties": {
+        "classification": { "$ref": "#/$defs/stableId" },
+        "owner": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "handling": {
+          "type": "object",
+          "required": ["allowedSinks", "crossRepo", "retentionPolicy"],
+          "additionalProperties": false,
+          "properties": {
+            "allowedSinks": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "$ref": "#/$defs/stableId" }
+            },
+            "crossRepo": { "enum": ["allow", "approval-required", "deny"] },
+            "retentionPolicy": { "$ref": "#/$defs/stableId" }
+          }
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "required": ["schemaVersion", "artifactId", "category", "classification", "sinkId", "tier", "createdAt", "policyId", "policyVersion", "dispositionDeadline", "action", "holds"],
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": { "const": "ops-evidence-lifecycle.aiwg.io/v1" },
+        "artifactId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "category": { "$ref": "#/$defs/stableId" },
+        "classification": { "$ref": "#/$defs/stableId" },
+        "sinkId": { "$ref": "#/$defs/stableId" },
+        "tier": { "enum": ["raw", "durable"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "policyId": { "$ref": "#/$defs/stableId" },
+        "policyVersion": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "dispositionDeadline": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "format": "date-time" }
+          ]
+        },
+        "action": { "enum": ["retain", "summarize", "redact-fields", "archive", "delete"] },
+        "rawCaptureReasonDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+        "dispositionFields": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "archiveSink": { "$ref": "#/$defs/stableId" },
+        "holds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "actor", "reasonDigest", "placedAt"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "minLength": 1, "maxLength": 256 },
+              "actor": { "type": "string", "minLength": 1, "maxLength": 256 },
+              "reasonDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+              "placedAt": { "type": "string", "format": "date-time" },
+              "releasedAt": { "type": "string", "format": "date-time" },
+              "releasedBy": { "type": "string", "minLength": 1, "maxLength": 256 },
+              "releaseReasonDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

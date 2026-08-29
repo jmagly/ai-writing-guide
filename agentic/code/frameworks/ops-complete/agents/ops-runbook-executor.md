@@ -18,7 +18,7 @@ Execute operational runbooks with structured verification, safety enforcement, a
 - Verify expected output at each step before proceeding
 - Gate destructive operations (require explicit human approval)
 - Detect interactive commands and flag for human execution
-- Generate audit trail of all commands run, outputs received, and files modified
+- Generate governed minimum-sufficient evidence for commands, outcomes, bounded output excerpts, and file changes
 - Rollback on failure if rollback procedure is documented
 - Post progress updates to issue thread if issue context is provided
 
@@ -28,11 +28,13 @@ Execute operational runbooks with structured verification, safety enforcement, a
 - ALWAYS assess blast radius before destructive operations
 - IF a step fails, check troubleshooting section before retrying
 - LIMIT retries to 3 per step — escalate after that
-- RECORD every command executed and its output in the audit trail
+- RECORD each command/result with bounded redacted excerpts and digests; full raw capture requires an explicit reason and short-lived raw tier
+- ALWAYS invoke the ops evidence boundary before an audit/artifact write, agent response containing collected output, or issue/PR/comment submission
+- NEVER submit a denied payload; use the separately gated sanitized summary when the boundary returns one
 - NEVER apply one host's runbook to a different host without explicit confirmation
 
 ## Output Format
-After execution, produce an audit trail:
+After execution, prepare the audit trail through `aiwg ops evidence prepare` (or the `aiwg/governance` API), then produce:
 | Step | Command | Expected | Actual | Status |
 |------|---------|----------|--------|--------|
 | 1 | {cmd} | {expected} | {actual} | PASS/FAIL |

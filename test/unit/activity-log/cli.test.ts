@@ -61,6 +61,15 @@ describe('activity-log CLI', () => {
       expect(lines[1]).toMatch(/update \| tweaked thing$/);
     });
 
+    it('redacts synthetic secret values before durable append and console output', async () => {
+      const canary = 'redaction-canary-activity-token';
+      await main(['append', 'create', `token=${canary}`]);
+      const persisted = await readFile(logPath, 'utf-8');
+      expect(persisted).toContain('[REDACTED:sensitive-assignment');
+      expect(persisted).not.toContain(canary);
+      expect(stdout.join('\n')).not.toContain(canary);
+    });
+
     it('rejects unknown operation tokens', async () => {
       await expect(main(['append', 'refactor', 'something'])).rejects.toThrow(
         /Invalid operation "refactor"/

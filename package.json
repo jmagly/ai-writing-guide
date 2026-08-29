@@ -20,6 +20,11 @@
       "import": "./dist/src/resources/index.js",
       "default": "./dist/src/resources/index.js"
     },
+    "./governance": {
+      "types": "./dist/src/governance/index.d.ts",
+      "import": "./dist/src/governance/index.js",
+      "default": "./dist/src/governance/index.js"
+    },
     "./package.json": "./package.json"
   },
   "engines": {

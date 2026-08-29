@@ -26,6 +26,7 @@ import {
 } from './types.js';
 import { parseLog, parseUtcDate } from './parser.js';
 import { resolveStorage, type StorageAdapter } from '../storage/index.js';
+import { redactText } from '../governance/redaction.js';
 
 const LOG_PATH = 'activity.log';
 const DEFAULT_LIMIT = 20;
@@ -99,7 +100,9 @@ async function handleAppend(args: string[]): Promise<void> {
     );
   }
   const op = args[0];
-  const summary = args.slice(1).join(' ').trim();
+  const summary = redactText(args.slice(1).join(' ').trim(), {
+    limits: { maxInputBytes: 16 * 1024 },
+  }).text;
 
   if (!isActivityOperation(op)) {
     throw new Error(

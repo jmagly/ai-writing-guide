@@ -110,3 +110,7 @@ Produce a consolidated identity audit report with:
 - Certificate expiry timeline
 - Unused client inventory
 - Policy drift assessment
+
+## Governance Boundary
+
+Identity evidence defaults to `restricted-identity`. Durable output is aggregated by finding/status unless a named user is required for an authorized remediation; raw API responses, bearer headers, named-user lists, redirect URIs, and certificate metadata remain short-lived restricted evidence. Invoke `aiwg ops evidence prepare` before every report write or tracker/publication action. Issue and comment sinks receive only non-expiring sanitized counts unless an explicit destination policy and scoped approval authorize more. Redaction and classification audit records must not reproduce usernames, tokens, URLs, or finding payloads.

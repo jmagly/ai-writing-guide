@@ -52,12 +52,55 @@
   "definitions": {
     "metadata": {
       "type": "object",
-      "required": ["name"],
+      "required": ["name", "governance", "lifecycle"],
       "additionalProperties": false,
       "properties": {
         "name": { "type": "string" },
         "namespace": { "type": "string" },
-        "labels": { "type": "object", "additionalProperties": { "type": "string" } }
+        "labels": { "type": "object", "additionalProperties": { "type": "string" } },
+        "governance": { "$ref": "#/definitions/governance" },
+        "lifecycle": { "$ref": "#/definitions/lifecycle" }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "required": ["classification", "owner", "handling"],
+      "additionalProperties": false,
+      "properties": {
+        "classification": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$" },
+        "owner": { "type": "string", "minLength": 1 },
+        "handling": {
+          "type": "object",
+          "required": ["allowedSinks", "crossRepo", "retentionPolicy"],
+          "additionalProperties": false,
+          "properties": {
+            "allowedSinks": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$" } },
+            "crossRepo": { "enum": ["allow", "approval-required", "deny"] },
+            "retentionPolicy": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$" }
+          }
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "required": ["schemaVersion", "artifactId", "category", "classification", "sinkId", "tier", "createdAt", "policyId", "policyVersion", "dispositionDeadline", "action", "holds"],
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": { "const": "ops-evidence-lifecycle.aiwg.io/v1" },
+        "artifactId": { "type": "string", "minLength": 1 },
+        "category": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$" },
+        "classification": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$" },
+        "sinkId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$" },
+        "tier": { "enum": ["raw", "durable"] },
+        "createdAt": { "type": "string" },
+        "policyId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$" },
+        "policyVersion": { "type": "string" },
+        "dispositionDeadline": { "type": ["string", "null"] },
+        "action": { "enum": ["retain", "summarize", "redact-fields", "archive", "delete"] },
+        "rawCaptureReasonDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+        "dispositionFields": { "type": "array", "items": { "type": "string" } },
+        "archiveSink": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$" },
+        "holds": { "type": "array", "items": { "type": "object" } }
       }
     },
     "stringMap": { "type": "object", "additionalProperties": { "type": "string" } }

@@ -11,6 +11,7 @@ Most AI coding assistants struggle in ops repositories because operational work 
 - Agents that can execute runbooks with per-step verification
 - Templates for runbooks, incident reports, and troubleshooting trees
 - A composable extension system for domain-specific operations
+- A mandatory evidence boundary for minimization, redaction, classification, publication, retention, and disposal
 
 ## The YAML Metalanguage
 
@@ -75,11 +76,14 @@ See `@$AIWG_ROOT/agentic/code/frameworks/ops-complete/docs/extensions-guide.md` 
 | Rule | Level | Purpose |
 |------|-------|---------|
 | `ops-safety` | CRITICAL | Detect interactive commands; gate destructive operations |
+| `ops-information-governance` | CRITICAL | Gate every response, persistence, tracker, repository, cross-repo, and export sink |
 | `ops-documentation` | HIGH | Enforce executable, idempotent, verified procedure format |
 | `ops-cross-repo` | HIGH | Validate scope; enforce cross-repo reference format |
 | `ops-issue-tracking` | MEDIUM | Label conventions, dependency tracking, phased work |
 
 The `ops-safety` rule is the most important. It catches patterns like `read -p "Are you sure?"` in runbooks, commands that lack rollback steps, and procedures that modify production state without verification.
+
+`ops-information-governance` is the mandatory confidentiality/lifecycle boundary. It resolves classification, defaults durable records to minimum sufficient evidence, sanitizes complete text streams and nested objects, rejects unknown or under-trusted sinks, and attaches retention/disposition metadata before any payload is written or submitted. The public API and project policy format are documented in `@$AIWG_ROOT/docs/ops-evidence-governance.md`.
 
 ### Agents
 
@@ -94,6 +98,7 @@ The `ops-safety` rule is the most important. It catches patterns like `read -p "
 |-------|---------|
 | `ops-verify` | Run post-procedure verification |
 | `ops-audit-trail` | Track files modified, backups created, commands run |
+| `aiwg ops evidence prepare` | Prepare and gate collected output before any sink |
 
 ### Templates
 
@@ -141,3 +146,4 @@ contract, validator command, and structured reference rules.
 - `@$AIWG_ROOT/agentic/code/frameworks/ops-complete/docs/extensions-guide.md` — Extension details
 - `@$AIWG_ROOT/docs/yaml-metalanguage.md` — Full YAML metalanguage specification
 - `@$AIWG_ROOT/agentic/code/frameworks/ops-complete/rules/RULES-INDEX.md` — All ops rules
+- `@$AIWG_ROOT/docs/ops-evidence-governance.md` — Redaction, publication, retention, and disposal contract

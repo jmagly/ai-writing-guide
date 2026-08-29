@@ -24,7 +24,7 @@ Execute a disaster recovery runbook in a controlled test environment to validate
 Walk through each step of the DR runbook in the test environment:
 
 - Execute each command as documented
-- Record actual output vs. expected output for each step
+- Record status plus bounded redacted excerpts/digests against expected output for each step
 - Note any steps that require modification
 - Time each major phase
 
@@ -78,3 +78,7 @@ Produce a test report:
 - Updated DR runbook (if corrections needed)
 - Updated test history
 - Issue tickets for unresolved problems
+
+## Governance Boundary
+
+DR artifacts default to `restricted-infrastructure` with the `dr-evidence` retention category. Recovery commands, backup destinations, topology, timings, and raw validation output must pass through `aiwg ops evidence prepare` before persistence. Full raw capture requires an explicit reason and short TTL. Durable reports preserve outcome, RTO/RPO status, bounded redacted excerpts, and digests. Immutable issue sinks receive only a prepared sanitized summary that does not depend on later deletion.

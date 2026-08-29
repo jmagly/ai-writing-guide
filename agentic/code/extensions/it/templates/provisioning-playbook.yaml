@@ -4,6 +4,26 @@ metadata:
   name: provision-host
   labels:
     type: provisioning
+  governance:
+    classification: restricted-infrastructure
+    owner: "{platform-operations-team}"
+    handling:
+      allowedSinks: [private-repository, encrypted-artifact-store]
+      crossRepo: approval-required
+      retentionPolicy: generic-durable
+  lifecycle:
+    schemaVersion: ops-evidence-lifecycle.aiwg.io/v1
+    artifactId: provision-host
+    category: generic
+    classification: restricted-infrastructure
+    sinkId: private-repository
+    tier: durable
+    createdAt: "{ISO-8601-created-at}"
+    policyId: generic-durable
+    policyVersion: "1"
+    dispositionDeadline: "{ISO-8601-disposition-deadline}"
+    action: summarize
+    holds: []
 spec:
   inventory: fleet-inventory
   targets:

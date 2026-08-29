@@ -94,3 +94,7 @@ Produce a reconciliation report with:
 - Drift summary (matched, drifted, missing, unreachable counts)
 - Per-asset remediation recommendations
 - List of unregistered hosts requiring CMDB enrollment
+
+## Governance Boundary
+
+Classify live and reconciled asset data as `restricted-infrastructure`. Keep raw discovery output in the short-lived raw tier only when an explicit reason is recorded; the durable reconciliation report defaults to counts, field names, status, bounded redacted excerpts, and record fingerprints. Before writing the CMDB report or posting a discrepancy to an issue, invoke `aiwg ops evidence prepare`. Public/immutable trackers receive only a sanitized summary, never hostnames, addresses, serials, owners, or backup paths.

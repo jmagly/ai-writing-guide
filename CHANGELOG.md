@@ -7,6 +7,27 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- **Ops outputs now cross a mandatory redaction boundary** - A public text,
+  stream, and nested-structured API sanitizes common and project-defined secret
+  classes before responses or persistent/external sinks. Typed markers preserve
+  optional length/HMAC correlation metadata, failures deny publication without a
+  payload, and exceptional bypasses require a sink-enabled, scoped audit record
+  (jmagly/aiwg#178).
+
+- **Ops artifacts are classified and destination-gated** - Versioned governance
+  schemas, secure kind/category defaults, inheritance, custom ordered classes,
+  sink visibility ceilings, cross-repo approval checks, payload-free decisions,
+  and separately gated sanitized summaries now cover repository, tracker,
+  comment, export, and bundle boundaries (jmagly/aiwg#179).
+
+- **Ops evidence has enforceable minimization and lifecycle controls** - Durable
+  evidence defaults to bounded excerpts, outcomes, counts, and digests; raw
+  capture requires a reason and short TTL. Category/classification/sink/tier
+  policies drive summarize, redact, archive, retain, and delete actions with
+  reversible holds and payload-free disposition receipts (jmagly/aiwg#180).
+
 ### Fixed
 
 - **Ops extension YAML templates now honor their declared schemas** - IT asset,

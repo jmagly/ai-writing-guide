@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/ops/governance-policy.v1.schema.json",
+  "title": "AIWG Ops Governance Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "redaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "organizationPatterns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "pattern"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "$ref": "#/$defs/stableId" },
+              "pattern": { "type": "string", "minLength": 1, "maxLength": 512 },
+              "flags": { "type": "string", "pattern": "^[gimsuy]*$" }
+            }
+          }
+        },
+        "sensitiveKeyPatterns": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 256 }
+        },
+        "includeLength": { "type": "boolean" },
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "maxInputBytes": { "type": "integer", "minimum": 1 },
+            "maxDepth": { "type": "integer", "minimum": 1 },
+            "maxNodes": { "type": "integer", "minimum": 1 },
+            "maxObjectKeys": { "type": "integer", "minimum": 1 },
+            "maxArrayItems": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "classes": {
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/stableId" },
+          "additionalProperties": {
+            "type": "object",
+            "required": ["rank"],
+            "additionalProperties": false,
+            "properties": {
+              "rank": { "type": "integer", "minimum": 0, "maximum": 10000 },
+              "description": { "type": "string", "maxLength": 512 }
+            }
+          }
+        },
+        "defaultClassification": { "$ref": "#/$defs/stableId" },
+        "defaultsByKind": { "$ref": "#/$defs/classificationMap" },
+        "defaultsByCategory": { "$ref": "#/$defs/classificationMap" },
+        "requireExplicitForKinds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 128 }
+        }
+      }
+    },
+    "retention": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "version", "action"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/$defs/stableId" },
+          "version": { "type": "string", "minLength": 1, "maxLength": 64 },
+          "category": { "$ref": "#/$defs/stableId" },
+          "classification": { "$ref": "#/$defs/stableId" },
+          "sink": { "$ref": "#/$defs/stableId" },
+          "tier": { "enum": ["raw", "durable"] },
+          "duration": {
+            "oneOf": [
+              { "type": "null" },
+              { "type": "string", "pattern": "^P(?:(?:[0-9]+D)(?:T(?:[0-9]+H)?(?:[0-9]+M)?(?:[0-9]+S)?)?|T(?:[0-9]+H)?(?:[0-9]+M)?(?:[0-9]+S))$" }
+            ]
+          },
+          "action": { "enum": ["retain", "summarize", "redact-fields", "archive", "delete"] },
+          "redactFields": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "archiveSink": { "$ref": "#/$defs/stableId" },
+          "priority": { "type": "integer", "minimum": -10000, "maximum": 10000 }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "action": { "const": "redact-fields" } }, "required": ["action"] },
+            "then": {
+              "required": ["redactFields"],
+              "properties": { "redactFields": { "type": "array", "minItems": 1 } }
+            }
+          },
+          {
+            "if": { "properties": { "action": { "const": "archive" } }, "required": ["action"] },
+            "then": {
+              "required": ["archiveSink"],
+              "properties": { "archiveSink": { "$ref": "#/$defs/stableId" } }
+            }
+          }
+        ]
+      }
+    },
+    "sinks": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/stableId" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id", "visibility", "external", "persistent", "mutable"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/$defs/stableId" },
+          "visibility": { "enum": ["public", "private", "restricted", "unknown"] },
+          "external": { "type": "boolean" },
+          "persistent": { "type": "boolean" },
+          "mutable": { "type": "boolean" },
+          "maxClassification": { "$ref": "#/$defs/stableId" },
+          "repository": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "acceptsSanitizedSummary": { "type": "boolean" },
+          "allowRedactionOverride": { "type": "boolean" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "stableId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{0,127}$" },
+    "classificationMap": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/stableId" }
+    }
+  }
+}

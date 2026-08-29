@@ -146,6 +146,18 @@ Impact assessment:
 - Version upgrade requires coordinated maintenance window
 ```
 
+### Rule 6: Gate Cross-Repository Disclosure
+
+Correct repository ownership does not establish that a destination may receive the source artifact. Before copying content, committing a generated artifact, creating a cross-repo reference with operational detail, or exporting a bundle:
+
+1. Resolve the source artifact's classification and handling metadata.
+2. Resolve the destination repository as a named sink with known visibility.
+3. Invoke the publication gate from `ops-information-governance`.
+4. Require an artifact-and-sink-scoped approval when `crossRepo` is `approval-required` or the destination ceiling is lower.
+5. If full disclosure is denied, use only the separately gated sanitized summary.
+
+Unknown destination visibility fails closed for restricted artifacts. The gate audit contains artifact identity, sink, decision, and approval references only; never duplicate the payload.
+
 ## Detection
 
 - Commits in sysops containing fleet-wide Ansible roles or CI/CD config
@@ -153,6 +165,7 @@ Impact assessment:
 - Bare `#N` references in cross-repo contexts (commit messages referencing issues from another repo)
 - Missing `Blocks:`/`Blocked-by:` when cross-repo dependencies exist
 - Host-level changes without service impact assessment
+- Cross-repo content copied or referenced without a classification/sink decision
 
 ## Enforcement
 

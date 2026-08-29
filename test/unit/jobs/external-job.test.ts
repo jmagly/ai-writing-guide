@@ -111,7 +111,7 @@ console.log('token fixture-private-value');
     expect(result.exitCode).toBe(0);
     expect(await readFile(captured, 'utf8')).toContain('Original prompt');
     expect(await readFile(captured, 'utf8')).toContain('"idempotencyKey": "aaaaaaaa');
-    expect(await readFile(path.join(runDirectory, 'stdout.jsonl'), 'utf8')).toContain('[REDACTED]');
+    expect(await readFile(path.join(runDirectory, 'stdout.jsonl'), 'utf8')).toContain('[REDACTED:');
     expect(result.finalMessage).toContain('externalResultUrl');
     expect(result.finalMessage).not.toContain('fixture-private-value');
   });

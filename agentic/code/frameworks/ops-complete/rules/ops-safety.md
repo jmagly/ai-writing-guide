@@ -207,6 +207,12 @@ curl -H "Authorization: token abc123" ...  # Visible in history
 - SSH keys and certificates follow the same rules as API tokens
 - Secrets in systemd unit files must use `LoadCredential=` or `EnvironmentFile=`
 
+### Rule 7: Sanitize Runtime Output Before Any Sink
+
+Secret references can be safe at authoring time while command output, API responses, URLs, stack traces, or generated evidence still contain the resolved value. Before placing collected output in an agent response, `.aiwg/ops/audit/`, a generated artifact, repository, commit helper, issue, PR, comment, export, or bundle, invoke the mandatory boundary from `ops-information-governance`.
+
+The boundary must complete redaction before emitting any stream bytes. It preserves typed markers and optional correlation fingerprints, not secret values. External and persistent sinks fail closed if sanitization cannot complete. A provider's masking is defense in depth, not a replacement for this boundary.
+
 ## Detection
 
 - Agent executing a command from the interactive list without flagging
@@ -215,6 +221,7 @@ curl -H "Authorization: token abc123" ...  # Visible in history
 - High/critical operations without preceding dry-run
 - Cross-host config application without human confirmation
 - Tokens appearing in procedure documents, issue bodies, or commit messages
+- Raw or collected output reaching a response/persistent/external sink without a successful governance-boundary decision
 
 ## Enforcement
 

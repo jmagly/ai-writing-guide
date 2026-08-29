@@ -3,13 +3,12 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import type { ExecutorResult, JobExecutor } from './types.js';
 import { resolveWorkspaceFile } from './flow.js';
+import { redactText } from '../governance/redaction.js';
 
 function redact(text: string, sensitiveValues: string[]): string {
   let output = text;
   for (const value of sensitiveValues.filter(value => value.length >= 4)) output = output.split(value).join('[REDACTED]');
-  return output
-    .replace(/\b(authorization|cookie|set-cookie)\s*[:=]\s*[^\s,;]+/giu, '$1=[REDACTED]')
-    .replace(/\b(bearer|token)\s+[A-Za-z0-9._~+\/-]{8,}/giu, '$1 [REDACTED]');
+  return redactText(output).text;
 }
 
 async function sensitiveValues(files: string[]): Promise<string[]> {
