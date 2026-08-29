@@ -1,5 +1,5 @@
-apiVersion: ops.aiwg.io/v1
-kind: OpsTarget
+apiVersion: stream.ops.aiwg.io/v1
+kind: StreamEncoderConfig
 metadata:
   name: "{encoder-name}"
   labels:

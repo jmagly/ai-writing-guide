@@ -9,3 +9,8 @@ spec:
   description: "Security operations — PKI, LUKS/TPM2, YubiKey/HSM, SSH CA, access control"
   version: "1.0.0"
   capabilities: auto-discover
+  kinds:
+    - name: SecCertificateLifecycle
+      schema: schemas/sec-artifacts.schema.json
+    - name: SecPKIHierarchy
+      schema: schemas/sec-artifacts.schema.json

@@ -129,6 +129,12 @@ spec:
 
 Auto-discovery scans for templates, rules, and skills in conventional subdirectories. Add them as needed.
 
+Extensions that introduce YAML resource kinds must register each kind in
+`ADDON.yaml` with a schema path relative to the extension root. The conformance
+gate discovers every extension YAML template and resolves custom kinds without
+requiring a core-framework edit. See `docs/extensions-guide.md` for the manifest
+contract, validator command, and structured reference rules.
+
 ## References
 
 - `@$AIWG_ROOT/agentic/code/frameworks/ops-complete/docs/quickstart.md` — Deploy and first steps

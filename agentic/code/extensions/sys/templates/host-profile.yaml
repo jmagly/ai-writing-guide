@@ -1,5 +1,5 @@
-apiVersion: ops.aiwg.io/v1
-kind: OpsTarget
+apiVersion: sys.ops.aiwg.io/v1
+kind: SysHostProfile
 metadata:
   name: "{hostname}"
   labels:

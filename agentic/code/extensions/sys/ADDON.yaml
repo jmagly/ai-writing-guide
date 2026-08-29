@@ -9,3 +9,8 @@ spec:
   description: "System operations — per-host hardware, OS, boot chains, fleet docs"
   version: "1.0.0"
   capabilities: auto-discover
+  kinds:
+    - name: SysFleetInventory
+      schema: schemas/sys-artifacts.schema.json
+    - name: SysHostProfile
+      schema: schemas/sys-artifacts.schema.json

@@ -1,5 +1,5 @@
-apiVersion: ops.aiwg.io/v1
-kind: OpsInventory
+apiVersion: sys.ops.aiwg.io/v1
+kind: SysFleetInventory
 metadata:
   name: "{fleet-name}"
 spec:

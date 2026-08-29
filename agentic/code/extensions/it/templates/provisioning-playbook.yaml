@@ -5,12 +5,12 @@ metadata:
   labels:
     type: provisioning
 spec:
-  description: "Provision a new host or VM with DNS registration, base configuration, identity enrollment, monitoring, and verification."
   inventory: fleet-inventory
   targets:
     hosts:
       - "{hostname}"
   vars:
+    hostname: "{hostname}"
     role: "{role}"
     ip: "{ip-address}"
     domain: "{domain}"
@@ -19,93 +19,101 @@ spec:
     ssh_key_ref: "{ssh-key-reference}"
   steps:
     - id: dns-register
-      name: "Register DNS records"
       capability: dns-register
       inputs:
-        hostname: "{{ hostname }}"
-        ip: "{{ ip }}"
-        domain: "{{ domain }}"
-        record_type: A
-        reverse: true
-      on_failure: abort
+        - name: hostname
+          from: vars.hostname
+        - name: ip
+          from: vars.ip
+        - name: domain
+          from: vars.domain
+        - name: record_type
+          value: A
+        - name: reverse
+          value: true
 
     - id: base-setup
-      name: "Base OS configuration"
       capability: host-standup
       depends_on:
         - dns-register
       inputs:
-        hostname: "{{ hostname }}"
-        role: "{{ role }}"
-        admin_user: "{{ admin_user }}"
-        ssh_key_ref: "{{ ssh_key_ref }}"
-        packages:
-          - curl
-          - jq
-          - htop
-          - unattended-upgrades
-      on_failure: abort
+        - name: hostname
+          from: vars.hostname
+        - name: role
+          from: vars.role
+        - name: admin_user
+          from: vars.admin_user
+        - name: ssh_key_ref
+          from: vars.ssh_key_ref
+        - name: packages
+          value: [curl, jq, htop, unattended-upgrades]
 
     - id: identity-enroll
-      name: "Enroll in identity provider"
       capability: identity-enroll
       depends_on:
         - base-setup
       inputs:
-        hostname: "{{ hostname }}"
-        realm: "{idp-realm}"
-        role: "{{ role }}"
-        groups:
-          - "{default-group}"
-      on_failure: abort
+        - name: hostname
+          from: vars.hostname
+        - name: realm
+          value: "{idp-realm}"
+        - name: role
+          from: vars.role
+        - name: groups
+          value: ["{default-group}"]
 
     - id: monitoring-register
-      name: "Register with monitoring stack"
       capability: monitoring-register
       depends_on:
         - base-setup
       inputs:
-        hostname: "{{ hostname }}"
-        ip: "{{ ip }}"
-        exporters:
-          - node-exporter
-          - "{role-specific-exporter}"
-        dashboard_template: "{dashboard-template}"
-        alert_group: "{alert-group}"
-      on_failure: warn
+        - name: hostname
+          from: vars.hostname
+        - name: ip
+          from: vars.ip
+        - name: exporters
+          value: [node-exporter, "{role-specific-exporter}"]
+        - name: dashboard_template
+          value: "{dashboard-template}"
+        - name: alert_group
+          value: "{alert-group}"
 
     - id: backup-configure
-      name: "Configure backup schedule"
       capability: backup-configure
       depends_on:
         - base-setup
       inputs:
-        hostname: "{{ hostname }}"
-        method: "{restic|borgbackup}"
-        schedule: "{cron-expression}"
-        retention: "{days}"
-        paths:
-          - /etc
-          - "{data-paths}"
-      on_failure: warn
+        - name: hostname
+          from: vars.hostname
+        - name: method
+          value: "{restic|borgbackup}"
+        - name: schedule
+          value: "{cron-expression}"
+        - name: retention
+          value: "{days}"
+        - name: paths
+          value: [/etc, "{data-paths}"]
 
     - id: asset-register
-      name: "Register in CMDB"
       capability: host-inventory
       depends_on:
         - dns-register
         - base-setup
       inputs:
-        hostname: "{{ hostname }}"
-        ip: "{{ ip }}"
-        role: "{{ role }}"
-        site: "{{ site }}"
-        owner: "{owner}"
-        sla_tier: "{gold|silver|bronze}"
-      on_failure: warn
+        - name: hostname
+          from: vars.hostname
+        - name: ip
+          from: vars.ip
+        - name: role
+          from: vars.role
+        - name: site
+          from: vars.site
+        - name: owner
+          value: "{owner}"
+        - name: sla_tier
+          value: "{gold|silver|bronze}"
 
     - id: verify
-      name: "End-to-end verification"
       capability: host-verify
       depends_on:
         - dns-register
@@ -114,11 +122,7 @@ spec:
         - monitoring-register
         - asset-register
       inputs:
-        hostname: "{{ hostname }}"
-        checks:
-          - dns_resolves
-          - ssh_reachable
-          - identity_enrolled
-          - monitoring_reporting
-          - cmdb_registered
-      on_failure: abort
+        - name: hostname
+          from: vars.hostname
+        - name: checks
+          value: [dns_resolves, ssh_reachable, identity_enrolled, monitoring_reporting, cmdb_registered]

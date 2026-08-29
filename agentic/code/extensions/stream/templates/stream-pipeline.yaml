@@ -1,5 +1,5 @@
-apiVersion: ops.aiwg.io/v1
-kind: OpsPlaybook
+apiVersion: stream.ops.aiwg.io/v1
+kind: StreamPipeline
 metadata:
   name: "{pipeline-name}"
   labels:

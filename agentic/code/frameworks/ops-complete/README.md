@@ -146,6 +146,11 @@ spec:
 
 Drop it in `agentic/code/extensions/netops/` and add templates, rules, skills as needed. Auto-discovery scans conventional subdirectories.
 
+Custom YAML kinds are declared under `spec.kinds` in `ADDON.yaml`, with schema
+paths relative to the extension root. Run `npm run lint:ops-templates` to
+validate every shipped extension YAML template and receive file-plus-pointer
+diagnostics. See `docs/extensions-guide.md` for the complete contract.
+
 ## Relationship to Other Frameworks
 
 | Framework | Relationship |

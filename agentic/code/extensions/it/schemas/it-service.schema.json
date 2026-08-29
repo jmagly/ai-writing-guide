@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/ops/it/v1/it-service.schema.json",
+  "title": "ITService",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": { "const": "it.ops.aiwg.io/v1" },
+    "kind": { "const": "ITService" },
+    "metadata": { "$ref": "#/definitions/metadata" },
+    "spec": {
+      "type": "object",
+      "required": ["deployment", "health", "dependencies", "backup", "monitoring", "owner", "sla"],
+      "additionalProperties": false,
+      "properties": {
+        "deployment": { "$ref": "#/definitions/stringMap" },
+        "health": { "$ref": "#/definitions/stringMap" },
+        "dependencies": { "type": "array", "items": { "type": "string" } },
+        "backup": {
+          "type": "object",
+          "required": ["enabled", "schedule", "retention", "method", "target"],
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "schedule": { "type": "string" },
+            "retention": { "type": "string" },
+            "method": { "type": "string" },
+            "target": { "type": "string" }
+          }
+        },
+        "monitoring": {
+          "type": "object",
+          "required": ["dashboard", "alerts"],
+          "additionalProperties": false,
+          "properties": {
+            "dashboard": { "type": "string" },
+            "alerts": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "owner": { "type": "string" },
+        "sla": { "$ref": "#/definitions/stringMap" },
+        "notes": { "type": "string" }
+      }
+    }
+  },
+  "definitions": {
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "namespace": { "type": "string" },
+        "labels": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    },
+    "stringMap": { "type": "object", "additionalProperties": { "type": "string" } }
+  }
+}

@@ -174,9 +174,14 @@
               },
               "from": {
                 "type": "string",
-                "description": "Reference to a previous step output (e.g., 'step-id.output-name')."
+                "pattern": "^(vars\\.[A-Za-z_][A-Za-z0-9_-]*|steps\\.[A-Za-z0-9_-]+\\.outputs\\.[A-Za-z0-9_-]+)$",
+                "description": "Structured reference to a playbook variable or prior step output."
               }
-            }
+            },
+            "oneOf": [
+              { "required": ["value"], "not": { "required": ["from"] } },
+              { "required": ["from"], "not": { "required": ["value"] } }
+            ]
           }
         },
         "outputs": {

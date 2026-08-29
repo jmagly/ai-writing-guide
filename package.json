@@ -91,6 +91,7 @@
     "e2e:cockpit-dev": "node test/e2e/cockpit-dev-e2e.mjs",
     "cockpit:up": "bash apps/cockpit/scripts/cockpit-up.sh",
     "lint:schemas": "node tools/scripts/lint-schemas.mjs",
+    "lint:ops-templates": "node tools/validation/ops-template-conformance.mjs",
     "lint:mission-inventory": "node tools/mission-protocol/inventory.mjs",
     "lint:mission-contract": "node tools/mission-protocol/contract-diff.mjs",
     "test:mission-protocol": "vitest run test/unit/mission-protocol test/conformance/mission-v1",

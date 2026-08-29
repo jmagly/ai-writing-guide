@@ -9,3 +9,8 @@ spec:
   description: "Streaming operations — transcoders, restreaming, platform integrations"
   version: "1.0.0"
   capabilities: auto-discover
+  kinds:
+    - name: StreamEncoderConfig
+      schema: schemas/stream-artifacts.schema.json
+    - name: StreamPipeline
+      schema: schemas/stream-artifacts.schema.json

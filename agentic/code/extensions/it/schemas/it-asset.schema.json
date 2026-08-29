@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/ops/it/v1/it-asset.schema.json",
+  "title": "ITAsset",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": { "const": "it.ops.aiwg.io/v1" },
+    "kind": { "const": "ITAsset" },
+    "metadata": { "$ref": "#/definitions/metadata" },
+    "spec": {
+      "type": "object",
+      "required": ["asset", "owner", "location", "lifecycle", "sla", "network", "tags"],
+      "additionalProperties": false,
+      "properties": {
+        "asset": { "$ref": "#/definitions/stringMap" },
+        "owner": { "type": "string" },
+        "location": { "$ref": "#/definitions/stringMap" },
+        "lifecycle": {
+          "type": "object",
+          "required": ["provisioned", "last_maintained", "decommission_date"],
+          "additionalProperties": false,
+          "properties": {
+            "provisioned": { "type": "string" },
+            "last_maintained": { "type": "string" },
+            "decommission_date": { "type": ["string", "null"] }
+          }
+        },
+        "sla": { "$ref": "#/definitions/stringMap" },
+        "network": { "$ref": "#/definitions/stringMap" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "notes": { "type": "string" }
+      }
+    }
+  },
+  "definitions": {
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "namespace": { "type": "string" },
+        "labels": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    },
+    "stringMap": { "type": "object", "additionalProperties": { "type": "string" } }
+  }
+}

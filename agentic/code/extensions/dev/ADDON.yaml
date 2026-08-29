@@ -9,3 +9,6 @@ spec:
   description: "DevOps — CI/CD pipelines, build automation, fleet-wide tooling"
   version: "1.0.0"
   capabilities: auto-discover
+  kinds:
+    - name: DevBuildPlaybook
+      schema: schemas/dev-artifacts.schema.json

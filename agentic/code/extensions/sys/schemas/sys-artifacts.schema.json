@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/ops/sys/v1/sys-artifacts.schema.json",
+  "title": "System operations extension artifacts",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": { "const": "sys.ops.aiwg.io/v1" },
+    "kind": { "enum": ["SysFleetInventory", "SysHostProfile"] },
+    "metadata": { "$ref": "#/definitions/metadata" },
+    "spec": { "type": "object", "additionalProperties": true }
+  },
+  "definitions": {
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "namespace": { "type": "string" },
+        "labels": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    }
+  }
+}

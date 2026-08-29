@@ -1,5 +1,5 @@
-apiVersion: ops.aiwg.io/v1
-kind: OpsTarget
+apiVersion: it.ops.aiwg.io/v1
+kind: ITAsset
 metadata:
   name: "{asset-id}"
   labels:

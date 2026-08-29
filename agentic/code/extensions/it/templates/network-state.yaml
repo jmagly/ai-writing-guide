@@ -1,5 +1,5 @@
-apiVersion: ops.aiwg.io/v1
-kind: OpsInventory
+apiVersion: it.ops.aiwg.io/v1
+kind: ITNetworkState
 metadata:
   name: "{network-name}"
   labels:

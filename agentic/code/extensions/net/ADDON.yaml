@@ -9,3 +9,10 @@ spec:
   description: "Network operations — VLANs, DNS, firewalls, tunnels, switch/AP management"
   version: "1.0.0"
   capabilities: auto-discover
+  kinds:
+    - name: NetDNSZoneRecord
+      schema: schemas/net-artifacts.schema.json
+    - name: NetNetworkState
+      schema: schemas/net-artifacts.schema.json
+    - name: NetTunnelConfig
+      schema: schemas/net-artifacts.schema.json

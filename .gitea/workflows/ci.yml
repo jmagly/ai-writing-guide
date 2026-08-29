@@ -101,6 +101,11 @@ jobs:
         # violates the declared _validates_as shape. (#1178)
         run: npm run lint:schemas
 
+      - name: Validate ops extension templates
+        # Discovers every extension YAML template, resolves core and custom
+        # kinds through ADDON.yaml, and fails on schema or reference drift.
+        run: npm run lint:ops-templates
+
       - name: Enforce Mission Protocol inventory and compatibility (#2178/#2180)
         # Fails when a new Mission producer/consumer is unclassified or when
         # mission.aiwg.io/v1 changes without an explicit version-policy verdict.

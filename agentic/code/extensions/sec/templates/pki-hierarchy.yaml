@@ -1,5 +1,5 @@
-apiVersion: ops.aiwg.io/v1
-kind: OpsTarget
+apiVersion: sec.ops.aiwg.io/v1
+kind: SecPKIHierarchy
 metadata:
   name: "{org}-pki-hierarchy"
   labels:

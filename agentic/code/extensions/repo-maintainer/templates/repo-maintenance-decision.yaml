@@ -20,7 +20,7 @@ spec:
     profile: balanced
     policyVersion: "1"
     profileVersion: "1.0.0"
-    policyHash: "{sha256}"
+    policyHash: "0000000000000000000000000000000000000000000000000000000000000000" # replace with the resolved policy SHA-256
     policyProvenance: ".aiwg/aiwg.config#security.threatAssessment"
     action: proceed
     wouldAction: proceed

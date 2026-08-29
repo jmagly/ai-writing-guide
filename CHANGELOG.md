@@ -7,6 +7,15 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Fixed
+
+- **Ops extension YAML templates now honor their declared schemas** - IT asset,
+  service, and network-state templates use strict first-class IT kinds, the
+  provisioning playbook uses structured references, and all shipped ops
+  extension templates resolve through manifest-declared schemas. A reusable
+  all-extension conformance validator with negative reference/shape tests now
+  runs in CI and reports file-plus-JSON-pointer diagnostics (jmagly/aiwg#181).
+
 ## [2026.8.27] - 2026-08-28 - "Qualified storage scale-out"
 
 ### Added

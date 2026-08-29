@@ -9,3 +9,10 @@ spec:
   description: "IT operations — asset management, CMDB, service deployments, disaster recovery"
   version: "1.0.0"
   capabilities: auto-discover
+  kinds:
+    - name: ITAsset
+      schema: schemas/it-asset.schema.json
+    - name: ITService
+      schema: schemas/it-service.schema.json
+    - name: ITNetworkState
+      schema: schemas/it-network-state.schema.json

@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/ops/it/v1/it-network-state.schema.json",
+  "title": "ITNetworkState",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": { "const": "it.ops.aiwg.io/v1" },
+    "kind": { "const": "ITNetworkState" },
+    "metadata": { "$ref": "#/definitions/metadata" },
+    "spec": {
+      "type": "object",
+      "required": ["vlans", "dns_zones", "firewall_rules", "switches", "dhcp"],
+      "additionalProperties": false,
+      "properties": {
+        "vlans": { "type": "array", "items": { "$ref": "#/definitions/stringMap" } },
+        "dns_zones": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["zone", "type", "server", "records"],
+            "additionalProperties": false,
+            "properties": {
+              "zone": { "type": "string" },
+              "type": { "type": "string" },
+              "server": { "type": "string" },
+              "records": { "type": "array", "items": { "$ref": "#/definitions/stringMap" } }
+            }
+          }
+        },
+        "firewall_rules": { "type": "array", "items": { "$ref": "#/definitions/stringMap" } },
+        "switches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "model", "management_ip", "ports", "uplinks"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "model": { "type": "string" },
+              "management_ip": { "type": "string" },
+              "ports": { "type": "string" },
+              "uplinks": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "dhcp": { "type": "array", "items": { "$ref": "#/definitions/stringMap" } }
+      }
+    }
+  },
+  "definitions": {
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "namespace": { "type": "string" },
+        "labels": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    },
+    "stringMap": { "type": "object", "additionalProperties": { "type": "string" } }
+  }
+}
