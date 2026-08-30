@@ -10,9 +10,22 @@ AIWG/Git project root. Override it with `--db <path>`. Read-only commands infer
 the workspace from an explicit `--workspace`, the canonical current project
 root, or a sole catalog workspace, in that order. Multiple candidates fail
 with `WORKSPACE_AMBIGUOUS`; AIWG never chooses between them. Mutation commands
-continue to require an explicit workspace. The catalog requires the optional
-`better-sqlite3` peer dependency; `aiwg sessions doctor --json` reports
-`CATALOG_UNAVAILABLE` when it is absent.
+continue to require an explicit workspace. Install and verify the optional
+SQLite runtime before using catalog commands:
+
+```sh
+aiwg features install sqlite
+aiwg features info sqlite --json
+```
+
+The installer places the exact supported `better-sqlite3` release in AIWG's
+user-owned feature root, allows only its required lifecycle script, and fails
+unless the native module loads. Catalog commands resolve that feature root
+before the base AIWG installation. If no compatible prebuild is available,
+the package falls back to `node-gyp`; install Python 3, `make`, and a C/C++
+compiler supported by your Node platform, then repeat the feature install.
+`aiwg sessions doctor --json` reports `CATALOG_UNAVAILABLE` with the same
+installer command when the package is absent or unusable.
 
 ## Commands
 

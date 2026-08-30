@@ -57,6 +57,7 @@
     "test": "vitest run --config config/vitest.config.js",
     "lint:session-fixtures": "node tools/ci/session-fixture-sanitize.mjs",
     "test:sessions:sqlite": "npm run build:cli && node tools/ci/session-sqlite-gate.mjs",
+    "test:sessions:feature-install": "node tools/ci/session-feature-install-smoke.mjs",
     "benchmark:sessions": "tsx tools/benchmarks/session-production.ts",
     "benchmark:index:sqlite": "tsx tools/benchmarks/sqlite-graph.ts",
     "verify:storage-claims": "node tools/benchmarks/verify-storage-claims.mjs",

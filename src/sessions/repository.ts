@@ -1,4 +1,4 @@
-import { createRequire } from 'node:module';
+import { requireFeaturePackage } from '../features/runtime.js';
 import type {
   CandidateReviewReceipt, DeletionReceipt, ImportCheckpoint, ImportRun,
   IntelligenceCandidate, PromotionDependencyDecision, PromotionReceipt,
@@ -27,7 +27,6 @@ import {
   type SessionAnalyticsStatus,
 } from './analytics.js';
 
-const require = createRequire(import.meta.url);
 const POLICY_PROVIDER_MIGRATION = 'policy-provider-identity:v2';
 const EVENT_ORIGIN_INTENT_MIGRATION = 'event-origin-intent:v1';
 
@@ -263,12 +262,18 @@ export class SessionRepository {
   private readonly db: SqliteDatabase;
 
   constructor(path = ':memory:') {
+    let Database: new (path: string) => SqliteDatabase;
     try {
-      const Database = require('better-sqlite3') as new (path: string) => SqliteDatabase;
-      this.db = new Database(path);
-    } catch {
-      throw new Error('session SQLite repository requires optional peer dependency better-sqlite3');
+      Database = requireFeaturePackage('better-sqlite3') as new (path: string) => SqliteDatabase;
+    } catch (cause) {
+      throw new Error(
+        'session SQLite catalog is unavailable because better-sqlite3 could not be loaded; ' +
+        'run `aiwg features install sqlite`, then retry. If the native build fails, install ' +
+        'Python 3, make, and a C/C++ compiler supported by node-gyp.',
+        { cause },
+      );
     }
+    this.db = new Database(path);
     this.db.pragma('foreign_keys = ON');
     this.db.pragma('journal_mode = WAL');
     this.db.pragma('busy_timeout = 5000');

@@ -4,7 +4,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { getFeature } from '../../../src/features/catalog.js';
 import { prepareFeatureManifest } from '../../../src/features/installer.js';
-import { loadFeaturePackage } from '../../../src/features/runtime.js';
+import { loadFeaturePackage, requireFeaturePackage } from '../../../src/features/runtime.js';
+import { SessionRepository } from '../../../src/sessions/repository.js';
 import { getFeatureStatus } from '../../../src/features/status.js';
 
 const tempRoots: string[] = [];
@@ -100,5 +101,27 @@ describe('optional native feature policy', () => {
 
     expect(module.source).toBe('feature-root');
     expect(module.spawn).toBeTypeOf('function');
+  });
+
+  it('loads synchronous constructor dependencies from the user feature root', async () => {
+    const featureRoot = await tempDir();
+    process.env.AIWG_FEATURES_HOME = featureRoot;
+    await writeFakePackage(featureRoot, 'feature-root-sync', 'module.exports = { source: "feature-root" }');
+
+    const loaded = requireFeaturePackage('feature-root-sync') as { source?: string };
+
+    expect(loaded.source).toBe('feature-root');
+  });
+
+  it('routes the session repository through the user-owned SQLite feature', async () => {
+    const featureRoot = await tempDir();
+    process.env.AIWG_FEATURES_HOME = featureRoot;
+    await writeFakePackage(
+      featureRoot,
+      'better-sqlite3',
+      'module.exports = class FeatureRootDatabase { constructor() { throw new Error("feature-root-selected"); } }',
+    );
+
+    expect(() => new SessionRepository(':memory:')).toThrow('feature-root-selected');
   });
 });

@@ -110,7 +110,7 @@ jobs:
     # Policy"). Same discipline as the Gitea workflows — no mutable tags.
     # Row in ci/digests.txt.
     container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb  # node 24.15.0 / npm 11.12.1 (see ci/digests.txt)
-    timeout-minutes: 15
+    timeout-minutes: 25
     defaults:
       run:
         shell: bash
@@ -247,6 +247,12 @@ jobs:
           GIT_CONFIG_KEY_0: safe.directory
           GIT_CONFIG_VALUE_0: ${{ github.workspace }}
         run: npm test -- --run --testTimeout=120000
+
+      - name: Verify packaged SQLite feature installation (#182)
+        # Hard release gate: install the packed CLI without optional peers,
+        # use the documented scoped feature installer, verify the native
+        # module loads, and open an empty session catalog.
+        run: npm run test:sessions:feature-install
 
       - name: Extract and verify version against tag
         id: version

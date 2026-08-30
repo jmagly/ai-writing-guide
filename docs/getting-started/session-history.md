@@ -5,6 +5,21 @@
 Use the session catalog when you want one privacy-aware timeline across
 multiple AI providers.
 
+Install the catalog's SQLite runtime once and verify that its native module
+loads:
+
+```sh
+aiwg features install sqlite
+aiwg features info sqlite --json
+```
+
+The installer uses a platform prebuild when one is available. On platforms
+without a compatible prebuild, `better-sqlite3` falls back to `node-gyp`; that
+requires Python 3, `make`, and a C/C++ compiler supported by your Node
+platform. Install those prerequisites and repeat the command if the runtime
+load check fails. AIWG keeps this native dependency in its user-owned optional
+feature root rather than adding it to every base installation.
+
 From the project root, preview discovery first:
 
 ```sh

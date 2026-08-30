@@ -163,6 +163,11 @@ jobs:
         # their checksum/schema contract.
         run: npm run lint:fortemi-prebuilt-package
 
+      - name: Verify packaged SQLite feature installation (#182)
+        # Exercise the documented opt-in installer from the packed CLI before
+        # any pre-release artifact reaches the registry.
+        run: npm run test:sessions:feature-install
+
       - name: Check Cockpit package contents
         run: npm pack ./apps/cockpit --dry-run
 
@@ -414,6 +419,11 @@ jobs:
           AIWG_PERF_BUDGET_HELP_MS: "750"
           AIWG_PERF_SAMPLE_COUNT: "7"
         run: npm test -- --run
+
+      - name: Verify packaged SQLite feature installation (#182)
+        # Hard release gate: install the packed CLI without optional peers,
+        # verify the scoped native feature, and open an empty session catalog.
+        run: npm run test:sessions:feature-install
 
       - name: Extract and verify version
         id: version

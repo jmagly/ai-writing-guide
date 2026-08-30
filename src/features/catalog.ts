@@ -50,15 +50,16 @@ export const FEATURE_CATALOG: FeatureDefinition[] = [
   },
   {
     name: 'sqlite',
-    description: 'SQLite storage backend for memory / activity-log / kb subsystems',
+    description: 'SQLite runtime for session catalogs and persistent storage backends',
     packages: ['better-sqlite3'],
     packageSpecs: { 'better-sqlite3': '12.8.0' },
     scriptPackages: ['better-sqlite3'],
     enables: [
+      'aiwg sessions list / discover / import-discovered / timeline / search',
       'storage.config: backend=sqlite for any subsystem',
       'transactional reads/writes against `.aiwg/storage/`',
     ],
-    cost: '~5 MB — native compile via node-gyp',
+    cost: '~5 MB — platform prebuild when available, otherwise a native compile via node-gyp',
   },
   {
     name: 'postgres',
