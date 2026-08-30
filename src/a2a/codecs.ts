@@ -44,8 +44,17 @@ export function decodePushNotificationConfig(
   const result: PushNotificationConfig = {
     url: stringAt(version, `${path}.url`, obj.url),
   };
-  const id = version === '1.0' ? obj.id : obj.configId;
-  assignOptionalString(version, result, 'configId', id, `${path}.${version === '1.0' ? 'id' : 'configId'}`);
+  // The deployed 0.3 sandbox predates the stable field rename and returns
+  // `id`; accept that compatibility spelling while continuing to encode the
+  // documented 0.3 `configId` shape.
+  const id = version === '1.0' ? obj.id : (obj.configId ?? obj.id);
+  assignOptionalString(
+    version,
+    result,
+    'configId',
+    id,
+    `${path}.${version === '1.0' || obj.configId === undefined ? 'id' : 'configId'}`
+  );
   assignOptionalString(version, result, 'token', obj.token, `${path}.token`);
   if (version === '0.3') {
     assignOptionalString(version, result, 'secret', obj.secret, `${path}.secret`);

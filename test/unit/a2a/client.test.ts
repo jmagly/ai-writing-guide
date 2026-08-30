@@ -125,7 +125,7 @@ describe('A2AClient protocol negotiation', () => {
     protocolVersion: '0.3.0',
     name: 'dual agent',
     version: '2.0.0',
-    url: 'https://legacy.test/agents/inst-1',
+    url: 'https://legacy.test/agents/inst-1/v1',
     supportedInterfaces: [
       {
         url: 'https://v1.test/agents/inst-1',
@@ -133,7 +133,7 @@ describe('A2AClient protocol negotiation', () => {
         protocolVersion: '1.0',
       },
       {
-        url: 'https://legacy.test/agents/inst-1',
+        url: 'https://legacy.test/agents/inst-1/v1',
         protocolBinding: 'REST',
         protocolVersion: '0.3',
       },
@@ -330,6 +330,17 @@ describe('A2AClient push notification configs', () => {
       'https://exec.test/agents/inst-1/v1/tasks/task-1/pushNotificationConfigs'
     );
     expect(cfg.configId).toBe('cfg-1');
+  });
+
+  it('accepts the deployed 0.3 sandbox id compatibility spelling', async () => {
+    const { client } = mkClient(() =>
+      new Response(JSON.stringify({ id: 'cfg-legacy', url: 'https://hook' }), {
+        status: 201,
+        headers: { 'content-type': 'application/json' },
+      })
+    );
+    const cfg = await client.createPushNotificationConfig('task-1', { url: 'https://hook' });
+    expect(cfg.configId).toBe('cfg-legacy');
   });
 
   it('maps normalized push config fields to the 1.0 resource shape', async () => {

@@ -287,6 +287,35 @@ describe('aiwg serve — live UAT vs real agentic-sandbox', () => {
       expect(sent.protocolVersion).toBe(protocolPolicy);
       const status = await client.getTask(sent.task.id);
       outcomes.push({ version: protocolPolicy, state: status.status.state });
+
+      const subscription = client.subscribeToTask(sent.task.id);
+      const iterator = subscription[Symbol.asyncIterator]();
+      try {
+        const first = await Promise.race([
+          iterator.next(),
+          new Promise<never>((_, reject) => setTimeout(
+            () => reject(new Error(`timed out waiting for ${protocolPolicy} initial task snapshot`)),
+            5_000,
+          )),
+        ]);
+        expect(first.done).toBe(false);
+        expect(first.value).toMatchObject({
+          type: 'task',
+          protocolVersion: protocolPolicy,
+          task: { id: sent.task.id },
+        });
+      } finally {
+        subscription.close();
+      }
+
+      const push = await client.createPushNotificationConfig(sent.task.id, {
+        url: `https://subscriber.example.test/a2a/${protocolPolicy.replace('.', '-')}`,
+        token: `uat-${protocolPolicy}`,
+      });
+      expect(typeof push.configId).toBe('string');
+      const roundTrip = await client.getPushNotificationConfig(sent.task.id, push.configId!);
+      expect(roundTrip).toMatchObject({ configId: push.configId, url: push.url });
+      await client.deletePushNotificationConfig(sent.task.id, push.configId!);
     }
     expect(outcomes.map(outcome => outcome.version).sort()).toEqual(availableVersions.sort());
   }, 45_000);

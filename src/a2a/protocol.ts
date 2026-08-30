@@ -65,7 +65,7 @@ export function normalizeAgentCard(card: AgentCard): NormalizedAgentCard {
         `supportedInterfaces[${preference}] must contain an absolute URL`
       );
     }
-    assertAbsoluteUrl(entry.url, `supportedInterfaces[${preference}].url`);
+    assertAbsoluteInterfaceUrl(entry.url, `supportedInterfaces[${preference}].url`);
     const interfaceVersion = normalizeProtocolVersion(entry.protocolVersion);
     if (entry.protocolVersion !== undefined && !interfaceVersion) {
       throw new A2ANegotiationError(
@@ -195,5 +195,19 @@ function assertAbsoluteUrl(value: string, field: string): void {
     if (!['http:', 'https:'].includes(url.protocol)) throw new Error('not HTTP(S)');
   } catch {
     throw new A2ANegotiationError('agent_card.url_invalid', `${field} must be an absolute HTTP(S) URL`);
+  }
+}
+
+function assertAbsoluteInterfaceUrl(value: string, field: string): void {
+  try {
+    const url = new URL(value);
+    if (!['http:', 'https:', 'ws:', 'wss:'].includes(url.protocol)) {
+      throw new Error('unsupported interface scheme');
+    }
+  } catch {
+    throw new A2ANegotiationError(
+      'agent_card.url_invalid',
+      `${field} must be an absolute HTTP(S) or WS(S) URL`
+    );
   }
 }

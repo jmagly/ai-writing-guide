@@ -170,7 +170,10 @@ export class A2AClient {
 
   private operationPath(v1Path: string, legacyPath: string): string {
     if (this.selectedInterface) {
-      return this.protocolVersion === '1.0' ? `/${v1Path}` : `/v1/${legacyPath}`;
+      // An advertised interface URL is already the operation base. Appending
+      // the legacy route prefix again turns cards ending in `/v1` into
+      // `/v1/v1/...` and breaks otherwise valid negotiated 0.3 calls.
+      return this.protocolVersion === '1.0' ? `/${v1Path}` : `/${legacyPath}`;
     }
     return `${this.agentPath()}/${legacyPath}`;
   }

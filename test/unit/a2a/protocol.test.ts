@@ -52,4 +52,35 @@ describe('A2A AgentCard normalization and selection', () => {
     expect(agentInterfaceCacheKey('https://agent.test', 'i-1', v1))
       .not.toBe(agentInterfaceCacheKey('https://agent.test', 'i-1', v03));
   });
+
+  it('preserves safe custom WebSocket interfaces without selecting them as HTTP+JSON', () => {
+    const normalized = normalizeAgentCard({
+      ...dualCard,
+      supportedInterfaces: [
+        ...dualCard.supportedInterfaces,
+        {
+          url: 'wss://agent.test/sessions/{session_id}/attach',
+          protocolBinding: 'https://agent.test/bindings/pty-ws/v1',
+          protocolVersion: '1.0',
+        },
+      ],
+    });
+
+    expect(normalized.interfaces).toHaveLength(3);
+    expect(selectAgentInterface(normalized, { policy: '1.0' })).toMatchObject({
+      protocolBinding: 'HTTP+JSON',
+      url: 'https://agent.test/a2a/v1',
+    });
+  });
+
+  it('rejects unsafe interface URL schemes even for custom bindings', () => {
+    expect(() => normalizeAgentCard({
+      ...dualCard,
+      supportedInterfaces: [{
+        url: 'file:///tmp/agent.sock',
+        protocolBinding: 'custom',
+        protocolVersion: '1.0',
+      }],
+    })).toThrow(/absolute HTTP\(S\) or WS\(S\) URL/);
+  });
 });
