@@ -76,7 +76,7 @@ describe('routeDispatch — v2 happy path', () => {
     expect(result.a2aInstanceId).toBe('inst-1');
     expect(result.a2aProtocolVersion).toBe('0.3');
     expect(result.a2aInterface).toMatchObject({
-      url: 'https://exec.test/agents/inst-1',
+      url: 'https://exec.test/agents/inst-1/v1',
       protocolBinding: 'REST',
       protocolVersion: '0.3',
     });

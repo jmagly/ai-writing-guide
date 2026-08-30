@@ -161,7 +161,7 @@ async function dispatchV2(
   // discovery dependency to the compatibility path.
   if (clientOpts.protocolPolicy === '0.3') {
     clientOpts.selectedInterface = {
-      url: `${executor.transportEndpoints.rest.replace(/\/+$/, '')}/agents/${encodeURIComponent(a2aInstanceId)}`,
+      url: `${executor.transportEndpoints.rest.replace(/\/+$/, '')}/agents/${encodeURIComponent(a2aInstanceId)}/v1`,
       protocolBinding: 'REST',
       protocolVersion: '0.3',
       preference: 0,
