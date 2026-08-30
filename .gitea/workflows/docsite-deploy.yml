@@ -147,6 +147,7 @@ jobs:
           test -d "$OUT" || { echo "::error::Missing build output directory $OUT"; exit 1; }
           test -f "$OUT/index.html" || { echo "::error::Missing index.html"; exit 1; }
           test -f "$OUT/blog/index.html" || { echo "::error::Missing blog/index.html"; exit 1; }
+          test -f "$OUT/assets/blog/2026-8-aiwg-august-2026-report.png" || { echo "::error::Missing August report hero"; exit 1; }
           test -d "$OUT/sections" || { echo "::error::Missing sections/ — refusing to deploy (would rsync --delete an incomplete site)"; exit 1; }
           if find "$OUT" -type f \( -path '*/agents/*' -o -name 'agents--*.js' \) | grep -q .; then
             echo "::error::agent-reference material leaked into docs.aiwg.io output"
