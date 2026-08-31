@@ -442,6 +442,16 @@
       "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
+      "path": "docs/blog/2026-8-aiwg-august-2026-report.md",
+      "owner": "docs/blog",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
       "path": "docs/cli/reference.md",
       "owner": "docs/cli",
       "role": "documentation-example",
