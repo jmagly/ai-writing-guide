@@ -5,6 +5,7 @@ import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parse as parseYaml } from 'yaml';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const prebuiltDir = path.join(repoRoot, 'prebuilt', 'fortemi-core', 'framework');
@@ -20,6 +21,17 @@ function fail(message) {
 
 function sha256(text) {
   return createHash('sha256').update(text).digest('hex');
+}
+
+function sourceScriptDeclaration(item) {
+  const sourcePath = item.source?.path;
+  if (item.type !== 'aiwg.skill' || typeof sourcePath !== 'string') return null;
+  const absolute = path.join(repoRoot, sourcePath);
+  if (!existsSync(absolute)) return null;
+  const source = readFileSync(absolute, 'utf8');
+  const match = source.match(/^---\s*\r?\n([\s\S]*?)\r?\n---/);
+  if (!match) return null;
+  return parseYaml(match[1])?.script ?? null;
 }
 
 function parseNpmPackJson(stdout) {
@@ -103,6 +115,13 @@ if (oversizedBody) {
 }
 if (manifest.item_count !== exported.items.length) {
   fail(`manifest item_count ${manifest.item_count} does not match export item count ${exported.items.length}`);
+}
+
+const missingExecutableMetadata = exported.items.filter((item) =>
+  sourceScriptDeclaration(item) && !item.search?.frontmatter?.aiwg_script
+);
+if (missingExecutableMetadata.length > 0) {
+  fail(`prebuilt export strips executable metadata from ${missingExecutableMetadata.length} source skill(s): ${missingExecutableMetadata.slice(0, 5).map((item) => item.name ?? item.id).join(', ')}`);
 }
 
 const tmp = mkdtempSync(path.join(os.tmpdir(), 'aiwg-fortemi-prebuilt-gate-'));
@@ -225,6 +244,42 @@ try {
   }
 
   const installedRoot = path.join(installDir, 'node_modules', 'aiwg');
+  const executableSkills = [
+    {
+      name: 'issue-create',
+      args: ['plan', '--title', 'prebuilt package diagnostic', '--body', 'diagnostic', '--labels', 'bug', '--project-root', tmp],
+    },
+    {
+      name: 'address-issues-threat-assess',
+      args: ['--text', 'diagnostic', '--format', 'json'],
+    },
+  ];
+  for (const executable of executableSkills) {
+    const record = exported.items.find((item) => item.type === 'aiwg.skill' && item.name === executable.name);
+    if (!record) fail(`prebuilt export is missing executable skill ${executable.name}`);
+    for (const selector of [executable.name, record.id]) {
+      const run = spawnSync(
+        process.execPath,
+        [installedCli, 'run', 'skill', selector, '--', ...executable.args],
+        {
+          cwd: tmp,
+          encoding: 'utf8',
+          maxBuffer: 16 * 1024 * 1024,
+          env: {
+            ...process.env,
+            XDG_DATA_HOME: path.join(tmp, `xdg-run-${executable.name}-${selector === record.id ? 'id' : 'name'}`),
+            AIWG_ROOT: installedRoot,
+          },
+        },
+      );
+      if (run.status !== 0) {
+        console.error(run.stdout);
+        console.error(run.stderr);
+        fail(`packed production executable skill ${executable.name} failed via ${selector === record.id ? 'stable ID' : 'name'} (status ${run.status})`);
+      }
+    }
+  }
+
   const installedDoctor = spawnSync(
     process.execPath,
     [path.join(installedRoot, 'tools', 'cli', 'doctor.mjs'), '--no-budget-check'],

@@ -5,6 +5,7 @@ import os from "node:os";
 import { createHash } from "node:crypto";
 import {
   syncFortemiCoreIndex,
+  getFortemiCoreExecutableSkillStatus,
   getFortemiCoreSyncStatus,
 } from "../../../src/artifacts/fortemi-core-sync.js";
 import { collectIndexStatus } from "../../../src/artifacts/index-status.js";
@@ -107,6 +108,42 @@ describe("Fortemi Core static index sync (#1687)", () => {
     expect(exported.schema_version).toBe("aiwg.fortemi.index.export.v2");
     expect(exported.items[0].type).toBe("aiwg.skill");
     expect(exported.items[0].skos_concepts.length).toBeGreaterThan(0);
+  });
+
+  it("detects source executable skills whose prebuilt records lost runtime metadata (#2210)", () => {
+    const sourcePath = "agentic/code/addons/test-pack/skills/executable/SKILL.md";
+    fs.mkdirSync(path.join(tmp, path.dirname(sourcePath)), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmp, sourcePath),
+      "---\nname: executable\nscript:\n  entrypoint: scripts/run.mjs\n  runtime: node\n---\n# Executable\n",
+    );
+    const prebuiltDir = path.join(tmp, "prebuilt", "fortemi-core", "framework");
+    fs.mkdirSync(prebuiltDir, { recursive: true });
+    const record = {
+      id: "aiwg:skill:test",
+      type: "aiwg.skill",
+      name: "executable",
+      source: { path: sourcePath },
+      search: { frontmatter: {} },
+    };
+    fs.writeFileSync(
+      path.join(prebuiltDir, "aiwg-fortemi-index-v2.json"),
+      JSON.stringify({ schema_version: "aiwg.fortemi.index.export.v2", items: [record] }),
+    );
+
+    expect(getFortemiCoreExecutableSkillStatus("framework", tmp)).toEqual({
+      sourceExecutableCount: 1,
+      packagedExecutableCount: 0,
+      missing: ["executable"],
+    });
+    record.search.frontmatter = {
+      aiwg_script: { entrypoint: "scripts/run.mjs", runtime: "node" },
+    } as typeof record.search.frontmatter;
+    fs.writeFileSync(
+      path.join(prebuiltDir, "aiwg-fortemi-index-v2.json"),
+      JSON.stringify({ schema_version: "aiwg.fortemi.index.export.v2", items: [record] }),
+    );
+    expect(getFortemiCoreExecutableSkillStatus("framework", tmp).missing).toEqual([]);
   });
 
   it("reports unchanged for normal re-syncs when only the generated timestamp would differ", () => {

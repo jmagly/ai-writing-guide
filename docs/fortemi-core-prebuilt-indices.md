@@ -13,7 +13,11 @@ privacy classification, and SHA-256 checksum.
 
 This prebuilt export is the compact metadata/capability projection used so
 framework discovery can work from the npm distribution without shipping the full
-framework source body corpus.
+framework source body corpus. General source frontmatter is removed during
+compaction, except for the allowlisted `search.frontmatter.aiwg_script` field.
+That normalized declaration is runtime-critical: it preserves the entrypoint,
+runtime, working-directory policy, and argument hint needed by `aiwg run skill`
+when discovery is using only the packaged index.
 
 `aiwg index discover ... --graph framework` first uses a valid local cache under
 `.aiwg/.index/fortemi-core/`. If no compatible local framework cache exists, it
@@ -59,7 +63,9 @@ That command validates the query matrix against local and Fortemi Core backends,
 runs `npm pack` through `prepack`, verifies the prebuilt export and manifest are
 included in the npm tarball, checks manifest checksum/schema and size ceiling,
 and confirms Fortemi-backed discovery can answer from the packaged fallback with
-an empty local cache.
+an empty local cache. It also compares source script declarations with packaged
+records and executes representative script-bearing skills by both canonical name
+and stable artifact ID from a production-only tarball install.
 
 The npm tarball allowlist includes the top-level `prebuilt/` directory, and the
 publish workflows run the Fortemi package verification before publishing. That

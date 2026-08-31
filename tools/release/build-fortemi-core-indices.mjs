@@ -60,8 +60,14 @@ try {
       .join('\n');
     item.text = item.summary || item.title || '';
     if (item.search) {
+      const executableFrontmatter = item.search.frontmatter?.aiwg_script
+        ? { aiwg_script: item.search.frontmatter.aiwg_script }
+        : {};
       item.search.body = searchText;
-      item.search.frontmatter = {};
+      // The prebuilt export intentionally drops general frontmatter to stay
+      // compact, but aiwg_script is runtime metadata rather than search-only
+      // decoration. `aiwg run skill` needs it when no local index exists.
+      item.search.frontmatter = executableFrontmatter;
     }
     delete item.chunks;
   }

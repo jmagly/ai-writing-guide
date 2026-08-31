@@ -339,9 +339,11 @@ describe('doctor: Fortemi Core prebuilt index findings (#1697)', () => {
     const content = readFileSync(DOCTOR_SCRIPT, 'utf-8');
 
     expect(content).toContain('getFortemiCorePrebuiltStatus');
+    expect(content).toContain('getFortemiCoreExecutableSkillStatus');
     expect(content).toContain('getFortemiCoreSyncStatus');
     expect(content).toContain('fortemi-core-index');
     expect(content).toContain('prebuilt framework index present');
+    expect(content).toContain('prebuilt framework index is missing executable metadata');
     expect(content).toContain('run "npm run release:fortemi-index" before release packaging');
   });
 });

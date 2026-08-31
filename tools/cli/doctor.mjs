@@ -40,7 +40,7 @@ const { collectIndexStatus } = await importImpl(
   import.meta.url,
   'artifacts/index-status.js'
 );
-const { getFortemiCorePrebuiltStatus, getFortemiCoreSyncStatus } = await importImpl(
+const { getFortemiCoreExecutableSkillStatus, getFortemiCorePrebuiltStatus, getFortemiCoreSyncStatus } = await importImpl(
   import.meta.url,
   'artifacts/fortemi-core-sync.js'
 );
@@ -2052,8 +2052,13 @@ async function runDoctor() {
     const local = getFortemiCoreSyncStatus(process.cwd(), 'framework');
     const prebuilt = getFortemiCorePrebuiltStatus('framework');
     if (prebuilt.built && !prebuilt.stale) {
-      const localNote = local.built && !local.stale ? '; local cache also ready' : '';
-      check('fortemi-core-index', 'ok', `prebuilt framework index present (${prebuilt.itemCount ?? 0} items${localNote})`);
+      const executable = getFortemiCoreExecutableSkillStatus('framework');
+      if (executable.missing.length > 0) {
+        check('fortemi-core-index', 'warn', `prebuilt framework index is missing executable metadata for ${executable.missing.length} source skill(s): ${executable.missing.slice(0, 5).join(', ')} — run "npm run release:fortemi-index" before release packaging`);
+      } else {
+        const localNote = local.built && !local.stale ? '; local cache also ready' : '';
+        check('fortemi-core-index', 'ok', `prebuilt framework index present (${prebuilt.itemCount ?? 0} items; ${executable.packagedExecutableCount}/${executable.sourceExecutableCount} executable skills preserved${localNote})`);
+      }
     } else if (local.built && !local.stale) {
       check('fortemi-core-index', 'ok', `local framework cache ready (${local.itemCount ?? 0} items); prebuilt package index not present`);
     } else if (prebuilt.optedIn && prebuilt.stale) {

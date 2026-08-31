@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { parse as parseYaml } from "yaml";
 import type { GraphType } from "./types.js";
 import { GRAPH_CONFIGS, getProjectIndexRoot, loadGlobalGraphConfigs } from "./types.js";
 import {
@@ -63,6 +64,12 @@ export interface FortemiCoreSyncStatus {
   generatedAt: string | null;
   sourceIndexBuiltAt: string | null;
   reason: string | null;
+}
+
+export interface FortemiCoreExecutableSkillStatus {
+  sourceExecutableCount: number;
+  packagedExecutableCount: number;
+  missing: string[];
 }
 
 function syncDir(cwd: string, graph: string): string {
@@ -355,4 +362,37 @@ export function getFortemiCorePrebuiltStatus(
     sourceIndexBuiltAt: prebuiltManifest.source_index_built_at,
     reason: !exportExists ? "prebuilt manifest exists but export file is missing" : reason,
   };
+}
+
+/**
+ * Compare source script declarations with their compact prebuilt records.
+ * This is deliberately independent of cache freshness: a checksum-valid index
+ * can still be operationally broken when compaction drops runtime metadata.
+ */
+export function getFortemiCoreExecutableSkillStatus(
+  graph: string = "framework",
+  packageRoot?: string,
+): FortemiCoreExecutableSkillStatus {
+  const root = packageRoot ?? findPackageRoot(path.dirname(fileURLToPath(import.meta.url)));
+  if (!root) return { sourceExecutableCount: 0, packagedExecutableCount: 0, missing: [] };
+  const exportPath = path.join(root, "prebuilt", "fortemi-core", graph, "aiwg-fortemi-index-v2.json");
+  if (!fs.existsSync(exportPath)) return { sourceExecutableCount: 0, packagedExecutableCount: 0, missing: [] };
+
+  const exported = JSON.parse(fs.readFileSync(exportPath, "utf-8")) as AiwgFortemiIndexExport;
+  let sourceExecutableCount = 0;
+  let packagedExecutableCount = 0;
+  const missing: string[] = [];
+  for (const item of exported.items ?? []) {
+    if (item.type !== "aiwg.skill" || typeof item.source?.path !== "string") continue;
+    const sourcePath = path.join(root, item.source.path);
+    if (!fs.existsSync(sourcePath)) continue;
+    const match = fs.readFileSync(sourcePath, "utf-8").match(/^---\s*\r?\n([\s\S]*?)\r?\n---/);
+    if (!match) continue;
+    const script = (parseYaml(match[1]) as { script?: unknown } | null)?.script;
+    if (!script) continue;
+    sourceExecutableCount += 1;
+    if (item.search?.frontmatter?.aiwg_script) packagedExecutableCount += 1;
+    else missing.push(item.name ?? item.id);
+  }
+  return { sourceExecutableCount, packagedExecutableCount, missing };
 }
