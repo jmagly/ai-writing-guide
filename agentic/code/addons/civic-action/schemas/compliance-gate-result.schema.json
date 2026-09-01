@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/civic-action/v1/compliance-gate-result.schema.json",
+  "title": "Civic compliance gate result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "gate", "artifact_id", "status", "checked_at", "findings", "review"],
+  "properties": {
+    "schema": {"const": "aiwg.civic.gate-result.v1"},
+    "gate": {"enum": ["source-compliance", "meeting-reconciliation", "publication"]},
+    "artifact_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["pass", "warn", "block"]},
+    "checked_at": {"type": "string", "format": "date-time"},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "severity", "message", "evidence", "safe_alternative"],
+        "properties": {
+          "code": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+          "severity": {"enum": ["block", "warn", "record"]},
+          "message": {"type": "string", "minLength": 1},
+          "evidence": {"type": "array", "items": {"type": "string"}},
+          "safe_alternative": {"type": "string"}
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "decision"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "reviewer": {"type": ["string", "null"]},
+        "decision": {"enum": ["approved", "rejected", "revise", "pending", "not_required"]},
+        "decided_at": {"type": ["string", "null"], "format": "date-time"}
+      }
+    }
+  }
+}

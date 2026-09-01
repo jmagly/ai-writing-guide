@@ -1,0 +1,51 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: civic-newsroom
+  labels:
+    category: civic-action
+    domain: accountable-publishing
+spec:
+  steps:
+    - id: intake-and-jurisdiction
+      capability: civic-intake-and-jurisdiction
+      outputs:
+        - name: intake_packet
+    - id: source-compliance
+      capability: civic-source-compliance-check
+      depends_on: [intake-and-jurisdiction]
+      inputs:
+        - {name: intake_packet, from: intake-and-jurisdiction.intake_packet}
+      outputs:
+        - name: source_gate_results
+    - id: research-and-claims
+      capability: civic-research-and-claim-map
+      depends_on: [source-compliance]
+      outputs:
+        - name: evidence_packet
+    - id: draft
+      capability: civic-evidence-bound-draft
+      depends_on: [research-and-claims]
+      outputs:
+        - name: draft_artifact
+    - id: editorial-review
+      fanout:
+        strategy: parallel
+        agents: [civic-citation-review, civic-correction-review]
+        synthesize: civic-review-synthesis
+      depends_on: [draft]
+      outputs:
+        - name: review_packet
+    - id: human-publication-gate
+      kind: gate
+      description: >-
+        A named human reviews the exact artifact and underlying sources,
+        jurisdiction, access/reuse, claims, privacy, accessibility, dissent,
+        corrections, and machine-gate results. This gate may approve, reject,
+        or return for revision; it never performs publication.
+      depends_on: [editorial-review]
+    - id: publication-verification
+      capability: civic-publication-verify
+      depends_on: [human-publication-gate]
+      outputs:
+        - name: verification_receipt

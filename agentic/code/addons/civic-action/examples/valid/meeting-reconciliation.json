@@ -1,0 +1,8 @@
+{
+  "schema": "aiwg.civic.meeting-reconciliation.v1",
+  "reconciliation_id": "reconciliation-1",
+  "meeting_id": "meeting-1",
+  "minutes_state": "approved_minutes",
+  "comparisons": [{"assertion_id": "motion-1", "relation": "match", "difference": "", "materiality": "material", "source_selectors": ["cue-100", "minutes:p2:item4"], "decision": "accept", "reviewer": "meeting-reviewer"}],
+  "human_review": {"state": "approved", "reviewer": "meeting-reviewer", "reviewed_at": "2026-09-01T13:00:00Z"}
+}

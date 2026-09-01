@@ -1,0 +1,5 @@
+schema: aiwg.civic.vote-ledger.v1
+ledger_id: replace-me
+meeting_id: replace-me
+source_media_hash: sha256:0000000000000000000000000000000000000000000000000000000000000000
+motions: []

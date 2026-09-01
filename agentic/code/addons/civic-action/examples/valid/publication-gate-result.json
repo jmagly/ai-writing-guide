@@ -1,0 +1,9 @@
+{
+  "schema": "aiwg.civic.gate-result.v1",
+  "gate": "publication",
+  "artifact_id": "story-1:v2",
+  "status": "pass",
+  "checked_at": "2026-09-01T12:00:00Z",
+  "findings": [],
+  "review": {"required": true, "reviewer": null, "decision": "pending", "decided_at": null}
+}

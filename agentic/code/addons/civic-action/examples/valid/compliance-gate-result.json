@@ -1,0 +1,9 @@
+{
+  "schema": "aiwg.civic.gate-result.v1",
+  "gate": "source-compliance",
+  "artifact_id": "city-agenda",
+  "status": "pass",
+  "checked_at": "2026-09-01T12:00:00Z",
+  "findings": [],
+  "review": {"required": true, "reviewer": null, "decision": "pending", "decided_at": null}
+}

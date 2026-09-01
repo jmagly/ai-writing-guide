@@ -1,0 +1,33 @@
+schema: aiwg.civic.source-registry.v1
+source_id: replace-me
+title: Replace me
+canonical_url: https://example.invalid/source
+jurisdiction: unresolved
+authority:
+  publisher_name: Replace me
+  authority_class: unknown
+rights:
+  terms_url: null
+  license_url: null
+  terms_hash: null
+  terms_state: unknown
+  publication_state: unknown
+access:
+  method: manual_only
+  authorization_state: unknown
+  robots_state: unknown
+  access_state: unknown
+  control_bypass_requested: false
+  rate_limit: null
+freshness:
+  state: unknown
+  next_review_at: null
+  safety_critical: false
+  rationale: Not reviewed
+retrievals: []
+review:
+  state: pending
+  reviewer: null
+  reviewed_at: null
+  expires_at: null
+  reason: Not reviewed

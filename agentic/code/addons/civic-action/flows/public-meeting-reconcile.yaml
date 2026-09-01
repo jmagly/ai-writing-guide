@@ -1,0 +1,47 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: public-meeting-reconcile
+  labels:
+    category: civic-action
+    domain: public-meetings
+spec:
+  steps:
+    - id: legality-and-source-intake
+      capability: civic-meeting-source-intake
+      outputs:
+        - name: source_packet
+    - id: recording-human-gate
+      kind: gate
+      description: >-
+        Human confirms the jurisdiction profile, meeting openness, consent,
+        authorization, closed-session boundary, and intended source use before
+        acquisition or transcription. Unknown or private context stops.
+      depends_on: [legality-and-source-intake]
+    - id: transcript-handoff
+      capability: civic-transcript-handoff
+      depends_on: [recording-human-gate]
+      outputs:
+        - name: transcript_packet
+    - id: ledger-extraction
+      capability: civic-vote-ledger-extraction
+      depends_on: [transcript-handoff]
+      outputs:
+        - name: vote_ledger
+    - id: minutes-reconciliation
+      capability: civic-meeting-reconciliation
+      depends_on: [ledger-extraction]
+      outputs:
+        - name: reconciliation
+    - id: verification-human-gate
+      kind: gate
+      description: >-
+        Human verifies every material motion, vote, source cue, speaker label,
+        conflict, privacy redaction, and minutes state. Machine output remains
+        non-official and cannot identify speakers without evidence.
+      depends_on: [minutes-reconciliation]
+    - id: newsroom-handoff
+      capability: civic-meeting-newsroom-handoff
+      depends_on: [verification-human-gate]
+      outputs:
+        - name: reviewed_meeting_packet

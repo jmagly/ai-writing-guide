@@ -1,0 +1,9 @@
+{
+  "schema": "aiwg.civic.public-technology-review.v1",
+  "review_id": "review-1",
+  "jurisdiction_profile": "example-city-procurement-v1",
+  "evidence": [{"evidence_id": "ev-1", "claim": "The solicitation requires data export.", "claimant": "Example City", "artifact_class": "solicitation", "source_id": "solicitation-1", "selector": "section 4.2", "public_release_state": "public", "verification_state": "verified"}],
+  "risks": [{"risk_id": "risk-1", "category": "interoperability_lock_in", "condition": "Export format is unspecified", "consequence": "Transition cost may be uncertain", "evidence_ids": ["ev-1"], "likelihood": "unknown", "impact": "unknown", "uncertainty": "No contract draft reviewed", "rationale": "Evidence supports a question, not a score", "status": "open"}],
+  "award_recommendation": null,
+  "human_review": "pending"
+}

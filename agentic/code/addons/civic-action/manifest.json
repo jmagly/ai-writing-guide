@@ -1,0 +1,50 @@
+{
+  "id": "civic-action",
+  "type": "addon",
+  "name": "Civic Action",
+  "version": "2026.9.0",
+  "description": "Vendor-neutral, research-first workflows for lawful civic research, public records, public meetings, local information, and accountable publishing.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": ["civic-action", "public-records", "public-meetings", "local-information", "provenance", "publishing"],
+  "entry": {
+    "agents": "agents/",
+    "commands": "commands/",
+    "skills": "skills/",
+    "rules": "rules/",
+    "schemas": "schemas/",
+    "templates": "templates/",
+    "flows": "flows/",
+    "examples": "examples/",
+    "docs": "docs/"
+  },
+  "consolidation": {"strategy": "index-with-links", "rulesIndex": "rules/RULES-INDEX.md", "deployIndexOnly": true},
+  "agents": ["citation-editor", "civic-newsroom-operator", "correction-editor", "news-caster"],
+  "commands": [],
+  "skills": ["civic-newsroom-plan", "civic-publish-gate", "editorial-correction-review", "local-resource-index", "public-meeting-reconcile", "public-records-plan", "public-technology-review", "source-compliance-gate"],
+  "rules": ["civic-safety", "source-and-claim-integrity", "publication-human-review"],
+  "schemas": ["source-registry", "compliance-gate-result", "vote-ledger", "meeting-reconciliation", "public-records-plan", "public-technology-review", "local-resource-index", "correction-record", "publication-packet", "publication-gate-result"],
+  "templates": ["jurisdiction-review", "source-registry", "public-meeting-source-packet", "vote-ledger", "minutes-reconciliation", "public-records-plan", "public-technology-review", "local-resource-index", "correction-record", "publication-review"],
+  "flows": ["civic-newsroom", "public-meeting-reconcile", "public-records"],
+  "cli_commands": {
+    "namespace": "civic",
+    "description": "Validate civic source, meeting, and publication evidence packets with fail-closed machine gates.",
+    "entry": "commands/",
+    "subcommands": {
+      "source-gate": {"file": "civic-action.mjs", "description": "Evaluate a source registry before acquisition or reuse"},
+      "meeting-gate": {"file": "civic-action.mjs", "description": "Validate a public-meeting vote ledger and reconciliation packet"},
+      "publish-gate": {"file": "civic-action.mjs", "description": "Evaluate machine-readable civic publication gates"}
+    }
+  },
+  "dependencies": {
+    "required": ["aiwg-utils"],
+    "optional": ["research-complete", "media-curator", "knowledge-base", "media-marketing-kit", "ops-complete", "security-engineering"]
+  },
+  "researchFoundation": {
+    "issues": ["#2213", "#2214", "#2215", "#2216", "#2217", "#2218", "#2219", "#2220", "#2221", "#2222"],
+    "reports": ["docs/research/aiwg-design-patterns.md", "docs/research/civic-workflow-standards.md", "docs/research/legal-ethics-guardrails.md"]
+  }
+}

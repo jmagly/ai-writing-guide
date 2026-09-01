@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/civic-action/v1/local-resource-index.schema.json",
+  "title": "Local public resource index record",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "record_id", "vertical", "source_id", "retrieval_id", "publisher_verified", "profile", "payload_hash", "freshness_state", "public_scope", "facts", "correction_contact", "validation"],
+  "properties": {
+    "schema": {"const": "aiwg.civic.local-resource-index.v1"},
+    "record_id": {"type": "string", "minLength": 1},
+    "vertical": {"enum": ["cap", "gtfs", "hsds"]},
+    "source_id": {"type": "string", "minLength": 1},
+    "retrieval_id": {"type": "string", "minLength": 1},
+    "publisher_verified": {"type": "boolean"},
+    "profile": {"type": "string", "minLength": 1},
+    "payload_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "freshness_state": {"enum": ["fresh", "due", "stale", "expired", "unknown", "unavailable"]},
+    "public_scope": {"type": "boolean"},
+    "facts": {"type": "object", "additionalProperties": true},
+    "correction_contact": {"type": "string", "format": "uri"},
+    "validation": {"type": "object", "additionalProperties": false, "required": ["validator", "version", "status", "findings"], "properties": {"validator": {"type": "string"}, "version": {"type": "string"}, "status": {"enum": ["pass", "warn", "block"]}, "findings": {"type": "array", "items": {"type": "string"}}}}
+  }
+}

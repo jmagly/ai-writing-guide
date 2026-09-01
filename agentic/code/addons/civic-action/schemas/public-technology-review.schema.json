@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/civic-action/v1/public-technology-review.schema.json",
+  "title": "Public technology procurement review",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "review_id", "jurisdiction_profile", "evidence", "risks", "award_recommendation", "human_review"],
+  "properties": {
+    "schema": {"const": "aiwg.civic.public-technology-review.v1"},
+    "review_id": {"type": "string", "minLength": 1},
+    "jurisdiction_profile": {"type": "string", "minLength": 1},
+    "evidence": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["evidence_id", "claim", "artifact_class", "source_id", "selector", "public_release_state", "verification_state"], "properties": {"evidence_id": {"type": "string"}, "claim": {"type": "string"}, "claimant": {"type": ["string", "null"]}, "artifact_class": {"enum": ["need", "planning", "market_research", "solicitation", "source_selection", "responsibility", "award", "administration", "oversight", "public_release"]}, "source_id": {"type": "string"}, "selector": {"type": "string"}, "public_release_state": {"enum": ["public", "protected", "unknown"]}, "verification_state": {"enum": ["verified", "unverified", "disputed"]}}}},
+    "risks": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["risk_id", "category", "condition", "consequence", "evidence_ids", "likelihood", "impact", "uncertainty", "rationale", "status"], "properties": {"risk_id": {"type": "string"}, "category": {"enum": ["accessibility", "privacy", "security_supply_chain", "interoperability_lock_in", "resilience_continuity", "records_auditability", "fiscal_schedule_performance", "supplier_responsibility"]}, "condition": {"type": "string"}, "consequence": {"type": "string"}, "evidence_ids": {"type": "array", "items": {"type": "string"}}, "likelihood": {"enum": ["low", "medium", "high", "unknown"]}, "impact": {"enum": ["low", "medium", "high", "unknown"]}, "uncertainty": {"type": "string"}, "rationale": {"type": "string"}, "status": {"enum": ["open", "mitigated", "accepted", "closed"]}}}},
+    "award_recommendation": {"const": null},
+    "human_review": {"enum": ["pending", "approved", "rejected"]}
+  }
+}

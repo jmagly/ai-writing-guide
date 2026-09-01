@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/civic-action/v1/source-registry.schema.json",
+  "title": "Civic source registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "source_id", "title", "canonical_url", "jurisdiction", "authority", "rights", "access", "freshness", "retrievals", "review"],
+  "properties": {
+    "schema": {"const": "aiwg.civic.source-registry.v1"},
+    "source_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$"},
+    "title": {"type": "string", "minLength": 1},
+    "canonical_url": {"type": "string", "format": "uri"},
+    "jurisdiction": {"type": "string", "minLength": 1},
+    "authority": {
+      "type": "object", "additionalProperties": false,
+      "required": ["publisher_name", "authority_class"],
+      "properties": {
+        "publisher_name": {"type": "string", "minLength": 1},
+        "authority_class": {"enum": ["official_record", "official_guidance", "standards_body", "first_party_statement", "secondary_reporting", "community_submission", "unknown"]}
+      }
+    },
+    "rights": {
+      "type": "object", "additionalProperties": false,
+      "required": ["terms_state", "publication_state"],
+      "properties": {
+        "terms_url": {"type": ["string", "null"], "format": "uri"},
+        "license_url": {"type": ["string", "null"], "format": "uri"},
+        "terms_hash": {"type": ["string", "null"], "pattern": "^sha256:[a-f0-9]{64}$"},
+        "terms_state": {"enum": ["allowed", "restricted", "prohibited", "not_applicable", "unknown"]},
+        "publication_state": {"enum": ["allowed", "restricted", "prohibited", "unknown"]}
+      }
+    },
+    "access": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method", "authorization_state", "robots_state", "access_state", "control_bypass_requested"],
+      "properties": {
+        "method": {"enum": ["public_web", "official_api", "authorized_account", "user_supplied", "manual_only"]},
+        "authorization_state": {"enum": ["authorized", "not_required", "prohibited", "unknown"]},
+        "robots_state": {"enum": ["allowed", "disallowed", "unavailable", "error", "not_applicable", "unknown"]},
+        "access_state": {"enum": ["allowed", "manual_only", "blocked", "unknown"]},
+        "control_bypass_requested": {"type": "boolean"},
+        "rate_limit": {"type": ["string", "null"]}
+      }
+    },
+    "freshness": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "next_review_at", "safety_critical"],
+      "properties": {
+        "state": {"enum": ["fresh", "due", "stale", "expired", "unknown", "unavailable"]},
+        "next_review_at": {"type": ["string", "null"], "format": "date-time"},
+        "safety_critical": {"type": "boolean"},
+        "rationale": {"type": "string"}
+      }
+    },
+    "retrievals": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["retrieval_id", "retrieved_at", "content_hash"],
+        "properties": {
+          "retrieval_id": {"type": "string", "minLength": 1},
+          "retrieved_at": {"type": "string", "format": "date-time"},
+          "content_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+          "etag": {"type": ["string", "null"]},
+          "last_modified": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "review": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "reviewer", "reviewed_at"],
+      "properties": {
+        "state": {"enum": ["approved", "rejected", "pending", "expired"]},
+        "reviewer": {"type": ["string", "null"]},
+        "reviewed_at": {"type": ["string", "null"], "format": "date-time"},
+        "expires_at": {"type": ["string", "null"], "format": "date-time"},
+        "reason": {"type": "string"}
+      }
+    }
+  }
+}

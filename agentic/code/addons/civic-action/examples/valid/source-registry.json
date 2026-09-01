@@ -1,0 +1,13 @@
+{
+  "schema": "aiwg.civic.source-registry.v1",
+  "source_id": "city-agenda",
+  "title": "City meeting agenda",
+  "canonical_url": "https://example.gov/agenda",
+  "jurisdiction": "Example City",
+  "authority": {"publisher_name": "Example City Clerk", "authority_class": "official_record"},
+  "rights": {"terms_url": "https://example.gov/terms", "license_url": null, "terms_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111", "terms_state": "allowed", "publication_state": "allowed"},
+  "access": {"method": "public_web", "authorization_state": "not_required", "robots_state": "allowed", "access_state": "allowed", "control_bypass_requested": false, "rate_limit": "1 request/second"},
+  "freshness": {"state": "fresh", "next_review_at": "2099-01-01T00:00:00Z", "safety_critical": false, "rationale": "Reviewed against meeting date"},
+  "retrievals": [{"retrieval_id": "retrieval-1", "retrieved_at": "2026-09-01T12:00:00Z", "content_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222", "etag": null, "last_modified": null}],
+  "review": {"state": "approved", "reviewer": "human-editor", "reviewed_at": "2026-09-01T12:30:00Z", "expires_at": "2099-01-01T00:00:00Z", "reason": "Official public agenda; terms and access reviewed"}
+}

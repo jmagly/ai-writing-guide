@@ -1,0 +1,46 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: public-records
+  labels:
+    category: civic-action
+    domain: public-records
+spec:
+  steps:
+    - id: public-source-check
+      capability: civic-existing-public-source-check
+      outputs:
+        - name: source_findings
+    - id: jurisdiction-and-agency-research
+      capability: civic-records-jurisdiction-research
+      depends_on: [public-source-check]
+      outputs:
+        - name: jurisdiction_profile
+    - id: request-plan
+      capability: civic-public-records-plan
+      depends_on: [jurisdiction-and-agency-research]
+      outputs:
+        - name: request_draft
+    - id: submission-human-gate
+      kind: gate
+      description: >-
+        The human requester reviews the exact draft, jurisdiction, custodian,
+        scope, dates, fee exposure, privacy impact, attachments, contact data,
+        and tone. Submission is a manual external action outside this flow.
+      depends_on: [request-plan]
+    - id: manual-submission-receipt
+      capability: civic-record-manual-submission
+      depends_on: [submission-human-gate]
+      outputs:
+        - name: submission_receipt
+    - id: response-ingest
+      capability: civic-records-response-ingest
+      depends_on: [manual-submission-receipt]
+      outputs:
+        - name: response_evidence
+    - id: publication-review-gate
+      kind: gate
+      description: >-
+        Human reviews response provenance, redactions, privacy, allegations,
+        restricted data, and intended public indexing before any publication.
+      depends_on: [response-ingest]

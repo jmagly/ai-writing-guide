@@ -1,0 +1,12 @@
+{
+  "schema": "aiwg.civic.public-records-plan.v1",
+  "request_id": "request-1",
+  "status": "human_review",
+  "jurisdiction_profile": {"jurisdiction": "Federal example", "law_name": "Freedom of Information Act", "law_url": "https://www.foia.gov/foia-statute.html", "agency_instructions_url": "https://www.foia.gov/", "reviewed_at": "2026-09-01T12:00:00Z", "reviewer": "records-reviewer"},
+  "recipient": {"agency": "Example Agency", "component": "Records Office", "contact_source_url": "https://example.gov/foia", "submission_channels": ["web portal"]},
+  "scope": {"records_description": "Existing award records for the stated date range", "date_start": "2026-01-01", "date_end": "2026-06-30", "record_types": ["award notice"], "search_terms": ["project-x"], "exclusions": ["personal contact data"]},
+  "fees": {"fee_ceiling": 25, "waiver_requested": false, "waiver_rationale": null},
+  "privacy": {"third_party_personal_data": false, "minimization_notes": "Exclude personal contact details", "sensitive_terms": []},
+  "human_review": {"state": "pending", "reviewer": null, "artifact_hash": "sha256:4444444444444444444444444444444444444444444444444444444444444444"},
+  "automatic_submission": false
+}

@@ -261,6 +261,9 @@
     "addons/aiwg-utils",
     "addons/aiwg-utils/overview",
     "addons/aiwg-utils/rules-reference",
+    "addons/civic-action",
+    "addons/civic-action/overview",
+    "addons/civic-action/quickstart",
     "addons/auto-memory",
     "addons/auto-memory/overview",
     "addons/daemon",
@@ -2086,6 +2089,27 @@
       "summary": "Seven enforcement rules deployed with every AIWG installation. These rules apply automatically based",
       "file": "addons/aiwg-utils/rules-reference.md",
       "parent": "addons/aiwg-utils"
+    },
+    {
+      "id": "addons/civic-action",
+      "title": "Civic Action",
+      "summary": "Evidence-bound civic research, public records, meetings, local resources, corrections, and publishing gates",
+      "collapsed": true,
+      "parent": "addons"
+    },
+    {
+      "id": "addons/civic-action/overview",
+      "title": "Overview",
+      "summary": "Capabilities, safety boundaries, evidence model, and human authority for the Civic Action addon.",
+      "file": "addons/civic-action/overview.md",
+      "parent": "addons/civic-action"
+    },
+    {
+      "id": "addons/civic-action/quickstart",
+      "title": "Quick Start",
+      "summary": "Install Civic Action and run its source, meeting, and publication gates safely.",
+      "file": "addons/civic-action/quickstart.md",
+      "parent": "addons/civic-action"
     },
     {
       "id": "addons/auto-memory",

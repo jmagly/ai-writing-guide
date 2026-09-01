@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/civic-action/v1/meeting-reconciliation.schema.json",
+  "title": "Meeting minutes reconciliation",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "reconciliation_id", "meeting_id", "minutes_state", "comparisons", "human_review"],
+  "properties": {
+    "schema": {"const": "aiwg.civic.meeting-reconciliation.v1"},
+    "reconciliation_id": {"type": "string", "minLength": 1},
+    "meeting_id": {"type": "string", "minLength": 1},
+    "minutes_state": {"enum": ["unavailable", "draft_minutes", "approved_minutes", "superseded"]},
+    "comparisons": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["assertion_id", "relation", "difference", "materiality", "source_selectors", "decision"], "properties": {"assertion_id": {"type": "string"}, "relation": {"enum": ["match", "mismatch", "absent_from_source", "ambiguous", "human_review_required"]}, "difference": {"type": "string"}, "materiality": {"enum": ["material", "non_material", "unknown"]}, "source_selectors": {"type": "array", "minItems": 1, "items": {"type": "string"}}, "decision": {"enum": ["accept", "correct", "annotate", "pending"]}, "reviewer": {"type": ["string", "null"]}}}},
+    "human_review": {"type": "object", "additionalProperties": false, "required": ["state", "reviewer"], "properties": {"state": {"enum": ["approved", "rejected", "pending"]}, "reviewer": {"type": ["string", "null"]}, "reviewed_at": {"type": ["string", "null"], "format": "date-time"}}}
+  }
+}

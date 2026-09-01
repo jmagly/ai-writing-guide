@@ -1,0 +1,15 @@
+{
+  "schema": "aiwg.civic.publication-packet.v1",
+  "artifact_id": "story-1:v2",
+  "artifact_hash": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+  "sections": [{"id": "body", "content_length": 480}],
+  "links": [{"url": "https://example.gov/agenda", "http_status": 200, "material": true}],
+  "claims": [{"claim_id": "claim-1", "material": true, "status": "verified_fact", "attributed": true, "freshness_state": "fresh", "citations": ["city-agenda:retrieval-1#section-4"]}],
+  "upstream_gates": [{"gate_id": "source-compliance/city-agenda", "status": "pass"}],
+  "privacy": {"status": "pass", "reviewer": "privacy-reviewer"},
+  "accessibility": {"automated_status": "pass", "manual_status": "pass", "reviewer": "accessibility-reviewer"},
+  "publication_state": "usable",
+  "correction": {"open_blocking": false, "pending_reindex_targets": 0},
+  "deployment": {"last_good_copy_state": "available", "verification_state": "pass", "adapter": "vendor-neutral-static"},
+  "human_review": {"state": "approved", "reviewer": "human-editor", "artifact_hash": "sha256:6666666666666666666666666666666666666666666666666666666666666666"}
+}

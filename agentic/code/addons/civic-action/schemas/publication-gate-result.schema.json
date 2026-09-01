@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/civic-action/v1/publication-gate-result.schema.json",
+  "title": "Civic publication gate result",
+  "allOf": [{"$ref": "compliance-gate-result.schema.json"}],
+  "properties": {"gate": {"const": "publication"}}
+}

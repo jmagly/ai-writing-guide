@@ -1,0 +1,18 @@
+{
+  "schema": "aiwg.civic.vote-ledger.v1",
+  "ledger_id": "ledger-1",
+  "meeting_id": "meeting-1",
+  "source_media_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+  "motions": [{
+    "motion_id": "motion-1",
+    "agenda_item_id": "item-4",
+    "motion_text": "Approve the published agenda.",
+    "motion_text_state": "exact",
+    "vote_entries": [{"member": "Member A", "choice": "yes", "source_cue_id": "cue-101", "confidence": 1}],
+    "announced_result": "passed 1-0",
+    "calculated_result": "passed 1-0",
+    "source_cue_ids": ["cue-100", "cue-101"],
+    "verification_state": "human_verified",
+    "verified_by": "meeting-reviewer"
+  }]
+}

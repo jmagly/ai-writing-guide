@@ -1,0 +1,15 @@
+{
+  "schema": "aiwg.civic.local-resource-index.v1",
+  "record_id": "alert-1",
+  "vertical": "cap",
+  "source_id": "city-alert-feed",
+  "retrieval_id": "retrieval-1",
+  "publisher_verified": true,
+  "profile": "CAP-1.2",
+  "payload_hash": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+  "freshness_state": "fresh",
+  "public_scope": true,
+  "facts": {"status": "Actual", "msgType": "Alert", "expires": "2026-09-01T18:00:00Z"},
+  "correction_contact": "https://example.gov/contact",
+  "validation": {"validator": "example-cap-validator", "version": "1.0.0", "status": "pass", "findings": []}
+}

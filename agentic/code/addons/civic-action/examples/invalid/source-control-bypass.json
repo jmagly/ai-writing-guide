@@ -1,0 +1,9 @@
+{
+  "source_id": "unsafe-source",
+  "canonical_url": "https://example.invalid/private",
+  "access": {"control_bypass_requested": true, "authorization_state": "unknown", "robots_state": "disallowed", "access_state": "blocked"},
+  "rights": {"terms_state": "unknown", "publication_state": "unknown"},
+  "freshness": {"state": "unknown", "safety_critical": false},
+  "retrievals": [],
+  "review": {"state": "pending", "reviewer": null}
+}

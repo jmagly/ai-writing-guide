@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/civic-action/v1/correction-record.schema.json",
+  "title": "Civic correction record",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "correction_id", "item_id", "old_version", "new_version", "status_before", "status_after", "reason_category", "public_note", "changed_claim_ids", "source_refs", "reviewer", "downstream_targets"],
+  "properties": {
+    "schema": {"const": "aiwg.civic.correction-record.v1"},
+    "correction_id": {"type": "string", "minLength": 1},
+    "item_id": {"type": "string", "minLength": 1},
+    "old_version": {"type": "string", "minLength": 1},
+    "new_version": {"type": "string", "minLength": 1},
+    "status_before": {"enum": ["usable", "withheld", "canceled", "superseded"]},
+    "status_after": {"enum": ["usable", "withheld", "canceled", "superseded"]},
+    "reason_category": {"enum": ["factual_error", "context", "privacy", "safety", "legal", "source_withdrawal", "other"]},
+    "public_note": {"type": "string", "minLength": 1},
+    "changed_claim_ids": {"type": "array", "items": {"type": "string"}},
+    "source_refs": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "reviewer": {"type": "string", "minLength": 1},
+    "downstream_targets": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["target", "state"], "properties": {"target": {"type": "string"}, "state": {"enum": ["pending", "requested", "observed", "failed", "not_applicable"]}, "evidence": {"type": ["string", "null"]}}}}
+  }
+}
