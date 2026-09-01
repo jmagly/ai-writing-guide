@@ -26,3 +26,9 @@ triggers:
 ## Output
 
 A `correction-record` artifact and completion evidence per downstream target.
+
+## References
+
+- `schemas/correction-record.schema.json`
+- `rules/publication-human-review.md`
+- `docs/research/control-source-matrix.md`

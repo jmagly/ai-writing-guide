@@ -21,18 +21,22 @@ spec:
     - id: research-and-claims
       capability: civic-research-and-claim-map
       depends_on: [source-compliance]
+      inputs:
+        - {name: source_gate_results, from: source-compliance.source_gate_results}
       outputs:
         - name: evidence_packet
     - id: draft
       capability: civic-evidence-bound-draft
       depends_on: [research-and-claims]
+      inputs:
+        - {name: evidence_packet, from: research-and-claims.evidence_packet}
       outputs:
         - name: draft_artifact
     - id: editorial-review
       fanout:
         strategy: parallel
-        agents: [civic-citation-review, civic-correction-review]
-        synthesize: civic-review-synthesis
+        agents: [citation-editor, correction-editor]
+        synthesize: civic-newsroom-operator
       depends_on: [draft]
       outputs:
         - name: review_packet
@@ -47,5 +51,7 @@ spec:
     - id: publication-verification
       capability: civic-publication-verify
       depends_on: [human-publication-gate]
+      inputs:
+        - {name: review_packet, from: editorial-review.review_packet}
       outputs:
         - name: verification_receipt

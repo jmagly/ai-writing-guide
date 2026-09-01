@@ -1,0 +1,14 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: civic-records-response-ingest
+  namespace: civic-action
+  labels: {category: civic-records, idempotent: "true"}
+  annotations: {research: docs/research/control-source-matrix.md, boundary: preserve-originals-no-reverse-redaction}
+spec:
+  description: Inventory human-supplied response files, preserve original hashes, quarantine unsafe inputs, and label OCR or extraction as derived evidence.
+  version: 1.0.0
+  inputs: [{name: submission_receipt, type: object, required: true}]
+  outputs: [{name: response_evidence, type: object}]
+  agent: citation-editor
+  idempotent: true

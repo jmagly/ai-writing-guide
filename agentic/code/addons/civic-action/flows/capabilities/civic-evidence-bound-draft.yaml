@@ -1,0 +1,14 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: civic-evidence-bound-draft
+  namespace: civic-action
+  labels: {category: civic-editorial, idempotent: "true"}
+  annotations: {research: docs/research/control-source-matrix.md, boundary: draft-only-no-publication}
+spec:
+  description: Prepare a non-published draft from the reviewed evidence packet with visible attribution, uncertainty, response, privacy, and accessibility requirements.
+  version: 1.0.0
+  inputs: [{name: evidence_packet, type: object, required: true}]
+  outputs: [{name: draft_artifact, type: object}]
+  agent: news-caster
+  idempotent: true

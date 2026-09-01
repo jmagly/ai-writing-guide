@@ -1,6 +1,6 @@
 {
   "name": "@aiwg/cli",
-  "version": "2026.8.28",
+  "version": "2026.9.0",
   "description": "Lightweight AIWG CLI for signed, versioned web-backed resources.",
   "type": "module",
   "license": "MIT",
@@ -68,6 +68,7 @@
     "@fortemi/core": "2026.7.15",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "chalk": "^4.1.2",
     "chokidar": "^4.0.3",
     "commander": "^12.1.0",

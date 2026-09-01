@@ -14,11 +14,15 @@ spec:
     - id: jurisdiction-and-agency-research
       capability: civic-records-jurisdiction-research
       depends_on: [public-source-check]
+      inputs:
+        - {name: source_findings, from: public-source-check.source_findings}
       outputs:
         - name: jurisdiction_profile
     - id: request-plan
       capability: civic-public-records-plan
       depends_on: [jurisdiction-and-agency-research]
+      inputs:
+        - {name: jurisdiction_profile, from: jurisdiction-and-agency-research.jurisdiction_profile}
       outputs:
         - name: request_draft
     - id: submission-human-gate
@@ -31,11 +35,15 @@ spec:
     - id: manual-submission-receipt
       capability: civic-record-manual-submission
       depends_on: [submission-human-gate]
+      inputs:
+        - {name: request_draft, from: request-plan.request_draft}
       outputs:
         - name: submission_receipt
     - id: response-ingest
       capability: civic-records-response-ingest
       depends_on: [manual-submission-receipt]
+      inputs:
+        - {name: submission_receipt, from: manual-submission-receipt.submission_receipt}
       outputs:
         - name: response_evidence
     - id: publication-review-gate

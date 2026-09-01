@@ -1,0 +1,15 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: civic-meeting-reconciliation
+  namespace: civic-action
+  labels: {category: civic-meetings, idempotent: "true"}
+  annotations: {research: docs/research/control-source-matrix.md, boundary: preserves-source-disagreement}
+spec:
+  description: Compare the vote ledger with declared minutes evidence and preserve conflicts, missing records, materiality, and pending human decisions.
+  version: 1.0.0
+  inputs: [{name: vote_ledger, type: object, required: true}]
+  outputs: [{name: reconciliation, type: object}]
+  agent: citation-editor
+  idempotent: true
+  verification: {command: "aiwg civic meeting-gate vote-ledger.json meeting-reconciliation.json", expect: '"status"'}

@@ -33,3 +33,4 @@ A schema-valid evidence/risk review and human decision questions.
 - `schemas/public-technology-review.schema.json`
 - `templates/public-technology-review.md`
 - `docs/research/civic-workflow-standards.md`
+- `docs/research/control-source-matrix.md`

@@ -1,0 +1,14 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: civic-public-records-plan
+  namespace: civic-action
+  labels: {category: civic-records, idempotent: "true"}
+  annotations: {research: docs/research/control-source-matrix.md, boundary: draft-only-manual-submission}
+spec:
+  description: Prepare a versioned records-request draft, estimates, evidence checklist, and human decision questions; never submit the request.
+  version: 1.0.0
+  inputs: [{name: jurisdiction_profile, type: object, required: true}]
+  outputs: [{name: request_draft, type: object}]
+  agent: civic-newsroom-operator
+  idempotent: true

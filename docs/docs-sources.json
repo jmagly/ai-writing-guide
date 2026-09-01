@@ -100,6 +100,7 @@
     "files": [
       "agent-design.md",
       "agent-examples.md",
+      "agent-examples/ai-ml-engineer-examples.md",
       "agent-examples/api-designer-examples.md",
       "agent-examples/api-documenter-examples.md",
       "agent-examples/architecture-designer-examples.md",
@@ -256,6 +257,35 @@
   },
   {
     "kind": "addons",
+    "name": "civic-action",
+    "source": "agentic/code/addons/civic-action/docs",
+    "dest": "docs/addons/civic-action",
+    "files": [
+      "issue-traceability.md",
+      "overview.md",
+      "quickstart.md",
+      "research/aiwg-design-patterns.md",
+      "research/civic-workflow-standards.md",
+      "research/control-source-matrix.md",
+      "research/legal-ethics-guardrails.md",
+      "research/synthesis-and-readiness.md"
+    ]
+  },
+  {
+    "kind": "addons",
+    "name": "composition-engine",
+    "source": "agentic/code/addons/composition-engine/docs",
+    "dest": "docs/addons/composition-engine",
+    "files": [
+      "composition-evaluation-research-matrix.md",
+      "composition-evaluation.md",
+      "polyrhythmic-reasoning.md",
+      "runtime-operations.md",
+      "schema-evolution.md"
+    ]
+  },
+  {
+    "kind": "addons",
     "name": "compound-memory",
     "source": "agentic/code/addons/compound-memory/docs",
     "dest": "docs/addons/compound-memory",
@@ -273,6 +303,15 @@
       "configuration-reference.md",
       "daemon-addon-guide.md",
       "quickstart.md"
+    ]
+  },
+  {
+    "kind": "addons",
+    "name": "graph-pattern",
+    "source": "agentic/code/addons/graph-pattern/docs",
+    "dest": "docs/addons/graph-pattern",
+    "files": [
+      "decision-guide.md"
     ]
   },
   {
@@ -356,6 +395,7 @@
     "source": "agentic/code/addons/voice-framework/docs",
     "dest": "docs/addons/voice-framework",
     "files": [
+      "output-modes.md",
       "overview.md",
       "quickstart.md"
     ]

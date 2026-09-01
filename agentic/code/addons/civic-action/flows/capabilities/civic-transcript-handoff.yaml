@@ -1,0 +1,14 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: civic-transcript-handoff
+  namespace: civic-action
+  labels: {category: civic-meetings, idempotent: "true"}
+  annotations: {research: docs/research/control-source-matrix.md, boundary: optional-adapter-no-speaker-identification}
+spec:
+  description: Prepare a reviewed handoff to an optional transcription provider while preserving media hashes, cue provenance, and unknown speaker labels.
+  version: 1.0.0
+  inputs: [{name: source_packet, type: object, required: true}]
+  outputs: [{name: transcript_packet, type: object}]
+  agent: civic-newsroom-operator
+  idempotent: true

@@ -1216,16 +1216,18 @@ async function countBundleDeployedArtifacts(
 const SKILL_SUPPORT_REFERENCE = /(?:^|[\s`('"\[])((?:templates|references|scripts|assets)\/[A-Za-z0-9._@/+\-]+)(?=$|[\s`)'"\],:;])/gm;
 
 /**
- * Project skill-relative support files may live beside the skill or at the
- * bundle root (plugin payloads commonly share report templates). Materialize
+ * Skill-relative support files may live beside the skill or at the bundle root
+ * (plugin payloads commonly share report templates). Materialize
  * only paths explicitly named by SKILL.md, and fail closed on missing or
  * unsafe sources so a deployed instruction can never point at absent assets.
  */
-async function reconcileProjectLocalSkillAssets(
+async function reconcileDeployedSkillAssets(
   bundlePath: string,
   target: string,
   provider: string,
+  options: { strictReferences?: boolean } = {},
 ): Promise<void> {
+  const strictReferences = options.strictReferences ?? true;
   const skillsRoot = path.join(bundlePath, 'skills');
   let skillDirs: string[];
   try {
@@ -1247,7 +1249,13 @@ async function reconcileProjectLocalSkillAssets(
     const sourceSkillMd = path.join(sourceSkillDir, 'SKILL.md');
     let content: string;
     try { content = await fs.readFile(sourceSkillMd, 'utf8'); } catch { continue; }
-    const references = [...new Set([...content.matchAll(SKILL_SUPPORT_REFERENCE)].map(match => match[1]))];
+    const frontmatter = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? '';
+    const declaredEntrypoint = frontmatter
+      .match(/^[ \t]+entrypoint:\s*["']?([^"'\s]+)["']?\s*$/m)?.[1];
+    const declaredEntrypoints = new Set(declaredEntrypoint ? [declaredEntrypoint] : []);
+    const references = [...new Set([
+      ...content.matchAll(SKILL_SUPPORT_REFERENCE),
+    ].map(match => match[1]).concat([...declaredEntrypoints]))];
     for (const relative of references) {
       const normalized = path.posix.normalize(relative);
       if (normalized !== relative || normalized.startsWith('../') || path.isAbsolute(normalized)) {
@@ -1261,7 +1269,12 @@ async function reconcileProjectLocalSkillAssets(
           if (stat.isFile() && !stat.isSymbolicLink()) { source = candidate; break; }
         } catch { /* try bundle-root fallback */ }
       }
-      if (!source) throw new Error(`missing skill support asset '${relative}' referenced by ${sourceSkillMd}`);
+      if (!source) {
+        if (strictReferences || declaredEntrypoints.has(relative)) {
+          throw new Error(`missing skill support asset '${relative}' referenced by ${sourceSkillMd}`);
+        }
+        continue;
+      }
 
       let deployedSkillRoot: string | undefined;
       for (const root of deployRoots) {
@@ -1363,7 +1376,7 @@ async function deployOneProjectLocalBundle(opts: {
     exitCode = result.exitCode;
     if (exitCode === 0 && !dryRun) {
       try {
-        await reconcileProjectLocalSkillAssets(bundle.artifactPath, target, provider);
+        await reconcileDeployedSkillAssets(bundle.artifactPath, target, provider);
       } catch (error) {
         ui.warn(`Project-local skill asset deployment failed for '${bundle.id}': ${(error as Error).message}`);
         exitCode = 1;
@@ -3079,6 +3092,16 @@ export class UseHandler implements CommandHandler {
               || `Failed to deploy required addon '${dependency}'`,
           };
         }
+        if (!dryRunAddon) {
+          try {
+            await reconcileDeployedSkillAssets(dependencySource, target, provider, { strictReferences: false });
+          } catch (error) {
+            return {
+              exitCode: 1,
+              message: `Required addon '${dependency}' skill asset deployment failed: ${error instanceof Error ? error.message : String(error)}`,
+            };
+          }
+        }
         try {
           await registerSourceCliCommands({
             source: dependencySource,
@@ -3110,6 +3133,17 @@ export class UseHandler implements CommandHandler {
 
       if (addonResult.exitCode !== 0) {
         return addonResult;
+      }
+
+      if (!dryRunAddon) {
+        try {
+          await reconcileDeployedSkillAssets(addonSource, target, provider, { strictReferences: false });
+        } catch (error) {
+          return {
+            exitCode: 1,
+            message: `${kind} '${framework}' skill asset deployment failed: ${error instanceof Error ? error.message : String(error)}`,
+          };
+        }
       }
 
       // Register only artifacts actually written by a confirmed deployment.

@@ -4,9 +4,11 @@ Civic Action is an opt-in, vendor-neutral AIWG addon for evidence-bound civic
 research, public-meeting reconciliation, public-records planning, public
 technology review, local-resource indexing, corrections, and publication QA.
 
-It prepares and verifies artifacts. It never autonomously submits records
-requests, contacts people, identifies speakers, publishes content, or makes
-legal conclusions. Those transitions require named human review.
+It prepares structured artifacts and local findings. It never autonomously
+submits records requests, contacts people, identifies speakers, publishes
+content, or makes legal conclusions. Those transitions require named human
+review. A machine pass covers only the declared, schema-valid fields inspected
+by that command; it is not factual verification, compliance, or authorization.
 
 ## Install and discover
 

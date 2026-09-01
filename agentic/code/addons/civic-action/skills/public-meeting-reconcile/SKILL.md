@@ -39,4 +39,5 @@ JSON gate results plus a reviewed reconciliation packet; never official minutes.
 
 - `schemas/vote-ledger.schema.json`
 - `schemas/meeting-reconciliation.schema.json`
+- `docs/research/control-source-matrix.md`
 - media-curator `transcribe-media` and `diarize-media`; research-complete `induct-media`

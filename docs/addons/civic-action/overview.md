@@ -1,13 +1,49 @@
-# Civic Action addon
+# Civic Action overview
 
-Civic Action is an opt-in AIWG addon for evidence-bound public-source research,
-meeting reconciliation, records-request planning, public-technology review,
-local-resource indexing, corrections, and publication QA.
+Civic Action packages research-first, evidence-preserving workflows for public
+sources, meetings, records requests, public-technology procurement, local
+resource indexes, corrections, and publication review. It is an opt-in addon,
+not a jurisdiction database, law practice, autonomous newsroom, recorder, CMS,
+or outreach system.
 
-It provides four bounded agents, eight discoverable skills, three declarative
-FlowPlaybooks, ten schemas, ten review templates, three cross-cutting rules,
-and deterministic source/meeting/publication gates. It never autonomously
-records, submits, contacts, identifies, publishes, or makes legal conclusions.
+## Safety and evidence model
 
-Install with `aiwg use civic-action`. See the [quick start](quickstart.md) for
-safe example asks and executable gate usage.
+The executable source, meeting, and publication commands validate their input
+schemas and block selected declared conditions, including access-control bypass,
+unresolved source authorization/rights, conflicted or unverified vote evidence,
+uncited declared material claims, incomplete named privacy/accessibility review,
+and missing named exact-hash publication approval. Broader jurisdiction,
+consent, private/public status, anti-targeting, retention, and independent-review
+requirements are mandatory human workflow rules; the commands do not infer
+those facts from content.
+
+Source identity and retrieval versions are distinct. Contracts provide fields
+for epistemic status, source/retrieval identity, selectors, contrary evidence,
+and review history. Correction artifacts plan linked new versions rather than
+silent replacements; the addon does not enforce an external storage history.
+
+These choices follow [W3C PROV-O](https://www.w3.org/TR/prov-o/),
+[RFC 9309](https://www.rfc-editor.org/rfc/rfc9309.html), the
+[NIST AI RMF](https://www.nist.gov/itl/ai-risk-management-framework), the
+[NIST Privacy Framework](https://www.nist.gov/privacy-framework), and the
+[SPJ Code of Ethics](https://www.spj.org/spj-code-of-ethics/). The cited legal
+and standards research in `docs/research/` states scope and dissent explicitly.
+The `control-source-matrix.md` file maps each skill to its sources, tests, and
+executable-versus-declarative boundary.
+
+## Human authority
+
+Machine gates return `pass|warn|block`; a pass only means no blocking condition
+was found among the declared fields inspected by that command. It does not
+authorize action, determine legality, or independently verify facts. A named
+human reviews the exact artifact and underlying evidence before recording,
+submission, outreach, identity assignment, legal assertions, publication, or
+correction release. External action remains outside the executable gates.
+
+## Composition
+
+`aiwg-utils` supplies the Flow contract. Optional research-complete,
+media-curator, knowledge-base, media-marketing-kit, ops-complete, and
+security-engineering components add specialized capabilities. Their absence is
+reported honestly and never replaced with invented transcripts, citations,
+legal conclusions, accessibility conformance, or deployment evidence.

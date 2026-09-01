@@ -15,6 +15,38 @@ aiwg use ops --ext repo-maintainer
 
 Each extension introduces artifacts with its own `apiVersion` prefix (e.g., `sys.ops.aiwg.io/v1`) and extends the base kind vocabulary with domain-specific kinds.
 
+### Declaring custom kinds
+
+An extension owns every kind it adds. Declare each kind and its schema in
+`ADDON.yaml`; no framework source change or central registry entry is required:
+
+```yaml
+spec:
+  kinds:
+    - name: AcmeRecord
+      schema: schemas/acme-record.schema.json
+```
+
+The schema path is relative to the extension root and must stay inside that
+root. Custom artifacts use the extension namespace, for example
+`apiVersion: acme.ops.aiwg.io/v1`. Kind names must be unique across the core
+framework and installed extensions. Schemas should reject unknown fields at
+stable contract boundaries; use intentionally open nested maps only where the
+extension explicitly promises an untyped payload.
+
+Run `npm run lint:ops-templates` from an AIWG source checkout to discover every
+YAML file below `agentic/code/extensions/*/templates/`, resolve its declared
+kind, and validate it. Diagnostics include the template path and JSON pointer.
+The same validator can check a consumer-produced artifact directly:
+
+```bash
+node tools/validation/ops-template-conformance.mjs path/to/artifact.yaml
+```
+
+`OpsPlaybook` input bindings use exactly one of `value:` or `from:`. Structured
+references are `vars.<name>` or `steps.<id>.outputs.<name>`; unresolved names
+and `{{ }}` template expressions fail conformance.
+
 ---
 
 ## sys — System Operations
@@ -100,6 +132,11 @@ Install when your repository manages infrastructure assets beyond individual hos
 - `dr-runbook.yaml` — Disaster recovery procedure with RTO/RPO targets
 - `provisioning-playbook.yaml` — New service or host provisioning procedure
 - `network-state.yaml` — Network topology snapshot
+
+The YAML contracts are `ITAsset`, `ITService`, and `ITNetworkState` under
+`it.ops.aiwg.io/v1`, plus the core `OpsPlaybook` provisioning contract. Their
+schemas live in `agentic/code/extensions/it/schemas/` and are registered by the
+IT extension's `ADDON.yaml`.
 
 **Rules**:
 - `it-change-control` — Require change record reference for production changes

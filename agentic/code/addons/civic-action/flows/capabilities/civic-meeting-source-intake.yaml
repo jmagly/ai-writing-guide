@@ -1,0 +1,14 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: civic-meeting-source-intake
+  namespace: civic-action
+  labels: {category: civic-meetings, idempotent: "true"}
+  annotations: {research: docs/research/control-source-matrix.md, boundary: human-recording-review-required}
+spec:
+  description: Prepare meeting source, jurisdiction, openness, consent, authorization, and closed-session questions for the mandatory human gate.
+  version: 1.0.0
+  inputs: []
+  outputs: [{name: source_packet, type: object}]
+  agent: civic-newsroom-operator
+  idempotent: true

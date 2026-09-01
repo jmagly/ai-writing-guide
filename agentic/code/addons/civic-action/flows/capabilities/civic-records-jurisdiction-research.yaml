@@ -1,0 +1,14 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: civic-records-jurisdiction-research
+  namespace: civic-action
+  labels: {category: civic-records, idempotent: "true"}
+  annotations: {research: docs/research/control-source-matrix.md, boundary: human-legal-review-no-legal-advice}
+spec:
+  description: Prepare a dated, cited agency and jurisdiction profile for human review without treating federal FOIA as a universal fallback.
+  version: 1.0.0
+  inputs: [{name: source_findings, type: object, required: true}]
+  outputs: [{name: jurisdiction_profile, type: object}]
+  agent: citation-editor
+  idempotent: true

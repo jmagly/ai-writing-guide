@@ -581,6 +581,7 @@ aiwg use forensics         # Digital forensics & incident response (13 agents, 1
 aiwg use marketing         # Marketing operations (37 agents, 87+ templates)
 aiwg use media-curator     # Media archive management (6 agents, 9 commands)
 aiwg use research          # Research workflow automation (8 agents, 8-stage pipeline)
+aiwg use civic-action      # Cited civic review and publication-preparation kit
 aiwg use rlm               # RLM addon (recursive context decomposition)
 aiwg use all               # Everything
 
@@ -635,8 +636,10 @@ The bundle is **byte-identical** in shape to its upstream form, so
 /plugin install compound-memory@aiwg
 ```
 
-The marketplace contains all 40 packaged frameworks and addons, so you can
-install only the capabilities a Claude Code workspace needs.
+The marketplace contains 40 independently packaged framework and addon
+plugins, so you can install only the capabilities a Claude Code workspace
+needs. Source-distributed opt-in addons such as Civic Action deploy with
+`aiwg use civic-action` and do not imply a marketplace wrapper.
 
 ### Multi-Platform Deployment
 
@@ -685,10 +688,11 @@ If you ship a product that bundles AIWG and want to be listed here, open an issu
 | **[Ops Complete](agentic/code/frameworks/ops-complete/)** | 12 | 3 | Operational infrastructure — incident management, runbooks, troubleshooting workflows |
 | **[Security Engineering](agentic/code/frameworks/security-engineering/)** | 2 | 5 | Applied security beyond STRIDE/OWASP — cryptographic primitive selection, chain-of-trust integrity, authentication-factor architecture, degraded-mode design, runtime secret hygiene, supply-chain trust, physical-access threats. Pattern-based, product-agnostic |
 
-### Addons (31)
+### Addons (32)
 
 | Addon | What It Does |
 |-------|--------------|
+| **[Civic Action](agentic/code/addons/civic-action/)** | Cited, opt-in decision support for source review, records planning, meeting reconciliation, public-technology research, local-resource profiles, corrections, and publication preparation |
 | **[RLM](agentic/code/addons/rlm/)** | Recursive context decomposition — process 10M+ tokens via sub-agent delegation with parallel fan-out |
 | **[Writing Quality](agentic/code/addons/writing-quality/)** | Content validation, AI pattern detection, authentic voice enforcement |
 | **[Testing Quality](agentic/code/addons/testing-quality/)** | TDD enforcement, mutation testing, flaky test detection and repair |

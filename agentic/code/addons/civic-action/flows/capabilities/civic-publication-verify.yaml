@@ -1,0 +1,15 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: civic-publication-verify
+  namespace: civic-action
+  labels: {category: civic-publication, idempotent: "true"}
+  annotations: {research: docs/research/control-source-matrix.md, boundary: verification-receipt-no-publication}
+spec:
+  description: Evaluate a human-reviewed publication packet and return local findings; never write to a CMS, cache, index, or external service.
+  version: 1.0.0
+  inputs: [{name: review_packet, type: object, required: true}]
+  outputs: [{name: verification_receipt, type: object}]
+  agent: correction-editor
+  idempotent: true
+  verification: {command: "aiwg civic publish-gate publication-packet.json", expect: '"status"'}

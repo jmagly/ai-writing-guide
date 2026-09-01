@@ -1,5 +1,7 @@
 # Civic Action quickstart
 
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed and connected to the target project.
+
 Install the opt-in addon:
 
 ```bash

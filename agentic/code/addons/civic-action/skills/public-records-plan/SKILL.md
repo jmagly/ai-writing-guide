@@ -36,3 +36,4 @@ A `public-records-plan` artifact, evidence checklist, and pending human action.
 - `templates/public-records-plan.md`
 - `schemas/public-records-plan.schema.json`
 - `docs/research/legal-ethics-guardrails.md`
+- `docs/research/control-source-matrix.md`

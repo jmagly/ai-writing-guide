@@ -465,7 +465,24 @@
     "frameworks/media-marketing-kit/design-operations-examples",
     "addons/compound-memory",
     "addons/compound-memory/operator-guide",
-    "addons/compound-memory/overview"
+    "addons/compound-memory/overview",
+    "frameworks/sdlc-complete/agent-examples/ai-ml-engineer-examples",
+    "addons/civic-action/issue-traceability",
+    "addons/civic-action/research",
+    "addons/civic-action/research/aiwg-design-patterns",
+    "addons/civic-action/research/civic-workflow-standards",
+    "addons/civic-action/research/control-source-matrix",
+    "addons/civic-action/research/legal-ethics-guardrails",
+    "addons/civic-action/research/synthesis-and-readiness",
+    "addons/composition-engine",
+    "addons/composition-engine/composition-evaluation-research-matrix",
+    "addons/composition-engine/composition-evaluation",
+    "addons/composition-engine/polyrhythmic-reasoning",
+    "addons/composition-engine/runtime-operations",
+    "addons/composition-engine/schema-evolution",
+    "addons/graph-pattern",
+    "addons/graph-pattern/decision-guide",
+    "addons/voice-framework/output-modes"
   ],
   "sections": [
     {
@@ -3496,6 +3513,125 @@
       "summary": "Compound Memory composes AIWG's existing memory capabilities into a governed",
       "file": "addons/compound-memory/overview.md",
       "parent": "addons/compound-memory"
+    },
+    {
+      "id": "frameworks/sdlc-complete/agent-examples/ai-ml-engineer-examples",
+      "title": "Ai Ml Engineer Examples",
+      "summary": "Externalized from the agent definition per the few-shot-examples rule. These examples are patterns t",
+      "file": "frameworks/sdlc-complete/agent-examples/ai-ml-engineer-examples.md",
+      "parent": "frameworks/sdlc-complete/agent-examples"
+    },
+    {
+      "id": "addons/civic-action/issue-traceability",
+      "title": "Issue Traceability",
+      "summary": "| Issue | Implemented proof | Verification |",
+      "file": "addons/civic-action/issue-traceability.md",
+      "parent": "addons/civic-action"
+    },
+    {
+      "id": "addons/civic-action/research",
+      "title": "Research",
+      "summary": "",
+      "collapsed": true,
+      "parent": "addons/civic-action"
+    },
+    {
+      "id": "addons/civic-action/research/aiwg-design-patterns",
+      "title": "Aiwg Design Patterns",
+      "summary": "Status: implementation design input for AIWG issues #2213–#2222",
+      "file": "addons/civic-action/research/aiwg-design-patterns.md",
+      "parent": "addons/civic-action/research"
+    },
+    {
+      "id": "addons/civic-action/research/civic-workflow-standards",
+      "title": "Civic Workflow Standards",
+      "summary": "Issues: #2214, #2216, #2217, #2218, #2220, #2221",
+      "file": "addons/civic-action/research/civic-workflow-standards.md",
+      "parent": "addons/civic-action/research"
+    },
+    {
+      "id": "addons/civic-action/research/control-source-matrix",
+      "title": "Control Source Matrix",
+      "summary": "Reviewed: 2026-09-01",
+      "file": "addons/civic-action/research/control-source-matrix.md",
+      "parent": "addons/civic-action/research"
+    },
+    {
+      "id": "addons/civic-action/research/legal-ethics-guardrails",
+      "title": "Legal Ethics Guardrails",
+      "summary": "- Issues: [AIWG #2213](https://git.integrolabs.net/roctinam/aiwg/issues/2213), jurisdiction-sensitiv",
+      "file": "addons/civic-action/research/legal-ethics-guardrails.md",
+      "parent": "addons/civic-action/research"
+    },
+    {
+      "id": "addons/civic-action/research/synthesis-and-readiness",
+      "title": "Synthesis And Readiness",
+      "summary": "Decision date: 2026-09-01",
+      "file": "addons/civic-action/research/synthesis-and-readiness.md",
+      "parent": "addons/civic-action/research"
+    },
+    {
+      "id": "addons/composition-engine",
+      "title": "Composition Engine",
+      "summary": "",
+      "collapsed": true,
+      "parent": "addons"
+    },
+    {
+      "id": "addons/composition-engine/composition-evaluation-research-matrix",
+      "title": "Composition Evaluation Research Matrix",
+      "summary": "This matrix records the decision and evidence status for every source named in",
+      "file": "addons/composition-engine/composition-evaluation-research-matrix.md",
+      "parent": "addons/composition-engine"
+    },
+    {
+      "id": "addons/composition-engine/composition-evaluation",
+      "title": "Composition Evaluation",
+      "summary": "This harness is the release-claim gate for composition policy documentation.",
+      "file": "addons/composition-engine/composition-evaluation.md",
+      "parent": "addons/composition-engine"
+    },
+    {
+      "id": "addons/composition-engine/polyrhythmic-reasoning",
+      "title": "Polyrhythmic Reasoning",
+      "summary": "The polyrhythmic-reasoning adapter turns the illustrative 4:4 and 5:4",
+      "file": "addons/composition-engine/polyrhythmic-reasoning.md",
+      "parent": "addons/composition-engine"
+    },
+    {
+      "id": "addons/composition-engine/runtime-operations",
+      "title": "Runtime Operations",
+      "summary": "The FlowGraph runtime is a deterministic planner/executor beneath the existing",
+      "file": "addons/composition-engine/runtime-operations.md",
+      "parent": "addons/composition-engine"
+    },
+    {
+      "id": "addons/composition-engine/schema-evolution",
+      "title": "Schema Evolution",
+      "summary": "flow.aiwg.io/v1alpha1 is an experimental conformance line. It is not a",
+      "file": "addons/composition-engine/schema-evolution.md",
+      "parent": "addons/composition-engine"
+    },
+    {
+      "id": "addons/graph-pattern",
+      "title": "Graph Pattern",
+      "summary": "",
+      "collapsed": true,
+      "parent": "addons"
+    },
+    {
+      "id": "addons/graph-pattern/decision-guide",
+      "title": "Decision Guide",
+      "summary": "Graph is one optional AIWG Flow profile. Choose it for explicit shared state,",
+      "file": "addons/graph-pattern/decision-guide.md",
+      "parent": "addons/graph-pattern"
+    },
+    {
+      "id": "addons/voice-framework/output-modes",
+      "title": "Output Modes",
+      "summary": "Output modes are provider-neutral presentation constraints selected at runtime. With no configured m",
+      "file": "addons/voice-framework/output-modes.md",
+      "parent": "addons/voice-framework"
     }
   ],
   "pages": [

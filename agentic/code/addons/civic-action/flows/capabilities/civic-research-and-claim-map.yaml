@@ -1,0 +1,14 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: civic-research-and-claim-map
+  namespace: civic-action
+  labels: {category: civic-evidence, idempotent: "true"}
+  annotations: {research: docs/research/control-source-matrix.md, boundary: evidence-preparation-only}
+spec:
+  description: Map declared material claims to source and selector evidence while preserving uncertainty, attribution, conflicts, and missing evidence.
+  version: 1.0.0
+  inputs: [{name: source_gate_results, type: object, required: true}]
+  outputs: [{name: evidence_packet, type: object}]
+  agent: citation-editor
+  idempotent: true

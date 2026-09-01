@@ -1,0 +1,14 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: civic-record-manual-submission
+  namespace: civic-action
+  labels: {category: civic-records, idempotent: "false"}
+  annotations: {research: docs/research/control-source-matrix.md, boundary: receipt-ingest-only-no-submission}
+spec:
+  description: Accept a receipt supplied after a human independently submits an approved request; this capability performs no contact or submission.
+  version: 1.0.0
+  inputs: [{name: request_draft, type: object, required: true}]
+  outputs: [{name: submission_receipt, type: object}]
+  agent: civic-newsroom-operator
+  idempotent: false

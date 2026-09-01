@@ -1,0 +1,14 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: civic-meeting-newsroom-handoff
+  namespace: civic-action
+  labels: {category: civic-meetings, idempotent: "true"}
+  annotations: {research: docs/research/control-source-matrix.md, boundary: reviewed-handoff-no-publication}
+spec:
+  description: Package a named-human-reviewed reconciliation for optional editorial use while retaining non-official status and unresolved conflicts.
+  version: 1.0.0
+  inputs: [{name: reconciliation, type: object, required: true}]
+  outputs: [{name: reviewed_meeting_packet, type: object}]
+  agent: civic-newsroom-operator
+  idempotent: true

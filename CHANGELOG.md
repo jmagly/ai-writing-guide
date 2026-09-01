@@ -7,6 +7,78 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.9.0] - 2026-09-01 - "Cited civic workflows, safer publication"
+
+### Added
+
+- **Civic research and publication now have an opt-in, cited review kit** -
+  Four bounded agents, eight skills, three rules, three FlowPlaybooks, fifteen
+  resolvable Flow capabilities, ten schemas, ten templates, examples, and
+  deployment metadata support public-source review, public-records planning,
+  meeting and vote reconciliation, public-technology research, local-resource
+  profiles, editorial correction, and publication QA
+  (roctinam/aiwg#2213-#2222).
+
+- **Civic contracts expose source, jurisdiction, and review fields** - Source
+  registry contracts record provenance, license and terms, acquisition method,
+  jurisdiction, and declared uses. CAP, GTFS, and HSDS remain vendor-neutral
+  AIWG profile contracts. A control-to-source matrix links every skill to the
+  primary standards and public-sector guidance that informed its design and
+  records which boundaries are executable or declarative.
+
+### Security
+
+- **Selected declared civic conditions produce machine-readable blocks** -
+  Local gates block declared access-control bypass and unresolved source
+  authorization/rights; conflicted or unverified vote evidence; declared
+  material claims without citations; unnamed privacy/accessibility review;
+  unresolved declared corrections/deployment states; and publication packets
+  lacking named exact-hash approval. Broader jurisdiction, consent,
+  anti-targeting, retention, and independent-review requirements remain
+  explicit human workflow rules.
+
+### Fixed
+
+- **Required CI workflows no longer cancel one another** - Workflow-specific
+  concurrency groups isolate CI, documentation, and metadata-validation runs so
+  the release gate can observe each required check independently.
+
+- **Release publication and recovery paths are retry-safe** - Gitea npm jobs
+  scope Vault route variables correctly, recovery dispatch is supported,
+  duplicate release assets are replaced on retry, and GitHub signing identity
+  is bound to the release tag.
+
+- **Prebuilt release indices are reproducible** - Generated index timestamps no
+  longer introduce non-deterministic package output.
+
+- **Civic executable gates reject malformed contracts before evaluating
+  policy** - Source, meeting, and publication commands validate their complete
+  JSON Schemas and return the documented invalid-input exit code with bounded
+  JSON-pointer diagnostics instead of allowing a partial object to pass.
+
+- **Civic newsroom discovery resolves its shipped FlowPlaybook** - The planning
+  skill and design map now reference the deployed `civic-newsroom.yaml` path.
+
+- **Executable addon skills retain their support payloads after deployment** -
+  Bundled addon installs now copy declared scripts and existing referenced
+  assets into native provider skill directories. Civic gate wrappers resolve
+  the installed AIWG source root when executed from a deployed Codex skill.
+
+### Release boundaries
+
+- Civic Action prepares structured artifacts and local findings; named humans
+  retain authority for acquisition, recording, contact, submission, legal
+  interpretation, identity resolution, procurement decisions, correction
+  approval, and publication.
+- A machine pass means only that no blocking condition was found among the
+  declared, schema-valid fields. It is not legal advice, factual verification,
+  standards certification, a compliance determination, or authorization to
+  act. Review and hash fields are asserted metadata unless a command explicitly
+  verifies them.
+- Records, procurement, local-resource, and correction assets are profile and
+  review contracts. Jurisdiction-specific rules and external adapters do not
+  ship in this release; missing integrations perform no external action.
+
 ## [2026.8.28] - 2026-08-31 - "Governed evidence, resilient tooling"
 
 ### Added

@@ -20,7 +20,7 @@ triggers:
 3. Map material claims to selectors and epistemic states.
 4. Plan accessibility, privacy minimization, response, correction, retention,
    and named reviewer responsibilities.
-5. Use `flows/civic-newsroom.playbook.yaml`; stop at its publication gate.
+5. Use `flows/civic-newsroom.yaml`; stop at its publication gate.
 
 ## Output
 
@@ -31,4 +31,5 @@ decisions. Missing optional frameworks are explicit degraded states.
 
 - `rules/RULES-INDEX.md`
 - `docs/research/aiwg-design-patterns.md`
+- `docs/research/control-source-matrix.md`
 - research-complete `citation-guard`; media-marketing-kit `approval-workflow`

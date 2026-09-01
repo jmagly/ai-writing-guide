@@ -1,0 +1,15 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: civic-source-compliance-check
+  namespace: civic-action
+  labels: {category: civic-sources, idempotent: "true"}
+  annotations: {research: docs/research/control-source-matrix.md, boundary: local-declared-field-check}
+spec:
+  description: Validate source registries and evaluate declared access, rights, freshness, provenance, and human-review conditions without determining legality.
+  version: 1.0.0
+  inputs: [{name: intake_packet, type: object, required: true}]
+  outputs: [{name: source_gate_results, type: object}]
+  agent: citation-editor
+  idempotent: true
+  verification: {command: "aiwg civic source-gate source-registry.json", expect: '"status"'}

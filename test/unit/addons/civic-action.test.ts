@@ -1,5 +1,6 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import yaml from 'js-yaml';
@@ -46,6 +47,8 @@ describe('civic-action addon', () => {
     }
     const rulesIndex = read('rules/RULES-INDEX.md');
     for (const name of manifest.rules) expect(rulesIndex).toContain(`${name}.md`);
+    expect(read('skills/civic-newsroom-plan/SKILL.md')).toContain('flows/civic-newsroom.yaml');
+    expect(read('skills/civic-newsroom-plan/SKILL.md')).not.toContain('civic-newsroom.playbook.yaml');
   });
 
   it('compiles every civic schema and validates each positive fixture', () => {
@@ -79,15 +82,31 @@ describe('civic-action addon', () => {
   });
 
   it('validates FlowPlaybooks and proves consequential paths contain human gates', () => {
-    const schema = JSON.parse(readFileSync(resolve('agentic/code/addons/aiwg-utils/workflow/schemas/workflow-playbook.schema.json'), 'utf8'));
+    const playbookSchema = JSON.parse(readFileSync(resolve('agentic/code/addons/aiwg-utils/workflow/schemas/workflow-playbook.schema.json'), 'utf8'));
+    const capabilitySchema = JSON.parse(readFileSync(resolve('agentic/code/addons/aiwg-utils/workflow/schemas/workflow-capability.schema.json'), 'utf8'));
     const ajv = new Ajv({ allErrors: true, strict: false });
     addFormats(ajv);
-    const validate = ajv.compile(schema);
-    for (const file of files('flows').filter((item) => item.endsWith('.yaml'))) {
+    const validatePlaybook = ajv.compile(playbookSchema);
+    const validateCapability = ajv.compile(capabilitySchema);
+    const manifest = json('manifest.json');
+    const capabilityFiles = files('flows/capabilities').filter((item) => item.endsWith('.yaml'));
+    const capabilityNames = new Set(capabilityFiles.map((file) => {
+      const capability: any = yaml.load(read(file));
+      expect(validateCapability(capability), `${file}: ${JSON.stringify(validateCapability.errors)}`).toBe(true);
+      expect(capability.metadata.annotations.research).toBe('docs/research/control-source-matrix.md');
+      return capability.metadata.name;
+    }));
+
+    for (const file of files('flows').filter((item) => item.endsWith('.yaml') && !item.includes('/capabilities/'))) {
       const flow: any = yaml.load(read(file));
-      expect(validate(flow), `${file}: ${JSON.stringify(validate.errors)}`).toBe(true);
+      expect(validatePlaybook(flow), `${file}: ${JSON.stringify(validatePlaybook.errors)}`).toBe(true);
       const ids = new Set(flow.spec.steps.map((step: any) => step.id));
       for (const step of flow.spec.steps) for (const dependency of step.depends_on ?? []) expect(ids.has(dependency)).toBe(true);
+      for (const step of flow.spec.steps) {
+        if (step.capability) expect(capabilityNames.has(step.capability), `${file} has unresolved capability ${step.capability}`).toBe(true);
+        for (const agent of step.fanout?.agents ?? []) expect(manifest.agents).toContain(agent);
+        if (step.fanout?.synthesize) expect(manifest.agents).toContain(step.fanout.synthesize);
+      }
       const gates = flow.spec.steps.filter((step: any) => step.kind === 'gate');
       expect(gates.length).toBeGreaterThan(0);
       expect(gates.every((gate: any) => /human/i.test(gate.description))).toBe(true);
@@ -111,6 +130,16 @@ describe('civic-action addon', () => {
       'EMPTY_RESULT_THRESHOLD',
       'SOURCE_LAST_GOOD_COPY_MISSING',
     ]));
+
+    for (const decision of ['block', 'pending', 'manual_only']) {
+      const denied = json('examples/valid/source-registry.json');
+      denied.review.decision = decision;
+      expect(evaluateSourceRegistry(denied).findings.map((item) => item.code)).toContain('SOURCE_REVIEW_DECISION_NOT_ALLOW');
+    }
+
+    const expiredDeclaration = json('examples/valid/source-registry.json');
+    expiredDeclaration.freshness.deadline = '2026-08-31T00:00:00Z';
+    expect(evaluateSourceRegistry(expiredDeclaration, { now: new Date('2026-09-01T00:00:00Z') }).findings.map((item) => item.code)).toContain('SOURCE_FRESHNESS_DEADLINE_PASSED');
   });
 
   it('blocks inferred/conflicted votes and accepts human-verified reconciliation', () => {
@@ -122,6 +151,10 @@ describe('civic-action addon', () => {
     const blocked = evaluateMeeting(ledger, reconciliation);
     expect(blocked.status).toBe('block');
     expect(blocked.findings.map((item) => item.code)).toEqual(expect.arrayContaining(['VOTE_CONFLICT', 'VOTE_INFERRED_WITHOUT_SOURCE']));
+
+    const undated = json('examples/valid/meeting-reconciliation.json');
+    undated.human_review.reviewed_at = null;
+    expect(evaluateMeeting(json('examples/valid/vote-ledger.json'), undated).findings.map((item) => item.code)).toContain('MEETING_REVIEW_PENDING');
   });
 
   it('blocks uncited allegations, incomplete privacy/accessibility, and missing exact-hash approval', () => {
@@ -149,6 +182,18 @@ describe('civic-action addon', () => {
       'DEPLOYMENT_CACHE_STATE_PENDING',
     ]));
     expect(evaluatePublication(json('examples/valid/publication-packet.json')).status).toBe('pass');
+
+    const anonymousReviews = json('examples/valid/publication-packet.json');
+    anonymousReviews.privacy.reviewer = null;
+    anonymousReviews.accessibility.reviewer = null;
+    expect(evaluatePublication(anonymousReviews).findings.map((item) => item.code)).toEqual(expect.arrayContaining([
+      'PRIVACY_REVIEW_INCOMPLETE',
+      'ACCESSIBILITY_MANUAL_REVIEW_REQUIRED',
+    ]));
+
+    const superseded = json('examples/valid/publication-packet.json');
+    superseded.publication_state = 'superseded';
+    expect(evaluatePublication(superseded).findings.map((item) => item.code)).toContain('PUBLICATION_STATE_BLOCKED');
   });
 
   it('schema-locks consequential civic actions to review-only outputs', () => {
@@ -198,6 +243,30 @@ describe('civic-action addon', () => {
     expect(blocked.exitCode).toBe(1);
     expect(JSON.parse(blocked.message).status).toBe('block');
     expect((await civicAction([], { cwd: ROOT, subcommand: 'source-gate' })).exitCode).toBe(2);
+  });
+
+  it('rejects schema-invalid source, meeting, and publication inputs before rule evaluation', async () => {
+    const temporaryRoot = mkdtempSync(join(tmpdir(), 'aiwg-civic-schema-'));
+    try {
+      for (const file of ['source.json', 'ledger.json', 'reconciliation.json', 'publication.json']) {
+        writeFileSync(join(temporaryRoot, file), '{}\n');
+      }
+
+      const results = [
+        await civicAction(['source.json'], { cwd: temporaryRoot, subcommand: 'source-gate' }),
+        await civicAction(['ledger.json', 'reconciliation.json'], { cwd: temporaryRoot, subcommand: 'meeting-gate' }),
+        await civicAction(['publication.json'], { cwd: temporaryRoot, subcommand: 'publish-gate' }),
+      ];
+
+      for (const result of results) {
+        const payload = JSON.parse(result.message);
+        expect(result.exitCode).toBe(2);
+        expect(payload.code).toBe('CIVIC_SCHEMA_INVALID');
+        expect(payload.validation_errors.length).toBeGreaterThan(0);
+      }
+    } finally {
+      rmSync(temporaryRoot, { recursive: true, force: true });
+    }
   });
 
   it('contains cited, dated research and explicit scope limits', () => {

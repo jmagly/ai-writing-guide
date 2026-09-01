@@ -1,0 +1,14 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: civic-intake-and-jurisdiction
+  namespace: civic-action
+  labels: {category: civic-intake, idempotent: "true"}
+  annotations: {research: docs/research/control-source-matrix.md, boundary: named-human-jurisdiction-review}
+spec:
+  description: Prepare the public-interest scope, intended uses, jurisdiction questions, prohibited uses, and named reviewers without making a legal determination.
+  version: 1.0.0
+  inputs: []
+  outputs: [{name: intake_packet, type: object}]
+  agent: civic-newsroom-operator
+  idempotent: true

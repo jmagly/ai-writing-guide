@@ -21,16 +21,22 @@ spec:
     - id: transcript-handoff
       capability: civic-transcript-handoff
       depends_on: [recording-human-gate]
+      inputs:
+        - {name: source_packet, from: legality-and-source-intake.source_packet}
       outputs:
         - name: transcript_packet
     - id: ledger-extraction
       capability: civic-vote-ledger-extraction
       depends_on: [transcript-handoff]
+      inputs:
+        - {name: transcript_packet, from: transcript-handoff.transcript_packet}
       outputs:
         - name: vote_ledger
     - id: minutes-reconciliation
       capability: civic-meeting-reconciliation
       depends_on: [ledger-extraction]
+      inputs:
+        - {name: vote_ledger, from: ledger-extraction.vote_ledger}
       outputs:
         - name: reconciliation
     - id: verification-human-gate
@@ -43,5 +49,7 @@ spec:
     - id: newsroom-handoff
       capability: civic-meeting-newsroom-handoff
       depends_on: [verification-human-gate]
+      inputs:
+        - {name: reconciliation, from: minutes-reconciliation.reconciliation}
       outputs:
         - name: reviewed_meeting_packet

@@ -41,3 +41,4 @@ law, contractual permission, or fair use.
 - `rules/civic-safety.md`
 - `docs/research/civic-workflow-standards.md`
 - `docs/research/legal-ethics-guardrails.md`
+- `docs/research/control-source-matrix.md`

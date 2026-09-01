@@ -38,4 +38,5 @@ invalid input/usage. The command never writes to a CMS or external service.
 
 - `schemas/publication-gate-result.schema.json`
 - `rules/publication-human-review.md`
+- `docs/research/control-source-matrix.md`
 - media-marketing-kit `qa-protocol` and `approval-workflow`; ops-complete `ops-verify`

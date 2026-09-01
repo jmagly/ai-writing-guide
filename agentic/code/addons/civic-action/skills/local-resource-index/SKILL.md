@@ -32,4 +32,5 @@ A `local-resource-index` record plus `block|warn|record` findings.
 ## References
 
 - `schemas/local-resource-index.schema.json`
+- `docs/research/control-source-matrix.md`
 - OASIS CAP 1.2, GTFS, and Open Referral HSDS sources in the research brief
