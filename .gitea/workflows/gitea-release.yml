@@ -8,15 +8,16 @@
 
 name: Create Gitea Release
 
-env:
-  VAULT_ADDR: ${{ vars.VAULT_ADDR }}
-  GT_RELEASE_TOKEN_VAULT_PATH: ${{ vars.GT_RELEASE_TOKEN_VAULT_PATH }}
-  GT_RELEASE_TOKEN_VAULT_FIELD: ${{ vars.GT_RELEASE_TOKEN_VAULT_FIELD }}
-
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_to_publish:
+        description: 'Existing signed release tag (for recovery reruns)'
+        required: true
+        type: string
 
 concurrency:
   group: release
@@ -40,8 +41,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
 
-      - name: Verify source-bound storage benchmark claims (#2191)
-        run: npm run verify:storage-claims
+      - name: Resolve release tag
+        id: release_tag
+        env:
+          INPUT_TAG_TO_PUBLISH: ${{ github.event.inputs.tag_to_publish }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            RELEASE_TAG="${INPUT_TAG_TO_PUBLISH:-}"
+          else
+            RELEASE_TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          if ! echo "$RELEASE_TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$'; then
+            echo "Release tag must match vYYYY.M.PATCH[-pre]: ${RELEASE_TAG:-<empty>}"
+            exit 1
+          fi
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Fetch tag object for signature verification
         # actions/checkout@v4 on tag-push uses --no-tags by default
@@ -52,7 +67,7 @@ jobs:
         # prerelease job in npm-publish.yml for the full post-mortem.
         run: |
           set -o pipefail
-          TAG="${GITHUB_REF#refs/tags/}"
+          TAG="${{ steps.release_tag.outputs.release_tag }}"
           git fetch origin "+refs/tags/${TAG}:refs/tags/${TAG}" --depth=1
 
       - name: Verify signed tag (#1299 / A9 gate)
@@ -61,13 +76,22 @@ jobs:
         # Runs BEFORE the release-creation step so a bad signature never
         # produces a Gitea release record. See tools/ci/verify-signed-tag.sh
         # and docs/contributing/versioning.md.
+        env:
+          AIWG_VERIFY_TAG_REF: refs/tags/${{ steps.release_tag.outputs.release_tag }}
         run: bash tools/ci/verify-signed-tag.sh
+
+      - name: Checkout release tag
+        run: git checkout --detach "refs/tags/${{ steps.release_tag.outputs.release_tag }}"
+
+      - name: Verify source-bound storage benchmark claims (#2191)
+        run: npm run verify:storage-claims
 
       - name: Extract version from package.json
         id: version
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          TAG_VERSION='${{ steps.release_tag.outputs.release_tag }}'
+          TAG_VERSION=${TAG_VERSION#v}
           if [ "$TAG_VERSION" != "$VERSION" ]; then
             echo "Error: Tag ($TAG_VERSION) does not match package.json ($VERSION)"
             exit 1
@@ -82,6 +106,9 @@ jobs:
 
       - name: Fetch Gitea release token from vault
         env:
+          VAULT_ADDR: ${{ vars.VAULT_ADDR }}
+          GT_RELEASE_TOKEN_VAULT_PATH: ${{ vars.GT_RELEASE_TOKEN_VAULT_PATH }}
+          GT_RELEASE_TOKEN_VAULT_FIELD: ${{ vars.GT_RELEASE_TOKEN_VAULT_FIELD }}
           VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
           VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
         run: bash ci/vault-fetch.sh --spec ci/vault-fetch.gitea-release.spec

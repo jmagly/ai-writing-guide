@@ -55,7 +55,19 @@ describe('@aiwg/cli release workflow wiring', () => {
 
   it('documents a dependency-safe Gitea mirror install in generated releases', () => {
     const workflow = readFileSync(path.join(ROOT, '.gitea/workflows/gitea-release.yml'), 'utf8');
+    const workflowHeader = workflow.slice(0, workflow.indexOf('\njobs:'));
 
+    expect(workflow).toContain('tag_to_publish:');
+    expect(workflow).toContain(
+      'AIWG_VERIFY_TAG_REF: refs/tags/${{ steps.release_tag.outputs.release_tag }}',
+    );
+    expect(workflow).toContain(
+      'git checkout --detach "refs/tags/${{ steps.release_tag.outputs.release_tag }}"',
+    );
+    expect(workflow.indexOf('Checkout release tag')).toBeLessThan(
+      workflow.indexOf('Verify source-bound storage benchmark claims'),
+    );
+    expect(workflowHeader).not.toContain('GT_RELEASE_TOKEN_VAULT_FIELD');
     expect(workflow).toContain(
       'api/packages/roctinam/npm/aiwg/-/%s/aiwg-%s.tgz',
     );
