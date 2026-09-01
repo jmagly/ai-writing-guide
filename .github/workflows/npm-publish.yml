@@ -84,7 +84,7 @@ on:
   workflow_dispatch:
     inputs:
       tag_to_publish:
-        description: 'Existing tag to re-attempt publish for (must already exist on this branch)'
+        description: 'Existing tag to re-attempt publish for (dispatch with --ref set to the same tag)'
         required: false
         type: string
       remove_cli_bootstrap_tag:
@@ -144,6 +144,20 @@ jobs:
           echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
           echo "Resolved release tag: $RELEASE_TAG"
 
+      - name: Verify workflow identity is tag-bound
+        run: |
+          set -euo pipefail
+          TAG='${{ steps.release_tag.outputs.release_tag }}'
+          EXPECTED_REF="refs/tags/${TAG}"
+          if [ "$GITHUB_REF" != "$EXPECTED_REF" ]; then
+            echo "Release signing requires a tag-bound workflow identity." >&2
+            echo "Observed GITHUB_REF: $GITHUB_REF" >&2
+            echo "Expected GITHUB_REF: $EXPECTED_REF" >&2
+            echo "Recovery: gh workflow run npm-publish.yml --ref '$TAG' -f tag_to_publish='$TAG'" >&2
+            exit 1
+          fi
+          echo "Workflow identity is bound to $EXPECTED_REF"
+
       - name: Fetch tag object for signature verification
         # actions/checkout@v4 on tag-push uses --no-tags by default
         # and writes refs/tags/<tag> as a commit ref, not the tag
@@ -171,10 +185,9 @@ jobs:
         # halts the workflow before npm sees the publish request. See
         # tools/ci/verify-signed-tag.sh and docs/contributing/versioning.md.
         env:
-          # workflow_dispatch runs on the selected branch, so GitHub leaves
-          # GITHUB_REF as refs/heads/<branch> even after we detach to the
-          # requested tag. GitHub also protects GITHUB_REF from shell-level
-          # override, so pass an explicit verifier-only tag ref.
+          # Explicit input still protects tag selection on a recovery dispatch;
+          # the identity gate above additionally requires the workflow itself
+          # to have been dispatched with --ref <tag>.
           AIWG_VERIFY_TAG_REF: refs/tags/${{ steps.release_tag.outputs.release_tag }}
         run: bash tools/ci/verify-signed-tag.sh
 

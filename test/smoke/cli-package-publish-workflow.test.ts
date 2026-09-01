@@ -15,6 +15,10 @@ describe('@aiwg/cli release workflow wiring', () => {
     expect(workflow).toContain('GIT_CONFIG_KEY_0: safe.directory');
     expect(workflow).toContain('GIT_CONFIG_VALUE_0: ${{ github.workspace }}');
     expect(workflow).toContain('remove_cli_bootstrap_tag:');
+    expect(workflow).toContain('Verify workflow identity is tag-bound');
+    expect(workflow).toContain(
+      "gh workflow run npm-publish.yml --ref '$TAG' -f tag_to_publish='$TAG'",
+    );
     expect(workflow).toContain('npm dist-tag rm @aiwg/cli bootstrap');
     expect(workflow).toContain('Remove deprecated @aiwg/cli bootstrap tag');
     expect(workflow).not.toContain('npm dist-tag add @aiwg/cli bootstrap');
