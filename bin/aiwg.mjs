@@ -407,6 +407,12 @@ async function main() {
   // commands remain reachable so an operator can explicitly adopt or switch.
   if (args[0] !== 'installation') {
     const identityPath = path.join(activePackageRoot, 'dist', 'src', 'installation', 'manager.mjs');
+    if (activePackageRoot !== packageRoot && !existsSync(identityPath)) {
+      console.error(`Dev mode: compiled installation manager not found at ${identityPath}`);
+      console.error(`  Run: (cd ${activePackageRoot} && npm run build:cli)`);
+      console.error(`  Or switch back: aiwg --use-stable`);
+      process.exit(1);
+    }
     const { assertCanonicalInstallation } = await import(pathToFileURL(identityPath).href);
     assertCanonicalInstallation({ actualRoot: activePackageRoot });
   }
