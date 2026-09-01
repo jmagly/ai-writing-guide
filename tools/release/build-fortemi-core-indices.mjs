@@ -47,6 +47,12 @@ try {
   });
 
   for (const item of exported.items) {
+    // Release checkouts receive fresh filesystem mtimes on every runner. The
+    // general index records those mtimes for incremental local indexing, but a
+    // prebuilt release index must be reproducible from the same signed source.
+    // Bind exported record timestamps to the explicit build epoch instead.
+    item.updated_at = generatedAt;
+    if (item.source) item.source.updated_at = generatedAt;
     const searchText = [
       item.title,
       item.name,

@@ -103,6 +103,12 @@ if (exported.source?.graph !== 'framework') fail(`export source.graph is ${expor
 if (!Array.isArray(exported.items) || exported.items.length === 0) {
   fail('export contains no items');
 }
+const nondeterministicTimestamp = exported.items.find((item) =>
+  item.updated_at !== exported.generated_at || item.source?.updated_at !== exported.generated_at
+);
+if (nondeterministicTimestamp) {
+  fail(`prebuilt export timestamp for ${nondeterministicTimestamp.source?.path ?? nondeterministicTimestamp.id} is not bound to generated_at`);
+}
 if (exported.items.some((item) => Array.isArray(item.chunks) && item.chunks.length > 0)) {
   fail('prebuilt framework export must not include chunk payloads; package fallback is metadata/capability-only');
 }
