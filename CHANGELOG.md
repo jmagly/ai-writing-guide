@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.8.28] - 2026-08-31 - "Governed evidence, resilient tooling"
+
 ### Added
 
 - **Ops outputs now cross a mandatory redaction boundary** - A public text,
@@ -36,6 +38,35 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   extension templates resolve through manifest-declared schemas. A reusable
   all-extension conformance validator with negative reference/shape tests now
   runs in CI and reports file-plus-JSON-pointer diagnostics (jmagly/aiwg#181).
+
+- **Development-channel build drift now fails with an actionable recovery
+  path** - When a configured checkout has a compiled router but is missing the
+  compiled installation manager, the launcher reports the exact `build:cli`
+  command and keeps `aiwg --use-stable` reachable instead of surfacing a raw
+  Node module import error (roctinam/aiwg#2212).
+
+- **Scoped SQLite session installs now complete through the production feature
+  path** - Session storage can install its optional SQLite backend through the
+  same feature workflow used by deployed commands, with CI coverage for the
+  package and runtime boundary (jmagly/aiwg#182).
+
+- **A2A dual-version negotiation preserves compatible routes** - Client and
+  dispatch adapters retain the legacy interface base where required while
+  qualifying negotiated version-specific endpoints with codec and routing
+  regression coverage.
+
+- **Executable skills retain their release-index metadata** - Fortemi Core
+  package indices preserve script entrypoints and execution flags so a skill
+  discovered from the release corpus remains runnable rather than degrading to
+  documentation-only metadata.
+
+### Release boundaries
+
+- Ops evidence governance applies at the new boundary APIs and CLI preparation
+  path; existing custom integrations must call that boundary before publishing
+  operational payloads.
+- The SQLite feature remains optional and is installed only when selected by a
+  session workflow. This release does not add SQLite to the base package.
 
 ## [2026.8.27] - 2026-08-28 - "Qualified storage scale-out"
 
