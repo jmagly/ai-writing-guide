@@ -8,13 +8,13 @@ name: Docsite Build
 on:
   push:
     branches: [main, develop]
-    paths: ['docs/**']
+    paths: ['docs/**', '.gitea/workflows/docsite-build.yml']
   pull_request:
     branches: [main, develop]
-    paths: ['docs/**']
+    paths: ['docs/**', '.gitea/workflows/docsite-build.yml']
 
 concurrency:
-  group: ci-${{ gitea.head_ref || gitea.ref }}
+  group: docsite-build-${{ gitea.head_ref || gitea.ref }}
   cancel-in-progress: true
 
 jobs:

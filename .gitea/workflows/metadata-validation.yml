@@ -28,7 +28,7 @@ on:
       - '.gitea/workflows/metadata-validation.yml'
 
 concurrency:
-  group: ci-${{ gitea.head_ref || gitea.ref }}
+  group: metadata-validation-${{ gitea.head_ref || gitea.ref }}
   cancel-in-progress: true
 
 jobs:
