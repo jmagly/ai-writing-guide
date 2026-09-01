@@ -50,9 +50,6 @@ concurrency:
 env:
   GITEA_NPM_REGISTRY: https://git.integrolabs.net/api/packages/roctinam/npm/
   NODE_VERSION: '20'
-  VAULT_ADDR: ${{ vars.VAULT_ADDR }}
-  GT_NPM_TOKEN_VAULT_PATH: ${{ vars.GT_NPM_TOKEN_VAULT_PATH }}
-  GT_NPM_TOKEN_VAULT_FIELD: ${{ vars.GT_NPM_TOKEN_VAULT_FIELD }}
 
 jobs:
   build-and-publish-prerelease:
@@ -195,6 +192,9 @@ jobs:
 
       - name: Fetch Gitea npm token from vault
         env:
+          VAULT_ADDR: ${{ vars.VAULT_ADDR }}
+          GT_NPM_TOKEN_VAULT_PATH: ${{ vars.GT_NPM_TOKEN_VAULT_PATH }}
+          GT_NPM_TOKEN_VAULT_FIELD: ${{ vars.GT_NPM_TOKEN_VAULT_FIELD }}
           VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
           VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
         run: bash ci/vault-fetch.sh --spec ci/vault-fetch.npm-publish.spec
@@ -518,6 +518,9 @@ jobs:
 
       - name: Fetch Gitea npm token from vault
         env:
+          VAULT_ADDR: ${{ vars.VAULT_ADDR }}
+          GT_NPM_TOKEN_VAULT_PATH: ${{ vars.GT_NPM_TOKEN_VAULT_PATH }}
+          GT_NPM_TOKEN_VAULT_FIELD: ${{ vars.GT_NPM_TOKEN_VAULT_FIELD }}
           VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
           VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
         run: bash ci/vault-fetch.sh --spec ci/vault-fetch.npm-publish.spec

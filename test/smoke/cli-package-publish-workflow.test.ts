@@ -22,8 +22,11 @@ describe('@aiwg/cli release workflow wiring', () => {
 
   it('publishes and promotes the assembled package in the Gitea registry', () => {
     const workflow = readFileSync(path.join(ROOT, '.gitea/workflows/npm-publish.yml'), 'utf8');
+    const workflowHeader = workflow.slice(0, workflow.indexOf('\njobs:'));
 
     expect(workflow.match(/npm run package:cli/g)).toHaveLength(2);
+    expect(workflowHeader).not.toContain('GT_NPM_TOKEN_VAULT_FIELD');
+    expect(workflow.match(/GT_NPM_TOKEN_VAULT_FIELD: \$\{\{ vars\.GT_NPM_TOKEN_VAULT_FIELD \}\}/g)).toHaveLength(2);
     expect(workflow).toContain('npm publish ./dist/packages/cli --registry=');
     expect(workflow).toContain('npm dist-tag add "@aiwg/cli@${VERSION}" "${TAG}"');
     expect(workflow).toContain('npm dist-tag add "@aiwg/cli@${VERSION}" latest');
