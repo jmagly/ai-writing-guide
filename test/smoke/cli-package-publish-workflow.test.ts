@@ -82,4 +82,12 @@ describe('@aiwg/cli release workflow wiring', () => {
       'npm install -g aiwg@%s --registry=https://git.integrolabs.net/api/packages/roctinam/npm/',
     );
   });
+
+  it('keeps Gitea release asset recovery idempotent when duplicate names are accepted', () => {
+    const workflow = readFileSync(path.join(ROOT, '.gitea/workflows/upload-release-sigs.yml'), 'utf8');
+
+    expect(workflow).toContain('delete_existing_assets "$name"');
+    expect(workflow).toContain("select(.name == $n) | .id");
+    expect(workflow).toContain('expected exactly one $f on Gitea release after upload');
+  });
 });
