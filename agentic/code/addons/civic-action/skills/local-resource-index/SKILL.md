@@ -15,12 +15,15 @@ triggers:
 
 1. Register and gate every source before acquisition.
 2. Select `cap`, `gtfs`, or `hsds`; retain the original payload/hash, publisher,
-   profile/version, mappings, and validation result.
+   profile/version, per-vertical required fields, selectors, mappings, and
+   validation result.
 3. Never infer absent availability, accessibility, cancellations, contacts, or
    eligibility. Keep `not_provided` distinct from `none`.
 4. Apply domain expiry/freshness and public-scope rules. Expired active alerts,
    unverified publishers, fabricated contacts, and sensitive client data block.
 5. Provide correction/takedown intake and retain an append-only audit chain.
+6. Record the structured-data mapping and pass the record through the civic
+   publication gate before any local publishing handoff.
 
 ## Output
 

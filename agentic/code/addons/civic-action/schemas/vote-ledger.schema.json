@@ -14,18 +14,28 @@
   "definitions": {
     "motion": {
       "type": "object", "additionalProperties": false,
-      "required": ["motion_id", "agenda_item_id", "motion_text", "motion_text_state", "vote_entries", "announced_result", "calculated_result", "source_cue_ids", "verification_state"],
+      "required": ["motion_id", "agenda_item_id", "motion_text", "motion_text_state", "mover", "seconder", "vote_method", "quorum_observed", "members_present", "timestamp_start_seconds", "citation", "vote_entries", "announced_result", "calculated_result", "source_cue_ids", "source_document_ids", "extracted_by", "verification_state", "notes"],
       "properties": {
         "motion_id": {"type": "string", "minLength": 1},
         "agenda_item_id": {"type": "string", "minLength": 1},
         "motion_text": {"type": "string", "minLength": 1},
         "motion_text_state": {"enum": ["exact", "paraphrase", "unknown"]},
+        "mover": {"type": ["string", "null"]},
+        "seconder": {"type": ["string", "null"]},
+        "vote_method": {"enum": ["roll_call", "voice", "show_of_hands", "unanimous_consent", "ballot", "other", "unknown"]},
+        "quorum_observed": {"enum": ["yes", "no", "unknown"]},
+        "members_present": {"type": "array", "items": {"type": "string"}},
+        "timestamp_start_seconds": {"type": ["number", "null"], "minimum": 0},
+        "citation": {"type": "string", "minLength": 1},
         "vote_entries": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["member", "choice", "source_cue_id", "confidence"], "properties": {"member": {"type": "string"}, "choice": {"enum": ["yes", "no", "abstain", "recused", "absent", "unknown"]}, "source_cue_id": {"type": ["string", "null"]}, "confidence": {"type": "number", "minimum": 0, "maximum": 1}}}},
         "announced_result": {"type": ["string", "null"]},
         "calculated_result": {"type": ["string", "null"]},
         "source_cue_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "source_document_ids": {"type": "array", "items": {"type": "string"}},
+        "extracted_by": {"type": "string", "minLength": 1},
         "verification_state": {"enum": ["captured_unverified", "human_verified", "corroborated", "conflict", "unresolvable"]},
-        "verified_by": {"type": ["string", "null"]}
+        "verified_by": {"type": ["string", "null"]},
+        "notes": {"type": "string"}
       }
     }
   }

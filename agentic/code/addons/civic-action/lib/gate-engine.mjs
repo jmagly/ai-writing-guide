@@ -31,7 +31,19 @@ export function evaluateSourceRegistry(value, options = {}) {
   const findings = [];
   required(value?.source_id, '/source_id', findings);
   required(value?.canonical_url, '/canonical_url', findings);
-  required(value?.retrievals?.[0]?.content_hash, '/retrievals/0/content_hash', findings);
+  required(value?.owner, '/owner', findings);
+  required(value?.acquisition?.cadence, '/acquisition/cadence', findings);
+  required(value?.citation?.format, '/citation/format', findings);
+
+  if (value?.acquisition?.decision === 'prohibited') {
+    findings.push(finding('ACQUISITION_PROHIBITED', 'block', 'The reviewed acquisition decision prohibits this method.', ['/acquisition/decision'], 'Use the documented public-record alternative or skip the source.'));
+  } else if (value?.acquisition?.decision === 'public_record_alternative') {
+    findings.push(finding('PUBLIC_RECORD_ALTERNATIVE_REQUIRED', 'block', 'Automated acquisition is replaced by a public-record request.', ['/acquisition/decision'], 'Prepare a draft request for named-human review and manual submission.'));
+  } else if (value?.acquisition?.decision === 'uncertain') {
+    findings.push(finding('ACQUISITION_UNCERTAIN', 'block', 'The acquisition method has not received a permissive decision.', ['/acquisition/decision'], 'Resolve terms, authority, and jurisdiction before acquisition.'));
+  } else if (value?.acquisition?.decision === 'likely_allowed') {
+    findings.push(finding('ACQUISITION_LIKELY_ALLOWED', 'warn', 'The acquisition decision is provisional.', ['/acquisition/decision'], 'Record a named-human disposition or obtain an allowed decision.'));
+  }
 
   if (value?.access?.control_bypass_requested === true) {
     findings.push(finding('ACCESS_CONTROL_BYPASS', 'block', 'Access-control bypass is non-overridable.', ['/access/control_bypass_requested'], 'Use an official API/export, an authorized account, or a lawfully supplied copy.'));
@@ -63,6 +75,19 @@ export function evaluateSourceRegistry(value, options = {}) {
     findings.push(finding('SAFETY_SOURCE_EXPIRED', 'block', 'Safety-critical content is expired or unavailable.', ['/freshness'], 'Do not present it as current; revalidate the authoritative source.'));
   } else if (['due', 'stale', 'expired', 'unknown', 'unavailable'].includes(value?.freshness?.state)) {
     findings.push(finding('SOURCE_FRESHNESS_UNCERTAIN', 'warn', 'Source freshness requires visible review.', ['/freshness/state'], 'Revalidate or display the last-verified time and limitation.'));
+  }
+  const observed = value?.empty_result?.observed_records;
+  const minimum = value?.empty_result?.minimum_records;
+  if (Number.isInteger(observed) && Number.isInteger(minimum) && observed < minimum) {
+    const severity = value?.empty_result?.policy === 'warn' ? 'warn' : value?.empty_result?.policy === 'accept_if_authoritative_empty' ? 'record' : 'block';
+    findings.push(finding('EMPTY_RESULT_THRESHOLD', severity, `Observed ${observed} record(s), below the declared minimum ${minimum}.`, ['/empty_result'], 'Verify an authoritative empty result, use the last-good copy, or stop publication.'));
+  }
+  if (Number.isInteger(observed) && observed !== (value?.retrievals?.length ?? 0)) {
+    findings.push(finding('RETRIEVAL_COUNT_MISMATCH', 'block', 'Observed-record and retrieval counts differ.', ['/empty_result/observed_records', '/retrievals'], 'Reconcile the versioned retrieval inventory.'));
+  }
+  for (const [index, retrieval] of (value?.retrievals ?? []).entries()) required(retrieval?.content_hash, `/retrievals/${index}/content_hash`, findings);
+  if (value?.fallback?.strategy === 'last_good_copy' && !value?.fallback?.last_good_copy_hash) {
+    findings.push(finding('SOURCE_LAST_GOOD_COPY_MISSING', 'block', 'The selected fallback has no last-good-copy hash.', ['/fallback'], 'Capture an immutable last-good copy or select another reviewed fallback.'));
   }
   return report('source-compliance', value?.source_id, findings, now);
 }
@@ -100,6 +125,9 @@ export function evaluatePublication(packet, options = {}) {
   }
   for (const [index, section] of (packet?.sections ?? []).entries()) {
     if (!Number.isFinite(section.content_length) || section.content_length <= 0) findings.push(finding('SECTION_EMPTY', 'block', `Publication section is empty: ${section.id ?? index}`, [`/sections/${index}`], 'Remove the empty section or provide reviewed content.'));
+    if (section.required && Number.isInteger(section.record_count) && Number.isInteger(section.minimum_count) && section.record_count < section.minimum_count) findings.push(finding('SECTION_MINIMUM_COUNT_UNMET', 'block', `Required section is below its minimum record count: ${section.id ?? index}`, [`/sections/${index}`], 'Restore the minimum cited records or withhold the section.'));
+    if (section.required && ['expired', 'unavailable'].includes(section.freshness_state)) findings.push(finding('SECTION_SOURCE_EXPIRED', 'block', `Required section has expired or unavailable evidence: ${section.id ?? index}`, [`/sections/${index}`], 'Refresh the section or use a reviewed last-good copy with visible limitations.'));
+    else if (section.required && ['due', 'stale', 'unknown'].includes(section.freshness_state)) findings.push(finding('SECTION_FRESHNESS_REVIEW', 'warn', `Required section needs freshness review: ${section.id ?? index}`, [`/sections/${index}`], 'Revalidate or record a visible named-human disposition.'));
   }
   for (const [index, link] of (packet?.links ?? []).entries()) {
     if (!Number.isInteger(link.http_status) || link.http_status >= 400) findings.push(finding(link.material ? 'MATERIAL_LINK_BROKEN' : 'LINK_UNVERIFIED', link.material ? 'block' : 'warn', `Link is unavailable or unverified: ${link.url ?? '(missing URL)'}`, [`/links/${index}`], 'Repair, replace, archive, or visibly qualify the link.'));
@@ -116,6 +144,8 @@ export function evaluatePublication(packet, options = {}) {
     if (gate.status === 'block') findings.push(finding('UPSTREAM_GATE_BLOCKED', 'block', `Upstream gate is blocked: ${gate.gate_id}`, [`/upstream_gates/${index}`], 'Remediate the original blocking result; do not downgrade it.'));
     if (gate.status === 'warn') findings.push(finding('UPSTREAM_GATE_WARNING', 'warn', `Upstream gate requires disposition: ${gate.gate_id}`, [`/upstream_gates/${index}`], 'Record a named human disposition before publication.'));
   }
+  if (packet?.structured_data?.status === 'fail') findings.push(finding('STRUCTURED_DATA_INVALID', 'block', 'Structured-data validation failed.', ['/structured_data'], 'Correct the declared format and rerun its validator.'));
+  else if (!['pass', 'not_applicable'].includes(packet?.structured_data?.status)) findings.push(finding('STRUCTURED_DATA_PENDING', 'block', 'Structured-data validation is incomplete.', ['/structured_data'], 'Complete or explicitly mark the check not applicable.'));
   if (packet?.privacy?.status !== 'pass') findings.push(finding('PRIVACY_REVIEW_INCOMPLETE', 'block', 'Privacy/minimization review has not passed.', ['/privacy'], 'Review personal data, redactions, safety, retention, and public-interest necessity.'));
   if (packet?.accessibility?.automated_status === 'fail') findings.push(finding('ACCESSIBILITY_KNOWN_FAILURE', 'block', 'Automated accessibility testing found a known failure.', ['/accessibility/automated_status'], 'Remediate the failure and rerun the complete process.'));
   if (packet?.accessibility?.manual_status !== 'pass') findings.push(finding('ACCESSIBILITY_MANUAL_REVIEW_REQUIRED', 'block', 'Required manual accessibility evaluation is incomplete.', ['/accessibility/manual_status'], 'Complete scoped manual evaluation; an automated pass is not conformance.'));
@@ -124,6 +154,10 @@ export function evaluatePublication(packet, options = {}) {
   if (packet?.correction?.pending_reindex_targets > 0) findings.push(finding('CORRECTION_REINDEX_PENDING', 'block', 'Required owned correction/reindex propagation remains pending.', ['/correction/pending_reindex_targets'], 'Update owned downstream targets and attach completion evidence.'));
   if (!['available', 'first_publication'].includes(packet?.deployment?.last_good_copy_state)) findings.push(finding('LAST_GOOD_COPY_MISSING', 'block', 'No verified last-good-copy or first-publication state is declared.', ['/deployment/last_good_copy_state'], 'Capture a rollback copy or explicitly review first-publication rollback behavior.'));
   if (packet?.deployment?.verification_state !== 'pass') findings.push(finding('DEPLOYMENT_VERIFICATION_PENDING', 'block', 'Vendor-neutral publication verification has not passed.', ['/deployment/verification_state'], 'Run the configured static/CMS verification adapter and retain its receipt.'));
+  if (packet?.deployment?.live_page_state !== 'pass') findings.push(finding('LIVE_PAGE_VERIFICATION_PENDING', 'block', 'The deployed page has not passed live verification.', ['/deployment/live_page_state'], 'Verify the live URL, content hash, and required sections.'));
+  for (const field of ['sitemap_state', 'reindex_state', 'cache_state']) {
+    if (!['pass', 'not_applicable'].includes(packet?.deployment?.[field])) findings.push(finding(`DEPLOYMENT_${field.toUpperCase()}_PENDING`, 'block', `${field.replaceAll('_', ' ')} is incomplete.`, [`/deployment/${field}`], 'Complete the adapter handoff or document that it is not applicable.'));
+  }
   const review = packet?.human_review;
   if (review?.state !== 'approved' || !review?.reviewer || review?.artifact_hash !== packet?.artifact_hash) findings.push(finding('HUMAN_PUBLICATION_APPROVAL_MISSING', 'block', 'A named human has not approved the exact artifact hash.', ['/human_review'], 'Review the underlying sources and approve the exact version.'));
   return report('publication', packet?.artifact_id, findings, options.now ?? new Date());

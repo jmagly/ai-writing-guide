@@ -2,32 +2,90 @@ schema: aiwg.civic.source-registry.v1
 source_id: replace-me
 title: Replace me
 canonical_url: https://example.invalid/source
+source_type: replace-me
+language: und
+owner: Replace me
 jurisdiction: unresolved
 authority:
   publisher_name: Replace me
+  publisher_id: null
+  publisher_type: replace-me
   authority_class: unknown
+  responsible_agent: null
+  contact_url: null
+catalog:
+  description: ""
+  keywords: []
+  spatial_coverage: null
+  temporal_coverage_start: null
+  temporal_coverage_end: null
+  update_frequency: manual review required
+  distribution_format: unknown
+  distribution_url: https://example.invalid/source
+acquisition:
+  method: skip
+  cadence: manual review required
+  decision: uncertain
+citation:
+  format: title, publisher, canonical URL, retrieval date, selector
+  selector_scheme: section
 rights:
   terms_url: null
   license_url: null
+  terms_retrieved_at: null
   terms_hash: null
   terms_state: unknown
   publication_state: unknown
+  attribution_text: null
+  reuse_constraints: []
 access:
   method: manual_only
+  authentication_required: false
   authorization_state: unknown
+  authorization_reference: null
+  robots_url: null
+  robots_retrieved_at: null
+  robots_hash: null
   robots_state: unknown
   access_state: unknown
   control_bypass_requested: false
   rate_limit: null
+  retry_after: null
 freshness:
+  publisher_issued_at: null
+  publisher_modified_at: null
+  observed_age: null
+  policy_id: manual-review
+  deadline: null
   state: unknown
   next_review_at: null
   safety_critical: false
   rationale: Not reviewed
+fallback:
+  strategy: skip
+  last_good_copy_hash: null
+empty_result:
+  policy: block
+  minimum_records: 1
+  observed_records: 0
 retrievals: []
+provenance:
+  generated_by_activity: source-registry-draft
+  used_entities: []
+  derived_from: []
+  quoted_from: []
+  primary_source: false
+  attributed_to: Replace me
+  generated_at: 1970-01-01T00:00:00Z
+  invalidated_at: null
+  revision_of: null
 review:
   state: pending
   reviewer: null
   reviewed_at: null
+  decision: pending
+  decision_reason: Not reviewed
+  exception_id: null
+  exception_expires_at: null
   expires_at: null
   reason: Not reviewed

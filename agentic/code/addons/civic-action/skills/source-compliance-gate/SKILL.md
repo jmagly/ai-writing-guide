@@ -19,10 +19,15 @@ triggers:
 ## Process
 
 1. Create a versioned source registry from `templates/source-registry.yaml`.
+   Record owner, URL, API/feed/HTML/browser/OCR/manual-export/records/skip
+   method, cadence, decision state, citation format, fallback, and provenance.
 2. Run `aiwg run skill source-compliance-gate -- registry.json`.
 3. Stop automated collection on prohibited/unknown terms, robots error or
    disallow, authorization uncertainty, control bypass, or expired approval.
 4. Route jurisdiction, terms, license, and publication rights to a named human.
+5. Compare observed and minimum records. An empty or under-count result follows
+   the declared block/warn/authoritative-empty policy and never silently erases
+   the reviewed last-good copy.
 
 ## Output
 

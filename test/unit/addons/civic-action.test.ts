@@ -99,6 +99,18 @@ describe('civic-action addon', () => {
     expect(unsafe.status).toBe('block');
     expect(unsafe.findings.map((item) => item.code)).toContain('ACCESS_CONTROL_BYPASS');
     expect(evaluateSourceRegistry(json('examples/valid/source-registry.json')).status).toBe('pass');
+    const alternate = json('examples/valid/source-registry.json');
+    alternate.acquisition.decision = 'public_record_alternative';
+    alternate.empty_result.observed_records = 0;
+    alternate.retrievals = [];
+    alternate.fallback.last_good_copy_hash = null;
+    const deferred = evaluateSourceRegistry(alternate);
+    expect(deferred.status).toBe('block');
+    expect(deferred.findings.map((item) => item.code)).toEqual(expect.arrayContaining([
+      'PUBLIC_RECORD_ALTERNATIVE_REQUIRED',
+      'EMPTY_RESULT_THRESHOLD',
+      'SOURCE_LAST_GOOD_COPY_MISSING',
+    ]));
   });
 
   it('blocks inferred/conflicted votes and accepts human-verified reconciliation', () => {
@@ -118,16 +130,23 @@ describe('civic-action addon', () => {
     expect(blocked.findings.map((item) => item.code)).toEqual(expect.arrayContaining([
       'MATERIAL_CLAIM_UNCITED',
       'SECTION_EMPTY',
+      'SECTION_MINIMUM_COUNT_UNMET',
+      'SECTION_SOURCE_EXPIRED',
       'MATERIAL_LINK_BROKEN',
       'MATERIAL_SOURCE_EXPIRED',
       'ALLEGATION_UNATTRIBUTED',
       'PRIVACY_REVIEW_INCOMPLETE',
       'ACCESSIBILITY_MANUAL_REVIEW_REQUIRED',
+      'STRUCTURED_DATA_INVALID',
       'HUMAN_PUBLICATION_APPROVAL_MISSING',
       'CORRECTION_UNRESOLVED',
       'CORRECTION_REINDEX_PENDING',
       'LAST_GOOD_COPY_MISSING',
       'DEPLOYMENT_VERIFICATION_PENDING',
+      'LIVE_PAGE_VERIFICATION_PENDING',
+      'DEPLOYMENT_SITEMAP_STATE_PENDING',
+      'DEPLOYMENT_REINDEX_STATE_PENDING',
+      'DEPLOYMENT_CACHE_STATE_PENDING',
     ]));
     expect(evaluatePublication(json('examples/valid/publication-packet.json')).status).toBe('pass');
   });
@@ -141,13 +160,34 @@ describe('civic-action addon', () => {
     records.automatic_submission = true;
     expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/public-records-plan.schema.json')!(records)).toBe(false);
 
+    const incompleteRecords = json('examples/valid/public-records-plan.json');
+    delete incompleteRecords.tracking.appeal_deadline;
+    expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/public-records-plan.schema.json')!(incompleteRecords)).toBe(false);
+
     const procurement = json('examples/valid/public-technology-review.json');
     procurement.award_recommendation = 'award to Vendor A';
     expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/public-technology-review.schema.json')!(procurement)).toBe(false);
 
+    const incompleteProcurement = json('examples/valid/public-technology-review.json');
+    delete incompleteProcurement.source_class_inventory.public_comment;
+    expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/public-technology-review.schema.json')!(incompleteProcurement)).toBe(false);
+
     const resource = json('examples/valid/local-resource-index.json');
     resource.vertical = 'personal-profile';
     expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/local-resource-index.schema.json')!(resource)).toBe(false);
+
+    const incompleteVertical = json('examples/valid/local-resource-index.json');
+    delete incompleteVertical.vertical_fields.identifier;
+    expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/local-resource-index.schema.json')!(incompleteVertical)).toBe(false);
+    for (const vertical of ['gtfs', 'hsds']) {
+      const wrongProfile = json('examples/valid/local-resource-index.json');
+      wrongProfile.vertical = vertical;
+      expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/local-resource-index.schema.json')!(wrongProfile), `${vertical} accepted CAP fields`).toBe(false);
+    }
+
+    const incompleteVote = json('examples/valid/vote-ledger.json');
+    delete incompleteVote.motions[0].mover;
+    expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/vote-ledger.schema.json')!(incompleteVote)).toBe(false);
   });
 
   it('exposes stable JSON CLI results and usage exit codes', async () => {

@@ -2,14 +2,15 @@
   "schema": "aiwg.civic.publication-packet.v1",
   "artifact_id": "story-1:v2",
   "artifact_hash": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
-  "sections": [{"id": "body", "content_length": 480}],
+  "sections": [{"id": "body", "required": true, "content_length": 480, "record_count": 1, "minimum_count": 1, "freshness_state": "fresh"}],
   "links": [{"url": "https://example.gov/agenda", "http_status": 200, "material": true}],
   "claims": [{"claim_id": "claim-1", "material": true, "status": "verified_fact", "attributed": true, "freshness_state": "fresh", "citations": ["city-agenda:retrieval-1#section-4"]}],
   "upstream_gates": [{"gate_id": "source-compliance/city-agenda", "status": "pass"}],
+  "structured_data": {"status": "not_applicable", "format": null, "errors": []},
   "privacy": {"status": "pass", "reviewer": "privacy-reviewer"},
   "accessibility": {"automated_status": "pass", "manual_status": "pass", "reviewer": "accessibility-reviewer"},
   "publication_state": "usable",
   "correction": {"open_blocking": false, "pending_reindex_targets": 0},
-  "deployment": {"last_good_copy_state": "available", "verification_state": "pass", "adapter": "vendor-neutral-static"},
+  "deployment": {"last_good_copy_state": "available", "verification_state": "pass", "live_page_state": "pass", "sitemap_state": "pass", "reindex_state": "pass", "cache_state": "not_applicable", "adapter": "vendor-neutral-static"},
   "human_review": {"state": "approved", "reviewer": "human-editor", "artifact_hash": "sha256:6666666666666666666666666666666666666666666666666666666666666666"}
 }

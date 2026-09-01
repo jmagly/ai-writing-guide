@@ -4,75 +4,170 @@
   "title": "Civic source registry",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "source_id", "title", "canonical_url", "jurisdiction", "authority", "rights", "access", "freshness", "retrievals", "review"],
+  "required": ["schema", "source_id", "title", "canonical_url", "source_type", "language", "owner", "jurisdiction", "authority", "catalog", "acquisition", "citation", "rights", "access", "freshness", "fallback", "empty_result", "retrievals", "provenance", "review"],
   "properties": {
     "schema": {"const": "aiwg.civic.source-registry.v1"},
     "source_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$"},
     "title": {"type": "string", "minLength": 1},
     "canonical_url": {"type": "string", "format": "uri"},
+    "source_type": {"type": "string", "minLength": 1},
+    "language": {"type": "string", "minLength": 1},
+    "owner": {"type": "string", "minLength": 1},
     "jurisdiction": {"type": "string", "minLength": 1},
     "authority": {
       "type": "object", "additionalProperties": false,
-      "required": ["publisher_name", "authority_class"],
+      "required": ["publisher_name", "publisher_id", "publisher_type", "authority_class", "responsible_agent", "contact_url"],
       "properties": {
         "publisher_name": {"type": "string", "minLength": 1},
+        "publisher_id": {"type": ["string", "null"]},
+        "publisher_type": {"type": "string", "minLength": 1},
+        "responsible_agent": {"type": ["string", "null"]},
+        "contact_url": {"type": ["string", "null"], "format": "uri"},
         "authority_class": {"enum": ["official_record", "official_guidance", "standards_body", "first_party_statement", "secondary_reporting", "community_submission", "unknown"]}
+      }
+    },
+    "catalog": {
+      "type": "object", "additionalProperties": false,
+      "required": ["description", "keywords", "spatial_coverage", "temporal_coverage_start", "temporal_coverage_end", "update_frequency", "distribution_format", "distribution_url"],
+      "properties": {
+        "description": {"type": "string"},
+        "keywords": {"type": "array", "items": {"type": "string"}},
+        "spatial_coverage": {"type": ["string", "null"]},
+        "temporal_coverage_start": {"type": ["string", "null"], "format": "date-time"},
+        "temporal_coverage_end": {"type": ["string", "null"], "format": "date-time"},
+        "update_frequency": {"type": "string", "minLength": 1},
+        "distribution_format": {"type": "string", "minLength": 1},
+        "distribution_url": {"type": "string", "format": "uri"}
+      }
+    },
+    "acquisition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method", "cadence", "decision"],
+      "properties": {
+        "method": {"enum": ["official_api", "feed", "html", "browser", "ocr", "manual_export", "public_records_request", "skip"]},
+        "cadence": {"type": "string", "minLength": 1},
+        "decision": {"enum": ["allowed", "likely_allowed", "uncertain", "prohibited", "public_record_alternative"]}
+      }
+    },
+    "citation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["format", "selector_scheme"],
+      "properties": {
+        "format": {"type": "string", "minLength": 1},
+        "selector_scheme": {"enum": ["page", "section", "paragraph", "timestamp", "row", "json_pointer", "fragment", "other"]}
       }
     },
     "rights": {
       "type": "object", "additionalProperties": false,
-      "required": ["terms_state", "publication_state"],
+      "required": ["terms_url", "license_url", "terms_retrieved_at", "terms_hash", "terms_state", "publication_state", "attribution_text", "reuse_constraints"],
       "properties": {
         "terms_url": {"type": ["string", "null"], "format": "uri"},
         "license_url": {"type": ["string", "null"], "format": "uri"},
+        "terms_retrieved_at": {"type": ["string", "null"], "format": "date-time"},
         "terms_hash": {"type": ["string", "null"], "pattern": "^sha256:[a-f0-9]{64}$"},
         "terms_state": {"enum": ["allowed", "restricted", "prohibited", "not_applicable", "unknown"]},
-        "publication_state": {"enum": ["allowed", "restricted", "prohibited", "unknown"]}
+        "publication_state": {"enum": ["allowed", "restricted", "prohibited", "unknown"]},
+        "attribution_text": {"type": ["string", "null"]},
+        "reuse_constraints": {"type": "array", "items": {"type": "string"}}
       }
     },
     "access": {
       "type": "object", "additionalProperties": false,
-      "required": ["method", "authorization_state", "robots_state", "access_state", "control_bypass_requested"],
+      "required": ["method", "authentication_required", "authorization_state", "authorization_reference", "robots_url", "robots_retrieved_at", "robots_hash", "robots_state", "access_state", "control_bypass_requested", "rate_limit", "retry_after"],
       "properties": {
         "method": {"enum": ["public_web", "official_api", "authorized_account", "user_supplied", "manual_only"]},
+        "authentication_required": {"type": "boolean"},
         "authorization_state": {"enum": ["authorized", "not_required", "prohibited", "unknown"]},
+        "authorization_reference": {"type": ["string", "null"]},
+        "robots_url": {"type": ["string", "null"], "format": "uri"},
+        "robots_retrieved_at": {"type": ["string", "null"], "format": "date-time"},
+        "robots_hash": {"type": ["string", "null"], "pattern": "^sha256:[a-f0-9]{64}$"},
         "robots_state": {"enum": ["allowed", "disallowed", "unavailable", "error", "not_applicable", "unknown"]},
         "access_state": {"enum": ["allowed", "manual_only", "blocked", "unknown"]},
         "control_bypass_requested": {"type": "boolean"},
-        "rate_limit": {"type": ["string", "null"]}
+        "rate_limit": {"type": ["string", "null"]},
+        "retry_after": {"type": ["string", "null"]}
       }
     },
     "freshness": {
       "type": "object", "additionalProperties": false,
-      "required": ["state", "next_review_at", "safety_critical"],
+      "required": ["publisher_issued_at", "publisher_modified_at", "observed_age", "policy_id", "deadline", "state", "next_review_at", "safety_critical"],
       "properties": {
+        "publisher_issued_at": {"type": ["string", "null"], "format": "date-time"},
+        "publisher_modified_at": {"type": ["string", "null"], "format": "date-time"},
+        "observed_age": {"type": ["string", "null"]},
+        "policy_id": {"type": "string", "minLength": 1},
+        "deadline": {"type": ["string", "null"], "format": "date-time"},
         "state": {"enum": ["fresh", "due", "stale", "expired", "unknown", "unavailable"]},
         "next_review_at": {"type": ["string", "null"], "format": "date-time"},
         "safety_critical": {"type": "boolean"},
         "rationale": {"type": "string"}
       }
     },
+    "fallback": {
+      "type": "object", "additionalProperties": false,
+      "required": ["strategy", "last_good_copy_hash"],
+      "properties": {
+        "strategy": {"enum": ["last_good_copy", "manual_export", "public_records_request", "alternate_official_source", "skip"]},
+        "last_good_copy_hash": {"type": ["string", "null"], "pattern": "^sha256:[a-f0-9]{64}$"}
+      }
+    },
+    "empty_result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policy", "minimum_records", "observed_records"],
+      "properties": {
+        "policy": {"enum": ["accept_if_authoritative_empty", "warn", "block"]},
+        "minimum_records": {"type": "integer", "minimum": 0},
+        "observed_records": {"type": "integer", "minimum": 0}
+      }
+    },
     "retrievals": {
-      "type": "array", "minItems": 1,
+      "type": "array",
       "items": {
         "type": "object", "additionalProperties": false,
-        "required": ["retrieval_id", "retrieved_at", "content_hash"],
+        "required": ["retrieval_id", "requested_url", "resolved_url", "retrieved_at", "http_status", "etag", "last_modified", "cache_control", "content_type", "content_length", "content_hash", "storage_reference"],
         "properties": {
           "retrieval_id": {"type": "string", "minLength": 1},
+          "requested_url": {"type": "string", "format": "uri"},
+          "resolved_url": {"type": "string", "format": "uri"},
           "retrieved_at": {"type": "string", "format": "date-time"},
+          "http_status": {"type": "integer", "minimum": 100, "maximum": 599},
           "content_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
           "etag": {"type": ["string", "null"]},
-          "last_modified": {"type": ["string", "null"]}
+          "last_modified": {"type": ["string", "null"]},
+          "cache_control": {"type": ["string", "null"]},
+          "content_type": {"type": ["string", "null"]},
+          "content_length": {"type": ["integer", "null"], "minimum": 0},
+          "storage_reference": {"type": "string", "minLength": 1}
         }
+      }
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["generated_by_activity", "used_entities", "derived_from", "quoted_from", "primary_source", "attributed_to", "generated_at", "invalidated_at", "revision_of"],
+      "properties": {
+        "generated_by_activity": {"type": "string", "minLength": 1},
+        "used_entities": {"type": "array", "items": {"type": "string"}},
+        "derived_from": {"type": "array", "items": {"type": "string"}},
+        "quoted_from": {"type": "array", "items": {"type": "string"}},
+        "primary_source": {"type": "boolean"},
+        "attributed_to": {"type": "string", "minLength": 1},
+        "generated_at": {"type": "string", "format": "date-time"},
+        "invalidated_at": {"type": ["string", "null"], "format": "date-time"},
+        "revision_of": {"type": ["string", "null"]}
       }
     },
     "review": {
       "type": "object", "additionalProperties": false,
-      "required": ["state", "reviewer", "reviewed_at"],
+      "required": ["state", "reviewer", "reviewed_at", "decision", "decision_reason", "exception_id", "exception_expires_at"],
       "properties": {
         "state": {"enum": ["approved", "rejected", "pending", "expired"]},
         "reviewer": {"type": ["string", "null"]},
         "reviewed_at": {"type": ["string", "null"], "format": "date-time"},
+        "decision": {"enum": ["allow", "manual_only", "block", "pending"]},
+        "decision_reason": {"type": "string"},
+        "exception_id": {"type": ["string", "null"]},
+        "exception_expires_at": {"type": ["string", "null"], "format": "date-time"},
         "expires_at": {"type": ["string", "null"], "format": "date-time"},
         "reason": {"type": "string"}
       }

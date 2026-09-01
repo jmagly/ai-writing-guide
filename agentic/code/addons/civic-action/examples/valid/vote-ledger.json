@@ -8,11 +8,21 @@
     "agenda_item_id": "item-4",
     "motion_text": "Approve the published agenda.",
     "motion_text_state": "exact",
+    "mover": "Member A",
+    "seconder": null,
+    "vote_method": "roll_call",
+    "quorum_observed": "yes",
+    "members_present": ["Member A"],
+    "timestamp_start_seconds": 615.2,
+    "citation": "source_media_hash#t=615.2; cue-100",
     "vote_entries": [{"member": "Member A", "choice": "yes", "source_cue_id": "cue-101", "confidence": 1}],
     "announced_result": "passed 1-0",
     "calculated_result": "passed 1-0",
     "source_cue_ids": ["cue-100", "cue-101"],
+    "source_document_ids": ["agenda-1"],
+    "extracted_by": "public-meeting-reconcile",
     "verification_state": "human_verified",
-    "verified_by": "meeting-reviewer"
+    "verified_by": "meeting-reviewer",
+    "notes": "Seconder was not stated in the reviewed source."
   }]
 }

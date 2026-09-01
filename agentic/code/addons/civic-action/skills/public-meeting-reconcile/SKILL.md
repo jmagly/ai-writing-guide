@@ -22,7 +22,10 @@ triggers:
 2. Reuse media-curator transcription and research-complete media induction when
    installed; otherwise emit `blocked-dependency-missing` rather than text.
 3. Keep media, transcript, vote ledger, and minutes reconciliation versioned
-   separately. Never identify a speaker from diarization alone.
+   separately. Record agenda item, motion text/state, mover, seconder,
+   timestamp, citation, member votes/abstentions/recusals/absences, and both
+   announced and calculated results. Never identify a speaker from diarization
+   alone.
 4. Run the executable gate. Conflicts, inferred votes, unverified official
    labels, and missing source cues block.
 5. A human verifies each material motion, vote, speaker label, and public/closed

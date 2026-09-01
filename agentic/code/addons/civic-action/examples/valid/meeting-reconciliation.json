@@ -3,6 +3,6 @@
   "reconciliation_id": "reconciliation-1",
   "meeting_id": "meeting-1",
   "minutes_state": "approved_minutes",
-  "comparisons": [{"assertion_id": "motion-1", "relation": "match", "difference": "", "materiality": "material", "source_selectors": ["cue-100", "minutes:p2:item4"], "decision": "accept", "reviewer": "meeting-reviewer"}],
+  "comparisons": [{"assertion_id": "motion-1", "artifact_a": "vote-ledger:ledger-1", "artifact_b": "approved-minutes:meeting-1", "relation": "match", "difference": "", "materiality": "material", "source_selectors": ["cue-100", "minutes:p2:item4"], "decision": "accept", "decision_reason": "Motion and result match the approved minutes.", "reviewer": "meeting-reviewer"}],
   "human_review": {"state": "approved", "reviewer": "meeting-reviewer", "reviewed_at": "2026-09-01T13:00:00Z"}
 }

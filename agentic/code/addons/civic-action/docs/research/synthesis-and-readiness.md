@@ -41,6 +41,34 @@ media-curator, knowledge-base, media-marketing-kit, ops-complete, and
 security-engineering. Missing optional dependencies create explicit degraded or
 manual-review states.
 
+### Persona and artifact allocation
+
+The durable roles are agents: `civic-newsroom-operator` owns orchestration,
+`news-caster` owns accessible evidence-bound explanation, `citation-editor`
+owns claim/source review, and `correction-editor` owns append-only correction
+review. Records research, procurement review, and CAP/GTFS/HSDS indexing remain
+skills plus schemas/templates because they are bounded procedures, not durable
+identities. Community-resource and public-records evidence editing compose the
+citation editor with their domain skill. Local SEO/GEO is limited to accurate,
+cited structured-data planning through the local-resource and publication
+gates; ranking manipulation, invented locality, and uncited optimization are
+out of scope.
+
+### Pilot and marketplace disposition
+
+Recommended project-local pilots are: one official CAP alert feed, one public
+GTFS static feed, one public HSDS directory, one previously published meeting
+with approved minutes, and one closed public-records request whose response can
+be replayed without contacting an agency. Browser, CMS, hosting, OCR,
+transcription, search, and surveillance-vendor adapters remain optional and
+must degrade honestly when absent.
+
+Marketplace language must describe Civic Action as a lawful research,
+reconciliation, drafting, and quality-review addon. It must not promise legal
+advice, guaranteed compliance, surveillance, automated outreach/submission,
+speaker identification, vendor scoring, or autonomous publication. A future
+plugin may distribute the addon as a generated thin wrapper only.
+
 ## Human acceptance and non-overridable policy
 
 The user's direction to fully implement the issue set using cited AIWG research

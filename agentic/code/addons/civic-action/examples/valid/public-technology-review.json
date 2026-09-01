@@ -2,8 +2,10 @@
   "schema": "aiwg.civic.public-technology-review.v1",
   "review_id": "review-1",
   "jurisdiction_profile": "example-city-procurement-v1",
-  "evidence": [{"evidence_id": "ev-1", "claim": "The solicitation requires data export.", "claimant": "Example City", "artifact_class": "solicitation", "source_id": "solicitation-1", "selector": "section 4.2", "public_release_state": "public", "verification_state": "verified"}],
-  "risks": [{"risk_id": "risk-1", "category": "interoperability_lock_in", "condition": "Export format is unspecified", "consequence": "Transition cost may be uncertain", "evidence_ids": ["ev-1"], "likelihood": "unknown", "impact": "unknown", "uncertainty": "No contract draft reviewed", "rationale": "Evidence supports a question, not a score", "status": "open"}],
+  "source_class_inventory": {"rfp": "present", "bid": "protected", "contract": "requested", "purchase_order": "requested", "grant": "not_applicable", "policy": "present", "packet": "present", "minutes": "present", "renewal": "unknown", "invoice": "requested", "public_comment": "present"},
+  "evidence": [{"evidence_id": "ev-1", "claim": "The solicitation requires data export.", "claimant": "Example City", "artifact_class": "solicitation", "source_id": "solicitation-1", "source_authority": "primary_record", "selector": "section 4.2", "date": "2026-08-01", "jurisdiction": "Example City", "public_release_state": "public", "verification_state": "verified", "supports_or_contradicts": "supports", "review_notes": "Exact requirement text reviewed."}],
+  "risks": [{"risk_id": "risk-1", "category": "interoperability_lock_in", "condition": "Export format is unspecified", "consequence": "Transition cost may be uncertain", "affected_service_or_population": "City data portability", "evidence_ids": ["ev-1"], "likelihood": "unknown", "impact": "unknown", "uncertainty": "No contract draft reviewed", "rationale": "Evidence supports a question, not a score", "owner": null, "mitigation": "Request the draft contract and export specification.", "verification_method": "Review the primary contract record when released.", "residual_risk": "unknown", "status": "open", "reviewed_at": null}],
+  "handoffs": {"records_request": "ready", "meeting_analysis": "ready", "publication": "pending"},
   "award_recommendation": null,
-  "human_review": "pending"
+  "human_review": {"state": "pending", "reviewer": null, "artifact_hash": "sha256:9999999999999999999999999999999999999999999999999999999999999999"}
 }

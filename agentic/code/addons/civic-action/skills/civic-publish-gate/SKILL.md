@@ -18,13 +18,16 @@ triggers:
 
 ## Process
 
-1. Supply a versioned publication packet with claims, sources, accessibility
-   evaluation, privacy result, correction state, and human review.
+1. Supply a versioned publication packet with per-section count/freshness
+   rules, claims, sources, links, structured-data validation, accessibility,
+   privacy, correction state, static/CMS adapter results, and human review.
 2. Run `aiwg run skill civic-publish-gate -- packet.json`.
 3. Remediate every block. Warnings require visible human disposition.
 4. Treat automated accessibility checks as evidence only, never a complete WCAG
    conformance determination.
 5. Publication remains an external human action even after a machine pass.
+6. Verify the live page, last-good copy, sitemap, reindex, and cache handoffs;
+   each must pass or be explicitly not applicable before publication completes.
 
 ## Output
 

@@ -3,3 +3,6 @@ ledger_id: replace-me
 meeting_id: replace-me
 source_media_hash: sha256:0000000000000000000000000000000000000000000000000000000000000000
 motions: []
+# Each motion records agenda_item_id, exact/paraphrased text, mover, seconder,
+# timestamp_start_seconds, citation, member-level yes/no/abstain/recused/absent
+# entries, source cue IDs, announced/calculated results, and human verification.

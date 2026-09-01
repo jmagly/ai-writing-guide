@@ -9,7 +9,12 @@
   "payload_hash": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
   "freshness_state": "fresh",
   "public_scope": true,
+  "vertical_fields": {"identifier": "alert-1", "sender": "alerts@example.gov", "sent": "2026-09-01T16:00:00Z", "status": "Actual", "msg_type": "Alert", "scope": "Public", "references": [], "incidents": [], "language": "en-US", "category": ["Safety"], "event": "Road closure", "urgency": "Expected", "severity": "Moderate", "certainty": "Observed", "effective": "2026-09-01T16:00:00Z", "onset": "2026-09-01T16:00:00Z", "expires": "2026-09-01T18:00:00Z", "headline": "Road closure", "description": "A published road closure alert.", "instruction": "Use the signed detour.", "web": "https://example.gov/alerts/alert-1", "contact": "Example City emergency management", "areas": ["Example City"]},
   "facts": {"status": "Actual", "msgType": "Alert", "expires": "2026-09-01T18:00:00Z"},
+  "citations": [{"source_id": "city-alert-feed", "retrieval_id": "retrieval-1", "selector": "/alert/info/0"}],
+  "structured_data": {"format": "cap-1.2", "mapping_state": "native"},
   "correction_contact": "https://example.gov/contact",
+  "review": {"correction_state": "clear", "takedown_state": "clear", "reviewer": "resource-reviewer"},
+  "publication_gate_status": "pass",
   "validation": {"validator": "example-cap-validator", "version": "1.0.0", "status": "pass", "findings": []}
 }

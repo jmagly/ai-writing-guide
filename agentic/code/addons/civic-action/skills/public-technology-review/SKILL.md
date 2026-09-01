@@ -21,6 +21,8 @@ triggers:
 4. Record claims and evidence without sentiment scores. Risk ratings require a
    human-defined scale, rationale, uncertainty, owner, and verification method.
 5. Do not infer corruption, rank vendors, or recommend an award autonomously.
+6. Record explicit handoff states for missing records, meeting/vote analysis,
+   and any publication packet; protected material never enters a public handoff.
 
 ## Output
 
