@@ -2,6 +2,11 @@
 
 AIWG includes an MCP server for programmatic integration with AI tools.
 
+[![Listed on mcpservers.org](https://mcpservers.org/badge.svg)](https://mcpservers.org/servers/docs-aiwg-io)
+
+The AIWG MCP Daemon is listed in the
+[mcpservers.org directory](https://mcpservers.org/servers/docs-aiwg-io).
+
 ## Quick Start
 
 ```bash
