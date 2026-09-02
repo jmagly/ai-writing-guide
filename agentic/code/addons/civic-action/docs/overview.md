@@ -6,6 +6,28 @@ resource indexes, corrections, and publication review. It is an opt-in addon,
 not a jurisdiction database, law practice, autonomous newsroom, recorder, CMS,
 or outreach system.
 
+## Interaction model
+
+Users describe the civic outcome and evidence boundary in a prompt. The AIWG
+steward handles opt-in setup, capability discovery, dependency checks, and
+provider-safe deployment; the selected civic skill then creates reviewable
+artifacts and stops at the appropriate human gate.
+
+```text
+Act as the AIWG steward. Make Civic Action available for this project after
+previewing the setup and obtaining approval. Then help me plan an evidence-bound
+civic workflow for the material I provide. Establish jurisdiction and source
+authority, preserve uncertainty and citations, explain every warning or blocked
+condition, and stop before any submission, contact, recording, identification,
+or publication.
+```
+
+The [prompt-based quickstart](quickstart.md) provides focused asks for source
+review, public records, meetings, procurement, local resources, corrections,
+and publication. Direct setup and gate syntax is isolated in the
+[Civic Action CLI reference](https://docs.aiwg.io/pages/cli--reference.html#civic-action)
+for advanced operators and automation.
+
 ## Safety and evidence model
 
 The executable source, meeting, and publication commands validate their input

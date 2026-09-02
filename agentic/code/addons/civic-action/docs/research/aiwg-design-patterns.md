@@ -1,5 +1,11 @@
 # AIWG design-pattern audit for the civic-action addon
 
+> **Research and maintainer reference.** Begin with the
+> [prompt-based Civic Action quickstart](../quickstart.md) for user interaction.
+> Commands below are verification evidence for maintainers; supported operator
+> syntax is maintained in the
+> [CLI reference](https://docs.aiwg.io/pages/cli--reference.html#civic-action).
+
 Status: implementation design input for AIWG issues #2213–#2222
 Repository audit date: 2026-09-01
 Scope: repository-native packaging, component contracts, composition, discovery,

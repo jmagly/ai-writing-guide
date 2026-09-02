@@ -10,26 +10,36 @@ content, or makes legal conclusions. Those transitions require named human
 review. A machine pass covers only the declared, schema-valid fields inspected
 by that command; it is not factual verification, compliance, or authorization.
 
-## Install and discover
+## Ask the steward to set it up
 
-```bash
-aiwg use civic-action
-aiwg discover "plan a public records request"
-aiwg discover "reconcile a public meeting transcript with minutes"
-aiwg discover "publish cited local public information"
+Start in your agent conversation. The steward can inspect the provider and
+workspace, preview the opt-in installation, preserve existing configuration,
+and verify the deployed agents, skills, flows, and gates:
+
+```text
+Act as the AIWG steward and set up Civic Action for this project. Inspect the
+current AIWG and provider configuration first. Explain whether you will enable
+the canonical civic-action addon directly or through an available provider
+plugin wrapper, preview every file or setting that will change, preserve local
+customizations, and ask for approval before writing. After setup, verify that
+the civic skills, agents, flows, templates, schemas, and validation gates are
+discoverable. Report any unavailable optional integration and its degraded
+mode. Do not submit, contact, record, identify, or publish anything.
 ```
 
-## Executable gates
+Then describe the civic outcome rather than selecting implementation commands:
 
-```bash
-aiwg civic source-gate source-registry.json
-aiwg civic meeting-gate vote-ledger.json reconciliation.json
-aiwg civic publish-gate publication-packet.json
+```text
+Plan a public records request for human review using authoritative sources and
+the correct jurisdiction. Preserve uncertainty, identify every required human
+decision, and stop before submission.
 ```
 
-All commands write a JSON report to stdout. Exit `0` means no blocking
-finding, exit `1` means one or more `block` findings, and exit `2` means invalid
-input or usage. Warnings remain in the report for human disposition.
+Advanced operators and automation can use the direct addon installation and
+gate commands documented in the
+[Civic Action CLI reference](https://docs.aiwg.io/pages/cli--reference.html#civic-action).
+Command results remain review evidence: they never authorize an external civic
+action.
 
 ## Capability map
 
@@ -49,5 +59,5 @@ operations, and security capabilities. If absent, skills instruct the agent or
 reviewer to report a blocked dependency or manual-review requirement; they do
 not claim those checks ran.
 
-See `docs/overview.md`, `docs/quickstart.md`, and the cited research reports in
-`docs/research/` for the design basis and limitations.
+See `docs/overview.md`, the prompt catalog in `docs/quickstart.md`, and the cited
+research reports in `docs/research/` for the design basis and limitations.

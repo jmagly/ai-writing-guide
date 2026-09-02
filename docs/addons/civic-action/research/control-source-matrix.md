@@ -1,5 +1,10 @@
 # Civic Action control-to-source matrix
 
+> **Control reference.** Begin with the
+> [prompt-based Civic Action quickstart](../quickstart.md) for user interaction.
+> This matrix explains the evidence behind each prompt and gate; it does not
+> authorize an external civic action.
+
 **Reviewed:** 2026-09-01
 
 **Scope:** AIWG Civic Action addon

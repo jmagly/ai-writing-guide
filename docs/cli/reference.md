@@ -609,6 +609,10 @@ aiwg use rlm
 # Deploy RLM addon to Codex
 aiwg use rlm --provider codex
 
+# Preview and deploy the Civic Action addon
+aiwg use civic-action --dry-run
+aiwg use civic-action
+
 # Preview deployment without writing files
 aiwg use sdlc --dry-run
 
@@ -685,9 +689,10 @@ reload are shown with `--verbose`.
 
 **Addon options:**
 
-| Addon   | ID    | Description                                                                           |
-| ------- | ----- | ------------------------------------------------------------------------------------- |
-| **RLM** | `rlm` | Recursive Language Models — recursive context decomposition for 10M+ token processing |
+| Addon            | ID             | Description                                                                           |
+| ---------------- | -------------- | ------------------------------------------------------------------------------------- |
+| **Civic Action** | `civic-action` | Evidence-bound civic research, review artifacts, and human-gated validation           |
+| **RLM**          | `rlm`          | Recursive Language Models — recursive context decomposition for 10M+ token processing |
 
 **Platform targets:**
 
@@ -5395,6 +5400,31 @@ State source: `.aiwg/ralph/rlm-state.json`.
 ## Addon Commands
 
 Commands contributed by installed addons. Available after running `aiwg use <addon>`.
+
+### civic-action
+
+The prompt-first user journey is in the
+[Civic Action quickstart](../addons/civic-action/quickstart.md). Operators and
+automation may preview and enable the same addon directly:
+
+```bash
+aiwg use civic-action --dry-run
+aiwg use civic-action
+```
+
+After deployment, the addon contributes three deterministic validation gates:
+
+```bash
+aiwg civic source-gate <source-registry.json>
+aiwg civic meeting-gate <vote-ledger.json> <meeting-reconciliation.json>
+aiwg civic publish-gate <publication-packet.json>
+```
+
+Each gate writes a versioned JSON report to standard output. Exit `0` means no
+blocking finding was detected in the declared fields, exit `1` means at least
+one blocking finding, and exit `2` means invalid input or usage. A zero exit is
+review evidence only; it does not authorize acquisition, recording, request
+submission, contact, identification, correction release, or publication.
 
 ### composition
 

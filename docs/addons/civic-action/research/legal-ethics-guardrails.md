@@ -1,5 +1,10 @@
 # Legal and ethics guardrails for civic-action workflows
 
+> **Research reference.** Begin with the
+> [prompt-based Civic Action quickstart](../quickstart.md) for user interaction.
+> These guardrails inform agent behavior and human review; they are not legal
+> advice or a jurisdiction-independent operating procedure.
+
 - **Issues:** [AIWG #2213](https://git.integrolabs.net/roctinam/aiwg/issues/2213), jurisdiction-sensitive portions of [AIWG #2216](https://git.integrolabs.net/roctinam/aiwg/issues/2216) and [AIWG #2217](https://git.integrolabs.net/roctinam/aiwg/issues/2217)
 - **Retrieved:** 2026-09-01
 - **Geographic baseline:** United States federal law and selected state examples; no state, tribal, territorial, or local conclusion is encoded

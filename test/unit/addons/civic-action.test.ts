@@ -51,6 +51,47 @@ describe('civic-action addon', () => {
     expect(read('skills/civic-newsroom-plan/SKILL.md')).not.toContain('civic-newsroom.playbook.yaml');
   });
 
+  it('keeps civic user guidance prompt-first, synchronized, and linked to CLI reference', () => {
+    for (const canonical of files('docs').filter((file) => file.endsWith('.md'))) {
+      const relative = canonical.slice('docs/'.length);
+      const published = readFileSync(resolve('docs/addons/civic-action', relative), 'utf8');
+      expect(published, `${relative} drifted from the canonical addon document`).toBe(read(canonical));
+    }
+
+    const userGuides = [
+      read('README.md'),
+      read('docs/overview.md'),
+      read('docs/quickstart.md'),
+      readFileSync(resolve('docs/addons/civic-action/overview.md'), 'utf8'),
+      readFileSync(resolve('docs/addons/civic-action/quickstart.md'), 'utf8'),
+    ];
+    for (const guide of userGuides) {
+      expect(guide).toContain('```text');
+      expect(guide).toContain('AIWG steward');
+      expect(guide).not.toMatch(/^\s*(?:npx\s+)?aiwg\s+/mu);
+    }
+
+    const quickstart = read('docs/quickstart.md');
+    for (const heading of [
+      'Ask the steward to set up Civic Action',
+      'Review a public source',
+      'Plan a public-records request',
+      'Reconcile a public meeting',
+      'Review public technology',
+      'Index local public resources',
+      'Prepare a correction',
+      'Review a publication packet',
+    ]) expect(quickstart).toContain(heading);
+    expect(quickstart).toContain('cli--reference.html#civic-action');
+
+    const cliReference = readFileSync(resolve('docs/cli/reference.md'), 'utf8');
+    expect(cliReference).toContain('### civic-action');
+    expect(cliReference).toContain('aiwg use civic-action');
+    expect(cliReference).toContain('aiwg civic source-gate');
+    expect(cliReference).toContain('aiwg civic meeting-gate');
+    expect(cliReference).toContain('aiwg civic publish-gate');
+  });
+
   it('compiles every civic schema and validates each positive fixture', () => {
     const ajv = new Ajv({ allErrors: true, strict: false });
     addFormats(ajv);

@@ -1,5 +1,10 @@
 # Civic-action research synthesis and readiness decision
 
+> **Decision record.** Begin with the
+> [prompt-based Civic Action quickstart](../quickstart.md) for user interaction.
+> This document records implementation readiness and boundaries; it is not a
+> command-led user procedure.
+
 **Decision date:** 2026-09-01
 **Issues:** #2213–#2222
 **Decision:** proceed with an opt-in addon and fail-closed human gates; reject

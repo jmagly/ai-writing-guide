@@ -1,5 +1,10 @@
 # Civic-action issue traceability
 
+> **Implementation reference.** Begin with the
+> [prompt-based Civic Action quickstart](quickstart.md) for user interaction.
+> Exact setup and validation syntax is maintained only in the
+> [CLI reference](https://docs.aiwg.io/pages/cli--reference.html#civic-action).
+
 | Issue | Implemented proof | Verification |
 |---|---|---|
 | #2213 legal/ethics guardrails | `rules/civic-safety.md`, `rules/publication-human-review.md`, jurisdiction template, cited legal brief, non-overridable source/publish gate findings | Source bypass and missing-review negative tests |

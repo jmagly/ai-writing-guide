@@ -2,44 +2,111 @@
 
 > **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed and connected to the target project.
 
-Install the opt-in addon:
+## Ask the steward to set up Civic Action
 
-```bash
-aiwg use civic-action
-```
-
-Start with a natural-language ask:
+Use the AIWG steward for the safest setup path. This prompt asks it to distinguish
+the canonical addon from any provider plugin wrapper, preview changes, and prove
+that the deployment works before civic work begins:
 
 ```text
-Plan a public records request for human review.
-Reconcile this public meeting transcript with the approved minutes.
-Review this public technology procurement using source-linked evidence.
-Index local emergency, transit, and human-service resources with citations.
-Run civic publication quality gates on this evidence packet.
+Act as the AIWG steward and set up Civic Action for this project. Inspect the
+current AIWG and provider configuration first. Explain whether you will enable
+the canonical civic-action addon directly or through an available provider
+plugin wrapper, preview every file or setting that will change, preserve local
+customizations, and ask for approval before writing. After setup, verify that
+the civic skills, agents, flows, templates, schemas, and validation gates are
+discoverable. Report any unavailable optional integration and its degraded
+mode. Do not submit, contact, record, identify, or publish anything.
 ```
 
-For source acquisition, copy `templates/source-registry.yaml`, replace every
-unknown state with observed evidence, obtain named review, then run:
+If you explicitly prefer terminal operation or automation, the
+[Civic Action CLI reference](https://docs.aiwg.io/pages/cli--reference.html#civic-action)
+shows the direct `use` setup and validation commands. The rest of this guide
+uses prompts because the steward and civic skills carry the safety context that
+bare commands do not.
 
-```bash
-aiwg civic source-gate source-registry.json
+## Ask for an evidence-bound workflow
+
+Choose the prompt closest to your outcome and attach or identify the available
+source material. The agent should ask for missing jurisdiction and approval
+details instead of guessing them.
+
+### Review a public source
+
+```text
+Review this public source before acquisition or reuse. Establish the publisher,
+jurisdiction, access method, authorization, current terms and publication
+rights, retrieval identity, freshness deadline, citation selector, fallback,
+and named human review. Treat unknown, stale, expired, or bypassed conditions
+as findings rather than assumptions. Return the source registry and gate report;
+do not acquire restricted material.
 ```
 
-For meetings, preserve separate source media, transcript, ledger, and minutes
-artifacts. Do not replace `SPEAKER_XX` with a name without evidence and human
-confirmation:
+### Plan a public-records request
 
-```bash
-aiwg civic meeting-gate vote-ledger.json reconciliation.json
+```text
+Plan a public records request for human review. Research the applicable
+jurisdiction and existing public sources first, draft a narrow request, separate
+estimated dates from observed events, identify privacy and fee risks, and show
+the proposed tracking record. Stop before submission and ask a named person to
+approve the exact request.
 ```
 
-For publication, supply claim-level citations, privacy and accessibility
-reviews, correction state, upstream gates, and exact-hash human approval:
+### Reconcile a public meeting
 
-```bash
-aiwg civic publish-gate publication-packet.json
+```text
+Reconcile this public meeting's official source media, transcript, vote ledger,
+agenda, and approved minutes. Confirm recording and use are allowed for the
+jurisdiction before processing. Preserve speaker uncertainty, never infer an
+absent vote, distinguish draft from approved minutes, and cite every motion,
+vote, and material mismatch. Return the ledger and reconciliation packet for
+named human review; do not publish it.
 ```
 
-Exit `0` means no machine block, not permission to publish. Exit `1` is a
-blocking result. Exit `2` is invalid input/usage. Human publication remains a
-separate external action.
+### Review public technology
+
+```text
+Review this public-technology procurement using primary public records and
+source-linked evidence. Inventory the relevant request, bid, contract, policy,
+meeting, payment, and oversight records; distinguish verified facts from claims;
+and map privacy, accessibility, security, interoperability, resilience, fiscal,
+and supplier risks to evidence. Do not rank vendors or recommend an award.
+```
+
+### Index local public resources
+
+```text
+Create a cited local-resource index from the authoritative CAP, GTFS, or HSDS
+source I provide. Preserve the original source and retrieval identities, bind
+the record to the correct format profile, validate freshness and public scope,
+and keep correction and takedown review visible. Report incomplete or unsafe
+records as blocked; do not present this as full standards conformance.
+```
+
+### Prepare a correction
+
+```text
+Review this proposed correction against the original and replacement artifacts.
+Identify every changed claim, supporting citation, affected downstream target,
+privacy or safety concern, and required revalidation. Preserve append-only
+version history and distinguish requested reindexing from observed completion.
+Return a correction record for independent human approval; do not publish it.
+```
+
+### Review a publication packet
+
+```text
+Review this civic publication packet for release readiness. Verify every
+material claim has a source, retrieval, and selector; inspect contrary evidence,
+freshness, privacy, accessibility, structured data, corrections, upstream gates,
+and deployment checks; and require independent, dated approval of the exact
+artifact hash. Report every warning and blocker. Do not publish anything.
+```
+
+## Expected handoff
+
+The agent should return the artifacts it created or updated, source-linked
+findings, gate results, unresolved assumptions, unavailable optional
+capabilities, and the named human decisions still required. A machine result
+with no blocker is not permission to submit, contact, record, identify, or
+publish. Those remain separate external actions.

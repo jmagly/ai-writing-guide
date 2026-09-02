@@ -1,5 +1,10 @@
 # Civic workflow standards research brief
 
+> **Research reference.** Begin with the
+> [prompt-based Civic Action quickstart](../quickstart.md) for user interaction.
+> This brief supports the prompts and controls; it is not an operating guide or
+> a substitute for jurisdiction-specific human review.
+
 **Issues:** #2214, #2216, #2217, #2218, #2220, #2221
 **Retrieved:** 2026-09-01
 **Status:** implementation guidance; not legal advice
