@@ -9,7 +9,7 @@ not remove it from the product.
 | Audience | Reader need | Owner | Publication target |
 |---|---|---|---|
 | End user | Goals, conversational asks, choices, approvals, outcomes, verification | Product documentation | `docs.aiwg.io` |
-| Agent/operator | CLI contracts, flags, structured output, automation, diagnostics, recovery | Runtime and capability owners | `docs/cli/`, installed package, and `releases.aiwg.io` |
+| Agent/operator | CLI contracts, flags, structured output, automation, diagnostics, recovery | Runtime and capability owners | The dedicated `docs/cli/` reference section, installed package, and `releases.aiwg.io` |
 | Contributor/maintainer | Authoring, architecture, testing, and release operations | Maintainers | explicitly classified development/contributor surfaces |
 
 Within every audience, use the Diátaxis task types—tutorial, how-to, reference,
@@ -30,34 +30,31 @@ experience. It defines necessary terms, identifies where each action occurs,
 explains the effect and approval boundary, and gives an observable success and
 recovery condition.
 
-Executable commands appear in public user docs only when they are on the
-direct-touch install and recovery allowlist. During public-site staging,
-advanced executable blocks are replaced by contextual natural-language prompts;
-the exact source contracts remain in `docs/cli/` for agents and scripts.
+Executable commands and flag tables do not appear in public user journeys.
+During public-site staging, AIWG command examples—including bootstrap and
+recovery examples—are replaced by contextual natural-language prompts. Exact
+syntax remains available only in the published `docs/cli/` reference section
+for readers, agents, and scripts that explicitly need it.
 
-## Direct-touch command allowlist
+## Prompt-first user contract
 
-| Command | Why a user may type it |
-|---|---|
-| `npm install -g aiwg` | Bootstrap before an AI agent can use AIWG |
-| `aiwg wizard` | Optional guided bootstrap when the agent cannot run setup |
-| `aiwg use all --provider <provider>` | Preferred complete provider bootstrap |
-| `aiwg status` | Independent verification or broken-agent diagnosis |
-| `aiwg doctor` | Exceptional recovery |
-| `aiwg refresh` | Exceptional repair/update of deployed context |
-| `aiwg version` | Confirm the installed CLI version |
-| `aiwg features` | Repair an optional installation feature |
-| `aiwg update` / `aiwg uninstall` | Explicit installation lifecycle actions |
+Each public procedure provides:
 
-After bootstrap, `aiwg-regenerate` is invoked through the provider so the agent
-can select and apply the correct context migration. Discovery, `show`, indexing,
-loops, missions, orchestration, JSON contracts, and non-interactive flags are
-agent/operator surfaces.
+- a pasteable prompt describing the goal;
+- what the agent should inspect before acting;
+- which material changes require approval;
+- the observable success result and evidence; and
+- a recovery prompt when the result differs.
+
+When no working agent is available, the page links to the CLI reference rather
+than reproducing a terminal recipe. Installation, deployment, status, repair,
+discovery, indexing, loops, missions, orchestration, JSON contracts, and
+non-interactive flags all follow this boundary.
 
 ## Publication metadata
 
 CLI references live under `docs/cli/`; other agent references live under
-`docs/agents/`. Both declare:
+`docs/agents/`. Agent references declare:
 
 ```yaml
 audience: agent-operator
@@ -65,15 +62,17 @@ publication: agent-reference
 stable_id: aiwg.agent-reference.<name>
 ```
 
-The public build is assembled into a staging directory that excludes this
-corpus. Release and npm packaging retain the source directory. CI verifies both
-sides of the boundary.
+The public build publishes the dedicated CLI reference section but excludes the
+rest of the agent-only corpus. Release and npm packaging retain the complete
+source directory. CI verifies both sides of the boundary and rejects AIWG
+command guidance in staged public-user pages outside `docs/cli/`.
 
 ## Linking
 
-User pages link to conversational journeys, not CLI reference pages. Agent
-documents use stable IDs and paths rooted at `docs/agents/`. Contributor pages
-may link across audiences when the audience and target are explicit.
+User pages link primarily to conversational journeys. They may link to the CLI
+reference only as an explicitly labelled terminal or automation reference.
+Agent documents use stable IDs and paths rooted at `docs/agents/`. Contributor
+pages may link across audiences when the audience and target are explicit.
 
 Historical release notes and fixtures remain accurate records and are excluded
 from mechanical conversational rewrites.

@@ -23,5 +23,27 @@
     "provenance": {"type": "object", "additionalProperties": false, "required": ["sources", "drafted_by", "reviewed_by", "revision_of", "generated_at"], "properties": {"sources": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}, "drafted_by": {"type": "string", "minLength": 1}, "reviewed_by": {"type": ["string", "null"]}, "revision_of": {"type": ["string", "null"]}, "generated_at": {"type": "string", "format": "date-time"}}},
     "human_review": {"type": "object", "additionalProperties": false, "required": ["state", "reviewer", "artifact_hash"], "properties": {"state": {"enum": ["approved", "rejected", "pending"]}, "reviewer": {"type": ["string", "null"]}, "artifact_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}},
     "automatic_submission": {"const": false}
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "ready"}}},
+      "then": {"properties": {"human_review": {"properties": {
+        "state": {"const": "approved"},
+        "reviewer": {"type": "string", "minLength": 1}
+      }}}}
+    },
+    {
+      "if": {"properties": {"status": {"enum": ["submitted", "acknowledged", "clarification_requested", "fee_issue", "processing", "partial_response", "completed", "denied", "appeal_considered", "closed"]}}},
+      "then": {"properties": {
+        "tracking": {"properties": {
+          "sent_at": {"type": "string", "format": "date-time"},
+          "submission_proof": {"type": "string", "minLength": 1}
+        }},
+        "human_review": {"properties": {
+          "state": {"const": "approved"},
+          "reviewer": {"type": "string", "minLength": 1}
+        }}
+      }}
+    }
+  ]
 }

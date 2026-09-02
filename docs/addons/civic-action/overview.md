@@ -12,7 +12,9 @@ The executable source, meeting, and publication commands validate their input
 schemas and block selected declared conditions, including access-control bypass,
 unresolved source authorization/rights, conflicted or unverified vote evidence,
 uncited declared material claims, incomplete named privacy/accessibility review,
-and missing named exact-hash publication approval. Broader jurisdiction,
+and missing independent, dated exact-hash publication approval. Publication
+claims use source/retrieval/selector citations, and empty claim or upstream-gate
+inventories cannot pass. Broader jurisdiction,
 consent, private/public status, anti-targeting, retention, and independent-review
 requirements are mandatory human workflow rules; the commands do not infer
 those facts from content.

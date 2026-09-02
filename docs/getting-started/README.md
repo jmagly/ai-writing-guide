@@ -109,7 +109,11 @@ AIWG vocabulary is required.
 
 **Key Addons** — Al (iterative loops), RLM (large codebase handling), Voice Framework (consistent writing style), and other capabilities that extend any framework.
 
-**Project-Local Customization** — How to add project-specific agents, skills, and scripts under `.aiwg/{extensions,addons,frameworks}/<name>/` so they deploy automatically with `aiwg use` and survive platform-directory resets. Use `.aiwg/plugins/<name>/` only for marketplace delivery wrappers. Keeps platform dirs (`.claude/`, `.codex/`, etc.) fully expendable.
+**Project-Local Customization** — How to ask the agent to add project-specific
+agents, skills, and scripts under `.aiwg/{extensions,addons,frameworks}/<name>/`
+so they deploy with the project and survive platform-directory resets. Use
+`.aiwg/plugins/<name>/` only for marketplace delivery wrappers. This keeps
+platform directories (`.claude/`, `.codex/`, and similar paths) expendable.
 
 **Onboarding Validation** — A lightweight checklist for maintainers to confirm that a new user can move from docs to install, wizard, verification, and one useful AIWG workflow.
 

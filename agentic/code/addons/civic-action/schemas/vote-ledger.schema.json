@@ -9,7 +9,7 @@
     "ledger_id": {"type": "string", "minLength": 1},
     "meeting_id": {"type": "string", "minLength": 1},
     "source_media_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
-    "motions": {"type": "array", "items": {"$ref": "#/definitions/motion"}}
+    "motions": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/motion"}}
   },
   "definitions": {
     "motion": {

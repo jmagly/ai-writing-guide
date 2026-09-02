@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 
 const root = path.resolve(import.meta.dirname, '../../..');
 const docs = path.join(root, 'docs');
+const cliCommandPattern = /\b(?:npx\s+)?aiwg\s+(?:--?)?[a-z][a-z0-9-]*\b/;
+const legacyProviderCommandPattern = /(?<![a-z0-9~.])\/aiwg-[a-z][a-z0-9-]*\b|\$aiwg-[a-z][a-z0-9-]*\b|\baiwg-regenerate\b/;
 
 describe('documentation audience boundary', () => {
   it('keeps agent and CLI references indexed with stable metadata', () => {
@@ -44,14 +46,22 @@ describe('documentation audience boundary', () => {
     }
   });
 
-  it('teaches the preferred complete deployment across public provider quickstarts', () => {
+  it('publishes provider quickstarts as prompt-first journeys', () => {
+    const output = path.join(root, 'dist', 'test-prompt-first-provider-docs');
+    execFileSync(process.execPath, ['tools/docs/build-public-source.mjs', output], {
+      cwd: root,
+      stdio: 'pipe',
+    });
     const quickstarts = readdirSync(path.join(docs, 'integrations'))
       .filter((entry) => entry.endsWith('-quickstart.md'));
     expect(quickstarts.length).toBeGreaterThan(0);
     for (const entry of quickstarts) {
-      const content = readFileSync(path.join(docs, 'integrations', entry), 'utf8');
-      expect(content).toMatch(/aiwg use all --provider [a-z-]+/);
-      expect(content).toContain('aiwg-regenerate');
+      const content = readFileSync(path.join(output, 'integrations', entry), 'utf8');
+      expect(content).toContain('<!-- aiwg-public-operator-guidance -->');
+      expect(content).toContain('Describe the outcome you want');
+      expect(content).not.toMatch(cliCommandPattern);
+      expect(content).not.toMatch(legacyProviderCommandPattern);
+      expect(content).not.toMatch(/\bnpm\s+(?:install|i|add)\b[^\n`]*\baiwg\b/i);
     }
   });
 
@@ -64,7 +74,7 @@ describe('documentation audience boundary', () => {
     expect(existsSync(path.join(output, 'agents'))).toBe(false);
     expect(existsSync(path.join(output, 'cli', 'README.md'))).toBe(true);
     expect(existsSync(path.join(output, 'cli', 'install-and-repair.md'))).toBe(true);
-    expect(existsSync(path.join(output, 'cli', 'reference.md'))).toBe(false);
+    expect(existsSync(path.join(output, 'cli', 'reference.md'))).toBe(true);
     expect(existsSync(path.join(output, 'cli', 'agent-usage.md'))).toBe(false);
     const manifest = JSON.parse(readFileSync(path.join(output, '_manifest.json'), 'utf8'));
     expect(manifest.order.some((entry: string) => entry === 'agents' || entry.startsWith('agents/'))).toBe(false);
@@ -95,14 +105,18 @@ describe('documentation audience boundary', () => {
     expect(audit.totals.onboardingNeedsReview).toBe(0);
     expect(audit.totals.publicCommandPages).toBeGreaterThan(0);
     expect(audit.totals.publicOperatorGuidancePages).toBeGreaterThan(0);
+    expect(audit.totals.publicPublishedCommandPages).toBe(0);
+    expect(audit.totals.publicPublishedCommandMentions).toBe(0);
     expect(audit.totals.publicPublishedAdvancedCommandPages).toBe(0);
     expect(audit.totals.publicPublishedAdvancedCommandMentions).toBe(0);
+    expect(audit.totals.publicPublishedCliFlagMentions).toBe(0);
     expect(audit.totals.publicPublishedDiscoveryMentions).toBe(0);
     expect(audit.totals.publicUnclassifiedCommandPages).toBe(0);
+    expect(audit.totals.coreJourneyAgentOwnedMentions).toBe(0);
     expect(audit.beforeAfter.current.homepageCommandChecklistItems).toBe(0);
     expect(audit.beforeAfter.current.publicCliNavigationEntries).toBe(0);
-    expect(audit.beforeAfter.current.coreJourneyCommandMentions)
-      .toBeLessThan(audit.beforeAfter.baseline.coreJourneyCommandMentions);
+    expect(audit.beforeAfter.current.canonicalPublicCliReferenceEntries).toBe(1);
+    expect(audit.beforeAfter.current.coreJourneyCommandMentions).toBe(0);
   });
 
   it('labels every retained public operator-command page in staged output', () => {
@@ -123,6 +137,10 @@ describe('documentation audience boundary', () => {
       const staged = readFileSync(path.join(output, row.path), 'utf8');
       expect(staged).toContain('<!-- aiwg-public-operator-guidance -->');
       expect(staged).toContain('Describe the outcome you want');
+      expect(staged).not.toMatch(cliCommandPattern);
+      expect(staged).not.toMatch(legacyProviderCommandPattern);
+      expect(staged).not.toMatch(/\bnpm\s+(?:install|i|add)\b[^\n`]*\baiwg\b/i);
+      expect(staged).not.toMatch(/(?<![a-z0-9-])--[a-z][a-z0-9-]*\b/);
     }
   });
 });

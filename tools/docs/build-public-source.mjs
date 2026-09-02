@@ -61,10 +61,9 @@ for (const entry of await readdir(stagedReleases, { withFileTypes: true })) {
 }
 
 // The source tree is also the installed agent/reference corpus, so it retains
-// exact implementation examples. The public user build replaces executable
-// advanced CLI blocks with natural-language agent prompts. Historical and
-// contributor material remains byte-accurate, and dedicated CLI references are
-// kept out of the end-user publication.
+// exact implementation examples. The public user build replaces all AIWG CLI
+// guidance with natural-language agent prompts. Historical and contributor
+// material remains byte-accurate. Exact syntax is published only in docs/cli/.
 for (const filename of await markdownFiles(output)) {
   const relative = path.relative(output, filename).split(path.sep).join('/');
   if (isHistorical(relative) || isContributor(relative)) continue;

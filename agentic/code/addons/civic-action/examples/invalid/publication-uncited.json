@@ -2,15 +2,16 @@
   "schema": "aiwg.civic.publication-packet.v1",
   "artifact_id": "unsafe-story",
   "artifact_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+  "prepared_by": "news-caster",
   "sections": [{"id": "body", "required": true, "content_length": 0, "record_count": 0, "minimum_count": 1, "freshness_state": "expired"}],
   "links": [{"url": "https://example.invalid/missing", "http_status": 404, "material": true}],
   "claims": [{"claim_id": "claim-1", "material": true, "status": "reported_allegation", "attributed": false, "freshness_state": "expired", "citations": []}],
-  "upstream_gates": [],
+  "upstream_gates": [{"gate_id": "source-compliance/unsafe-source", "status": "pass"}],
   "structured_data": {"status": "fail", "format": "NewsArticle", "errors": ["missing dateModified"]},
-  "privacy": {"status": "pending", "reviewer": null},
-  "accessibility": {"automated_status": "pass", "manual_status": "pending", "reviewer": null},
+  "privacy": {"status": "pending", "reviewer": null, "reviewed_at": null, "decision_reason": ""},
+  "accessibility": {"automated_status": "pass", "manual_status": "pending", "reviewer": null, "reviewed_at": null, "decision_reason": ""},
   "publication_state": "usable",
   "correction": {"open_blocking": true, "pending_reindex_targets": 2},
   "deployment": {"last_good_copy_state": "missing", "verification_state": "pending", "live_page_state": "pending", "sitemap_state": "pending", "reindex_state": "pending", "cache_state": "pending", "adapter": "vendor-neutral-static"},
-  "human_review": {"state": "pending", "reviewer": null, "artifact_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777"}
+  "human_review": {"state": "pending", "reviewer": null, "reviewer_role": null, "artifact_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777", "reviewed_at": null, "decision_reason": ""}
 }

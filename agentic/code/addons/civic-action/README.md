@@ -45,9 +45,9 @@ input or usage. Warnings remain in the report for human disposition.
 | Local public resources | `local-resource-index`, CAP/GTFS/HSDS profile contract |
 
 Optional frameworks add research, transcription, knowledge-base, editorial,
-operations, and security capabilities. If absent, skills emit an explicit
-`blocked-dependency-missing` or `manual-review-required` state; they do not
-claim those checks ran.
+operations, and security capabilities. If absent, skills instruct the agent or
+reviewer to report a blocked dependency or manual-review requirement; they do
+not claim those checks ran.
 
 See `docs/overview.md`, `docs/quickstart.md`, and the cited research reports in
 `docs/research/` for the design basis and limitations.

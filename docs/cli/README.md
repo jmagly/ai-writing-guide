@@ -38,7 +38,7 @@ The following references are intentionally written for agents, scripts, and
 advanced operators. They contain exact flags, structured-output contracts, and
 recovery procedures:
 
-- [Complete CLI reference](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md)
+- [Complete CLI reference](reference.md)
 - [Agent and automation usage guide](https://github.com/jmagly/aiwg/blob/main/docs/cli/agent-usage.md)
 - [Capability discovery and retrieval contract](https://github.com/jmagly/aiwg/blob/main/docs/cli/discovery-and-retrieval.md)
 - [Capability routing architecture and verification](https://github.com/jmagly/aiwg/blob/main/docs/cli/capability-routing.md)

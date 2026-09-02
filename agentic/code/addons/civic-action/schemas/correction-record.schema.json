@@ -14,9 +14,9 @@
     "status_after": {"enum": ["usable", "withheld", "canceled", "superseded"]},
     "reason_category": {"enum": ["factual_error", "context", "privacy", "safety", "legal", "source_withdrawal", "other"]},
     "public_note": {"type": "string", "minLength": 1},
-    "changed_claim_ids": {"type": "array", "items": {"type": "string"}},
+    "changed_claim_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
     "source_refs": {"type": "array", "minItems": 1, "items": {"type": "string"}},
     "reviewer": {"type": "string", "minLength": 1},
-    "downstream_targets": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["target", "state"], "properties": {"target": {"type": "string"}, "state": {"enum": ["pending", "requested", "observed", "failed", "not_applicable"]}, "evidence": {"type": ["string", "null"]}}}}
+    "downstream_targets": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["target", "state"], "properties": {"target": {"type": "string", "minLength": 1}, "state": {"enum": ["pending", "requested", "observed", "failed", "not_applicable"]}, "evidence": {"type": ["string", "null"]}}}}
   }
 }

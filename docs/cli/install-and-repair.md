@@ -23,8 +23,9 @@ create or update, preserve existing work, ask before material changes, and
 verify that AIWG is active when you finish.
 ```
 
-If no working agent can complete project setup, the installation guide provides
-the supported `aiwg wizard` and `aiwg use` fallback commands.
+If no working agent can complete project setup, the
+[complete CLI reference](reference.md) provides the supported `aiwg wizard`
+and `aiwg use` fallback commands.
 
 ## Check or repair the installation
 

@@ -11,12 +11,12 @@ reader and task, not deleted by raw count.
 | `docs/discovery-and-kernel-skills.md` | Compatibility pointer | Canonical routing guide moved to `docs/cli/capability-routing.md` |
 | Discovery and kernel procedures | Agent-internal | Indexed agent reference; public pages describe the conversational result |
 | Welcome/homepage | End-user orientation | Lead with conversation, expected behavior, approval, and result |
-| Start-here and quickstart | End-user tutorial | Lead with asks; retain bootstrap escape hatch |
+| Start-here and quickstart | End-user tutorial | Lead with pasteable asks; link terminal users to the CLI reference |
 | Provider handoff | End-user how-to plus operator details | Conversational primary path; operational flags in agent corpus |
 | Onboarding validation | End-user verification | Agent runs probe and translates evidence |
 | Framework entry points | End-user how-to | Ask/outcome/verification pattern |
-| Install pages | User-required direct touch | Retain justified bootstrap commands |
-| Troubleshooting | Recovery escape hatch | Commands allowed when clearly labeled |
+| Install pages | End-user setup | Agent-install prompt, expected evidence, and CLI-reference link only |
+| Troubleshooting | End-user recovery | Recovery prompts; exact diagnostics stay in the CLI reference |
 | Development/contributing | Maintainer | Retain commands with explicit audience |
 | Blog and release notes | Historical | Preserve wording and command history |
 | Tests and fixtures | Example fixture | Excluded from prose migration |
@@ -39,12 +39,11 @@ without treating every specialized tutorial as a duplicate install guide.
 
 The inventory also records every Markdown page containing an `aiwg` command,
 the number of direct-touch mentions, and the number of agent/operator mentions.
-During public-source staging, advanced executable blocks on non-historical user
-pages are replaced with a contextual natural-language prompt and a visible
-agent-run notice. Exact syntax remains in the installed source corpus and the
-dedicated `docs/cli/` area for agents and scripts. Historical release notes,
-contributor documentation, and the source files themselves are not
-mechanically rewritten.
+During public-source staging, every AIWG executable block and inline command on
+non-historical user pages is replaced with a contextual natural-language prompt
+and a visible prompt-first notice. Exact syntax remains in the dedicated,
+published `docs/cli/` area and the installed agent corpus. Historical release
+notes and contributor documentation are not mechanically rewritten.
 
 ## Before and after
 
@@ -53,9 +52,9 @@ the repository HEAD at issue intake. The same audit reports current values:
 
 | Signal | Before | Current target |
 |---|---:|---:|
-| Command mentions across the seven core public journeys | 51 | substantially reduced; retained commands are bootstrap or recovery |
+| Command mentions across the core published user journeys | 51 | 0 |
 | Command-first homepage checklist items | 3 | 0 |
-| CLI/agent-reference entries in public navigation | 2 | 0 |
+| Canonical CLI-reference entries in public navigation | 0 | 1 |
 
 Operational coverage is retained in `docs/agents/`, the npm `docs/` payload,
 and the signed release pipeline's `reference` bundle.

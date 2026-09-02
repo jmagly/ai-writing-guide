@@ -2,10 +2,10 @@
   "default": "README",
   "order": [
     "README",
-    "install-and-repair"
+    "install-and-repair",
+    "reference"
   ],
   "exclude": [
-    "reference",
     "agent-usage",
     "discovery-and-retrieval",
     "capability-routing",

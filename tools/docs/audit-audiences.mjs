@@ -55,6 +55,9 @@ for (const filename of files) {
   const publishedActionableAdvanced = publicUser
     ? actionableAdvancedCommands(publicRewrite.content, policy.directTouchCommands)
     : [];
+  const publishedCliFlagMentions = publicUser && publicRewrite.changed
+    ? (publicRewrite.content.match(/(?<![a-z0-9-])--[a-z][a-z0-9-]*\b/gu) || []).length
+    : 0;
   const publishedDiscoveryMentions = publicUser
     ? (publicRewrite.content.match(/\baiwg[\t ]+(?:discover|show)\b/gu) || []).length
     : 0;
@@ -77,6 +80,7 @@ for (const filename of files) {
     publishedCommandMentions: publishedCommands.length,
     publishedAdvancedCommandMentions: publicUser ? publishedAdvancedCommands.length : 0,
     publishedActionableAdvancedMentions: publishedActionableAdvanced.length,
+    publishedCliFlagMentions,
     publishedDiscoveryMentions,
     publicOperatorNoticeRequired: publicRewrite.changed,
   });
@@ -91,6 +95,8 @@ const homepageCommandChecklistItems = (siteConfig.welcome?.checklist || [])
   .filter((item) => /\b(?:aiwg|npm)\b/.test(item)).length;
 const publicCliNavigationEntries = (docsManifest.order || [])
   .filter((item) => item === 'CLI_USAGE' || item === 'cli-reference' || item.startsWith('agents/')).length;
+const canonicalPublicCliReferenceEntries = (docsManifest.order || [])
+  .filter((item) => item === 'cli/reference').length;
 const onboardingPattern = /(^getting-started\/|quickstart|how-to|howto)/i;
 const onboardingSurfaces = [];
 for (const row of rows.filter((entry) => onboardingPattern.test(entry.path))) {
@@ -126,10 +132,15 @@ const summary = {
     coreJourneyAgentOwnedMentions: coreRows.reduce((sum, row) => sum + row.agentOwnedMentions, 0),
     publicCommandPages: rows.filter((row) =>
       row.classification === 'public-user' && row.commandMentions > 0).length,
+    publicPublishedCommandPages: rows.filter((row) =>
+      row.classification === 'public-user' && row.publishedCommandMentions > 0).length,
+    publicPublishedCommandMentions: rows.reduce((sum, row) =>
+      sum + (row.classification === 'public-user' ? row.publishedCommandMentions : 0), 0),
     publicOperatorGuidancePages: rows.filter((row) => row.publicOperatorNoticeRequired).length,
     publicSourceAdvancedCommandPages: rows.filter((row) => row.sourceActionableAdvancedMentions > 0).length,
     publicPublishedAdvancedCommandPages: rows.filter((row) => row.publishedActionableAdvancedMentions > 0).length,
     publicPublishedAdvancedCommandMentions: rows.reduce((sum, row) => sum + row.publishedAdvancedCommandMentions, 0),
+    publicPublishedCliFlagMentions: rows.reduce((sum, row) => sum + row.publishedCliFlagMentions, 0),
     publicPublishedDiscoveryMentions: rows.reduce((sum, row) => sum + row.publishedDiscoveryMentions, 0),
     publicUnclassifiedCommandPages: rows.filter((row) => row.publishedActionableAdvancedMentions > 0).length,
     onboardingSurfaces: onboardingSurfaces.length,
@@ -141,6 +152,7 @@ const summary = {
       coreJourneyCommandMentions,
       homepageCommandChecklistItems,
       publicCliNavigationEntries,
+      canonicalPublicCliReferenceEntries,
     },
   },
   coreJourneys: coreRows,

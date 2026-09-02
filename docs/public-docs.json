@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "baseline": {
     "issue": 1937,
     "capturedFrom": "git HEAD at issue intake",
@@ -14,7 +14,6 @@
     "CLI_USAGE.md",
     "cli-reference.md",
     "discovery-and-kernel-skills.md",
-    "cli/reference.md",
     "cli/agent-usage.md",
     "cli/discovery-and-retrieval.md",
     "cli/capability-routing.md",
@@ -65,19 +64,9 @@
     "scaffold-extension",
     "scaffold-framework"
   ],
-  "directTouchCommands": [
-    "wizard",
-    "use",
-    "status",
-    "doctor",
-    "refresh",
-    "version",
-    "features",
-    "update",
-    "uninstall"
-  ],
+  "directTouchCommands": [],
   "operatorNotice": {
     "marker": "<!-- aiwg-public-operator-guidance -->",
-    "text": "> **Agent-run procedure:** Describe the outcome you want in your agent conversation. The agent should select and load the appropriate AIWG assets, explain material changes, request any needed approval, and report verification evidence. Exact CLI syntax is reserved for agents and scripts in the [CLI area](https://github.com/jmagly/aiwg/tree/main/docs/cli)."
+    "text": "> **Prompt-first procedure:** Describe the outcome you want in your agent conversation. The agent should select and load the appropriate AIWG assets, explain material changes, request any needed approval, and report verification evidence. Exact commands and flags appear only in the [CLI reference](https://docs.aiwg.io/#/cli/reference)."
   }
 }

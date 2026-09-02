@@ -1,6 +1,6 @@
 # Onboarding Validation
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed and connected to the target project.
 
 Use this page to validate whether the beginner path actually helps a new user reach first success.
 
@@ -19,7 +19,7 @@ Track whether the user reaches each milestone:
 | Milestone | Evidence to record |
 |---|---|
 | Landed on beginner docs | Page link shared, support thread, or session note. |
-| Installed or confirmed AIWG | `aiwg -version` result or existing provider integration. |
+| Installed or confirmed AIWG | Agent-reported installed version or existing provider integration. |
 | Reviewed guided setup | Agent preview plus the user's recorded approval. |
 | Verified engagement | Agent report of probe state, project root, provider files, and next action. |
 | Completed one useful workflow | Short note naming the command, skill, or agent outcome. |

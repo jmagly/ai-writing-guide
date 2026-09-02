@@ -1,142 +1,125 @@
 # Install, Connect, and Verify AIWG
 
-> Need secure long-running agents? Use the [AIWG Cockpit + Agentic Sandbox
-> installer](https://aiwg.io/agentic-sandbox/setup.aiwg.yaml).
-> It audits the host, installs approved container or VM prerequisites, connects
-> Cockpit to the self-hosted executor, and verifies the control and audit path.
-
-This is the preferred first-run path for every supported provider.
-
-You do not need to know how AIWG works internally. This guide distinguishes
-between two places where you act:
-
-- **Terminal:** the app where you type installation commands. It may be called
-  Terminal, PowerShell, Command Prompt, a shell, or an integrated terminal.
-- **Agent conversation:** the chat in Claude Code, Codex, Cursor, Copilot, or
-  another AI tool. This is where you ask the agent to tailor and use AIWG.
+This is the preferred first-run path for every supported provider. You work in
+the agent conversation: state the outcome, review the proposed changes, approve
+what matters, and ask the agent to prove the result.
 
 Your **project root** is the main folder for the project—the folder that usually
-contains files such as `README.md`, `package.json`, or `.git`. If you are not
-sure which folder that is, ask your agent to identify it before continuing.
+contains files such as `README.md`, `package.json`, or `.git`. Your **provider**
+is the AI tool you are using, such as Claude Code, Codex, Copilot, or Cursor.
 
-## Easiest path: ask your agent to install or repair AIWG
+## One prompt for installation or repair
 
-Paste this prompt into a supported provider:
+Open the intended project in your provider and paste:
 
 ```text
 Install or repair AIWG for this project by following
 https://aiwg.io/setup.aiwg.yaml
-Explain the plan before changing anything, preserve my existing work, and ask
-me only for choices you cannot safely determine.
+
+First identify the project root and provider. Inspect the current installation
+without changing it, explain the plan and files that may change, preserve my
+existing work, and ask me only for choices you cannot safely determine. Use the
+complete supported AIWG setup unless this project already declares a narrower
+policy. When finished, verify the engagement state and report the evidence in
+plain language.
 ```
 
-The linked installer inspects first. It can recognize a healthy install, an
-older or broken install, duplicate commands, and an intentional source-checkout
-development setup. It explains proposed changes before making them. If you are
-using a development checkout, it keeps that mode by default and offers either a
-safe repository update or an explicit switch to the published package.
+The linked installer is designed for agent use. It recognizes healthy,
+outdated, incomplete, duplicate, and source-checkout installations. A healthy
+installation should not be replaced merely because the agent was asked to
+check it.
 
-Continue below if you prefer to type the setup commands yourself.
+## What the agent should do
 
-## 1. Install AIWG
+The agent should:
 
-AIWG uses Node.js and its bundled npm installer. If either `node --version` or
-`npm --version` does not work, first follow [Install Node.js and npm
-Safely](install-node.md).
+1. confirm the project root and provider;
+2. inspect the installed AIWG version and ownership;
+3. preview installation, deployment, and context changes;
+4. ask before material or scope-changing writes;
+5. connect the complete supported AIWG surface to the selected provider;
+6. preserve project-authored instructions and unrelated work; and
+7. run the engagement check and explain the result.
 
-If your AI tool does not already bundle AIWG, install AIWG once:
+If the agent cannot determine the project folder, tell it which folder contains
+your project and ask it to reopen or continue from there. Do not approve a path
+that points at your home directory or an unrelated repository.
 
-```bash
-npm install -g aiwg
-```
+## Provider handoff
 
-Type this in the terminal, not in the agent chat. It installs the `aiwg`
-command for your user account. If the terminal reports a permission error, do
-not use an unfamiliar administrator or `sudo` command copied from the web; use
-the [macOS install guide](macos-install.md) or ask your agent for a safe
-platform-specific installation path.
+Tell the agent which tool you are using:
 
-## 2. Change into the project root
-
-Use the terminal to move into the folder you want AIWG to configure:
-
-```bash
-cd /path/to/your/project
-```
-
-If you do not know the path, tell the agent which folder contains your project
-and ask for the exact safe command.
-
-## 3. Deploy and verify the complete AIWG system
-
-The **provider** is the AI tool you will use with AIWG. The preferred default is
-`all`, which installs AIWG's complete set of frameworks and supporting
-capabilities rather than making you choose pieces before you understand them.
-
-In the terminal, replace `<provider>` with the provider name from the table:
-
-```bash
-aiwg use all --provider <provider>
-```
-
-| If you use | Provider name |
+| AI tool | What to say |
 |---|---|
-| Claude Code | `claude` |
-| OpenAI Codex | `codex` |
-| GitHub Copilot | `copilot` |
-| Cursor | `cursor` |
-| Factory | `factory` |
-| OpenCode | `opencode` |
-| Warp | `warp` |
-| Devin Desktop | `devin` |
-| OpenClaw | `openclaw` |
-| Hermes | `hermes` |
-| OpenHuman | `openhuman` |
+| Claude Code | “Connect AIWG to this Claude Code project.” |
+| OpenAI Codex | “Connect AIWG to this Codex workspace.” |
+| GitHub Copilot | “Connect AIWG to this Copilot workspace.” |
+| Cursor | “Connect AIWG to this Cursor project.” |
+| Factory | “Connect AIWG to this Factory project.” |
+| OpenCode | “Connect AIWG to this OpenCode project.” |
+| Warp | “Connect AIWG to this Warp project.” |
+| Devin Desktop | “Connect AIWG to this Devin Desktop project.” |
+| OpenClaw | “Connect AIWG to this OpenClaw workspace.” |
+| Hermes | “Connect AIWG to this Hermes workspace.” |
+| OpenHuman | “Connect AIWG to this OpenHuman workspace.” |
 
-For example, a Codex user types:
+Some providers can use refreshed context immediately; others need a single
+restart or workspace reload. The agent should report that need rather than
+asking you to restart by default.
 
-```bash
-aiwg use all --provider codex
-```
+## Verify the result
 
-This one command installs the complete framework/addon surface, refreshes its
-capability indices, generates canonical project context and provider adapters,
-then verifies the result. It reports `ready`, `ready-restart-required`,
-`degraded`, or `failed` with the exact next action. Do not run index,
-regenerate, status, or doctor as extra required setup steps.
-
-Before accepting an unexpected file location or permission request, stop and
-ask the agent to explain what will be written and whether it stays inside the
-project. After a successful result, ask:
+Paste this after setup:
 
 ```text
-Is AIWG active in this project? Run or read the status probe and report the
-engaged state, project root, deployed provider files, installed frameworks and
-addons, and the next action.
+Is AIWG active in this project? Read the canonical engagement evidence and
+report the engaged state, project root, provider files, installed frameworks
+and addons, and exactly one next action. Do not make me interpret raw command
+output. If anything is partial or degraded, explain the safest recovery path
+before changing files.
 ```
 
-The agent can read the same deployment evidence and explain it in ordinary
-language. Success means:
+Success means:
 
 - the reported project folder is the one you intended;
-- the provider name matches the AI tool you opened;
-- the complete `all` deployment is installed;
-- the provider's context points to `WORKSPACE.md` and `AIWG.md`; and
-- the agent gives you one sensible next action.
+- the provider matches the AI tool you opened;
+- AIWG reports an engaged, ready state;
+- the provider context is connected to `WORKSPACE.md` and `AIWG.md`; and
+- the agent gives one sensible next action with verification evidence.
 
-If any item is wrong, do not continue into project work. Use the recovery list
-below or ask the agent to explain the mismatch first.
+## Recovery prompts
 
-## Recovery
+Wrong project:
 
-- Wrong project: stop and reopen the provider from the intended project root.
-- Missing provider files: rerun the `all` deployment with the correct provider.
-- Provider reports `ready-restart-required`: reload or restart it once, then
-  continue in the project.
-- Context generation reports conflicts: review the proposed resolution; do not
-  overwrite project-authored instructions blindly.
+```text
+Stop. Re-check the project root from repository evidence, tell me which folder
+you are using, and propose how to reopen AIWG in the intended project without
+changing either folder.
+```
 
-The standalone index, regenerate, status-probe, and doctor commands are still
-supported for independent audits and recovery. Advanced flags and their
-machine-readable contracts live in the [agent reference
-corpus](https://github.com/jmagly/aiwg/tree/main/docs/agents/).
+Missing or stale provider context:
+
+```text
+Diagnose the AIWG provider connection for this project. Explain what is missing
+or stale, preview the smallest safe repair, preserve project-authored files,
+and verify the connection after I approve it.
+```
+
+Conflicting instructions:
+
+```text
+Show me the conflicting AIWG-managed and project-authored instructions. Explain
+which source owns each section and propose a preservation-safe resolution. Do
+not overwrite project-authored content without my approval.
+```
+
+## If no agent can run
+
+Exact terminal installation, deployment, status, and repair syntax is kept in
+the [CLI reference](../cli/reference.md). Use that section only when no working
+agent can complete the prompt-first path or when you intentionally need
+automation-level control.
+
+For secure long-running agents, an operator can instead use the
+[AIWG Cockpit + Agentic Sandbox installer](https://aiwg.io/agentic-sandbox/setup.aiwg.yaml),
+which audits the host and verifies the control and audit path.

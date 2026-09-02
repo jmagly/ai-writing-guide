@@ -2,13 +2,14 @@
 template: civic-publication-review
 version: 1.0.0
 category: civic-action
-description: Human review of the exact civic publication artifact and its machine-gate evidence.
-variables: [artifact_id, artifact_hash]
+description: Independent human review of the exact civic publication artifact and its machine-gate evidence.
+variables: [artifact_id, artifact_hash, prepared_by]
 ---
 
 # Publication review: {{ artifact_id }}
 
 Exact hash: `{{ artifact_hash }}`
+Prepared by: `{{ prepared_by }}`
 
 - [ ] Source access/reuse and jurisdiction profiles current.
 - [ ] Material claims have resolvable selectors and correct epistemic labels.
@@ -22,4 +23,8 @@ Exact hash: `{{ artifact_hash }}`
 - [ ] Last-good copy and static/CMS sitemap, reindex, and cache handoffs pass or
       are explicitly not applicable.
 - [ ] Machine blocks absent; warnings explicitly disposed.
-- Reviewer/role/decision/conditions/time/expiry:
+- Independent reviewer:
+- Reviewer role:
+- Decision and reason:
+- Conditions:
+- Reviewed at / expires at:

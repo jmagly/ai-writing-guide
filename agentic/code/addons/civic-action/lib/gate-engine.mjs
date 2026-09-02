@@ -34,6 +34,9 @@ export function evaluateSourceRegistry(value, options = {}) {
   required(value?.owner, '/owner', findings);
   required(value?.acquisition?.cadence, '/acquisition/cadence', findings);
   required(value?.citation?.format, '/citation/format', findings);
+  if (['unknown', 'unresolved', 'pending', 'not_applicable', 'n/a'].includes(String(value?.jurisdiction ?? '').trim().toLowerCase())) {
+    findings.push(finding('JURISDICTION_UNRESOLVED', 'block', 'The source jurisdiction has not been resolved.', ['/jurisdiction'], 'Attach a dated, named-human jurisdiction review before using the source.'));
+  }
 
   if (value?.acquisition?.decision === 'prohibited') {
     findings.push(finding('ACQUISITION_PROHIBITED', 'block', 'The reviewed acquisition decision prohibits this method.', ['/acquisition/decision'], 'Use the documented public-record alternative or skip the source.'));
@@ -63,6 +66,9 @@ export function evaluateSourceRegistry(value, options = {}) {
   if (value?.rights?.publication_state !== 'allowed') {
     findings.push(finding('PUBLICATION_RIGHTS_NOT_ALLOWED', 'block', 'Retrieval permission does not establish publication permission.', ['/rights/publication_state'], 'Keep the source restricted or obtain publication review.'));
   }
+  if (value?.rights?.terms_state === 'allowed' && (!value?.rights?.terms_retrieved_at || !value?.rights?.terms_hash)) {
+    findings.push(finding('TERMS_SNAPSHOT_MISSING', 'block', 'The allowed terms decision is not bound to a dated terms snapshot.', ['/rights'], 'Record the retrieved terms time and exact content hash before relying on the decision.'));
+  }
   if (value?.review?.state !== 'approved' || !value?.review?.reviewer || !value?.review?.reviewed_at) {
     findings.push(finding('SOURCE_REVIEW_PENDING', 'block', 'A named human has not approved this source version.', ['/review'], 'Complete the source review against the exact registry version.'));
   }
@@ -77,6 +83,12 @@ export function evaluateSourceRegistry(value, options = {}) {
   if (expires && (!Number.isFinite(expires.getTime()) || expires <= now)) {
     findings.push(finding('SOURCE_REVIEW_EXPIRED', 'block', 'The source approval has expired.', ['/review/expires_at'], 'Revalidate current terms, access, rights, and jurisdiction.'));
   }
+  const exceptionExpires = value?.review?.exception_expires_at ? new Date(value.review.exception_expires_at) : null;
+  if (value?.review?.exception_id && !exceptionExpires) {
+    findings.push(finding('SOURCE_EXCEPTION_EXPIRY_MISSING', 'block', 'The source review exception has no expiry.', ['/review/exception_expires_at'], 'Set a bounded exception expiry or remove the exception.'));
+  } else if (exceptionExpires && (!Number.isFinite(exceptionExpires.getTime()) || exceptionExpires <= now)) {
+    findings.push(finding('SOURCE_EXCEPTION_EXPIRED', 'block', 'The source review exception has expired.', ['/review/exception_expires_at'], 'Revalidate the exception with a named human reviewer.'));
+  }
   if (['expired', 'unavailable'].includes(value?.freshness?.state) && value?.freshness?.safety_critical) {
     findings.push(finding('SAFETY_SOURCE_EXPIRED', 'block', 'Safety-critical content is expired or unavailable.', ['/freshness'], 'Do not present it as current; revalidate the authoritative source.'));
   } else if (['due', 'stale', 'expired', 'unknown', 'unavailable'].includes(value?.freshness?.state)) {
@@ -90,6 +102,16 @@ export function evaluateSourceRegistry(value, options = {}) {
       'The declared freshness deadline has passed.',
       ['/freshness/deadline'],
       'Revalidate the authoritative source and update its observed freshness evidence.',
+    ));
+  }
+  const nextReview = value?.freshness?.next_review_at ? new Date(value.freshness.next_review_at) : null;
+  if (nextReview && (!Number.isFinite(nextReview.getTime()) || nextReview <= now)) {
+    findings.push(finding(
+      'SOURCE_REVIEW_DUE',
+      value?.freshness?.safety_critical ? 'block' : 'warn',
+      'The declared source revalidation time has passed.',
+      ['/freshness/next_review_at'],
+      'Revalidate the source and record a new named-human review time.',
     ));
   }
   const observed = value?.empty_result?.observed_records;
@@ -109,6 +131,12 @@ export function evaluateMeeting(ledger, reconciliation, options = {}) {
   const findings = [];
   required(ledger?.ledger_id, '/ledger_id', findings);
   required(ledger?.source_media_hash, '/source_media_hash', findings);
+  if (!ledger?.motions?.length) {
+    findings.push(finding('MOTION_INVENTORY_EMPTY', 'block', 'The vote ledger contains no reviewed motions.', ['/motions'], 'Supply at least one source-linked motion or withhold the meeting result.'));
+  }
+  if (!reconciliation?.comparisons?.length) {
+    findings.push(finding('RECONCILIATION_INVENTORY_EMPTY', 'block', 'The reconciliation contains no artifact comparisons.', ['/comparisons'], 'Compare the relevant source artifacts before approval.'));
+  }
   if (ledger?.meeting_id !== reconciliation?.meeting_id) {
     findings.push(finding('MEETING_ID_MISMATCH', 'block', 'Ledger and reconciliation refer to different meetings.', ['/meeting_id'], 'Supply artifacts for the same meeting.'));
   }
@@ -123,7 +151,7 @@ export function evaluateMeeting(ledger, reconciliation, options = {}) {
     }
   }
   for (const [index, comparison] of (reconciliation?.comparisons ?? []).entries()) {
-    if (['mismatch', 'ambiguous', 'human_review_required'].includes(comparison.relation) && comparison.decision === 'pending') findings.push(finding('RECONCILIATION_PENDING', comparison.materiality === 'material' ? 'block' : 'warn', 'A reconciliation difference remains pending.', [`/comparisons/${index}`], 'Have a human accept, correct, or annotate the difference.'));
+    if (comparison.decision === 'pending') findings.push(finding('RECONCILIATION_PENDING', comparison.materiality === 'non_material' ? 'warn' : 'block', 'A reconciliation difference remains pending.', [`/comparisons/${index}`], 'Have a human accept, correct, or annotate the difference.'));
   }
   if (reconciliation?.human_review?.state !== 'approved' || !reconciliation?.human_review?.reviewer || !reconciliation?.human_review?.reviewed_at) findings.push(finding('MEETING_REVIEW_PENDING', 'block', 'A named human has not approved and dated the reconciliation.', ['/human_review'], 'Complete review of votes, speakers, source boundaries, and minutes state.'));
   if (reconciliation?.minutes_state !== 'approved_minutes') findings.push(finding('MINUTES_NOT_ADOPTED', 'warn', 'The reconciliation is not based on adopted minutes.', ['/minutes_state'], 'Preserve the current minutes state and avoid presenting it as an adopted official record.'));
@@ -136,6 +164,12 @@ export function evaluatePublication(packet, options = {}) {
   required(packet?.artifact_hash, '/artifact_hash', findings);
   if (!packet?.sections?.length) {
     findings.push(finding('CONTENT_EMPTY', 'block', 'Publication contains no declared content sections.', ['/sections'], 'Supply the reviewed content sections and rerun the gate.'));
+  }
+  if (!packet?.claims?.length) {
+    findings.push(finding('CLAIM_INVENTORY_EMPTY', 'block', 'Publication contains no reviewed claim inventory.', ['/claims'], 'Inventory the publication claims and attach source selectors before review.'));
+  }
+  if (!packet?.upstream_gates?.length) {
+    findings.push(finding('UPSTREAM_GATE_INVENTORY_EMPTY', 'block', 'Publication contains no upstream gate evidence.', ['/upstream_gates'], 'Attach the required source, meeting, correction, or other applicable gate results.'));
   }
   for (const [index, section] of (packet?.sections ?? []).entries()) {
     if (!Number.isFinite(section.content_length) || section.content_length <= 0) findings.push(finding('SECTION_EMPTY', 'block', `Publication section is empty: ${section.id ?? index}`, [`/sections/${index}`], 'Remove the empty section or provide reviewed content.'));
@@ -158,11 +192,11 @@ export function evaluatePublication(packet, options = {}) {
     if (gate.status === 'block') findings.push(finding('UPSTREAM_GATE_BLOCKED', 'block', `Upstream gate is blocked: ${gate.gate_id}`, [`/upstream_gates/${index}`], 'Remediate the original blocking result; do not downgrade it.'));
     if (gate.status === 'warn') findings.push(finding('UPSTREAM_GATE_WARNING', 'warn', `Upstream gate requires disposition: ${gate.gate_id}`, [`/upstream_gates/${index}`], 'Record a named human disposition before publication.'));
   }
-  if (packet?.structured_data?.status === 'fail') findings.push(finding('STRUCTURED_DATA_INVALID', 'block', 'Structured-data validation failed.', ['/structured_data'], 'Correct the declared format and rerun its validator.'));
+  if (packet?.structured_data?.status === 'fail' || (packet?.structured_data?.status === 'pass' && packet?.structured_data?.errors?.length)) findings.push(finding('STRUCTURED_DATA_INVALID', 'block', 'Structured-data validation failed or contains contradictory errors.', ['/structured_data'], 'Correct the declared format and rerun its validator.'));
   else if (!['pass', 'not_applicable'].includes(packet?.structured_data?.status)) findings.push(finding('STRUCTURED_DATA_PENDING', 'block', 'Structured-data validation is incomplete.', ['/structured_data'], 'Complete or explicitly mark the check not applicable.'));
-  if (packet?.privacy?.status !== 'pass' || !packet?.privacy?.reviewer) findings.push(finding('PRIVACY_REVIEW_INCOMPLETE', 'block', 'A named privacy/minimization review has not passed.', ['/privacy'], 'Review personal data, redactions, safety, retention, and public-interest necessity.'));
+  if (packet?.privacy?.status !== 'pass' || !packet?.privacy?.reviewer || !packet?.privacy?.reviewed_at || !packet?.privacy?.decision_reason) findings.push(finding('PRIVACY_REVIEW_INCOMPLETE', 'block', 'A named, dated privacy/minimization review has not passed.', ['/privacy'], 'Review personal data, redactions, safety, retention, and public-interest necessity.'));
   if (packet?.accessibility?.automated_status === 'fail') findings.push(finding('ACCESSIBILITY_KNOWN_FAILURE', 'block', 'Automated accessibility testing found a known failure.', ['/accessibility/automated_status'], 'Remediate the failure and rerun the complete process.'));
-  if (packet?.accessibility?.manual_status !== 'pass' || !packet?.accessibility?.reviewer) findings.push(finding('ACCESSIBILITY_MANUAL_REVIEW_REQUIRED', 'block', 'Required named-human accessibility evaluation is incomplete.', ['/accessibility'], 'Complete scoped manual evaluation; an automated pass is not conformance.'));
+  if (packet?.accessibility?.manual_status !== 'pass' || !packet?.accessibility?.reviewer || !packet?.accessibility?.reviewed_at || !packet?.accessibility?.decision_reason) findings.push(finding('ACCESSIBILITY_MANUAL_REVIEW_REQUIRED', 'block', 'Required named, dated accessibility evaluation is incomplete.', ['/accessibility'], 'Complete scoped manual evaluation; an automated pass is not conformance.'));
   if (packet?.publication_state !== 'usable') findings.push(finding('PUBLICATION_STATE_BLOCKED', 'block', 'Only a usable artifact version can proceed through this publication gate.', ['/publication_state'], 'Use a later approved usable version.'));
   if (packet?.correction?.open_blocking === true) findings.push(finding('CORRECTION_UNRESOLVED', 'block', 'A blocking correction remains unresolved.', ['/correction'], 'Complete the append-only correction and rerun all affected gates.'));
   if (packet?.correction?.pending_reindex_targets > 0) findings.push(finding('CORRECTION_REINDEX_PENDING', 'block', 'Required owned correction/reindex propagation remains pending.', ['/correction/pending_reindex_targets'], 'Update owned downstream targets and attach completion evidence.'));
@@ -173,7 +207,7 @@ export function evaluatePublication(packet, options = {}) {
     if (!['pass', 'not_applicable'].includes(packet?.deployment?.[field])) findings.push(finding(`DEPLOYMENT_${field.toUpperCase()}_PENDING`, 'block', `${field.replaceAll('_', ' ')} is incomplete.`, [`/deployment/${field}`], 'Complete the adapter handoff or document that it is not applicable.'));
   }
   const review = packet?.human_review;
-  if (review?.state !== 'approved' || !review?.reviewer || review?.artifact_hash !== packet?.artifact_hash) findings.push(finding('HUMAN_PUBLICATION_APPROVAL_MISSING', 'block', 'A named human has not approved the exact artifact hash.', ['/human_review'], 'Review the underlying sources and approve the exact version.'));
+  if (review?.state !== 'approved' || !review?.reviewer || !review?.reviewer_role || !review?.reviewed_at || !review?.decision_reason || review?.artifact_hash !== packet?.artifact_hash || review?.reviewer === packet?.prepared_by) findings.push(finding('HUMAN_PUBLICATION_APPROVAL_MISSING', 'block', 'An independent named human has not recorded a dated approval of the exact artifact hash.', ['/human_review'], 'Have a non-author reviewer inspect the underlying sources and approve the exact version with a reason.'));
   return report('publication', packet?.artifact_id, findings, options.now ?? new Date());
 }
 

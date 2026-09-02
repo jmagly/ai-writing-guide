@@ -9,14 +9,19 @@ publication target before content is written.
 2. Is the page a tutorial, how-to, reference, or explanation?
 3. Should it appear on `docs.aiwg.io`, in the installed/release agent corpus,
    or only in contributor/development surfaces?
-4. Does a public command genuinely require direct user action?
-5. If an agent owns the command, does the public page instead state the user
+4. Does the page state a copyable user prompt before implementation details?
+5. Does the public page state the user
    ask, expected agent behavior, approval boundary, outcome, and verification?
 
-Agent/operator references belong in `docs/agents/` with the metadata and stable
-ID defined in the [documentation information architecture](../architecture/documentation-information-architecture.md).
-Public exceptions must use a direct-touch command from the documented allowlist
-or label the command as an operator/recovery escape hatch.
+Agent/operator references belong in `docs/agents/`. Exact commands and flags
+belong in `docs/cli/`, which is the sole CLI reference section. Public user
+journeys link there when a reader explicitly wants terminal-level operation;
+they do not duplicate command blocks or flag tables.
+
+Every user procedure should lead with a prompt that a reader can paste into a
+supported agent. The prompt states the desired outcome, the evidence to inspect,
+the approval boundary, and what the agent must report when finished. Follow it
+with expected results and recovery prompts, not command syntax.
 
 Do not mechanically rewrite historical release notes or example fixtures.
 

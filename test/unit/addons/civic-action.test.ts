@@ -140,6 +140,19 @@ describe('civic-action addon', () => {
     const expiredDeclaration = json('examples/valid/source-registry.json');
     expiredDeclaration.freshness.deadline = '2026-08-31T00:00:00Z';
     expect(evaluateSourceRegistry(expiredDeclaration, { now: new Date('2026-09-01T00:00:00Z') }).findings.map((item) => item.code)).toContain('SOURCE_FRESHNESS_DEADLINE_PASSED');
+
+    const unresolvedJurisdiction = json('examples/valid/source-registry.json');
+    unresolvedJurisdiction.jurisdiction = 'unresolved';
+    expect(evaluateSourceRegistry(unresolvedJurisdiction).findings.map((item) => item.code)).toContain('JURISDICTION_UNRESOLVED');
+
+    const overdueReview = json('examples/valid/source-registry.json');
+    overdueReview.freshness.next_review_at = '2026-08-31T00:00:00Z';
+    expect(evaluateSourceRegistry(overdueReview, { now: new Date('2026-09-01T00:00:00Z') }).findings.map((item) => item.code)).toContain('SOURCE_REVIEW_DUE');
+
+    const expiredException = json('examples/valid/source-registry.json');
+    expiredException.review.exception_id = 'exception-1';
+    expiredException.review.exception_expires_at = '2026-08-31T00:00:00Z';
+    expect(evaluateSourceRegistry(expiredException, { now: new Date('2026-09-01T00:00:00Z') }).findings.map((item) => item.code)).toContain('SOURCE_EXCEPTION_EXPIRED');
   });
 
   it('blocks inferred/conflicted votes and accepts human-verified reconciliation', () => {
@@ -155,6 +168,21 @@ describe('civic-action addon', () => {
     const undated = json('examples/valid/meeting-reconciliation.json');
     undated.human_review.reviewed_at = null;
     expect(evaluateMeeting(json('examples/valid/vote-ledger.json'), undated).findings.map((item) => item.code)).toContain('MEETING_REVIEW_PENDING');
+
+    const emptyLedger = json('examples/valid/vote-ledger.json');
+    const emptyReconciliation = json('examples/valid/meeting-reconciliation.json');
+    emptyLedger.motions = [];
+    emptyReconciliation.comparisons = [];
+    expect(evaluateMeeting(emptyLedger, emptyReconciliation).findings.map((item) => item.code)).toEqual(expect.arrayContaining([
+      'MOTION_INVENTORY_EMPTY',
+      'RECONCILIATION_INVENTORY_EMPTY',
+    ]));
+
+    const absentPending = json('examples/valid/meeting-reconciliation.json');
+    absentPending.comparisons[0].relation = 'absent_from_source';
+    absentPending.comparisons[0].materiality = 'material';
+    absentPending.comparisons[0].decision = 'pending';
+    expect(evaluateMeeting(json('examples/valid/vote-ledger.json'), absentPending).findings.map((item) => item.code)).toContain('RECONCILIATION_PENDING');
   });
 
   it('blocks uncited allegations, incomplete privacy/accessibility, and missing exact-hash approval', () => {
@@ -194,6 +222,23 @@ describe('civic-action addon', () => {
     const superseded = json('examples/valid/publication-packet.json');
     superseded.publication_state = 'superseded';
     expect(evaluatePublication(superseded).findings.map((item) => item.code)).toContain('PUBLICATION_STATE_BLOCKED');
+
+    const emptyEvidence = json('examples/valid/publication-packet.json');
+    emptyEvidence.claims = [];
+    emptyEvidence.upstream_gates = [];
+    expect(evaluatePublication(emptyEvidence).findings.map((item) => item.code)).toEqual(expect.arrayContaining([
+      'CLAIM_INVENTORY_EMPTY',
+      'UPSTREAM_GATE_INVENTORY_EMPTY',
+    ]));
+
+    const contradictoryValidation = json('examples/valid/publication-packet.json');
+    contradictoryValidation.structured_data.status = 'pass';
+    contradictoryValidation.structured_data.errors = ['validator failed'];
+    expect(evaluatePublication(contradictoryValidation).findings.map((item) => item.code)).toContain('STRUCTURED_DATA_INVALID');
+
+    const selfReviewed = json('examples/valid/publication-packet.json');
+    selfReviewed.human_review.reviewer = selfReviewed.prepared_by;
+    expect(evaluatePublication(selfReviewed).findings.map((item) => item.code)).toContain('HUMAN_PUBLICATION_APPROVAL_MISSING');
   });
 
   it('schema-locks consequential civic actions to review-only outputs', () => {
@@ -209,6 +254,12 @@ describe('civic-action addon', () => {
     delete incompleteRecords.tracking.appeal_deadline;
     expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/public-records-plan.schema.json')!(incompleteRecords)).toBe(false);
 
+    const unprovedSubmission = json('examples/valid/public-records-plan.json');
+    unprovedSubmission.status = 'submitted';
+    unprovedSubmission.human_review.state = 'approved';
+    unprovedSubmission.human_review.reviewer = 'records-reviewer';
+    expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/public-records-plan.schema.json')!(unprovedSubmission)).toBe(false);
+
     const procurement = json('examples/valid/public-technology-review.json');
     procurement.award_recommendation = 'award to Vendor A';
     expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/public-technology-review.schema.json')!(procurement)).toBe(false);
@@ -216,6 +267,11 @@ describe('civic-action addon', () => {
     const incompleteProcurement = json('examples/valid/public-technology-review.json');
     delete incompleteProcurement.source_class_inventory.public_comment;
     expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/public-technology-review.schema.json')!(incompleteProcurement)).toBe(false);
+
+    const emptyProcurement = json('examples/valid/public-technology-review.json');
+    emptyProcurement.evidence = [];
+    emptyProcurement.risks = [];
+    expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/public-technology-review.schema.json')!(emptyProcurement)).toBe(false);
 
     const resource = json('examples/valid/local-resource-index.json');
     resource.vertical = 'personal-profile';
@@ -230,9 +286,37 @@ describe('civic-action addon', () => {
       expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/local-resource-index.schema.json')!(wrongProfile), `${vertical} accepted CAP fields`).toBe(false);
     }
 
+    const unsafePublishedResource = json('examples/valid/local-resource-index.json');
+    unsafePublishedResource.publisher_verified = false;
+    unsafePublishedResource.freshness_state = 'expired';
+    unsafePublishedResource.public_scope = false;
+    expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/local-resource-index.schema.json')!(unsafePublishedResource)).toBe(false);
+
+    const mismatchedResourceFormat = json('examples/valid/local-resource-index.json');
+    mismatchedResourceFormat.structured_data.format = 'gtfs-static';
+    expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/local-resource-index.schema.json')!(mismatchedResourceFormat)).toBe(false);
+
     const incompleteVote = json('examples/valid/vote-ledger.json');
     delete incompleteVote.motions[0].mover;
     expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/vote-ledger.schema.json')!(incompleteVote)).toBe(false);
+
+    const emptyVote = json('examples/valid/vote-ledger.json');
+    emptyVote.motions = [];
+    expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/vote-ledger.schema.json')!(emptyVote)).toBe(false);
+
+    const emptyComparison = json('examples/valid/meeting-reconciliation.json');
+    emptyComparison.comparisons = [];
+    expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/meeting-reconciliation.schema.json')!(emptyComparison)).toBe(false);
+
+    const emptyPublication = json('examples/valid/publication-packet.json');
+    emptyPublication.claims = [];
+    emptyPublication.upstream_gates = [];
+    expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/publication-packet.schema.json')!(emptyPublication)).toBe(false);
+
+    const emptyCorrection = json('examples/valid/correction-record.json');
+    emptyCorrection.changed_claim_ids = [];
+    emptyCorrection.downstream_targets = [];
+    expect(ajv.getSchema('https://aiwg.io/schemas/civic-action/v1/correction-record.schema.json')!(emptyCorrection)).toBe(false);
   });
 
   it('exposes stable JSON CLI results and usage exit codes', async () => {
@@ -264,6 +348,16 @@ describe('civic-action addon', () => {
         expect(payload.code).toBe('CIVIC_SCHEMA_INVALID');
         expect(payload.validation_errors.length).toBeGreaterThan(0);
       }
+
+      const noisy = json('examples/valid/source-registry.json');
+      noisy.retrievals = Array.from({ length: 100 }, () => ({}));
+      writeFileSync(join(temporaryRoot, 'noisy-source.json'), `${JSON.stringify(noisy)}\n`);
+      const bounded = await civicAction(['noisy-source.json'], { cwd: temporaryRoot, subcommand: 'source-gate' });
+      const boundedPayload = JSON.parse(bounded.message);
+      expect(bounded.exitCode).toBe(2);
+      expect(boundedPayload.validation_error_count).toBeGreaterThan(50);
+      expect(boundedPayload.validation_errors).toHaveLength(50);
+      expect(boundedPayload.validation_errors_truncated).toBe(true);
     } finally {
       rmSync(temporaryRoot, { recursive: true, force: true });
     }
@@ -279,5 +373,10 @@ describe('civic-action addon', () => {
       expect((read(`docs/research/${file}`).match(/https:\/\//g) ?? []).length).toBeGreaterThan(5);
     }
     expect(read('docs/research/synthesis-and-readiness.md')).toContain('proceed with an opt-in addon');
+    const manifest = json('manifest.json');
+    for (const skill of manifest.skills) {
+      expect(read(`skills/${skill}/SKILL.md`), `${skill} does not link the control-to-source matrix`)
+        .toContain('docs/research/control-source-matrix.md');
+    }
   });
 });

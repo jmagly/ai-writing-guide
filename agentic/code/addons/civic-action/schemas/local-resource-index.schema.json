@@ -25,8 +25,33 @@
     "validation": {"type": "object", "additionalProperties": false, "required": ["validator", "version", "status", "findings"], "properties": {"validator": {"type": "string"}, "version": {"type": "string"}, "status": {"enum": ["pass", "warn", "block"]}, "findings": {"type": "array", "items": {"type": "string"}}}}
   },
   "allOf": [
-    {"if": {"properties": {"vertical": {"const": "cap"}}}, "then": {"properties": {"vertical_fields": {"required": ["identifier", "sender", "sent", "status", "msg_type", "scope", "references", "incidents", "language", "category", "event", "urgency", "severity", "certainty", "effective", "onset", "expires", "headline", "description", "instruction", "web", "contact", "areas"]}}}},
-    {"if": {"properties": {"vertical": {"const": "gtfs"}}}, "then": {"properties": {"vertical_fields": {"required": ["feed_version", "agency_ids", "route_ids", "trip_ids", "stop_ids", "stop_time_count", "service_ids", "calendar_dates", "agency_timezone", "service_date", "active_service_dates"]}}}},
-    {"if": {"properties": {"vertical": {"const": "hsds"}}}, "then": {"properties": {"vertical_fields": {"required": ["organization_id", "service_id", "location_ids", "service_at_location_ids", "schedule_ids", "contact_ids", "phone_ids", "eligibility", "fees", "languages", "taxonomy_terms", "service_areas"]}}}}
+    {"if": {"properties": {"vertical": {"const": "cap"}}}, "then": {"properties": {"vertical_fields": {"required": ["identifier", "sender", "sent", "status", "msg_type", "scope", "references", "incidents", "language", "category", "event", "urgency", "severity", "certainty", "effective", "onset", "expires", "headline", "description", "instruction", "web", "contact", "areas"]}, "structured_data": {"properties": {"format": {"const": "cap-1.2"}}}}}},
+    {"if": {"properties": {"vertical": {"const": "gtfs"}}}, "then": {"properties": {"vertical_fields": {"required": ["feed_version", "agency_ids", "route_ids", "trip_ids", "stop_ids", "stop_time_count", "service_ids", "calendar_dates", "agency_timezone", "service_date", "active_service_dates"]}, "structured_data": {"properties": {"format": {"const": "gtfs-static"}}}}}},
+    {"if": {"properties": {"vertical": {"const": "hsds"}}}, "then": {"properties": {"vertical_fields": {"required": ["organization_id", "service_id", "location_ids", "service_at_location_ids", "schedule_ids", "contact_ids", "phone_ids", "eligibility", "fees", "languages", "taxonomy_terms", "service_areas"]}, "structured_data": {"properties": {"format": {"const": "hsds"}}}}}},
+    {
+      "if": {"properties": {"publication_gate_status": {"const": "pass"}}},
+      "then": {"properties": {
+        "publisher_verified": {"const": true},
+        "freshness_state": {"const": "fresh"},
+        "public_scope": {"const": true},
+        "structured_data": {"properties": {"mapping_state": {"enum": ["native", "documented_transform"]}}},
+        "review": {"properties": {
+          "correction_state": {"const": "clear"},
+          "takedown_state": {"enum": ["clear", "rejected"]},
+          "reviewer": {"type": "string", "minLength": 1}
+        }},
+        "validation": {"properties": {"status": {"const": "pass"}}}
+      }}
+    },
+    {
+      "if": {"allOf": [
+        {"properties": {"vertical": {"const": "cap"}}},
+        {"properties": {"publication_gate_status": {"const": "pass"}}}
+      ]},
+      "then": {"properties": {"vertical_fields": {"properties": {
+        "status": {"const": "Actual"},
+        "scope": {"const": "Public"}
+      }}}}
+    }
   ]
 }

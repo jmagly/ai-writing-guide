@@ -12,6 +12,7 @@ const SCHEMA_FILES = {
 
 const ajv = new Ajv({ allErrors: true, strict: false });
 addFormats(ajv);
+const MAX_PUBLIC_ERRORS = 50;
 
 const validators = Object.fromEntries(Object.entries(SCHEMA_FILES).map(([kind, file]) => {
   const schemaUrl = new URL(`../schemas/${file}`, import.meta.url);
@@ -24,7 +25,9 @@ export class CivicSchemaValidationError extends Error {
     super(`${kind} does not conform to its civic-action schema`);
     this.name = 'CivicSchemaValidationError';
     this.code = 'CIVIC_SCHEMA_INVALID';
-    this.validationErrors = errors;
+    this.validationErrorCount = errors.length;
+    this.validationErrors = errors.slice(0, MAX_PUBLIC_ERRORS);
+    this.validationErrorsTruncated = errors.length > MAX_PUBLIC_ERRORS;
   }
 }
 

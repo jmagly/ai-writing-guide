@@ -3,8 +3,13 @@ import path from 'node:path';
 import { evaluateMeeting, evaluatePublication, evaluateSourceRegistry, exitCodeFor } from '../lib/gate-engine.mjs';
 import { assertCivicSchema, CivicSchemaValidationError } from '../lib/schema-validator.mjs';
 
+const MAX_INPUT_BYTES = 2 * 1024 * 1024;
+
 async function readJson(cwd, file) {
-  return JSON.parse(await fs.readFile(path.resolve(cwd, file), 'utf8'));
+  const absolute = path.resolve(cwd, file);
+  const metadata = await fs.stat(absolute);
+  if (metadata.size > MAX_INPUT_BYTES) throw new Error(`Civic input exceeds ${MAX_INPUT_BYTES} bytes: ${file}`);
+  return JSON.parse(await fs.readFile(absolute, 'utf8'));
 }
 
 export default async function civicAction(args, context = {}) {
@@ -38,7 +43,11 @@ export default async function civicAction(args, context = {}) {
       schema: 'aiwg.civic.gate-error.v1',
       code: error instanceof CivicSchemaValidationError ? error.code : 'CIVIC_INPUT_INVALID',
       error: error instanceof Error ? error.message : String(error),
-      ...(error instanceof CivicSchemaValidationError ? { validation_errors: error.validationErrors } : {}),
+      ...(error instanceof CivicSchemaValidationError ? {
+        validation_error_count: error.validationErrorCount,
+        validation_errors_truncated: error.validationErrorsTruncated,
+        validation_errors: error.validationErrors,
+      } : {}),
     };
     return { exitCode: 2, message: JSON.stringify(payload, null, 2) };
   }
