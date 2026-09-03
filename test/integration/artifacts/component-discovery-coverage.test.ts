@@ -33,8 +33,8 @@ describe('shipped component discovery coverage', () => {
 
     expect(report.ok).toBe(true);
     expect(report.counts).toMatchObject({
-      total: 59,
-      covered: 59,
+      total: 60,
+      covered: 60,
       missing: 0,
       invalid: 0,
       missingRuntimeAssets: 0,

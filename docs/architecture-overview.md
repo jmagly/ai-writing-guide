@@ -22,7 +22,7 @@ Deeper guides:
 flowchart LR
   subgraph Source["AIWG framework source"]
     direction TB
-    KERN[25 kernel skills<br/>always visible]
+    KERN[26 kernel skills<br/>always visible]
     STD[~455 standard skills<br/>read from $AIWG_ROOT]
     AGENT[200+ agents]
     RULES[60+ rules]
@@ -70,7 +70,7 @@ flowchart LR
 
 ## 2. The two-tier skill model — kernel vs standard
 
-AIWG ships **480+ skills**. Platform context windows can't fit them all. So AIWG splits them: **25 kernel skills** are always loaded into the platform's flat skill listing; the remaining **~455 standard skills** stay at `$AIWG_ROOT` and reach the agent only when queried via the artifact index.
+AIWG ships **480+ skills**. Platform context windows can't fit them all. So AIWG splits them: **26 kernel skills** are always loaded into the platform's flat skill listing; the remaining **~455 standard skills** stay at `$AIWG_ROOT` and reach the agent only when queried via the artifact index.
 
 ```mermaid
 flowchart TB
