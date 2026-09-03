@@ -10,13 +10,15 @@ triggers: [retire this dataset, remove this index safely, delete derived dataset
 
 # Dataset Retirement
 
-First use `aiwg dataset plan <dataset-ref> --capability retire --json`. Require
+First encode the retirement operation and complete enumeration in a governed
+plan input, then use `aiwg dataset plan --file <plan-input.json> --json`. Require
 complete bounded enumeration of affected canonical and derived artifacts,
 retention/legal-hold checks, tombstones by default, rollback limits, and a
 reviewed bulk threshold. Dataset Policy Reviewer approval must match the exact
 plan digest.
 
-Delegate only through the retirement operation exposed by `aiwg dataset`.
+Delegate only through `aiwg dataset ingest` with the exact retirement plan
+digest, idempotency key, approval IDs, preview digest, and threshold.
 Never delete directly. Preserve canonical material unless explicitly and
 separately authorized. Finish with `aiwg dataset verify <run-ref> --json` and a
 reconciliation/evidence handoff.

@@ -16,6 +16,7 @@ traceability, provenance, graph, and export independently; never force a preset.
 
 For each selection state rationale, assumptions, materialized artifact and its
 class, privacy/network/write implications, required versus optional status, and
-explicit fallback. Required absence fails closed. Use
-`aiwg dataset plan <source> --capability <list> --json` to create the candidate
+explicit fallback. Required absence fails closed. Write those decisions to the
+governed plan input, then use
+`aiwg dataset plan --file <plan-input.json> --json` to create the candidate
 plan and hand its immutable reference to `dataset-plan-review`.

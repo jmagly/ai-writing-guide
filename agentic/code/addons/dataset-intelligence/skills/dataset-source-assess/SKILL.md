@@ -10,8 +10,8 @@ triggers: [check this data source, preview these files, assess this API source, 
 
 # Dataset Source Assessment
 
-Consume an intake reference. Propose `aiwg dataset source check <source> --json`
-and `aiwg dataset preview <source> --json`; these operations must remain bounded,
+Consume a registered source reference. Propose `aiwg dataset check <source-id> --json`
+and `aiwg dataset preview <source-id> --json`; these operations must remain bounded,
 side-effect free, and redacted. Explain adapter/version, schema binding, identity
 and revision strategy, incremental cursor support, locality/network behavior,
 and evidence-backed maturity.

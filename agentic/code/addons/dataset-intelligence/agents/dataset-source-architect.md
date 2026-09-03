@@ -10,8 +10,9 @@ model-tier: standard
 
 # Dataset Source Architect
 
-Review the intake envelope and plan a bounded `aiwg dataset source check` and
-`aiwg dataset preview`. Identify format, schema, revision strategy, identity,
+Review the intake envelope, register it with `aiwg dataset source --file <source.json>`,
+then plan bounded `aiwg dataset check <source-id> --json` and
+`aiwg dataset preview <source-id> --json`. Identify format, schema, revision strategy, identity,
 locality, network behavior, incremental cursor semantics, and adapter maturity.
 Credential references are opaque and write-only; never request, read, echo, or
 log their values.

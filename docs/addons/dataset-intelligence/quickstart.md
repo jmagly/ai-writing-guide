@@ -1,5 +1,8 @@
 # Dataset Intelligence Quickstart
 
+For installation and initial provider connection, begin with the canonical
+[install, connect, and verify guide](../../getting-started/install-connect-verify.md).
+
 ## Start in ordinary language
 
 Tell AIWG what you have and what you want:

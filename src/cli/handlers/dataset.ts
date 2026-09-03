@@ -7,7 +7,7 @@ import { DatasetOrchestrationService } from "../../dataset/orchestration-service
 import { presentDatasetResult } from "../../dataset/presentation.js";
 import type { CommandHandler, HandlerContext, HandlerResult } from "./types.js";
 
-const ACTIONS = [
+export const DATASET_ACTIONS = [
   "source",
   "check",
   "preview",
@@ -70,14 +70,14 @@ function service(ctx: HandlerContext) {
     },
   );
 }
-async function execute(ctx: HandlerContext): Promise<HandlerResult> {
+export async function executeDatasetCommand(ctx: HandlerContext, providedService?: DatasetOrchestrationService): Promise<HandlerResult> {
   const [action, ...ids] = positions(ctx.args);
-  if (!ACTIONS.includes(action as any))
+  if (!DATASET_ACTIONS.includes(action as any))
     return {
       exitCode: 1,
       message: `Unknown dataset action '${action ?? ""}'.`,
     };
-  const s = service(ctx);
+  const s = providedService ?? service(ctx);
   let result: any;
   switch (action) {
     case "source":
@@ -173,7 +173,7 @@ export const datasetHandler: CommandHandler = {
   },
   async execute(ctx) {
     try {
-      return await execute(ctx);
+      return await executeDatasetCommand(ctx);
     } catch (e) {
       return {
         exitCode: 1,

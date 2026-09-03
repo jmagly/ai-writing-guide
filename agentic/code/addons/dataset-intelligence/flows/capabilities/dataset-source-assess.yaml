@@ -6,7 +6,7 @@ metadata:
   labels: {category: assessment, idempotent: "true"}
   annotations: {boundary: declarative-aiwg-dataset-delegation, operation: aiwg-dataset-source-check-and-preview}
 spec:
-  description: Review bounded aiwg dataset source check and preview evidence without mutation, credential-value access, or shadow connector execution.
+  description: Review bounded aiwg dataset check and preview evidence without mutation, credential-value access, or shadow connector execution.
   version: 1.0.0
   inputs: [{name: intake_ref, type: string, required: true}]
   outputs: [{name: assessment_ref, type: string}]

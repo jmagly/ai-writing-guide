@@ -11,8 +11,8 @@ triggers: [export this dataset, create a PROV report, make an OpenLineage export
 # Dataset Export
 
 Review authorization, privacy, destination, schema binding, and the selected
-versioned exchange profile. Delegate to
-`aiwg dataset export <dataset-ref> --profile <profile> --json` only after any
+versioned exchange profile in the approved plan. Delegate to
+`aiwg dataset export <artifact-id> --json` only after any
 required plan approval. Surface exact mapping coverage, unsupported features,
 extensions, compatibility, and loss report.
 

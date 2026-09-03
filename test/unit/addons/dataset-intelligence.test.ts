@@ -5,6 +5,7 @@ import Ajv from 'ajv'
 import addFormats from 'ajv-formats'
 import yaml from 'js-yaml'
 import { describe, expect, it } from 'vitest'
+import { DATASET_ACTIONS } from '../../../src/cli/handlers/dataset.js'
 
 const ROOT = resolve('agentic/code/addons/dataset-intelligence')
 const read = (path: string) => readFileSync(resolve(ROOT, path), 'utf8')
@@ -91,6 +92,16 @@ describe('dataset-intelligence addon', () => {
     expect(allGuidance).toMatch(/Fortemi shard/i)
     expect(allGuidance).toMatch(/derived|regenerable/)
     expect(allGuidance).toMatch(/degrad/)
+  })
+
+  it('binds command, skill, and flow delegation to the exact shared service action surface', () => {
+    const guidance = [...files('commands'), ...files('skills'), ...files('flows')].map(read).join('\n')
+    const explicit = [...guidance.matchAll(/aiwg dataset (source|check|preview|plan|ingest|status|show|verify|query|lineage|export|cancel|retry)\b/g)].map(match => match[1])
+    expect(explicit.length).toBeGreaterThan(10)
+    expect(explicit.every(action => DATASET_ACTIONS.includes(action as any))).toBe(true)
+    expect(guidance).not.toMatch(/aiwg dataset source check|aiwg dataset ingest --plan|aiwg dataset export [^`\n]+ --profile|aiwg dataset plan [^`\n]+ --capability/)
+    expect(read('manifest.json')).toContain('"shadowRuntime": false')
+    expect(guidance).not.toMatch(/new DatasetOrchestrationService|orchestration-service\.(?:ts|js)/)
   })
 
   it('supports novice and domain-specific discovery without forking contracts', () => {

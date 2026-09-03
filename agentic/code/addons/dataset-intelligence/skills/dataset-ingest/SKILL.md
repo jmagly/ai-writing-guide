@@ -11,9 +11,10 @@ triggers: [ingest the dataset, run the approved plan, resume dataset sync, updat
 # Dataset Ingest
 
 Require the approved immutable plan reference and matching approval reference.
-Delegate only through `aiwg dataset ingest --plan <plan-ref> --json`. For an
-incremental continuation, use the orchestration service's resume/checkpoint
-option as exposed by `aiwg dataset`; never decode or advance a cursor here.
+Delegate only through `aiwg dataset ingest <plan-id> --digest <plan-digest>
+--idempotency-key <key> --json`, adding only reviewed `--approve` and
+reconciliation bindings. For an incremental continuation, use `retry <run-id>`
+when the orchestration service reports the run retryable; never decode or advance a cursor here.
 
 Surface run ID, status, cancellation affordance, prior and new committed
 checkpoint references, rejections, degraded behavior, and receipt reference.

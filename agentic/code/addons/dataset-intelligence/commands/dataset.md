@@ -5,8 +5,9 @@ allowed-tools: Read, Bash
 ---
 
 Start with `dataset-intelligence` for plain-language requests. Use the canonical
-`aiwg dataset` CLI for every check, preview, plan, ingest, status, cancellation,
-verification, lineage, export, synchronization, or retirement operation.
+`aiwg dataset` CLI actions only: source, check, preview, plan, ingest, status,
+show, verify, query, lineage, export, cancel, and retry. Synchronization and
+retirement are governed plan/ingest workflows, not separate runtimes.
 
 Never perform source enumeration, indexing, checkpoint mutation, deletion, or
 backend writes inside this command wrapper. Show the exact proposed
