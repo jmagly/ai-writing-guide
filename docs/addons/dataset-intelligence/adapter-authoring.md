@@ -1,6 +1,6 @@
 # Source adapter authoring and qualification
 
-Use the normative [source adapter guide](../../dataset/source-adapters.md)
+Use the normative [source adapter guide](https://github.com/jmagly/aiwg/blob/main/docs/dataset/source-adapters.md)
 and `source-adapter.v1` schema. An adapter manifest declares identity, version,
 source kinds, configuration schema, credential locators, capability limits,
 privacy/network behavior, lifecycle support, checkpoint compatibility, and
