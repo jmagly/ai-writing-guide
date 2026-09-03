@@ -90,5 +90,5 @@ verification.
 
 See [offline and troubleshooting](offline-troubleshooting.md) for diagnostics
 and [migration](migration-guide.md) before changing an existing workflow. Use
-the [standards profile matrix](../../../dataset/standards-profiles.md) to
+the [standards profile matrix](../../dataset/standards-profiles.md) to
 distinguish tested profiles from descriptor-only plans.

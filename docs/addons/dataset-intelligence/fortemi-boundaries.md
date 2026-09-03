@@ -8,7 +8,7 @@
 | Local compatibility projection | bounded legacy/portable view | explicitly lossy or regenerable | retain canonical ledger and loss report |
 
 The static v1/v2 export contract is documented in [Fortemi index
-export](../../../integrations/fortemi-index-export.md). A successful Fortemi
+export](../../integrations/fortemi-index-export.md). A successful Fortemi
 query proves neither source availability nor provenance. The Fortemi search
 projection is not provenance, and relationships without evidence require a
 separate evidence-bearing conversion.
