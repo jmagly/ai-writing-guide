@@ -51,6 +51,10 @@ import type {
  */
 export interface McpClientLike {
   callTool(name: string, args: Record<string, unknown>): Promise<unknown>;
+  listTools?(): Promise<{
+    tools?: Array<{ name: string; inputSchema?: Record<string, unknown> }>;
+  }>;
+  serverVersion?(): { name?: string; version?: string } | undefined;
   close?(): Promise<void>;
 }
 
@@ -379,6 +383,12 @@ export const createDefaultMcpClient = async (
   return {
     async callTool(name, args) {
       return unwrapMcpToolResult(await client.callTool({ name, arguments: args }));
+    },
+    async listTools() {
+      return client.listTools();
+    },
+    serverVersion() {
+      return client.getServerVersion();
     },
     async close() {
       await client.close();

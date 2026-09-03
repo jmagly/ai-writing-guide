@@ -120,6 +120,23 @@ Fortemi's design is immutable — no destructive delete. The adapter's `delete()
   HTTPS and missing credential references fail closed.
 - **No `update`-on-conflict semantics.** Two concurrent `write`s to the same `note_id` may race at the Fortemi side. Behavior is governed by Fortemi's versioning model, not by the adapter.
 
+## Live qualification
+
+Run the opt-in live gate against a deployed Streamable HTTP MCP endpoint:
+
+```bash
+AIWG_FORTEMI_LIVE_URL=https://memory.example.internal/mcp \
+AIWG_FORTEMI_LIVE_TOKEN="$AIWG_FORTEMI_TOKEN" \
+AIWG_FORTEMI_CONTRACT_REVISION=2026-07-06 \
+npm run test:fortemi:live
+```
+
+Without `AIWG_FORTEMI_LIVE_URL`, the suite is skipped and ordinary CI remains offline. The transport retains the adapter's HTTPS requirement (plain HTTP is accepted only on loopback), and the token value is read from the environment rather than written to configuration or output. `AIWG_FORTEMI_LIVE_TIMEOUT_MS` controls each bounded operation (250–30000 ms; default 5000).
+
+Qualification first requests the MCP tool catalog and reports the server name/version, optional contract revision, and per-operation schema compatibility. If any adapter argument is absent or no longer required, qualification stops before invoking a tool. This makes the currently observed 2026.9.0 drift (`id` UUIDs, `capture_knowledge action=create`, and no `list_notes.id_prefix`) actionable without leaving data behind.
+
+Reads, list, and search use a fresh `aiwg-qualification-<UUID>` namespace only after schema preflight succeeds. Writes are disabled by default. Set `AIWG_FORTEMI_LIVE_ALLOW_WRITE=1` only when an isolated qualification record may be retained by the server's immutable history.
+
 ## Setup
 
 1. Install and run Fortemi (separately from AIWG).

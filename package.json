@@ -62,6 +62,7 @@
     "benchmark:index:sqlite": "tsx tools/benchmarks/sqlite-graph.ts",
     "verify:storage-claims": "node tools/benchmarks/verify-storage-claims.mjs",
     "test:integration": "vitest run --config config/vitest.config.js test/integration/cli-startup.test.ts test/integration/cli-perf.test.ts",
+    "test:fortemi:live": "vitest run --config config/vitest.config.js test/integration/storage-fortemi-live.test.ts",
     "test:perf": "vitest run --config config/vitest.config.js test/integration/cli-perf.test.ts",
     "test:ci": "vitest run --config config/vitest.config.js && vitest run --config config/vitest.uat.config.js",
     "test:coverage": "vitest --config config/vitest.config.js --coverage",

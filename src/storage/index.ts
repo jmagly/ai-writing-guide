@@ -50,6 +50,11 @@ export { LogseqAdapter } from './backends/logseq.js';
 export { FortemiAdapter } from './backends/fortemi.js';
 export type { McpClientLike, McpClientFactory, FortemiAdapterOptions } from './backends/fortemi.js';
 export {
+  qualifyLiveFortemi,
+  FORTEMI_QUALIFICATION_VERSION,
+} from './fortemi-qualification.js';
+export type { FortemiQualificationReport } from './fortemi-qualification.js';
+export {
   STORAGE_BACKEND_CONTRACT,
   STORAGE_BACKEND_MATRIX,
   StorageCapabilityError,
