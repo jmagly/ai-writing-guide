@@ -1,0 +1,1 @@
+{"sentinel":"SYNTHETIC_CREDENTIAL_DO_NOT_LOG","paths":["../escape","link/outside"],"urls":["http://127.0.0.1/private","https://allowed.example/redirect-private"],"limits":{"compressedBytes":64,"expandedBytes":1048577,"records":10001,"nesting":33}}

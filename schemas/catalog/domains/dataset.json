@@ -6,6 +6,42 @@
   "policy": { "strict": true, "compatibility": "backward", "requireFixtures": true },
   "artifacts": [
     {
+      "logicalName": "dataset.conformance-manifest",
+      "id": "https://aiwg.io/schemas/dataset/conformance-manifest.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": { "id": "aiwg-maintainers" },
+      "authority": { "kind": "canonical", "path": "schemas/dataset/conformance-manifest.v1.schema.json" },
+      "compatibility": { "mode": "backward" },
+      "consumers": [
+        { "id": "dataset-conformance-policy", "boundary": "matrix completeness, maturity, and evidence policy", "path": "src/dataset/conformance.ts" },
+        { "id": "dataset-conformance-runner", "boundary": "repository-local and controlled qualification", "path": "tools/qualification/dataset-conformance.ts" }
+      ],
+      "fixtures": { "valid": ["test/fixtures/dataset-intelligence/v1/manifest.json"], "invalid": ["test/fixtures/dataset/conformance-manifest.invalid.json"] },
+      "projections": [{ "kind": "types", "path": "src/dataset/conformance-types.ts", "generated": false }, { "kind": "validator", "path": "src/dataset/conformance.ts", "generated": false }],
+      "publication": { "public": true }
+    },
+    {
+      "logicalName": "dataset.conformance-receipt",
+      "id": "https://aiwg.io/schemas/dataset/conformance-receipt.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": { "id": "aiwg-maintainers" },
+      "authority": { "kind": "canonical", "path": "schemas/dataset/conformance-receipt.v1.schema.json" },
+      "compatibility": { "mode": "backward" },
+      "dependencies": [{ "id": "https://aiwg.io/schemas/dataset/conformance-manifest.v1.schema.json", "version": "1.0.0" }],
+      "consumers": [{ "id": "dataset-conformance-gate", "boundary": "receipt verification and stable-release eligibility", "path": "src/dataset/conformance.ts" }],
+      "fixtures": { "valid": ["test/fixtures/dataset/conformance-receipt.valid.json"], "invalid": ["test/fixtures/dataset/conformance-receipt.invalid.json"] },
+      "projections": [{ "kind": "types", "path": "src/dataset/conformance-types.ts", "generated": false }, { "kind": "validator", "path": "src/dataset/conformance.ts", "generated": false }],
+      "publication": { "public": true }
+    },
+    {
       "logicalName": "dataset.source-adapter",
       "id": "https://aiwg.io/schemas/dataset/source-adapter.v1.schema.json",
       "version": "1.0.0",

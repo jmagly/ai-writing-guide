@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import {
   computeProcessingPlanDigest,
   computeRunReceiptDigest,
+  datasetDigest,
+  DatasetContractError,
   negotiateDatasetCapabilities,
   verifyProcessingPlanDigest,
 } from "./contracts.js";
@@ -53,6 +55,8 @@ const fail = (action: DatasetAction, e: unknown): DatasetResult => {
   const x =
     e instanceof DatasetOrchestrationError
       ? e
+      : e instanceof DatasetContractError
+        ? new DatasetOrchestrationError(e.code, e.message, "plan")
       : new DatasetOrchestrationError(
           "DATASET_INTERNAL_ERROR",
           e instanceof Error ? e.message : String(e),
@@ -505,12 +509,31 @@ export class DatasetOrchestrationService {
           `Unknown run ${runId}`,
         );
       const plan = await this.repo.getPlan(run.planId);
+      const source = plan ? await this.repo.getSource(plan.source.id) : undefined;
+      const records = await this.repo.listArtifactRecords(`artifact:${run.planId}`);
       return ok("lineage", {
         artifactId: `artifact:${run.planId}`,
         artifactRevision: run.planDigest.value,
         runId,
         sourceRevisionId: plan?.source.revisionId,
         planDigest: run.planDigest,
+        principal: plan?.createdBy,
+        adapter: plan?.adapter,
+        schemas: plan?.schemas,
+        checkpoint: run.checkpoint ?? source?.checkpoint,
+        validation: run.receipt
+          ? {
+              receiptId: run.receipt.id,
+              receiptDigest: run.receipt.receiptDigest,
+              valid:
+                computeRunReceiptDigest(run.receipt).value ===
+                run.receipt.receiptDigest.value,
+            }
+          : undefined,
+        records: records.map((record, ordinal) => ({
+          ordinal,
+          digest: datasetDigest(record),
+        })),
       });
     } catch (e) {
       return fail("lineage", e);

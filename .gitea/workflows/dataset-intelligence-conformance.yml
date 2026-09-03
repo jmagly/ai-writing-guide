@@ -1,0 +1,88 @@
+name: Dataset Intelligence Conformance
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/dataset/**'
+      - 'schemas/dataset/**'
+      - 'test/conformance/dataset/**'
+      - 'test/fixtures/dataset-intelligence/**'
+      - 'tools/qualification/dataset-conformance.ts'
+      - '.gitea/workflows/dataset-intelligence-conformance.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'src/dataset/**'
+      - 'schemas/dataset/**'
+      - 'test/conformance/dataset/**'
+      - 'test/fixtures/dataset-intelligence/**'
+      - 'tools/qualification/dataset-conformance.ts'
+      - '.gitea/workflows/dataset-intelligence-conformance.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: dataset-conformance-${{ gitea.head_ref || gitea.ref }}
+  cancel-in-progress: true
+
+jobs:
+  local-contract:
+    runs-on: ubuntu-latest
+    container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint:schemas && npm run schema:catalog:check
+      - run: npm run test:conformance:dataset
+      - name: Produce explicit local receipt
+        run: npm run qualify:dataset -- --mode local --report test-results/dataset-conformance.json
+      - name: Reject stale, weakened, or unverifiable evidence
+        run: npm run verify:dataset-conformance -- --verify test-results/dataset-conformance.json
+      - name: Preserve receipt including pending cells
+        if: always()
+        uses: actions/upload-artifact@c24449f33cd45d4826c6702db7e49f7cdb9b551d
+        with:
+          name: dataset-conformance-${{ gitea.sha }}
+          path: test-results/dataset-conformance.json
+          if-no-files-found: error
+
+  pinned-fortemi-core:
+    needs: [local-contract]
+    runs-on: ubuntu-latest
+    container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb
+    timeout-minutes: 20
+    env:
+      FORTEMI_COMMIT: e528fbf889f5844dfeaa170eed6e33b67906b54b
+      FORTEMI_CHECKOUT: /tmp/dataset-fortemi-core
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa
+        with:
+          version: 10.6.5
+      - run: npm ci
+      - name: Resolve the exact authorized Fortemi source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init -q "$FORTEMI_CHECKOUT"
+          git -C "$FORTEMI_CHECKOUT" remote add origin https://git.integrolabs.net/Fortemi/fortemi-react.git
+          git -C "$FORTEMI_CHECKOUT" fetch --quiet --no-tags --depth=1 origin "$FORTEMI_COMMIT"
+          git -C "$FORTEMI_CHECKOUT" checkout --quiet --detach FETCH_HEAD
+          test "$(git -C "$FORTEMI_CHECKOUT" rev-parse HEAD)" = "$FORTEMI_COMMIT"
+          test -z "$(git -C "$FORTEMI_CHECKOUT" status --porcelain)"
+      - name: Install Fortemi's exact locked graph
+        run: pnpm --dir "$FORTEMI_CHECKOUT" install --frozen-lockfile
+      - name: Run pinned semantic parity and emit cross-repository receipt
+        run: npm run qualify:dataset -- --mode cross-repo --fortemi-checkout "$FORTEMI_CHECKOUT" --fortemi-commit "$FORTEMI_COMMIT" --report test-results/dataset-cross-repo.json
+      - name: Verify bindings and release eligibility
+        run: |
+          npm run verify:dataset-conformance -- --verify test-results/dataset-cross-repo.json
+          node -e "const r=require('./test-results/dataset-cross-repo.json'); if (!r.summary.stableEligible) throw new Error('Dataset conformance is not stable-eligible')"
+      - if: always()
+        uses: actions/upload-artifact@c24449f33cd45d4826c6702db7e49f7cdb9b551d
+        with:
+          name: dataset-cross-repo-${{ gitea.sha }}
+          path: test-results/dataset-cross-repo.json
+          if-no-files-found: error

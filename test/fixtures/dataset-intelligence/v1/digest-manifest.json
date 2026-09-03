@@ -1,0 +1,17 @@
+{
+  "corpusVersion": "1.0.0",
+  "seed": "dataset-intelligence-v1",
+  "algorithm": "sha256",
+  "files": {
+    "incremental/replay.json": "57e49948d2915409a1d55e717173fb896e13309cbafece32c8adc464f860e151",
+    "offline/cache.json": "a19c831f2e5fb87124112fa1c1eea194b7c05806c33d4724432e89466eb99960",
+    "security/adversarial.json": "06b7a68645b74cc1cb6acc73a3082bf9ea1e6347e8e8fdc049cfa260b72808dc",
+    "sources/directory/one.json": "5c6e8d8cd05a59ebf3874e6e3e6c160e46053d1fa7f262032ffe1ff49e587db3",
+    "sources/directory/two.json": "db5d19d7662144eb09791072230ed35b926b5d09c8f7c42ae811a5b241097980",
+    "sources/http-response.json": "be4852e14595a63494b748bebaa80547f56374223deedb926114fbd50b2b78e5",
+    "sources/plain.txt": "f8ff7c8658bb9f3c2939e70b72ba6e0271fd2d4889befe275fae040e6805ed2b",
+    "sources/records.csv": "c9b34599422e16ba7d7ff31470237cc7ad1fc93134c536d7539b07d34d18cdbc",
+    "sources/records.jsonl": "18e17c1b559cb861cc801a45ebeb5fdfb1ab74ab10aee55accec9b5c46539d0d",
+    "standards/lineage.json": "a02f88ff99e9e2733a30ba6edf4c54a4f92a2896547eb814170fdc9335ec11c7"
+  }
+}

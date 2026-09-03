@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/dataset/conformance-receipt.v1.schema.json",
+  "title": "AIWG Dataset Intelligence Conformance Receipt v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["contract", "schemaVersion", "corpusVersion", "manifestDigest", "resultDigest", "bindings", "startedAt", "endedAt", "results", "summary"],
+  "properties": {
+    "contract": { "const": "aiwg.dataset.conformance/v1" }, "schemaVersion": { "$ref": "#/$defs/version" }, "corpusVersion": { "$ref": "#/$defs/version" },
+    "manifestDigest": { "$ref": "#/$defs/digest" }, "resultDigest": { "$ref": "#/$defs/digest" },
+    "startedAt": { "$ref": "#/$defs/time" }, "endedAt": { "$ref": "#/$defs/time" },
+    "bindings": { "$ref": "#/$defs/bindings" },
+    "results": { "type": "array", "items": { "$ref": "#/$defs/result" } },
+    "summary": { "type": "object", "additionalProperties": false, "required": ["passed", "failed", "pending", "stableEligible"], "properties": { "passed": { "type": "integer", "minimum": 0 }, "failed": { "type": "integer", "minimum": 0 }, "pending": { "type": "integer", "minimum": 0 }, "stableEligible": { "type": "boolean" } } }
+  },
+  "$defs": {
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$" }, "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }, "time": { "type": "string", "format": "date-time", "pattern": "Z$" },
+    "digestMap": { "type": "object", "minProperties": 1, "additionalProperties": { "$ref": "#/$defs/digest" } },
+    "bindings": { "type": "object", "additionalProperties": false, "required": ["aiwgCommit", "packageDigests", "schemaDigests", "fixtureDigest", "configurationDigest"], "properties": { "aiwgCommit": { "type": "string", "pattern": "^(?:[0-9a-f]{40}|sha256:[0-9a-f]{64})$" }, "fortemiCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" }, "packageDigests": { "$ref": "#/$defs/digestMap" }, "schemaDigests": { "$ref": "#/$defs/digestMap" }, "fixtureDigest": { "$ref": "#/$defs/digest" }, "descriptorDigest": { "$ref": "#/$defs/digest" }, "configurationDigest": { "$ref": "#/$defs/digest" } } },
+    "evidence": { "type": "object", "additionalProperties": false, "required": ["kind", "reference", "digest"], "properties": { "kind": { "enum": ["fixture", "real-source", "cross-repo", "live-qualification"] }, "reference": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" } } },
+    "result": { "type": "object", "additionalProperties": false, "required": ["cellId", "status", "evidence", "observed"], "properties": { "cellId": { "type": "string", "minLength": 1 }, "status": { "enum": ["passed", "failed", "pending"] }, "diagnostic": { "type": "string", "minLength": 1 }, "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidence" } }, "observed": { "type": "object", "additionalProperties": false, "required": ["networkAttempts"], "properties": { "records": { "type": "integer", "minimum": 0 }, "bytes": { "type": "integer", "minimum": 0 }, "durationMs": { "type": "integer", "minimum": 0 }, "networkAttempts": { "type": "integer", "minimum": 0 } } } } }
+  }
+}

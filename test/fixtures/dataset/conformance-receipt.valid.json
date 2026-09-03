@@ -1,0 +1,18 @@
+{
+  "contract": "aiwg.dataset.conformance/v1",
+  "schemaVersion": "1.0.0",
+  "corpusVersion": "1.0.0",
+  "manifestDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "resultDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "bindings": {
+    "aiwgCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "packageDigests": { "aiwg": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" },
+    "schemaDigests": { "manifest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd" },
+    "fixtureDigest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "configurationDigest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  },
+  "startedAt": "2026-01-01T00:00:00Z",
+  "endedAt": "2026-01-01T00:00:01Z",
+  "results": [],
+  "summary": { "passed": 0, "failed": 0, "pending": 0, "stableEligible": false }
+}

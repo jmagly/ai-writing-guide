@@ -128,6 +128,9 @@ jobs:
         # CI budget intact. Zero network I/O — fully deterministic. (#1183)
         run: npm run test:conformance
 
+      - name: Run Dataset Intelligence conformance contracts (#2242)
+        run: npm run test:conformance:dataset
+
       - name: Enforce adversarial attestation transport conformance (#2092)
         # Regenerates deterministic real-key fixtures, rejects drift, and proves
         # identical non-waiveable outcomes across every supported transport.
