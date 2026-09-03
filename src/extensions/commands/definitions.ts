@@ -1168,6 +1168,13 @@ export const schemaCommand: Extension = {
   } satisfies CommandMetadata,
 };
 
+export const datasetCommand: Extension = {
+  id: 'dataset', type: 'command', name: 'Dataset Intelligence', description: 'Register, preview, plan, ingest, verify, query, and trace governed datasets', version: '1.0.0',
+  capabilities: ['cli', 'dataset', 'ingest', 'index', 'traceability', 'provenance'], keywords: ['dataset', 'source', 'preview', 'plan', 'ingest', 'verify', 'query', 'lineage', 'export'], category: 'index',
+  platforms: { claude: 'full', generic: 'full' }, deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: { type: 'command', template: 'utility', argumentHint: '<source|check|preview|plan|ingest|status|show|verify|query|lineage|export|cancel|retry> [options]', allowedTools: ['Read', 'Write'] } satisfies CommandMetadata,
+};
+
 // Session Catalog Command (#1903)
 
 export const sessionsCommand: Extension = {
@@ -4002,6 +4009,7 @@ export const commandDefinitions: Extension[] = [
   sessionsCommand,
   outputModeCommand,
   schemaCommand,
+  datasetCommand,
 ];
 
 // ============================================

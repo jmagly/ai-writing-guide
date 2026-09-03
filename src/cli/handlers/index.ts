@@ -144,6 +144,7 @@ import { outputModeHandler } from './output-mode.js';
 import { installationHandler } from './installation.js';
 import { uhpHandler } from './uhp.js';
 import { schemaHandler } from './schema.js';
+import { datasetHandler } from './dataset.js';
 
 import type { CommandHandler } from './types.js';
 
@@ -182,6 +183,7 @@ export {
   artifactVerifyHandler,
   outputModeHandler,
   schemaHandler,
+  datasetHandler,
   installationHandler,
 
   // Project
@@ -371,6 +373,7 @@ export const allHandlers: CommandHandler[] = [
   artifactVerifyHandler,
   outputModeHandler,
   schemaHandler,
+  datasetHandler,
 
   // Workspace management
   ...workspaceHandlers,

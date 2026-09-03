@@ -112,6 +112,16 @@ export interface ProcessingPlan extends ContractBase {
   readonly steps: readonly ProcessingStep[]
   readonly artifactClasses: readonly ArtifactClass[]
   readonly createdBy: string
+  readonly source: { id: string; revisionId: string; identity: string }
+  readonly adapter: { id: string; version: string; configDigest: Digest }
+  readonly schemas: readonly SchemaBinding[]
+  readonly capabilities: readonly CapabilitySpec[]
+  readonly capabilityDecision: CapabilityNegotiationReceipt
+  readonly policy: PolicyBinding
+  readonly execution: { locality: 'local' | 'remote'; backend: string; fallback?: string }
+  readonly estimates: { reads: number; writes: number; bytes?: number; cost?: number; currency?: string }
+  readonly approvals: readonly { id: string; required: boolean; reason: string; threshold?: number }[]
+  readonly reconciliation?: { tombstones: number; previewDigest: Digest; approvalThreshold: number }
   readonly planDigest: Digest
 }
 
