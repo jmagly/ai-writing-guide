@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "aiwg.run-ledger/v2",
+  "eventId": "event:invalid",
+  "sequence": 0,
+  "recordedAt": "not-a-time",
+  "producer": { "id": "software:unknown", "version": "1" },
+  "record": { "recordType": "extension:unregistered", "id": "record:x" },
+  "eventDigest": { "algorithm": "sha256", "value": "not-a-digest" }
+}

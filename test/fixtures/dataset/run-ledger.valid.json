@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "aiwg.run-ledger/v1",
+  "eventId": "urn:aiwg:event:agent-1",
+  "sequence": 1,
+  "recordedAt": "2026-09-02T12:00:00Z",
+  "producer": { "id": "software:aiwg", "version": "2026.9.0" },
+  "record": { "recordType": "agent", "id": "agent:operator", "principalKind": "person" },
+  "eventDigest": { "algorithm": "sha256", "value": "057da5eeb006af1af007f92e460a937d873bd58c71db522d40d8a7852682d5a9" }
+}

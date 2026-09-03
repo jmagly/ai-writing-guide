@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/dataset/run-ledger.v1.schema.json",
+  "title": "AIWG Canonical Run and Evidence Ledger v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventId", "sequence", "recordedAt", "producer", "record", "eventDigest"],
+  "properties": {
+    "schemaVersion": { "const": "aiwg.run-ledger/v1" },
+    "eventId": { "$ref": "#/$defs/scopedId" },
+    "runId": { "$ref": "#/$defs/scopedId" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "recordedAt": { "type": "string", "format": "date-time" },
+    "producer": { "$ref": "#/$defs/producer" },
+    "record": { "oneOf": [
+      { "$ref": "#/$defs/entity" }, { "$ref": "#/$defs/activity" }, { "$ref": "#/$defs/agent" },
+      { "$ref": "#/$defs/evidence" }, { "$ref": "#/$defs/assertion" }, { "$ref": "#/$defs/correction" }, { "$ref": "#/$defs/supersession" }
+    ] },
+    "eventDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 2048 },
+    "scopedId": { "type": "string", "minLength": 3, "maxLength": 2048, "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:.+$" },
+    "digest": { "type": "object", "additionalProperties": false, "required": ["algorithm", "value"], "properties": { "algorithm": { "const": "sha256" }, "value": { "type": "string", "pattern": "^[a-f0-9]{64}$" } } },
+    "privacy": { "enum": ["public", "internal", "confidential", "restricted"] },
+    "producer": { "type": "object", "additionalProperties": false, "required": ["id", "version"], "properties": { "id": { "$ref": "#/$defs/id" }, "version": { "type": "string", "minLength": 1 } } },
+    "locator": {
+      "type": "object", "additionalProperties": false, "required": ["scheme", "value"],
+      "properties": { "scheme": { "enum": ["file", "uri", "json-pointer", "line-column", "record-key", "external-id"] }, "value": { "$ref": "#/$defs/id" }, "field": { "type": "string", "minLength": 1 }, "line": { "type": "integer", "minimum": 1 }, "column": { "type": "integer", "minimum": 1 } }
+    },
+    "entity": { "type": "object", "additionalProperties": false, "required": ["recordType", "id", "entityType", "privacy"], "properties": { "recordType": { "const": "entity" }, "id": { "$ref": "#/$defs/id" }, "entityType": { "type": "string", "minLength": 1 }, "revision": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" }, "privacy": { "$ref": "#/$defs/privacy" }, "retentionPolicy": { "type": "string", "minLength": 1 } } },
+    "activity": { "type": "object", "additionalProperties": false, "required": ["recordType", "id", "activityType"], "properties": { "recordType": { "const": "activity" }, "id": { "$ref": "#/$defs/id" }, "activityType": { "type": "string", "minLength": 1 }, "runId": { "$ref": "#/$defs/scopedId" }, "startedAt": { "type": "string", "format": "date-time" }, "endedAt": { "type": "string", "format": "date-time" }, "planDigest": { "$ref": "#/$defs/digest" } } },
+    "agent": { "type": "object", "additionalProperties": false, "required": ["recordType", "id", "principalKind"], "properties": { "recordType": { "const": "agent" }, "id": { "$ref": "#/$defs/id" }, "principalKind": { "enum": ["person", "organization", "software", "service"] }, "version": { "type": "string", "minLength": 1 } } },
+    "evidence": { "type": "object", "additionalProperties": false, "required": ["recordType", "id", "source", "method", "confidence", "privacy", "responsibleAgentId", "observedAt"], "properties": { "recordType": { "const": "evidence" }, "id": { "$ref": "#/$defs/id" }, "source": { "$ref": "#/$defs/locator" }, "target": { "$ref": "#/$defs/locator" }, "method": { "type": "string", "minLength": 1 }, "confidence": { "type": "number", "minimum": 0, "maximum": 1 }, "privacy": { "$ref": "#/$defs/privacy" }, "retentionPolicy": { "type": "string", "minLength": 1 }, "runId": { "$ref": "#/$defs/scopedId" }, "responsibleAgentId": { "$ref": "#/$defs/id" }, "observedAt": { "type": "string", "format": "date-time" } } },
+    "assertion": { "type": "object", "additionalProperties": false, "required": ["recordType", "id", "subjectId", "predicate", "objectId", "basis", "evidenceIds", "privacy"], "properties": { "recordType": { "const": "assertion" }, "id": { "$ref": "#/$defs/id" }, "subjectId": { "$ref": "#/$defs/id" }, "predicate": { "type": "string", "minLength": 1 }, "objectId": { "$ref": "#/$defs/id" }, "basis": { "enum": ["declared", "observed", "imported", "inferred"] }, "evidenceIds": { "type": "array", "items": { "$ref": "#/$defs/id" }, "uniqueItems": true }, "activityId": { "$ref": "#/$defs/id" }, "runId": { "$ref": "#/$defs/scopedId" }, "field": { "type": "string", "minLength": 1 }, "privacy": { "$ref": "#/$defs/privacy" }, "retentionPolicy": { "type": "string", "minLength": 1 } }, "allOf": [{ "if": { "properties": { "basis": { "const": "observed" } }, "required": ["basis"] }, "then": { "properties": { "runId": {}, "evidenceIds": { "type": "array", "minItems": 1 } }, "required": ["runId"] } }] },
+    "correction": { "type": "object", "additionalProperties": false, "required": ["recordType", "id", "correctsEventId", "reason", "responsibleAgentId"], "properties": { "recordType": { "const": "correction" }, "id": { "$ref": "#/$defs/id" }, "correctsEventId": { "$ref": "#/$defs/id" }, "replacementEventId": { "$ref": "#/$defs/id" }, "reason": { "type": "string", "minLength": 1 }, "responsibleAgentId": { "$ref": "#/$defs/id" } } },
+    "supersession": { "type": "object", "additionalProperties": false, "required": ["recordType", "id", "supersedesEventId", "successorEventId"], "properties": { "recordType": { "const": "supersession" }, "id": { "$ref": "#/$defs/id" }, "supersedesEventId": { "$ref": "#/$defs/id" }, "successorEventId": { "$ref": "#/$defs/id" }, "reason": { "type": "string", "minLength": 1 } } }
+  }
+}

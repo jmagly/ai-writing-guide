@@ -13,7 +13,7 @@ export type LocalityPolicy = 'local-only' | 'approved-regions' | 'unrestricted'
 export type NetworkPolicy = 'offline' | 'allowlisted' | 'online'
 export type CapabilityRequirement = 'required' | 'optional'
 export type DegradationAction = 'fail' | 'disable' | 'fallback'
-export type LineageBasis = 'declared' | 'observed'
+export type LineageBasis = 'declared' | 'observed' | 'imported' | 'inferred'
 export type RunOutcome = 'preview' | 'attempted' | 'committed' | 'rejected' | 'cancelled' | 'failed'
 
 export interface ContractBase {

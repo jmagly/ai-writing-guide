@@ -59,3 +59,10 @@ execution backend. Implementations incur explicit negotiation, receipt,
 projection, and migration obligations. Existing index, memory, research, and
 provenance shapes remain available only through named compatibility projections.
 
+The canonical run ledger is the authority for execution and lineage history.
+Search indexes, dependency graphs, W3C PROV views, research records, marketplace
+graphs, Fortemi exports, operational state, mentions, and SDLC trace links are
+materialized projections rather than competing stores of record. Every adapter
+returns an explicit loss receipt, and correction or retraction is represented by
+a new immutable ledger event. Privacy classification and retention obligations
+travel with evidence and assertions through every governed projection.

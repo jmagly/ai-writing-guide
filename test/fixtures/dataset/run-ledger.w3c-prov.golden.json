@@ -1,0 +1,34 @@
+{
+  "entity": {
+    "entity:source": {
+      "type": "dataset-revision",
+      "privacy": "confidential"
+    },
+    "entity:output": {
+      "type": "derived-artifact",
+      "privacy": "confidential"
+    }
+  },
+  "activity": {
+    "activity:1": {
+      "type": "transform"
+    }
+  },
+  "agent": {
+    "agent:1": {
+      "type": "software",
+      "version": "1"
+    }
+  },
+  "wasDerivedFrom": [
+    {
+      "generatedEntity": "entity:output",
+      "usedEntity": "entity:source",
+      "evidence": ["evidence:1"]
+    }
+  ],
+  "wasGeneratedBy": [],
+  "used": [],
+  "wasAssociatedWith": [],
+  "wasAttributedTo": []
+}
