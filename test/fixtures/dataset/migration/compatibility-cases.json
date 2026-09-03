@@ -1,0 +1,25 @@
+{
+  "context": {
+    "producer": { "id": "agent:migration", "version": "1.0.0" },
+    "recordedAt": "2026-09-03T12:00:00.000Z",
+    "privacy": "confidential",
+    "retentionPolicy": "P30D"
+  },
+  "research": {
+    "id": "research:1",
+    "timestamp": "2026-09-03T12:00:00.000Z",
+    "entity": { "id": "paper:1", "type": "paper", "attributes": { "title": "Evidence" } },
+    "activity": { "id": "activity:research", "type": "analysis", "startedAt": "2026-09-03T12:00:00.000Z", "attributes": { "method": "review" } },
+    "agent": { "id": "agent:research", "type": "software_agent", "attributes": {} },
+    "relationships": { "wasGeneratedBy": "activity:research", "wasDerivedFrom": ["paper:source"], "wasAttributedTo": "agent:research" }
+  },
+  "marketplace": {
+    "standard": "W3C-PROV",
+    "entities": [{ "id": "package:1", "type": "package", "attributes": { "channel": "stable" } }],
+    "activities": [{ "id": "activity:publish", "type": "publish", "startedAt": "2026-09-03T12:00:00.000Z" }],
+    "agents": [{ "id": "agent:publisher", "type": "organization" }],
+    "relations": [{ "type": "wasGeneratedBy", "subject": "package:1", "object": "activity:publish" }]
+  },
+  "mention": { "sourcePath": "src/a.ts", "targetPath": "docs/r.md", "method": "mention", "line": 12, "confidence": 0.9 },
+  "sdlc": { "requirementId": "UC-001", "targetPath": "src/a.ts", "targetType": "code", "verified": true, "confidence": 1 }
+}

@@ -8,6 +8,11 @@ Private project memory can also live under `~/.aiwg/projects/`; see
 [`user-level-project-memory.md`](./user-level-project-memory.md) for the
 manifest, index, and resolution order.
 
+These remain active compatibility workflows. Dataset Intelligence may register
+their sources and provenance, but does not make a regenerable index canonical
+or replace existing `aiwg index` commands. See the [dataset migration
+guide](./addons/dataset-intelligence/migration-guide.md).
+
 ## Built-In User Capability Graph
 
 Place custom user capabilities under `~/.aiwg`:

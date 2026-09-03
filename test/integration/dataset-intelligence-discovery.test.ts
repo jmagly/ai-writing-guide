@@ -55,7 +55,8 @@ describe('dataset-intelligence discovery from an isolated packaged corpus', () =
 
   it.each([
     'use this data', 'make this searchable', 'trace this dataset',
-    'sync this source', 'retire this dataset',
+    'sync this source', 'retire this dataset', 'use a dataset offline',
+    'write a source adapter', 'migrate index graphs',
   ])('ranks the kernel router first for “%s”', async phrase => {
     const result = await discover(phrase)
     expect(result.results[0]?.name).toBe('dataset-intelligence')

@@ -1,5 +1,9 @@
 # Fortemi Index Export Contract
 
+This static export/cache contract remains active. It is not Fortemi Server
+durable persistence or canonical dataset authority; see the [Dataset
+Intelligence boundary guide](../addons/dataset-intelligence/fortemi-boundaries.md).
+
 AIWG can emit browser-consumable index exports for Fortemi integrations. The
 default remains the v1 compatibility contract:
 

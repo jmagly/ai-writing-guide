@@ -6,6 +6,11 @@ stable_id: aiwg.agent-reference.git-native-marketplace
 
 # Git-Native Package Exchange
 
+Marketplace provenance remains authoritative in this workflow. Dataset
+Intelligence can project its core agents, entities, activities, and relations,
+but non-core attributes require a governed extension; see the [dataset
+migration guide](../addons/dataset-intelligence/migration-guide.md).
+
 AIWG can exchange frameworks, addons, extensions, and standalone plugin
 wrappers directly through Git. A catalog improves discovery but is not a
 central authority: package identity and integrity remain bound to the

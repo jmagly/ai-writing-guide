@@ -19,12 +19,28 @@ safe defaults.
 
 ## Review before writes
 
-The recommendation becomes an immutable `aiwg dataset plan`. Review the exact
+Register and assess the source, then create an immutable plan:
+
+```bash
+aiwg dataset source --file source.json --json
+aiwg dataset check source:support-history --json
+aiwg dataset preview source:support-history --count 10 --offline --json
+aiwg dataset plan --file plan-input.json --json
+```
+
+Review the exact
 plan digest, schemas, estimated reads and writes, artifact classes, capability
 fallbacks, retention, and authorization references. Policy-sensitive work
 pauses for approval scoped to that digest.
 
-After approval, the addon delegates execution to `aiwg dataset ingest`. It
+After approval, ingest using the exact digest and a caller-selected idempotency
+key:
+
+```bash
+aiwg dataset ingest plan:support-history --digest <sha256> --idempotency-key <key> --approve <approval-id> --json
+```
+
+The service
 reports run, receipt, rejection, cancellation, and checkpoint references. It
 does not execute a connector or index data itself.
 
@@ -43,13 +59,24 @@ and expected writes. Cancellation preserves the last committed checkpoint.
 
 ## Explain and verify
 
-Ask “where did this result come from?” to route a bounded query through
-`aiwg dataset lineage`. Evidence includes identities, revisions, schema and run
+Ask “where did this result come from?” to request a bounded lineage query.
+Evidence includes identities, revisions, schema and run
 bindings, assertion basis, method, confidence, privacy, and locators.
 
-Ask “is this dataset and index current?” to route through
-`aiwg dataset verify`. The result distinguishes verified, degraded,
+Ask “is this dataset and index current?” to request verification. The result
+distinguishes verified, degraded,
 unverifiable, and failed states. Search success alone is never verification.
+
+```bash
+aiwg dataset status run:support-history --json
+aiwg dataset show run:support-history --json
+aiwg dataset verify run:support-history --json
+aiwg dataset query dataset:support-history --json
+aiwg dataset lineage dataset:support-history --json
+aiwg dataset export dataset:support-history --json
+aiwg dataset cancel run:support-history --json
+aiwg dataset retry run:support-history --json
+```
 
 ## Export or retire
 
@@ -60,3 +87,10 @@ Retirement first creates an `aiwg dataset` plan with complete affected-artifact
 enumeration, canonical/derived distinctions, holds, tombstones, bulk threshold,
 and rollback limits. Nothing is deleted by an agent or skill. The shared service
 performs only the approved operation and returns reconciliation evidence.
+
+Local JSONL/CSV adapters are stable and the checked-in local orchestration,
+offline, provenance, and standards cells are qualified. Pre-stable migration,
+Fortemi Core parity, and live Fortemi Server persistence remain pending. See
+the [task guide support matrix](task-guide.md#support-status) and consult `aiwg
+dataset --help` for the installed action surface. The aggregate conformance
+receipt is not stable-eligible while those three cells remain pending.

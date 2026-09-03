@@ -18,6 +18,7 @@
     "schemas": "schemas/",
     "flows": "flows/",
     "examples": "examples/",
+    "deprecations": "deprecations/",
     "docs": "docs/"
   },
   "consolidation": {"strategy": "index-with-links", "rulesIndex": "rules/RULES-INDEX.md", "deployIndexOnly": true},
@@ -40,6 +41,6 @@
   },
   "discovery": {
     "driver": "skills/dataset-intelligence/SKILL.md",
-    "aliases": ["use this data", "make this searchable", "index my files", "trace this dataset", "dataset provenance", "sync this source", "retire this dataset"]
+    "aliases": ["use this data", "make this searchable", "index my files", "trace this dataset", "dataset provenance", "sync this source", "retire this dataset", "use a dataset offline", "write a source adapter", "migrate index graphs"]
   }
 }

@@ -311,8 +311,14 @@
     "source": "agentic/code/addons/dataset-intelligence/docs",
     "dest": "docs/addons/dataset-intelligence",
     "files": [
+      "adapter-authoring.md",
+      "fortemi-boundaries.md",
+      "migration-guide.md",
+      "offline-troubleshooting.md",
       "overview.md",
-      "quickstart.md"
+      "quickstart.md",
+      "task-guide.md",
+      "worked-examples.md"
     ]
   },
   {

@@ -11,4 +11,6 @@ to the shared `aiwg dataset` orchestration service. They never implement a
 second ingestion runtime. Canonical source data remains canonical; indexes,
 graphs, embeddings, and Fortemi shards are derived or regenerable artifacts.
 
-See [the overview](docs/overview.md) and [quickstart](docs/quickstart.md).
+See [the overview](docs/overview.md), [quickstart](docs/quickstart.md), [task
+guide](docs/task-guide.md), [worked examples](docs/worked-examples.md), and
+[migration guide](docs/migration-guide.md).

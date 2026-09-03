@@ -486,7 +486,13 @@
     "addons/voice-framework/output-modes",
     "addons/dataset-intelligence",
     "addons/dataset-intelligence/overview",
-    "addons/dataset-intelligence/quickstart"
+    "addons/dataset-intelligence/quickstart",
+    "addons/dataset-intelligence/adapter-authoring",
+    "addons/dataset-intelligence/fortemi-boundaries",
+    "addons/dataset-intelligence/migration-guide",
+    "addons/dataset-intelligence/offline-troubleshooting",
+    "addons/dataset-intelligence/task-guide",
+    "addons/dataset-intelligence/worked-examples"
   ],
   "sections": [
     {
@@ -3656,6 +3662,48 @@
       "title": "Quick Start",
       "summary": "Tell AIWG what you have and what you want:",
       "file": "addons/dataset-intelligence/quickstart.md",
+      "parent": "addons/dataset-intelligence"
+    },
+    {
+      "id": "addons/dataset-intelligence/adapter-authoring",
+      "title": "Adapter Authoring",
+      "summary": "Use the normative [source adapter guide](../../../dataset/source-adapters.md)",
+      "file": "addons/dataset-intelligence/adapter-authoring.md",
+      "parent": "addons/dataset-intelligence"
+    },
+    {
+      "id": "addons/dataset-intelligence/fortemi-boundaries",
+      "title": "Fortemi Boundaries",
+      "summary": "| Layer | Authority | Persistence claim | Recovery |",
+      "file": "addons/dataset-intelligence/fortemi-boundaries.md",
+      "parent": "addons/dataset-intelligence"
+    },
+    {
+      "id": "addons/dataset-intelligence/migration-guide",
+      "title": "Migration Guide",
+      "summary": "Migration is projection, not relabeling. Preserve the original store, produce",
+      "file": "addons/dataset-intelligence/migration-guide.md",
+      "parent": "addons/dataset-intelligence"
+    },
+    {
+      "id": "addons/dataset-intelligence/offline-troubleshooting",
+      "title": "Offline Troubleshooting",
+      "summary": "| State | Meaning | Required action |",
+      "file": "addons/dataset-intelligence/offline-troubleshooting.md",
+      "parent": "addons/dataset-intelligence"
+    },
+    {
+      "id": "addons/dataset-intelligence/task-guide",
+      "title": "Task Guide",
+      "summary": "This guide starts from a user outcome. It does not assume that the user knows",
+      "file": "addons/dataset-intelligence/task-guide.md",
+      "parent": "addons/dataset-intelligence"
+    },
+    {
+      "id": "addons/dataset-intelligence/worked-examples",
+      "title": "Worked Examples",
+      "summary": "These are reviewable workflow examples, not promises that every lifecycle",
+      "file": "addons/dataset-intelligence/worked-examples.md",
       "parent": "addons/dataset-intelligence"
     }
   ],

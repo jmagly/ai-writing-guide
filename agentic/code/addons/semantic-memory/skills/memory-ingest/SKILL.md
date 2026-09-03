@@ -13,6 +13,11 @@ triggers:
 
 # memory-ingest
 
+This remains the canonical semantic synthesis workflow. Dataset Intelligence
+can register its source and evidence, but raw dataset ingestion does not replace
+summary, entity, contradiction, topology, or cross-reference behavior. See the
+[dataset migration guide](../../../dataset-intelligence/docs/migration-guide.md).
+
 Ingest an external source into a consumer framework's semantic memory. Reads the consumer's `memory.topology` contract to know where pages live, then extracts, summarizes, integrates, and cross-references — all topology-agnostic.
 
 ## When to Use

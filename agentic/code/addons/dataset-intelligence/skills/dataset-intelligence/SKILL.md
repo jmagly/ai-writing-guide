@@ -6,7 +6,7 @@ version: 1.0.0
 platforms: [all]
 kernel: true
 aliases: [dataset, data steward, data onboarding, custom indexing, dataset workflow]
-triggers: [use this data, make this searchable, index my files, build a knowledge index, trace this dataset, show data provenance, sync this source, retire this dataset, point AIWG at data]
+triggers: [use this data, make this searchable, index my files, build a knowledge index, trace this dataset, show data provenance, sync this source, retire this dataset, point AIWG at data, use a dataset offline, write a source adapter, migrate index graphs]
 ---
 
 # Dataset Intelligence Router

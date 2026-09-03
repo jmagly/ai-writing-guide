@@ -5,7 +5,7 @@ import Ajv from 'ajv'
 import addFormats from 'ajv-formats'
 import yaml from 'js-yaml'
 import { describe, expect, it } from 'vitest'
-import { DATASET_ACTIONS } from '../../../src/cli/handlers/dataset.js'
+import { DATASET_ACTIONS, datasetHandler } from '../../../src/cli/handlers/dataset.js'
 
 const ROOT = resolve('agentic/code/addons/dataset-intelligence')
 const read = (path: string) => readFileSync(resolve(ROOT, path), 'utf8')
@@ -106,7 +106,7 @@ describe('dataset-intelligence addon', () => {
 
   it('supports novice and domain-specific discovery without forking contracts', () => {
     const router = read('skills/dataset-intelligence/SKILL.md')
-    for (const phrase of ['use this data', 'make this searchable', 'index my files', 'trace this dataset', 'sync this source', 'retire this dataset']) {
+    for (const phrase of ['use this data', 'make this searchable', 'index my files', 'trace this dataset', 'sync this source', 'retire this dataset', 'use a dataset offline', 'write a source adapter', 'migrate index graphs']) {
       expect(router).toContain(phrase)
     }
     for (const domain of ['SDLC', 'research', 'knowledge-base', 'media', 'marketing', 'ops', 'project-local']) {
@@ -125,5 +125,39 @@ describe('dataset-intelligence addon', () => {
     const map = readFileSync(resolve('agentic/code/addons/aiwg-utils/skills/aiwg-language-map/SKILL.md'), 'utf8')
     expect(map).toContain('### Dataset intelligence, indexing & provenance')
     expect(map).toContain('`make this searchable` | dataset-intelligence')
+  })
+
+  it('binds documentation to CLI help, service actions, and conformance maturity', async () => {
+    for (const name of ['task-guide.md', 'worked-examples.md', 'adapter-authoring.md', 'fortemi-boundaries.md', 'migration-guide.md', 'offline-troubleshooting.md']) {
+      expect(files('docs')).toContain(`docs/${name}`)
+    }
+    const guide = read('docs/task-guide.md')
+    for (const term of ['canonical source', 'immutable revision', 'derived artifact', 'regenerable index', 'static cache', 'portable export']) {
+      expect(guide.toLowerCase()).toContain(term)
+    }
+    const documentedActions = [...guide.matchAll(/^aiwg dataset ([a-z-]+)/gm)].map(match => match[1])
+    expect(documentedActions).toEqual([...DATASET_ACTIONS])
+    const help = await datasetHandler.help!({ args: [], rawArgs: ['dataset'], cwd: process.cwd(), frameworkRoot: process.cwd() })
+    for (const action of documentedActions) expect(help.message).toContain(action)
+
+    const conformance = JSON.parse(readFileSync(resolve('test/fixtures/dataset-intelligence/v1/manifest.json'), 'utf8'))
+    const statuses = Object.fromEntries(conformance.cells.map((cell: any) => [cell.id, cell.expected.result]))
+    expect(statuses['adapter.jsonl.real']).toBe('pass')
+    expect(statuses['adapter.csv.real']).toBe('pass')
+    expect(statuses['migration.pre-stable']).toBe('pending')
+    expect(statuses['parity.fortemi-core']).toBe('pending')
+    expect(statuses['parity.fortemi-server-live']).toBe('pending')
+    for (const phrase of ['Pre-stable migration', 'Fortemi Core parity', 'Fortemi Server']) expect(guide).toContain(phrase)
+    const migration = read('docs/migration-guide.md')
+    for (const surface of ['index.graphs', 'memory-ingest', 'research provenance', 'marketplace provenance', 'mention edges', 'SDLC traceability']) {
+      expect(migration).toContain(surface)
+    }
+    expect(migration).toContain('No surface in this table is newly deprecated')
+
+    const ajv = new Ajv2020({ allErrors: true, strict: false })
+    addFormats(ajv)
+    const validate = ajv.compile(JSON.parse(readFileSync(resolve('schemas/dataset/dataset-deprecations.v1.schema.json'), 'utf8')))
+    expect(validate(json('deprecations/dataset-deprecations.v1.json')), JSON.stringify(validate.errors)).toBe(true)
+    expect(validate(JSON.parse(readFileSync(resolve('test/fixtures/dataset/deprecations.invalid.json'), 'utf8')))).toBe(false)
   })
 })

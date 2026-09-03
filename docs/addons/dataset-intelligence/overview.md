@@ -26,6 +26,17 @@ query, export, synchronization, and retirement operation delegates to the
 shared `aiwg dataset` service. Stable artifact and receipt references—not chat
 history—carry authority between phases.
 
+The orchestration CLI exposes thirteen actions through this shared boundary:
+`source`, `check`, `preview`, `plan`, `ingest`, `status`, `show`, `verify`,
+`query`, `lineage`, `export`, `cancel`, and `retry`. Check `aiwg dataset
+--help` rather than deriving command names from task prose.
+
+Conformance evidence qualifies local orchestration, offline behavior,
+provenance, and the PROV/OpenLineage profiles. The pre-stable migration cell is
+pending because no stable predecessor exists. Fortemi Core parity is pending a
+pinned compatible dependency, and live Fortemi Server persistence is pending
+separately authorized live qualification.
+
 Canonical source material remains distinct from derived indexes, embeddings,
 graphs, caches, portable projections, and Fortemi shards. A successful search
 does not prove canonical availability, freshness, authorization, or provenance.
@@ -42,3 +53,7 @@ Runs expose cancellation, checkpoint/resume, rejections, and commit receipts.
 Verification checks digests, checkpoints, evidence completeness, and freshness.
 Retirement is tombstone-first and requires complete enumeration, threshold
 review, and reconciliation evidence.
+
+Continue with the [task guide](task-guide.md), [worked
+examples](worked-examples.md), [migration guide](migration-guide.md), and
+[Fortemi boundary](fortemi-boundaries.md).

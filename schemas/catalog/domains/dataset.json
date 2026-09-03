@@ -6,6 +6,27 @@
   "policy": { "strict": true, "compatibility": "backward", "requireFixtures": true },
   "artifacts": [
     {
+      "logicalName": "dataset.deprecations",
+      "id": "https://aiwg.io/schemas/dataset/dataset-deprecations.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": { "id": "aiwg-maintainers" },
+      "authority": { "kind": "canonical", "path": "schemas/dataset/dataset-deprecations.v1.schema.json" },
+      "compatibility": { "mode": "backward" },
+      "consumers": [
+        { "id": "dataset-intelligence-documentation", "boundary": "machine-readable release and removal gates", "path": "agentic/code/addons/dataset-intelligence/deprecations/dataset-deprecations.v1.json" }
+      ],
+      "fixtures": {
+        "valid": ["test/fixtures/dataset/deprecations.valid.json"],
+        "invalid": ["test/fixtures/dataset/deprecations.invalid.json"]
+      },
+      "projections": [],
+      "publication": { "public": true }
+    },
+    {
       "logicalName": "dataset.conformance-manifest",
       "id": "https://aiwg.io/schemas/dataset/conformance-manifest.v1.schema.json",
       "version": "1.0.0",
