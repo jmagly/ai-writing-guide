@@ -1,0 +1,20 @@
+{
+  "cases": [
+    {
+      "code": "candidate-promoted-without-review",
+      "value": { "schemaVersion": "aiwg.dataset-schema-governance/v1", "kind": "DatasetSchemaCandidate", "id": "candidate:1", "status": "promoted" }
+    },
+    {
+      "code": "binding-without-digest",
+      "value": { "schemaVersion": "aiwg.dataset-schema-governance/v1", "kind": "ExchangeProfile", "id": "exchange:1", "standard": "PROV", "standardVersion": "2013", "binding": { "id": "schema:1", "version": "1" }, "direction": "export", "lossPolicy": "report" }
+    },
+    {
+      "code": "embedded-secret",
+      "value": { "schemaVersion": "aiwg.dataset-schema-governance/v1", "kind": "AdapterConfiguration", "id": "config:1", "adapterId": "adapter:1", "binding": { "id": "schema:1", "version": "1", "digest": { "algorithm": "sha256", "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" } }, "values": { "password": "forbidden" } }
+    },
+    {
+      "code": "impact-omits-consumers",
+      "value": { "schemaVersion": "aiwg.dataset-schema-governance/v1", "kind": "DatasetSchemaImpactReport", "schemaId": "schema:1", "baseline": "git:base", "compatibility": { "status": "unknown", "reasons": ["review"] }, "targets": [] }
+    }
+  ]
+}

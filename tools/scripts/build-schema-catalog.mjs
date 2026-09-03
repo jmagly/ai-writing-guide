@@ -2,17 +2,32 @@
 
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
 
 const root = resolve(import.meta.dirname, '../..');
 const output = resolve(root, 'schemas/catalog/domains/repository-json-schemas.json');
 const checkOnly = process.argv.includes('--check');
+function explicitlyCatalogedPaths() {
+  const domainsDir = resolve(root, 'schemas/catalog/domains');
+  const paths = new Set();
+  for (const filename of readdirSync(domainsDir).filter(name => name.endsWith('.json') && name !== 'repository-json-schemas.json').sort()) {
+    const manifest = JSON.parse(readFileSync(resolve(domainsDir, filename), 'utf8'));
+    for (const artifact of manifest.artifacts ?? []) {
+      if (artifact.authority?.kind === 'canonical' && typeof artifact.authority.path === 'string') paths.add(artifact.authority.path);
+      for (const projection of artifact.projections ?? []) if (typeof projection.path === 'string') paths.add(projection.path);
+    }
+  }
+  return paths;
+}
+
 function trackedSchemas() {
+  const explicit = explicitlyCatalogedPaths();
   return execFileSync('git', ['ls-files', '--cached', '--', '*.schema.json'], { cwd: root, encoding: 'utf8' })
     .split('\n')
     .filter(Boolean)
     .filter(path => !path.startsWith('schemas/catalog/'))
+    .filter(path => !explicit.has(path))
     .sort()
     .map(path => resolve(root, path));
 }

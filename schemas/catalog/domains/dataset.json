@@ -29,6 +29,34 @@
         { "kind": "validator", "path": "src/dataset/contracts.ts", "generated": false }
       ],
       "publication": { "public": true }
+    },
+    {
+      "logicalName": "dataset.schema-governance",
+      "id": "https://aiwg.io/schemas/dataset/dataset-schema-governance.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": { "id": "aiwg-maintainers" },
+      "authority": { "kind": "canonical", "path": "schemas/dataset/dataset-schema-governance.v1.schema.json" },
+      "compatibility": { "mode": "backward" },
+      "dependencies": [
+        { "id": "https://aiwg.io/schemas/dataset/dataset-contracts.v1.schema.json", "version": "1.0.0" }
+      ],
+      "consumers": [
+        { "id": "dataset-schema-governance-runtime", "boundary": "candidate promotion, compatibility impact, and boundary validation", "path": "src/dataset/schema-governance.ts" },
+        { "id": "dataset-schema-governance-types", "boundary": "TypeScript representation", "path": "src/dataset/schema-governance.ts" }
+      ],
+      "fixtures": {
+        "valid": ["test/fixtures/dataset/schema-governance.valid.json"],
+        "invalid": ["test/fixtures/dataset/schema-governance.invalid.json"]
+      },
+      "projections": [
+        { "kind": "types", "path": "src/dataset/schema-governance.ts", "generated": false },
+        { "kind": "validator", "path": "src/dataset/schema-governance.ts", "generated": false }
+      ],
+      "publication": { "public": true }
     }
   ]
 }

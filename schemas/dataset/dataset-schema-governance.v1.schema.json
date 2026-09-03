@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/dataset/dataset-schema-governance.v1.schema.json",
+  "title": "AIWG Dataset Schema Governance Records v1",
+  "oneOf": [
+    { "$ref": "#/$defs/DatasetSchemaCandidate" },
+    { "$ref": "#/$defs/DatasetSchemaPromotionReceipt" },
+    { "$ref": "#/$defs/DatasetSchemaImpactReport" },
+    { "$ref": "#/$defs/AdapterManifest" },
+    { "$ref": "#/$defs/AdapterConfiguration" },
+    { "$ref": "#/$defs/DiscoveredRecord" },
+    { "$ref": "#/$defs/ExchangeProfile" }
+  ],
+  "$defs": {
+    "version": { "const": "aiwg.dataset-schema-governance/v1" },
+    "id": { "type": "string", "minLength": 1, "maxLength": 2048 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "digest": {
+      "type": "object", "additionalProperties": false, "required": ["algorithm", "value"],
+      "properties": { "algorithm": { "const": "sha256" }, "value": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+    },
+    "schemaBinding": {
+      "type": "object", "additionalProperties": false, "required": ["id", "version", "digest"],
+      "properties": { "id": { "$ref": "#/$defs/id" }, "version": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" } }
+    },
+    "compatibility": {
+      "type": "object", "additionalProperties": false, "required": ["status", "reasons"],
+      "properties": {
+        "status": { "enum": ["compatible", "breaking", "unknown"] },
+        "baseline": { "$ref": "#/$defs/id" },
+        "reasons": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "DatasetSchemaCandidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "kind", "id", "status", "sourceRevisionId", "inferredSchema", "inferredSchemaDigest", "inference", "observedAt"],
+      "properties": {
+        "schemaVersion": { "$ref": "#/$defs/version" }, "kind": { "const": "DatasetSchemaCandidate" }, "id": { "$ref": "#/$defs/id" }, "status": { "const": "candidate" },
+        "sourceRevisionId": { "$ref": "#/$defs/id" }, "inferredSchema": { "type": "object" }, "inferredSchemaDigest": { "$ref": "#/$defs/digest" },
+        "inference": {
+          "type": "object", "additionalProperties": false, "required": ["method", "tool", "toolVersion"],
+          "properties": { "method": { "type": "string", "minLength": 1 }, "tool": { "$ref": "#/$defs/id" }, "toolVersion": { "type": "string", "minLength": 1 }, "runId": { "$ref": "#/$defs/id" } }
+        },
+        "observedAt": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "DatasetSchemaPromotionReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "kind", "id", "status", "candidateId", "candidateDigest", "promotedSchema", "reviewer", "reviewedAt", "decisionEvidence", "compatibility"],
+      "properties": {
+        "schemaVersion": { "$ref": "#/$defs/version" }, "kind": { "const": "DatasetSchemaPromotionReceipt" }, "id": { "$ref": "#/$defs/id" }, "status": { "const": "promoted" },
+        "candidateId": { "$ref": "#/$defs/id" }, "candidateDigest": { "$ref": "#/$defs/digest" }, "promotedSchema": { "$ref": "#/$defs/schemaBinding" },
+        "reviewer": { "$ref": "#/$defs/id" }, "reviewedAt": { "$ref": "#/$defs/timestamp" }, "decisionEvidence": { "$ref": "#/$defs/id" }, "compatibility": { "$ref": "#/$defs/compatibility" }
+      }
+    },
+    "impactTarget": {
+      "type": "object", "additionalProperties": false, "required": ["target", "disposition", "reason"],
+      "properties": {
+        "target": { "enum": ["adapter", "checkpoint-state", "processing-plan", "index", "derived-artifact", "consumer"] },
+        "disposition": { "enum": ["compatible", "review-required", "migration-required"] }, "reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "DatasetSchemaImpactReport": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "kind", "schemaId", "baseline", "compatibility", "targets"],
+      "properties": {
+        "schemaVersion": { "$ref": "#/$defs/version" }, "kind": { "const": "DatasetSchemaImpactReport" }, "schemaId": { "$ref": "#/$defs/id" }, "baseline": { "$ref": "#/$defs/id" },
+        "compatibility": { "$ref": "#/$defs/compatibility" }, "targets": { "type": "array", "minItems": 6, "maxItems": 6, "items": { "$ref": "#/$defs/impactTarget" } }
+      }
+    },
+    "AdapterManifest": {
+      "type": "object", "additionalProperties": false, "required": ["schemaVersion", "kind", "id", "adapterVersion", "configSchema", "recordSchema", "checkpointSchema", "capabilities"],
+      "properties": {
+        "schemaVersion": { "$ref": "#/$defs/version" }, "kind": { "const": "AdapterManifest" }, "id": { "$ref": "#/$defs/id" }, "adapterVersion": { "type": "string", "minLength": 1 },
+        "configSchema": { "$ref": "#/$defs/schemaBinding" }, "recordSchema": { "$ref": "#/$defs/schemaBinding" }, "checkpointSchema": { "$ref": "#/$defs/schemaBinding" },
+        "capabilities": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      }
+    },
+    "AdapterConfiguration": {
+      "type": "object", "additionalProperties": false, "required": ["schemaVersion", "kind", "id", "adapterId", "binding", "values"],
+      "properties": { "schemaVersion": { "$ref": "#/$defs/version" }, "kind": { "const": "AdapterConfiguration" }, "id": { "$ref": "#/$defs/id" }, "adapterId": { "$ref": "#/$defs/id" }, "binding": { "$ref": "#/$defs/schemaBinding" }, "values": { "type": "object", "propertyNames": { "not": { "pattern": "^(password|passwd|secret|token|api[-_]?key|private[-_]?key|credential)s?$" } } } }
+    },
+    "DiscoveredRecord": {
+      "type": "object", "additionalProperties": false, "required": ["schemaVersion", "kind", "id", "sourceRevisionId", "binding", "recordDigest", "value"],
+      "properties": { "schemaVersion": { "$ref": "#/$defs/version" }, "kind": { "const": "DiscoveredRecord" }, "id": { "$ref": "#/$defs/id" }, "sourceRevisionId": { "$ref": "#/$defs/id" }, "binding": { "$ref": "#/$defs/schemaBinding" }, "recordDigest": { "$ref": "#/$defs/digest" }, "value": {} }
+    },
+    "ExchangeProfile": {
+      "type": "object", "additionalProperties": false, "required": ["schemaVersion", "kind", "id", "standard", "standardVersion", "binding", "direction", "lossPolicy"],
+      "properties": { "schemaVersion": { "$ref": "#/$defs/version" }, "kind": { "const": "ExchangeProfile" }, "id": { "$ref": "#/$defs/id" }, "standard": { "type": "string", "minLength": 1 }, "standardVersion": { "type": "string", "minLength": 1 }, "binding": { "$ref": "#/$defs/schemaBinding" }, "direction": { "enum": ["import", "export", "round-trip"] }, "lossPolicy": { "enum": ["lossless", "report", "reject"] } }
+    }
+  }
+}

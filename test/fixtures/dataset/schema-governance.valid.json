@@ -1,0 +1,51 @@
+{
+  "records": [
+    {
+      "schemaVersion": "aiwg.dataset-schema-governance/v1", "kind": "DatasetSchemaCandidate", "id": "schema-candidate:orders:1", "status": "candidate",
+      "sourceRevisionId": "revision:orders:1", "inferredSchema": { "type": "object", "required": ["id"] },
+      "inferredSchemaDigest": { "algorithm": "sha256", "value": "019679b717eb12d07c6998cc0f588d9e91b712340859f760dd205e8fc1ed94f7" },
+      "inference": { "method": "sample", "tool": "adapter:csv", "toolVersion": "1.0.0", "runId": "run:preview:1" }, "observedAt": "2026-09-02T12:00:00Z"
+    },
+    {
+      "schemaVersion": "aiwg.dataset-schema-governance/v1", "kind": "DatasetSchemaPromotionReceipt", "id": "schema-promotion:orders:1", "status": "promoted",
+      "candidateId": "schema-candidate:orders:1", "candidateDigest": { "algorithm": "sha256", "value": "019679b717eb12d07c6998cc0f588d9e91b712340859f760dd205e8fc1ed94f7" },
+      "promotedSchema": { "id": "https://example.test/orders.schema.json", "version": "1.0.0", "digest": { "algorithm": "sha256", "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" } },
+      "reviewer": "principal:reviewer", "reviewedAt": "2026-09-02T13:00:00Z", "decisionEvidence": "decision:orders-schema-1",
+      "compatibility": { "status": "unknown", "reasons": ["first governed revision"] }
+    },
+    {
+      "schemaVersion": "aiwg.dataset-schema-governance/v1", "kind": "DatasetSchemaImpactReport", "schemaId": "https://example.test/orders.schema.json", "baseline": "git:baseline",
+      "compatibility": { "status": "breaking", "baseline": "git:baseline", "reasons": ["required property added: currency"] },
+      "targets": [
+        { "target": "adapter", "disposition": "migration-required", "reason": "review adapter" },
+        { "target": "checkpoint-state", "disposition": "migration-required", "reason": "review state" },
+        { "target": "processing-plan", "disposition": "migration-required", "reason": "review plan" },
+        { "target": "index", "disposition": "migration-required", "reason": "review index" },
+        { "target": "derived-artifact", "disposition": "migration-required", "reason": "review artifact" },
+        { "target": "consumer", "disposition": "migration-required", "reason": "review consumer" }
+      ]
+    },
+    {
+      "schemaVersion": "aiwg.dataset-schema-governance/v1", "kind": "AdapterManifest", "id": "adapter:csv", "adapterVersion": "1.0.0",
+      "configSchema": { "id": "https://example.test/csv-config", "version": "1.0.0", "digest": { "algorithm": "sha256", "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" } },
+      "recordSchema": { "id": "https://example.test/orders", "version": "1.0.0", "digest": { "algorithm": "sha256", "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" } },
+      "checkpointSchema": { "id": "https://aiwg.io/schemas/dataset/dataset-contracts.v1.schema.json", "version": "1.0.0", "digest": { "algorithm": "sha256", "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" } },
+      "capabilities": ["preview", "incremental-read"]
+    },
+    {
+      "schemaVersion": "aiwg.dataset-schema-governance/v1", "kind": "AdapterConfiguration", "id": "adapter-config:csv:1", "adapterId": "adapter:csv",
+      "binding": { "id": "https://example.test/csv-config", "version": "1.0.0", "digest": { "algorithm": "sha256", "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" } },
+      "values": { "delimiter": ",", "credentialRef": "credential-ref:orders" }
+    },
+    {
+      "schemaVersion": "aiwg.dataset-schema-governance/v1", "kind": "DiscoveredRecord", "id": "record:orders:1", "sourceRevisionId": "revision:orders:1",
+      "binding": { "id": "https://example.test/orders", "version": "1.0.0", "digest": { "algorithm": "sha256", "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" } },
+      "recordDigest": { "algorithm": "sha256", "value": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd" }, "value": { "id": 1 }
+    },
+    {
+      "schemaVersion": "aiwg.dataset-schema-governance/v1", "kind": "ExchangeProfile", "id": "exchange:prov:1", "standard": "W3C PROV", "standardVersion": "2013",
+      "binding": { "id": "https://example.test/prov", "version": "1.0.0", "digest": { "algorithm": "sha256", "value": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" } },
+      "direction": "round-trip", "lossPolicy": "report"
+    }
+  ]
+}
