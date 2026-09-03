@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/dataset/profiles/openlineage-1.0.0.schema.json",
+  "title": "OpenLineage RunEvent 1.0.0 supported profile",
+  "type": "object",
+  "required": ["eventTime", "eventType", "run", "job"],
+  "properties": {
+    "eventTime": { "type": "string", "format": "date-time" }, "eventType": { "enum": ["START", "RUNNING", "COMPLETE", "ABORT", "FAIL", "OTHER"] },
+    "run": { "type": "object", "required": ["runId"], "properties": { "runId": { "type": "string", "minLength": 1 }, "facets": { "type": "object" } }, "additionalProperties": false },
+    "job": { "$ref": "#/$defs/named" }, "inputs": { "type": "array", "items": { "$ref": "#/$defs/named" } }, "outputs": { "type": "array", "items": { "$ref": "#/$defs/named" } },
+    "producer": { "type": "string", "format": "uri" }, "schemaURL": { "type": "string", "format": "uri" }
+  },
+  "additionalProperties": true,
+  "$defs": { "named": { "type": "object", "required": ["namespace", "name"], "properties": { "namespace": { "type": "string" }, "name": { "type": "string" }, "facets": { "type": "object" } }, "additionalProperties": false } }
+}

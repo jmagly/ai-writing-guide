@@ -1,0 +1,13 @@
+{
+  "prefix": { "ex": "https://example.test/" },
+  "entity": { "ex:source": { "prov:type": "dataset" }, "ex:result": { "prov:type": "dataset" } },
+  "activity": { "ex:job": { "prov:type": "transform", "prov:startTime": "2026-09-02T10:00:00Z", "prov:endTime": "2026-09-02T10:01:00Z" } },
+  "agent": { "ex:worker": { "prov:type": "prov:SoftwareAgent" } },
+  "wasDerivedFrom": { "ex:d1": { "prov:generatedEntity": "ex:result", "prov:usedEntity": "ex:source" } },
+  "wasGeneratedBy": { "ex:g1": { "prov:entity": "ex:result", "prov:activity": "ex:job" } },
+  "used": { "ex:u1": { "prov:activity": "ex:job", "prov:entity": "ex:source" } },
+  "wasAttributedTo": { "ex:a1": { "prov:entity": "ex:result", "prov:agent": "ex:worker" } },
+  "wasAssociatedWith": { "ex:s1": { "prov:activity": "ex:job", "prov:agent": "ex:worker" } },
+  "alternateOf": { "ex:c1": { "prov:alternate1": "ex:source", "prov:alternate2": "ex:result" } },
+  "https://vendor.example/trace": { "ticket": "synthetic-1" }
+}

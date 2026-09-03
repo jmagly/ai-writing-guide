@@ -1,0 +1,9 @@
+{
+  "eventTime": "2026-09-02T10:01:00Z",
+  "eventType": "COMPLETE",
+  "run": { "runId": "run-001", "facets": { "errorMessage": { "message": "synthetic fixture" } } },
+  "job": { "namespace": "example.test/jobs", "name": "transform" },
+  "inputs": [{ "namespace": "example.test/data", "name": "source", "facets": { "columnLineage": { "fields": {} } } }],
+  "outputs": [{ "namespace": "example.test/data", "name": "result", "facets": { "columnLineage": { "fields": { "normalized": { "inputFields": [{ "namespace": "example.test/data", "name": "source", "field": "raw" }] } } } } }],
+  "producer": "https://aiwg.io"
+}

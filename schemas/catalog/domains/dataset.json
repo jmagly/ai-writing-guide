@@ -82,6 +82,72 @@
         { "kind": "validator", "path": "src/dataset/ledger.ts", "generated": false }
       ],
       "publication": { "public": true }
+    },
+    {
+      "logicalName": "dataset.standards-exchange",
+      "id": "https://aiwg.io/schemas/dataset/dataset-standards-exchange.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": { "id": "aiwg-maintainers" },
+      "authority": { "kind": "canonical", "path": "schemas/dataset/dataset-standards-exchange.v1.schema.json" },
+      "compatibility": { "mode": "backward" },
+      "dependencies": [
+        { "id": "https://aiwg.io/schemas/dataset/run-ledger.v1.schema.json", "version": "1.0.0" }
+      ],
+      "consumers": [
+        { "id": "dataset-standards-runtime", "boundary": "profile selection, conversions, and loss reports", "path": "src/dataset/standards.ts" },
+        { "id": "dataset-standards-types", "boundary": "TypeScript representation", "path": "src/dataset/standards-types.ts" }
+      ],
+      "fixtures": {
+        "valid": ["test/fixtures/dataset/standards/exchange.valid.json"],
+        "invalid": ["test/fixtures/dataset/standards/exchange.invalid.json"]
+      },
+      "projections": [
+        { "kind": "types", "path": "src/dataset/standards-types.ts", "generated": false },
+        { "kind": "validator", "path": "src/dataset/standards.ts", "generated": false }
+      ],
+      "publication": { "public": true }
+    },
+    {
+      "logicalName": "dataset.profile.prov-json-20130430",
+      "id": "https://aiwg.io/schemas/dataset/profiles/prov-json-20130430.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": { "id": "aiwg-maintainers" },
+      "authority": { "kind": "canonical", "path": "schemas/dataset/profiles/prov-json-20130430.schema.json" },
+      "compatibility": { "mode": "none" },
+      "dependencies": [
+        { "id": "https://aiwg.io/schemas/dataset/dataset-standards-exchange.v1.schema.json", "version": "1.0.0" }
+      ],
+      "consumers": [{ "id": "prov-json-adapter", "boundary": "validated PROV-JSON import and export", "path": "src/dataset/standards.ts" }],
+      "fixtures": { "valid": ["test/fixtures/dataset/standards/prov-json-20130430.valid.json"], "invalid": ["test/fixtures/dataset/standards/prov-json-20130430.invalid.json"] },
+      "projections": [{ "kind": "validator", "path": "src/dataset/standards.ts", "generated": false }],
+      "publication": { "public": true }
+    },
+    {
+      "logicalName": "dataset.profile.openlineage-1.0.0",
+      "id": "https://aiwg.io/schemas/dataset/profiles/openlineage-1.0.0.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": { "id": "aiwg-maintainers" },
+      "authority": { "kind": "canonical", "path": "schemas/dataset/profiles/openlineage-1.0.0.schema.json" },
+      "compatibility": { "mode": "none" },
+      "dependencies": [
+        { "id": "https://aiwg.io/schemas/dataset/dataset-standards-exchange.v1.schema.json", "version": "1.0.0" }
+      ],
+      "consumers": [{ "id": "openlineage-adapter", "boundary": "validated OpenLineage RunEvent import and export", "path": "src/dataset/standards.ts" }],
+      "fixtures": { "valid": ["test/fixtures/dataset/standards/openlineage-1.0.0.valid.json"], "invalid": ["test/fixtures/dataset/standards/openlineage-1.0.0.invalid.json"] },
+      "projections": [{ "kind": "validator", "path": "src/dataset/standards.ts", "generated": false }],
+      "publication": { "public": true }
     }
   ]
 }

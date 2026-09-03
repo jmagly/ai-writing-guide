@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "aiwg.dataset-standards-exchange/v1",
+  "profile": { "id": "openlineage/1.0.0", "version": "1.0.0" },
+  "value": {},
+  "loss": {
+    "schemaVersion": "aiwg.dataset-standards-exchange/v1",
+    "profileId": "openlineage/1.0.0",
+    "profileVersion": "1.0.0",
+    "direction": "export",
+    "sourceDigest": { "algorithm": "sha256", "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+    "items": [{ "category": "mapped", "sourcePath": "/events/0", "targetPath": "/job", "reason": "fixture mapping" }],
+    "counts": { "mapped": 1, "omitted": 0, "synthesized": 0, "unsupported": 0, "extension-carried": 0 }
+  }
+}

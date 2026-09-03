@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/dataset/profiles/prov-json-20130430.schema.json",
+  "title": "W3C PROV-JSON 2013-04-30 supported profile",
+  "type": "object",
+  "properties": {
+    "prefix": { "type": "object" }, "entity": { "$ref": "#/$defs/map" }, "activity": { "$ref": "#/$defs/map" }, "agent": { "$ref": "#/$defs/map" },
+    "wasDerivedFrom": { "$ref": "#/$defs/map" }, "wasGeneratedBy": { "$ref": "#/$defs/map" }, "used": { "$ref": "#/$defs/map" }, "wasAttributedTo": { "$ref": "#/$defs/map" }, "wasAssociatedWith": { "$ref": "#/$defs/map" }, "alternateOf": { "$ref": "#/$defs/map" }
+  },
+  "additionalProperties": true,
+  "$defs": { "map": { "type": "object", "additionalProperties": { "type": "object" } } }
+}
