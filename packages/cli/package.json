@@ -35,6 +35,7 @@
     "dist/src/api/index.d.ts",
     "dist/src/resources/index.d.ts",
     "dist/src/resources/web-release.d.ts",
+    "dist/src/dataset/**/*.d.ts",
     "tools/_resolve-impl.mjs",
     "tools/agents/deploy-agents.mjs",
     "tools/agents/providers/",

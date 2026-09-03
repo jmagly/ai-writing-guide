@@ -1,0 +1,14 @@
+{
+  "fixtureRevision": "dataset-adapter-fixtures-v1",
+  "cells": [
+    { "name": "configuration-schema", "source": "fixture", "passed": true, "evidence": ["adapter configure contract suite"] },
+    { "name": "preview-purity", "source": "fixture", "passed": true, "evidence": ["checkpoint remains absent"] },
+    { "name": "deterministic-read", "source": "fixture", "passed": true, "evidence": ["replay identity comparison"] },
+    { "name": "stable-errors", "source": "fixture", "passed": true, "evidence": ["diagnostic code matrix"] },
+    { "name": "cancellation", "source": "fixture", "passed": true, "evidence": ["aborted signal suite"] },
+    { "name": "checkpoints", "source": "fixture", "passed": true, "evidence": ["resume and incompatible version suite"] },
+    { "name": "version-upgrade", "source": "fixture", "passed": true, "evidence": ["exact schema/version binding suite"] },
+    { "name": "secret-leakage", "source": "fixture", "passed": true, "evidence": ["synthetic sentinel absence suite"] },
+    { "name": "real-source-cell", "source": "real-source", "passed": true, "evidence": ["checked-in filesystem source read with native Node runtime"] }
+  ]
+}

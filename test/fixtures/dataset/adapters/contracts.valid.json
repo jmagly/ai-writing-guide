@@ -1,0 +1,20 @@
+{
+  "records": [
+    {
+      "contractVersion": "aiwg.dataset.adapter/v1",
+      "kind": "AdapterConfiguration",
+      "adapter": { "id": "aiwg.adapter.http", "version": "1.0.0" },
+      "config": { "url": "https://data.example.test/items.jsonl" },
+      "credentialLocators": { "authorization": { "kind": "vault", "locator": "dataset/reader" } }
+    },
+    {
+      "contractVersion": "aiwg.dataset.adapter/v1",
+      "kind": "AdapterCheckpoint",
+      "adapter": { "id": "aiwg.adapter.jsonl", "version": "1.0.0" },
+      "sourceIdentity": "jsonl:sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "cursor": "3",
+      "schema": { "id": "https://aiwg.io/schemas/dataset/adapters/checkpoint.v1", "version": "1.0.0", "digest": { "algorithm": "sha256", "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" } },
+      "createdAt": "2026-09-03T12:00:00Z"
+    }
+  ]
+}

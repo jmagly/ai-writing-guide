@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/dataset/source-adapter.v1.schema.json",
+  "title": "AIWG dataset source adapter contracts v1",
+  "oneOf": [
+    { "$ref": "#/$defs/manifest" },
+    { "$ref": "#/$defs/checkpoint" },
+    { "$ref": "#/$defs/qualificationReport" },
+    { "$ref": "#/$defs/configurationEnvelope" }
+  ],
+  "$defs": {
+    "digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "value"],
+      "properties": { "algorithm": { "const": "sha256" }, "value": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "digest"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "schemaDeclaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "digest", "dialect", "schema"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "digest": { "$ref": "#/$defs/digest" },
+        "dialect": { "const": "https://json-schema.org/draft/2020-12/schema" },
+        "schema": { "type": "object" }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxRecords", "maxBytes", "maxRecordBytes", "timeoutMs", "maxRedirects", "maxDepth"],
+      "properties": {
+        "maxRecords": { "type": "integer", "minimum": 1 }, "maxBytes": { "type": "integer", "minimum": 1 },
+        "maxRecordBytes": { "type": "integer", "minimum": 1 }, "timeoutMs": { "type": "integer", "minimum": 1 },
+        "maxRedirects": { "type": "integer", "minimum": 0 }, "maxDepth": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contractVersion", "kind", "id", "version", "packageDigest", "datasetContractRange", "sourceKinds", "schemas", "capabilities", "limits", "maturity", "publisher", "trust", "permissions", "incremental"],
+      "properties": {
+        "contractVersion": { "const": "aiwg.dataset.adapter/v1" }, "kind": { "const": "AdapterManifest" },
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$" }, "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "packageDigest": { "$ref": "#/$defs/digest" }, "datasetContractRange": { "type": "string", "minLength": 1 },
+        "sourceKinds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "schemas": {
+          "type": "object", "additionalProperties": false, "required": ["config", "discoveredRecord", "checkpoint"],
+          "properties": { "config": { "$ref": "#/$defs/schemaDeclaration" }, "discoveredRecord": { "$ref": "#/$defs/schemaDeclaration" }, "checkpoint": { "$ref": "#/$defs/schemaDeclaration" } }
+        },
+        "capabilities": { "type": "array", "uniqueItems": true, "items": { "enum": ["discovery", "preview", "streaming-read", "checkpoint", "tombstone"] } },
+        "limits": { "$ref": "#/$defs/limits" }, "maturity": { "enum": ["experimental", "qualified", "stable"] },
+        "publisher": { "type": "object", "additionalProperties": false, "required": ["id"], "properties": { "id": { "type": "string", "minLength": 1 }, "url": { "type": "string", "format": "uri" } } },
+        "trust": { "type": "object", "additionalProperties": false, "required": ["state"], "properties": { "state": { "enum": ["builtin", "verified", "untrusted"] }, "signature": { "type": "string" } } },
+        "permissions": {
+          "type": "object", "additionalProperties": false, "required": ["locality", "network", "credentials"],
+          "properties": { "locality": { "enum": ["local", "remote"] }, "network": { "enum": ["none", "https-allowlisted"] }, "credentials": { "enum": ["none", "locator-only"] } }
+        },
+        "incremental": {
+          "type": "object", "additionalProperties": false, "required": ["ordering", "sameCursorTieHandling", "lateArrivals", "tombstones", "checkpointCompatibility"],
+          "properties": { "ordering": { "type": "string", "minLength": 1 }, "sameCursorTieHandling": { "type": "string", "minLength": 1 }, "lateArrivals": { "type": "string", "minLength": 1 }, "tombstones": { "type": "string", "minLength": 1 }, "checkpointCompatibility": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "checkpoint": {
+      "type": "object", "additionalProperties": false,
+      "required": ["contractVersion", "kind", "adapter", "sourceIdentity", "cursor", "schema", "createdAt"],
+      "properties": {
+        "contractVersion": { "const": "aiwg.dataset.adapter/v1" }, "kind": { "const": "AdapterCheckpoint" },
+        "adapter": { "type": "object", "additionalProperties": false, "required": ["id", "version"], "properties": { "id": { "type": "string" }, "version": { "type": "string" } } },
+        "sourceIdentity": { "type": "string", "minLength": 1 }, "cursor": { "type": "string" }, "tieBreaker": { "type": "string" },
+        "schema": { "$ref": "#/$defs/binding" }, "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "credentialLocator": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "locator"],
+      "properties": { "kind": { "enum": ["opaque", "environment", "keychain", "vault"] }, "locator": { "type": "string", "minLength": 1, "maxLength": 512 } }
+    },
+    "configurationEnvelope": {
+      "type": "object", "additionalProperties": false, "required": ["contractVersion", "kind", "adapter", "config", "credentialLocators"],
+      "properties": {
+        "contractVersion": { "const": "aiwg.dataset.adapter/v1" }, "kind": { "const": "AdapterConfiguration" },
+        "adapter": { "type": "object", "required": ["id", "version"], "properties": { "id": { "type": "string" }, "version": { "type": "string" } } }, "config": { "type": "object" },
+        "credentialLocators": { "type": "object", "additionalProperties": { "$ref": "#/$defs/credentialLocator" } }
+      }
+    },
+    "qualificationReport": {
+      "type": "object", "additionalProperties": false,
+      "required": ["contractVersion", "kind", "adapter", "schemas", "fixtureRevision", "cells", "qualifiedAt", "qualified", "stableEligible"],
+      "properties": {
+        "contractVersion": { "const": "aiwg.dataset.adapter/v1" }, "kind": { "const": "AdapterQualificationReport" },
+        "adapter": { "type": "object", "required": ["id", "version", "packageDigest"], "properties": { "id": { "type": "string" }, "version": { "type": "string" }, "packageDigest": { "$ref": "#/$defs/digest" } } },
+        "schemas": { "type": "object", "required": ["config", "record", "checkpoint"], "properties": { "config": { "$ref": "#/$defs/binding" }, "record": { "$ref": "#/$defs/binding" }, "checkpoint": { "$ref": "#/$defs/binding" } } },
+        "fixtureRevision": { "type": "string", "minLength": 1 },
+        "cells": { "type": "array", "items": { "type": "object", "required": ["name", "source", "passed", "evidence"], "properties": { "name": { "type": "string" }, "source": { "enum": ["fixture", "real-source"] }, "passed": { "type": "boolean" }, "evidence": { "type": "array", "items": { "type": "string" } } } } },
+        "qualifiedAt": { "type": "string", "format": "date-time" }, "qualified": { "type": "boolean" }, "stableEligible": { "type": "boolean" }
+      }
+    }
+  }
+}

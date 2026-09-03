@@ -1,0 +1,7 @@
+{
+  "cases": [
+    { "code": "raw-secret", "value": { "contractVersion": "aiwg.dataset.adapter/v1", "kind": "AdapterConfiguration", "adapter": {}, "config": {}, "credentialLocators": { "authorization": "secret-value" } } },
+    { "code": "checkpoint-missing-binding", "value": { "contractVersion": "aiwg.dataset.adapter/v1", "kind": "AdapterCheckpoint", "adapter": { "id": "x", "version": "1" }, "sourceIdentity": "x", "cursor": "0", "schema": {}, "createdAt": "now" } },
+    { "code": "unknown-kind", "value": { "contractVersion": "aiwg.dataset.adapter/v1", "kind": "Unknown" } }
+  ]
+}

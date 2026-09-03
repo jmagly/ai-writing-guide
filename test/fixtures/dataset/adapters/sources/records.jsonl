@@ -1,0 +1,5 @@
+{"id":"one","value":1}
+{"id":"two","value":2}
+{"id":"two","value":3}
+
+{"id":"deleted","tombstone":true}

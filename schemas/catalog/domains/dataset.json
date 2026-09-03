@@ -6,6 +6,29 @@
   "policy": { "strict": true, "compatibility": "backward", "requireFixtures": true },
   "artifacts": [
     {
+      "logicalName": "dataset.source-adapter",
+      "id": "https://aiwg.io/schemas/dataset/source-adapter.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": { "id": "aiwg-maintainers" },
+      "authority": { "kind": "canonical", "path": "schemas/dataset/source-adapter.v1.schema.json" },
+      "compatibility": { "mode": "backward" },
+      "dependencies": [{ "id": "https://aiwg.io/schemas/dataset/dataset-contracts.v1.schema.json", "version": "1.0.0" }],
+      "consumers": [
+        { "id": "dataset-adapter-sdk", "boundary": "manifest, configuration, lifecycle, checkpoint, and qualification contracts", "path": "src/dataset/adapter-sdk.ts" },
+        { "id": "dataset-reference-adapters", "boundary": "bounded source access", "path": "src/dataset/adapters.ts" }
+      ],
+      "fixtures": { "valid": ["test/fixtures/dataset/adapters/contracts.valid.json"], "invalid": ["test/fixtures/dataset/adapters/contracts.invalid.json"] },
+      "projections": [
+        { "kind": "types", "path": "src/dataset/adapter-types.ts", "generated": false },
+        { "kind": "validator", "path": "src/dataset/adapter-sdk.ts", "generated": false }
+      ],
+      "publication": { "public": true }
+    },
+    {
       "logicalName": "dataset.contracts",
       "id": "https://aiwg.io/schemas/dataset/dataset-contracts.v1.schema.json",
       "version": "1.0.0",
