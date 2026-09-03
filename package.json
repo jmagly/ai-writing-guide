@@ -160,6 +160,7 @@
     "schemas/security/",
     "schemas/providers/",
     "schemas/activity/",
+    "schemas/dataset/",
     "schemas/deploy/",
     "schemas/flow/",
     "schemas/uhp/",

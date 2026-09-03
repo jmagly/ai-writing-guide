@@ -1,0 +1,53 @@
+{
+  "contracts": [
+    {
+      "contractVersion": "aiwg.dataset/v1", "kind": "DatasetSource", "id": "source:orders",
+      "sourceType": "jsonl", "locator": "file:data/orders.jsonl",
+      "policy": { "privacy": "confidential", "rights": "internal-use", "license": "Proprietary", "retention": { "policy": "P30D" }, "intendedUse": ["analytics"], "locality": "local-only", "network": "offline", "authorizationRefs": ["authz:orders-read"] },
+      "schema": { "id": "schema:orders", "version": "1.0.0" },
+      "adapter": { "id": "adapter:jsonl", "version": "1.0.0", "configDigest": { "algorithm": "sha256", "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" } }
+    },
+    {
+      "contractVersion": "aiwg.dataset/v1", "kind": "Dataset", "id": "dataset:orders", "artifactClass": "canonical", "logicalId": "dataset:orders", "title": "Orders", "owner": "team:data",
+      "policy": { "privacy": "confidential", "intendedUse": ["analytics"], "locality": "local-only", "network": "offline", "authorizationRefs": ["authz:orders-read"] }
+    },
+    {
+      "contractVersion": "aiwg.dataset/v1", "kind": "DatasetRevision", "id": "dataset:orders@sha256:aaa", "artifactClass": "canonical", "datasetId": "dataset:orders", "revisionId": "dataset:orders@sha256:aaa",
+      "manifestDigest": { "algorithm": "sha256", "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }, "contentDigest": { "algorithm": "sha256", "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" }, "sourceIds": ["source:orders"], "createdAt": "2026-09-02T12:00:00Z"
+    },
+    {
+      "contractVersion": "aiwg.dataset/v1", "kind": "Distribution", "id": "distribution:orders-jsonl", "datasetRevisionId": "dataset:orders@sha256:aaa", "artifactClass": "distribution", "mediaType": "application/x-ndjson", "locator": "file:exports/orders.jsonl", "digest": { "algorithm": "sha256", "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" }
+    },
+    {
+      "contractVersion": "aiwg.dataset/v1", "kind": "CapabilityProfile", "id": "capability-profile:orders",
+      "capabilities": [
+        { "name": "incremental-read", "requirement": "required", "acceptedVersions": ["1"], "degradation": { "action": "fail" } },
+        { "name": "vector-index", "requirement": "optional", "degradation": { "action": "disable", "reason": "lexical query remains available" } }
+      ]
+    },
+    {
+      "contractVersion": "aiwg.dataset/v1", "kind": "ProcessingPlan", "id": "plan:orders-v1", "datasetRevisionId": "dataset:orders@sha256:aaa", "capabilityProfileId": "capability-profile:orders",
+      "steps": [{ "id": "step:normalize", "operation": "normalize", "implementation": { "id": "transform:orders", "version": "1.0.0" }, "configDigest": { "algorithm": "sha256", "value": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd" } }],
+      "artifactClasses": ["regenerable-index"], "createdBy": "principal:operator", "planDigest": { "algorithm": "sha256", "value": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" }
+    },
+    {
+      "contractVersion": "aiwg.dataset/v1", "kind": "ProcessingRun", "id": "run:orders-1", "runId": "run:orders-1", "planId": "plan:orders-v1", "planDigest": { "algorithm": "sha256", "value": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" }, "attempt": 1, "outcome": "committed", "startedAt": "2026-09-02T12:01:00Z", "endedAt": "2026-09-02T12:02:00Z", "executor": { "id": "executor:local", "version": "1.0.0" }
+    },
+    {
+      "contractVersion": "aiwg.dataset/v1", "kind": "DerivedArtifact", "id": "index:orders-v1", "artifactClass": "regenerable-index", "sourceRevisionId": "dataset:orders@sha256:aaa", "runId": "run:orders-1", "locator": "file:.aiwg/index/orders", "digest": { "algorithm": "sha256", "value": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" }, "regenerable": true
+    },
+    {
+      "contractVersion": "aiwg.dataset/v1", "kind": "ProvenanceAssertion", "id": "assertion:orders-1", "basis": "observed", "subjectId": "index:orders-v1", "predicate": "wasDerivedFrom", "objectId": "dataset:orders@sha256:aaa", "sourceRevisionId": "dataset:orders@sha256:aaa", "runId": "run:orders-1", "evidence": [{ "locator": "file:receipts/run-1.json#/committedRecords", "method": "execution-receipt", "confidence": 1, "privacy": "internal" }], "assertedBy": "executor:local", "assertedAt": "2026-09-02T12:02:00Z"
+    },
+    {
+      "contractVersion": "aiwg.dataset/v1", "kind": "Relationship", "id": "relationship:orders-1", "relationshipType": "derived-from", "direction": "outbound", "sourceId": "index:orders-v1", "targetId": "dataset:orders@sha256:aaa", "basis": "observed", "sourceRevisionId": "dataset:orders@sha256:aaa", "runId": "run:orders-1", "evidence": [{ "locator": "file:receipts/run-1.json", "method": "execution-receipt", "confidence": 1, "privacy": "internal" }]
+    },
+    {
+      "contractVersion": "aiwg.dataset/v1", "kind": "Checkpoint", "id": "checkpoint:orders-1", "sourceId": "source:orders", "sourceSchema": { "id": "schema:orders", "version": "1.0.0" }, "adapter": { "id": "adapter:jsonl", "version": "1.0.0" }, "planDigest": { "algorithm": "sha256", "value": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" }, "opaqueCursor": "line:100", "createdAt": "2026-09-02T12:02:00Z"
+    },
+    {
+      "contractVersion": "aiwg.dataset/v1", "kind": "RunReceipt", "id": "receipt:orders-1", "runId": "run:orders-1", "planId": "plan:orders-v1", "planDigest": { "algorithm": "sha256", "value": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" }, "outcome": "committed", "committed": true, "attemptedRecords": 100, "committedRecords": 98, "rejectedRecords": 2, "checkpointAfterId": "checkpoint:orders-1", "receiptDigest": { "algorithm": "sha256", "value": "1111111111111111111111111111111111111111111111111111111111111111" }, "createdAt": "2026-09-02T12:02:00Z"
+    }
+  ],
+  "runReceiptOutcomes": ["preview", "attempted", "committed", "rejected", "cancelled", "failed"]
+}

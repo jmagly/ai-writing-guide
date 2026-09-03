@@ -1,0 +1,34 @@
+{
+  "$schema": "../domain-manifest.v1.schema.json",
+  "schemaVersion": "1",
+  "domain": "dataset-intelligence",
+  "owner": { "id": "aiwg-maintainers" },
+  "policy": { "strict": true, "compatibility": "backward", "requireFixtures": true },
+  "artifacts": [
+    {
+      "logicalName": "dataset.contracts",
+      "id": "https://aiwg.io/schemas/dataset/dataset-contracts.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": { "id": "aiwg-maintainers" },
+      "authority": { "kind": "canonical", "path": "schemas/dataset/dataset-contracts.v1.schema.json" },
+      "compatibility": { "mode": "backward" },
+      "consumers": [
+        { "id": "dataset-runtime", "boundary": "serialized contract validation", "path": "src/dataset/contracts.ts" },
+        { "id": "dataset-types", "boundary": "TypeScript representation", "path": "src/dataset/types.ts" }
+      ],
+      "fixtures": {
+        "valid": ["test/fixtures/dataset/contracts.valid.json"],
+        "invalid": ["test/fixtures/dataset/contracts.invalid.json"]
+      },
+      "projections": [
+        { "kind": "types", "path": "src/dataset/types.ts", "generated": false },
+        { "kind": "validator", "path": "src/dataset/contracts.ts", "generated": false }
+      ],
+      "publication": { "public": true }
+    }
+  ]
+}

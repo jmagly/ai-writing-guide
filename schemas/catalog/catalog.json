@@ -10,6 +10,7 @@
   },
   "domains": [
     "domains/control-plane.json",
+    "domains/dataset.json",
     "domains/repository-json-schemas.json"
   ]
 }

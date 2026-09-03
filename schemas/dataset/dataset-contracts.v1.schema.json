@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/dataset/dataset-contracts.v1.schema.json",
+  "title": "AIWG Dataset Intelligence Contracts v1",
+  "oneOf": [
+    { "$ref": "#/$defs/DatasetSource" }, { "$ref": "#/$defs/Dataset" },
+    { "$ref": "#/$defs/DatasetRevision" }, { "$ref": "#/$defs/Distribution" },
+    { "$ref": "#/$defs/CapabilityProfile" }, { "$ref": "#/$defs/ProcessingPlan" },
+    { "$ref": "#/$defs/ProcessingRun" }, { "$ref": "#/$defs/DerivedArtifact" },
+    { "$ref": "#/$defs/ProvenanceAssertion" }, { "$ref": "#/$defs/Relationship" },
+    { "$ref": "#/$defs/Checkpoint" }, { "$ref": "#/$defs/RunReceipt" }
+  ],
+  "$defs": {
+    "contractVersion": { "const": "aiwg.dataset/v1" },
+    "id": { "type": "string", "minLength": 1, "maxLength": 1024 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "nonNegativeInteger": { "type": "integer", "minimum": 0 },
+    "digest": {
+      "type": "object", "additionalProperties": false, "required": ["algorithm", "value"],
+      "properties": { "algorithm": { "const": "sha256" }, "value": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+    },
+    "schemaBinding": {
+      "type": "object", "additionalProperties": false, "required": ["id", "version"],
+      "properties": { "id": { "$ref": "#/$defs/id" }, "version": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" } }
+    },
+    "privacy": { "enum": ["public", "internal", "confidential", "restricted"] },
+    "artifactClass": { "enum": ["canonical", "derived", "regenerable-index", "cache", "distribution", "portable-export"] },
+    "policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["privacy", "intendedUse", "locality", "network", "authorizationRefs"],
+      "properties": {
+        "privacy": { "$ref": "#/$defs/privacy" }, "rights": { "type": "string" }, "license": { "type": "string" },
+        "retention": { "type": "object", "additionalProperties": false, "required": ["policy"], "properties": { "policy": { "type": "string", "minLength": 1 }, "expiresAt": { "$ref": "#/$defs/timestamp" } } },
+        "intendedUse": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "locality": { "enum": ["local-only", "approved-regions", "unrestricted"] },
+        "network": { "enum": ["offline", "allowlisted", "online"] },
+        "authorizationRefs": { "type": "array", "items": { "$ref": "#/$defs/id" }, "uniqueItems": true }
+      },
+      "propertyNames": { "not": { "pattern": "^(password|passwd|secret|token|api[-_]?key|private[-_]?key|credential)s?$" } }
+    },
+    "adapter": {
+      "type": "object", "additionalProperties": false, "required": ["id", "version", "configDigest"],
+      "properties": { "id": { "$ref": "#/$defs/id" }, "version": { "type": "string", "minLength": 1 }, "configDigest": { "$ref": "#/$defs/digest" } }
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false, "required": ["locator", "method", "confidence", "privacy"],
+      "properties": { "locator": { "$ref": "#/$defs/id" }, "method": { "type": "string", "minLength": 1 }, "confidence": { "type": "number", "minimum": 0, "maximum": 1 }, "privacy": { "$ref": "#/$defs/privacy" } }
+    },
+    "baseProperties": {
+      "contractVersion": { "$ref": "#/$defs/contractVersion" }, "id": { "$ref": "#/$defs/id" }
+    },
+    "DatasetSource": {
+      "type": "object", "additionalProperties": false, "required": ["contractVersion", "kind", "id", "sourceType", "locator", "policy", "adapter"],
+      "properties": { "contractVersion": { "$ref": "#/$defs/contractVersion" }, "kind": { "const": "DatasetSource" }, "id": { "$ref": "#/$defs/id" }, "sourceType": { "type": "string", "minLength": 1 }, "locator": { "$ref": "#/$defs/id" }, "policy": { "$ref": "#/$defs/policy" }, "schema": { "$ref": "#/$defs/schemaBinding" }, "adapter": { "$ref": "#/$defs/adapter" } }
+    },
+    "Dataset": {
+      "type": "object", "additionalProperties": false, "required": ["contractVersion", "kind", "id", "artifactClass", "logicalId", "title", "owner", "policy"],
+      "properties": { "contractVersion": { "$ref": "#/$defs/contractVersion" }, "kind": { "const": "Dataset" }, "id": { "$ref": "#/$defs/id" }, "artifactClass": { "const": "canonical" }, "logicalId": { "$ref": "#/$defs/id" }, "title": { "type": "string", "minLength": 1 }, "description": { "type": "string" }, "owner": { "$ref": "#/$defs/id" }, "policy": { "$ref": "#/$defs/policy" } }
+    },
+    "DatasetRevision": {
+      "type": "object", "additionalProperties": false, "required": ["contractVersion", "kind", "id", "artifactClass", "datasetId", "revisionId", "manifestDigest", "sourceIds", "createdAt"],
+      "properties": { "contractVersion": { "$ref": "#/$defs/contractVersion" }, "kind": { "const": "DatasetRevision" }, "id": { "$ref": "#/$defs/id" }, "artifactClass": { "const": "canonical" }, "datasetId": { "$ref": "#/$defs/id" }, "revisionId": { "$ref": "#/$defs/id" }, "manifestDigest": { "$ref": "#/$defs/digest" }, "contentDigest": { "$ref": "#/$defs/digest" }, "sourceIds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } }, "createdAt": { "$ref": "#/$defs/timestamp" }, "schema": { "$ref": "#/$defs/schemaBinding" } }
+    },
+    "Distribution": {
+      "type": "object", "additionalProperties": false, "required": ["contractVersion", "kind", "id", "datasetRevisionId", "artifactClass", "mediaType", "locator", "digest"],
+      "properties": { "contractVersion": { "$ref": "#/$defs/contractVersion" }, "kind": { "const": "Distribution" }, "id": { "$ref": "#/$defs/id" }, "datasetRevisionId": { "$ref": "#/$defs/id" }, "artifactClass": { "enum": ["distribution", "portable-export"] }, "mediaType": { "type": "string", "minLength": 1 }, "locator": { "$ref": "#/$defs/id" }, "digest": { "$ref": "#/$defs/digest" }, "schema": { "$ref": "#/$defs/schemaBinding" } }
+    },
+    "capabilitySpec": {
+      "type": "object", "additionalProperties": false, "required": ["name", "requirement", "degradation"],
+      "properties": { "name": { "$ref": "#/$defs/id" }, "requirement": { "enum": ["required", "optional"] }, "acceptedVersions": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }, "degradation": { "type": "object", "additionalProperties": false, "required": ["action"], "properties": { "action": { "enum": ["fail", "disable", "fallback"] }, "fallbackCapability": { "$ref": "#/$defs/id" }, "reason": { "type": "string" } } } }
+    },
+    "CapabilityProfile": {
+      "type": "object", "additionalProperties": false, "required": ["contractVersion", "kind", "id", "capabilities"],
+      "properties": { "contractVersion": { "$ref": "#/$defs/contractVersion" }, "kind": { "const": "CapabilityProfile" }, "id": { "$ref": "#/$defs/id" }, "capabilities": { "type": "array", "items": { "$ref": "#/$defs/capabilitySpec" } } }
+    },
+    "processingStep": {
+      "type": "object", "additionalProperties": false, "required": ["id", "operation", "implementation", "configDigest"],
+      "properties": { "id": { "$ref": "#/$defs/id" }, "operation": { "type": "string", "minLength": 1 }, "implementation": { "type": "object", "additionalProperties": false, "required": ["id", "version"], "properties": { "id": { "$ref": "#/$defs/id" }, "version": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" } } }, "inputSchema": { "$ref": "#/$defs/schemaBinding" }, "outputSchema": { "$ref": "#/$defs/schemaBinding" }, "configDigest": { "$ref": "#/$defs/digest" } }
+    },
+    "ProcessingPlan": {
+      "type": "object", "additionalProperties": false, "required": ["contractVersion", "kind", "id", "datasetRevisionId", "capabilityProfileId", "steps", "artifactClasses", "createdBy", "planDigest"],
+      "properties": { "contractVersion": { "$ref": "#/$defs/contractVersion" }, "kind": { "const": "ProcessingPlan" }, "id": { "$ref": "#/$defs/id" }, "datasetRevisionId": { "$ref": "#/$defs/id" }, "capabilityProfileId": { "$ref": "#/$defs/id" }, "steps": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/processingStep" } }, "artifactClasses": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/artifactClass" } }, "createdBy": { "$ref": "#/$defs/id" }, "planDigest": { "$ref": "#/$defs/digest" } }
+    },
+    "runOutcome": { "enum": ["preview", "attempted", "committed", "rejected", "cancelled", "failed"] },
+    "ProcessingRun": {
+      "type": "object", "additionalProperties": false, "required": ["contractVersion", "kind", "id", "runId", "planId", "planDigest", "attempt", "outcome", "startedAt", "executor"],
+      "properties": { "contractVersion": { "$ref": "#/$defs/contractVersion" }, "kind": { "const": "ProcessingRun" }, "id": { "$ref": "#/$defs/id" }, "runId": { "$ref": "#/$defs/id" }, "planId": { "$ref": "#/$defs/id" }, "planDigest": { "$ref": "#/$defs/digest" }, "attempt": { "type": "integer", "minimum": 1 }, "outcome": { "$ref": "#/$defs/runOutcome" }, "startedAt": { "$ref": "#/$defs/timestamp" }, "endedAt": { "$ref": "#/$defs/timestamp" }, "executor": { "type": "object", "additionalProperties": false, "required": ["id", "version"], "properties": { "id": { "$ref": "#/$defs/id" }, "version": { "type": "string", "minLength": 1 } } }, "diagnosticCodes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true } }
+    },
+    "DerivedArtifact": {
+      "type": "object", "additionalProperties": false, "required": ["contractVersion", "kind", "id", "artifactClass", "sourceRevisionId", "runId", "locator", "digest", "regenerable"],
+      "properties": { "contractVersion": { "$ref": "#/$defs/contractVersion" }, "kind": { "const": "DerivedArtifact" }, "id": { "$ref": "#/$defs/id" }, "artifactClass": { "enum": ["derived", "regenerable-index", "cache", "distribution", "portable-export"] }, "sourceRevisionId": { "$ref": "#/$defs/id" }, "runId": { "$ref": "#/$defs/id" }, "locator": { "$ref": "#/$defs/id" }, "digest": { "$ref": "#/$defs/digest" }, "schema": { "$ref": "#/$defs/schemaBinding" }, "regenerable": { "type": "boolean" } }
+    },
+    "ProvenanceAssertion": {
+      "type": "object", "additionalProperties": false, "required": ["contractVersion", "kind", "id", "basis", "subjectId", "predicate", "objectId", "evidence", "assertedBy", "assertedAt"],
+      "properties": { "contractVersion": { "$ref": "#/$defs/contractVersion" }, "kind": { "const": "ProvenanceAssertion" }, "id": { "$ref": "#/$defs/id" }, "basis": { "enum": ["declared", "observed"] }, "subjectId": { "$ref": "#/$defs/id" }, "predicate": { "type": "string", "minLength": 1 }, "objectId": { "$ref": "#/$defs/id" }, "sourceRevisionId": { "$ref": "#/$defs/id" }, "runId": { "$ref": "#/$defs/id" }, "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidence" } }, "assertedBy": { "$ref": "#/$defs/id" }, "assertedAt": { "$ref": "#/$defs/timestamp" } },
+      "allOf": [{ "if": { "properties": { "basis": { "const": "observed" } }, "required": ["basis"] }, "then": { "properties": { "runId": {} }, "required": ["runId"] } }]
+    },
+    "Relationship": {
+      "type": "object", "additionalProperties": false, "required": ["contractVersion", "kind", "id", "relationshipType", "direction", "sourceId", "targetId", "basis", "evidence"],
+      "properties": { "contractVersion": { "$ref": "#/$defs/contractVersion" }, "kind": { "const": "Relationship" }, "id": { "$ref": "#/$defs/id" }, "relationshipType": { "type": "string", "minLength": 1 }, "direction": { "enum": ["outbound", "inbound"] }, "sourceId": { "$ref": "#/$defs/id" }, "targetId": { "$ref": "#/$defs/id" }, "basis": { "enum": ["declared", "observed"] }, "sourceRevisionId": { "$ref": "#/$defs/id" }, "runId": { "$ref": "#/$defs/id" }, "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidence" } } },
+      "allOf": [{ "if": { "properties": { "basis": { "const": "observed" } }, "required": ["basis"] }, "then": { "properties": { "runId": {} }, "required": ["runId"] } }]
+    },
+    "Checkpoint": {
+      "type": "object", "additionalProperties": false, "required": ["contractVersion", "kind", "id", "sourceId", "sourceSchema", "adapter", "planDigest", "opaqueCursor", "createdAt"],
+      "properties": { "contractVersion": { "$ref": "#/$defs/contractVersion" }, "kind": { "const": "Checkpoint" }, "id": { "$ref": "#/$defs/id" }, "sourceId": { "$ref": "#/$defs/id" }, "sourceSchema": { "$ref": "#/$defs/schemaBinding" }, "adapter": { "type": "object", "additionalProperties": false, "required": ["id", "version"], "properties": { "id": { "$ref": "#/$defs/id" }, "version": { "type": "string", "minLength": 1 } } }, "planDigest": { "$ref": "#/$defs/digest" }, "opaqueCursor": { "type": "string", "minLength": 1 }, "priorCommittedReceiptId": { "$ref": "#/$defs/id" }, "createdAt": { "$ref": "#/$defs/timestamp" } }
+    },
+    "RunReceipt": {
+      "type": "object", "additionalProperties": false, "required": ["contractVersion", "kind", "id", "runId", "planId", "planDigest", "outcome", "committed", "attemptedRecords", "committedRecords", "rejectedRecords", "receiptDigest", "createdAt"],
+      "properties": { "contractVersion": { "$ref": "#/$defs/contractVersion" }, "kind": { "const": "RunReceipt" }, "id": { "$ref": "#/$defs/id" }, "runId": { "$ref": "#/$defs/id" }, "planId": { "$ref": "#/$defs/id" }, "planDigest": { "$ref": "#/$defs/digest" }, "outcome": { "$ref": "#/$defs/runOutcome" }, "committed": { "type": "boolean" }, "attemptedRecords": { "$ref": "#/$defs/nonNegativeInteger" }, "committedRecords": { "$ref": "#/$defs/nonNegativeInteger" }, "rejectedRecords": { "$ref": "#/$defs/nonNegativeInteger" }, "checkpointBeforeId": { "$ref": "#/$defs/id" }, "checkpointAfterId": { "$ref": "#/$defs/id" }, "priorCommittedReceiptId": { "$ref": "#/$defs/id" }, "receiptDigest": { "$ref": "#/$defs/digest" }, "createdAt": { "$ref": "#/$defs/timestamp" }, "diagnosticCodes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true } },
+      "allOf": [
+        { "if": { "properties": { "outcome": { "const": "committed" } }, "required": ["outcome"] }, "then": { "properties": { "committed": { "const": true } } } },
+        { "if": { "not": { "properties": { "outcome": { "const": "committed" } }, "required": ["outcome"] } }, "then": { "properties": { "committed": { "const": false } } } }
+      ]
+    }
+  }
+}
