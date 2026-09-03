@@ -71,7 +71,9 @@ function packageRoot(start: string): string {
   for (;;) {
     try {
       const pkg = JSON.parse(readFileSync(join(current, 'package.json'), 'utf8')) as { name?: string }
-      if (pkg.name === 'aiwg') return current
+      // The release packager renames the installed package to `@aiwg/cli`.
+      // Keep schema lookup valid in both the source and packaged layouts.
+      if (pkg.name === 'aiwg' || pkg.name === '@aiwg/cli') return current
     } catch { /* keep walking */ }
     const parent = dirname(current)
     if (parent === current) throw new Error('dataset schema governance: could not locate package root')

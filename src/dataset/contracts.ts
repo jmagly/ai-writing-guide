@@ -31,7 +31,10 @@ function packageRoot(start: string): string {
   for (;;) {
     try {
       const packageJson = JSON.parse(readFileSync(join(current, 'package.json'), 'utf8')) as { name?: string }
-      if (packageJson.name === 'aiwg') return current
+      // The source tree is named `aiwg`; the release packager rewrites the
+      // installed distribution to `@aiwg/cli`. Both layouts contain the same
+      // governed schemas, so package discovery must recognize both identities.
+      if (packageJson.name === 'aiwg' || packageJson.name === '@aiwg/cli') return current
     } catch {
       // Keep walking; source and compiled modules have different depths.
     }
