@@ -1,0 +1,10 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata: { name: schema-evolve, namespace: schema-governance, labels: { domain: schema } }
+spec:
+  description: Analyze compatibility and produce a governed schema revision with consumer migration evidence.
+  version: "1.0.0"
+  inputs: [{name: change_request, type: object, required: true}]
+  outputs: [{name: schema_artifacts, type: object}]
+  agent: schema-architect
+  idempotent: false

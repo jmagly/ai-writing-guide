@@ -1,0 +1,10 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: schema-lifecycle
+  labels: { domain: schema, version: "1.0.0" }
+spec:
+  steps:
+    - { id: intake, capability: schema-intake }
+    - { id: author, capability: schema-author, depends_on: [intake], inputs: [{name: schema_brief, from: intake.schema_brief}] }
+    - { id: review, capability: schema-review, depends_on: [author], inputs: [{name: schema_artifacts, from: author.schema_artifacts}] }

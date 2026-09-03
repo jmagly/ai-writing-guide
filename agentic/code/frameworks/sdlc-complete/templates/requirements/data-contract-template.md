@@ -23,7 +23,25 @@
 - Name/Path: `GET /api/v1/...`
 - Version: v`major.minor`
 
-## Request Schema
+## Schema Authority
+
+- Logical name:
+- Stable schema ID:
+- Version and lifecycle:
+- Canonical authority path:
+- Owner:
+- Producers and consumers:
+- Compatibility mode and baseline:
+- Fixture paths (valid/invalid):
+- Projections:
+- Catalog/domain manifest:
+
+If this data is persistent, exchanged, configured, queued, evented,
+imported/exported, or structured user input, these fields are required. A prose
+shape or example is not the contract. An opt-out requires an ephemeral internal
+boundary, owner, rationale, and review date.
+
+## Request Example (validated by the canonical schema)
 
 ```json
 {
@@ -32,7 +50,7 @@
 }
 ```
 
-## Response Schema
+## Response Example (validated by the canonical schema)
 
 ```json
 {

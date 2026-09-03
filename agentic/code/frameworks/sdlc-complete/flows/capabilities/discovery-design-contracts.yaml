@@ -5,11 +5,14 @@ metadata:
   name: discovery-design-contracts
   labels: { domain: discovery }
 spec:
-  description: Inventory data/interface needs from the use-case briefs, then author data contract cards (api-designer) and interface specification cards (architecture-designer) with backward-compatibility validation (flow Step 3).
-  version: "1.0.0"
+  description: Inventory every persistent or exchanged data element from the use-case briefs, run schema-intake by default, then author canonical cataloged schemas, data contract cards, and interface cards with compatibility validation (flow Step 3).
+  version: "1.1.0"
   inputs: []
   outputs:
     - { name: data_contracts, type: array }
+    - { name: canonical_schemas, type: array }
+    - { name: schema_opt_outs, type: array }
     - { name: interface_specs, type: array }
   agent: api-designer
+  requires_addon: schema-governance
   idempotent: false

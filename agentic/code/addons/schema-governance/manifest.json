@@ -1,0 +1,20 @@
+{
+  "id": "schema-governance",
+  "type": "addon",
+  "name": "Schema Governance",
+  "version": "1.0.0",
+  "description": "First-class schema discovery, authoring, validation, evolution, and SDLC normalization",
+  "entry": { "agents": "agents", "commands": "commands", "skills": "skills", "rules": "rules", "flows": "flows", "templates": "templates" },
+  "core": true,
+  "autoInstall": true,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "agents": ["schema-steward", "schema-architect", "schema-reviewer"],
+  "commands": ["schema"],
+  "skills": ["schema-intake", "schema-author", "schema-evolve", "schema-review", "schema-onboard"],
+  "rules": ["schema-first"],
+  "flows": ["schema-lifecycle", "schema-change"],
+  "templates": ["schema-brief"],
+  "dependencies": { "required": ["aiwg-utils"], "optional": ["sdlc-complete"] },
+  "cli": { "namespace": "schema", "providedBy": "AIWG core runtime", "catalog": "schemas/catalog/catalog.json" }
+}

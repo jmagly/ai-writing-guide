@@ -223,7 +223,8 @@ A work item is READY for delivery when:
 #### Documentation Complete
 - [ ] Use-case specification OR user story is written (`requirements/use-case-brief-template.md` or `user-story-card.md`)
 - [ ] Acceptance criteria are testable and specific
-- [ ] Interface contracts defined (`requirements/data-contract-template.md`, API specs, data models)
+- [ ] Every persistent/exchanged structured data element has a canonical cataloged schema, fixtures, and compatibility disposition—or a reviewed explicit opt-out
+- [ ] Interface contracts reference their governed schema identities (`requirements/data-contract-template.md`, API specs, data models)
 - [ ] Dependencies identified and documented (`management/dependency-card.md`)
 - [ ] Related risks assessed (`management/risk-card.md` - no unmitigated High risks)
 - [ ] Architectural decisions documented (`analysis-design/architecture-decision-record-template.md` if needed)

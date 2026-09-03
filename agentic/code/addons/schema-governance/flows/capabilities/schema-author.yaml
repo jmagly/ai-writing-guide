@@ -1,0 +1,10 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata: { name: schema-author, namespace: schema-governance, labels: { domain: schema } }
+spec:
+  description: Produce canonical schema authority, catalog metadata, fixtures, and declared projections from a schema brief.
+  version: "1.0.0"
+  inputs: [{name: schema_brief, type: object, required: true}]
+  outputs: [{name: schema_artifacts, type: object}]
+  agent: schema-architect
+  idempotent: false

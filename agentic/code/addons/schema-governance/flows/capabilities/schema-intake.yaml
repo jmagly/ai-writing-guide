@@ -1,0 +1,10 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata: { name: schema-intake, namespace: schema-governance, labels: { domain: schema } }
+spec:
+  description: Detect schema-bearing data boundaries and produce an examples-first schema brief or reviewed opt-out.
+  version: "1.0.0"
+  inputs: [{name: data_need, type: object, required: true}]
+  outputs: [{name: schema_brief, type: object}]
+  agent: schema-steward
+  idempotent: true

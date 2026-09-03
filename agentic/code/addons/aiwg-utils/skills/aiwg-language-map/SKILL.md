@@ -34,6 +34,27 @@ Each section opens with an explicit `aiwg discover "<phrase>"` example. Table ro
 
 ## Addon capability domains
 
+### Schemas & data contracts
+
+When the user describes a record, configuration file, event, API payload,
+message, import/export, or other structured data—even when they do not know to
+ask for a schema.
+
+Example: `aiwg discover "define data shape"`. Phrases below pass straight to
+`aiwg discover`.
+
+| Need | Phrase | Bundle |
+|---|---|---|
+| Decide whether structured data needs a contract | `define data shape` | schema-governance |
+| Explain schemas and continue examples-first | `why do I need a schema` | schema-governance |
+| Author and register a canonical schema | `create a schema` | schema-governance |
+| Evolve an existing contract safely | `change an existing schema` | schema-governance |
+| Review correctness and readiness | `review a data contract` | schema-governance |
+
+The SDLC discovery track invokes this addon automatically for persistent or
+exchanged data. Users should describe the data need; they need not choose a
+dialect, identifier, lifecycle, or compatibility policy themselves.
+
 ### Loops & iteration
 
 When the user needs an iterative coding loop, recursive context decomposition, eval gates, or guided autonomous implementation.

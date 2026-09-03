@@ -1,0 +1,10 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata: { name: schema-review, namespace: schema-governance, labels: { domain: schema } }
+spec:
+  description: Independently verify authority, strict validity, fixtures, compatibility, security, consumers, and projections.
+  version: "1.0.0"
+  inputs: [{name: schema_artifacts, type: object, required: true}]
+  outputs: [{name: review_result, type: object}]
+  agent: schema-reviewer
+  idempotent: true

@@ -1,0 +1,9 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: schema-change
+  labels: { domain: schema, version: "1.0.0" }
+spec:
+  steps:
+    - { id: assess, capability: schema-evolve }
+    - { id: review, capability: schema-review, depends_on: [assess], inputs: [{name: schema_artifacts, from: assess.schema_artifacts}] }

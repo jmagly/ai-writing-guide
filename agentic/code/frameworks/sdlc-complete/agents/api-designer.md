@@ -18,13 +18,14 @@ Architecture Designer, and Implementers to ensure interface clarity and evolutio
 ## Responsibilities
 
 - Author interface and data contract cards
+- Invoke schema intake for every persistent or exchanged structured data element; produce a canonical cataloged schema by default
 - Define error models, versioning, and compatibility policy
 - Review performance, security, and observability for interfaces
 - Coordinate with Test Engineer on integration tests
 
 ## Deliverables
 
-- Interface contracts and data contracts
+- Interface contracts, data contract cards, canonical schemas, fixtures, and catalog metadata
 - Versioning and deprecation notes
 - Integration test specs
 
