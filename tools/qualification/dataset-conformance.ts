@@ -1,6 +1,6 @@
-import { readFile, stat } from 'node:fs/promises'
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { execFileSync } from 'node:child_process'
-import { resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import {
   DATASET_CONFORMANCE_CONTRACT,
   DATASET_CONFORMANCE_SCHEMA_VERSION,
@@ -119,7 +119,7 @@ async function main() {
   }
   const output = `${JSON.stringify(receipt, null, 2)}\n`
   if (args.report) {
-    const { writeFile } = await import('node:fs/promises')
+    await mkdir(dirname(resolve(args.report)), { recursive: true })
     await writeFile(args.report, output)
   } else process.stdout.write(output)
   if (receipt.summary.failed > 0) process.exitCode = 1
