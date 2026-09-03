@@ -6,7 +6,7 @@
  * conforming to `StorageAdapter`.
  *
  * @design @.aiwg/architecture/storage-design.md
- * @schema @.aiwg/architecture/schemas/storage.config.v1.json
+ * @schema @schemas/storage/storage.config.v1.schema.json
  * @issue #934
  * @issue #953
  */

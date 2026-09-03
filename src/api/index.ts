@@ -19,6 +19,7 @@ export * from '../marketplace/artifact-attestation.js';
 export * from '../uhp/index.js';
 export * from '../mission-protocol/index.js';
 export * from '../governance/index.js';
+export * from '../schema/index.js';
 export {
   ARTIFACT_TRUST_ROOT_MEDIA_TYPE,
   ARTIFACT_TRUST_ROOT_SCHEMA_VERSION,

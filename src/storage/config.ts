@@ -5,10 +5,9 @@
  * v1 schema, and returns a typed `StorageConfig`. Absence of the file is
  * a no-op: every subsystem defaults to `fs` rooted under `.aiwg/`.
  *
- * Validation is hand-rolled rather than schema-validator-driven to avoid
- * adding an `ajv` dependency for a single file. The published JSON
- * Schema (`.aiwg/architecture/schemas/storage.config.v1.json`) remains
- * canonical for editor tooling and external consumers.
+ * Runtime validation is kept in parity with the canonical JSON Schema at
+ * `schemas/storage/storage.config.v1.schema.json`; the lightweight path here
+ * avoids loading the full catalog during storage bootstrap.
  *
  * @design @.aiwg/architecture/storage-design.md
  * @issue #934
@@ -117,6 +116,7 @@ export function validateStorageConfig(parsed: unknown, source = '<input>'): Stor
   }
 
   walkRejectingCredentials(obj, source, 'storage');
+  rejectUnknownKeys(obj, ['version', 'roots', 'backends', 'fallback'], source, 'storage');
 
   const roots = validateRoots(obj['roots'], source);
   const backends = validateBackends(obj['backends'], source);
@@ -199,19 +199,24 @@ function validateBackendConfig(raw: unknown, source: string): BackendConfig {
   // — the adapter is responsible for any further validation it needs.
   switch (type) {
     case 'fs':
+      rejectUnknownKeys(obj, ['type'], source, 'backend');
       return { type: 'fs' };
     case 'obsidian':
+      rejectUnknownKeys(obj, ['type', 'vault', 'folder', 'useCli'], source, 'backend');
       requireString(obj, 'vault', source);
       return obj as unknown as BackendConfig;
     case 'logseq':
+      rejectUnknownKeys(obj, ['type', 'graph', 'apiUrl', 'useApi'], source, 'backend');
       requireString(obj, 'graph', source);
       return obj as unknown as BackendConfig;
     case 'notion': {
+      rejectUnknownKeys(obj, ['type', 'parent', 'externalIdProperty'], source, 'backend');
       const parent = obj['parent'];
       if (typeof parent !== 'object' || parent === null) {
         throw new Error(`${source}.parent must be an object with pageId or databaseId`);
       }
       const p = parent as Record<string, unknown>;
+      rejectUnknownKeys(p, ['pageId', 'databaseId'], source, 'parent');
       const hasPage = typeof p['pageId'] === 'string' && p['pageId'].length > 0;
       const hasDb = typeof p['databaseId'] === 'string' && p['databaseId'].length > 0;
       if (hasPage === hasDb) {
@@ -220,20 +225,29 @@ function validateBackendConfig(raw: unknown, source: string): BackendConfig {
       return obj as unknown as BackendConfig;
     }
     case 'anythingllm':
+      rejectUnknownKeys(obj, ['type', 'baseUrl', 'workspace', 'folder'], source, 'backend');
       requireString(obj, 'baseUrl', source);
       requireString(obj, 'workspace', source);
       return obj as unknown as BackendConfig;
     case 'fortemi':
+      rejectUnknownKeys(obj, ['type', 'mcpServer', 'scheme'], source, 'backend');
       return obj as unknown as BackendConfig;
     case 's3':
+      rejectUnknownKeys(obj, ['type', 'bucket', 'prefix', 'region', 'endpoint'], source, 'backend');
       requireString(obj, 'bucket', source);
       return obj as unknown as BackendConfig;
     case 'webdav':
+      rejectUnknownKeys(obj, ['type', 'url', 'authMode'], source, 'backend');
       requireString(obj, 'url', source);
       return obj as unknown as BackendConfig;
     default:
       throw new Error(`${source}: unhandled backend type ${type}`);
   }
+}
+
+function rejectUnknownKeys(obj: Record<string, unknown>, allowed: readonly string[], source: string, label: string): void {
+  const unknown = Object.keys(obj).find(key => !allowed.includes(key));
+  if (unknown) throw new Error(`${source}: ${label}.${unknown} is not a supported property`);
 }
 
 function requireString(obj: Record<string, unknown>, key: string, source: string): void {

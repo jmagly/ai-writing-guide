@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/storage/storage.config.v1.schema.json",
+  "title": "AIWG Storage Configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version"],
+  "properties": {
+    "version": { "const": "1" },
+    "roots": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "memory": { "$ref": "#/$defs/path" }, "reflections": { "$ref": "#/$defs/path" },
+        "kb": { "$ref": "#/$defs/path" }, "activity_log": { "$ref": "#/$defs/path" },
+        "provenance": { "$ref": "#/$defs/path" }, "research": { "$ref": "#/$defs/path" },
+        "media": { "$ref": "#/$defs/path" }, "sandbox_identity": { "$ref": "#/$defs/path" }
+      }
+    },
+    "backends": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "memory": { "$ref": "#/$defs/backend" }, "reflections": { "$ref": "#/$defs/backend" },
+        "kb": { "$ref": "#/$defs/backend" }, "activity_log": { "$ref": "#/$defs/backend" },
+        "provenance": { "$ref": "#/$defs/backend" }, "research": { "$ref": "#/$defs/backend" },
+        "media": { "$ref": "#/$defs/backend" }, "sandbox_identity": { "$ref": "#/$defs/backend" }
+      }
+    },
+    "fallback": { "enum": ["cache_and_warn", "block"] }
+  },
+  "$defs": {
+    "path": { "type": "string", "minLength": 1 },
+    "backend": {
+      "oneOf": [
+        { "$ref": "#/$defs/fs" }, { "$ref": "#/$defs/obsidian" }, { "$ref": "#/$defs/logseq" },
+        { "$ref": "#/$defs/notion" }, { "$ref": "#/$defs/anythingllm" }, { "$ref": "#/$defs/fortemi" },
+        { "$ref": "#/$defs/s3" }, { "$ref": "#/$defs/webdav" }
+      ]
+    },
+    "fs": { "type": "object", "additionalProperties": false, "required": ["type"], "properties": { "type": { "const": "fs" } } },
+    "obsidian": { "type": "object", "additionalProperties": false, "required": ["type", "vault"], "properties": { "type": { "const": "obsidian" }, "vault": { "$ref": "#/$defs/path" }, "folder": { "type": "string" }, "useCli": { "type": "boolean" } } },
+    "logseq": { "type": "object", "additionalProperties": false, "required": ["type", "graph"], "properties": { "type": { "const": "logseq" }, "graph": { "$ref": "#/$defs/path" }, "apiUrl": { "type": "string" }, "useApi": { "type": "boolean" } } },
+    "notion": { "type": "object", "additionalProperties": false, "required": ["type", "parent"], "properties": { "type": { "const": "notion" }, "parent": { "oneOf": [{ "type": "object", "additionalProperties": false, "required": ["pageId"], "properties": { "pageId": { "$ref": "#/$defs/path" } } }, { "type": "object", "additionalProperties": false, "required": ["databaseId"], "properties": { "databaseId": { "$ref": "#/$defs/path" } } }] }, "externalIdProperty": { "type": "string" } } },
+    "anythingllm": { "type": "object", "additionalProperties": false, "required": ["type", "baseUrl", "workspace"], "properties": { "type": { "const": "anythingllm" }, "baseUrl": { "$ref": "#/$defs/path" }, "workspace": { "$ref": "#/$defs/path" }, "folder": { "type": "string" } } },
+    "fortemi": { "type": "object", "additionalProperties": false, "required": ["type"], "properties": { "type": { "const": "fortemi" }, "mcpServer": { "type": "string" }, "scheme": { "type": "string" } } },
+    "s3": { "type": "object", "additionalProperties": false, "required": ["type", "bucket"], "properties": { "type": { "const": "s3" }, "bucket": { "$ref": "#/$defs/path" }, "prefix": { "type": "string" }, "region": { "type": "string" }, "endpoint": { "type": "string" } } },
+    "webdav": { "type": "object", "additionalProperties": false, "required": ["type", "url"], "properties": { "type": { "const": "webdav" }, "url": { "$ref": "#/$defs/path" }, "authMode": { "enum": ["basic", "digest", "bearer"] } } }
+  }
+}

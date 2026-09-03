@@ -1,0 +1,1571 @@
+{
+  "$schema": "../domain-manifest.v1.schema.json",
+  "schemaVersion": "1",
+  "domain": "repository-json-schemas",
+  "owner": {
+    "id": "aiwg-maintainers"
+  },
+  "policy": {
+    "strict": true,
+    "remoteReferences": "locked",
+    "compatibility": "unknown"
+  },
+  "artifacts": [
+    {
+      "logicalName": "schemas.activity.activity.operational.evidence.v1",
+      "id": "https://agentic-sandbox.local/schemas/activity-operational-evidence-v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-activity"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/activity/activity-operational-evidence-v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": [],
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "apps/cockpit/bridge/contracts/activity-operational-evidence-v1.schema.json",
+          "digest": "sha256:4ab09301a572bef219277d3e59fabda95794ee4326940937803654d75a0f7d83",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "agentic.code.addons.voice.framework.schemas.voice.profile",
+      "id": "https://aiwg.dev/schemas/voice-profile.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-voice-framework"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/voice-framework/schemas/voice-profile.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "apps.cockpit.contrib.contribution",
+      "id": "https://aiwg.io/cockpit/contribution/v1",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "app-cockpit"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "apps/cockpit/contrib/contribution.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.artifacts.aiwg.fortemi.full.v1.consumer.receipt.v1",
+      "id": "https://aiwg.io/schemas/artifacts/aiwg-fortemi-full-v1-consumer-receipt.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-artifacts"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/artifacts/aiwg-fortemi-full-v1-consumer-receipt.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.artifacts.aiwg.fortemi.shard.receipt.v1",
+      "id": "https://aiwg.io/schemas/artifacts/aiwg-fortemi-shard-receipt.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-artifacts"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/artifacts/aiwg-fortemi-shard-receipt.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "src.data.community",
+      "id": "https://aiwg.io/schemas/community.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "runtime-data"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "src/data/community.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.compound.memory.schemas.compound.memory.config",
+      "id": "https://aiwg.io/schemas/compound-memory/config.v1.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-compound-memory"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/compound-memory/schemas/compound-memory-config.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": [],
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/compound-memory/schemas/compound-memory-config.schema.json",
+          "digest": "sha256:9290d2cf5e399cc58f2f0dbdebbaa0f4f9bb1092f01f88471863b2c4715d4ac9",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "agentic.code.frameworks.research.complete.skills.best.practices.audit.contributor",
+      "id": "https://aiwg.io/schemas/contributors/research.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-research-complete"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/frameworks/research-complete/skills/best-practices-audit/contributor.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": [],
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/research/skills/best-practices-audit/contributor.schema.json",
+          "digest": "sha256:858990028033225a57c625cfe5c864ebcd02766f6de410ef30a93cd442f9661d",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "agentic.code.addons.aiwg.utils.skills.project.status.contributor",
+      "id": "https://aiwg.io/schemas/contributors/status.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-aiwg-utils"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/aiwg-utils/skills/project-status/contributor.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": [],
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/utils/skills/project-status/contributor.schema.json",
+          "digest": "sha256:4da7d25c978885c766e1594828212b9e517de3e31147e287d96d946e4b91f5bd",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "agentic.code.frameworks.media.marketing.kit.schemas.design.template",
+      "id": "https://aiwg.io/schemas/design/design-template.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-media-marketing-kit"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/frameworks/media-marketing-kit/schemas/design-template.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.frameworks.media.marketing.kit.schemas.theme",
+      "id": "https://aiwg.io/schemas/design/theme.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-media-marketing-kit"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/frameworks/media-marketing-kit/schemas/theme.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.composition.engine.schemas.flow.graph",
+      "id": "https://aiwg.io/schemas/flow/graph/v1alpha1/flow-graph.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-composition-engine"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/composition-engine/schemas/flow-graph.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.graph.pattern.schemas.graph.playbook",
+      "id": "https://aiwg.io/schemas/graph/flow/v1/graph-playbook.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-graph-pattern"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/graph-pattern/schemas/graph-playbook.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.jobs.external.job.result.v1",
+      "id": "https://aiwg.io/schemas/jobs/external-job-result.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-jobs"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/jobs/external-job-result.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.jobs.external.job.v1",
+      "id": "https://aiwg.io/schemas/jobs/external-job.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-jobs"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/jobs/external-job.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.marketplace.aiwg.marketplace.catalog.v1",
+      "id": "https://aiwg.io/schemas/marketplace/aiwg-marketplace-catalog.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-marketplace"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/marketplace/aiwg-marketplace-catalog.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.marketplace.aiwg.marketplace.envelope.v1",
+      "id": "https://aiwg.io/schemas/marketplace/aiwg-marketplace-envelope.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-marketplace"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/marketplace/aiwg-marketplace-envelope.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.marketplace.aiwg.marketplace.lock.v1",
+      "id": "https://aiwg.io/schemas/marketplace/aiwg-marketplace-lock.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-marketplace"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/marketplace/aiwg-marketplace-lock.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.marketplace.aiwg.marketplace.portable.bundle.v1",
+      "id": "https://aiwg.io/schemas/marketplace/aiwg-marketplace-portable-bundle.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-marketplace"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/marketplace/aiwg-marketplace-portable-bundle.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.marketplace.aiwg.marketplace.portable.bundle.v2",
+      "id": "https://aiwg.io/schemas/marketplace/aiwg-marketplace-portable-bundle.v2.schema.json",
+      "version": "2.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-marketplace"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/marketplace/aiwg-marketplace-portable-bundle.v2.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.marketplace.aiwg.marketplace.receipt.v1",
+      "id": "https://aiwg.io/schemas/marketplace/aiwg-marketplace-receipt.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-marketplace"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/marketplace/aiwg-marketplace-receipt.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.marketplace.aiwg.marketplace.trust.v1",
+      "id": "https://aiwg.io/schemas/marketplace/aiwg-marketplace-trust.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-marketplace"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/marketplace/aiwg-marketplace-trust.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.frameworks.sdlc.complete.schemas.metalanguage.agent",
+      "id": "https://aiwg.io/schemas/metalanguage/agent.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-sdlc-complete"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/frameworks/sdlc-complete/schemas/metalanguage/agent.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.frameworks.sdlc.complete.schemas.metalanguage.flow",
+      "id": "https://aiwg.io/schemas/metalanguage/flow.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-sdlc-complete"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/frameworks/sdlc-complete/schemas/metalanguage/flow.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.frameworks.sdlc.complete.schemas.metalanguage.rule",
+      "id": "https://aiwg.io/schemas/metalanguage/rule.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-sdlc-complete"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/frameworks/sdlc-complete/schemas/metalanguage/rule.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.frameworks.sdlc.complete.schemas.metalanguage.skill",
+      "id": "https://aiwg.io/schemas/metalanguage/skill.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-sdlc-complete"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/frameworks/sdlc-complete/schemas/metalanguage/skill.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.mission.v1",
+      "id": "https://aiwg.io/schemas/mission.aiwg.io/v1",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-mission-v1.schema.json"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/mission-v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.models.model.catalog.v1",
+      "id": "https://aiwg.io/schemas/models/model-catalog.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-models"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/models/model-catalog.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.models.model.config.compatibility.v1",
+      "id": "https://aiwg.io/schemas/models/model-config-compatibility.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-models"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/models/model-config-compatibility.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.models.model.policy.v1",
+      "id": "https://aiwg.io/schemas/models/model-policy.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-models"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/models/model-policy.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.models.provider.model.capabilities.v1",
+      "id": "https://aiwg.io/schemas/models/provider-model-capabilities.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-models"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/models/provider-model-capabilities.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.ops.artifact.governance",
+      "id": "https://aiwg.io/schemas/ops/artifact-governance.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-ops"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/ops/artifact-governance.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.extensions.dev.schemas.dev.artifacts",
+      "id": "https://aiwg.io/schemas/ops/dev/v1/dev-artifacts.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-dev"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/extensions/dev/schemas/dev-artifacts.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.ops.governance.policy",
+      "id": "https://aiwg.io/schemas/ops/governance-policy.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-ops"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/ops/governance-policy.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.extensions.it.schemas.it.asset",
+      "id": "https://aiwg.io/schemas/ops/it/v1/it-asset.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-it"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/extensions/it/schemas/it-asset.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.extensions.it.schemas.it.network.state",
+      "id": "https://aiwg.io/schemas/ops/it/v1/it-network-state.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-it"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/extensions/it/schemas/it-network-state.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.extensions.it.schemas.it.service",
+      "id": "https://aiwg.io/schemas/ops/it/v1/it-service.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-it"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/extensions/it/schemas/it-service.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.extensions.net.schemas.net.artifacts",
+      "id": "https://aiwg.io/schemas/ops/net/v1/net-artifacts.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-net"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/extensions/net/schemas/net-artifacts.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.extensions.repo.maintainer.schemas.repo.maintenance.decision",
+      "id": "https://aiwg.io/schemas/ops/repo-maintainer/v1/repo-maintenance-decision.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-repo-maintainer"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/extensions/repo-maintainer/schemas/repo-maintenance-decision.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.extensions.sec.schemas.sec.artifacts",
+      "id": "https://aiwg.io/schemas/ops/sec/v1/sec-artifacts.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-sec"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/extensions/sec/schemas/sec-artifacts.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.extensions.stream.schemas.stream.artifacts",
+      "id": "https://aiwg.io/schemas/ops/stream/v1/stream-artifacts.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-stream"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/extensions/stream/schemas/stream-artifacts.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.extensions.sys.schemas.sys.artifacts",
+      "id": "https://aiwg.io/schemas/ops/sys/v1/sys-artifacts.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-sys"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/extensions/sys/schemas/sys-artifacts.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.frameworks.ops.complete.schemas.metalanguage.ops.capability",
+      "id": "https://aiwg.io/schemas/ops/v1/ops-capability.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-ops-complete"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/frameworks/ops-complete/schemas/metalanguage/ops-capability.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.frameworks.ops.complete.schemas.metalanguage.ops.extension",
+      "id": "https://aiwg.io/schemas/ops/v1/ops-extension.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-ops-complete"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/frameworks/ops-complete/schemas/metalanguage/ops-extension.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.frameworks.ops.complete.schemas.metalanguage.ops.gate",
+      "id": "https://aiwg.io/schemas/ops/v1/ops-gate.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-ops-complete"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/frameworks/ops-complete/schemas/metalanguage/ops-gate.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.frameworks.ops.complete.schemas.metalanguage.ops.inventory",
+      "id": "https://aiwg.io/schemas/ops/v1/ops-inventory.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-ops-complete"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/frameworks/ops-complete/schemas/metalanguage/ops-inventory.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.frameworks.ops.complete.schemas.metalanguage.ops.playbook",
+      "id": "https://aiwg.io/schemas/ops/v1/ops-playbook.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-ops-complete"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/frameworks/ops-complete/schemas/metalanguage/ops-playbook.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.frameworks.ops.complete.schemas.metalanguage.ops.role",
+      "id": "https://aiwg.io/schemas/ops/v1/ops-role.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-ops-complete"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/frameworks/ops-complete/schemas/metalanguage/ops-role.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.frameworks.ops.complete.schemas.metalanguage.ops.target",
+      "id": "https://aiwg.io/schemas/ops/v1/ops-target.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-ops-complete"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/frameworks/ops-complete/schemas/metalanguage/ops-target.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.voice.framework.schemas.output.mode.profile",
+      "id": "https://aiwg.io/schemas/output-mode-profile.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-voice-framework"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/voice-framework/schemas/output-mode-profile.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.providers.aiwg.provider.transformation.evidence.state.v1",
+      "id": "https://aiwg.io/schemas/providers/aiwg-provider-transformation-evidence-state.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-providers"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/providers/aiwg-provider-transformation-evidence-state.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.providers.aiwg.provider.transformation.receipt.v1",
+      "id": "https://aiwg.io/schemas/providers/aiwg-provider-transformation-receipt.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-providers"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/providers/aiwg-provider-transformation-receipt.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.security.aiwg.artifact.attestation.v1",
+      "id": "https://aiwg.io/schemas/security/aiwg-artifact-attestation.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-security"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/security/aiwg-artifact-attestation.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.security.aiwg.artifact.provenance.v1",
+      "id": "https://aiwg.io/schemas/security/aiwg-artifact-provenance.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-security"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/security/aiwg-artifact-provenance.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.security.aiwg.artifact.trust.root.v1",
+      "id": "https://aiwg.io/schemas/security/aiwg-artifact-trust-root.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-security"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/security/aiwg-artifact-trust-root.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.security.aiwg.artifact.trust.state.v1",
+      "id": "https://aiwg.io/schemas/security/aiwg-artifact-trust-state.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-security"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/security/aiwg-artifact-trust-state.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.security.aiwg.artifact.verification.result.v1",
+      "id": "https://aiwg.io/schemas/security/aiwg-artifact-verification-result.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-security"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/security/aiwg-artifact-verification-result.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.security.threat.assessment.input.v1",
+      "id": "https://aiwg.io/schemas/security/threat-assessment-input.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-security"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/security/threat-assessment-input.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.security.threat.assessment.report.v1",
+      "id": "https://aiwg.io/schemas/security/threat-assessment-report.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-security"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/security/threat-assessment-report.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.agentic.installer.schemas.v1.setup.manifest",
+      "id": "https://aiwg.io/schemas/setup/v1/setup-manifest.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-agentic-installer"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/agentic-installer/schemas/v1/setup-manifest.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": [],
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/agentic-installer/schemas/v1/setup-manifest.schema.json",
+          "digest": "sha256:dae506f1c4569095392351bc7acefab27c1652f824844673e6ae19c3ae304b66",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "schemas.skills.agent.skill.sidecar.v1",
+      "id": "https://aiwg.io/schemas/skills/agent-skill-sidecar.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-skills"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/skills/agent-skill-sidecar.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.storage.storage.config.v1",
+      "id": "https://aiwg.io/schemas/storage/storage.config.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-storage"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/storage/storage.config.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.twelve.factor.schemas.audit.report",
+      "id": "https://aiwg.io/schemas/twelve-factor-audit-report.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-twelve-factor"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/twelve-factor/schemas/audit-report.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": [],
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/twelve-factor/schemas/audit-report.schema.json",
+          "digest": "sha256:c3bf96b65fbef609c2b94c9536740ceaa00753d2f97e44116795283f3e216657",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "agentic.code.addons.aiwg.utils.workflow.schemas.workflow.capability",
+      "id": "https://aiwg.io/schemas/workflow/v1/workflow-capability.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-aiwg-utils"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/aiwg-utils/workflow/schemas/workflow-capability.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.aiwg.utils.workflow.schemas.workflow.extension",
+      "id": "https://aiwg.io/schemas/workflow/v1/workflow-extension.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-aiwg-utils"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/aiwg-utils/workflow/schemas/workflow-extension.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.aiwg.utils.workflow.schemas.workflow.gate",
+      "id": "https://aiwg.io/schemas/workflow/v1/workflow-gate.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-aiwg-utils"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/aiwg-utils/workflow/schemas/workflow-gate.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.aiwg.utils.workflow.schemas.workflow.inventory",
+      "id": "https://aiwg.io/schemas/workflow/v1/workflow-inventory.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-aiwg-utils"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/aiwg-utils/workflow/schemas/workflow-inventory.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.aiwg.utils.workflow.schemas.workflow.playbook",
+      "id": "https://aiwg.io/schemas/workflow/v1/workflow-playbook.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-aiwg-utils"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/aiwg-utils/workflow/schemas/workflow-playbook.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.aiwg.utils.workflow.schemas.workflow.role",
+      "id": "https://aiwg.io/schemas/workflow/v1/workflow-role.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-aiwg-utils"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/aiwg-utils/workflow/schemas/workflow-role.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.aiwg.utils.workflow.schemas.workflow.target",
+      "id": "https://aiwg.io/schemas/workflow/v1/workflow-target.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-aiwg-utils"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/aiwg-utils/workflow/schemas/workflow-target.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.activity.activity.event.v1",
+      "id": "https://github.com/jmagly/agentic-sandbox/blob/main/docs/schemas/activity-event-v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-activity"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/activity/activity-event-v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": [],
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "apps/cockpit/bridge/contracts/activity-event-v1.schema.json",
+          "digest": "sha256:41215c23e7c5171371de0771033bdf6519eff6167c932cb554b733fca5195cfd",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "schemas.deploy.flow.domain.static.site.plan.v1",
+      "id": "https://schemas.aiwg.io/deploy/flow-domain-static-site-plan.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-deploy"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/deploy/flow-domain-static-site-plan.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.flow.graph.sandbox.node.event.v1",
+      "id": "https://schemas.aiwg.io/flow/graph-sandbox-node-event.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-flow"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/flow/graph-sandbox-node-event.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.uhp.uhp.2026.08.11",
+      "id": "https://unifiedharnessprotocol.org/schema/uhp-2026-08-11.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-uhp"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/uhp/uhp-2026-08-11.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "schemas.fleet.workload.v1",
+      "id": "urn:agentic-orchestration:fleet-workload:v1",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "schema-fleet-workload-v1.schema.json"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/fleet-workload-v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    }
+  ]
+}

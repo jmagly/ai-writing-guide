@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "exceptions": [
+    {
+      "resource": "agentic/code/addons/aiwg-utils/workflow/schemas/workflow-playbook.schema.json",
+      "rule": "strictRequired",
+      "owner": "aiwg-utils",
+      "rationale": "Legacy negative capability branch references a property declared by its parent composition.",
+      "approvedBy": "schema-control-plane",
+      "expires": "2027-03-01"
+    },
+    {
+      "resource": "agentic/code/addons/composition-engine/schemas/flow-graph.schema.json",
+      "rule": "strictRequired",
+      "owner": "composition-engine",
+      "rationale": "Legacy union branches require fields declared by the enclosing graph contract.",
+      "approvedBy": "schema-control-plane",
+      "expires": "2027-03-01"
+    },
+    {
+      "resource": "agentic/code/addons/voice-framework/schemas/output-mode-profile.schema.json",
+      "rule": "strictRequired",
+      "owner": "voice-framework",
+      "rationale": "Conditional validation branches require fields declared by the enclosing validation object.",
+      "approvedBy": "schema-control-plane",
+      "expires": "2027-03-01"
+    },
+    {
+      "resource": "agentic/code/frameworks/ops-complete/schemas/metalanguage/ops-playbook.schema.json",
+      "rule": "strictRequired",
+      "owner": "ops-complete",
+      "rationale": "Legacy negative input branch references a field declared by the enclosing composed object.",
+      "approvedBy": "schema-control-plane",
+      "expires": "2027-03-01"
+    },
+    {
+      "resource": "schemas/artifacts/aiwg-fortemi-full-v1-consumer-receipt.v1.schema.json",
+      "rule": "strictRequired",
+      "owner": "artifact-governance",
+      "rationale": "Legacy conditional required declarations need structural migration before strictRequired can be enabled.",
+      "approvedBy": "schema-control-plane",
+      "expires": "2027-03-01"
+    },
+    {
+      "resource": "schemas/artifacts/aiwg-fortemi-shard-receipt.v1.schema.json",
+      "rule": "strictRequired",
+      "owner": "artifact-governance",
+      "rationale": "Legacy allOf required declarations need structural migration before strictRequired can be enabled.",
+      "approvedBy": "schema-control-plane",
+      "expires": "2027-03-01"
+    },
+    {
+      "resource": "schemas/flow/graph-sandbox-node-event.v1.schema.json",
+      "rule": "strictRequired",
+      "owner": "flow-runtime",
+      "rationale": "The conditional exit shape declares a sibling property through composition.",
+      "approvedBy": "schema-control-plane",
+      "expires": "2027-03-01"
+    },
+    {
+      "resource": "schemas/flow/graph-sandbox-node-event.v1.schema.json",
+      "rule": "strictTypes",
+      "owner": "flow-runtime",
+      "rationale": "A composed conditional branch applies properties to an object typed in its parent schema.",
+      "approvedBy": "schema-control-plane",
+      "expires": "2027-03-01"
+    },
+    {
+      "resource": "schemas/security/threat-assessment-input.v1.schema.json",
+      "rule": "strictRequired",
+      "owner": "security-engineering",
+      "rationale": "The legacy oneOf branches rely on root properties and require a compatibility-preserving refactor.",
+      "approvedBy": "schema-control-plane",
+      "expires": "2027-03-01"
+    },
+    {
+      "resource": "schemas/security/threat-assessment-input.v1.schema.json",
+      "rule": "allowUnionTypes",
+      "owner": "security-engineering",
+      "rationale": "The published draft-07 contract uses a type array for source identifiers.",
+      "approvedBy": "schema-control-plane",
+      "expires": "2027-03-01"
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "$schema": "../domain-manifest.v1.schema.json",
+  "schemaVersion": "1",
+  "domain": "schema-control-plane",
+  "owner": { "id": "aiwg-maintainers" },
+  "policy": { "compatibility": "backward" },
+  "artifacts": [
+    {
+      "logicalName": "catalog.schema-artifact",
+      "id": "https://aiwg.io/schemas/catalog/schema-artifact.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": { "id": "aiwg-maintainers" },
+      "authority": { "kind": "canonical", "path": "schemas/catalog/schema-artifact.v1.schema.json" },
+      "compatibility": { "mode": "backward" },
+      "consumers": [{ "id": "schema-catalog-compiler", "boundary": "catalog manifest" }]
+    },
+    {
+      "logicalName": "catalog.domain-manifest",
+      "id": "https://aiwg.io/schemas/catalog/domain-manifest.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": { "id": "aiwg-maintainers" },
+      "authority": { "kind": "canonical", "path": "schemas/catalog/domain-manifest.v1.schema.json" },
+      "compatibility": { "mode": "backward" },
+      "dependencies": [{ "id": "https://aiwg.io/schemas/catalog/schema-artifact.v1.schema.json", "version": "1.0.0" }],
+      "consumers": [{ "id": "schema-catalog-loader", "boundary": "domain manifest" }]
+    },
+    {
+      "logicalName": "catalog.root",
+      "id": "https://aiwg.io/schemas/catalog/catalog.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": { "id": "aiwg-maintainers" },
+      "authority": { "kind": "canonical", "path": "schemas/catalog/catalog.v1.schema.json" },
+      "compatibility": { "mode": "backward" },
+      "dependencies": [
+        { "id": "https://aiwg.io/schemas/catalog/schema-artifact.v1.schema.json", "version": "1.0.0" },
+        { "id": "https://aiwg.io/schemas/catalog/domain-manifest.v1.schema.json", "version": "1.0.0" }
+      ],
+      "consumers": [{ "id": "schema-catalog-loader", "boundary": "root catalog" }]
+    }
+  ]
+}

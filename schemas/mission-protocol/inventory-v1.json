@@ -694,6 +694,18 @@
       "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
+      "path": "schemas/catalog/domains/repository-json-schemas.json",
+      "owner": "schemas/catalog",
+      "role": "schema",
+      "currentVersion": "mission.aiwg.io/v1",
+      "statusVocabulary": [
+        "unknown"
+      ],
+      "serialization": "json",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
       "path": "schemas/executor-v1.json",
       "owner": "schemas/executor-v1.json",
       "role": "schema",

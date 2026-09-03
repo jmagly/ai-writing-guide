@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/catalog/schema-artifact.v1.schema.json",
+  "title": "AIWG SchemaArtifact",
+  "description": "Governance record for one versioned schema or contract authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["logicalName", "id", "version", "format", "lifecycle", "owner", "authority"],
+  "properties": {
+    "logicalName": { "type": "string", "minLength": 1, "pattern": "^[a-z0-9][a-z0-9._/-]*$" },
+    "id": { "type": "string", "format": "uri", "pattern": "^https://" },
+    "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$" },
+    "format": { "enum": ["json-schema", "yaml-schema", "zod", "typescript-validator", "sql", "frontmatter", "protocol", "other"] },
+    "dialect": { "type": "string", "format": "uri" },
+    "lifecycle": { "enum": ["experimental", "proposed", "active", "deprecated", "retired"] },
+    "stability": { "enum": ["unstable", "preview", "stable"] },
+    "owner": { "$ref": "#/$defs/owner" },
+    "authority": { "$ref": "#/$defs/authority" },
+    "policy": { "$ref": "#/$defs/policy" },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": { "$ref": "#/$defs/compatibilityMode" },
+        "baseline": { "type": "string", "minLength": 1 }
+      }
+    },
+    "dependencies": { "type": "array", "items": { "$ref": "#/$defs/dependency" }, "uniqueItems": true },
+    "consumers": { "type": "array", "items": { "$ref": "#/$defs/consumer" } },
+    "fixtures": { "$ref": "#/$defs/fixtures" },
+    "projections": { "type": "array", "items": { "$ref": "#/$defs/projection" } },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "aliases": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "supersedes": { "type": "array", "items": { "type": "string", "format": "uri" }, "uniqueItems": true },
+    "deprecation": { "$ref": "#/$defs/deprecation" },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "public": { "type": "boolean" }, "uri": { "type": "string", "format": "uri" } }
+    }
+  },
+  "allOf": [
+    { "if": { "properties": { "format": { "const": "json-schema" } }, "required": ["format"] }, "then": { "properties": { "dialect": {} }, "required": ["dialect"] } },
+    { "if": { "properties": { "lifecycle": { "const": "deprecated" } }, "required": ["lifecycle"] }, "then": { "properties": { "deprecation": {} }, "required": ["deprecation"] } }
+  ],
+  "$defs": {
+    "owner": {
+      "type": "object", "additionalProperties": false, "required": ["id"],
+      "properties": { "id": { "type": "string", "minLength": 1 }, "contact": { "type": "string", "minLength": 1 } }
+    },
+    "authority": {
+      "type": "object", "additionalProperties": false, "required": ["kind"],
+      "properties": { "kind": { "enum": ["canonical", "external"] }, "path": { "type": "string", "minLength": 1 }, "uri": { "type": "string", "format": "uri" } },
+      "allOf": [
+        { "if": { "properties": { "kind": { "const": "canonical" } } }, "then": { "properties": { "path": {} }, "required": ["path"] } },
+        { "if": { "properties": { "kind": { "const": "external" } } }, "then": { "properties": { "uri": {} }, "required": ["uri"] } }
+      ]
+    },
+    "compatibilityMode": { "enum": ["backward", "forward", "full", "breaking", "none", "unknown"] },
+    "exception": {
+      "type": "object", "additionalProperties": false, "required": ["rule", "rationale", "owner", "expires"],
+      "properties": {
+        "rule": { "type": "string", "minLength": 1 }, "rationale": { "type": "string", "minLength": 1 },
+        "owner": { "type": "string", "minLength": 1 }, "approvedBy": { "type": "string", "minLength": 1 },
+        "expires": { "type": "string", "format": "date" }
+      }
+    },
+    "policy": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "strict": { "type": "boolean" }, "remoteReferences": { "enum": ["deny", "locked", "allow"] },
+        "compatibility": { "$ref": "#/$defs/compatibilityMode" }, "requireFixtures": { "type": "boolean" },
+        "requireDigest": { "type": "boolean" }, "exceptions": { "type": "array", "items": { "$ref": "#/$defs/exception" } }
+      }
+    },
+    "dependency": {
+      "type": "object", "additionalProperties": false, "required": ["id"],
+      "properties": { "id": { "type": "string", "format": "uri" }, "version": { "type": "string" }, "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }, "optional": { "type": "boolean" } }
+    },
+    "consumer": {
+      "type": "object", "additionalProperties": false, "required": ["id"],
+      "properties": { "id": { "type": "string", "minLength": 1 }, "boundary": { "type": "string" }, "path": { "type": "string" }, "notes": { "type": "string" } }
+    },
+    "fixtures": {
+      "type": "object", "additionalProperties": false,
+      "properties": { "valid": { "type": "array", "items": { "type": "string" } }, "invalid": { "type": "array", "items": { "type": "string" } } }
+    },
+    "projection": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "path"],
+      "properties": { "kind": { "enum": ["mirror", "validator", "types", "bundle", "documentation", "other"] }, "path": { "type": "string", "minLength": 1 }, "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }, "generated": { "type": "boolean" } }
+    },
+    "deprecation": {
+      "type": "object", "additionalProperties": false, "required": ["supportUntil"],
+      "properties": { "replacement": { "type": "string", "format": "uri" }, "migration": { "type": "string", "minLength": 1 }, "supportUntil": { "type": "string", "format": "date" } }
+    }
+  }
+}

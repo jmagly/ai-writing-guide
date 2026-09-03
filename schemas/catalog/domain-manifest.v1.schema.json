@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/catalog/domain-manifest.v1.schema.json",
+  "title": "AIWG Schema Domain Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "domain", "owner", "artifacts"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": "1" },
+    "domain": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+    "owner": { "$ref": "schema-artifact.v1.schema.json#/$defs/owner" },
+    "policy": { "$ref": "schema-artifact.v1.schema.json#/$defs/policy" },
+    "artifacts": { "type": "array", "items": { "$ref": "schema-artifact.v1.schema.json" } }
+  }
+}

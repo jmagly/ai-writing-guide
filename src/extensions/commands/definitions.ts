@@ -1149,6 +1149,25 @@ export const outputModeCommand: Extension = {
   } satisfies CommandMetadata,
 };
 
+export const schemaCommand: Extension = {
+  id: 'schema',
+  type: 'command',
+  name: 'Schema Control Plane',
+  description: 'Discover, validate, compare, and verify governed schema artifacts',
+  version: '1.0.0',
+  capabilities: ['cli', 'schema', 'catalog', 'validation', 'compatibility', 'projections'],
+  keywords: ['schema', 'catalog', 'validate', 'lint', 'references', 'compatibility', 'projection', 'policy'],
+  category: 'utility',
+  platforms: { claude: 'full', generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: {
+    type: 'command',
+    template: 'utility',
+    argumentHint: '<list|show|graph|policy|validate|lint|check-refs|diff|compatibility|generate|verify-projections> [options]',
+    allowedTools: ['Read', 'Write'],
+  } satisfies CommandMetadata,
+};
+
 // Session Catalog Command (#1903)
 
 export const sessionsCommand: Extension = {
@@ -3982,6 +4001,7 @@ export const commandDefinitions: Extension[] = [
   sessionCommand,
   sessionsCommand,
   outputModeCommand,
+  schemaCommand,
 ];
 
 // ============================================
