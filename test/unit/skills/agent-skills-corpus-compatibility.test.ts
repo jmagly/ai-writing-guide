@@ -69,17 +69,21 @@ function formatDiagnostics(diagnostics: readonly AgentSkillDiagnostic[]): string
   )).join('\n');
 }
 
+function validateCorpus(skills: readonly ParsedSkill[]): AgentSkillDiagnostic[] {
+  return skills.flatMap((skill) => (
+    validateCompatibleAgentSkillMetadata(
+      skill.frontmatter,
+      basename(dirname(skill.file)),
+      relative(ROOT, skill.file),
+      skill.content.split(/\r?\n/).length,
+    )
+  ));
+}
+
 describe('canonical Agent Skills-compatible corpus', () => {
   it('keeps all canonical skills compatible with stable path diagnostics', () => {
     const skills = canonicalSkills();
-    const diagnostics = skills.flatMap((skill) => (
-      validateCompatibleAgentSkillMetadata(
-        skill.frontmatter,
-        basename(dirname(skill.file)),
-        relative(ROOT, skill.file),
-        skill.content.split(/\r?\n/).length,
-      )
-    ));
+    const diagnostics = validateCorpus(skills);
     const errors = diagnostics.filter((diagnostic) => (
       diagnostic.severity === 'error'
     ));
@@ -87,12 +91,39 @@ describe('canonical Agent Skills-compatible corpus', () => {
       diagnostic.code === 'AS_ADVISORY_LINES'
     ));
 
-    expect(skills).toHaveLength(527);
+    expect(skills.length).toBeGreaterThan(0);
+    for (const root of ['addons', 'extensions', 'frameworks']) {
+      expect(skills.some((skill) => (
+        relative(ROOT, skill.file).startsWith(`agentic/code/${root}/`)
+      )), `missing canonical skills under ${root}`).toBe(true);
+    }
     expect(errors, formatDiagnostics(errors)).toEqual([]);
-    expect(lineAdvisories).toHaveLength(85);
+    expect(lineAdvisories.length).toBeGreaterThan(0);
     expect(lineAdvisories.every((diagnostic) => (
       diagnostic.file.endsWith('/SKILL.md')
     ))).toBe(true);
+  });
+
+  it('accepts inventory growth when an additional skill is valid', () => {
+    const skills = canonicalSkills();
+    const exemplar = skills[0];
+    expect(exemplar).toBeDefined();
+    const expanded = [
+      ...skills,
+      {
+        ...exemplar!,
+        file: resolve('agentic/code/addons/inventory-growth/skills/inventory-growth/SKILL.md'),
+        frontmatter: {
+          ...exemplar!.frontmatter,
+          name: 'inventory-growth',
+          description: 'Valid synthetic skill used to prove corpus growth is not a test failure.',
+        },
+      },
+    ];
+
+    const errors = validateCorpus(expanded).filter((diagnostic) => diagnostic.severity === 'error');
+    expect(expanded).toHaveLength(skills.length + 1);
+    expect(errors, formatDiagnostics(errors)).toEqual([]);
   });
 
   it('limits strict-only failures to mapped AIWG extension fields', () => {
