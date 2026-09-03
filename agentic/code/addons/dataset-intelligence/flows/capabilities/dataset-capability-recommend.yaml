@@ -1,0 +1,16 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dataset-capability-recommend
+  namespace: dataset-intelligence
+  labels: {category: planning, idempotent: "true"}
+  annotations: {boundary: declarative-aiwg-dataset-delegation, operation: aiwg-dataset-plan}
+spec:
+  description: Compose independently supported search, traceability, provenance, graph, and export capabilities and delegate candidate planning to aiwg dataset.
+  version: 1.0.0
+  inputs:
+    - {name: intake_ref, type: string, required: true}
+    - {name: assessment_ref, type: string, required: true}
+  outputs: [{name: plan_ref, type: string}]
+  agent: dataset-steward
+  idempotent: true

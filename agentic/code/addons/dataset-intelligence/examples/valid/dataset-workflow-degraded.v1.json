@@ -1,0 +1,17 @@
+{
+  "schema": "aiwg.dataset-workflow-handoff/v1",
+  "id": "handoff:run-44-degraded",
+  "phase": "verification",
+  "state": "degraded",
+  "inputRefs": ["run:44", "receipt:44"],
+  "outputRefs": ["verification:44"],
+  "planRef": "plan:44",
+  "planDigest": {"algorithm": "sha256", "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},
+  "runRef": "run:44",
+  "approvals": [],
+  "cancellation": {"supported": true, "requested": false},
+  "degradation": {"active": true, "reason": "Optional graph capability unavailable", "changedGuarantees": ["No relationship traversal"], "fallbackRef": "capability:traceability"},
+  "evidenceRefs": ["evidence:capability-negotiation-44"],
+  "diagnosticCodes": ["DATASET_OPTIONAL_CAPABILITY_DEGRADED"],
+  "createdAt": "2026-09-03T12:20:00Z"
+}

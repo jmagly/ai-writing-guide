@@ -1,0 +1,47 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: dataset-one-shot
+  labels: {domain: dataset-intelligence, lifecycle: one-shot}
+  annotations: {runtime: aiwg-dataset, authority: stable-artifact-references}
+spec:
+  steps:
+    - id: intake
+      capability: dataset-intake
+      inputs: [{name: request, value: "caller-supplied source locator and desired outcome"}]
+      outputs: [{name: intake_ref}]
+    - id: assess
+      capability: dataset-source-assess
+      depends_on: [intake]
+      inputs: [{name: intake_ref, from: intake.intake_ref}]
+      outputs: [{name: assessment_ref}]
+    - id: recommend
+      capability: dataset-capability-recommend
+      depends_on: [assess]
+      inputs:
+        - {name: intake_ref, from: intake.intake_ref}
+        - {name: assessment_ref, from: assess.assessment_ref}
+      outputs: [{name: plan_ref}]
+    - id: review
+      capability: dataset-plan-review
+      depends_on: [recommend]
+      inputs: [{name: plan_ref, from: recommend.plan_ref}]
+      outputs: [{name: approval_ref}]
+    - id: approval-gate
+      kind: gate
+      description: Human reviews the exact immutable plan digest, policy/network implications, writes, derived artifacts, and degradation before execution.
+      depends_on: [review]
+    - id: ingest
+      capability: dataset-ingest
+      depends_on: [approval-gate]
+      inputs:
+        - {name: plan_ref, from: recommend.plan_ref}
+        - {name: approval_ref, from: review.approval_ref}
+      outputs: [{name: run_ref}, {name: receipt_ref}, {name: checkpoint_ref}]
+    - id: verify
+      capability: dataset-verify
+      depends_on: [ingest]
+      inputs:
+        - {name: run_ref, from: ingest.run_ref}
+        - {name: receipt_ref, from: ingest.receipt_ref}
+      outputs: [{name: verification_ref}]

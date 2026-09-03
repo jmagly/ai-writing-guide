@@ -307,6 +307,16 @@
   },
   {
     "kind": "addons",
+    "name": "dataset-intelligence",
+    "source": "agentic/code/addons/dataset-intelligence/docs",
+    "dest": "docs/addons/dataset-intelligence",
+    "files": [
+      "overview.md",
+      "quickstart.md"
+    ]
+  },
+  {
+    "kind": "addons",
     "name": "graph-pattern",
     "source": "agentic/code/addons/graph-pattern/docs",
     "dest": "docs/addons/graph-pattern",

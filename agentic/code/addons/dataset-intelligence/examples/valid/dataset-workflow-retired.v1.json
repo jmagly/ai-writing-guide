@@ -1,0 +1,17 @@
+{
+  "schema": "aiwg.dataset-workflow-handoff/v1",
+  "id": "handoff:dataset-9-reconciled",
+  "phase": "reconciliation",
+  "state": "verified",
+  "inputRefs": ["plan:retire-9", "run:retire-9"],
+  "outputRefs": ["reconciliation:retire-9", "verification:retire-9"],
+  "planRef": "plan:retire-9",
+  "planDigest": {"algorithm": "sha256", "value": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"},
+  "runRef": "run:retire-9",
+  "approvals": [{"decision": "approved", "scopeRef": "plan:retire-9", "reviewerRef": "reviewer:policy", "decidedAt": "2026-09-03T12:25:00Z", "reason": "Enumerated derived artifacts are below the reviewed threshold"}],
+  "cancellation": {"supported": true, "requested": false},
+  "degradation": {"active": false},
+  "evidenceRefs": ["evidence:enumeration-9", "evidence:tombstones-9", "evidence:reconciliation-9"],
+  "diagnosticCodes": [],
+  "createdAt": "2026-09-03T12:30:00Z"
+}

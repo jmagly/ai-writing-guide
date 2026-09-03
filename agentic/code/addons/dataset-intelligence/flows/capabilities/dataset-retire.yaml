@@ -1,0 +1,18 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dataset-retire
+  namespace: dataset-intelligence
+  labels: {category: retirement, idempotent: "false"}
+  annotations: {boundary: shared-aiwg-dataset-runtime-only, operation: aiwg-dataset-retirement}
+spec:
+  description: Delegate approved tombstone-first retirement to aiwg dataset after complete enumeration and preserve reconciliation evidence.
+  version: 1.0.0
+  inputs:
+    - {name: plan_ref, type: string, required: true}
+    - {name: approval_ref, type: string, required: true}
+  outputs:
+    - {name: run_ref, type: string}
+    - {name: reconciliation_ref, type: string}
+  agent: dataset-policy-reviewer
+  idempotent: false

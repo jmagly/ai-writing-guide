@@ -483,7 +483,10 @@
     "addons/composition-engine/schema-evolution",
     "addons/graph-pattern",
     "addons/graph-pattern/decision-guide",
-    "addons/voice-framework/output-modes"
+    "addons/voice-framework/output-modes",
+    "addons/dataset-intelligence",
+    "addons/dataset-intelligence/overview",
+    "addons/dataset-intelligence/quickstart"
   ],
   "sections": [
     {
@@ -3633,6 +3636,27 @@
       "summary": "Output modes are provider-neutral presentation constraints selected at runtime. With no configured m",
       "file": "addons/voice-framework/output-modes.md",
       "parent": "addons/voice-framework"
+    },
+    {
+      "id": "addons/dataset-intelligence",
+      "title": "Dataset Intelligence",
+      "summary": "",
+      "collapsed": true,
+      "parent": "addons"
+    },
+    {
+      "id": "addons/dataset-intelligence/overview",
+      "title": "Overview",
+      "summary": "Dataset Intelligence gives every AIWG domain the same governed path from “use",
+      "file": "addons/dataset-intelligence/overview.md",
+      "parent": "addons/dataset-intelligence"
+    },
+    {
+      "id": "addons/dataset-intelligence/quickstart",
+      "title": "Quick Start",
+      "summary": "Tell AIWG what you have and what you want:",
+      "file": "addons/dataset-intelligence/quickstart.md",
+      "parent": "addons/dataset-intelligence"
     }
   ],
   "pages": [

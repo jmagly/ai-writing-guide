@@ -1,0 +1,43 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: dataset-incremental-sync
+  labels: {domain: dataset-intelligence, lifecycle: incremental}
+  annotations: {runtime: aiwg-dataset, authority: stable-artifact-references}
+spec:
+  steps:
+    - id: assess
+      capability: dataset-source-assess
+      inputs: [{name: intake_ref, value: "durable prior intake reference"}]
+      outputs: [{name: assessment_ref}]
+    - id: recommend
+      capability: dataset-capability-recommend
+      depends_on: [assess]
+      inputs:
+        - {name: intake_ref, value: "durable prior intake reference"}
+        - {name: assessment_ref, from: assess.assessment_ref}
+      outputs: [{name: plan_ref}]
+    - id: review
+      capability: dataset-plan-review
+      depends_on: [recommend]
+      inputs: [{name: plan_ref, from: recommend.plan_ref}]
+      outputs: [{name: approval_ref}]
+    - id: resume-gate
+      kind: gate
+      description: Human reviews changed-source evidence, prior committed checkpoint, exact plan digest, tombstone policy, and expected writes before resume.
+      depends_on: [review]
+    - id: resume
+      capability: dataset-ingest
+      depends_on: [resume-gate]
+      inputs:
+        - {name: plan_ref, from: recommend.plan_ref}
+        - {name: approval_ref, from: review.approval_ref}
+        - {name: checkpoint_ref, value: "durable prior committed checkpoint reference"}
+      outputs: [{name: run_ref}, {name: receipt_ref}, {name: checkpoint_ref}]
+    - id: verify
+      capability: dataset-verify
+      depends_on: [resume]
+      inputs:
+        - {name: run_ref, from: resume.run_ref}
+        - {name: receipt_ref, from: resume.receipt_ref}
+      outputs: [{name: verification_ref}]

@@ -1,0 +1,14 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dataset-intake
+  namespace: dataset-intelligence
+  labels: {category: intake, idempotent: "true"}
+  annotations: {boundary: declarative-aiwg-dataset-delegation, output-schema: dataset-intake.v1}
+spec:
+  description: Create a shared governed intake envelope from an opaque source locator and desired outcome; propose aiwg dataset preview without reading the source.
+  version: 1.0.0
+  inputs: [{name: request, type: object, required: true}]
+  outputs: [{name: intake_ref, type: string}]
+  agent: dataset-steward
+  idempotent: true

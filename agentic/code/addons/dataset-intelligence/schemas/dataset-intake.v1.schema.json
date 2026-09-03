@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/addons/dataset-intelligence/dataset-intake.v1.schema.json",
+  "title": "Dataset Intelligence Intake v1",
+  "description": "Shared domain-neutral request envelope from source locator and desired outcome to governed dataset planning.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "source", "desiredOutcome", "domain", "capabilities", "policy", "assumptions"],
+  "properties": {
+    "schema": {"const": "aiwg.dataset-intake/v1"},
+    "id": {"$ref": "#/$defs/id"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locator", "sourceType"],
+      "properties": {
+        "locator": {"$ref": "#/$defs/id"},
+        "sourceType": {"type": "string", "minLength": 1, "maxLength": 128},
+        "credentialRef": {"$ref": "#/$defs/id"},
+        "schemaRef": {"$ref": "#/$defs/id"}
+      },
+      "propertyNames": {"not": {"pattern": "^(password|passwd|secret|token|api[-_]?key|private[-_]?key|credential)$"}}
+    },
+    "desiredOutcome": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "domain": {"enum": ["sdlc", "research", "knowledge-base", "media", "marketing", "ops", "project-local"]},
+    "capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"enum": ["full-text", "vector", "hybrid", "rerank", "traceability", "provenance", "graph", "export"]}
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["privacy", "locality", "network", "authorizationRefs"],
+      "properties": {
+        "privacy": {"enum": ["public", "internal", "confidential", "restricted"]},
+        "locality": {"enum": ["local-only", "approved-regions", "unrestricted"]},
+        "network": {"enum": ["offline", "allowlisted", "online"]},
+        "authorizationRefs": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "retention": {"type": "string", "minLength": 1}
+      },
+      "propertyNames": {"not": {"pattern": "^(password|passwd|secret|token|api[-_]?key|private[-_]?key|credential)s?$"}}
+    },
+    "assumptions": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "extensions": {
+      "type": "object",
+      "description": "Domain-owned extensions must use a reverse-DNS or URI namespace key.",
+      "propertyNames": {"pattern": "^(https?://|[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+/).+"},
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "maxLength": 2048}
+  }
+}

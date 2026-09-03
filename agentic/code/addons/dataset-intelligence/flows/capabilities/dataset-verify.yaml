@@ -1,0 +1,16 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dataset-verify
+  namespace: dataset-intelligence
+  labels: {category: verification, idempotent: "true"}
+  annotations: {boundary: declarative-aiwg-dataset-delegation, operation: aiwg-dataset-verify}
+spec:
+  description: Delegate verification to aiwg dataset verify and independently review receipt, checkpoint, provenance, freshness, and degradation evidence.
+  version: 1.0.0
+  inputs:
+    - {name: run_ref, type: string, required: true}
+    - {name: receipt_ref, type: string, required: true}
+  outputs: [{name: verification_ref, type: string}]
+  agent: dataset-provenance-reviewer
+  idempotent: true

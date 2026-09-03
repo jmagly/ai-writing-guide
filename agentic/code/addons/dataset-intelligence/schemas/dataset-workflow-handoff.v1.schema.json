@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/addons/dataset-intelligence/dataset-workflow-handoff.v1.schema.json",
+  "title": "Dataset Intelligence Workflow Handoff v1",
+  "description": "Stable references and governed state handed between declarative dataset workflow phases.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "phase", "state", "inputRefs", "outputRefs", "approvals", "cancellation", "degradation", "evidenceRefs", "createdAt"],
+  "properties": {
+    "schema": {"const": "aiwg.dataset-workflow-handoff/v1"},
+    "id": {"$ref": "#/$defs/id"},
+    "phase": {"enum": ["intake", "assessment", "planning", "review", "execution", "trace", "verification", "export", "retirement", "reconciliation"]},
+    "state": {"enum": ["proposed", "awaiting-approval", "approved", "rejected", "running", "cancel-requested", "cancelled", "committed", "degraded", "verified", "unverifiable", "failed"]},
+    "inputRefs": {"type": "array", "items": {"$ref": "#/$defs/ref"}, "uniqueItems": true},
+    "outputRefs": {"type": "array", "items": {"$ref": "#/$defs/ref"}, "uniqueItems": true},
+    "planRef": {"$ref": "#/$defs/ref"},
+    "planDigest": {"$ref": "#/$defs/digest"},
+    "runRef": {"$ref": "#/$defs/ref"},
+    "checkpointBeforeRef": {"$ref": "#/$defs/ref"},
+    "checkpointAfterRef": {"$ref": "#/$defs/ref"},
+    "approvals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["decision", "scopeRef", "reviewerRef", "decidedAt"],
+        "properties": {
+          "decision": {"enum": ["approved", "rejected"]},
+          "scopeRef": {"$ref": "#/$defs/ref"},
+          "reviewerRef": {"$ref": "#/$defs/ref"},
+          "decidedAt": {"type": "string", "format": "date-time"},
+          "reason": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "cancellation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["supported", "requested"],
+      "properties": {
+        "supported": {"type": "boolean"},
+        "requested": {"type": "boolean"},
+        "requestRef": {"$ref": "#/$defs/ref"},
+        "lastCommittedCheckpointRef": {"$ref": "#/$defs/ref"}
+      },
+      "allOf": [{
+        "if": {"properties": {"requested": {"const": true}}, "required": ["requested"]},
+        "then": {
+          "properties": {
+            "requestRef": {"$ref": "#/$defs/ref"},
+            "lastCommittedCheckpointRef": {"$ref": "#/$defs/ref"}
+          },
+          "required": ["requestRef", "lastCommittedCheckpointRef"]
+        }
+      }]
+    },
+    "degradation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["active"],
+      "properties": {
+        "active": {"type": "boolean"},
+        "reason": {"type": "string", "minLength": 1},
+        "changedGuarantees": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "fallbackRef": {"$ref": "#/$defs/ref"}
+      },
+      "allOf": [{
+        "if": {"properties": {"active": {"const": true}}, "required": ["active"]},
+        "then": {
+          "properties": {
+            "reason": {"type": "string", "minLength": 1},
+            "changedGuarantees": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+          },
+          "required": ["reason", "changedGuarantees"]
+        }
+      }]
+    },
+    "evidenceRefs": {"type": "array", "items": {"$ref": "#/$defs/ref"}, "uniqueItems": true},
+    "diagnosticCodes": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "createdAt": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "maxLength": 2048},
+    "ref": {"type": "string", "minLength": 3, "maxLength": 2048, "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:.+$"},
+    "digest": {"type": "object", "additionalProperties": false, "required": ["algorithm", "value"], "properties": {"algorithm": {"const": "sha256"}, "value": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}}
+  }
+}

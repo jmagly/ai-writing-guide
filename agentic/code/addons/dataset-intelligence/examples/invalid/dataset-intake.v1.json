@@ -1,0 +1,10 @@
+{
+  "schema": "aiwg.dataset-intake/v1",
+  "id": "intake:unsafe",
+  "source": {"locator": "file:fixtures/data.json", "sourceType": "json", "password": "synthetic-not-allowed"},
+  "desiredOutcome": "Index it",
+  "domain": "knowledge-base",
+  "capabilities": ["full-text"],
+  "policy": {"privacy": "internal", "locality": "local-only", "network": "offline", "authorizationRefs": []},
+  "assumptions": []
+}

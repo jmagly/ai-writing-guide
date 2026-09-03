@@ -171,6 +171,62 @@
       "fixtures": { "valid": ["test/fixtures/dataset/standards/openlineage-1.0.0.valid.json"], "invalid": ["test/fixtures/dataset/standards/openlineage-1.0.0.invalid.json"] },
       "projections": [{ "kind": "validator", "path": "src/dataset/standards.ts", "generated": false }],
       "publication": { "public": true }
+    },
+    {
+      "logicalName": "dataset.addon-intake",
+      "id": "https://aiwg.io/schemas/addons/dataset-intelligence/dataset-intake.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": { "id": "aiwg-maintainers" },
+      "authority": { "kind": "canonical", "path": "agentic/code/addons/dataset-intelligence/schemas/dataset-intake.v1.schema.json" },
+      "compatibility": { "mode": "backward" },
+      "dependencies": [
+        { "id": "https://aiwg.io/schemas/dataset/dataset-contracts.v1.schema.json", "version": "1.0.0" }
+      ],
+      "consumers": [
+        { "id": "dataset-intelligence-intake", "boundary": "cross-domain plain-language intake", "path": "agentic/code/addons/dataset-intelligence/skills/dataset-intake/SKILL.md" },
+        { "id": "dataset-orchestration-cli", "boundary": "preview and plan request", "path": "src/cli/handlers/dataset.ts" }
+      ],
+      "fixtures": {
+        "valid": ["agentic/code/addons/dataset-intelligence/examples/valid/dataset-intake.v1.json"],
+        "invalid": ["agentic/code/addons/dataset-intelligence/examples/invalid/dataset-intake.v1.json"]
+      },
+      "projections": [],
+      "publication": { "public": true }
+    },
+    {
+      "logicalName": "dataset.addon-workflow-handoff",
+      "id": "https://aiwg.io/schemas/addons/dataset-intelligence/dataset-workflow-handoff.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": { "id": "aiwg-maintainers" },
+      "authority": { "kind": "canonical", "path": "agentic/code/addons/dataset-intelligence/schemas/dataset-workflow-handoff.v1.schema.json" },
+      "compatibility": { "mode": "backward" },
+      "dependencies": [
+        { "id": "https://aiwg.io/schemas/dataset/dataset-contracts.v1.schema.json", "version": "1.0.0" },
+        { "id": "https://aiwg.io/schemas/dataset/run-ledger.v1.schema.json", "version": "1.0.0" }
+      ],
+      "consumers": [
+        { "id": "dataset-intelligence-flows", "boundary": "stable phase and approval handoff references", "path": "agentic/code/addons/dataset-intelligence/flows" },
+        { "id": "dataset-orchestration-cli", "boundary": "plan, run, cancellation, checkpoint, and verification envelopes", "path": "src/cli/handlers/dataset.ts" }
+      ],
+      "fixtures": {
+        "valid": [
+          "agentic/code/addons/dataset-intelligence/examples/valid/dataset-workflow-handoff.v1.json",
+          "agentic/code/addons/dataset-intelligence/examples/valid/dataset-workflow-cancelled.v1.json",
+          "agentic/code/addons/dataset-intelligence/examples/valid/dataset-workflow-degraded.v1.json",
+          "agentic/code/addons/dataset-intelligence/examples/valid/dataset-workflow-retired.v1.json"
+        ],
+        "invalid": ["agentic/code/addons/dataset-intelligence/examples/invalid/dataset-workflow-handoff.v1.json"]
+      },
+      "projections": [],
+      "publication": { "public": true }
     }
   ]
 }

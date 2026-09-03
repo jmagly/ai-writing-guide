@@ -1,0 +1,45 @@
+{
+  "id": "dataset-intelligence",
+  "type": "addon",
+  "name": "Dataset Intelligence",
+  "version": "1.0.0",
+  "description": "Governed, reusable dataset intake, planning, materialization, traceability, verification, export, synchronization, and retirement",
+  "core": true,
+  "autoInstall": true,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": ["dataset", "indexing", "provenance", "traceability", "lineage", "schema", "ingest"],
+  "entry": {
+    "agents": "agents/",
+    "commands": "commands/",
+    "skills": "skills/",
+    "rules": "rules/",
+    "schemas": "schemas/",
+    "flows": "flows/",
+    "examples": "examples/",
+    "docs": "docs/"
+  },
+  "consolidation": {"strategy": "index-with-links", "rulesIndex": "rules/RULES-INDEX.md", "deployIndexOnly": true},
+  "agents": ["dataset-steward", "dataset-source-architect", "dataset-provenance-reviewer", "dataset-policy-reviewer"],
+  "commands": ["dataset"],
+  "skills": ["dataset-intelligence", "dataset-intake", "dataset-source-assess", "dataset-capability-recommend", "dataset-plan-review", "dataset-ingest", "dataset-trace", "dataset-verify", "dataset-export", "dataset-retire"],
+  "rules": ["dataset-safety"],
+  "schemas": ["dataset-intake.v1", "dataset-workflow-handoff.v1"],
+  "flows": ["dataset-one-shot", "dataset-incremental-sync", "dataset-retirement"],
+  "capabilities": ["dataset-intake", "dataset-source-assess", "dataset-capability-recommend", "dataset-plan-review", "dataset-ingest", "dataset-trace", "dataset-verify", "dataset-export", "dataset-retire"],
+  "dependencies": {
+    "required": ["aiwg-utils", "schema-governance"],
+    "optional": ["sdlc-complete", "research-complete", "knowledge-base", "media-curator", "media-marketing-kit", "ops-complete"]
+  },
+  "cli": {
+    "namespace": "dataset",
+    "providedBy": "AIWG core runtime",
+    "delegation": "aiwg dataset",
+    "shadowRuntime": false
+  },
+  "discovery": {
+    "driver": "skills/dataset-intelligence/SKILL.md",
+    "aliases": ["use this data", "make this searchable", "index my files", "trace this dataset", "dataset provenance", "sync this source", "retire this dataset"]
+  }
+}

@@ -1,0 +1,20 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dataset-ingest
+  namespace: dataset-intelligence
+  labels: {category: execution, idempotent: "false"}
+  annotations: {boundary: shared-aiwg-dataset-runtime-only, operation: aiwg-dataset-ingest}
+spec:
+  description: Delegate an approved plan to aiwg dataset ingest and preserve run, cancellation, checkpoint, rejection, and receipt references.
+  version: 1.0.0
+  inputs:
+    - {name: plan_ref, type: string, required: true}
+    - {name: approval_ref, type: string, required: true}
+    - {name: checkpoint_ref, type: string, required: false}
+  outputs:
+    - {name: run_ref, type: string}
+    - {name: receipt_ref, type: string}
+    - {name: checkpoint_ref, type: string}
+  agent: dataset-steward
+  idempotent: false

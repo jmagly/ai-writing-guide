@@ -1,0 +1,18 @@
+{
+  "schema": "aiwg.dataset-workflow-handoff/v1",
+  "id": "handoff:sync-43-cancelled",
+  "phase": "execution",
+  "state": "cancelled",
+  "inputRefs": ["plan:43", "checkpoint:42"],
+  "outputRefs": ["receipt:43-cancelled"],
+  "planRef": "plan:43",
+  "planDigest": {"algorithm": "sha256", "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+  "runRef": "run:43",
+  "checkpointBeforeRef": "checkpoint:42",
+  "approvals": [{"decision": "approved", "scopeRef": "plan:43", "reviewerRef": "reviewer:policy", "decidedAt": "2026-09-03T12:10:00Z"}],
+  "cancellation": {"supported": true, "requested": true, "requestRef": "cancellation:43", "lastCommittedCheckpointRef": "checkpoint:42"},
+  "degradation": {"active": false},
+  "evidenceRefs": ["evidence:cancelled-receipt-43"],
+  "diagnosticCodes": ["DATASET_RUN_CANCELLED"],
+  "createdAt": "2026-09-03T12:12:00Z"
+}

@@ -1,0 +1,35 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: dataset-retirement
+  labels: {domain: dataset-intelligence, lifecycle: retirement}
+  annotations: {runtime: aiwg-dataset, authority: stable-artifact-references}
+spec:
+  steps:
+    - id: trace
+      capability: dataset-trace
+      inputs: [{name: subject_ref, value: "caller-supplied dataset reference"}]
+      outputs: [{name: evidence_ref}]
+    - id: review
+      capability: dataset-plan-review
+      depends_on: [trace]
+      inputs: [{name: plan_ref, value: "immutable aiwg dataset retirement plan reference"}]
+      outputs: [{name: approval_ref}]
+    - id: retirement-gate
+      kind: gate
+      description: Human reviews complete enumeration, canonical-versus-derived classes, holds, tombstones, bulk threshold, rollback limits, and exact plan digest.
+      depends_on: [review]
+    - id: retire
+      capability: dataset-retire
+      depends_on: [retirement-gate]
+      inputs:
+        - {name: plan_ref, value: "immutable aiwg dataset retirement plan reference"}
+        - {name: approval_ref, from: review.approval_ref}
+      outputs: [{name: run_ref}, {name: reconciliation_ref}]
+    - id: verify
+      capability: dataset-verify
+      depends_on: [retire]
+      inputs:
+        - {name: run_ref, from: retire.run_ref}
+        - {name: receipt_ref, from: retire.reconciliation_ref}
+      outputs: [{name: verification_ref}]

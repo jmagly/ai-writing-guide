@@ -1,0 +1,19 @@
+{
+  "schema": "aiwg.dataset-workflow-handoff/v1",
+  "id": "handoff:run-42-verify",
+  "phase": "verification",
+  "state": "verified",
+  "inputRefs": ["run:42", "receipt:42"],
+  "outputRefs": ["verification:42"],
+  "planRef": "plan:42",
+  "planDigest": {"algorithm": "sha256", "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+  "runRef": "run:42",
+  "checkpointBeforeRef": "checkpoint:41",
+  "checkpointAfterRef": "checkpoint:42",
+  "approvals": [{"decision": "approved", "scopeRef": "plan:42", "reviewerRef": "reviewer:policy", "decidedAt": "2026-09-03T12:00:00Z"}],
+  "cancellation": {"supported": true, "requested": false, "lastCommittedCheckpointRef": "checkpoint:42"},
+  "degradation": {"active": false},
+  "evidenceRefs": ["evidence:receipt-42", "evidence:lineage-42"],
+  "diagnosticCodes": [],
+  "createdAt": "2026-09-03T12:05:00Z"
+}

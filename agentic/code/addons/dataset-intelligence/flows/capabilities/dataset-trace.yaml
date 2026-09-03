@@ -1,0 +1,14 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dataset-trace
+  namespace: dataset-intelligence
+  labels: {category: evidence, idempotent: "true"}
+  annotations: {boundary: declarative-aiwg-dataset-delegation, operation: aiwg-dataset-lineage}
+spec:
+  description: Delegate bounded lineage queries to aiwg dataset lineage and review evidence, confidence, schema, run, and artifact-class references.
+  version: 1.0.0
+  inputs: [{name: subject_ref, type: string, required: true}]
+  outputs: [{name: evidence_ref, type: string}]
+  agent: dataset-provenance-reviewer
+  idempotent: true

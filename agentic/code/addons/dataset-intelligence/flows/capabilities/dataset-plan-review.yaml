@@ -1,0 +1,14 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: dataset-plan-review
+  namespace: dataset-intelligence
+  labels: {category: approval, idempotent: "true"}
+  annotations: {boundary: human-review-of-aiwg-dataset-plan, output-schema: dataset-workflow-handoff.v1}
+spec:
+  description: Review the exact immutable aiwg dataset plan, impacts, policy, degradation, and authorization scope without executing it.
+  version: 1.0.0
+  inputs: [{name: plan_ref, type: string, required: true}]
+  outputs: [{name: approval_ref, type: string}]
+  agent: dataset-policy-reviewer
+  idempotent: true
