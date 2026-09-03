@@ -9,6 +9,7 @@ const validate = new Ajv2020({ strict: true, allErrors: true }).compile(schema)
 const fixtures: unknown[] = [
   { version: '1' },
   { version: '1', roots: { research: 'research' }, backends: { memory: { type: 'notion', parent: { pageId: 'p' } } }, fallback: 'block' },
+  { version: '1', backends: { memory: { type: 'webdav', url: 'http://localhost', basePath: '/' } } },
   {},
   { version: '2' },
   { version: '1', extra: true },

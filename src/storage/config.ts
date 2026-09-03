@@ -237,7 +237,7 @@ function validateBackendConfig(raw: unknown, source: string): BackendConfig {
       requireString(obj, 'bucket', source);
       return obj as unknown as BackendConfig;
     case 'webdav':
-      rejectUnknownKeys(obj, ['type', 'url', 'authMode'], source, 'backend');
+      rejectUnknownKeys(obj, ['type', 'url', 'basePath', 'authMode'], source, 'backend');
       requireString(obj, 'url', source);
       return obj as unknown as BackendConfig;
     default:

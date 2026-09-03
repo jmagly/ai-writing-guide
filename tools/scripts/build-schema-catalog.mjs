@@ -1,23 +1,20 @@
 #!/usr/bin/env node
 
 import { createHash } from 'node:crypto';
-import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
 
 const root = resolve(import.meta.dirname, '../..');
 const output = resolve(root, 'schemas/catalog/domains/repository-json-schemas.json');
 const checkOnly = process.argv.includes('--check');
-const ignored = new Set(['.git', 'node_modules', 'dist', 'build', 'coverage']);
-
-function walk(directory, files = []) {
-  for (const name of readdirSync(directory).sort()) {
-    if (ignored.has(name)) continue;
-    const path = resolve(directory, name);
-    const stat = statSync(path);
-    if (stat.isDirectory()) walk(path, files);
-    else if (name.endsWith('.schema.json') && !path.startsWith(resolve(root, 'schemas/catalog'))) files.push(path);
-  }
-  return files;
+function trackedSchemas() {
+  return execFileSync('git', ['ls-files', '--cached', '--', '*.schema.json'], { cwd: root, encoding: 'utf8' })
+    .split('\n')
+    .filter(Boolean)
+    .filter(path => !path.startsWith('schemas/catalog/'))
+    .sort()
+    .map(path => resolve(root, path));
 }
 
 function repositoryPath(path) {
@@ -54,7 +51,7 @@ function versionFor(path, schema) {
   return major ? `${major[1]}.0.0` : '1.0.0';
 }
 
-const records = walk(root).map(path => {
+const records = trackedSchemas().map(path => {
   const repoPath = repositoryPath(path);
   const schema = JSON.parse(readFileSync(path, 'utf8'));
   return { path: repoPath, schema, digest: `sha256:${createHash('sha256').update(readFileSync(path)).digest('hex')}` };

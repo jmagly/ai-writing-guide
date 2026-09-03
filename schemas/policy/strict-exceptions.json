@@ -2,6 +2,38 @@
   "version": 1,
   "exceptions": [
     {
+      "resource": "agentic/code/addons/civic-action/schemas/local-resource-index.schema.json",
+      "rule": "strictTypes",
+      "owner": "civic-action",
+      "rationale": "Conditional branches apply required/properties to objects typed by the enclosing canonical schema.",
+      "approvedBy": "schema-control-plane",
+      "expires": "2027-03-01"
+    },
+    {
+      "resource": "agentic/code/addons/civic-action/schemas/local-resource-index.schema.json",
+      "rule": "strictRequired",
+      "owner": "civic-action",
+      "rationale": "Conditional vertical refinements require fields declared in the enclosing vertical_fields schema.",
+      "approvedBy": "schema-control-plane",
+      "expires": "2027-03-01"
+    },
+    {
+      "resource": "agentic/code/addons/civic-action/schemas/public-records-plan.schema.json",
+      "rule": "strictTypes",
+      "owner": "civic-action",
+      "rationale": "Conditional workflow-state branches refine objects typed by the enclosing canonical schema.",
+      "approvedBy": "schema-control-plane",
+      "expires": "2027-03-01"
+    },
+    {
+      "resource": "agentic/code/addons/civic-action/schemas/publication-gate-result.schema.json",
+      "rule": "strictTypes",
+      "owner": "civic-action",
+      "rationale": "The composed specialization applies properties to the object authority referenced through allOf.",
+      "approvedBy": "schema-control-plane",
+      "expires": "2027-03-01"
+    },
+    {
       "resource": "agentic/code/addons/aiwg-utils/workflow/schemas/workflow-playbook.schema.json",
       "rule": "strictRequired",
       "owner": "aiwg-utils",

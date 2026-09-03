@@ -120,6 +120,206 @@
       "consumers": []
     },
     {
+      "logicalName": "agentic.code.addons.civic.action.schemas.compliance.gate.result",
+      "id": "https://aiwg.io/schemas/civic-action/v1/compliance-gate-result.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-civic-action"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/civic-action/schemas/compliance-gate-result.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.civic.action.schemas.correction.record",
+      "id": "https://aiwg.io/schemas/civic-action/v1/correction-record.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-civic-action"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/civic-action/schemas/correction-record.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.civic.action.schemas.local.resource.index",
+      "id": "https://aiwg.io/schemas/civic-action/v1/local-resource-index.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-civic-action"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/civic-action/schemas/local-resource-index.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.civic.action.schemas.meeting.reconciliation",
+      "id": "https://aiwg.io/schemas/civic-action/v1/meeting-reconciliation.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-civic-action"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/civic-action/schemas/meeting-reconciliation.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.civic.action.schemas.public.records.plan",
+      "id": "https://aiwg.io/schemas/civic-action/v1/public-records-plan.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-civic-action"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/civic-action/schemas/public-records-plan.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.civic.action.schemas.public.technology.review",
+      "id": "https://aiwg.io/schemas/civic-action/v1/public-technology-review.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-civic-action"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/civic-action/schemas/public-technology-review.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.civic.action.schemas.publication.gate.result",
+      "id": "https://aiwg.io/schemas/civic-action/v1/publication-gate-result.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-civic-action"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/civic-action/schemas/publication-gate-result.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.civic.action.schemas.publication.packet",
+      "id": "https://aiwg.io/schemas/civic-action/v1/publication-packet.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-civic-action"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/civic-action/schemas/publication-packet.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.civic.action.schemas.source.registry",
+      "id": "https://aiwg.io/schemas/civic-action/v1/source-registry.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-civic-action"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/civic-action/schemas/source-registry.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
+      "logicalName": "agentic.code.addons.civic.action.schemas.vote.ledger",
+      "id": "https://aiwg.io/schemas/civic-action/v1/vote-ledger.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-civic-action"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/civic-action/schemas/vote-ledger.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
       "logicalName": "src.data.community",
       "id": "https://aiwg.io/schemas/community.schema.json",
       "version": "1.0.0",

@@ -175,6 +175,7 @@ export interface S3BackendConfig {
 export interface WebdavBackendConfig {
   type: 'webdav';
   url: string;
+  basePath?: string;
   authMode?: 'basic' | 'digest' | 'bearer';
 }
 

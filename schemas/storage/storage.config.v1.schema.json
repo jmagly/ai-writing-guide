@@ -45,6 +45,6 @@
     "anythingllm": { "type": "object", "additionalProperties": false, "required": ["type", "baseUrl", "workspace"], "properties": { "type": { "const": "anythingllm" }, "baseUrl": { "$ref": "#/$defs/path" }, "workspace": { "$ref": "#/$defs/path" }, "folder": { "type": "string" } } },
     "fortemi": { "type": "object", "additionalProperties": false, "required": ["type"], "properties": { "type": { "const": "fortemi" }, "mcpServer": { "type": "string" }, "scheme": { "type": "string" } } },
     "s3": { "type": "object", "additionalProperties": false, "required": ["type", "bucket"], "properties": { "type": { "const": "s3" }, "bucket": { "$ref": "#/$defs/path" }, "prefix": { "type": "string" }, "region": { "type": "string" }, "endpoint": { "type": "string" } } },
-    "webdav": { "type": "object", "additionalProperties": false, "required": ["type", "url"], "properties": { "type": { "const": "webdav" }, "url": { "$ref": "#/$defs/path" }, "authMode": { "enum": ["basic", "digest", "bearer"] } } }
+    "webdav": { "type": "object", "additionalProperties": false, "required": ["type", "url"], "properties": { "type": { "const": "webdav" }, "url": { "$ref": "#/$defs/path" }, "basePath": { "type": "string" }, "authMode": { "enum": ["basic", "digest", "bearer"] } } }
   }
 }
