@@ -46,6 +46,7 @@
     "benchmark:threat-assessment": "node tools/security/evaluate-threat-policy.mjs",
     "ci:fortemi-index": "npm run lint:discovery-coverage && npm run test:release-discovery && npm run lint:fortemi-prebuilt-package",
     "smoke:web-resources:live": "node tools/release/web-resource-live-smoke.mjs",
+    "smoke:pi:live": "node tools/providers/pi-live-smoke.mjs",
     "validate-metadata": "aiwg validate-metadata",
     "package-plugins": "node tools/plugin/package-plugins.mjs --all",
     "package-plugins:clean": "node tools/plugin/package-plugins.mjs --all --clean",

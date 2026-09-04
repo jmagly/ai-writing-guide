@@ -19,6 +19,9 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 - Added pinned Pi provider and version-3 session conformance fixtures covering
   resource discovery, explicit headless trust, branches, compaction, retry
   evidence, opaque future entries, malformed JSONL, and credential redaction.
+- Added an opt-in Pi/OpenRouter smoke harness that uses an ephemeral pinned
+  package or reviewed source build, isolated agent/session roots, explicit
+  trust, strict JSONL/RPC checks, and value-free evidence.
 
 ## [2026.9.1] - 2026-09-04 - "Governed data, broader provider reach"
 

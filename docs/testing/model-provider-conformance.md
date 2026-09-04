@@ -80,9 +80,22 @@ constraint rather than treating the configured ID as the resolved model.
 
 For an opt-in Pi/OpenRouter smoke, install
 `@earendil-works/pi-coding-agent`, source `OPENROUTER_API_KEY` from an
-approved secret manager, isolate `PI_CODING_AGENT_DIR` and
-`PI_CODING_AGENT_SESSION_DIR` in temporary directories, and pass either
-`--approve` or `--no-approve` explicitly. The smoke must never depend on a
-pre-existing global Pi configuration. Pi's current flags are documented in the
+approved secret manager, and run the gated harness:
+
+```bash
+node tools/providers/pi-live-smoke.mjs --check
+
+AIWG_PI_LIVE_SMOKE=1 \
+OPENROUTER_API_KEY="$(your-secret-command)" \
+npm run smoke:pi:live -- --model <openrouter-model-id>
+```
+
+The default live path uses a pinned, ephemeral `npx` package rather than a
+global Pi installation. For a reviewed source build, pass `--pi-bin` with the
+path to that build's `dist/bundle/cli.js`. The harness creates temporary
+`HOME`, `PI_CODING_AGENT_DIR`, and `PI_CODING_AGENT_SESSION_DIR` values,
+uses `--no-approve`, validates discovery, RPC controls, strict JSONL, and
+`agent_settled`, and deletes raw output. It emits only summary evidence and
+never writes the credential. Pi's current flags are documented in the
 [upstream coding-agent README](https://github.com/earendil-works/pi/tree/main/packages/coding-agent#cli-reference)
 (last verified 2026-09-04).
