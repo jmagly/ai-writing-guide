@@ -7,6 +7,60 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.9.1] - 2026-09-04 - "Governed data, broader provider reach"
+
+### Added
+
+- **Schema governance now has a first-class control plane** - A catalog,
+  lifecycle policy, compatibility analysis, validation commands, and storage
+  parity checks make schema evolution explicit and testable across packaged
+  resources (roctinam/aiwg#2223, roctinam/aiwg#2227).
+
+- **Dataset intelligence adds governed, reproducible data workflows** - The new
+  addon provides source-adapter contracts, standards profiles, canonical run
+  ledgers, provenance, orchestration commands, migration guidance, and
+  cross-runtime conformance coverage.
+
+- **Pi Coding Agent is available as an experimental resource-first provider** -
+  `aiwg use all --provider pi` deploys a Pi-neutral `AGENTS.md`, portable Agent
+  Skills, and native `.pi/prompts` templates at project or relocated user scope.
+  Provider detection, capability routing, receipts, planning records, and
+  end-to-end coverage are included. The public provider inventory now enforces
+  12 named integrations plus a separately identified generic fallback
+  (roctinam/aiwg#2148, roctinam/aiwg#2149).
+
+- **Output modes now have a supported extension and discovery surface** - The
+  output-mode registry and protected transformation runtime are exported from
+  the package API, with guides for selection, custom profiles, integration, and
+  troubleshooting.
+
+- **Fortemi storage qualification now runs against the live server path** - A
+  dedicated conformance gate exercises published Core receipts against clean
+  PGlite and Fortemi environments (roctinam/aiwg#2194).
+
+### Fixed
+
+- **Release CI installs Rust from an immutable archive** - The conformance
+  workflow no longer depends on a mutable installer endpoint.
+
+- **Dataset documentation, packaging, and orchestration stay aligned** -
+  Governed schemas ship with the CLI, report directories are created before
+  use, source links resolve correctly, and addon commands bind to the shared
+  orchestration service.
+
+- **Provider documentation cannot silently drift from the registry** - A unit
+  test compares the published provider inventory with canonical definitions and
+  asserts the exact named-provider count.
+
+### Release boundaries
+
+- Pi support in this release covers provider identity, detection, capability
+  reporting, and native resource deployment. Runtime extensions, model-catalog
+  integration, and persisted-session ingestion remain future work.
+- Dataset standards profiles and adapters establish governed contracts; they do
+  not certify external datasets or replace operator review of source rights,
+  quality, or fitness for purpose.
+
 ## [2026.9.0] - 2026-09-01 - "Cited civic workflows, safer publication"
 
 ### Added
@@ -82,20 +136,6 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 ## [2026.8.28] - 2026-08-31 - "Governed evidence, resilient tooling"
 
 ### Added
-
-- **Pi Coding Agent is available as an experimental resource-first provider** -
-  `aiwg use all --provider pi` deploys a Pi-neutral `AGENTS.md`, portable Agent
-  Skills, and native `.pi/prompts` templates at project or relocated user scope.
-  Provider detection, steward/doctor reporting, dry-run safety, deployment
-  receipts, planning records, and end-to-end coverage are included. Public docs
-  now publish the canonical 12-provider inventory, Pi setup and operational
-  guides, and accurate provider counts across the primary site references.
-
-- **Output modes now have a supported extension and discovery surface** - The
-  output-mode registry and protected transformation runtime are exported from
-  the package API, an indexed guide responds to output-mask, Wittgenstein,
-  engineering-language, and custom-syntax requests, and a four-part guide set
-  covers use, personal profiles, runtime integration, and troubleshooting.
 
 - **Ops outputs now cross a mandatory redaction boundary** - A public text,
   stream, and nested-structured API sanitizes common and project-defined secret

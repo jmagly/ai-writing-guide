@@ -127,8 +127,12 @@ describe('WatchService', () => {
 
       // Modify file
       await writeFile(filePath, 'Modified', 'utf-8');
-      // Wait for awaitWriteFinish + debounce + processing
-      await new Promise(resolve => setTimeout(resolve, 600));
+      // Poll through awaitWriteFinish + debounce + processing. Fixed sleeps are
+      // unreliable when the full integration suite is saturating the host.
+      const deadline = Date.now() + 5000;
+      while (service.getStats().eventsProcessed === 0 && Date.now() < deadline) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
 
       expect(events.some(e => e.type === 'change')).toBe(true);
     }, 10000);

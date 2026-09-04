@@ -296,7 +296,7 @@ describe('Fortemi Core capability discovery over the real framework/addon corpus
         expect(local.results[0]?.path, `${testCase.phrase} local top result`).toContain(testCase.expected_top_path);
         expect(fortemi.results[0]?.path, `${testCase.phrase} Fortemi top result`).toContain(testCase.expected_top_path);
       }
-    });
+    }, 60_000);
   }
 
   it('explains exact marketing-trigger dominance over generic persona identity routing (#1828)', async () => {

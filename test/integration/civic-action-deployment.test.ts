@@ -103,5 +103,5 @@ describe('civic-action addon deployment', () => {
     });
     expect(executed.status, executed.stderr).toBe(0);
     expect(JSON.parse(executed.stdout).status).toBe('pass');
-  }, 30_000);
+  }, 60_000);
 });

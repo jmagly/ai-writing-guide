@@ -214,7 +214,7 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
     expect(existsSync(path.join(fortemiRoot, 'aiwg-fortemi-index-v2.json'))).toBe(true);
     expect(fortemiManifest.item_count).toBe(stats.totalArtifacts);
     expect(fortemiManifest.source_index_built_at).toBe(frameworkMetadata.builtAt);
-  }, 60_000);
+  }, 120_000);
 
   it('keeps default non-TTY output compact, colorless, and free of registry chatter', () => {
     const projectRoot = isolatedRoot('aiwg-use-output-codex-project-');

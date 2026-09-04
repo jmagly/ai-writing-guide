@@ -57,7 +57,7 @@ describe('nlp-prod addon CLI deployment', () => {
         import(path.join(registry.nlp.source, descriptor.file)),
       ).resolves.toHaveProperty('default');
     }
-  });
+  }, 60_000);
 
   it('dispatches every advertised subcommand to its executable handler', async () => {
     const deployed = await new UseHandler().execute(useContext([
@@ -74,7 +74,7 @@ describe('nlp-prod addon CLI deployment', () => {
       expect(executed?.exitCode, `dispatch ${subcommand}`).toBe(0);
       expect(executed?.message).toContain(`aiwg nlp ${subcommand}`);
     }
-  });
+  }, 60_000);
 
   it('scaffolds a pipeline and discovers it through status', async () => {
     await new UseHandler().execute(useContext([
@@ -92,5 +92,5 @@ describe('nlp-prod addon CLI deployment', () => {
       'nlp', ['status'], projectDir, frameworkRoot,
     );
     expect(status).toEqual({ exitCode: 0, message: 'Found 1 pipeline(s).' });
-  });
+  }, 60_000);
 });

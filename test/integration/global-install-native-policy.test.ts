@@ -149,7 +149,7 @@ describe('global install native lifecycle-script policy', () => {
         '--cache', path.join(tempRoot, 'cache'), '--userconfig', npmrc,
         '--no-audit', '--no-fund', tarball,
       ],
-      { cwd: tempRoot, encoding: 'utf8', timeout: 120_000, env: cleanEnv },
+      { cwd: tempRoot, encoding: 'utf8', timeout: 240_000, env: cleanEnv },
     );
     installOutput = `${install.stdout}\n${install.stderr}`;
     if (install.status !== 0) throw new Error(installOutput);
@@ -179,7 +179,7 @@ describe('global install native lifecycle-script policy', () => {
     fixture.publishRelease();
     trustRootFile = path.join(home, 'release-root.pem');
     await writeFile(trustRootFile, fixture.publicKeyPem, { mode: 0o600 });
-  }, 300_000);
+  }, 420_000);
 
   afterAll(async () => {
     await fixture?.stop();

@@ -77,10 +77,10 @@ if (!existsSync(manifestPath)) fail(`${manifestRel} is missing`);
 const exportText = readFileSync(exportPath, 'utf8');
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 const exported = JSON.parse(exportText);
-// The optional graph-pattern capability and scoped Markdown-link edge metadata
-// add discoverable corpus structure. Keep a tight, explicit package budget
-// while accommodating the reviewed 3,705-item release corpus.
-const maxExportBytes = Number.parseInt(process.env.AIWG_FORTEMI_PREBUILT_MAX_BYTES ?? '13250000', 10);
+// The schema-governance, dataset-intelligence, and Pi capabilities add reviewed
+// discoverable corpus structure. Keep a tight, explicit package budget while
+// accommodating the 3,920-item 2026.9.1 release corpus with about 1.5% headroom.
+const maxExportBytes = Number.parseInt(process.env.AIWG_FORTEMI_PREBUILT_MAX_BYTES ?? '14000000', 10);
 
 if (manifest.schema_version !== 'aiwg.fortemi.prebuilt.v1') {
   fail(`manifest schema_version is ${manifest.schema_version}`);
@@ -154,6 +154,7 @@ try {
       env: {
         ...process.env,
         XDG_DATA_HOME: path.join(tmp, 'xdg'),
+        AIWG_CONFIG: path.join(tmp, 'config-source'),
         AIWG_ROOT: repoRoot,
       },
     },
@@ -177,6 +178,7 @@ try {
         env: {
           ...process.env,
           XDG_DATA_HOME: path.join(tmp, 'xdg'),
+          AIWG_CONFIG: path.join(tmp, 'config-source'),
           AIWG_ROOT: repoRoot,
         },
       },
@@ -236,6 +238,7 @@ try {
       env: {
         ...process.env,
         XDG_DATA_HOME: path.join(tmp, 'xdg-installed'),
+        AIWG_CONFIG: path.join(tmp, 'config-installed'),
         AIWG_ROOT: path.join(installDir, 'node_modules', 'aiwg'),
       },
     },
@@ -274,6 +277,7 @@ try {
           env: {
             ...process.env,
             XDG_DATA_HOME: path.join(tmp, `xdg-run-${executable.name}-${selector === record.id ? 'id' : 'name'}`),
+            AIWG_CONFIG: path.join(tmp, 'config-installed'),
             AIWG_ROOT: installedRoot,
           },
         },
@@ -296,6 +300,7 @@ try {
       env: {
         ...process.env,
         XDG_DATA_HOME: path.join(tmp, 'xdg-doctor'),
+        AIWG_CONFIG: path.join(tmp, 'config-installed'),
         AIWG_ROOT: installedRoot,
       },
     },
