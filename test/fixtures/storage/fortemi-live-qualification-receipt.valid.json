@@ -20,6 +20,30 @@
       "tool": "get_note",
       "compatible": false,
       "code": "FORTEMI_TOOL_SCHEMA_DRIFT"
+    },
+    {
+      "operation": "write",
+      "tool": "upsert_external_notes",
+      "compatible": true,
+      "code": "FORTEMI_TOOL_SCHEMA_COMPATIBLE"
+    },
+    {
+      "operation": "update",
+      "tool": "update_note",
+      "compatible": true,
+      "code": "FORTEMI_TOOL_SCHEMA_COMPATIBLE"
+    },
+    {
+      "operation": "list",
+      "tool": "list_notes",
+      "compatible": true,
+      "code": "FORTEMI_TOOL_SCHEMA_COMPATIBLE"
+    },
+    {
+      "operation": "query",
+      "tool": "search",
+      "compatible": true,
+      "code": "FORTEMI_TOOL_SCHEMA_COMPATIBLE"
     }
   ],
   "mutation": { "attempted": false },
@@ -29,6 +53,6 @@
     "timeoutMs": 5000,
     "durationMs": 1000,
     "networkAttempts": 2,
-    "toolCount": 1
+    "toolCount": 5
   }
 }

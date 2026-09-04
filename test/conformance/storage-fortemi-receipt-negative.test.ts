@@ -8,7 +8,15 @@ const input = () => ({
     mutationAttempted: false,
     server: { name: "fortemi", version: "2026.9.1" },
     namespace: "aiwg-qualification-123e4567-e89b-42d3-a456-426614174000",
-    operations: [],
+    operations: ["read", "write", "update", "list", "query"].map(
+      (operation) => ({
+        operation,
+        tool: `${operation}_tool`,
+        compatible: true,
+        code: "FORTEMI_TOOL_SCHEMA_COMPATIBLE",
+        detail: "compatible",
+      }),
+    ),
   },
   endpointUrl: "https://titan.example/mcp",
   toolSchemas: {},
@@ -50,6 +58,20 @@ describe("Fortemi qualification receipt negative controls", () => {
         value.timeoutMs = 60000;
       },
       "FORTEMI_RECEIPT_INVALID_RESOURCES",
+    ],
+    [
+      "truncated operation inventory",
+      (value: ReturnType<typeof input>) => {
+        value.report.operations.pop();
+      },
+      "FORTEMI_RECEIPT_OPERATION_INVENTORY_INVALID",
+    ],
+    [
+      "duplicate operation inventory",
+      (value: ReturnType<typeof input>) => {
+        value.report.operations[4]!.operation = "read";
+      },
+      "FORTEMI_RECEIPT_OPERATION_INVENTORY_INVALID",
     ],
   ])("rejects %s", (_name, mutate, code) => {
     const value = input();

@@ -26,6 +26,13 @@ const base = () => ({
         code: "FORTEMI_TOOL_SCHEMA_DRIFT",
         detail: "secret-bearing detail must be omitted",
       },
+      ...["write", "update", "list", "query"].map((operation) => ({
+        operation,
+        tool: `${operation}_tool`,
+        compatible: true,
+        code: "FORTEMI_TOOL_SCHEMA_COMPATIBLE",
+        detail: "compatible",
+      })),
     ],
   },
   endpointUrl: "https://user:password@titan.example/mcp?token=secret#fragment",
@@ -53,7 +60,7 @@ describe("Fortemi durable live qualification receipt", () => {
       timeoutMs: 5000,
       durationMs: 1000,
       networkAttempts: 2,
-      toolCount: 1,
+      toolCount: 5,
     });
     expect(serialized).not.toContain("titan.example");
     expect(serialized).not.toContain("password");

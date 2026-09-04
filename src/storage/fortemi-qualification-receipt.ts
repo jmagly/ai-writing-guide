@@ -12,6 +12,24 @@ const REF = /^(?:refs\/(?:heads|tags)\/[A-Za-z0-9._/-]+|[0-9a-f]{40})$/;
 const SHORT_REF = /^[A-Za-z0-9._/-]+$/;
 const SAFE = /^[A-Za-z0-9._:/-]+$/;
 const NAMESPACE = /^aiwg-qualification-[0-9a-f-]{36}$/;
+const REQUIRED_OPERATIONS = new Set([
+  "read",
+  "write",
+  "update",
+  "list",
+  "query",
+]);
+
+function hasCompleteOperationInventory(
+  operations: FortemiQualificationReceipt["operations"],
+): boolean {
+  const names = operations.map((operation) => operation.operation);
+  return (
+    names.length === REQUIRED_OPERATIONS.size &&
+    new Set(names).size === REQUIRED_OPERATIONS.size &&
+    names.every((name) => REQUIRED_OPERATIONS.has(name))
+  );
+}
 
 export interface FortemiQualificationReceipt {
   contract: typeof FORTEMI_QUALIFICATION_RECEIPT;
@@ -70,7 +88,8 @@ export function resolveFortemiQualificationSource(
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
     }).trim();
-  const aiwgCommit = env.AIWG_STORAGE_QUALIFICATION_COMMIT || git("rev-parse", "HEAD");
+  const aiwgCommit =
+    env.AIWG_STORAGE_QUALIFICATION_COMMIT || git("rev-parse", "HEAD");
   const configuredRef = env.AIWG_STORAGE_QUALIFICATION_BRANCH;
   const aiwgRef = configuredRef
     ? REF.test(configuredRef)
@@ -78,15 +97,15 @@ export function resolveFortemiQualificationSource(
       : SHORT_REF.test(configuredRef) && !configuredRef.includes("..")
         ? `refs/heads/${configuredRef}`
         : configuredRef
-    :
-    (() => {
-      try {
-        return git("symbolic-ref", "-q", "HEAD");
-      } catch {
-        return aiwgCommit;
-      }
-    })();
-  if (!COMMIT.test(aiwgCommit)) throw new Error("FORTEMI_RECEIPT_INVALID_COMMIT");
+    : (() => {
+        try {
+          return git("symbolic-ref", "-q", "HEAD");
+        } catch {
+          return aiwgCommit;
+        }
+      })();
+  if (!COMMIT.test(aiwgCommit))
+    throw new Error("FORTEMI_RECEIPT_INVALID_COMMIT");
   if (!REF.test(aiwgRef) || aiwgRef.includes(".."))
     throw new Error("FORTEMI_RECEIPT_INVALID_REF");
   return { aiwgCommit, aiwgRef };
@@ -159,6 +178,8 @@ export function createFortemiQualificationReceipt(
       return { operation, tool, compatible, code };
     },
   );
+  if (!hasCompleteOperationInventory(operations))
+    throw new Error("FORTEMI_RECEIPT_OPERATION_INVENTORY_INVALID");
   const material: Omit<FortemiQualificationReceipt, "receiptDigest"> = {
     contract: FORTEMI_QUALIFICATION_RECEIPT,
     outcome: input.report.compatible ? "passed" : "failed",
@@ -236,6 +257,8 @@ export function verifyFortemiQualificationReceipt(
     )
   )
     errors.push("FORTEMI_RECEIPT_OPERATION_INVALID");
+  if (!hasCompleteOperationInventory(receipt.operations))
+    errors.push("FORTEMI_RECEIPT_OPERATION_INVENTORY_INVALID");
   if (
     receipt.mutation.attempted !== Boolean(receipt.mutation.objectId) ||
     (receipt.mutation.objectId && !SAFE.test(receipt.mutation.objectId))

@@ -56,12 +56,16 @@
     },
     "operations": {
       "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
       "items": {
         "type": "object",
         "additionalProperties": false,
         "required": ["operation", "tool", "compatible", "code"],
         "properties": {
-          "operation": { "$ref": "#/$defs/safe" },
+          "operation": {
+            "enum": ["read", "write", "update", "list", "query"]
+          },
           "tool": { "$ref": "#/$defs/safe" },
           "compatible": { "type": "boolean" },
           "code": { "$ref": "#/$defs/safe" }
