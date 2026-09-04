@@ -283,7 +283,9 @@ Two-step pattern by design. **Discover** ranks candidates and returns metadata. 
 
 ## Per-provider deployment paths
 
-The kernel + standard split applies across all 12 named integrations. Each provider honors `--copy-all` on the skill surface defined by its registry entry.
+The kernel + standard split applies across all 13 named integrations. Each
+provider honors `--copy-all` on the skill surface defined by its registry
+entry.
 
 | Provider | Kernel skills | Standard skills (when opt-in) | Cross-agent dump |
 |---|---|---|---|
@@ -297,6 +299,7 @@ The kernel + standard split applies across all 12 named integrations. Each provi
 | OpenCode | `.opencode/skill/` | `.opencode/.aiwg/skill/` | `.agents/skills/` |
 | OpenClaw | `~/.openclaw/skills/aiwg/` | `~/.openclaw/.aiwg/skills/` | `.agents/skills/` |
 | OpenHuman | `~/.openhuman/skills/` | `~/.openhuman/.aiwg/skills/` | `.agents/skills/` |
+| Oh My Pi | `.agents/skills/` | `.agents/skills/` (with `--copy-all`) | `.agents/skills/` |
 | Pi Coding Agent | `.agents/skills/` | `.pi/.aiwg/skills/` | `.agents/skills/` |
 | Codex | `.agents/skills/` | `.agents/skills/` (with `--copy-all`) | `.agents/skills/` |
 
@@ -307,6 +310,9 @@ The kernel + standard split applies across all 12 named integrations. Each provi
   entries in legacy `~/.codex/skills/` are pruned to avoid duplicate discovery.
 - **OpenCode** uses singular `.opencode/skill/` (platform convention). Cross-agent dump at `.agents/skills/` honors the same env-var filter.
 - **OpenClaw** is user-scope only — pass `--scope user`, not `--target`. Kernel skills nest under `aiwg/` namespace at `~/.openclaw/skills/aiwg/` to avoid collisions with non-AIWG ClaWHub installs.
+- **Oh My Pi** uses one-level native Agent Skills in `.agents/skills/` for both
+  kernel and opted-in standard resources. OMP profiles relocate user-scope
+  resources without changing the project path.
 
 ## Verifying it's working
 

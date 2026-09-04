@@ -65,6 +65,8 @@
     "integrations/windsurf-quickstart",
     "integrations/hermes-quickstart",
     "integrations/openhuman-quickstart",
+    "integrations/openclaw-quickstart",
+    "integrations/omp-quickstart",
     "integrations/pi-quickstart",
     "integrations/cross-platform-config",
     "openclaw-guide",
@@ -321,6 +323,9 @@
     "providers",
     "providers/capability-matrix",
     "providers/provider-inventory",
+    "providers/omp",
+    "providers/omp-verification",
+    "providers/omp-sessions",
     "project-local/overview",
     "mcp/profiles",
     "mcp/codex-profiles",
@@ -741,6 +746,20 @@
       "title": "OpenHuman",
       "summary": "Connect AIWG to OpenHuman",
       "file": "integrations/openhuman-quickstart.md",
+      "parent": "integrations"
+    },
+    {
+      "id": "integrations/openclaw-quickstart",
+      "title": "OpenClaw",
+      "summary": "Connect AIWG to an OpenClaw workspace",
+      "file": "integrations/openclaw-quickstart.md",
+      "parent": "integrations"
+    },
+    {
+      "id": "integrations/omp-quickstart",
+      "title": "Oh My Pi",
+      "summary": "Deploy and verify AIWG with the experimental OMP provider",
+      "file": "integrations/omp-quickstart.md",
       "parent": "integrations"
     },
     {
@@ -2530,6 +2549,27 @@
       "title": "Provider Inventory",
       "summary": "Canonical list and count of named provider integrations",
       "file": "providers/provider-inventory.md",
+      "parent": "providers"
+    },
+    {
+      "id": "providers/omp",
+      "title": "Oh My Pi Provider Guide",
+      "summary": "Complete deployment, runtime, profile, MCP, team, and maintenance guide",
+      "file": "providers/omp.md",
+      "parent": "providers"
+    },
+    {
+      "id": "providers/omp-verification",
+      "title": "OMP Verification Baseline",
+      "summary": "Pinned native and OpenRouter verification evidence for Oh My Pi",
+      "file": "providers/omp-verification.md",
+      "parent": "providers"
+    },
+    {
+      "id": "providers/omp-sessions",
+      "title": "OMP Session Ingestion",
+      "summary": "Authorized discovery and replay-safe import of OMP session trees",
+      "file": "providers/omp-sessions.md",
       "parent": "providers"
     },
     {

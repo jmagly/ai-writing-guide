@@ -521,7 +521,7 @@ providers:
     artifact_paths:
       agents: .omp/agents/
       commands: .omp/prompts/
-      skills: .omp/skills/
+      skills: .agents/skills/
       skills_cross_agent: .agents/skills/
       rules: .omp/rules/
       behaviors: .omp/extensions/

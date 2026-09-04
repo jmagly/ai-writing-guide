@@ -17,6 +17,13 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   title-prefixed session imports. See the [provider guide](docs/providers/omp.md)
   for the pinned version, support limits, and removal workflow (#2244–#2256).
 
+### Changed
+
+- Synchronized OMP across the public homepage, provider and capability
+  matrices, setup navigation, operator references, and getting-started guides.
+  The public platform list now matches the 13 named provider integrations and
+  no longer counts Ollama, an LLM backend, as an AIWG deployment provider.
+
 ## [2026.9.2] - 2026-09-04 - "Pi from resources to runtime"
 
 ### Changed

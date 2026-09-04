@@ -629,7 +629,7 @@ After deploying RLM to any provider:
 
 **Check**:
 1. Provider name spelled correctly (lowercase)
-2. The provider is one of AIWG's 12 named integrations (`aiwg help`)
+2. The provider is one of AIWG's 13 named integrations (`aiwg help`)
 3. Permissions to write to target directories
 4. For Codex: Home prompt directory and project `.agents/skills/` are writable
 

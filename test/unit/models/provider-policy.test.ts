@@ -145,6 +145,8 @@ describe('provider-aware compilation', () => {
     ['opencode', 'native', true],
     ['openclaw', 'native', true],
     ['openhuman', 'compiled', true],
+    ['omp', 'native', true],
+    ['pi', 'native', true],
     ['warp', 'global-only', false],
     ['windsurf', 'unsupported', false],
   ] as const)(

@@ -154,7 +154,7 @@ See [Al Guide](../ralph-guide.md) for full documentation.
 | OpenClaw | [Setup Guide](openclaw-quickstart.md) |
 | Hermes | [Setup Guide](hermes-quickstart.md) |
 | OpenHuman | [Setup Guide](openhuman-quickstart.md) |
-| Oh My Pi | [Setup Guide](../providers/omp.md) |
+| Oh My Pi | [Setup Guide](omp-quickstart.md) · [Full provider guide](../providers/omp.md) |
 | Pi Coding Agent | [Setup Guide](pi-quickstart.md) |
 
 ---

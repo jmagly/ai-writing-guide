@@ -62,6 +62,8 @@ Tell the agent which tool you are using:
 | OpenClaw | “Connect AIWG to this OpenClaw workspace.” |
 | Hermes | “Connect AIWG to this Hermes workspace.” |
 | OpenHuman | “Connect AIWG to this OpenHuman workspace.” |
+| Oh My Pi | “Connect AIWG to this Oh My Pi project.” |
+| Pi Coding Agent | “Connect AIWG to this Pi Coding Agent project.” |
 
 Some providers can use refreshed context immediately; others need a single
 restart or workspace reload. The agent should report that need rather than

@@ -1,10 +1,10 @@
 <div align="center">
 
-<a href="https://aiwg.io"><img src="https://aiwg.io/assets/badges/aiwg-hero-dark.png" alt="AIWG — multi-agent AI framework · one source of truth · 13 provider integrations" width="680"></a>
+<a href="https://aiwg.io"><img src="https://aiwg.io/assets/badges/aiwg-hero-dark.png" alt="AIWG — multi-agent AI framework · one source of truth · 13 provider integrations including Oh My Pi" width="680"></a>
 
 # AIWG
 
-**Multi-agent AI framework for 13 provider integrations, including Claude Code, Codex, Copilot, Cursor, Pi, and Warp**
+**Multi-agent AI framework for 13 provider integrations, including Claude Code, Codex, Copilot, Cursor, Oh My Pi, Pi, and Warp**
 
 200+ agents, 109+ CLI commands, 400+ deployable agent/skill/command/rule artifacts, 8 core frameworks, 32 addons, and a 40-plugin Claude Code marketplace. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
 
@@ -47,7 +47,7 @@ aiwg use all --provider <provider>
 ```
 
 Replace `<provider>` with your AI tool's name, such as `claude`, `codex`,
-`copilot`, or `cursor`.
+`copilot`, `cursor`, `omp`, or `pi`.
 
 The final command deploys, indexes, connects, verifies, and reports one outcome.
 The standalone index, regenerate, status, and doctor commands remain available

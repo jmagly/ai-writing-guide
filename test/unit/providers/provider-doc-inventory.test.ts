@@ -23,6 +23,7 @@ describe('public provider inventory', () => {
     const publicFiles = [
       'README.md',
       'docs/config.json',
+      'docs/welcome.html',
       'docs/overview/what-is-aiwg.md',
       'docs/overview/executive-brief.md',
       'docs/integrations/cross-platform-overview.md',
@@ -35,5 +36,58 @@ describe('public provider inventory', () => {
       expect(content, relativePath).toMatch(/Pi Coding Agent/i);
       expect(content, relativePath).toMatch(/Oh My Pi/i);
     }
+  });
+
+  it('publishes OMP in setup navigation and maintained provider handoffs', () => {
+    const docsManifest = JSON.parse(readFileSync(resolve(projectRoot, 'docs/_manifest.json'), 'utf8'));
+    const integrationManifest = JSON.parse(
+      readFileSync(resolve(projectRoot, 'docs/integrations/_manifest.json'), 'utf8'),
+    );
+    const sectionIds = docsManifest.sections.map(({ id }: { id: string }) => id);
+
+    expect(new Set(docsManifest.order).size).toBe(docsManifest.order.length);
+    expect(docsManifest.order).toContain('integrations/omp-quickstart');
+    expect(integrationManifest.order).toContain('omp-quickstart');
+    expect(sectionIds).toContain('integrations/omp-quickstart');
+    expect(sectionIds).toContain('providers/omp');
+    expect(sectionIds).toContain('providers/omp-verification');
+    expect(sectionIds).toContain('providers/omp-sessions');
+
+    for (const relativePath of [
+      'docs/getting-started/README.md',
+      'docs/getting-started/install-connect-verify.md',
+      'docs/getting-started/provider-handoff.md',
+      'docs/agents/providers/README.md',
+      'docs/cli/capability-routing.md',
+    ]) {
+      const content = readFileSync(resolve(projectRoot, relativePath), 'utf8');
+      expect(content, relativePath).toMatch(/Oh My Pi/i);
+      expect(content, relativePath).toMatch(/Pi Coding Agent/i);
+    }
+  });
+
+  it('keeps the public homepage list aligned with named deployment providers', () => {
+    const homepage = readFileSync(resolve(projectRoot, 'docs/welcome.html'), 'utf8');
+    const providerLinks = [...homepage.matchAll(/href="#integrations\/([^"]+-quickstart)"/g)]
+      .map((match) => match[1]);
+
+    expect(providerLinks).toEqual([
+      'claude-code-quickstart',
+      'codex-quickstart',
+      'copilot-quickstart',
+      'cursor-quickstart',
+      'factory-quickstart',
+      'hermes-quickstart',
+      'opencode-quickstart',
+      'openclaw-quickstart',
+      'openhuman-quickstart',
+      'omp-quickstart',
+      'pi-quickstart',
+      'warp-terminal-quickstart',
+      'windsurf-quickstart',
+    ]);
+    expect(homepage).toContain('href="#integrations/omp-quickstart">Oh My Pi</a>');
+    expect(homepage).toContain('href="#integrations/pi-quickstart">Pi Coding Agent</a>');
+    expect(homepage).not.toMatch(/Local\/Ollama/);
   });
 });

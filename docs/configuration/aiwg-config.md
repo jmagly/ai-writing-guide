@@ -54,8 +54,9 @@ Writes are atomic: the loader writes to a randomly-suffixed temp sibling, then
 | `build`         | `BuildConfig`                    | optional | Project build policy, including large-build host resource preflight. See [Build Block](#build-block).                                                 |
 | `uhp`           | `UhpConfig`                      | optional | Explicit experimental UHP client profiles. See [UHP Client Profiles](#uhp-client-profiles).                                                           |
 
-Valid `providers` values: `claude`, `factory`, `codex`, `opencode`, `copilot`, `cursor`,
-`warp`, `windsurf`, `hermes`, `openclaw`.
+Valid `providers` values: `claude`, `codex`, `copilot`, `cursor`, `factory`,
+`hermes`, `opencode`, `openclaw`, `openhuman`, `omp`, `pi`, `warp`, and
+`windsurf`.
 
 ## UHP Client Profiles
 

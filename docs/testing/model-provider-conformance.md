@@ -5,7 +5,7 @@ Normal CI is fixture-first and cost-free. The shared fixture at
 standard/coding, economy/efficiency, an unknown exact ID, and an invalid
 blocked pin. Its golden provider matrix asserts the configured target, artifact
 format, native or degraded outcome, field names, and omission of unsupported
-model and effort keys for all eleven providers.
+model and effort keys for all thirteen providers.
 
 ## Test matrix
 

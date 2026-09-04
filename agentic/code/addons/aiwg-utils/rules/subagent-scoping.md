@@ -104,7 +104,7 @@ Consider subagents when non-trivial work decomposes into independent, bounded un
 
 ## Platform Applicability
 
-Universal across all AI coding platforms (Claude Code, Codex, Copilot, Cursor, Warp, Factory, OpenCode, Windsurf) and any agent that delegates work.
+Universal across every supported provider and any agent that delegates work.
 
 ## Checklist
 

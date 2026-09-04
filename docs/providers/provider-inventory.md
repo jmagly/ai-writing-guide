@@ -16,7 +16,7 @@ AIWG has **13 named provider integrations**. The source-of-truth registry is
 | `openclaw` | OpenClaw | Stable | User |
 | `openhuman` | OpenHuman | Experimental | Mixed project/user |
 | `pi` | Pi Coding Agent | Experimental | Project |
-| `omp` | Oh My Pi | Experimental | Mixed project/user |
+| `omp` | [Oh My Pi](omp.md) | Experimental | Mixed project/user |
 | `warp` | Warp Terminal | Stable | Project |
 | `windsurf` | Devin Desktop | Stable compatibility adapter | Project |
 
