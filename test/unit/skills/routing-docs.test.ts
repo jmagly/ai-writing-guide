@@ -246,9 +246,10 @@ describe('routing documentation regressions', () => {
     expect(doc).toContain('This command is read-only by default');
     expect(doc).toContain('Only the exact value `1` enables');
     expect(doc).toContain('Endpoint access alone is not mutation authorization');
-    expect(doc).toContain('Until that receipt implementation lands');
+    expect(doc).toContain('aiwg.fortemi-live-qualification-receipt/v1');
     expect(qualification).toContain('PostgreSQL Direct, PostgREST, and Fortemi jobs');
-    expect(qualification).toContain('uploaded directory or console report is not certification evidence');
+    expect(qualification).toContain('an uploaded');
+    expect(qualification).toContain('directory or console report is not certification evidence');
     expect(secrets).toContain('ci/vault-fetch.storage-fortemi.spec');
     expect(secrets).toContain('ci/vault-fetch.storage-fortemi-auth.spec');
     expect(prebuilt).toContain('`AIWG_FORTEMI_CORE_LIVE` is a legacy test-only placeholder');

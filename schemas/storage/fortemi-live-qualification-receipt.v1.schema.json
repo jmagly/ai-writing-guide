@@ -7,6 +7,7 @@
   "required": [
     "contract",
     "receiptDigest",
+    "outcome",
     "bindings",
     "observed",
     "namespace",
@@ -19,6 +20,7 @@
   "properties": {
     "contract": { "const": "aiwg.fortemi-live-qualification-receipt/v1" },
     "receiptDigest": { "$ref": "#/$defs/digest" },
+    "outcome": { "enum": ["passed", "failed"] },
     "bindings": {
       "type": "object",
       "additionalProperties": false,
@@ -72,14 +74,14 @@
       "required": ["attempted"],
       "properties": {
         "attempted": { "type": "boolean" },
-        "objectId": { "type": "string", "format": "uuid" }
+        "objectId": { "$ref": "#/$defs/safe" }
       },
       "allOf": [
         {
           "if": { "properties": { "attempted": { "const": true } } },
           "then": {
             "properties": {
-              "objectId": { "type": "string", "format": "uuid" }
+              "objectId": { "$ref": "#/$defs/safe" }
             },
             "required": ["objectId"]
           }

@@ -30,12 +30,11 @@ mutation gate and may create one retained, UUID-namespaced qualification record;
 endpoint authorization must not be interpreted as permission to enable it.
 
 As of AIWG 2026.9.1, Fortemi live qualification remains pre-certification. The
-workflow reserves `test-results/storage/` for sanitized durable evidence, but
-the versioned Fortemi receipt writer/verifier is pending. A future receipt must
-bind the AIWG revision, non-secret endpoint identity, observed server and
+workflow writes sanitized `aiwg.fortemi-live-qualification-receipt/v1` evidence
+under `test-results/storage/`. The receipt binds the AIWG revision, non-secret endpoint identity, observed server and
 contract versions, operation outcomes, mutation state, timestamps, and resource
-bounds. Until that implementation and an approved live run both exist, an
-uploaded directory or console report is not certification evidence.
+bounds. Until an approved live run exists and its receipt verifies, an uploaded
+directory or console report is not certification evidence.
 
 The `aiwg.storage-qualification/v1` report records backend, branch, commit,
 dataset, declared and observed scope, readers/writers, operation count, exact

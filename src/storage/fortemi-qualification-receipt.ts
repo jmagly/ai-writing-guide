@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { link, mkdir, unlink, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { execFileSync } from "node:child_process";
 import type { FortemiQualificationReport } from "./fortemi-qualification.js";
 
 export const FORTEMI_QUALIFICATION_RECEIPT =
@@ -8,14 +9,14 @@ export const FORTEMI_QUALIFICATION_RECEIPT =
 const DIGEST = /^sha256:[0-9a-f]{64}$/;
 const COMMIT = /^[0-9a-f]{40}$/;
 const REF = /^(?:refs\/(?:heads|tags)\/[A-Za-z0-9._/-]+|[0-9a-f]{40})$/;
+const SHORT_REF = /^[A-Za-z0-9._/-]+$/;
 const SAFE = /^[A-Za-z0-9._:/-]+$/;
 const NAMESPACE = /^aiwg-qualification-[0-9a-f-]{36}$/;
-const UUID =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export interface FortemiQualificationReceipt {
   contract: typeof FORTEMI_QUALIFICATION_RECEIPT;
   receiptDigest: string;
+  outcome: "passed" | "failed";
   bindings: {
     aiwgCommit: string;
     aiwgRef: string;
@@ -57,6 +58,38 @@ export interface CreateFortemiQualificationReceiptInput {
   timeoutMs: number;
   networkAttempts: number;
   mutationObjectId?: string;
+}
+
+export function resolveFortemiQualificationSource(
+  env: NodeJS.ProcessEnv = process.env,
+  cwd = process.cwd(),
+): { aiwgCommit: string; aiwgRef: string } {
+  const git = (...args: string[]) =>
+    execFileSync("git", args, {
+      cwd,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  const aiwgCommit = env.AIWG_STORAGE_QUALIFICATION_COMMIT || git("rev-parse", "HEAD");
+  const configuredRef = env.AIWG_STORAGE_QUALIFICATION_BRANCH;
+  const aiwgRef = configuredRef
+    ? REF.test(configuredRef)
+      ? configuredRef
+      : SHORT_REF.test(configuredRef) && !configuredRef.includes("..")
+        ? `refs/heads/${configuredRef}`
+        : configuredRef
+    :
+    (() => {
+      try {
+        return git("symbolic-ref", "-q", "HEAD");
+      } catch {
+        return aiwgCommit;
+      }
+    })();
+  if (!COMMIT.test(aiwgCommit)) throw new Error("FORTEMI_RECEIPT_INVALID_COMMIT");
+  if (!REF.test(aiwgRef) || aiwgRef.includes(".."))
+    throw new Error("FORTEMI_RECEIPT_INVALID_REF");
+  return { aiwgCommit, aiwgRef };
 }
 
 function canonical(value: unknown): string {
@@ -105,7 +138,7 @@ export function createFortemiQualificationReceipt(
     throw new Error("FORTEMI_RECEIPT_INVALID_NAMESPACE");
   if (input.report.mutationAttempted !== Boolean(input.mutationObjectId))
     throw new Error("FORTEMI_RECEIPT_MUTATION_BINDING_MISMATCH");
-  if (input.mutationObjectId && !UUID.test(input.mutationObjectId))
+  if (input.mutationObjectId && !SAFE.test(input.mutationObjectId))
     throw new Error("FORTEMI_RECEIPT_INVALID_OBJECT_ID");
   const start = Date.parse(input.startedAt);
   const end = Date.parse(input.endedAt);
@@ -128,6 +161,7 @@ export function createFortemiQualificationReceipt(
   );
   const material: Omit<FortemiQualificationReceipt, "receiptDigest"> = {
     contract: FORTEMI_QUALIFICATION_RECEIPT,
+    outcome: input.report.compatible ? "passed" : "failed",
     bindings: {
       aiwgCommit: input.aiwgCommit,
       aiwgRef: input.aiwgRef,
@@ -164,6 +198,14 @@ export function verifyFortemiQualificationReceipt(
   if (receipt.contract !== FORTEMI_QUALIFICATION_RECEIPT)
     errors.push("FORTEMI_RECEIPT_CONTRACT_MISMATCH");
   if (
+    !["passed", "failed"].includes(receipt.outcome) ||
+    receipt.outcome !==
+      (receipt.operations.every((operation) => operation.compatible)
+        ? "passed"
+        : "failed")
+  )
+    errors.push("FORTEMI_RECEIPT_OUTCOME_INVALID");
+  if (
     !DIGEST.test(receipt.receiptDigest) ||
     receipt.receiptDigest !== fortemiReceiptDigest(receiptMaterial(receipt))
   )
@@ -196,7 +238,7 @@ export function verifyFortemiQualificationReceipt(
     errors.push("FORTEMI_RECEIPT_OPERATION_INVALID");
   if (
     receipt.mutation.attempted !== Boolean(receipt.mutation.objectId) ||
-    (receipt.mutation.objectId && !UUID.test(receipt.mutation.objectId))
+    (receipt.mutation.objectId && !SAFE.test(receipt.mutation.objectId))
   )
     errors.push("FORTEMI_RECEIPT_MUTATION_INVALID");
   if (

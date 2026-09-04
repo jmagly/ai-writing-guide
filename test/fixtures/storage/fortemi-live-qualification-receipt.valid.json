@@ -1,6 +1,7 @@
 {
   "contract": "aiwg.fortemi-live-qualification-receipt/v1",
   "receiptDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "outcome": "failed",
   "bindings": {
     "aiwgCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "aiwgRef": "refs/heads/main",

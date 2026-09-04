@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import {
   createFortemiQualificationReceipt,
   endpointFingerprint,
+  resolveFortemiQualificationSource,
   verifyFortemiQualificationReceipt,
   writeFortemiQualificationReceipt,
 } from "../../../src/storage/fortemi-qualification-receipt.js";
@@ -46,6 +47,7 @@ describe("Fortemi durable live qualification receipt", () => {
     expect(receipt.bindings.endpointFingerprint).toBe(
       endpointFingerprint(input.endpointUrl),
     );
+    expect(receipt.outcome).toBe("failed");
     expect(receipt.bindings.toolSchemaDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
     expect(receipt.resources).toEqual({
       timeoutMs: 5000,
@@ -79,5 +81,25 @@ describe("Fortemi durable live qualification receipt", () => {
     expect(verifyFortemiQualificationReceipt(receipt)).toContain(
       "FORTEMI_RECEIPT_DIGEST_MISMATCH",
     );
+    const outcomeTamper = createFortemiQualificationReceipt(base());
+    outcomeTamper.outcome = "passed";
+    expect(verifyFortemiQualificationReceipt(outcomeTamper)).toEqual(
+      expect.arrayContaining([
+        "FORTEMI_RECEIPT_DIGEST_MISMATCH",
+        "FORTEMI_RECEIPT_OUTCOME_INVALID",
+      ]),
+    );
+  });
+
+  it("uses validated CI source bindings without invoking git", () => {
+    expect(
+      resolveFortemiQualificationSource({
+        AIWG_STORAGE_QUALIFICATION_COMMIT: "b".repeat(40),
+        AIWG_STORAGE_QUALIFICATION_BRANCH: "qualification",
+      }),
+    ).toEqual({
+      aiwgCommit: "b".repeat(40),
+      aiwgRef: "refs/heads/qualification",
+    });
   });
 });

@@ -153,12 +153,11 @@ Reads, list, and search use a fresh `aiwg-qualification-<UUID>` namespace only a
 The manual `Storage Server Conformance` workflow follows the same boundary: it
 defaults to read-only and requires an explicit write input in addition to the
 Vault-gated endpoint. Its evidence-artifact location is reserved for a durable,
-sanitized qualification receipt. Until that receipt implementation lands, do
-not treat console output or an empty artifact upload as durable evidence. The
-intended receipt will generically bind the tested AIWG revision, a non-secret
+sanitized qualification receipt. The emitted
+`aiwg.fortemi-live-qualification-receipt/v1` document binds the tested AIWG revision, a non-secret
 endpoint identity, observed server/contract versions, operation outcomes,
-mutation state, timestamps, and resource bounds; its exact versioned schema is
-owned by the receipt implementation rather than this guide.
+mutation state, timestamps, and resource bounds. Console output alone is not a
+durable receipt.
 
 ## Setup
 

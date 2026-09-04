@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { FortemiAdapter, type McpClientLike } from "./backends/fortemi.js";
+import {
+  FortemiAdapter,
+  fortemiStableNoteId,
+  type McpClientLike,
+} from "./backends/fortemi.js";
 
 export const FORTEMI_QUALIFICATION_VERSION =
   "aiwg.fortemi-live-qualification/v1" as const;
@@ -7,6 +11,7 @@ export interface FortemiQualificationReport {
   schema: typeof FORTEMI_QUALIFICATION_VERSION;
   compatible: boolean;
   mutationAttempted: boolean;
+  mutationObjectId?: string;
   server: { name?: string; version?: string; contractRevision?: string };
   namespace: string;
   operations: Array<{
@@ -103,6 +108,7 @@ export async function qualifyLiveFortemi(
     timeoutMs?: number;
     allowMutation?: boolean;
     contractRevision?: string;
+    onToolSchemas?: (schemas: unknown) => void;
   } = {},
 ): Promise<FortemiQualificationReport> {
   const timeoutMs = Math.max(250, Math.min(options.timeoutMs ?? 5_000, 30_000));
@@ -128,6 +134,7 @@ export async function qualifyLiveFortemi(
       timeoutMs,
       "tools/list",
     );
+    options.onToolSchemas?.(discovered.tools ?? []);
     const tools = new Map(
       (discovered.tools ?? []).map((tool) => [tool.name, tool]),
     );
@@ -215,8 +222,13 @@ export async function qualifyLiveFortemi(
     );
     if (options.allowMutation) {
       report.mutationAttempted = true;
+      const mutationPath = randomUUID();
+      report.mutationObjectId =
+        profile === "source-addressed-v1"
+          ? fortemiStableNoteId(namespace, mutationPath)
+          : `${namespace}:${mutationPath}`;
       await bounded(
-        adapter.write(randomUUID(), `AIWG live qualification ${namespace}`, {
+        adapter.write(mutationPath, `AIWG live qualification ${namespace}`, {
           contentType: "text/plain",
         }),
         timeoutMs,

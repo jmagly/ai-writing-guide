@@ -271,6 +271,7 @@ describe("Fortemi live qualification preflight (#2194)", () => {
       ([name]) => name === "capture_knowledge",
     );
     expect(report.mutationAttempted).toBe(true);
+    expect(report.mutationObjectId).toBe(capture?.[1].note_id);
     expect(capture?.[1]).toMatchObject({
       note_id: expect.stringMatching(`^${report.namespace}:`),
     });
