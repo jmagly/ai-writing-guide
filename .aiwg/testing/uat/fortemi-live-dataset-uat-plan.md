@@ -19,7 +19,7 @@ Tenant/RLS certification, restart or fault injection, backup/restore, full migra
 - The tested AIWG revision, package lock, Fortemi server version, schema catalog, conformance manifest, and fixture digests are recorded before execution.
 - The operator has an approved live-test window and an isolated disposable namespace.
 - Read-only qualification is the default. Any mutation uses a separately recorded, digest-bound authorization and the workflow's explicit write gate.
-- Evidence output is directed to `AIWG_STORAGE_EVIDENCE_DIR`; receipts must pass schema validation and sanitization before publication.
+- Storage qualification evidence is directed to `AIWG_STORAGE_EVIDENCE_DIR`; dataset preflight evidence is directed to `AIWG_DATASET_EVIDENCE_DIR`. Receipts must pass verification and sanitization before publication.
 - Stop conditions, cleanup ownership, and the maximum permitted records/bytes/duration are recorded.
 - No endpoint, authorization material, tenant identity, infrastructure topology, or raw service log may enter a receipt, console transcript, or public issue comment.
 
@@ -38,6 +38,7 @@ Each executed case records a case ID, UTC window, AIWG commit/ref, Fortemi versi
 
 ### UAT-LIVE-02 — Live dataset conformance
 
+- Run `npm run qualify:dataset:fortemi-live` first. An absent or drifted dataset execution contract is `pending` and exits 2 without invoking any Fortemi tool.
 - Register a synthetic source through `aiwg dataset source --file <approved-source-file> --json`.
 - Exercise bounded `check` and `preview`; verify source identity, format, schema recommendation, capability requirements, and explicit degradation.
 - Create an immutable plan, then—only with separate mutation authorization—ingest the plan using its exact digest, idempotency key, and approval identifier.
