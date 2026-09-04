@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest';
 import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { OmpFrameDecoder, MAX_FRAME, OmpRpcClient } from '../../../tools/providers/omp-transport.mjs';
+import { OmpFrameDecoder, MAX_FRAME, OmpRpcClient, inspectOmpProcess, waitForOmpProcessCleanup } from '../../../tools/providers/omp-transport.mjs';
 import { OmpAdapter } from '../../../tools/ralph-external/lib/omp-adapter.mjs';
 import { OmpTaskGate, runOmpTeam, acquireOmpWorkspaceSlot } from '../../../tools/providers/omp-teams.mjs';
 import { discoverOmpModels, resolveOmpRoleModel } from '../../../src/models/model-discovery.js';
@@ -66,6 +66,33 @@ describe('OMP RPC lifecycle', () => {
     try { await client.connect(); expect(client.protocolVersion).toBe(version); expect(client.stderr).toContain('fixture stderr noise'); expect((await client.prompt('hello')).success).toBe(true); }
     finally { await client.close(); await rm(dir, { recursive: true, force: true }); }
     expect(client.isClosed).toBe(true);
+  });
+  it('allows EOF disposal to reap an owned descendant before closing', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'omp-dispose-')); const executable = join(dir, 'omp');
+    const fixture = join(dir, 'fixture.cjs'); const receipt = join(dir, 'reaped');
+    await writeFile(fixture, `const {spawn}=require('child_process');const fs=require('fs');const child=spawn(process.execPath,['-e','setInterval(()=>{},1000)'],{stdio:'ignore'});process.stdout.write(JSON.stringify({type:'ready'})+'\\n');process.stdin.resume();process.stdin.on('end',()=>setTimeout(()=>{child.once('exit',()=>{fs.writeFileSync(${JSON.stringify(receipt)},String(child.pid));process.exit(0)});child.kill('SIGTERM')},100));`);
+    await writeFile(executable, `#!/bin/sh\nexec '${process.execPath}' '${fixture}'\n`, { mode: 0o755 });
+    const client = new OmpRpcClient({ binary: executable, closeGraceMs: 1000 });
+    try {
+      await client.connect(); await client.close();
+      const pid = Number(await readFile(receipt, 'utf8'));
+      expect((await inspectOmpProcess({ pid })).present).toBe(false);
+      expect(client.child.signalCode).toBe(null);
+    } finally { await client.close(); await rm(dir, { recursive: true, force: true }); }
+  });
+  it('bounds shutdown when a ready process ignores EOF and SIGTERM', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'omp-close-bound-')); const executable = join(dir, 'omp');
+    await writeFile(executable, `#!/bin/sh\nexec '${process.execPath}' -e 'process.on("SIGTERM",()=>{});process.stdout.write(JSON.stringify({type:"ready"})+"\\n");process.stdin.resume();setInterval(()=>{},1000)'\n`, { mode: 0o755 });
+    const client = new OmpRpcClient({ binary: executable, closeGraceMs: 50 });
+    try { await client.connect(); const started = Date.now(); await client.close(); expect(Date.now() - started).toBeLessThan(2000); expect(client.child.signalCode).toBe('SIGKILL'); }
+    finally { await client.close(); await rm(dir, { recursive: true, force: true }); }
+  });
+  it('reports process ownership and refuses cleanup while a tracked process remains', async () => {
+    const state = await inspectOmpProcess({ pid: process.pid });
+    expect(state.present).toBe(true);
+    if (process.platform === 'linux') { expect(state.parentPid).toBe(process.ppid); expect(state.startTime).toMatch(/^\d+$/); }
+    const receipt = await waitForOmpProcessCleanup([{ pid: process.pid }], { timeoutMs: 10 });
+    expect(receipt.complete).toBe(false); expect(receipt.final[0].present).toBe(true);
   });
   it('kills a hanging child on timeout and abort', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'omp-hang-')); const executable = join(dir, 'omp');

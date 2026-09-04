@@ -1,4 +1,30 @@
 import { spawn } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
+
+/** Preserve process identity and state: zombies still fail the cleanup gate. */
+export async function inspectOmpProcess({ pid, startTime }) {
+  try {
+    const stat = await readFile(`/proc/${pid}/stat`, 'utf8');
+    const fields = stat.slice(stat.lastIndexOf(')') + 2).trim().split(/\s+/);
+    return { pid, state: fields[0], parentPid: Number(fields[1]), processGroup: Number(fields[2]), startTime: fields[19], present: !startTime || startTime === fields[19], identityChanged: Boolean(startTime && startTime !== fields[19]) };
+  } catch (error) {
+    if (process.platform === 'linux' && error.code === 'ENOENT') return { pid, present: false };
+    try { process.kill(pid, 0); return { pid, present: true, state: 'unknown' }; }
+    catch (probe) { return { pid, present: probe.code !== 'ESRCH', state: probe.code === 'ESRCH' ? undefined : 'unknown' }; }
+  }
+}
+
+export async function waitForOmpProcessCleanup(processes, { timeoutMs = 3000 } = {}) {
+  const started = Date.now();
+  const initial = await Promise.all(processes.map(inspectOmpProcess));
+  let final = initial;
+  while (final.some(item => item.present) && Date.now() - started < timeoutMs) {
+    await new Promise(resolve => setTimeout(resolve, Math.min(50, Math.max(1, timeoutMs - (Date.now() - started)))));
+    final = await Promise.all(processes.map(inspectOmpProcess));
+  }
+  return { initial, final, elapsedMs: Date.now() - started, complete: final.every(item => !item.present) };
+}
+
 
 export const MAX_FRAME = 1024 * 1024;
 export const MAX_MESSAGE = 64 * MAX_FRAME;
@@ -61,8 +87,8 @@ export function summarizeOmpEvents(events, { exitCode = 0 } = {}) {
 
 /** Owns one native RPC process. Commands correlate by id; prompt ack is never completion. */
 export class OmpRpcClient {
-  constructor({ binary = process.env.AIWG_OMP_BIN || 'omp', args = [], cwd, env = process.env, timeoutMs = 30000, eventLimit = 16 * MAX_FRAME } = {}) {
-    this.timeoutMs = timeoutMs; this.events = []; this.eventBytes = 0; this.eventLimit = eventLimit; this.pending = new Map(); this.counter = 0; this.protocolVersion = 1;
+  constructor({ binary = process.env.AIWG_OMP_BIN || 'omp', args = [], cwd, env = process.env, timeoutMs = 30000, eventLimit = 16 * MAX_FRAME, closeGraceMs = 5000 } = {}) {
+    this.closeGraceMs = closeGraceMs; this.timeoutMs = timeoutMs; this.events = []; this.eventBytes = 0; this.eventLimit = eventLimit; this.pending = new Map(); this.counter = 0; this.protocolVersion = 1;
     this.child = spawn(binary, ['--mode', 'rpc', ...args], { cwd, env, stdio: ['pipe', 'pipe', 'pipe'], detached: process.platform !== 'win32' });
     this.decoder = new OmpFrameDecoder(); this.stderr = '';
     this.ready = new Promise((resolve, reject) => { this.readyResolve = resolve; this.readyReject = reject; });
@@ -113,5 +139,22 @@ export class OmpRpcClient {
   }
   fail(error) { if (this.failure) return; this.failure = error; clearTimeout(this.readyTimer); this.readyReject(error); this.promptReject?.(error); for (const p of this.pending.values()) { clearTimeout(p.timer); p.reject(error); } this.pending.clear(); if (!this.isClosed) this.kill('SIGKILL'); }
   kill(signal) { try { if (process.platform !== 'win32' && this.child.pid) process.kill(-this.child.pid, signal); else this.child.kill(signal); } catch { /* already exited */ } }
-  async close() { if (this.isClosed) return this.closed; if (this.closing) return this.closing; this.closing = (async () => { if (!this.child.stdin.destroyed) this.child.stdin.end(JSON.stringify({ type: 'abort', id: 'aiwg-close' }) + '\n'); this.kill('SIGTERM'); const timer = setTimeout(() => this.kill('SIGKILL'), 500); try { return await this.closed; } finally { clearTimeout(timer); this.kill('SIGKILL'); } })(); return this.closing; }
+  async close() {
+    if (this.isClosed) return this.closed;
+    if (this.closing) return this.closing;
+    this.closing = (async () => {
+      // Native EOF drains accepted commands and disposes sessions/MCP clients.
+      // Signalling the whole group first can orphan children before OMP reaps them.
+      if (!this.child.stdin.destroyed && !this.child.stdin.writableEnded)
+        this.child.stdin.end(JSON.stringify({ type: 'abort', id: 'aiwg-close' }) + '\n');
+      let killTimer;
+      const termTimer = setTimeout(() => {
+        this.kill('SIGTERM');
+        killTimer = setTimeout(() => this.kill('SIGKILL'), 500);
+      }, this.closeGraceMs);
+      try { return await this.closed; }
+      finally { clearTimeout(termTimer); clearTimeout(killTimer); this.kill('SIGKILL'); }
+    })();
+    return this.closing;
+  }
 }

@@ -241,5 +241,189 @@
     "commandDiscovered": "aiwg-bridge-status",
     "passed": true,
     "scope": "Explicit extension loading; SDK typecheck recorded separately."
+  },
+  "shutdownRegression": {
+    "containerImage": "node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb",
+    "fix": "Abort plus EOF permits native disposal for up to 5000ms, then SIGTERM and 500ms SIGKILL fallback. Container-after/local-after all four tracked PIDs absent before polling.",
+    "gate": "Any tracked PID still present including zombies or unknown status fails. PID start time detects reuse. Reports preserve launch parent and final state/ownership.",
+    "before": {
+      "pass": false,
+      "childAlive": true,
+      "checkedSubprocesses": 4,
+      "cleanup": {
+        "initial": [
+          {
+            "pid": 58,
+            "state": "Z",
+            "parentPid": 1,
+            "processGroup": 58,
+            "startTime": "10974107",
+            "present": true,
+            "identityChanged": false
+          },
+          {
+            "pid": 163,
+            "state": "Z",
+            "parentPid": 1,
+            "processGroup": 163,
+            "startTime": "10974435",
+            "present": true,
+            "identityChanged": false
+          },
+          {
+            "pid": 172,
+            "state": "Z",
+            "parentPid": 1,
+            "processGroup": 172,
+            "startTime": "10974476",
+            "present": true,
+            "identityChanged": false
+          },
+          {
+            "pid": 261,
+            "state": "Z",
+            "parentPid": 1,
+            "processGroup": 261,
+            "startTime": "10974809",
+            "present": true,
+            "identityChanged": false
+          }
+        ],
+        "final": [
+          {
+            "pid": 58,
+            "state": "Z",
+            "parentPid": 1,
+            "processGroup": 58,
+            "startTime": "10974107",
+            "present": true,
+            "identityChanged": false
+          },
+          {
+            "pid": 163,
+            "state": "Z",
+            "parentPid": 1,
+            "processGroup": 163,
+            "startTime": "10974435",
+            "present": true,
+            "identityChanged": false
+          },
+          {
+            "pid": 172,
+            "state": "Z",
+            "parentPid": 1,
+            "processGroup": 172,
+            "startTime": "10974476",
+            "present": true,
+            "identityChanged": false
+          },
+          {
+            "pid": 261,
+            "state": "Z",
+            "parentPid": 1,
+            "processGroup": 261,
+            "startTime": "10974809",
+            "present": true,
+            "identityChanged": false
+          }
+        ],
+        "elapsedMs": 3001,
+        "complete": false
+      }
+    },
+    "after": {
+      "pass": true,
+      "childAlive": false,
+      "checkedSubprocesses": 4,
+      "cleanup": {
+        "initial": [
+          {
+            "pid": 58,
+            "present": false
+          },
+          {
+            "pid": 162,
+            "present": false
+          },
+          {
+            "pid": 172,
+            "present": false
+          },
+          {
+            "pid": 260,
+            "present": false
+          }
+        ],
+        "final": [
+          {
+            "pid": 58,
+            "present": false
+          },
+          {
+            "pid": 162,
+            "present": false
+          },
+          {
+            "pid": 172,
+            "present": false
+          },
+          {
+            "pid": 260,
+            "present": false
+          }
+        ],
+        "elapsedMs": 0,
+        "complete": true
+      }
+    },
+    "hostAfter": {
+      "pass": true,
+      "childAlive": false,
+      "checkedSubprocesses": 4,
+      "cleanup": {
+        "initial": [
+          {
+            "pid": 2623311,
+            "present": false
+          },
+          {
+            "pid": 2623770,
+            "present": false
+          },
+          {
+            "pid": 2623826,
+            "present": false
+          },
+          {
+            "pid": 2624226,
+            "present": false
+          }
+        ],
+        "final": [
+          {
+            "pid": 2623311,
+            "present": false
+          },
+          {
+            "pid": 2623770,
+            "present": false
+          },
+          {
+            "pid": 2623826,
+            "present": false
+          },
+          {
+            "pid": 2624226,
+            "present": false
+          }
+        ],
+        "elapsedMs": 1,
+        "complete": true
+      }
+    },
+    "tests": {
+      "command": "npx vitest run test/unit/providers/omp-runtime.test.ts",
+      "passed": 25
+    }
   }
 }
