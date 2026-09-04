@@ -13,6 +13,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   FortemiAdapter,
+  fortemiStableNoteId,
+  resolveFortemiToolProfile,
   resolveMcpRequestHeaders,
   unwrapMcpToolResult,
   validateRemoteMcpUrl,
@@ -34,7 +36,10 @@ class StubMcpClient implements McpClientLike {
   }> = [];
   public closed = false;
 
-  async callTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+  async callTool(
+    name: string,
+    args: Record<string, unknown>,
+  ): Promise<unknown> {
     this.calls.push({ name, args });
     for (const r of this.responses) {
       if (r.name !== name) continue;
@@ -52,7 +57,9 @@ class StubMcpClient implements McpClientLike {
 describe('storage/backends/fortemi (#972)', () => {
   let stub: StubMcpClient;
 
-  function makeAdapter(opts: { subsystem?: string; scheme?: string } = {}): FortemiAdapter {
+  function makeAdapter(
+    opts: { subsystem?: string; scheme?: string } = {},
+  ): FortemiAdapter {
     return new FortemiAdapter({
       subsystem: opts.subsystem ?? 'memory',
       config: {
@@ -132,7 +139,10 @@ describe('storage/backends/fortemi (#972)', () => {
 
       await adapter.write('foo', '# body', { frontmatter: { tags: ['ai'] } });
 
-      expect(stub.calls.map((c) => c.name)).toEqual(['get_note', 'capture_knowledge']);
+      expect(stub.calls.map((c) => c.name)).toEqual([
+        'get_note',
+        'capture_knowledge',
+      ]);
       const captureCall = stub.calls[1];
       expect(captureCall.args['note_id']).toBe('memory:foo');
       expect(captureCall.args['content']).toBe('# body');
@@ -146,12 +156,18 @@ describe('storage/backends/fortemi (#972)', () => {
 
     it('uses update_note for subsequent writes (note exists)', async () => {
       const adapter = makeAdapter();
-      stub.responses.push({ name: 'get_note', result: { note: { content: 'old' } } });
+      stub.responses.push({
+        name: 'get_note',
+        result: { note: { content: 'old' } },
+      });
       stub.responses.push({ name: 'update_note', result: { ok: true } });
 
       await adapter.write('foo', 'new content');
 
-      expect(stub.calls.map((c) => c.name)).toEqual(['get_note', 'update_note']);
+      expect(stub.calls.map((c) => c.name)).toEqual([
+        'get_note',
+        'update_note',
+      ]);
       expect(stub.calls[1].args['note_id']).toBe('memory:foo');
       expect(stub.calls[1].args['content']).toBe('new content');
     });
@@ -166,6 +182,178 @@ describe('storage/backends/fortemi (#972)', () => {
     });
   });
 
+  describe('source-addressed live contract (Fortemi 2026.9.1)', () => {
+    const tools = [
+      {
+        name: 'get_note',
+        inputSchema: { properties: { id: {} }, required: ['id'] },
+      },
+      {
+        name: 'update_note',
+        inputSchema: {
+          properties: { id: {}, content: {}, archived: {} },
+          required: ['id'],
+        },
+      },
+      {
+        name: 'list_notes',
+        inputSchema: { properties: { limit: {}, offset: {} } },
+      },
+      {
+        name: 'search',
+        inputSchema: {
+          properties: { action: {}, query: {}, limit: {} },
+          required: ['action'],
+        },
+      },
+      {
+        name: 'upsert_external_notes',
+        inputSchema: {
+          properties: {
+            source_namespace: {},
+            items: {
+              items: {
+                properties: {
+                  external_id: {},
+                  content: {},
+                  caller_stable_id: {},
+                },
+              },
+            },
+          },
+        },
+      },
+    ];
+
+    function currentAdapter(responses: Record<string, unknown> = {}) {
+      const calls: ToolCall[] = [];
+      const client: McpClientLike = {
+        listTools: async () => ({ tools }),
+        callTool: async (name, args) => {
+          calls.push({ name, args });
+          return responses[name] ?? null;
+        },
+      };
+      return {
+        calls,
+        adapter: new FortemiAdapter({
+          subsystem: 'kb',
+          config: { type: 'fortemi' },
+          clientFactory: async () => client,
+        }),
+      };
+    }
+
+    it('selects contracts from schemas and derives a deterministic opaque UUID', () => {
+      expect(resolveFortemiToolProfile(tools)).toBe('source-addressed-v1');
+      expect(fortemiStableNoteId('kb', 'a.md')).toBe(
+        fortemiStableNoteId('kb', 'a.md'),
+      );
+      expect(fortemiStableNoteId('kb', 'a.md')).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+      );
+      expect(fortemiStableNoteId('kb', 'a.md')).not.toBe(
+        fortemiStableNoteId('kb', 'b.md'),
+      );
+    });
+
+    it('maps read and delete to UUID id without sending legacy note_id', async () => {
+      const { adapter, calls } = currentAdapter({
+        get_note: { note: { content: 'body' } },
+      });
+      expect(await adapter.read('a.md')).toBe('body');
+      await adapter.delete('a.md');
+      expect(calls[0]).toEqual({
+        name: 'get_note',
+        args: { id: fortemiStableNoteId('kb', 'a.md') },
+      });
+      expect(calls[2]).toEqual({
+        name: 'update_note',
+        args: {
+          id: fortemiStableNoteId('kb', 'a.md'),
+          archived: true,
+        },
+      });
+    });
+
+    it('uses one atomic source-addressed upsert with stable identity and digest', async () => {
+      const { adapter, calls } = currentAdapter();
+      await adapter.write('a.md', '# body', { contentType: 'text/markdown' });
+      expect(calls).toHaveLength(1);
+      expect(calls[0].name).toBe('upsert_external_notes');
+      expect(calls[0].args).toMatchObject({
+        source_namespace: 'aiwg.storage.kb',
+        source_schema_version: 'aiwg.storage-entry/v1',
+        policy: 'replace',
+        items: [
+          {
+            external_id: 'a.md',
+            content: '# body',
+            caller_stable_id: fortemiStableNoteId('kb', 'a.md'),
+            metadata: {
+              subsystem: 'kb',
+              aiwg_storage_path: 'a.md',
+              content_type: 'text/markdown',
+            },
+          },
+        ],
+      });
+      expect(calls[0].args.import_run_id).toMatch(/^sha256:[0-9a-f]{64}$/);
+      expect(calls[0].args.batch_id).toBe(calls[0].args.import_run_id);
+    });
+
+    it('filters unscoped list/search results locally using source metadata', async () => {
+      const { adapter, calls } = currentAdapter({
+        list_notes: {
+          notes: [
+            {
+              id: 'uuid-a',
+              metadata: { subsystem: 'kb', aiwg_storage_path: 'docs/a.md' },
+            },
+            {
+              id: 'uuid-b',
+              metadata: { subsystem: 'other', aiwg_storage_path: 'docs/b.md' },
+            },
+          ],
+        },
+        search: {
+          results: [
+            {
+              id: 'uuid-a',
+              metadata: { subsystem: 'kb', aiwg_storage_path: 'docs/a.md' },
+            },
+            {
+              id: 'uuid-b',
+              metadata: { subsystem: 'other', aiwg_storage_path: 'docs/b.md' },
+            },
+          ],
+        },
+      });
+      expect(await adapter.list('docs/')).toEqual([
+        { path: 'docs/a.md', externalId: 'uuid-a' },
+      ]);
+      expect(await adapter.query('alpha')).toEqual([
+        { path: 'docs/a.md', externalId: 'uuid-a' },
+      ]);
+      expect(calls[0]).toEqual({
+        name: 'list_notes',
+        args: { limit: 500, offset: 0 },
+      });
+      expect(calls[1]).toMatchObject({
+        name: 'search',
+        args: { action: 'text', query: 'alpha', limit: 500 },
+      });
+    });
+
+    it('fails closed on an unknown schema before any tool operation', async () => {
+      expect(() =>
+        resolveFortemiToolProfile([
+          { name: 'get_note', inputSchema: { properties: { slug: {} } } },
+        ]),
+      ).toThrow(/unsupported live MCP tool contract/);
+    });
+  });
+
   describe('list', () => {
     it('returns entries with subsystem prefix stripped', async () => {
       const adapter = makeAdapter({ subsystem: 'kb' });
@@ -173,14 +361,21 @@ describe('storage/backends/fortemi (#972)', () => {
         name: 'list_notes',
         result: {
           notes: [
-            { note_id: 'kb:entities/a.md', size: 12, updated_at: '2026-04-28T12:00:00Z' },
+            {
+              note_id: 'kb:entities/a.md',
+              size: 12,
+              updated_at: '2026-04-28T12:00:00Z',
+            },
             { note_id: 'kb:entities/b.md', size: 18 },
             { note_id: 'memory:other.md' }, // wrong subsystem — filtered out
           ],
         },
       });
       const entries = await adapter.list('entities/');
-      expect(entries.map((e) => e.path)).toEqual(['entities/a.md', 'entities/b.md']);
+      expect(entries.map((e) => e.path)).toEqual([
+        'entities/a.md',
+        'entities/b.md',
+      ]);
       expect(entries[0].externalId).toBe('kb:entities/a.md');
       expect(entries[0].size).toBe(12);
       expect(entries[0].modifiedAt).toBeInstanceOf(Date);
@@ -210,10 +405,16 @@ describe('storage/backends/fortemi (#972)', () => {
   describe('delete', () => {
     it('archives via update_note when the note exists', async () => {
       const adapter = makeAdapter();
-      stub.responses.push({ name: 'get_note', result: { note: { content: 'x' } } });
+      stub.responses.push({
+        name: 'get_note',
+        result: { note: { content: 'x' } },
+      });
       stub.responses.push({ name: 'update_note', result: { ok: true } });
       await adapter.delete('foo');
-      expect(stub.calls.map((c) => c.name)).toEqual(['get_note', 'update_note']);
+      expect(stub.calls.map((c) => c.name)).toEqual([
+        'get_note',
+        'update_note',
+      ]);
       expect(stub.calls[1].args['archived']).toBe(true);
     });
 
@@ -239,7 +440,10 @@ describe('storage/backends/fortemi (#972)', () => {
         },
       });
       const results = await adapter.query('something');
-      expect(results.map((r) => r.path)).toEqual(['concepts/foo.md', 'entities/bar.md']);
+      expect(results.map((r) => r.path)).toEqual([
+        'concepts/foo.md',
+        'entities/bar.md',
+      ]);
       expect(stub.calls[0].args['query']).toBe('something');
       expect(stub.calls[0].args['id_prefix']).toBe('kb:');
     });
@@ -273,7 +477,9 @@ describe('storage/backends/fortemi (#972)', () => {
           { headerEnv: { Authorization: 'AIWG_FORTEMI_TOKEN' } },
           {},
         ),
-      ).toThrow(/required credential environment variable "AIWG_FORTEMI_TOKEN" is not set/);
+      ).toThrow(
+        /required credential environment variable "AIWG_FORTEMI_TOKEN" is not set/,
+      );
     });
 
     it('rejects malformed environment variable references', () => {
@@ -286,12 +492,18 @@ describe('storage/backends/fortemi (#972)', () => {
     });
 
     it('requires TLS remotely while allowing loopback workstation HTTP', () => {
-      expect(validateRemoteMcpUrl('https://memory.example.internal/mcp').protocol).toBe('https:');
-      expect(validateRemoteMcpUrl('http://127.0.0.1:3100/mcp').hostname).toBe('127.0.0.1');
-      expect(validateRemoteMcpUrl('http://[::1]:3100/mcp').hostname).toBe('[::1]');
-      expect(() => validateRemoteMcpUrl('http://memory.example.internal/mcp')).toThrow(
-        /must use HTTPS/,
+      expect(
+        validateRemoteMcpUrl('https://memory.example.internal/mcp').protocol,
+      ).toBe('https:');
+      expect(validateRemoteMcpUrl('http://127.0.0.1:3100/mcp').hostname).toBe(
+        '127.0.0.1',
       );
+      expect(validateRemoteMcpUrl('http://[::1]:3100/mcp').hostname).toBe(
+        '[::1]',
+      );
+      expect(() =>
+        validateRemoteMcpUrl('http://memory.example.internal/mcp'),
+      ).toThrow(/must use HTTPS/);
     });
   });
 
@@ -328,6 +540,31 @@ describe('storage/backends/fortemi (#972)', () => {
           content: [{ type: 'text', text: 'not authorized' }],
         }),
       ).toThrow(/MCP tool failed: not authorized/);
+    });
+
+    it('normalizes only explicit Fortemi note-not-found problem responses', () => {
+      expect(
+        unwrapMcpToolResult({
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: 'API error 404: Not Found | detail: Note not found | type: https://fortemi.com/problems/not-found',
+            },
+          ],
+        }),
+      ).toEqual({ not_found: true });
+      expect(() =>
+        unwrapMcpToolResult({
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: 'API error 404: Not Found | detail: route missing',
+            },
+          ],
+        }),
+      ).toThrow(/MCP tool failed/);
     });
   });
 
