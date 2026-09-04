@@ -73,7 +73,7 @@ export class IncrementalSessionImporter {
   constructor(private readonly repository: SessionRepositoryPort) {}
 
   async import(request: ImportRequest): Promise<ImportReceipt[]> {
-    assertSupportedSchemaMajor(request.source.sourceSchemaVersion);
+    assertSupportedSchemaMajor(request.source.sourceSchemaVersion, request.adapter.sourceSchemaMajor ?? 1);
     if (request.inactivityThresholdMs !== undefined
       && (!Number.isFinite(request.inactivityThresholdMs) || request.inactivityThresholdMs < 0)) {
       throw new SessionContractError(
@@ -575,6 +575,7 @@ async function sourceContinuity(
     selectedPath: request.selectedSource.locator,
     allowedRoots: request.selectedSource.authorizedScope.allowedRoots,
   };
+  const skipPrefixBytes = await request.adapter.mutablePrefixBytes?.(request.selectedSource) ?? 0;
   const metadata = await fingerprintSourcePrefix(authorization, 0);
   if (previous?.sourceSize !== undefined) {
     if (metadata.size < previous.sourceSize) {
@@ -590,7 +591,7 @@ async function sourceContinuity(
         'session source file generation was replaced or rotated',
       );
     }
-    const priorPrefix = await fingerprintSourcePrefix(authorization, previous.sourceSize);
+    const priorPrefix = await fingerprintSourcePrefix(authorization, previous.sourceSize, skipPrefixBytes);
     if (previous.prefixDigest && priorPrefix.digest !== previous.prefixDigest) {
       throw new SessionContractError(
         'SCHEMA_DRIFT',
@@ -598,7 +599,7 @@ async function sourceContinuity(
       );
     }
   }
-  const current = await fingerprintSourcePrefix(authorization, metadata.size);
+  const current = await fingerprintSourcePrefix(authorization, metadata.size, skipPrefixBytes);
   const generation = previous?.sourceGeneration ?? sha256([
     sourceGenerationDigest(request),
     metadata.fileIdentity,

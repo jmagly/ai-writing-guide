@@ -10,6 +10,7 @@
  * project` are mutually exclusive; default is `project`.
  */
 
+import { resolveOmpPaths } from '../providers/omp-paths.mjs';
 import { homedir } from 'node:os';
 import * as path from 'node:path';
 import { resolveHermesHome, resolveHermesHomePath } from '../providers/hermes-home.js';
@@ -59,6 +60,12 @@ export const USER_SCOPE_PATHS: Record<string, { agents: string; skills: string; 
     commands: path.join(homedir(), '.codex', 'prompts'),
     rules: '',
     behaviors: '',
+  },
+  get omp() {
+    const { agentDir } = resolveOmpPaths();
+    return { agents: path.join(agentDir, 'agents'), skills: path.join(agentDir, 'skills'),
+      commands: path.join(agentDir, 'prompts'), rules: path.join(agentDir, 'rules'),
+      behaviors: path.join(agentDir, 'extensions') };
   },
   pi: {
     // Pi's global resource root is configurable. Unlike project deployment,

@@ -15,6 +15,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { existsSync } from 'fs';
+import YAML from 'yaml';
 import type {
   AgentInfo,
   DeploymentTarget,
@@ -297,6 +298,16 @@ export class AgentDeployer {
       }
     }
 
+    // Preserve provider-native fields consumed by the OMP packager. The
+    // historical line parser cannot represent arrays, booleans or objects.
+    const native = YAML.parse(frontmatter) || {};
+    for (const key of ['thinkingLevel', 'spawns', 'blocking', 'output', 'autoloadSkills', 'readSummarize', 'prewalk', 'advisor'] as const) {
+      if (native[key] !== undefined) Object.assign(metadata, { [key]: native[key] });
+    }
+    if (Array.isArray(native.model)) { metadata.modelPriority = native.model; delete metadata.model; }
+    if (Array.isArray(native.tools)) metadata.tools = native.tools;
+    if (typeof native.name === 'string') metadata.name = native.name;
+    if (typeof native.description === 'string') metadata.description = native.description;
     return metadata as AgentMetadata;
   }
 

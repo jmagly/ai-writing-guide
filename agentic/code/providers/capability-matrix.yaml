@@ -511,6 +511,47 @@ providers:
     deploy_target: project
     aggregated_output: false
 
+  omp:
+    display_name: Oh My Pi
+    aliases:
+      - oh-my-pi
+    status: experimental
+    daemon_tier: unsupported
+    daemon_pty_adapter: false
+    artifact_paths:
+      agents: .omp/agents/
+      commands: .omp/prompts/
+      skills: .omp/skills/
+      skills_cross_agent: .agents/skills/
+      rules: .omp/rules/
+      behaviors: .omp/extensions/
+    native_features:
+      cron: false
+      agent_teams: true
+      tasks: true
+      mcp: true
+      behaviors: true
+      mission_control: false
+      daemon: false
+    emulation:
+      cron: external-trigger
+      agent_teams: null
+      tasks: null
+      mcp: null
+      behaviors: null
+      mission_control: aiwg-mc
+      daemon: null
+    hook_wiring:
+      at_link_support: true
+      fallback: full-inject
+      context_file: .omp/AGENTS.md
+    interaction:
+      structured_questions: none
+      fallback: markdown
+      notes: OMP integration uses Markdown questions; native UI questions require an interactive runtime.
+    deploy_target: project
+    aggregated_output: false
+
 # Feature definitions — documents what each feature key means and
 # what emulation strategies are available when native support is absent.
 features:

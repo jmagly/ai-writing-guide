@@ -14,7 +14,7 @@ describe('provider model registry', () => {
     const registry = loadProviderModelCapabilities();
     expect(Object.keys(registry.providers).sort()).toEqual([
       'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
-      'openclaw', 'opencode', 'openhuman', 'pi', 'warp', 'windsurf',
+      'omp', 'openclaw', 'opencode', 'openhuman', 'pi', 'warp', 'windsurf',
     ]);
     for (const capability of Object.values(registry.providers)) {
       expect(capability.sourceUrl).toMatch(/^https:\/\//);

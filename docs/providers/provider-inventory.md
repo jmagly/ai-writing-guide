@@ -1,6 +1,6 @@
 # Provider Inventory
 
-AIWG has **12 named provider integrations**. The source-of-truth registry is
+AIWG has **13 named provider integrations**. The source-of-truth registry is
 `src/providers/provider-definitions.ts`; capability details are maintained in
 `agentic/code/providers/capability-matrix.yaml`.
 
@@ -16,11 +16,13 @@ AIWG has **12 named provider integrations**. The source-of-truth registry is
 | `openclaw` | OpenClaw | Stable | User |
 | `openhuman` | OpenHuman | Experimental | Mixed project/user |
 | `pi` | Pi Coding Agent | Experimental | Project |
+| `omp` | Oh My Pi | Experimental | Mixed project/user |
 | `warp` | Warp Terminal | Stable | Project |
 | `windsurf` | Devin Desktop | Stable compatibility adapter | Project |
 
+`oh-my-pi` is an alias for `omp`; OMP is distinct from the original `pi` provider.
 `devin` is an alias for `windsurf`, not an additional provider. The `generic`
-adapter is a thirteenth registry entry used to emit portable files for custom
+adapter is a fourteenth registry entry used to emit portable files for custom
 or unknown harnesses; it is deliberately excluded from the named-integration
 count. Product interfaces, model APIs, MCP servers, and aliases are likewise
 not counted as separate provider integrations.

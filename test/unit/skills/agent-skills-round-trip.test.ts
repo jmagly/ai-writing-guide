@@ -272,7 +272,7 @@ describe('Agent Skills import-to-provider round trip', () => {
   it('keeps the provider oracle explicit and aligned with all canonical IDs', () => {
     expect(providerOracle.providers.map((provider) => provider.id))
       .toEqual([...PROVIDER_IDS]);
-    expect(providerOracle.providers).toHaveLength(13);
+    expect(providerOracle.providers).toHaveLength(14);
   });
 
   it('preserves every managed source file as exact bytes without running scripts', () => {

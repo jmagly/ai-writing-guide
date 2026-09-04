@@ -94,8 +94,13 @@ async function handleRuntimeInfo(args: string[], cwd = process.cwd()): Promise<v
   if (hasProviders) {
     const { collectProviderInventory } = await import('../../providers/provider-inventory.js');
     const inventory = await collectProviderInventory(cwd);
+    const selected = args[args.indexOf('--provider') + 1];
+    const ompSelected = args.includes('--provider') && ['omp', 'oh-my-pi'].includes(selected);
+    const ompRuntime = ompSelected
+      ? await (await import('../../providers/omp-diagnostics.mjs')).diagnoseOmpRuntime({ cwd })
+      : undefined;
     if (hasJson) {
-      console.log(JSON.stringify(inventory, null, 2));
+      console.log(JSON.stringify({ ...inventory, ...(ompRuntime ? { ompRuntime } : {}) }, null, 2));
     } else {
       console.log('\nProvider Inventory');
       console.log('==================');
@@ -113,6 +118,7 @@ async function handleRuntimeInfo(args: string[], cwd = process.cwd()): Promise<v
         }
         for (const reason of provider.reasons) console.log(`  note: ${reason}`);
       }
+      if (ompRuntime) console.log(`\nOMP runtime: ${JSON.stringify(ompRuntime, null, 2)}`);
     }
     return;
   }

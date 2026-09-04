@@ -40,6 +40,7 @@ const PROVIDER_LABELS: Record<string, string> = {
   codex:     'OpenAI Codex      ~/.codex/',
   openclaw:  'OpenClaw          ~/.openclaw/',
   hermes:    'Hermes (MCP)      aiwg mcp',
+  omp:       'Oh My Pi         .omp/ + .agents/skills/',
   pi:        'Pi Coding Agent   .pi/ + .agents/skills/',
 };
 

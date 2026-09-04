@@ -121,6 +121,15 @@
       "resources": "exact"
     },
     {
+      "id": "omp",
+      "location": "project",
+      "root": ".omp/skills",
+      "status": "native",
+      "outcome": "deployed",
+      "validator": "pass",
+      "resources": "exact"
+    },
+    {
       "id": "warp",
       "location": "project",
       "root": ".warp/skills",

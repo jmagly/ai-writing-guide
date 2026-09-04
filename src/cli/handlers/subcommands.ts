@@ -771,6 +771,18 @@ export const removeHandler: CommandHandler = {
   aliases: [],
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
+    // Explicit provider removal is separate from framework removal. The native
+    // adapter validates receipt hashes and preserves operator modifications.
+    const nativeRemovalProvider = parseRemoveProvider(ctx.args);
+    if (firstRemovePositional(ctx.args) === 'omp' && nativeRemovalProvider.provider === 'omp') {
+      const { uninstall } = await import('../../../tools/agents/providers/omp.mjs');
+      const { getProjectDir } = await import('../../config/aiwg-config.js');
+      const dryRun = ctx.args.includes('--dry-run');
+      const scope = ctx.args.includes('--user') || isScopeUser(ctx.args) ? 'user' : 'project';
+      const count = uninstall(getProjectDir({ cwd: ctx.cwd }, ctx.args), { dryRun, scope });
+      return { exitCode: 0, message: `${dryRun ? 'Would remove' : 'Removed'} ${count} unchanged OMP-owned files; operator files preserved.` };
+    }
+
     // #1156 Phase 1 — `--scope user` / `--user`: revert the user-scope mirror
     // for the given framework. Independent of any project; reads the per-user
     // registry at ~/.aiwg/installed.json to find what was deployed, deletes

@@ -6,6 +6,8 @@
 
 import type { AgentInfo, Platform, PackagedAgent } from './types.js';
 import { getProviderDefinition } from '../providers/provider-definitions.js';
+import YAML from 'yaml';
+import { transformAgent as transformOmpAgent } from '../providers/omp-agent.mjs';
 
 type AgentFormatAdapter = (agent: AgentInfo) => string;
 
@@ -13,6 +15,7 @@ export class AgentPackager {
   private getAgentFormatAdapters(): Record<string, AgentFormatAdapter> {
     return {
       'claude-markdown': (agent) => this.convertToClaudeFormat(agent),
+      'omp-markdown': (agent) => this.convertToOmpFormat(agent),
       'cursor-json': (agent) => this.convertToCursorFormat(agent),
       'codex-markdown': (agent) => this.convertToCodexFormat(agent),
       'copilot-markdown': (agent) => this.convertToGenericFormat(agent),
@@ -42,6 +45,12 @@ export class AgentPackager {
       content: adapter(agent),
       format: definition.id,
     };
+  }
+
+  /** Preserve native OMP metadata without passing through another provider's serializer. */
+  convertToOmpFormat(agent: AgentInfo): string {
+    const metadata = { ...agent.metadata, model: agent.metadata.modelPriority ?? agent.metadata.model };
+    return transformOmpAgent(agent.filePath, `---\n${YAML.stringify(metadata)}---\n${agent.content}`);
   }
 
   /**

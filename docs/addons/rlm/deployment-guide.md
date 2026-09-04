@@ -6,7 +6,7 @@
 
 ## Overview
 
-The RLM (Recursive Language Models) addon provides recursive context decomposition for processing arbitrarily large codebases and document corpora through programmatic sub-agent delegation. This guide documents resource deployment across AIWG's 12 named provider integrations; runtime delegation depends on provider capability.
+The RLM (Recursive Language Models) addon provides recursive context decomposition for processing arbitrarily large codebases and document corpora through programmatic sub-agent delegation. This guide documents resource deployment across AIWG's 13 named provider integrations; runtime delegation depends on provider capability.
 
 ### What Gets Deployed
 

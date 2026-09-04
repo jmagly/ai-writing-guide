@@ -7,6 +7,14 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- Experimental Oh My Pi (`omp`, alias `oh-my-pi`) integration with distinct native
+  resource paths, profile-aware configuration, agents, owned MCP injection,
+  extension bridge, model discovery, JSON/RPC execution, bounded teams, and
+  title-prefixed session imports. See the [provider guide](docs/providers/omp.md)
+  for the pinned version, support limits, and removal workflow (#2244–#2256).
+
 ## [2026.9.2] - 2026-09-04 - "Pi from resources to runtime"
 
 ### Changed

@@ -18,6 +18,7 @@ import {
 } from './registry.mjs';
 import { McpProfileRegistry } from './profiles.mjs';
 import { getMcpInjectionDefinition } from '../providers/provider-definitions.mjs';
+import { manageOmpMcp } from './omp-config.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -38,6 +39,7 @@ Usage:
   aiwg mcp update <name> [opts]  Update a server definition
   aiwg mcp list                List registered MCP servers
   aiwg mcp inject [opts]       Inject servers into provider configs
+  aiwg mcp uninject [opts]     Remove unchanged AIWG-owned OMP server entries
   aiwg mcp profile <sub>       Manage MCP profiles (named server subsets)
 
 Server Options (for add/update):
@@ -52,7 +54,8 @@ Server Options (for add/update):
   --description <text> Optional description
 
 Inject Options:
-  --provider <name>    Target provider (claude-code, cursor, factory, codex, opencode, windsurf, warp)
+  --provider <name>    Target provider (including omp / oh-my-pi)
+  --scope <scope>      project (default) or user; OMP user scope respects OMP_PROFILE
   --all                Inject into all previously configured providers
   --servers <a,b,...>  Only inject specific servers (comma-separated names)
   --dry-run            Show what would change without writing
@@ -651,6 +654,8 @@ async function handleInject(args) {
   const serversStr = parseFlag(args, '--servers');
   const dryRun = args.includes('--dry-run');
   const projectDir = parseFlag(args, '--project') || '.';
+  const scope = parseFlag(args, '--scope') || 'project';
+  if (!['project', 'user'].includes(scope)) throw new Error('Scope must be project or user');
   const profileName = parseFlag(args, '--profile');
   const ephemeral = args.includes('--ephemeral');
   const outPath = parseFlag(args, '--out');
@@ -782,10 +787,12 @@ async function handleInject(args) {
       servers: serverFilter,
       projectDir,
       dryRun,
+      scope,
     });
 
     if (result.error) {
       console.error(`  ${p}: ${result.error}`);
+      process.exitCode = 1;
       continue;
     }
 
@@ -1124,6 +1131,15 @@ export async function main(args = process.argv.slice(2)) {
     }
 
     case 'install': {
+      if (['omp', 'oh-my-pi'].includes(args[1])) {
+        const scope = parseFlag(args, '--scope') || 'project';
+        if (!['project', 'user'].includes(scope)) throw new Error('Scope must be project or user');
+        const projectDir = parseFlag(args, '--project') || (args[2] && !args[2].startsWith('--') ? args[2] : '.');
+        const configPath = getProviderConfigPath('omp', projectDir, { scope });
+        const result = await manageOmpMcp(configPath, [{ name: 'aiwg', type: 'stdio', command: 'aiwg', args: ['mcp', 'serve'] }], { dryRun: args.includes('--dry-run') });
+        console.log(JSON.stringify(result, null, 2));
+        break;
+      }
       // Parse install arguments (skip flags)
       const installArgs = args.slice(1).filter(a => !a.startsWith('--'));
       const target = installArgs[0] || 'claude';
@@ -1183,6 +1199,19 @@ export async function main(args = process.argv.slice(2)) {
     case 'inject':
       await handleInject(subArgs);
       break;
+
+    case 'uninject': {
+      const provider = parseFlag(subArgs, '--provider');
+      if (!['omp', 'oh-my-pi'].includes(provider)) throw new Error('uninject currently supports --provider omp');
+      const scope = parseFlag(subArgs, '--scope') || 'project';
+      if (!['project', 'user'].includes(scope)) throw new Error('Scope must be project or user');
+      const remove = (parseFlag(subArgs, '--servers') || '').split(',').map(s => s.trim()).filter(Boolean);
+      if (!remove.length) throw new Error('uninject requires --servers name[,name]');
+      const configPath = getProviderConfigPath(provider, parseFlag(subArgs, '--project') || '.', { scope });
+      const result = await manageOmpMcp(configPath, [], { remove, dryRun: subArgs.includes('--dry-run') });
+      console.log(JSON.stringify(result, null, 2));
+      break;
+    }
 
     case 'profile':
       await handleProfile(subArgs);

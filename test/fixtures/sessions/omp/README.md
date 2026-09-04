@@ -1,0 +1,1 @@
+Synthetic redaction-safe fixtures derived from oh-my-pi 5964a0f7649275bcde818f20073193fd032451f2, session/session-entries.ts and session/session-manager.ts. The loader accepts older header-first version 3 JSONL and current fixed 256-byte title slots. All identities/content are synthetic.

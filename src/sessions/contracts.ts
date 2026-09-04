@@ -3,10 +3,10 @@ import { z } from 'zod';
 export const SESSION_CONTRACT_VERSION = '1.0.0' as const;
 export const SESSION_PROVIDER_IDS = [
   'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
-  'opencode', 'openclaw', 'openhuman', 'pi', 'warp', 'devin-desktop', 'generic',
+  'opencode', 'openclaw', 'openhuman', 'pi', 'omp', 'warp', 'devin-desktop', 'generic',
 ] as const satisfies readonly [
   string, string, string, string, string, string,
-  string, string, string, string, string, string, string,
+  string, string, string, string, string, string, string, string,
 ];
 
 export const SessionProviderIdSchema = z.enum(SESSION_PROVIDER_IDS);
@@ -376,6 +376,9 @@ export interface SessionSourceAdapter {
   readonly disposition: z.infer<typeof CapabilityDispositionSchema>;
   readonly supportedOperations: readonly SessionSourceOperation[];
   readonly acquisitionModes: readonly SessionAcquisitionMode[];
+  readonly sourceSchemaMajor?: number;
+  /** Validated mutable preamble excluded from append-continuity checks. */
+  mutablePrefixBytes?(source: SelectedSource): Promise<number>;
   discover(scope: AuthorizedScope): AsyncIterable<SourceDescriptor>;
   inspect(source: SelectedSource): Promise<SourceProbe>;
   stream(source: SelectedSource, cursor?: ImportCursor): AsyncIterable<ProviderRecord>;

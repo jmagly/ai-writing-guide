@@ -59,7 +59,7 @@ Apply when: Telegram/group-chat bots, multi-bot rooms, direct-message business b
 
 #### native-ux-tools
 
-Use provider-native interaction tools (e.g., Claude Code's AskUserQuestion) for interactive questions rather than plain text. One question per interaction turn. The capability matrix covers all 12 named provider integrations and falls back to formatted markdown if native tools are unavailable.
+Use provider-native interaction tools (e.g., Claude Code's AskUserQuestion) for interactive questions rather than plain text. One question per interaction turn. The capability matrix covers all 13 named provider integrations and falls back to formatted markdown if native tools are unavailable.
 
 Apply when: interactive commands (`--interactive` flag), decision gates, intake wizards.
 

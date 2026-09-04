@@ -1,0 +1,1 @@
+export function diagnoseOmpRuntime(options?: {cwd?: string; env?: NodeJS.ProcessEnv; binary?: string; runner?: (...args: any[]) => Promise<{stdout: string}>}): Promise<{executable: string; available: boolean; version: string | null; paths: ReturnType<typeof import('./omp-paths.mjs').resolveOmpPaths>; reason: string | null}>;

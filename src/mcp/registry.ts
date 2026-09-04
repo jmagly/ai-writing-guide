@@ -1,3 +1,5 @@
+import { manageOmpMcp } from './omp-config.mjs';
+import { resolveOmpPaths } from '../providers/omp-paths.mjs';
 /**
  * MCP Server Registry
  *
@@ -47,6 +49,17 @@ export interface McpServerDefinition {
    * consuming client at connection time.
    */
   headerEnv?: Record<string, string>;
+  /** OMP native transport and authentication options (placeholders remain unresolved). */
+  cwd?: string;
+  /** SDK/plugin policies; native OMP mcp.json injection rejects these instead of silently dropping them. */
+  envPolicy?: 'literal';
+  envLiteralKeys?: string[];
+  headerPolicy?: 'origin-locked';
+  enabled?: boolean;
+  timeout?: number;
+  requestIdFormat?: 'string' | 'number';
+  auth?: { type: 'oauth' | 'apikey'; credentialId?: string; tokenUrl?: string; clientId?: string; clientSecret?: string; resource?: string };
+  oauth?: { clientId?: string; clientSecret?: string; redirectUri?: string; callbackPort?: number; callbackPath?: string; prompt?: string; scope?: string };
 
   /** Providers this server has been injected into */
   injectedProviders?: string[];
@@ -68,6 +81,8 @@ export interface McpRegistryData {
 }
 
 export type InjectProvider =
+  | 'omp'
+  | 'oh-my-pi'
   | 'claude-code'
   | 'claude'
   | 'cursor'
@@ -374,10 +389,14 @@ export interface InjectResult {
 /**
  * Get the config file path for a provider.
  */
-export function getProviderConfigPath(provider: InjectProvider, projectDir = '.'): string {
+export function getProviderConfigPath(provider: InjectProvider, projectDir = '.', options: { scope?: 'user' | 'project' } = {}): string {
+  if ((provider === 'omp' || provider === 'oh-my-pi') && options.scope !== undefined && !['user', 'project'].includes(options.scope)) throw new Error('OMP MCP scope must be user or project');
+  if ((provider === 'omp' || provider === 'oh-my-pi') && options.scope === 'user') return resolve(resolveOmpPaths().agentDir, 'mcp.json');
   const homeDir = process.env.HOME || process.env.USERPROFILE || '';
 
   const pathMap: Record<InjectProvider, string> = {
+    omp: resolve(projectDir, '.omp/mcp.json'),
+    'oh-my-pi': resolve(projectDir, '.omp/mcp.json'),
     'claude-code': resolve(projectDir, '.claude/settings.local.json'),
     claude: resolve(projectDir, '.claude/settings.local.json'),
     cursor: resolve(projectDir, '.cursor/mcp.json'),
@@ -402,13 +421,14 @@ export async function injectServers(
   registry: McpServerRegistry,
   provider: InjectProvider,
   options: {
+    scope?: 'user' | 'project';
     servers?: string[];
     projectDir?: string;
     dryRun?: boolean;
   } = {},
 ): Promise<InjectResult> {
   const { servers: serverFilter, projectDir = '.', dryRun = false } = options;
-  const configPath = getProviderConfigPath(provider, projectDir);
+  const configPath = getProviderConfigPath(provider, projectDir, options);
   const result: InjectResult = {
     provider,
     configPath,
@@ -425,6 +445,16 @@ export async function injectServers(
   if (allServers.length === 0) {
     result.error = 'No servers to inject. Use "aiwg mcp add" first.';
     return result;
+  }
+
+  if (provider === 'omp' || provider === 'oh-my-pi') {
+    try {
+      const managed = await manageOmpMcp(configPath, allServers, { dryRun });
+      if (!dryRun) for (const server of allServers) await registry.recordInjection(server.name, 'omp');
+      return { ...result, ...managed };
+    } catch (error) {
+      return { ...result, error: error instanceof Error ? error.message : String(error) };
+    }
   }
 
   // Handle TOML-based providers (Codex/OpenAI) separately
@@ -539,6 +569,7 @@ function escapeRegex(str: string): string {
 
 /** All supported provider names for injection */
 export const SUPPORTED_PROVIDERS: InjectProvider[] = [
+  'omp',
   'claude-code',
   'cursor',
   'factory',

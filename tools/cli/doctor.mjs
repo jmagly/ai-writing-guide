@@ -100,6 +100,7 @@ const PROVIDER_LABELS = {
   windsurf: 'Windsurf',
   openclaw: 'OpenClaw',
   openhuman: 'OpenHuman',
+  omp: 'Oh My Pi',
   hermes:   'Hermes',
 };
 
@@ -116,6 +117,7 @@ const PROVIDER_AGENT_DIRS = {
   warp:     '.warp/agents',
   windsurf: '.windsurf/agents',
   openhuman: '.agents/agents',
+  omp: '.omp/agents',
   // openclaw/hermes deploy to ~/.{provider}/ — handled separately
 };
 
@@ -943,7 +945,7 @@ async function runDoctor() {
   if (!noBudgetCheck) {
     try {
       const supported = providersToCheck.filter((name) =>
-        ['claude', 'codex', 'copilot', 'cursor', 'factory', 'opencode', 'pi', 'warp', 'windsurf', 'hermes', 'openhuman'].includes(name),
+        ['claude', 'codex', 'copilot', 'cursor', 'factory', 'opencode', 'pi', 'omp', 'warp', 'windsurf', 'hermes', 'openhuman'].includes(name),
       );
       const firewall = await scanContextMemoryFirewall({
         rootDir: process.cwd(),

@@ -1,0 +1,9 @@
+{"type":"session","version":3,"id":"omp-native-id","timestamp":"2026-09-04T12:00:00Z","cwd":"/workspace","parentSession":"/prior/fork.jsonl","previousSessionFiles":["/prior/moved.jsonl"]}
+{"type":"message","id":"a","parentId":null,"timestamp":"2026-09-04T12:00:00Z","message":{"role":"user","content":"Review OMP"}}
+{"type":"model_change","id":"b","parentId":"a","timestamp":"2026-09-04T12:00:00Z","model":"openrouter/test","role":"smol","resolvedModelIsFallback":true}
+{"type":"model_usage","id":"c","parentId":"a","timestamp":"2026-09-04T12:00:00Z","purpose":"title","model":"test","provider":"openrouter","api":"openai-completions","usage":{"input":5,"output":2,"cost":{"total":0.01}}}
+{"type":"compaction","id":"d","parentId":"a","timestamp":"2026-09-04T12:00:00Z","summary":"Preserve context","firstKeptEntryId":"a","tokensBefore":100,"tokensAfter":30}
+{"type":"branch_summary","id":"e","parentId":"a","timestamp":"2026-09-04T12:00:00Z","fromId":"b","summary":"Forked branch"}
+{"type":"message","id":"f","parentId":"a","timestamp":"2026-09-04T12:00:00Z","message":{"role":"toolResult","toolName":"read","content":"SECRET_CANARY"}}
+{"type":"custom","id":"g","parentId":"a","timestamp":"2026-09-04T12:00:00Z","data":{"token":"SECRET_CANARY"}}
+{"type":"future_entry","id":"h","parentId":"a","timestamp":"2026-09-04T12:00:00Z","payload":"SECRET_CANARY"}

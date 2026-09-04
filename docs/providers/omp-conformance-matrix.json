@@ -1,0 +1,1337 @@
+{
+  "schemaVersion": 1,
+  "sourceBaseline": "5964a0f7649275bcde818f20073193fd032451f2",
+  "ompVersion": "18.1.10",
+  "scope": "Epic2244 and children2245\u20132256; all original acceptance criteria",
+  "recordedAt": "2026-09-04T21:16:43.357562+00:00",
+  "deliveryGate": "Signed commit on main and green remote CI; resolving issue comments record the delivered commit. Local verification alone does not close issues.",
+  "criteria": [
+    {
+      "id": "2245.1",
+      "issue": 2245,
+      "requirement": "All command/schema/inventory entry points resolve omp and oh-my-pi consistently; pi and pi-coding-agent still resolve to Pi.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "src/providers/provider-definitions.ts"
+        },
+        {
+          "path": "src/providers/provider-definitions.mjs"
+        },
+        {
+          "path": "src/cli/provider-resolution.ts"
+        },
+        {
+          "path": "test/unit/providers/omp-provider.test.ts"
+        },
+        {
+          "path": "test/integration/omp-provider.test.ts"
+        },
+        {
+          "path": "test/unit/skills/agent-skills-round-trip.test.ts"
+        }
+      ],
+      "detail": "Canonical definitions, runtime MCP registry, provider resolver and real public canonical/alias use agree; complete main-based suite validates inventory/oracle parity."
+    },
+    {
+      "id": "2245.2",
+      "issue": 2245,
+      "requirement": "Table-driven path tests cover default/project/user roots, named profile, explicitly empty OMP_PROFILE, legacy PI_PROFILE fallback, agent-dir override and XDG directory-existence cases on supported OSes.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "src/providers/omp-paths.mjs"
+        },
+        {
+          "path": "test/unit/providers/omp-provider.test.ts"
+        },
+        {
+          "path": "test/unit/providers/omp-deploy.test.js"
+        },
+        {
+          "path": "test/integration/omp-provider.test.ts"
+        }
+      ],
+      "detail": "Table-driven resolver covers profiles, explicit empty values, overrides and XDG existence; native agent-resource exception is exposed separately."
+    },
+    {
+      "id": "2245.3",
+      "issue": 2245,
+      "requirement": "Ambiguous PI variables and a workspace containing both .pi and .omp do not misidentify the running harness; explicit provider selection wins.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-provider.test.ts"
+        },
+        {
+          "path": "src/cli/provider-resolution.ts"
+        }
+      ],
+      "detail": "Coexisting native directories and legacy Pi variables do not infer a runtime; explicit OMP alias wins and binary/package process markers distinguish Pi."
+    },
+    {
+      "id": "2245.4",
+      "issue": 2245,
+      "requirement": "Runtime diagnostics report executable/version and effective non-secret paths; missing binary yields a useful unavailable state.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "src/providers/omp-diagnostics.mjs"
+        },
+        {
+          "path": "src/cli/handlers/runtime-info.ts"
+        },
+        {
+          "path": "test/unit/providers/omp-provider.test.ts"
+        }
+      ],
+      "detail": "Bounded version probe reports parsed version and effective non-secret paths, suppresses raw errors and provides an unavailable reason; actual pinned binary probe passed."
+    },
+    {
+      "id": "2245.5",
+      "issue": 2245,
+      "requirement": "Refresh/removal affect only receipt-owned OMP artifacts; update provider schema and CLI documentation.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/integration/omp-provider.test.ts"
+        },
+        {
+          "path": "test/unit/providers/omp-deploy.test.js"
+        },
+        {
+          "path": "src/providers/provider-definitions.ts"
+        },
+        {
+          "path": "docs/providers/omp.md"
+        }
+      ],
+      "detail": "Receipt-aware public refresh/removal preserves operator and other-provider artifacts; schema and CLI definitions contain OMP."
+    },
+    {
+      "id": "2246.1",
+      "issue": 2246,
+      "requirement": "Fixtures prove startup loading from repository root and nested cwd, including multiple context filenames and .omp/native versus compatibility collisions.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "checks.nativeContextPrecedesForeignProject/disabledNativeContext/disabledForeignContext",
+          "section": "precedence"
+        },
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "checks.nativeResources/nativeNestedContext",
+          "section": "nativeBinary"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2246.2",
+      "issue": 2246,
+      "requirement": "WORKSPACE.md and AIWG.md are reachable exactly once through the generated contract; ordinary Markdown links are never reported as automatic includes.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "checks.canonicalImportsExactlyOnce",
+          "section": "precedence"
+        },
+        {
+          "path": "test/fixtures/providers/omp-precedence/probe.ts",
+          "assertion": "workspaceOccurrences/aiwgOccurrences"
+        },
+        {
+          "path": "docs/providers/omp.md",
+          "assertion": "native import contract"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2246.3",
+      "issue": 2246,
+      "requirement": "Provider inventory and context-firewall describe actual native loading, precedence and degraded cases.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp.md"
+        },
+        {
+          "path": "docs/providers/provider-inventory.md"
+        },
+        {
+          "path": "src/providers/provider-definitions.ts",
+          "assertion": "omp context metadata"
+        },
+        {
+          "path": "test/fixtures/providers/omp-precedence/README.md",
+          "assertion": "native precedence and override exception"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2246.4",
+      "issue": 2246,
+      "requirement": "Regeneration preserves operator content and shared Pi/Claude/Codex bootstraps; refresh is idempotent.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-deploy.test.js",
+          "assertion": "preserves context operators and leaves shared bootstraps untouched"
+        },
+        {
+          "path": "test/unit/providers/omp-deploy.test.js",
+          "assertion": "preserves malformed or operator-modified bootstrap blocks on removal"
+        },
+        {
+          "path": "test/integration/omp-provider.test.ts",
+          "assertion": "deploys/repeats full skills then reconciles kernel-only through the public command"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2246.5",
+      "issue": 2246,
+      "requirement": "Tests exercise disabled native/foreign discovery and foreign-user opt-in; docs explain their effect.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "checks.disabledNativeContext/disabledForeignContext/foreignUserExplicitDirectoryOptIn/disabledForeignOverridesDirectoryOptIn",
+          "section": "precedence"
+        },
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "checks.nativeSdk.foreignUserDefaultExcluded/foreignUserOptInLoads/disabledProviderOverridesUserOptIn",
+          "section": "precedence"
+        },
+        {
+          "path": "docs/providers/omp.md"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2247.1",
+      "issue": 2247,
+      "requirement": "Native loader fixtures discover generated kernel skills, explicitly copied standard skills, argument-bearing prompts and conditional/always-apply rules.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "checks.deployedKernelAndStandardSkillsLoaded/nativeAlwaysAndDisabledRules",
+          "section": "precedence"
+        },
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "checks.nativeSdk.nativeDisabledRuleOmitted/nativeAlwaysRuleBucket/conditionalGlobNonmatchExcluded/conditionalGlobMatchIncluded",
+          "section": "precedence"
+        },
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "native prompt expansion checks",
+          "section": "mcp"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2247.2",
+      "issue": 2247,
+      "requirement": "Dry-run performs no writes; repeated deployment is idempotent; receipts identify every generated file and transformation.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-deploy.test.js",
+          "assertion": "is dry-run safe, idempotent and preserves operator modifications even with force"
+        },
+        {
+          "path": "test/integration/omp-provider.test.ts",
+          "assertion": "supports canonical and alias dry-run without creating native artifacts"
+        },
+        {
+          "path": "tools/agents/providers/omp.mjs",
+          "assertion": "writeOwned and createAgentsMd block-scoped receipts"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2247.3",
+      "issue": 2247,
+      "requirement": "User/profile and project deployment, selected artifact modes, stale cleanup and uninstall preserve operator-owned and other-provider resources.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-deploy.test.js",
+          "assertion": "reconciles full-copy standard skills while preserving modified, unowned and Pi-owned files"
+        },
+        {
+          "path": "test/unit/providers/omp-deploy.test.js",
+          "assertion": "uses the resolved profile and uninstalls only unchanged owned files"
+        },
+        {
+          "path": "test/unit/providers/omp-deploy.test.js",
+          "assertion": "public remove omp route preserves operator files and supports dry-run"
+        },
+        {
+          "path": "test/integration/omp-provider.test.ts",
+          "assertion": "routes default user resources and named profile resources to isolated native roots"
+        },
+        {
+          "path": "test/integration/omp-provider.test.ts",
+          "assertion": "removes only receipt-owned files from the selected project/profile"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2247.4",
+      "issue": 2247,
+      "requirement": "Nested skill names and duplicate logical names have deterministic policy; no duplicate native and compatibility copies silently inflate context.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-deploy.test.js",
+          "assertion": "keeps standard skills lazy and copies full mode to one native level"
+        },
+        {
+          "path": "tools/agents/providers/omp.mjs",
+          "assertion": "selected(type): framework over addon, lexical builtin addon tie-break with diagnostics; direct collision rejection"
+        },
+        {
+          "path": "test/fixtures/providers/omp-precedence/README.md"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2247.5",
+      "issue": 2247,
+      "requirement": "Prompt escaping and unknown metadata have tested behavior; update deployment help and changelog.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-deploy.test.js",
+          "assertion": "preserves shell-looking prompt text and reports unsupported metadata without evaluation"
+        },
+        {
+          "path": "test/unit/providers/omp-deploy.test.js",
+          "assertion": "translates prompts and conditional rules without importing foreign policy"
+        },
+        {
+          "path": "docs/providers/omp.md"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "assertion": "OMP integration entry"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2248.1",
+      "issue": 2248,
+      "requirement": "JSON fixtures cover catalog entries from multiple LLM providers, empty catalog, malformed output and unsupported command/version.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-runtime.test.ts",
+          "assertion": "OMP catalog: uses native JSON with safe extensions default and exact model overrides; parametrized empty/invalid/shape/unsupported/timeout catalog"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2248.2",
+      "issue": 2248,
+      "requirement": "Explicit model ids override role defaults; unavailable mappings generate actionable diagnostics without choosing an unrelated model.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-runtime.test.ts",
+          "assertion": "uses native JSON with safe extensions default and exact model overrides"
+        },
+        {
+          "path": "src/models/model-discovery.ts",
+          "assertion": "resolveOmpRoleModel preserves explicit selection and rejects unavailable role mapping"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2248.3",
+      "issue": 2248,
+      "requirement": "Profile and config selection isolate catalogs and cache keys; capability output distinguishes observed availability from configured defaults.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/models/model-discovery.test.ts",
+          "assertion": "isolates cache by profile, config overlay and extension discovery mode; also asserts observed native models separate from configured/default observed:false"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2248.4",
+      "issue": 2248,
+      "requirement": "Source command arguments match the supported OMP CLI; no --list-models assumption leaks from Pi.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-runtime.test.ts",
+          "assertion": "uses native JSON with safe extensions default and exact model overrides (exact argv assertion)"
+        },
+        {
+          "path": "src/models/model-discovery.ts",
+          "assertion": "discoverOmpModels builds models --json --no-extensions and optional profile/config"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2248.5",
+      "issue": 2248,
+      "requirement": "Timeout/error output is bounded and redacted; model documentation and tests cover extension-enabled versus no-extensions discovery.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-runtime.test.ts",
+          "assertion": "timeout/unsupported catalog cases assert error length<200 and absence of SECRET; first catalog test covers extensions:true"
+        },
+        {
+          "path": "src/models/model-discovery.ts",
+          "assertion": "runModelDiscoveryCommand bounded stdout/stderr and timeout"
+        },
+        {
+          "path": "docs/providers/omp.md",
+          "assertion": "model discovery modes and role selection"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2249.1",
+      "issue": 2249,
+      "requirement": "Round-trip representative research, SDLC, coding and efficiency agents through the OMP parser with expected fields and body.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "checks.nativeSdk.researchNativeAgentRoundtrip/sdlcNativeAgentRoundtrip/codingNativeAgentRoundtrip/efficiencyNativeAgentRoundtrip",
+          "section": "precedence"
+        },
+        {
+          "path": "test/fixtures/providers/omp-precedence/sdk.ts",
+          "assertion": "direct native parseAgent on transformed actual source agents"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2249.2",
+      "issue": 2249,
+      "requirement": "Unknown model/tool mappings fail clearly or produce an explicitly degraded receipt; never silently widen tool or spawn permissions.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-deploy.test.js",
+          "assertion": "prevents implicit wildcard task delegation and reports unknown mappings"
+        },
+        {
+          "path": "tools/agents/providers/omp.mjs",
+          "assertion": "per-artifact degraded receipt diagnostics"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2249.3",
+      "issue": 2249,
+      "requirement": "Agents including task in tools do not accidentally inherit wildcard spawns; generated spawn policy is explicit.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-deploy.test.js",
+          "assertion": "prevents implicit wildcard task delegation and reports unknown mappings"
+        },
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "checks.nativeSdk.*NativeAgentRoundtrip",
+          "section": "precedence"
+        },
+        {
+          "path": "src/providers/omp-agent.mjs",
+          "assertion": "removes task when spawns is empty, because native parser infers wildcard"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2249.4",
+      "issue": 2249,
+      "requirement": "Project/user/plugin/bundled same-name precedence is covered by fixtures; disabled providers remain respected.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "checks.nativeSdk.projectOverridesUserAndPlugin/userOverridesPlugin/extensionOverridesBundled/explicitExtensionOverridesInstalledPackage/installedPackageOverridesBundled/linkedPackageOverridesBundled/disabledExtensionFallsBackToBundled",
+          "section": "precedence"
+        },
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "checks.nativeSdk.foreignUserDefaultExcluded/foreignUserOptInLoads/disabledProviderOverridesUserOptIn",
+          "section": "precedence"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2249.5",
+      "issue": 2249,
+      "requirement": "Agent-only deployment, Smith generation, refresh and removal share the same transformation contract.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-deploy-bridge.test.ts",
+          "assertion": "AgentPackager preserves OMP native model priority, reasoning and explicit spawn policy"
+        },
+        {
+          "path": "test/unit/providers/omp-deploy-bridge.test.ts",
+          "assertion": "AgentSmith generates the native OMP path and conservative leaf tools"
+        },
+        {
+          "path": "test/unit/providers/omp-deploy.test.js",
+          "assertion": "deploys direct bundle kernel skills and respects the native task-agent override exception"
+        },
+        {
+          "path": "test/unit/providers/omp-deploy.test.js",
+          "assertion": "uses the resolved profile and uninstalls only unchanged owned files"
+        },
+        {
+          "path": "src/providers/omp-agent.mjs",
+          "assertion": "shared transform imported by packager and deployment adapter"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2250.1",
+      "issue": 2250,
+      "requirement": "Native discovery consumes generated stdio and supported remote transport fixtures; disabled entries and precedence behave correctly.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "pass=true; configGeneratedBy=src/mcp/omp-config.mjs manageOmpMcp; nativeTools includes stdio/http; disabledSuppressed/projectOverrideSuppressed/profileIsolated=true",
+          "section": "mcp"
+        },
+        {
+          "path": "tools/providers/omp-mcp-conformance.mjs",
+          "assertion": "launch-sentinel disabled/project-over-user tests and actual named profile tools"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2250.2",
+      "issue": 2250,
+      "requirement": "Existing operator entries and unknown metadata survive add/update/remove; collision behavior is deterministic.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-mcp.test.ts",
+          "assertion": "preserves unknown metadata and operator entries through injection, update and removal; refuses operator edits and malformed input without writing; refuses an active writer lock without changing operator configuration"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2250.3",
+      "issue": 2250,
+      "requirement": "Round-trip tests cover env placeholders, cwd, headers, enabled, timeout and malformed configurations without exposing secret values in receipts/logs.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-mcp.test.ts",
+          "assertion": "preserves unknown metadata and operator entries through injection, update and removal; retains remote options and unresolved header references; never reflects malformed configuration contents and cleans its writer lock; rejects SDK-only policies that native mcp.json would silently ignore"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2250.4",
+      "issue": 2250,
+      "requirement": "A local deterministic MCP server proves initialization, one tool call, disconnect and cleanup without external service credentials.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "httpMethods and stdioMethods include initialize/notifications initialized/tools list/tools call/disconnect; childAlive=false; checkedSubprocesses=4; credentialFree=true",
+          "section": "mcp"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2250.5",
+      "issue": 2250,
+      "requirement": "Capability matrix and steward distinguish native MCP support from AIWG injection readiness.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "src/cli/handlers/steward.ts",
+          "assertion": "OMP capability rendering explicitly distinguishes native client, AIWG project/profile persistent injection/removal and unsupported ephemeral injection."
+        },
+        {
+          "path": "src/cli/handlers/steward.ts",
+          "assertion": "Actual source stewardHandler.execute capabilities --provider oh-my-pi output contains native/injection distinction; exitCode0."
+        },
+        {
+          "path": "test/unit/cli/handlers/steward.test.ts",
+          "assertion": "Existing29 steward handler tests passed after parent changes."
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2251.1",
+      "issue": 2251,
+      "requirement": "Typecheck the bridge against the pinned supported OMP API; loader fixtures show successful activation and visible failure diagnostics.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "checks.nativeExtensionTypes",
+          "section": "nativeSdk"
+        },
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "commandDiscovered",
+          "section": "bridgeLoader"
+        },
+        {
+          "path": "test/unit/providers/omp-deploy-bridge.test.ts",
+          "assertion": "registers the actual native event surface and propagates tool denials and failures"
+        },
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "checks.nativeSdk.nativeExtensionFailureDiagnostic (actual pinned loadExtensions with throwing factory)",
+          "section": "precedence"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2251.2",
+      "issue": 2251,
+      "requirement": "Lifecycle tests demonstrate session start, before-agent-start and tool-call decision propagation, plus cancellation and handler failure behavior.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-deploy-bridge.test.ts",
+          "assertion": "registers the actual native event surface and propagates tool denials and failures"
+        },
+        {
+          "path": "test/unit/providers/omp-deploy-bridge.test.ts",
+          "assertion": "validates tool inputs, outputs, cancellation and error propagation"
+        },
+        {
+          "path": "agentic/code/providers/omp/aiwg-bridge.ts",
+          "assertion": "native event forwarding"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2251.3",
+      "issue": 2251,
+      "requirement": "Disable/uninstall removes only AIWG-owned activation and code, preserving other extensions and settings.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/integration/omp-provider.test.ts",
+          "assertion": "removes only receipt-owned files from the selected project/profile"
+        },
+        {
+          "path": "test/unit/providers/omp-deploy.test.js",
+          "assertion": "preserves symlink destinations and refuses malformed receipts before writes"
+        },
+        {
+          "path": "tools/agents/providers/omp.mjs",
+          "assertion": "deployExtensionBridge/uninstall use unchanged-content ownership checks"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2251.4",
+      "issue": 2251,
+      "requirement": "No policy is advertised as enforced solely by adding text to a prompt; capability reports identify native, bridged and unsupported events.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "agentic/code/providers/omp/README.md",
+          "assertion": "explicit no-default-policy/native event/unsupported event contract"
+        },
+        {
+          "path": "agentic/code/providers/omp/aiwg-bridge.ts",
+          "assertion": "supportedEvents/unsupportedEvents"
+        },
+        {
+          "path": "docs/providers/omp.md",
+          "assertion": "behavior boundary"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2251.5",
+      "issue": 2251,
+      "requirement": "A representative custom tool and executable custom command validate their input/output and error paths; native pre/post hooks have an explicit mapped or unsupported disposition.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-deploy-bridge.test.ts",
+          "assertion": "validates tool inputs, outputs, cancellation and error propagation"
+        },
+        {
+          "path": "test/unit/providers/omp-deploy-bridge.test.ts",
+          "assertion": "registers the actual native event surface and propagates tool denials and failures"
+        },
+        {
+          "path": "agentic/code/providers/omp/aiwg-bridge.ts",
+          "assertion": "registerAiwgTool and aiwg-bridge-status executable command, unsupported native_hook_installation"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2251.6",
+      "issue": 2251,
+      "requirement": "Upgrade compatibility fixture detects changed handler signatures and requires explicit revalidation.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "tools/providers/omp-conformance-api.mjs",
+          "assertion": "source commit/pristine checkout and actual API tsc check"
+        },
+        {
+          "path": ".gitea/workflows/omp-conformance.yml",
+          "assertion": "pinned source checkout and bridge typecheck"
+        },
+        {
+          "path": "test/fixtures/providers/omp-conformance/manifest.json",
+          "assertion": "version/hash/source pins"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2252.1",
+      "issue": 2252,
+      "requirement": "Fixtures cover terminal/nonterminal agent_end, tool error, model failure, malformed/truncated JSONL, stderr noise, empty output and nonzero exit.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-runtime.test.ts",
+          "assertion": "uses OMP flags and requires terminal assistant plus zero exit; negotiates v1/v2 with correlation, terminal events and process cleanup (real stderr noise); does not treat AIWG tracking UUID as native resume and rejects model failure despite exit zero"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2252.2",
+      "issue": 2252,
+      "requirement": "RPC tests cover ready frame, supported-version negotiation, response correlation, v1 fallback/elision, valid v2 chunks, out-of-order/oversized/invalid chunks and bounded memory.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-runtime.test.ts",
+          "assertion": "negotiates v1/v2 with correlation, terminal events and process cleanup; reassembles v2 ordered chunks including split UTF8 and bounds memory; marks v1 elision as incomplete, refuses interrupted chunks and malformed JSON"
+        },
+        {
+          "path": "tools/providers/omp-transport.mjs",
+          "assertion": "bounded decoder + event retention and command write callback backpressure"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2252.3",
+      "issue": 2252,
+      "requirement": "Timeout/abort and stdin EOF cause bounded cleanup; no child process remains running after cancellation.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-runtime.test.ts",
+          "assertion": "kills a hanging child on timeout and abort; rejects RPC EOF without a terminal event"
+        },
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "nativeCancelled=true; cancellation.reachedWorker=true/status=cancelled; childAlive=false after all four MCP subprocess checks",
+          "section": "mcp"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2252.4",
+      "issue": 2252,
+      "requirement": "Session and model arguments are OMP-native; Pi --no-approve and Node-version checks are not inherited without proof.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-runtime.test.ts",
+          "assertion": "uses OMP flags and requires terminal assistant plus zero exit; does not treat AIWG tracking UUID as native resume and rejects model failure despite exit zero"
+        },
+        {
+          "path": "tools/ralph-external/lib/omp-adapter.mjs",
+          "assertion": "independent flags/session behavior and bounded availability check without Pi Node runtime restriction"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2252.5",
+      "issue": 2252,
+      "requirement": "A pinned live local CLI smoke records version and tested flags; any model-backed test is separately identified and credential-gated.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "runtimeVersion=omp/18.1.10; credentialFree=true; model=deterministic loopback fixture",
+          "section": "mcp"
+        },
+        {
+          "path": "tools/providers/omp-mcp-conformance.mjs",
+          "assertion": "exact native RPC/model/config flags and isolated env"
+        },
+        {
+          "path": "test/fixtures/providers/omp-conformance/manifest.json",
+          "assertion": "pinned source commit and Linux x64 SHA256"
+        },
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "separate parent-owned hosted-model acceptance report",
+          "section": "hosted"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2253.1",
+      "issue": 2253,
+      "requirement": "Fixtures cover current title-slot files, source-verified older header-first files, missing header, malformed title, unknown major and truncated tail.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/fixtures/sessions/omp/"
+        },
+        {
+          "path": "test/unit/sessions/omp-adapter.test.ts"
+        }
+      ],
+      "detail": "Current fixed title-slot and older header-first v3 fixtures plus missing/malformed header/title, unknown-major and truncated-tail assertions."
+    },
+    {
+      "id": "2253.2",
+      "issue": 2253,
+      "requirement": "Repeated imports are idempotent; title rewrites and appended messages do not duplicate events, skip data or reset native identity.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/sessions/omp-adapter.test.ts"
+        },
+        {
+          "path": "test/unit/sessions/omp-cli.test.ts"
+        },
+        {
+          "path": "src/sessions/importer.ts"
+        },
+        {
+          "path": "src/sessions/readers.ts"
+        }
+      ],
+      "detail": "Persistent SQLite close/reopen, validated title rewrite then append, idempotent replays, absolute byte cursor boundaries and stable rediscovery/batch source identity."
+    },
+    {
+      "id": "2253.3",
+      "issue": 2253,
+      "requirement": "Branch/fork relationships, model_usage, model_change, compaction and unknown events retain useful typed or opaque provenance.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/sessions/omp-adapter.test.ts"
+        },
+        {
+          "path": "src/sessions/adapters/omp.ts"
+        }
+      ],
+      "detail": "Typed model and numeric usage, parent/fork/move header provenance, compaction/branch IDs, opaque unknown native type and offset assertions; custom payloads withheld."
+    },
+    {
+      "id": "2253.4",
+      "issue": 2253,
+      "requirement": "Authorized-root, symlink, byte/file limits and content-redaction tests match existing session safeguards.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/sessions/omp-adapter.test.ts"
+        }
+      ],
+      "detail": "Unauthorized root/symlink, max record/total bytes, discovered-file limit, custom/tool/unknown redaction assertions."
+    },
+    {
+      "id": "2253.5",
+      "issue": 2253,
+      "requirement": "Pi fixtures still pass and OMP files never silently identify as Pi based only on version 3.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/sessions/pi-adapter.test.ts"
+        },
+        {
+          "path": "test/unit/sessions/omp-adapter.test.ts"
+        }
+      ],
+      "detail": "Pi fixture suite passes; Pi adapter rejects OMP title-prefixed v3 despite version equality; legacy header-first OMP is selected explicitly as omp."
+    },
+    {
+      "id": "2254.1",
+      "issue": 2254,
+      "requirement": "Deterministic fixtures exercise 1, 2 and 4 active workers plus a fifth queued/rejected request under the current workspace cap.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-runtime.test.ts",
+          "assertion": "bounds 1/2/4 active workers and queues the fifth; shares filesystem slots between independent gates and cancels queued admission"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2254.2",
+      "issue": 2254,
+      "requirement": "Nested spawning does not bypass the global AIWG ceiling or deadlock parents waiting for children; cancellation drains owned descendants.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-runtime.test.ts",
+          "assertion": "cancels descendants through parent signals and persists failures; releases both admission slots when native client cleanup throws"
+        },
+        {
+          "path": "tools/providers/omp-teams.mjs",
+          "assertion": "flattened parent graph/cycle rejection, native maxRecursionDepth=1, cross-process filesystem admission slots, guard one task per slot"
+        },
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "nativeCancelled=true; native task/leaf tool schema capture excludes recursive task from workers",
+          "section": "mcp"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2254.3",
+      "issue": 2254,
+      "requirement": "Agent tools/spawns remain explicitly bounded and match generated definitions; read-only intent and filesystem ownership are documented accurately.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "teamAllowlistVerified=true; native model requests show only task on coordinator and read on workers",
+          "section": "mcp"
+        },
+        {
+          "path": "tools/providers/omp-teams.mjs",
+          "assertion": "explicit guard session activation + tool_call authorization/argument rewrite; blocking native leaf agents; ownership/read-only explicitly not sandbox"
+        },
+        {
+          "path": "test/unit/providers/omp-runtime.test.ts",
+          "assertion": "runs research and SDLC through native task traces and retains parent/ownership/results; asserts temporary agents removed and retained guard receipt"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2254.4",
+      "issue": 2254,
+      "requirement": "Task ids, parent relationships, output references, failures and interruption status survive aggregation into AIWG artifacts.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/unit/providers/omp-runtime.test.ts",
+          "assertion": "runs research and SDLC through native task traces and retains parent/ownership/results; cancels descendants through parent signals and persists failures"
+        },
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "nativeTeam records id,parentId,role,ownership,requestedModel and native results with exitCode/output/outputPath/resolvedModel",
+          "section": "mcp"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2254.5",
+      "issue": 2254,
+      "requirement": "A research-plus-SDLC acceptance scenario produces traceable outputs through native tasks; unsupported controls are explicit.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp-native-evidence.json",
+          "assertion": "nativeTeam research(reasoning,research.md) and sdlc(coding,design.md) completed through native TaskTool with exitCode0 and observed fixture/fixture model",
+          "section": "mcp"
+        },
+        {
+          "path": "tools/providers/omp-teams.mjs",
+          "assertion": "native recursive spawning disabled; AIWG nested requests flattened; filesystem ownership intent explicit"
+        }
+      ],
+      "detail": ""
+    },
+    {
+      "id": "2255.1",
+      "issue": 2255,
+      "requirement": "Coverage matrix maps every child issue\u2019s acceptance criteria to a test or explicit live-evidence artifact; a stub alone cannot certify live behavior.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp-conformance-matrix.json"
+        },
+        {
+          "path": "docs/providers/omp-verification.md"
+        },
+        {
+          "path": "test/fixtures/providers/omp-conformance/manifest.json"
+        }
+      ],
+      "detail": "This matrix enumerates all 61 original acceptance criteria, each linked to implementation, tests or a reproducible native evidence gate. Delivery remains a separate CI requirement."
+    },
+    {
+      "id": "2255.2",
+      "issue": 2255,
+      "requirement": "Fresh workspace and coinstalled Pi/Claude/Codex scenarios cover project/user/profile scopes, dry-run, deploy, repeat deploy, refresh and uninstall.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/integration/omp-provider.test.ts"
+        },
+        {
+          "path": "tools/providers/omp-conformance.mjs"
+        },
+        {
+          "path": "test/unit/providers/omp-deploy.test.js"
+        }
+      ],
+      "detail": "Public source CLI covers project, default user and named user/alias deployment, repeat, lazy refresh and uninstall with Pi/Claude/Codex operator files preserved. Native fixture runner starts a fresh workspace."
+    },
+    {
+      "id": "2255.3",
+      "issue": 2255,
+      "requirement": "Version, source SHA, OS/runtime and results are recorded; source main and release tag are not assumed identical.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "test/fixtures/providers/omp-conformance/manifest.json"
+        },
+        {
+          "path": "tools/providers/omp-conformance.mjs"
+        },
+        {
+          "path": "tools/providers/omp-conformance-api.mjs"
+        },
+        {
+          "path": ".gitea/workflows/omp-conformance.yml"
+        }
+      ],
+      "detail": "Native binary checksum/version and independent source commit/pristine checks record OS/runtime results. Manifest pins both rather than assuming tag and source main agree."
+    },
+    {
+      "id": "2255.4",
+      "issue": 2255,
+      "requirement": "Credential-free tests run routinely; model-backed native team and MCP checks are explicitly gated and record skips as unverified.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "tools/providers/omp-mcp-conformance.mjs"
+        },
+        {
+          "path": "tools/providers/omp-live-smoke.mjs"
+        },
+        {
+          "path": "test/unit/providers/omp-live-smoke.test.js"
+        },
+        {
+          "path": ".gitea/workflows/omp-conformance.yml"
+        }
+      ],
+      "detail": "Routine CI runs deterministic loopback model/MCP/team checks without credentials. Hosted smoke requires explicit opt-in and key; prerequisite-only check submits zero prompts. Missing required native prerequisites fail; optional absent prerequisites report skipped."
+    },
+    {
+      "id": "2255.5",
+      "issue": 2255,
+      "requirement": "Upgrade drift changes the evidence baseline and reruns contract checks; docs state exactly which platforms and install paths passed.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "tools/providers/omp-conformance.mjs"
+        },
+        {
+          "path": "tools/providers/omp-conformance-api.mjs"
+        },
+        {
+          "path": "docs/providers/omp.md"
+        },
+        {
+          "path": "docs/providers/omp-verification.md"
+        }
+      ],
+      "detail": "Digest/source mismatch rejects stale qualification; upgrade requires deliberate manifest update and rerunning native contracts. Only the tested Linux x64 standalone baseline is claimed."
+    },
+    {
+      "id": "2256.1",
+      "issue": 2256,
+      "requirement": "Onboarding commands match tested flags and distinguish --provider omp in AIWG from OMP LLM selection.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp.md"
+        },
+        {
+          "path": "test/integration/omp-provider.test.ts"
+        },
+        {
+          "path": "test/unit/providers/omp-mcp.test.ts"
+        }
+      ],
+      "detail": "Onboarding uses real public commands tested for native use/refresh/removal and MCP lifecycle, with AIWG provider selection distinguished from OMP model selection."
+    },
+    {
+      "id": "2256.2",
+      "issue": 2256,
+      "requirement": "Guide describes Pi coexistence, kernel-only/full-copy resource options, profile targeting, ownership and removal.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp.md"
+        },
+        {
+          "path": "agentic/code/providers/omp/README.md"
+        },
+        {
+          "path": "test/integration/omp-provider.test.ts"
+        }
+      ],
+      "detail": "Guide documents coexistence, lazy/full-copy layout, per-resource user/profile roots, ownership and removal."
+    },
+    {
+      "id": "2256.3",
+      "issue": 2256,
+      "requirement": "Native/bridged/unsupported/unverified capability states match code and conformance results, including concurrency and RPC limits.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp.md"
+        },
+        {
+          "path": "src/cli/handlers/steward.ts"
+        },
+        {
+          "path": "agentic/code/providers/capability-matrix.yaml"
+        },
+        {
+          "path": "tools/providers/omp-teams.mjs"
+        }
+      ],
+      "detail": "Guide and steward distinguish native client/task capabilities, explicit bridge activation, bounded team control and unsupported daemon/ephemeral/enforcement surfaces."
+    },
+    {
+      "id": "2256.4",
+      "issue": 2256,
+      "requirement": "Install documentation specifies Bun >=1.3.14 for the package route or separately verified standalone binary requirements; it does not demand Python/Docker/Nix for core use.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "docs/providers/omp.md"
+        },
+        {
+          "path": "test/fixtures/providers/omp-conformance/manifest.json"
+        },
+        {
+          "path": ".gitea/workflows/omp-conformance.yml"
+        }
+      ],
+      "detail": "Guide specifies Bun >=1.3.14 package prerequisite and independently tested Linux standalone binary; Python/Docker/Nix are not core prerequisites."
+    },
+    {
+      "id": "2256.5",
+      "issue": 2256,
+      "requirement": "Changelog, provider comparison, support/upgrade policy and evidence links are updated; public provider counts derive from actual supported inventory.",
+      "status": "verified-local",
+      "evidence": [
+        {
+          "path": "CHANGELOG.md"
+        },
+        {
+          "path": "docs/providers/provider-inventory.md"
+        },
+        {
+          "path": "docs/providers/omp.md"
+        },
+        {
+          "path": "test/unit/providers/provider-doc-inventory.test.ts"
+        },
+        {
+          "path": "README.md"
+        }
+      ],
+      "detail": "Changelog, public provider comparison/counts, maintenance cadence, promotion and rollback policy are updated. Inventory consistency test checks 13 named integrations and 14 including generic."
+    }
+  ],
+  "epicCriteria": [
+    {
+      "id": "2244.1",
+      "requirement": "`omp`/`oh-my-pi` selects the correct provider without changing original Pi behavior.",
+      "status": "verified-local",
+      "childEvidence": [
+        "2245.1",
+        "2245.2",
+        "2245.3",
+        "2245.4",
+        "2245.5"
+      ]
+    },
+    {
+      "id": "2244.2",
+      "requirement": "Source-backed initial deployment contracts pass deterministic and recorded live smoke checks for the supported local CLI route.",
+      "status": "verified-local",
+      "childEvidence": [
+        "2246.1",
+        "2246.2",
+        "2246.3",
+        "2246.4",
+        "2246.5",
+        "2247.1",
+        "2247.2",
+        "2247.3",
+        "2247.4",
+        "2247.5",
+        "2250.1",
+        "2250.2",
+        "2250.3",
+        "2250.4",
+        "2250.5",
+        "2255.1",
+        "2255.2",
+        "2255.3",
+        "2255.4",
+        "2255.5"
+      ]
+    },
+    {
+      "id": "2244.3",
+      "requirement": "Native versus AIWG-bridged versus unverified capabilities are accurately reported.",
+      "status": "verified-local",
+      "childEvidence": [
+        "2250.1",
+        "2250.2",
+        "2250.3",
+        "2250.4",
+        "2250.5",
+        "2251.1",
+        "2251.2",
+        "2251.3",
+        "2251.4",
+        "2251.5",
+        "2251.6",
+        "2254.1",
+        "2254.2",
+        "2254.3",
+        "2254.4",
+        "2254.5",
+        "2256.1",
+        "2256.2",
+        "2256.3",
+        "2256.4",
+        "2256.5"
+      ]
+    },
+    {
+      "id": "2244.4",
+      "requirement": "Optional integrations have individual acceptance evidence before promotion.",
+      "status": "verified-local",
+      "childEvidence": [
+        "2248.1",
+        "2248.2",
+        "2248.3",
+        "2248.4",
+        "2248.5",
+        "2249.1",
+        "2249.2",
+        "2249.3",
+        "2249.4",
+        "2249.5",
+        "2251.1",
+        "2251.2",
+        "2251.3",
+        "2251.4",
+        "2251.5",
+        "2251.6",
+        "2252.1",
+        "2252.2",
+        "2252.3",
+        "2252.4",
+        "2252.5",
+        "2253.1",
+        "2253.2",
+        "2253.3",
+        "2253.4",
+        "2253.5",
+        "2254.1",
+        "2254.2",
+        "2254.3",
+        "2254.4",
+        "2254.5"
+      ]
+    },
+    {
+      "id": "2244.5",
+      "requirement": "Shared primitives are reused where tested; divergent contracts remain distinct.",
+      "status": "verified-local",
+      "childEvidence": [
+        "2247.1",
+        "2247.2",
+        "2247.3",
+        "2247.4",
+        "2247.5",
+        "2249.1",
+        "2249.2",
+        "2249.3",
+        "2249.4",
+        "2249.5",
+        "2253.1",
+        "2253.2",
+        "2253.3",
+        "2253.4",
+        "2253.5"
+      ]
+    },
+    {
+      "id": "2244.6",
+      "requirement": "Documentation explains the fork decision, supported versions, profiles, coexistence, upgrade and owned-artifact removal.",
+      "status": "verified-local",
+      "childEvidence": [
+        "2256.1",
+        "2256.2",
+        "2256.3",
+        "2256.4",
+        "2256.5"
+      ]
+    }
+  ]
+}

@@ -18,6 +18,7 @@ const CURRENT_PLATFORM_IDS = [
   'openclaw',
   'openhuman',
   'pi',
+  'omp',
   'warp',
   'windsurf',
   'generic',

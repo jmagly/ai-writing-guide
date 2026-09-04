@@ -269,6 +269,7 @@ describe('provider output characterization for registry migration', () => {
     } = await import('../../../src/providers/provider-definitions.mjs');
 
     expect(SUPPORTED_PROVIDERS).toEqual([
+      'omp',
       'claude-code',
       'cursor',
       'factory',

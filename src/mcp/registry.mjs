@@ -1,3 +1,5 @@
+import { manageOmpMcp } from './omp-config.mjs';
+import { resolveOmpPaths } from '../providers/omp-paths.mjs';
 /**
  * MCP Server Registry (Runtime ESM)
  *
@@ -281,15 +283,16 @@ function buildServerToml(server) {
   return lines.join('\n');
 }
 
-export function getProviderConfigPath(provider, projectDir = '.') {
-  return resolveMcpConfigPath(provider, projectDir);
+export function getProviderConfigPath(provider, projectDir = '.', options = {}) {
+  if (normalizeRuntimeProviderId(provider) === 'omp' && options.scope !== undefined && !['user', 'project'].includes(options.scope)) throw new Error('OMP MCP scope must be user or project');
+  return resolveMcpConfigPath(provider, projectDir, options);
 }
 
 export async function injectServers(registry, provider, options = {}) {
   const { servers: serverFilter, projectDir = '.', dryRun = false } = options;
   const normalizedProvider = normalizeRuntimeProviderId(provider);
   const mcpDefinition = getMcpInjectionDefinition(provider);
-  const configPath = getProviderConfigPath(provider, projectDir);
+  const configPath = getProviderConfigPath(provider, projectDir, options);
   const result = {
     provider,
     configPath,
@@ -310,6 +313,16 @@ export async function injectServers(registry, provider, options = {}) {
   if (allServers.length === 0) {
     result.error = 'No servers to inject. Use "aiwg mcp add" first.';
     return result;
+  }
+
+  if (normalizedProvider === 'omp') {
+    try {
+      const managed = await manageOmpMcp(configPath, allServers, { dryRun });
+      if (!dryRun) for (const server of allServers) await registry.recordInjection(server.name, 'omp');
+      return { ...result, ...managed };
+    } catch (error) {
+      return { ...result, error: error instanceof Error ? error.message : String(error) };
+    }
   }
 
   if (mcpDefinition?.configFormat === 'toml') {

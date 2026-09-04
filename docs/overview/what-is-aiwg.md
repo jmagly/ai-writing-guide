@@ -8,7 +8,7 @@
 
 ## The Elevator Pitch
 
-AIWG is a deployment tool and support utility for AI context. At its core, `aiwg use` copies markdown and YAML source files into the paths each provider reads — `.claude/agents/`, `.agents/skills/`, `.cursor/rules/`, `.github/prompts/`, and provider-specific equivalents — so one source of truth works across 12 named provider integrations. A separate `generic` fallback adapter is available for custom harnesses and is not included in that count. Around that core, AIWG ships utilities for things the base providers do not handle on their own: persistent artifact memory, background orchestration, autonomous loops, artifact indexing, cost telemetry, and health diagnostics. Most utilities are opt-in; the deployment layer works standalone as plain text.
+AIWG is a deployment tool and support utility for AI context. At its core, `aiwg use` copies markdown and YAML source files into the paths each provider reads — `.claude/agents/`, `.agents/skills/`, `.cursor/rules/`, `.github/prompts/`, and provider-specific equivalents — so one source of truth works across 13 named provider integrations. A separate `generic` fallback adapter is available for custom harnesses and is not included in that count. Around that core, AIWG ships utilities for things the base providers do not handle on their own: persistent artifact memory, background orchestration, autonomous loops, artifact indexing, cost telemetry, and health diagnostics. Most utilities are opt-in; the deployment layer works standalone as plain text.
 
 The compounding story matters more than any single file. Hundreds of small artifacts — each a readable, editable `.md` file — snap together into multi-agent workflows (SDLC, forensics, marketing, research) that would otherwise take a bespoke agent platform to build. AIWG implements patterns from cognitive science, multi-agent systems, and software engineering as file conventions and deployment rules, not as a runtime you depend on.
 
@@ -431,7 +431,7 @@ While the walkthrough above focuses on the SDLC framework, AIWG provides five co
 
 ### Multi-Platform Deployment
 
-All frameworks can be projected onto the supported surfaces of 12 named provider integrations with a single command:
+All frameworks can be projected onto the supported surfaces of 13 named provider integrations with a single command:
 
 ```bash
 aiwg use sdlc                          # Claude Code (default)
@@ -445,6 +445,7 @@ aiwg use sdlc --provider devin         # Devin Desktop
 aiwg use sdlc --provider hermes        # Hermes
 aiwg use sdlc --provider openclaw      # OpenClaw
 aiwg use sdlc --provider openhuman     # OpenHuman
+aiwg use sdlc --provider omp           # Oh My Pi (experimental)
 aiwg use sdlc --provider pi            # Pi Coding Agent
 ```
 

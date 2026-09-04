@@ -1,6 +1,6 @@
 # Cross-Platform Overview
 
-AIWG has 12 named provider integrations plus a provider-neutral `generic`
+AIWG has 13 named provider integrations plus a provider-neutral `generic`
 fallback adapter. **One command projects AIWG onto the surfaces supported by
 the selected provider.**
 
@@ -19,6 +19,7 @@ the selected provider.**
 | OpenCode | `aiwg use sdlc --provider opencode` | AGENTS.md |
 | OpenClaw | `aiwg use sdlc --provider openclaw` | AGENTS.md |
 | OpenHuman | `aiwg use sdlc --provider openhuman` | Provider-managed |
+| Oh My Pi | `aiwg use sdlc --provider omp` | .omp/AGENTS.md |
 | Pi Coding Agent | `aiwg use sdlc --provider pi` | AGENTS.md |
 | Warp Terminal | `aiwg use sdlc --provider warp` | WARP.md |
 | Devin Desktop | `aiwg use sdlc --provider devin` | AGENTS.md |
@@ -51,6 +52,7 @@ provider exposes the corresponding surface:
 | OpenCode | native | native | conventional | conventional | - |
 | OpenClaw | native | native | native | native | native |
 | OpenHuman | unsupported | unsupported | native | conventional | unsupported |
+| Oh My Pi | native | native prompts | native | native | extension bridge |
 | Pi Coding Agent | skills-as-agents | native prompts | native | AGENTS.md | reserved extensions |
 | Warp Terminal | aggregated | conventional | native | aggregated | - |
 | Devin Desktop | aggregated | native | native | native | - |
@@ -92,6 +94,7 @@ Most providers follow `.<provider>/<type>/`:
 | **Devin Desktop** | Agents aggregated to `AGENTS.md`<br>Commands → `.windsurf/workflows/`<br>Rules → `.windsurf/rules/*.md` (with trigger frontmatter)<br>Skills → `.windsurf/skills/`<br>Legacy selector: `windsurf` |
 | **Cursor** | Rules use `.mdc` extension (MDC format) with frontmatter (`description`, `globs`, `alwaysApply`)<br>Skills use native `.cursor/skills/*/SKILL.md` format (2.4+)<br>Also supports `AGENTS.md` with directory inheritance<br>Legacy `.cursorrules` still generated for backward compatibility<br>Cloud Agents support MCP for remote AIWG access |
 | **OpenClaw** | All artifacts deploy to home directory (`~/.openclaw/`)<br>First provider to support behaviors (`~/.openclaw/behaviors/`) |
+| **Oh My Pi** | Experimental integration, distinct from Pi<br>Agents → `.omp/agents/`; prompts → `.omp/prompts/`; rules → `.omp/rules/`<br>Kernel and explicitly copied skills → one-level `.agents/skills/`; standard corpus stays lazy by default<br>Context → `.omp/AGENTS.md` native imports of WORKSPACE.md and AIWG.md<br>User scope honors OMP profiles; lifecycle bridge → `.omp/extensions/` |
 | **Pi Coding Agent** | Commands → project `.pi/prompts/*.md`<br>Portable skills and agent roles → project `.agents/skills/*/SKILL.md`<br>AIWG-managed standard skills → `.pi/.aiwg/skills/`<br>Context → `AGENTS.md`<br>User scope honors `${PI_CODING_AGENT_DIR:-~/.pi/agent}` |
 | **Hermes** | Skills deploy at user scope under `~/.hermes/skills/.aiwg/`; unsupported artifact classes are not falsely advertised |
 | **OpenHuman** | Skills and rules deploy at user scope under `~/.openhuman/.aiwg/`; agent and command surfaces are unsupported |
@@ -151,6 +154,7 @@ See [Al Guide](../ralph-guide.md) for full documentation.
 | OpenClaw | [Setup Guide](openclaw-quickstart.md) |
 | Hermes | [Setup Guide](hermes-quickstart.md) |
 | OpenHuman | [Setup Guide](openhuman-quickstart.md) |
+| Oh My Pi | [Setup Guide](../providers/omp.md) |
 | Pi Coding Agent | [Setup Guide](pi-quickstart.md) |
 
 ---

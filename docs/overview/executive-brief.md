@@ -8,7 +8,7 @@
 
 ## What AIWG Does
 
-AIWG is a deployment tool and support utility for AI context. It copies markdown and YAML source files — agents, skills, commands, rules, templates — into the paths each provider reads, including the portable `.agents/skills/` surface, so one source of truth works across 12 named provider integrations. A separate `generic` fallback adapter supports custom harnesses and is not included in that count. Around that core, it ships optional utilities the base providers do not provide: persistent `.aiwg/` artifact memory, multi-agent orchestration, workflow recovery loops, artifact indexing, and cost telemetry.
+AIWG is a deployment tool and support utility for AI context. It copies markdown and YAML source files — agents, skills, commands, rules, templates — into the paths each provider reads, including the portable `.agents/skills/` surface, so one source of truth works across 13 named provider integrations. A separate `generic` fallback adapter supports custom harnesses and is not included in that count. Around that core, it ships optional utilities the base providers do not provide: persistent `.aiwg/` artifact memory, multi-agent orchestration, workflow recovery loops, artifact indexing, and cost telemetry.
 
 Unlike simple prompt tools, AIWG gives AI systems the memory to maintain project context across sessions, the coordination mechanisms to synthesize multiple perspectives, and the recovery protocols to handle failures systematically — all expressed as file conventions and deployment rules rather than a monolithic runtime you depend on.
 
@@ -165,7 +165,7 @@ This isn't academic theory—these are production standards governing billions o
 **Platform flexibility:**
 - Claude Code, GitHub Copilot, Cursor, Warp Terminal
 - Factory AI, OpenCode, OpenAI Codex
-- Hermes, OpenClaw, OpenHuman, Pi Coding Agent, Devin Desktop
+- Hermes, OpenClaw, OpenHuman, Oh My Pi, Pi Coding Agent, Devin Desktop
 - Self-hosted MCP server for enterprise deployment
 
 **Integration points:**

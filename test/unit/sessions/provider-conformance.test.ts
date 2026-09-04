@@ -14,6 +14,7 @@ import {
   OpenCodeSessionAdapter,
   OpenHumanSessionAdapter,
   PiSessionAdapter,
+  OmpSessionAdapter,
   SESSION_PROVIDER_IDS,
   WarpSessionAdapter,
   type SelectedSource,
@@ -49,7 +50,7 @@ const matrixPath = resolve(root,
   'docs/planning/session-intelligence/provider-conformance-matrix.json');
 const matrix = JSON.parse(readFileSync(matrixPath, 'utf8')) as Matrix;
 
-describe('thirteen-provider session release conformance', () => {
+describe('fourteen-provider session release conformance', () => {
   it.each(matrix.providers)('$provider matrix claims match the executable adapter contract', (entry) => {
     const adapter = adapterFor(entry.provider);
     expect(adapter.provider).toBe(entry.provider);
@@ -117,14 +118,14 @@ describe('thirteen-provider session release conformance', () => {
 
   it('maps every canonical provider exactly once to issue, status, operations, fixtures, tests, and docs', () => {
     expect(matrix.contractVersion).toBe('1.0.0');
-    expect(matrix.canonicalProviderCount).toBe(13);
+    expect(matrix.canonicalProviderCount).toBe(14);
     expect(matrix.providers.map((entry) => entry.provider)).toEqual(SESSION_PROVIDER_IDS);
-    expect(new Set(matrix.providers.map((entry) => entry.provider)).size).toBe(13);
-    expect(new Set(matrix.providers.map((entry) => entry.issue)).size).toBe(13);
+    expect(new Set(matrix.providers.map((entry) => entry.provider)).size).toBe(14);
+    expect(new Set(matrix.providers.map((entry) => entry.issue)).size).toBe(14);
 
     for (const entry of matrix.providers) {
       expect(entry.issue).toBeGreaterThanOrEqual(1910);
-      expect(entry.issue <= 1921 || entry.issue === 2152).toBe(true);
+      expect(entry.issue <= 1921 || entry.issue === 2152 || entry.issue === 2253).toBe(true);
       expect(entry.operations).toContain('inspect');
       expect(entry.operations).toContain('stream');
       for (const path of [entry.fixtures, entry.tests, entry.documentation]) {
@@ -184,6 +185,7 @@ function adapterFor(provider: string): SessionSourceAdapter {
     opencode: () => new OpenCodeSessionAdapter(),
     openhuman: () => new OpenHumanSessionAdapter(),
     pi: () => new PiSessionAdapter(),
+    omp: () => new OmpSessionAdapter(),
     warp: () => new WarpSessionAdapter(),
     'devin-desktop': () => new DevinDesktopSessionAdapter(),
   };

@@ -35,7 +35,7 @@
       "Knowledge Base — Wiki and semantic-memory framework: document ingest, KB health checks, and llm-wiki profiles",
       "Ops Complete — Operational infrastructure: incident response, runbooks, fleet inventory, and audit trails",
       "29 addons — RLM recursive context decomposition, voice profiles, testing quality, writing validation, UAT-MCP toolkit, and more",
-      "12 provider integrations — Claude Code, OpenAI Codex, GitHub Copilot, Cursor, Factory AI, Hermes, OpenCode, OpenClaw, OpenHuman, Pi Coding Agent, Warp Terminal, Devin Desktop"
+      "13 provider integrations — Claude Code, OpenAI Codex, GitHub Copilot, Cursor, Factory AI, Hermes, OpenCode, OpenClaw, OpenHuman, Oh My Pi, Pi Coding Agent, Warp Terminal, Devin Desktop"
     ],
     "checklist": [
       "Tell your agent the outcome you want",
