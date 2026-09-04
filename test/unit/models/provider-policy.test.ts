@@ -14,11 +14,11 @@ describe('provider model registry', () => {
     const registry = loadProviderModelCapabilities();
     expect(Object.keys(registry.providers).sort()).toEqual([
       'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
-      'openclaw', 'opencode', 'openhuman', 'warp', 'windsurf',
+      'openclaw', 'opencode', 'openhuman', 'pi', 'warp', 'windsurf',
     ]);
     for (const capability of Object.values(registry.providers)) {
       expect(capability.sourceUrl).toMatch(/^https:\/\//);
-      expect(capability.verifiedAt).toBe('2026-07-20');
+      expect(capability.verifiedAt).toMatch(/^2026-(?:07-20|09-04)$/);
       expect(capability.identifierSyntax).not.toBe('');
       expect(capability.verification).not.toBe('');
     }

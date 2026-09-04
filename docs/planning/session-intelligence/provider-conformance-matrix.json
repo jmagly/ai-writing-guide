@@ -1,6 +1,6 @@
 {
   "contractVersion": "1.0.0",
-  "canonicalProviderCount": 12,
+  "canonicalProviderCount": 13,
   "providers": [
     {
       "provider": "claude",
@@ -91,6 +91,16 @@
       "tests": "test/unit/sessions/openhuman-adapter.test.ts",
       "documentation": "docs/providers/openhuman-sessions.md",
       "conformance": {"locatorClass": "openhuman-enriched-jsonl", "malformed": ["malformed.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.jsonl", "UNKNOWN_SCHEMA_MAJOR"], "exceptions": {"discovery": "provider requires explicit authorized JSONL export"}}
+    },
+    {
+      "provider": "pi",
+      "issue": 2152,
+      "status": "implemented",
+      "operations": ["discover", "inspect", "stream"],
+      "fixtures": "test/fixtures/sessions/pi",
+      "tests": "test/unit/sessions/pi-adapter.test.ts",
+      "documentation": "docs/providers/pi-sessions.md",
+      "conformance": {"locatorClass": "pi-session-v3-jsonl", "malformed": ["malformed.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.jsonl", "UNKNOWN_SCHEMA_MAJOR"]}
     },
     {
       "provider": "warp",

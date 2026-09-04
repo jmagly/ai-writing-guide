@@ -76,6 +76,17 @@
       "verification": "Inspect active profile and run metadata",
       "sourceUrl": "https://docs.warp.dev/agent-platform/capabilities/agent-profiles-permissions", "verifiedAt": "2026-07-20"
     },
+    "pi": {
+      "agent": "native", "skill": "inherited", "globalChild": "native",
+      "identifierSyntax": "provider/model identifier accepted by Pi --model",
+      "effortValues": ["minimal", "low", "medium", "high", "xhigh"],
+      "inheritance": "Omitted model and thinking level inherit the invoking Pi session",
+      "invalidPinFallback": "Pi resolves against its configured catalog and exits on invalid explicit selection",
+      "configTarget": "Pi headless launch arguments",
+      "artifactFormat": "Runtime --model and --thinking flags",
+      "verification": "Inspect strict JSONL state and the selected provider/model",
+      "sourceUrl": "https://github.com/earendil-works/pi/tree/main/packages/coding-agent#cli-reference", "verifiedAt": "2026-09-04"
+    },
     "windsurf": {
       "agent": "unsupported", "skill": "unsupported", "globalChild": "inherited",
       "identifierSyntax": "UI-selected provider model",

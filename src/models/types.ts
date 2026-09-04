@@ -68,6 +68,7 @@ export type Provider =
   | 'opencode'
   | 'openclaw'
   | 'openhuman'
+  | 'pi'
   | 'openai'
   | 'warp'
   | 'windsurf';

@@ -9,6 +9,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Changed
 
+- Promote Pi integration coverage across a trust-gated extension bridge, native model discovery, External Ralph headless execution, bounded RPC cancellation, and authorized v3 session ingestion while retaining experimental provider status (#2147, #2150, #2151, #2152).
+
 - Corrected the Pi Coding Agent package name to
   `@earendil-works/pi-coding-agent` and synchronized the provider guide,
   quickstart, CLI reference, trust policy, OpenRouter example, session/RPC

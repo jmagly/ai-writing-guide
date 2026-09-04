@@ -76,6 +76,7 @@ describe('Pi provider conformance fixtures', () => {
     const names = readdirSync(join(fixtureRoot, 'sessions/pi'));
     expect(names.sort()).toEqual([
       'branched-v3.jsonl', 'malformed.jsonl', 'redaction-v3.jsonl',
+      'unknown-major.jsonl', 'valid.jsonl',
     ]);
     expect(() => jsonl('malformed.jsonl')).toThrow();
   });

@@ -10,10 +10,10 @@ stable_id: aiwg.agent-reference.provider.pi
 > [`47236c84450656043dd8fb21c8513d1421505ae3`](https://github.com/earendil-works/pi/commit/47236c84450656043dd8fb21c8513d1421505ae3),
 > verified 2026-09-04.
 
-AIWG's Pi integration is experimental and resource-first. It projects context,
-Agent Skills, and prompt templates onto Pi's native discovery surfaces. It does
-not currently install executable Pi extensions or packages, configure models,
-invoke Pi headlessly, or ingest sessions.
+AIWG's Pi integration remains experimental while its promotion gate is open. It
+projects context, Agent Skills, prompt templates, and a reviewed policy bridge;
+discovers configured models; supports External Ralph headless execution; and
+ingests native v3 session JSONL. AIWG never installs Pi packages or credentials.
 
 ## Install and deploy
 
@@ -68,9 +68,9 @@ into project files, issue comments, transcripts, or deployment receipts.
 | Standard skills | `.pi/.aiwg/skills/*/SKILL.md` | Receipted AIWG projection |
 | Commands | `.pi/prompts/*.md` | Native prompt templates |
 | Rules | `AGENTS.md` managed section | Aggregated; no invented `.pi/rules` |
-| Extensions | — | Not installed |
+| Extension bridge | `.pi/extensions/aiwg-bridge.ts` | Receipted, trust-gated policy hook |
 | Packages and settings | — | Operator-owned |
-| Session ingestion | — | Not implemented |
+| Session ingestion | Pi v3 JSONL | Discover, inspect, and stream |
 
 Pi documents `.pi/prompts/` in [Prompt
 Templates](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/prompt-templates.md),
@@ -78,8 +78,20 @@ Templates](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/
 [Skills](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/skills.md),
 and `.pi/extensions/` in
 [Extensions](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/extensions.md).
-AIWG deliberately installs no extension because project extensions execute
-arbitrary JavaScript/TypeScript with the user's permissions.
+The bridge executes with Pi's process permissions after project trust is
+granted. In headless mode it fails closed on destructive and package-mutating
+bash calls; with a TUI it asks the operator and defaults to denial. AIWG does
+not silently install extension dependencies or modify Pi package settings.
+
+| AIWG behavior | Pi mapping | Boundary |
+|---|---|---|
+| Prompt command | `.pi/prompts/*.md` | Native |
+| Role/agent | Agent Skill | Declarative projection |
+| Tool policy | `tool_call` extension hook | Deny is blocking and reported |
+| Headless worker | `--mode json --no-approve` | Strict JSONL stdout; diagnostics on stderr |
+| Cancellation | RPC `abort`, then bounded TERM/KILL | Waits before escalation |
+| MCP | None in Pi core | Unsupported unless an operator separately installs and verifies a compatible extension |
+| TUI APIs | `ctx.hasUI` guard | Never prompts or hangs headless |
 
 At user scope, the Pi agent root is
 `${PI_CODING_AGENT_DIR:-~/.pi/agent}`. The variable changes the resource
@@ -112,8 +124,11 @@ default. `PI_CODING_AGENT_SESSION_DIR` changes the session location, and
 links and may include compaction and branch-summary history. See Pi's
 [`SessionManager` source](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/session-manager.ts).
 
-AIWG does not yet ingest those sessions. Retain raw JSONL as source evidence
-and redact credentials or sensitive tool output before sharing it.
+AIWG's session adapter discovers only authorized roots, preserves native
+`id`/`parentId` topology and provenance, and redacts tool results and custom
+extension data during ingestion. Unknown entry types remain opaque; unknown
+major versions, malformed/truncated input, duplicates, and resource-limit
+violations fail closed. See [Pi session acquisition](../../providers/pi-sessions.md).
 
 Pi offers default print mode, `--mode json` event output, and bidirectional
 `--mode rpc`. RPC clients must parse stdout strictly as one JSON object per
@@ -124,13 +139,13 @@ protocol](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/d
 
 ## Capability boundaries
 
-- AIWG deploys declarative resources; it does not claim an in-process Pi MCP,
-  subagent, task, cron, structured-question, or daemon integration.
-- Pi extensions can add tools and events, but AIWG does not install one.
-- Model discovery, headless invocation, RPC handling, and session ingestion
-  remain planned rather than supported.
-- External Mission Control execution requires a dedicated, qualified Pi runtime
-  adapter.
+- AIWG does not claim an in-process Pi MCP, subagent, task, cron,
+  structured-question, or daemon integration.
+- `pi --list-models` is parsed as the configured local catalog while preserving
+  Pi backend/model identifiers; no model turn is used for discovery.
+- External Ralph has a dedicated Pi adapter with Node 22.19+ preflight,
+  model/thinking/tool/session propagation, strict JSONL parsing, and bounded
+  cancellation.
 
 ```bash
 aiwg steward capabilities --provider pi

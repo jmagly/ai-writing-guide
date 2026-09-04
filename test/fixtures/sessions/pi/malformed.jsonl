@@ -1,2 +1,3 @@
-{"type":"session","version":3,"id":"pi-malformed-fixture","timestamp":"2026-09-04T12:00:00.000Z","cwd":"/fixture/project"}
-{"type":"message","id":"broken","parentId":null
+{"type":"session","version":3,"id":"pi-session","timestamp":"2026-09-04T12:00:00Z","cwd":"/workspace"}
+{"type":"message","id":"missing-parent","timestamp":"2026-09-04T12:00:01Z"}
+{not-json}

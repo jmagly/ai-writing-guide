@@ -22,7 +22,7 @@ describe('session contracts', () => {
   it('asserts exactly 12 canonical provider IDs with the documented Windsurf alias', () => {
     expect(SESSION_PROVIDER_IDS).toEqual([
       'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
-      'opencode', 'openclaw', 'openhuman', 'warp', 'devin-desktop', 'generic',
+      'opencode', 'openclaw', 'openhuman', 'pi', 'warp', 'devin-desktop', 'generic',
     ]);
     expect(assertSessionProviderId('windsurf')).toBe('devin-desktop');
     expect(() => assertSessionProviderId('factory-ai')).toThrowError(

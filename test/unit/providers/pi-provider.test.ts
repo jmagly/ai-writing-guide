@@ -2,7 +2,8 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createAgentsMd, deployCommands, postDeploy, transformCommand } from '../../../tools/agents/providers/pi.mjs';
+import { createAgentsMd, deployCommands, deployExtensionBridge, postDeploy, transformCommand } from '../../../tools/agents/providers/pi.mjs';
+import aiwgBridge, { evaluateAiwgPiCommand } from '../../../agentic/code/providers/pi/aiwg-bridge.js';
 
 const roots: string[] = [];
 const repoRoot = resolve(__dirname, '../../..');
@@ -87,5 +88,29 @@ describe('Pi provider prompt projection', () => {
     expect(readFileSync(join(project, '.pi', 'prompts', 'sample.md'), 'utf8')).toBe(first);
     expect(readFileSync(join(project, '.pi', 'settings.json'), 'utf8')).toBe(settings);
     expect(readFileSync(join(project, '.pi', 'prompts', 'operator.md'), 'utf8')).toBe('operator-owned\n');
+  });
+
+  it('deploys the reviewed extension bridge without replacing operator extensions', () => {
+    const project = temporaryRoot('aiwg-pi-extension-');
+    mkdirSync(join(project, '.pi/extensions'), { recursive: true });
+    writeFileSync(join(project, '.pi/extensions/operator.ts'), 'operator-owned\n');
+    const options = { srcRoot: repoRoot, provider: 'pi', deployVersion: 'test', deploySource: 'fixture', quiet: true };
+    expect(deployExtensionBridge(project, options)).toHaveLength(1);
+    const bridge = readFileSync(join(project, '.pi/extensions/aiwg-bridge.ts'), 'utf8');
+    expect(bridge).toMatch(/!hasUI/);
+    expect(bridge).toMatch(/block: true/);
+    expect(readFileSync(join(project, '.pi/extensions/operator.ts'), 'utf8')).toBe('operator-owned\n');
+  });
+
+  it('blocks denied and headless-dangerous tool calls without prompting headless', async () => {
+    expect(await evaluateAiwgPiCommand('rm -rf ./build', false)).toMatchObject({ block: true });
+    expect(await evaluateAiwgPiCommand('npm install surprise', false)).toMatchObject({ block: true });
+    expect(await evaluateAiwgPiCommand('git status', false)).toBeUndefined();
+    let hook: any;
+    aiwgBridge({ on: (_name: string, handler: any) => { hook = handler; } } as any);
+    const select = vi.fn();
+    await expect(hook({ toolName: 'bash', input: { command: 'sudo chmod 777 /tmp/x' } },
+      { hasUI: false, ui: { select } })).resolves.toMatchObject({ block: true });
+    expect(select).not.toHaveBeenCalled();
   });
 });

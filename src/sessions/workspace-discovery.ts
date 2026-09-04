@@ -9,6 +9,7 @@ import { ClaudeSessionAdapter } from './adapters/claude.js';
 import { CodexSessionAdapter } from './adapters/codex.js';
 import { CursorSessionAdapter } from './adapters/cursor.js';
 import { FactorySessionAdapter } from './adapters/factory.js';
+import { PiSessionAdapter } from './adapters/pi.js';
 import {
   SESSION_PROVIDER_IDS,
   sha256,
@@ -70,7 +71,7 @@ export interface DiscoverWorkspaceOptions {
 }
 
 interface DiscoverableProvider {
-  provider: 'claude' | 'codex' | 'cursor' | 'factory';
+  provider: 'claude' | 'codex' | 'cursor' | 'factory' | 'pi';
   adapter: SessionSourceAdapter;
   roots: string[];
 }
@@ -120,6 +121,15 @@ export async function discoverWorkspaceHistories(
         join(providerHome, '.factory', 'projects', keyWithLeadingDash),
         join(providerHome, '.factory', 'sessions', keyWithLeadingDash),
       ]),
+    },
+    {
+      provider: 'pi',
+      adapter: new PiSessionAdapter(),
+      roots: options.providerHome
+        ? [process.env.PI_CODING_AGENT_SESSION_DIR
+          ? resolve(process.env.PI_CODING_AGENT_SESSION_DIR)
+          : join(resolve(options.providerHome), '.pi', 'agent', 'sessions')]
+        : [],
     },
   ];
 

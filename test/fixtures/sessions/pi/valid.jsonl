@@ -1,0 +1,6 @@
+{"type":"session","version":3,"id":"pi-session","timestamp":"2026-09-04T12:00:00Z","cwd":"/workspace"}
+{"type":"message","id":"m1","parentId":null,"timestamp":"2026-09-04T12:00:01Z","message":{"role":"user","content":[{"type":"text","text":"Review the provider."}]}}
+{"type":"model_change","id":"m2","parentId":"m1","timestamp":"2026-09-04T12:00:02Z","provider":"openrouter","modelId":"fixture/code"}
+{"type":"message","id":"m3","parentId":"m2","timestamp":"2026-09-04T12:00:03Z","message":{"role":"toolResult","toolCallId":"call-1","toolName":"read","content":[{"type":"text","text":"sensitive fixture output"}]}}
+{"type":"compaction","id":"m4","parentId":"m3","timestamp":"2026-09-04T12:00:04Z","summary":"Compact summary","firstKeptEntryId":"m2","tokensBefore":100}
+{"type":"future_entry","id":"m5","parentId":"m4","timestamp":"2026-09-04T12:00:05Z","payload":{"future":true}}

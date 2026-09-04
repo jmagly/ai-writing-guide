@@ -28,7 +28,7 @@ const catalogData = requireModelResource('model-catalog.v1.json');
 
 const ProviderSchema = z.enum([
   'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
-  'opencode', 'openclaw', 'openhuman', 'warp', 'windsurf',
+  'opencode', 'openclaw', 'openhuman', 'pi', 'warp', 'windsurf',
 ]);
 const OutcomeSchema = z.enum([
   'native', 'compiled', 'inherited', 'global-only', 'informational', 'unsupported',
@@ -145,7 +145,7 @@ export function loadProviderModelCapabilities(): ProviderModelCapabilityRegistry
     const expected = new Set(ProviderSchema.options);
     const actual = new Set(Object.keys(registryCache.providers));
     if (actual.size !== expected.size || [...expected].some(id => !actual.has(id))) {
-      throw new Error('Provider model capability registry must cover all 11 providers');
+      throw new Error('Provider model capability registry must cover all 12 providers');
     }
   }
   return registryCache;
@@ -199,6 +199,7 @@ function fieldNames(provider: Provider): { model?: string; effort?: string } {
     case 'copilot':
     case 'cursor':
     case 'opencode': return { model: 'model' };
+    case 'pi': return { model: 'model', effort: 'thinking' };
     case 'openhuman': return { model: 'model_hint' };
     case 'openclaw': return { model: 'subagents.model' };
     default: return {};

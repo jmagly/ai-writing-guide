@@ -489,7 +489,7 @@ providers:
       agent_teams: false
       tasks: false
       mcp: false
-      behaviors: false
+      behaviors: true
       mission_control: false
       daemon: false
     emulation:

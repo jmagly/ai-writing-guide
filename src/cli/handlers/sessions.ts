@@ -24,6 +24,8 @@ import {
   OpenClawSessionAdapter,
   OPENHUMAN_ADAPTER_VERSION,
   OpenHumanSessionAdapter,
+  PI_ADAPTER_VERSION,
+  PiSessionAdapter,
   WARP_ADAPTER_VERSION,
   WarpSessionAdapter,
   DEVIN_DESKTOP_ADAPTER_VERSION,
@@ -761,7 +763,7 @@ async function importSource(
   if (provider !== 'generic' && provider !== 'claude' && provider !== 'codex'
     && provider !== 'copilot' && provider !== 'cursor' && provider !== 'factory'
     && provider !== 'hermes' && provider !== 'opencode' && provider !== 'openclaw'
-    && provider !== 'openhuman' && provider !== 'warp' && provider !== 'devin-desktop') {
+    && provider !== 'openhuman' && provider !== 'pi' && provider !== 'warp' && provider !== 'devin-desktop') {
     throw new CliError('UNSUPPORTED_OPERATION', `session import is not implemented for ${provider}`, EXIT.unsupported);
   }
   const sourceId = requiredValue(args, '--source-id');
@@ -777,6 +779,7 @@ async function importSource(
   const isOpenCode = provider === 'opencode';
   const isOpenClaw = provider === 'openclaw';
   const isOpenHuman = provider === 'openhuman';
+  const isPi = provider === 'pi';
   const isWarp = provider === 'warp';
   const isDevinDesktop = provider === 'devin-desktop';
   const adapter: SessionSourceAdapter = isClaude
@@ -797,6 +800,8 @@ async function importSource(
                   ? new OpenClawSessionAdapter()
                   : isOpenHuman
                     ? new OpenHumanSessionAdapter()
+                    : isPi
+                      ? new PiSessionAdapter()
                     : isWarp
                       ? new WarpSessionAdapter()
                       : isDevinDesktop
@@ -820,6 +825,8 @@ async function importSource(
                   ? 'openclaw-consistent-snapshot-jsonl'
                   : isOpenHuman
                     ? 'openhuman-enriched-jsonl'
+                    : isPi
+                      ? 'pi-session-v3-jsonl'
                     : isWarp
                       ? 'warp-markdown-export'
                       : isDevinDesktop
@@ -1181,6 +1188,19 @@ function providerDisposition(provider: SessionProviderId): Record<string, unknow
         adapterVersion: OPENHUMAN_ADAPTER_VERSION,
         verifiedAt: '2026-07-27',
         documentation: 'https://github.com/tinyhumansai/openhuman/releases',
+      },
+    };
+  }
+  if (provider === 'pi') {
+    return {
+      provider, disposition: 'implemented', operationalState: 'available',
+      supportedOperations: ['discover', 'inspect', 'stream'],
+      acquisitionModes: ['jsonl'], reasonCode: null,
+      remediation: 'Authorize PI_CODING_AGENT_SESSION_DIR, the default Pi sessions root, or an explicit v3 JSONL export.',
+      evidence: {
+        adapterVersion: PI_ADAPTER_VERSION,
+        verifiedAt: '2026-09-04',
+        documentation: 'https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/session-manager.ts',
       },
     };
   }

@@ -980,6 +980,8 @@ export class Orchestrator {
           budget: state.config.budgetPerIteration,
           systemPrompt,
           mcpConfig: state.config.mcpConfig,
+          thinking: state.config.thinking,
+          tools: state.config.tools,
           workingDir: state.config.workingDir,
           stdoutPath: outputPaths.stdout,
           stderrPath: outputPaths.stderr,

@@ -7,6 +7,7 @@ import {
   diffModelCatalog,
   discoverOpenClawModels,
   discoverOpenCodeModels,
+  discoverPiModels,
   PROVIDER_DISCOVERY_DECISIONS,
   resolveDynamicModelCatalog,
   selectRoleModels,
@@ -73,7 +74,7 @@ describe('dynamic model catalog', () => {
   it('records an implemented-or-unsupported decision for every AIWG provider', () => {
     expect(Object.keys(PROVIDER_DISCOVERY_DECISIONS).sort()).toEqual([
       'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
-      'openclaw', 'opencode', 'openhuman', 'warp', 'windsurf',
+      'openclaw', 'opencode', 'openhuman', 'pi', 'warp', 'windsurf',
     ]);
     expect(Object.values(PROVIDER_DISCOVERY_DECISIONS).every(decision =>
       decision.reason.length > 0 && decision.documentation.startsWith('https://')
@@ -81,7 +82,7 @@ describe('dynamic model catalog', () => {
     expect(Object.values(PROVIDER_DISCOVERY_DECISIONS)
       .filter(decision => decision.status === 'native')
       .map(decision => decision.provider)
-      .sort()).toEqual(['codex', 'openclaw', 'opencode']);
+      .sort()).toEqual(['codex', 'openclaw', 'opencode', 'pi']);
   });
 
   it('maps enumerated models to semantic roles without inventing identifiers', () => {
@@ -123,6 +124,15 @@ describe('dynamic model catalog', () => {
       ['models', '--pure'],
       expect.objectContaining({ timeoutMs: 15_000 }),
     );
+  });
+
+  it('normalizes Pi model rows while preserving backend/model identity', async () => {
+    const runner = vi.fn()
+      .mockResolvedValueOnce({ stdout: '0.85.0\n', stderr: '', exitCode: 0 })
+      .mockResolvedValueOnce({ stdout: 'provider    model                  context\r\nopenrouter  fixture/code:free      32K\r\n', stderr: '', exitCode: 0 });
+    expect(await discoverPiModels('pi', runner)).toMatchObject({
+      provider: 'pi', runtimeVersion: '0.85.0', models: [{ id: 'openrouter/fixture/code:free' }],
+    });
   });
 
   it('normalizes documented OpenClaw JSON without probing provider APIs', async () => {

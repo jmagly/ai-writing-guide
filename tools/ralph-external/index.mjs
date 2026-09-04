@@ -71,7 +71,9 @@ function parseArgs(args) {
     enableAnalytics: true,        // Iteration analytics (#167)
     enableBestOutput: true,       // Best output tracking (#168)
     enableEarlyStopping: true,    // Early stopping (#149)
-    provider: 'claude',           // CLI provider (claude, codex, opencode, factory)
+    provider: 'claude',           // CLI provider (claude, codex, opencode, factory, pi)
+    thinking: null,
+    tools: null,
     verbose: false,               // Verbose per-iteration detail
     logFile: null,                // Optional log file path
     allowExhaustedResume: false,  // Explicitly permit resuming a budget-exhausted loop (#1765)
@@ -166,6 +168,10 @@ function parseArgs(args) {
       options.enableEarlyStopping = false;
     } else if (arg === '--provider') {
       options.provider = args[++i];
+    } else if (arg === '--thinking') {
+      options.thinking = args[++i];
+    } else if (arg === '--tools') {
+      options.tools = args[++i].split(',').map(value => value.trim()).filter(Boolean);
     } else if (arg === '--verbose' || arg === '-v') {
       options.verbose = true;
     } else if (arg === '--log-file') {
@@ -271,7 +277,9 @@ OPTIONS:
   --timeout <min>         Timeout per iteration in minutes (default: 60)
   --mcp-config <json>     MCP server configuration JSON
   --gitea-issue           Create/link Gitea issue for tracking
-  --provider <name>       CLI provider: claude (default), codex, opencode, factory
+  --provider <name>       CLI provider: claude (default), codex, opencode, factory, pi
+  --thinking <level>      Provider thinking level (Pi: off..max)
+  --tools <names>         Comma-separated provider tool allow-list
 
 RESEARCH-BACKED OPTIONS (REF-015, REF-021):
   -m, --memory <n|preset>  Memory capacity Ω: 1-10 or preset name
@@ -529,7 +537,7 @@ async function main() {
   await ensureProvidersRegistered();
   const providerName = options.provider || 'claude';
   if (!hasProvider(providerName)) {
-    console.error(`Error: Unknown provider '${providerName}'. Available: claude, codex, opencode, factory`);
+    console.error(`Error: Unknown provider '${providerName}'. Available: claude, codex, opencode, factory, pi`);
     process.exit(1);
   }
 
@@ -631,6 +639,8 @@ async function main() {
         mcpConfig: options.mcpConfig,
         giteaIntegration: options.giteaIssue ? { enabled: true } : null,
         provider: options.provider,
+        thinking: options.thinking,
+        tools: options.tools,
         verbose: options.verbose,
       });
     }

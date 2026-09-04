@@ -385,15 +385,16 @@ describe('steward models', () => {
     consoleSpy.mockRestore();
   });
 
-  it('rejects Pi model routing explicitly until the Pi runtime adapter exists', async () => {
+  it('routes Pi model policy after the Pi runtime adapter is available', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const result = await stewardHandler.execute(makeCtx([
       'models', '--route', '--provider', 'pi', '--complex',
       '--capability-type', 'agent', '--capability', 'software-implementer',
       '--assignment', 'Implement one bounded change.', '--json',
     ]));
-    expect(result.exitCode).toBe(2);
-    expect(result.error?.message).toContain('Model wrapper routing is not implemented for provider: pi');
+    expect(result.exitCode).toBe(0);
+    const envelope = JSON.parse(consoleSpy.mock.calls.map(call => String(call[0])).join('\n'));
+    expect(envelope.model).toMatchObject({ provider: 'pi', outcome: 'native' });
     consoleSpy.mockRestore();
   });
 

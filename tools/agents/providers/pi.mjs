@@ -8,6 +8,7 @@
  */
 
 import path from 'path';
+import fs from 'fs';
 import {
   collectFrameworkArtifacts,
   createAgentsMdFromTemplate,
@@ -30,6 +31,8 @@ export const paths = {
   skills: '.pi/.aiwg/skills',
   rules: '',
 };
+
+export const extensionBridge = 'agentic/code/providers/pi/aiwg-bridge.ts';
 
 export const kernelSkillsPath = '.agents/skills';
 
@@ -109,6 +112,14 @@ export function deployRules() {
   return 0;
 }
 
+export function deployExtensionBridge(targetDir, opts) {
+  const source = path.join(resolveAiwgRoot(opts.srcRoot) || opts.srcRoot, extensionBridge);
+  if (!fs.existsSync(source)) return 0;
+  const destination = path.join(targetDir, '.pi/extensions');
+  ensureDir(destination, opts.dryRun);
+  return deployFiles([source], destination, opts);
+}
+
 export function createAgentsMd(target, srcRoot, dryRun) {
   const aiwgRoot = resolveAiwgRoot(srcRoot) || srcRoot;
   createAgentsMdFromTemplate(target, aiwgRoot, 'pi/AGENTS.md.aiwg-template', dryRun);
@@ -153,6 +164,7 @@ export async function deploy(opts) {
   if (!opts.commandsOnly && !opts.skillsOnly && !opts.rulesOnly) count += deployAgents(agentFiles, opts.target, opts);
   if ((opts.deployCommands || opts.commandsOnly) && !opts.skillsOnly && !opts.rulesOnly) count += deployCommands(commandFiles, opts.target, opts);
   if ((opts.deploySkills || opts.skillsOnly) && !opts.commandsOnly && !opts.rulesOnly) count += deploySkills(skillDirs, opts.target, opts);
+  if (!opts.commandsOnly && !opts.skillsOnly && !opts.rulesOnly) count += deployExtensionBridge(opts.target, opts);
   await postDeploy(opts.target, opts);
   return count;
 }
@@ -160,5 +172,5 @@ export async function deploy(opts) {
 export default {
   name, aliases, paths, kernelSkillsPath, support, capabilities,
   mapModel, transformAgent, transformCommand, deployAgents, deployCommands,
-  deploySkills, deployRules, createAgentsMd, postDeploy, getFileExtension, deploy,
+  deploySkills, deployRules, deployExtensionBridge, createAgentsMd, postDeploy, getFileExtension, deploy,
 };

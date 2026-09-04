@@ -4,9 +4,9 @@
 > [`47236c84450656043dd8fb21c8513d1421505ae3`](https://github.com/earendil-works/pi/commit/47236c84450656043dd8fb21c8513d1421505ae3),
 > verified 2026-09-04.
 
-Pi is an experimental AIWG deployment provider. AIWG currently installs
-declarative context, skills, and prompt templates; it does not install Pi
-extensions or packages. Start with [Install, Connect, and
+Pi is an experimental AIWG deployment provider. AIWG installs declarative
+context, skills, prompt templates, and a reviewed trust-gated policy extension;
+it does not install Pi packages or credentials. Start with [Install, Connect, and
 Verify](../getting-started/install-connect-verify.md) for the general AIWG
 setup journey.
 
@@ -65,6 +65,7 @@ testing without project-local resources.
 | Portable skills and roles | `.agents/skills/*/SKILL.md` | Pi's shared Agent Skills surface |
 | AIWG-managed skills | `.pi/.aiwg/skills/` | Receipted AIWG projection |
 | Prompt templates | `.pi/prompts/*.md` | User-facing AIWG commands |
+| Policy bridge | `.pi/extensions/aiwg-bridge.ts` | Fail-closed headless command policy |
 
 Pi discovers project skills in `.pi/skills/` and `.agents/skills/`, as
 documented in [Skills](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/skills.md).
@@ -91,3 +92,8 @@ skills, extensions, packages, sessions, and Pi's trust decisions.
 For user scope, session handling, OpenRouter examples, limitations, and
 troubleshooting, see the [Pi operational
 reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/providers/pi.md).
+
+External Ralph can launch Pi with `--provider pi`; pass a Pi-native
+`provider/model` identifier using `--model`, and optionally `--thinking` and
+`--tools`. Session ingestion supports authorized Pi v3 JSONL roots; see
+[Pi session acquisition](../providers/pi-sessions.md).

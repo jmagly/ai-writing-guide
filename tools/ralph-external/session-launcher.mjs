@@ -194,6 +194,8 @@ export class SessionLauncher extends EventEmitter {
             verbose: options.verbose,
             systemPrompt: options.systemPrompt,
             mcpConfig: options.mcpConfig,
+            thinking: options.thinking,
+            tools: options.tools,
           })
         : this.buildArgs(options);
       this.startTime = Date.now();
@@ -210,9 +212,10 @@ export class SessionLauncher extends EventEmitter {
       const binary = this.providerAdapter ? this.providerAdapter.getBinary() : 'claude';
       const envOverrides = this.providerAdapter ? this.providerAdapter.getEnvOverrides() : { CI: 'true' };
 
+      const abortInput = this.providerAdapter?.getAbortInput?.();
       this.currentProcess = spawn(binary, args, {
         cwd: options.workingDir,
-        stdio: ['ignore', 'pipe', 'pipe'],
+        stdio: [abortInput ? 'pipe' : 'ignore', 'pipe', 'pipe'],
         env: {
           ...process.env,
           ...envOverrides,
@@ -246,13 +249,15 @@ export class SessionLauncher extends EventEmitter {
         timeoutId = setTimeout(() => {
           timedOut = true;
           this.emit('timeout');
-          child.kill('SIGTERM');
-          // Force kill after 5 seconds if still running
+          if (abortInput && child.stdin?.writable) child.stdin.write(abortInput);
+          const terminateDelay = abortInput ? 2000 : 0;
+          setTimeout(() => child.kill('SIGTERM'), terminateDelay);
+          // Force kill after bounded graceful-abort and termination windows.
           setTimeout(() => {
             if (!child.killed) {
               child.kill('SIGKILL');
             }
-          }, 5000);
+          }, terminateDelay + 5000);
         }, options.timeoutMs);
       }
 

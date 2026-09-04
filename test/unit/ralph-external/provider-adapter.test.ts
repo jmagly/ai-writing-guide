@@ -30,6 +30,7 @@ let ClaudeAdapter: any;
 let CodexAdapter: any;
 let OpenCodeAdapter: any;
 let FactoryAdapter: any;
+let PiAdapter: any;
 
 beforeEach(async () => {
   const adapterMod = await import('../../../tools/ralph-external/lib/provider-adapter.mjs');
@@ -51,6 +52,7 @@ beforeEach(async () => {
 
   const factoryMod = await import('../../../tools/ralph-external/lib/factory-adapter.mjs');
   FactoryAdapter = factoryMod.FactoryAdapter;
+  PiAdapter = (await import('../../../tools/ralph-external/lib/pi-adapter.mjs')).PiAdapter;
 });
 
 // ============================================================================
@@ -81,7 +83,7 @@ describe('ProviderAdapter (base class)', () => {
 
 describe('Provider Registry', () => {
   it('has all core providers registered', () => {
-    const providers = ['claude', 'codex', 'opencode', 'factory'];
+    const providers = ['claude', 'codex', 'opencode', 'factory', 'pi'];
     for (const provider of providers) {
       expect(hasProvider(provider)).toBe(true);
     }
@@ -98,6 +100,7 @@ describe('Provider Registry', () => {
       { name: 'codex', Class: CodexAdapter, caseName: 'CODEX' },
       { name: 'opencode', Class: OpenCodeAdapter, caseName: 'OpenCode' },
       { name: 'factory', Class: FactoryAdapter, caseName: 'Factory' },
+      { name: 'pi', Class: PiAdapter, caseName: 'PI' },
     ];
 
     for (const { name, Class, caseName } of tests) {
@@ -138,6 +141,20 @@ describe('Provider Registry', () => {
     // Note: We can't reliably assert beforeRegistration === false because in test
     // environment the registration might complete synchronously. The key invariant is:
     // after ensureProvidersRegistered(), hasProvider() MUST work correctly.
+  });
+});
+
+describe('PiAdapter', () => {
+  it('uses strict headless JSON, explicit trust denial, and preserves model/thinking/session', () => {
+    const args = new PiAdapter().buildSessionArgs({ prompt: 'task', model: 'openrouter/code',
+      thinking: 'high', sessionId: '/tmp/session.jsonl', tools: ['read', 'bash'] });
+    expect(args).toEqual(['--mode', 'json', '--no-approve', '--model', 'openrouter/code',
+      '--thinking', 'high', '--session', '/tmp/session.jsonl', '--tools', 'read,bash', 'task']);
+  });
+  it('rejects malformed JSONL and distinguishes agent settlement', () => {
+    const adapter = new PiAdapter();
+    expect(adapter.parseOutput('{"type":"agent_end"}\r\n{"type":"agent_settled"}\r\n')).toMatchObject({ settled: true });
+    expect(adapter.parseOutput('{bad}\n')).toBeNull();
   });
 });
 

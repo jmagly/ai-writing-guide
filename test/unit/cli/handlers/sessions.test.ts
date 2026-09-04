@@ -44,7 +44,7 @@ describe('sessions CLI contracts', () => {
       command: 'sessions.sources',
       status: 'ok',
       error: null,
-      data: { count: 12 },
+      data: { count: 13 },
     });
     expect(output.data.providers.map((item: any) => item.provider))
       .toEqual([...output.data.providers.map((item: any) => item.provider)].sort());
@@ -104,6 +104,8 @@ describe('sessions CLI contracts', () => {
         supportedOperations: ['inspect', 'stream'],
         acquisitionModes: ['jsonl'],
       });
+    expect(output.data.providers.find((item: any) => item.provider === 'pi'))
+      .toMatchObject({ disposition: 'implemented', supportedOperations: ['discover', 'inspect', 'stream'], acquisitionModes: ['jsonl'] });
     expect(output.data.providers.find((item: any) => item.provider === 'warp'))
       .toMatchObject({
         disposition: 'manual-only',

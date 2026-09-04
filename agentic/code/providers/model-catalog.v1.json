@@ -52,6 +52,14 @@
       },
       "sourceUrl": "https://opencode.ai/docs/models", "verifiedAt": "2026-07-20"
     },
+    "pi": {
+      "roles": {
+        "reasoning": { "id": "configured/reasoning", "status": "unverified", "observed": false },
+        "coding": { "id": "configured/coding", "status": "unverified", "observed": false },
+        "efficiency": { "id": "configured/efficiency", "status": "unverified", "observed": false }
+      },
+      "sourceUrl": "https://github.com/earendil-works/pi/tree/main/packages/coding-agent#providers--models", "verifiedAt": "2026-09-04"
+    },
     "warp": {
       "roles": {
         "reasoning": { "id": "profile-selected", "status": "unverified", "observed": false },

@@ -17,6 +17,7 @@
     "openclaw": { "agent": "native", "skill": "unsupported", "target": "OpenClaw subagent configuration", "format": "JSON/JSONC runtime configuration", "modelField": "subagents.model" },
     "opencode": { "agent": "native", "skill": "unsupported", "target": ".opencode/agent/*.md", "format": "YAML frontmatter plus Markdown", "modelField": "model" },
     "openhuman": { "agent": "compiled", "skill": "unsupported", "target": "OpenHuman agent TOML", "format": "Standalone TOML agent definition", "modelField": "model_hint" },
+    "pi": { "agent": "native", "skill": "inherited", "target": "Pi headless launch arguments", "format": "Runtime --model and --thinking flags", "modelField": "model", "effortField": "thinking" },
     "warp": { "agent": "global-only", "skill": "unsupported", "target": "Warp agent profile or run configuration", "format": "Saved profile / run control plane" },
     "windsurf": { "agent": "unsupported", "skill": "unsupported", "target": "No supported portable artifact field", "format": "Informational policy only" }
   }

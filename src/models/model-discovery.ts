@@ -79,6 +79,13 @@ export const PROVIDER_DISCOVERY_DECISIONS: Record<string, ProviderDiscoveryDecis
     reason: 'OpenHuman profiles accept semantic model hints but expose no standardized local model-list command.',
     documentation: 'https://github.com/roctinam/openhuman',
   },
+  pi: {
+    provider: 'pi',
+    status: 'native',
+    interface: 'pi --list-models',
+    reason: 'Pi exposes the configured provider/model catalog through a read-only non-interactive table.',
+    documentation: 'https://github.com/earendil-works/pi/tree/main/packages/coding-agent#cli-reference',
+  },
   warp: {
     provider: 'warp',
     status: 'unsupported',
@@ -259,6 +266,33 @@ export async function discoverOpenCodeModels(
       ? { errorKind: 'invalid-output' as const, error: 'OpenCode returned no normalized provider/model rows.' }
       : {}),
   };
+}
+
+export async function discoverPiModels(
+  command = 'pi',
+  runner: ModelDiscoveryCommandRunner = runModelDiscoveryCommand,
+): Promise<ProviderModelDiscovery> {
+  const observedAt = new Date().toISOString();
+  const [version, result] = await Promise.all([
+    runtimeVersion(command, runner),
+    runner(command, ['--list-models'], { cwd: tmpdir(), timeoutMs: 15_000 }),
+  ]);
+  if (result.exitCode !== 0) {
+    const error = result.stderr.trim() || `Pi --list-models exited ${result.exitCode}`;
+    return { provider: 'pi', source: 'native', observedAt,
+      ...(version ? { runtimeVersion: version } : {}), accountScope: 'local-runtime',
+      models: [], errorKind: classifyDiscoveryError(error), error };
+  }
+  const lines = result.stdout.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  const models = lines.slice(1).flatMap(line => {
+    const columns = line.split(/\s{2,}/);
+    if (columns.length < 2 || !/^[a-z0-9][a-z0-9._-]*$/i.test(columns[0])) return [];
+    return [{ id: `${columns[0]}/${columns[1]}` }];
+  });
+  return { provider: 'pi', source: 'native', observedAt,
+    ...(version ? { runtimeVersion: version } : {}), accountScope: 'local-runtime', models,
+    ...(models.length === 0 ? { errorKind: 'invalid-output' as const,
+      error: 'Pi returned no parseable provider/model rows.' } : {}) };
 }
 
 export async function discoverOpenClawModels(
@@ -583,6 +617,7 @@ export async function resolveDynamicModelCatalog(
     codex: () => discoverCodexModels(),
     opencode: () => discoverOpenCodeModels(),
     openclaw: () => discoverOpenClawModels(),
+    pi: () => discoverPiModels(),
   };
   const providerDiscovery: Record<string, ProviderModelDiscovery> = {};
   for (const provider of available) {
