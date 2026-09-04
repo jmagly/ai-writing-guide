@@ -128,6 +128,7 @@ const FAST_HELP_TEXT = `
   DISPATCH
     run skill <name>             Execute a script-bearing skill
     run <script-name>            Run a user-defined script from .aiwg/aiwg.config
+    output-mode <action>         Configure composable output language and presentation
 
   FEATURES
     features                     Show optional feature install status
@@ -183,7 +184,7 @@ const FAST_HELP_TEXT = `
     --use-stable                 Switch back to stable npm package
 ────────────────────────────────────────────────────────
 
-  Providers: claude (default), copilot, factory, codex, cursor, opencode, warp, windsurf
+  Providers: 12 — claude (default), codex, copilot, cursor, factory, hermes, opencode, openclaw, openhuman, pi, warp, windsurf (alias: devin)
 
   Examples:
     aiwg use sdlc                   Install SDLC framework
@@ -232,6 +233,12 @@ function maybeWarnUnbuiltDist() {
   process.exit(1);
 }
 maybeWarnUnbuiltDist();
+
+// Propagate the strict no-write contract through helpers that may resolve
+// installation/channel state before the command context exists.
+if (process.argv.slice(2).includes('--dry-run')) {
+  process.env['AIWG_CLI_DRY_RUN'] = '1';
+}
 
 // Display a cached notice and schedule its refresh before every eligible CLI
 // path, including fast help/version, channel recovery, and later preflight
@@ -299,7 +306,7 @@ trace('bin:entry');
  */
 async function resolveRouterPath() {
   const { loadConfig } = await import('../dist/src/channel/manager.mjs');
-  const config = await loadConfig();
+  const config = await loadConfig({ createIfMissing: !process.argv.slice(2).includes('--dry-run') });
   if (config.devMode && config.edgePath && config.edgePath !== packageRoot) {
     const devRouter = path.join(config.edgePath, 'dist', 'src', 'cli', 'router.js');
     if (!existsSync(devRouter)) {
@@ -414,7 +421,12 @@ async function main() {
       process.exit(1);
     }
     const { assertCanonicalInstallation } = await import(pathToFileURL(identityPath).href);
-    assertCanonicalInstallation({ actualRoot: activePackageRoot });
+    const readOnlyPreview = args.includes('--dry-run');
+    assertCanonicalInstallation({
+      actualRoot: activePackageRoot,
+      createIfMissing: !readOnlyPreview,
+      allowUnrecorded: readOnlyPreview,
+    });
   }
 
   // Wire up the logger level from -v/-vv/--quiet/AIWG_LOG_LEVEL before any

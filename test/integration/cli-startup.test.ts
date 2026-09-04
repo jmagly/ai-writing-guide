@@ -22,7 +22,7 @@
  * making a full build a precondition for the fast unit-test workflow.
  */
 
-import { describe, it, expect } from 'vitest';
+import { afterAll, describe, it, expect } from 'vitest';
 import { spawnSync } from 'child_process';
 import { mkdtempSync, rmSync, existsSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -34,6 +34,9 @@ const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const ROUTER_PATH = path.join(REPO_ROOT, 'dist', 'src', 'cli', 'router.js');
 const BIN_PATH = path.join(REPO_ROOT, 'bin', 'aiwg.mjs');
+const TEST_CONFIG_DIR = mkdtempSync(path.join(os.tmpdir(), 'aiwg-cli-startup-config-'));
+
+afterAll(() => rmSync(TEST_CONFIG_DIR, { recursive: true, force: true }));
 
 // Skip the integration suite if the compiled output isn't present. These
 // tests need the build artifact; running them without it would just produce
@@ -66,6 +69,7 @@ function runCli(
       // Disable the update notifier in tests so no network calls fire.
       NO_UPDATE_NOTIFIER: '1',
       AIWG_NO_UPDATE_CHECK: '1',
+      AIWG_CONFIG: TEST_CONFIG_DIR,
       NO_COLOR: '1',
       ...(opts.env ?? {}),
     },
@@ -192,7 +196,7 @@ describe.skipIf(missingBuild)('CLI integration: non-interactive / CI-friendly pa
     } finally {
       rmSync(tmpDir, { recursive: true, force: true });
     }
-  });
+  }, 65_000);
 });
 
 describe.skipIf(missingBuild)('CLI integration: JSONL logging', () => {

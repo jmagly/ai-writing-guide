@@ -8,7 +8,7 @@
 
 ## The Elevator Pitch
 
-AIWG is a deployment tool and support utility for AI context. At its core, `aiwg use` copies markdown and YAML source files into the specific paths each AI platform looks in — `.claude/agents/`, `.agents/skills/` for Codex, `.cursor/rules/`, `.github/prompts/`, and seven more — so one source of truth works across 11 platforms. Around that core, AIWG ships utilities for things the base platforms do not handle on their own: persistent artifact memory, background orchestration, autonomous loops, artifact indexing, cost telemetry, and health diagnostics. Most utilities are opt-in; the deployment layer works standalone as plain text.
+AIWG is a deployment tool and support utility for AI context. At its core, `aiwg use` copies markdown and YAML source files into the paths each provider reads — `.claude/agents/`, `.agents/skills/`, `.cursor/rules/`, `.github/prompts/`, and provider-specific equivalents — so one source of truth works across 12 named provider integrations. A separate `generic` fallback adapter is available for custom harnesses and is not included in that count. Around that core, AIWG ships utilities for things the base providers do not handle on their own: persistent artifact memory, background orchestration, autonomous loops, artifact indexing, cost telemetry, and health diagnostics. Most utilities are opt-in; the deployment layer works standalone as plain text.
 
 The compounding story matters more than any single file. Hundreds of small artifacts — each a readable, editable `.md` file — snap together into multi-agent workflows (SDLC, forensics, marketing, research) that would otherwise take a bespoke agent platform to build. AIWG implements patterns from cognitive science, multi-agent systems, and software engineering as file conventions and deployment rules, not as a runtime you depend on.
 
@@ -431,7 +431,7 @@ While the walkthrough above focuses on the SDLC framework, AIWG provides five co
 
 ### Multi-Platform Deployment
 
-All frameworks deploy to 8 AI platforms with a single command:
+All frameworks can be projected onto the supported surfaces of 12 named provider integrations with a single command:
 
 ```bash
 aiwg use sdlc                          # Claude Code (default)
@@ -440,8 +440,12 @@ aiwg use sdlc --provider cursor        # Cursor
 aiwg use sdlc --provider warp          # Warp Terminal
 aiwg use sdlc --provider factory       # Factory AI
 aiwg use sdlc --provider opencode      # OpenCode
-aiwg use sdlc --provider openai        # OpenAI/Codex
+aiwg use sdlc --provider codex         # OpenAI Codex
 aiwg use sdlc --provider devin         # Devin Desktop
+aiwg use sdlc --provider hermes        # Hermes
+aiwg use sdlc --provider openclaw      # OpenClaw
+aiwg use sdlc --provider openhuman     # OpenHuman
+aiwg use sdlc --provider pi            # Pi Coding Agent
 ```
 
 Each platform receives agents, commands, skills, and rules adapted to its conventions automatically. Write once, deploy everywhere.

@@ -2,7 +2,7 @@ export function getPackageRoot(): string;
 export function loadConfig(options?: Record<string, unknown>): Promise<any>;
 export function saveConfig(config: any, options?: Record<string, unknown>): Promise<void>;
 export function getChannel(): Promise<string>;
-export function getFrameworkRoot(): Promise<string>;
+export function getFrameworkRoot(options?: Record<string, unknown>): Promise<string>;
 export function switchToEdge(): Promise<void>;
 export function switchToStable(): Promise<void>;
 export function switchToDev(devPath: string): Promise<void>;

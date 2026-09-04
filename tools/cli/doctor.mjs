@@ -943,7 +943,7 @@ async function runDoctor() {
   if (!noBudgetCheck) {
     try {
       const supported = providersToCheck.filter((name) =>
-        ['claude', 'codex', 'copilot', 'cursor', 'factory', 'opencode', 'warp', 'windsurf', 'hermes', 'openhuman'].includes(name),
+        ['claude', 'codex', 'copilot', 'cursor', 'factory', 'opencode', 'pi', 'warp', 'windsurf', 'hermes', 'openhuman'].includes(name),
       );
       const firewall = await scanContextMemoryFirewall({
         rootDir: process.cwd(),

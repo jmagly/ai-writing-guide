@@ -65,6 +65,7 @@
     "integrations/windsurf-quickstart",
     "integrations/hermes-quickstart",
     "integrations/openhuman-quickstart",
+    "integrations/pi-quickstart",
     "integrations/cross-platform-config",
     "openclaw-guide",
     "quickstart-sdlc",
@@ -319,6 +320,7 @@
     "storage/security",
     "providers",
     "providers/capability-matrix",
+    "providers/provider-inventory",
     "project-local/overview",
     "mcp/profiles",
     "mcp/codex-profiles",
@@ -492,7 +494,10 @@
     "addons/dataset-intelligence/migration-guide",
     "addons/dataset-intelligence/offline-troubleshooting",
     "addons/dataset-intelligence/task-guide",
-    "addons/dataset-intelligence/worked-examples"
+    "addons/dataset-intelligence/worked-examples",
+    "addons/voice-framework/custom-output-modes",
+    "addons/voice-framework/output-mode-integration",
+    "addons/voice-framework/output-mode-troubleshooting"
   ],
   "sections": [
     {
@@ -729,6 +734,20 @@
       "title": "Hermes Agent",
       "summary": "Setup AIWG as an MCP sidecar for Hermes Agent",
       "file": "integrations/hermes-quickstart.md",
+      "parent": "integrations"
+    },
+    {
+      "id": "integrations/openhuman-quickstart",
+      "title": "OpenHuman",
+      "summary": "Connect AIWG to OpenHuman",
+      "file": "integrations/openhuman-quickstart.md",
+      "parent": "integrations"
+    },
+    {
+      "id": "integrations/pi-quickstart",
+      "title": "Pi Coding Agent",
+      "summary": "Deploy AIWG context, skills, and prompt templates to Pi",
+      "file": "integrations/pi-quickstart.md",
       "parent": "integrations"
     },
     {
@@ -2507,6 +2526,13 @@
       "parent": "providers"
     },
     {
+      "id": "providers/provider-inventory",
+      "title": "Provider Inventory",
+      "summary": "Canonical list and count of named provider integrations",
+      "file": "providers/provider-inventory.md",
+      "parent": "providers"
+    },
+    {
       "id": "project-local/overview",
       "title": "Project-Local Overview",
       "summary": "Per-project bundles",
@@ -3705,6 +3731,27 @@
       "summary": "These are reviewable workflow examples, not promises that every lifecycle",
       "file": "addons/dataset-intelligence/worked-examples.md",
       "parent": "addons/dataset-intelligence"
+    },
+    {
+      "id": "addons/voice-framework/custom-output-modes",
+      "title": "Custom Output Modes",
+      "summary": "Use a custom output mode when you want repeatable sentence structure, terminology, document organiza",
+      "file": "addons/voice-framework/custom-output-modes.md",
+      "parent": "addons/voice-framework"
+    },
+    {
+      "id": "addons/voice-framework/output-mode-integration",
+      "title": "Output Mode Integration",
+      "summary": "This guide is for skill authors, script authors, and provider-adapter maintainers. A correct integra",
+      "file": "addons/voice-framework/output-mode-integration.md",
+      "parent": "addons/voice-framework"
+    },
+    {
+      "id": "addons/voice-framework/output-mode-troubleshooting",
+      "title": "Output Mode Troubleshooting",
+      "summary": "aiwg output-mode status",
+      "file": "addons/voice-framework/output-mode-troubleshooting.md",
+      "parent": "addons/voice-framework"
     }
   ],
   "pages": [

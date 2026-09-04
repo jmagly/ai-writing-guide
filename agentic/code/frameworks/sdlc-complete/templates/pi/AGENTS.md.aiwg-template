@@ -1,0 +1,20 @@
+# Project Agent Instructions
+
+Read and follow `WORKSPACE.md` first. Then read `AIWG.md` for AIWG discovery,
+quick references, and framework routing.
+
+Pi loads this file through its root-to-working-directory context chain. A nearer
+`AGENTS.override.md` takes precedence, so keep project-specific overrides close
+to the directory where they apply.
+
+{{REMOTES_TOPOLOGY}}
+## AIWG resources
+
+- Shared Agent Skills are discovered from `.agents/skills/`.
+- Pi prompt templates are discovered from `.pi/prompts/` and invoked as `/name`.
+- Skills and prompt templates are distinct; invoke a skill as `/skill:name`.
+- Project resources are trust-gated. Review them, then use `/trust` and restart
+  Pi, or use `pi --approve` for a reviewed one-shot run.
+
+Do not duplicate this context into `.pi/SYSTEM.md`; the canonical context is
+`WORKSPACE.md`, `AIWG.md`, and this `AGENTS.md` bootstrap.

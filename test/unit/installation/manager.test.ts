@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   adoptInstallation,
+  assertCanonicalInstallation,
   createInstallationIdentity,
   inspectInstallation,
   installationFile,
@@ -33,6 +34,19 @@ afterEach(() => {
 });
 
 describe('canonical installation identity', () => {
+  it('permits an explicitly read-only unrecorded inspection without creating identity', () => {
+    const configDir = tempDir('config');
+    const root = packageRoot('aiwg', true);
+    const status = assertCanonicalInstallation({
+      configDir,
+      actualRoot: root,
+      createIfMissing: false,
+      allowUnrecorded: true,
+    });
+    expect(status.state).toBe('unrecorded');
+    expect(fs.existsSync(installationFile({ configDir }))).toBe(false);
+  });
+
   it('honors config override and both legacy user-config locations', () => {
     const home = tempDir('home');
     const override = tempDir('override');

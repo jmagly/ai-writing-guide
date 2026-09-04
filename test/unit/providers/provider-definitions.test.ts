@@ -17,6 +17,7 @@ const CURRENT_PLATFORM_IDS = [
   'opencode',
   'openclaw',
   'openhuman',
+  'pi',
   'warp',
   'windsurf',
   'generic',
@@ -50,7 +51,22 @@ describe('provider definition registry', () => {
     expect(normalizeProviderDefinitionId('devin-desktop')).toBe('windsurf');
     expect(normalizeProviderDefinitionId('devin-local')).toBe('windsurf');
     expect(normalizeProviderDefinitionId('cascade')).toBe('windsurf');
+    expect(normalizeProviderDefinitionId('pi-coding-agent')).toBe('pi');
     expect(normalizeProviderDefinitionId('missing-provider')).toBeNull();
+  });
+
+  it('models Pi native resources without claiming unimplemented bridges', () => {
+    const pi = getProviderDefinition('pi');
+    expect(pi).toBeDefined();
+    expect(pi?.status).toBe('experimental');
+    expect(pi?.detection).toMatchObject({ env: [], process: ['pi'], capabilityId: 'pi' });
+    expect(pi?.paths.kernelSkills).toBe('.agents/skills');
+    expect(pi?.paths.artifacts.commands).toBe('.pi/prompts');
+    expect(pi?.paths.artifacts.behaviors).toBe('.pi/extensions');
+    expect(pi?.context.startupFiles).toEqual(['AGENTS.override.md', 'AGENTS.md', 'CLAUDE.md']);
+    expect(pi?.context.verification.source).toContain('79680533c6b898894f2d2421c7f640b212d3dfdd');
+    expect(pi?.adapters.hookBridge).toBeNull();
+    expect(pi?.adapters.mcpInjection).toBeNull();
   });
 
   it('keeps capability matrix references resolvable for all non-generic providers', () => {

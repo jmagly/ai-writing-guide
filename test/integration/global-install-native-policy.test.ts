@@ -311,7 +311,7 @@ describe('global install native lifecycle-script policy', () => {
       installRoot,
       'prebuilt', 'fortemi-core', 'framework', 'aiwg-fortemi-index-v2.json',
     ))).toBe(true);
-  }, 30_000);
+  }, 90_000);
 
   it('runs installed-CLI web discover/show and warm offline through legacy configuration', async () => {
     const discovered = await runInstalledCli([

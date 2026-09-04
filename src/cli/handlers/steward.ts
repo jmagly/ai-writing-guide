@@ -44,6 +44,7 @@ import { routeModelTier } from '../../models/router.js';
 import { buildWrapperRouteEnvelope, type RoutedCapabilityType } from '../../models/wrapper-route.js';
 import {
   loadProviderModelCatalog,
+  type ModelPolicyProvider,
   type ProviderModelCatalog,
 } from '../../models/provider-policy.js';
 import {
@@ -52,6 +53,10 @@ import {
 } from '../../artifacts/capability-resolver.js';
 
 const BASELINE_PROVIDER = 'claude-code';
+
+function isModelPolicyProvider(provider: string): provider is ModelPolicyProvider {
+  return Object.hasOwn(loadProviderModelCatalog().providers, provider);
+}
 
 interface ResolvedStewardProvider {
   id: string;
@@ -250,7 +255,7 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
     aiwg steward permissions migrate --apply      Back up and atomically normalize config
 
   Providers:
-    claude-code, codex, copilot, cursor, factory, opencode, warp, windsurf, hermes, openclaw
+    claude-code, codex, copilot, cursor, factory, opencode, pi, warp, windsurf, hermes, openclaw
 
   Features:
     cron, agent_teams, tasks, mcp, behaviors, mission_control, daemon
@@ -510,6 +515,12 @@ async function handleSteward(args: string[], ctx?: HandlerContext): Promise<void
         code: 'ERR_USAGE_UNKNOWN_PROVIDER',
         message: `Cannot compile a wrapper route for provider: ${rawProvider ?? '(undetected)'}`,
         hint: 'Pass --provider with a supported provider id.',
+        exitCode: EXIT_CODES.USAGE,
+      });
+      if (!isModelPolicyProvider(provider)) throw new AiwgError({
+        code: 'ERR_USAGE_UNSUPPORTED_PROVIDER',
+        message: `Model wrapper routing is not implemented for provider: ${provider}`,
+        hint: 'Use `aiwg steward capabilities --provider pi` for current Pi capability routing; model routing is tracked separately.',
         exitCode: EXIT_CODES.USAGE,
       });
       const capabilityType = flagValue('--capability-type') as RoutedCapabilityType | undefined;

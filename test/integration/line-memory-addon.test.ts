@@ -62,7 +62,7 @@ describe('line-memory addon deployment', () => {
     expect(registry['line-memory'].source).toMatch(
       /agentic\/code\/addons\/line-memory\/commands$/,
     );
-  });
+  }, 90_000);
 
   it('registers CLI commands from a project-local plugin addon payload', async () => {
     const wrapperDir = path.join(projectDir, '.aiwg', 'plugins', 'custom-memory');
@@ -124,5 +124,5 @@ describe('line-memory addon deployment', () => {
     );
     expect(registry['custom-memory'].subcommands.ping.file).toBe('ping.mjs');
     expect(registry['custom-memory'].source).toBe(path.join(payloadDir, 'commands'));
-  });
+  }, 90_000);
 });

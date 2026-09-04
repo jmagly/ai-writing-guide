@@ -18,6 +18,14 @@ export const hermesHome = resolveHermesHome;
 
 export type Scope = 'project' | 'user';
 
+function piAgentDir(): string {
+  const configured = process.env.PI_CODING_AGENT_DIR;
+  if (!configured) return path.join(homedir(), '.pi', 'agent');
+  if (configured === '~') return homedir();
+  if (configured.startsWith('~/')) return path.join(homedir(), configured.slice(2));
+  return configured;
+}
+
 /**
  * User-scope deploy paths per provider per ADR-4 §2. Each path is absolute
  * (rooted in os.homedir()) so the orchestrator's existing path-join logic
@@ -51,6 +59,18 @@ export const USER_SCOPE_PATHS: Record<string, { agents: string; skills: string; 
     commands: path.join(homedir(), '.codex', 'prompts'),
     rules: '',
     behaviors: '',
+  },
+  pi: {
+    // Pi's global resource root is configurable. Unlike project deployment,
+    // user-scope resources belong under the effective agent directory. Keep
+    // skills on this single native path instead of also copying them to
+    // ~/.agents/skills, which would create duplicate Pi discovery entries.
+    // PI_CODING_AGENT_DIR is configuration only and is not runtime evidence.
+    agents: '',
+    skills: path.join(piAgentDir(), 'skills'),
+    commands: path.join(piAgentDir(), 'prompts'),
+    rules: '',
+    behaviors: path.join(piAgentDir(), 'extensions'),
   },
   copilot: {
     // #1160 — Non-applicable for filesystem user-scope discovery.

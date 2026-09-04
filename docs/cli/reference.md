@@ -1377,9 +1377,11 @@ same framework, project, and codebase graph normalization used by
 `aiwg discover` and `aiwg show`.
 
 Repeated `--output-mode` flags compose invocation-scoped modes with session and
-project state. The resolved ordered profiles are exposed to scripts as
-`AIWG_OUTPUT_MODES` and `AIWG_OUTPUT_MODES_JSON`; provider startup files are not
-rewritten.
+project state. Flags after `--` are forwarded to the child unchanged. The
+resolved ordered profiles are exposed to scripts as `AIWG_OUTPUT_MODES` and
+`AIWG_OUTPUT_MODES_JSON`; an empty stack exports an empty string and `[]` so
+stale parent state cannot leak into a nested run. Provider startup files are
+not rewritten.
 
 **Examples:**
 
@@ -1443,6 +1445,15 @@ resolution is project, user, voice adapter, then built-in; composition order is
 semantic, voice, controlled language, structure, presentation. Unknown modes,
 undeclared same-kind combinations, explicit conflicts, missing requirements,
 and mandatory validation without a configured validator fail safe.
+
+Project profiles live in `.aiwg/output-modes/`. Personal profiles live below
+the active user configuration path reported by `aiwg config path`. Selecting a
+mode resolves and exports policy; the participating skill, script, or provider
+adapter must consume and apply that policy. The `aiwg` package root exports the
+registry and `applyOutputModes` runtime for integrations.
+
+See `docs/addons/voice-framework/output-modes.md` for the user guide,
+custom-profile authoring, integration contract, and troubleshooting links.
 
 **Capabilities:** cli, voice, controlled-language, presentation
 **Tools:** Read, Bash
@@ -4119,7 +4130,7 @@ and the
 
 ### Best-practice usage guidance
 
-Discovery is the operator surface that makes the **kernel + on-demand model** work across all 11 supported providers (Claude Code, Cursor, Factory, Copilot, OpenCode, Warp, Windsurf, OpenClaw, OpenHuman, Hermes, Codex). Each provider deploys a small kernel set of always-loaded quickref skills; everything else sits at `<provider-dir>/.aiwg/skills/` and is reached via `aiwg discover`.
+Discovery is the operator surface that makes the **kernel + on-demand model** work across all 12 named provider integrations (Claude Code, OpenAI Codex, GitHub Copilot, Cursor, Factory AI, Hermes, OpenCode, OpenClaw, OpenHuman, Pi Coding Agent, Warp Terminal, and Devin Desktop). Each provider deploys a small kernel set on its supported skill surface; everything else is reached via `aiwg discover`.
 
 **Lead with discovery, not with memory.** When a user describes a capability, query first:
 

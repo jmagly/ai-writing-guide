@@ -283,7 +283,8 @@ describe.skipIf(!sqliteAvailable)('SqliteGraphBackend', () => {
       seed.addNode('seed');
       seed.close();
 
-      const Database = require('better-sqlite3') as new (path: string) => {
+      const { requireFeaturePackage } = await import('../../../src/features/runtime.js');
+      const Database = requireFeaturePackage('better-sqlite3') as new (path: string) => {
         exec(sql: string): void;
         prepare(sql: string): { get(): unknown };
         close(): void;
@@ -311,7 +312,8 @@ describe.skipIf(!sqliteAvailable)('SqliteGraphBackend', () => {
       const dbPath = join(root, 'graph.db');
       const seed = new SqliteGraphBackend(dbPath);
       seed.close();
-      const Database = require('better-sqlite3') as new (path: string) => {
+      const { requireFeaturePackage } = await import('../../../src/features/runtime.js');
+      const Database = requireFeaturePackage('better-sqlite3') as new (path: string) => {
         exec(sql: string): void;
         close(): void;
       };

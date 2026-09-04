@@ -84,6 +84,13 @@ export const activityLogPostCommandHook: HookHandler = {
   },
 
   async execute(ctx: HookContext): Promise<HookResult> {
+    // A dry-run is a strict no-write contract. The command handler may preview
+    // mutations, but the post-command hook must not create activity.log as a
+    // side effect of that preview.
+    if (ctx.args.includes('--dry-run')) {
+      return { action: 'continue' };
+    }
+
     // Skip on env-var opt-out
     if (isActivityLogSkipped()) {
       return { action: 'continue' };

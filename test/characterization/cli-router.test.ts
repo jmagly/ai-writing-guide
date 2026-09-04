@@ -11,7 +11,7 @@
  * Issue: #61 - Write characterization tests for existing CLI behavior
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, afterAll } from 'vitest';
 import { execSync, spawn, ChildProcess } from 'child_process';
 import { resolve, join } from 'path';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
@@ -19,6 +19,9 @@ import { tmpdir } from 'os';
 
 const PROJECT_ROOT = resolve(__dirname, '../..');
 const BIN_PATH = join(PROJECT_ROOT, 'bin/aiwg.mjs');
+const TEST_CONFIG_DIR = mkdirSync(join(tmpdir(), `aiwg-cli-router-config-${process.pid}`), { recursive: true }) || join(tmpdir(), `aiwg-cli-router-config-${process.pid}`);
+
+afterAll(() => rmSync(TEST_CONFIG_DIR, { recursive: true, force: true }));
 
 /**
  * Helper to run CLI command and capture output
@@ -37,6 +40,12 @@ function runCli(args: string[], options: { cwd?: string; timeout?: number } = {}
       cwd,
       timeout,
       stdio: ['pipe', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        AIWG_CONFIG: TEST_CONFIG_DIR,
+        NO_UPDATE_NOTIFIER: '1',
+        AIWG_NO_UPDATE_CHECK: '1',
+      },
     });
     return { stdout, stderr: '', exitCode: 0 };
   } catch (error: any) {

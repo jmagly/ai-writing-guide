@@ -151,7 +151,7 @@ export function loadInstallationIdentity(options = {}) {
       throw wrapped;
     }
   }
-  if (options.createIfMissing === false) return null;
+  if (options.createIfMissing === false || process.env.AIWG_CLI_DRY_RUN === '1') return null;
   if (!options.actualRoot) return null;
 
   const legacy = options.legacyConfig ?? readLegacy(options) ?? {};
@@ -232,6 +232,10 @@ export function formatInstallationDiagnostic(status) {
 
 export function assertCanonicalInstallation(options = {}) {
   const status = inspectInstallation(options);
+  // A strict dry-run may inspect an installation that has not yet recorded
+  // identity, but must not create installation.json merely to authorize a
+  // read-only preview. Callers must opt into this narrow exception.
+  if (options.allowUnrecorded === true && status.state === 'unrecorded') return status;
   if (status.state !== 'aligned') {
     const error = new Error(formatInstallationDiagnostic(status));
     error.code = 'AIWG_INSTALLATION_DRIFT';

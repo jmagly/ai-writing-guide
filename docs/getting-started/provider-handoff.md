@@ -33,6 +33,7 @@ If more than one provider is present, add the tool name to the first sentence.
 | Hermes | Workspace attached to the project | Hermes context and `AGENTS.md` | “Verify project state and recommend one next action.” |
 | OpenClaw | Project root or OpenClaw workspace | OpenClaw skill and rule paths | “Verify the deployed project and find one capability.” |
 | OpenHuman | Workspace attached to the project | OpenHuman user and project context | “Verify the AIWG context available here.” |
+| Pi Coding Agent | Pi session in the project root | `AGENTS.md`, `.agents/skills/`, and `.pi/prompts/` | “Invoke an AIWG prompt and verify the Pi handoff.” |
 
 ## Honest validation
 
@@ -45,6 +46,10 @@ Some providers load refreshed instructions immediately. Others need one
 restart or workspace reload. Until the current session demonstrates that it
 can use AIWG, describe the handoff as deployment-verified rather than fully
 active.
+
+All 12 named integrations have provider definitions and capability-matrix
+records. This structural and deployment-test coverage is distinct from field
+validation in a live provider session.
 
 ## If verification is unclear
 

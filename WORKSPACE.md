@@ -88,6 +88,7 @@ Multi-agent AI framework for Claude Code, Copilot, Cursor, Warp, and 6 more plat
 - [`.gitea/workflows/npm-publish.yml`](./.gitea/workflows/npm-publish.yml)
 - [`.gitea/workflows/scheduled-docs-release.yml`](./.gitea/workflows/scheduled-docs-release.yml)
 - [`.gitea/workflows/skill-lint-pr.yml`](./.gitea/workflows/skill-lint-pr.yml)
+- [`.gitea/workflows/storage-server-conformance.yml`](./.gitea/workflows/storage-server-conformance.yml)
 - [`.gitea/workflows/upload-release-sigs.yml`](./.gitea/workflows/upload-release-sigs.yml)
 - [`.github/workflows/npm-publish.yml`](./.github/workflows/npm-publish.yml)
 - [`.github/workflows/socket-post-publish.yml`](./.github/workflows/socket-post-publish.yml)

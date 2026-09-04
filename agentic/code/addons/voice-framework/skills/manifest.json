@@ -27,6 +27,11 @@
       "description": "Analyze content to detect voice characteristics",
       "triggers": ["analyze voice", "detect style", "what voice is this", "voice characteristics"],
       "scripts": ["scripts/voice_analyzer.py"]
+    },
+    {
+      "name": "output-mode-guide",
+      "description": "Configure, use, troubleshoot, and extend composable output modes",
+      "triggers": ["use output mask", "configure output modes", "Wittgenstein-inspired style", "engineering standards language", "custom syntax style"]
     }
   ],
   "dependencies": {

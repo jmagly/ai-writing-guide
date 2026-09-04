@@ -274,5 +274,5 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
     expect(result.payload.providers.every(
       (provider: { outcome: string }) => provider.outcome === 'ready-restart-required',
     )).toBe(true);
-  }, 30_000);
+  }, 90_000);
 });

@@ -8,7 +8,7 @@ Beyond the rules, aiwg-utils also provides:
 
 - **5 agents**: `context-regenerator`, `aiwg-developer`, `consortium-coordinator`, `self-debug`, `aiwg-steward`
 - **9 skills**: `project-awareness`, `schedule`, `soul-create`, `soul-validate`, `soul-enhance`, `soul-apply`, `soul-blend`, `aiwg-sync`, `aiwg-guide`
-- **Platform regeneration commands**: `aiwg-regenerate-claude`, `aiwg-regenerate-warp`, `aiwg-regenerate-factory`, and equivalents for all 9 providers
+- **Provider regeneration commands**: provider-native `aiwg-regenerate` prompts or skills across all 12 named integrations, adapted to each provider's command surface
 - **Workspace commands**: `workspace-realign`, `workspace-prune-working`, `workspace-reset`
 - **@-mention tooling**: `mention-wire`, `mention-validate`, `mention-report`, `mention-lint`
 - **Hook management**: `hook-enable`, `hook-disable`, `hook-status`, `hook-regenerate`
@@ -59,7 +59,7 @@ Apply when: Telegram/group-chat bots, multi-bot rooms, direct-message business b
 
 #### native-ux-tools
 
-Use platform-native interaction tools (e.g., Claude Code's AskUserQuestion) for interactive questions rather than plain text. One question per interaction turn. Includes a platform capability matrix for all 8 supported providers; falls back to formatted markdown if native tools are unavailable.
+Use provider-native interaction tools (e.g., Claude Code's AskUserQuestion) for interactive questions rather than plain text. One question per interaction turn. The capability matrix covers all 12 named provider integrations and falls back to formatted markdown if native tools are unavailable.
 
 Apply when: interactive commands (`--interactive` flag), decision gates, intake wizards.
 

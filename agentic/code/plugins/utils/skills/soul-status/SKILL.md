@@ -138,7 +138,7 @@ With `--verbose`, include additional detail:
 ## Workflow
 
 1. Locate SOUL.md (check `./SOUL.md`, `./.aiwg/SOUL.md`)
-2. For each of the 8 providers, check context file existence
+2. For each provider returned by the authoritative provider registry, check context file existence
 3. If context file exists, grep for `@SOUL.md` directive
 4. Check enforcement rule existence
 5. Scan for per-agent `.soul.md` files

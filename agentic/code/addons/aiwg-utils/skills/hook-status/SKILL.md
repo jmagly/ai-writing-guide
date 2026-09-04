@@ -91,7 +91,7 @@ With `--verbose`, include hook file details:
 
 ## Workflow
 
-1. For each of the 8 providers, check context file existence
+1. For each provider returned by the authoritative provider registry, check context file existence
 2. If context file exists, grep for hook directive
 3. If directive found, check hook file existence
 4. Format output with status symbols

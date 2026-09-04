@@ -3286,7 +3286,7 @@ export class UseHandler implements CommandHandler {
         // Profile selection is optional — don't fail deployment
       }
 
-      if (framework === 'aiwg-utils' && !remainingArgs.includes('--dry-run')) {
+      if (framework === 'aiwg-utils' && provider !== 'pi' && !remainingArgs.includes('--dry-run')) {
         const wrapperValidation = await validateDeployedModelWrappers({
           provider: normalizeProviderDefinitionId(provider) ?? provider,
           target,
@@ -3394,6 +3394,7 @@ export class UseHandler implements CommandHandler {
       ? withProviderOverride(deployFilteredArgs, provider)
       : deployFilteredArgs;
     const bulkKernelOnly = framework === 'all'
+      && provider !== 'pi'
       && !remainingArgs.includes('--copy-all')
       && !remainingArgs.includes('--copy-standard-skills');
     if (bulkKernelOnly) providerDeployArgs.push('--kernel-only');
@@ -3603,7 +3604,10 @@ export class UseHandler implements CommandHandler {
     await ensureProviderGeneratedDirsIgnored(target, provider, { dryRun, verbose });
 
     const paths = getProviderPaths(provider);
-    if (!dryRun && !skipUtils && !bulkKernelOnly) {
+    // Pi model selection/headless routing is delivered by #2151. Until that
+    // adapter exists, do not require model-wrapper artifacts that Pi cannot
+    // load; resource deployment remains independently valid.
+    if (!dryRun && !skipUtils && !bulkKernelOnly && provider !== 'pi') {
       const wrapperValidation = await validateDeployedModelWrappers({
         provider,
         target,

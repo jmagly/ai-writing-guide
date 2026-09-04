@@ -12,7 +12,11 @@
     "codex-quickstart",
     "opencode-quickstart",
     "warp-terminal-quickstart",
+    "windsurf-quickstart",
+    "hermes-quickstart",
+    "openhuman-quickstart",
     "openclaw-quickstart",
+    "pi-quickstart",
     "dfir-handoff",
     "cross-platform-config"
   ],

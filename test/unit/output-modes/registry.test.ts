@@ -12,7 +12,10 @@ async function root(): Promise<string> {
   return value;
 }
 
-afterEach(() => { delete process.env.AIWG_SESSION_ID; });
+afterEach(() => {
+  delete process.env.AIWG_SESSION_ID;
+  delete process.env.AIWG_CONFIG;
+});
 
 describe('output mode registry', () => {
   it('uses a true unaltered default when no modes are configured', async () => {
@@ -34,6 +37,34 @@ describe('output mode registry', () => {
     ].join('\n'));
     const registry = await loadOutputModeRegistry(cwd, cwd);
     expect(registry.get('wittgenstein-inspired')).toMatchObject({ version: '2.0.0', source: 'project' });
+  });
+
+  it('loads user profiles from the resolved AIWG config directory', async () => {
+    const cwd = await root();
+    const configDir = join(await root(), 'operator-config');
+    process.env.AIWG_CONFIG = configDir;
+    await mkdir(join(configDir, 'output-modes'), { recursive: true });
+    await writeFile(join(configDir, 'output-modes', 'personal-syntax.yaml'), [
+      'id: personal-syntax', 'version: 1.0.0', 'description: personal syntax',
+      'kind: voice', 'stage: voice', 'instructions: Use short declarative sentences.',
+      'provenance:', '  source: operator', '  license: CC0-1.0',
+      'validation:', '  level: advisory', '',
+    ].join('\n'));
+    const registry = await loadOutputModeRegistry(cwd, cwd);
+    expect(registry.get('personal-syntax')).toMatchObject({ source: 'user', sourcePath: join(configDir, 'output-modes', 'personal-syntax.yaml') });
+  });
+
+  it('rejects malformed nested profile metadata', async () => {
+    const cwd = await root();
+    const dir = join(cwd, '.aiwg', 'output-modes');
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, 'invalid.yaml'), [
+      'id: Invalid ID', 'version: 1.0.0', 'description: invalid',
+      'kind: voice', 'stage: voice', 'instructions: test',
+      'provenance:', '  source: test', '  license: MIT',
+      'validation:', '  level: conformance', '',
+    ].join('\n'));
+    await expect(loadOutputModeRegistry(cwd, cwd)).rejects.toThrow(/id:.*lowercase.*validation\.hook.*validation\.standardVersion/);
   });
 
   it('persists project and session scopes outside provider startup files', async () => {
@@ -58,6 +89,19 @@ describe('output mode registry', () => {
   it('fails safe for unknown modes', async () => {
     const cwd = await root();
     await expect(resolveOutputModes(cwd, cwd, ['provider.future-surface'])).rejects.toThrow(/fail safe/);
+  });
+
+  it('validates proposed project state before it is persisted', async () => {
+    const cwd = await root();
+    const dir = join(cwd, '.aiwg', 'output-modes');
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, 'dependent.yaml'), [
+      'id: dependent', 'version: 1.0.0', 'description: requires another mode',
+      'kind: structure', 'stage: structure', 'instructions: test',
+      'requires: [missing-mode]', 'provenance:', '  source: test', '  license: MIT',
+      'validation:', '  level: advisory', '',
+    ].join('\n'));
+    await expect(resolveOutputModes(cwd, cwd, [], { project: ['dependent'] })).rejects.toThrow(/requires 'missing-mode'/);
   });
 
   it('rejects same-kind composition without a merge strategy', async () => {
@@ -86,6 +130,20 @@ describe('output mode runtime', () => {
       transform: value => value.replace('Explain', 'Clarify'),
     });
     expect(result.content).toBe('Clarify `npm test` and [source](https://example.test).');
+  });
+
+  it('does not confuse pre-existing text with protected-literal tokens', async () => {
+    const cwd = await root();
+    const mode = (await resolveOutputModes(cwd, cwd, ['wittgenstein-inspired'])).modes[0];
+    const marker = '\uE000AIWG_OUTPUT_MODE_0\uE001';
+    const result = await applyOutputModes(`${marker} Preserve \`npm test\`.`, [mode], { transform: value => value });
+    expect(result.content).toBe(`${marker} Preserve \`npm test\`.`);
+  });
+
+  it('rejects transforms that duplicate protected literals', async () => {
+    const cwd = await root();
+    const mode = (await resolveOutputModes(cwd, cwd, ['wittgenstein-inspired'])).modes[0];
+    await expect(applyOutputModes('Run `npm test`.', [mode], { transform: value => `${value} ${value}` })).rejects.toThrow(/duplicated a protected literal/);
   });
 
   it('falls back to the original output after mandatory validation failure', async () => {

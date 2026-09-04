@@ -66,6 +66,34 @@ describe('runHandler', () => {
     });
   });
 
+  describe('output-mode arguments', () => {
+    it('extracts wrapper modes but preserves flags after the forwarding separator', async () => {
+      const { extractOutputModes } = await import('../../../../src/cli/handlers/run.js');
+      expect(extractOutputModes(['skill', 'example', '--output-mode', 'asd-ste', '--', '--output-mode', 'child-mode'])).toEqual({
+        args: ['skill', 'example', '--', '--output-mode', 'child-mode'],
+        modes: ['asd-ste'],
+      });
+    });
+
+    it('clears inherited output-mode variables when the effective stack is unaltered', async () => {
+      const outFile = join(tmpDir, 'mode_env.txt');
+      await writeConfig(tmpDir, { checkmode: `printf '%s|%s' "$AIWG_OUTPUT_MODES" "$AIWG_OUTPUT_MODES_JSON" > "${outFile}"` });
+      process.env.AIWG_OUTPUT_MODES = 'stale-parent-mode';
+      process.env.AIWG_OUTPUT_MODES_JSON = '[{"id":"stale-parent-mode"}]';
+      try {
+        const { runHandler } = await import('../../../../src/cli/handlers/run.js');
+        vi.spyOn(console, 'log').mockImplementation(() => {});
+        const result = await runHandler.execute(makeCtx(tmpDir, ['checkmode']));
+        expect(result.exitCode).toBe(0);
+        const { readFileSync } = await import('fs');
+        expect(readFileSync(outFile, 'utf8')).toBe('|[]');
+      } finally {
+        delete process.env.AIWG_OUTPUT_MODES;
+        delete process.env.AIWG_OUTPUT_MODES_JSON;
+      }
+    });
+  });
+
   describe('no config', () => {
     it('returns exitCode 1 with helpful error when no config exists', async () => {
       const { runHandler } = await import('../../../../src/cli/handlers/run.js');

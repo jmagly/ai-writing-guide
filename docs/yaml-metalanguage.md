@@ -11,7 +11,7 @@ AIWG defines four JSON Schema definitions (expressed as `.schema.json` files) fo
 Declarative YAML definitions are:
 
 - **Validated** — schema-checked at `aiwg validate-metadata` time
-- **Portable** — the same definition deploys across all 8 providers
+- **Portable** — the same definition can be projected onto the supported surfaces of all 12 named provider integrations
 - **Parseable** — tools like `aiwg catalog` and `aiwg index` can read structure without parsing prose
 - **Version-controlled** — diffs are meaningful (a field change, not a prose rewrite)
 

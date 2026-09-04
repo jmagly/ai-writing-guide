@@ -112,6 +112,15 @@
       "resources": "exact"
     },
     {
+      "id": "pi",
+      "location": "project",
+      "root": ".pi/skills",
+      "status": "native",
+      "outcome": "deployed",
+      "validator": "pass",
+      "resources": "exact"
+    },
+    {
       "id": "warp",
       "location": "project",
       "root": ".warp/skills",

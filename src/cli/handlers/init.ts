@@ -40,6 +40,7 @@ const PROVIDER_LABELS: Record<string, string> = {
   codex:     'OpenAI Codex      ~/.codex/',
   openclaw:  'OpenClaw          ~/.openclaw/',
   hermes:    'Hermes (MCP)      aiwg mcp',
+  pi:        'Pi Coding Agent   .pi/ + .agents/skills/',
 };
 
 // Local aliases for the shared prompt utilities. These preserve existing

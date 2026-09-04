@@ -128,6 +128,7 @@ const SKILLS_ONLY_PROVIDERS = new Set([
   'cursor',
   'hermes',
   'openhuman',
+  'pi',
 ]);
 
 /**

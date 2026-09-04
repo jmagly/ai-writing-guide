@@ -319,7 +319,7 @@ exists in the production CLI.
 aiwg steward capabilities --all
 ```
 
-**Response**: Formatted table of all 9 providers x all 6 features, with native/emulated/unsupported indicators.
+**Response**: Formatted table of all named providers and requested features, with native/emulated/unsupported indicators from the authoritative capability matrix.
 
 ## Clarification Prompts
 

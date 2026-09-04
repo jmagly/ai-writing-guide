@@ -315,11 +315,35 @@ describe('rejectOpenClawProjectScope (#1156)', () => {
 });
 
 describe('USER_SCOPE_PATHS coverage', () => {
-  it('covers all 11 supported providers', () => {
-    const expected = ['claude', 'codex', 'copilot', 'cursor', 'opencode', 'warp', 'windsurf', 'hermes', 'openclaw', 'openhuman', 'factory'];
+  it('covers all 12 supported providers', () => {
+    const expected = ['claude', 'codex', 'pi', 'copilot', 'cursor', 'opencode', 'warp', 'windsurf', 'hermes', 'openclaw', 'openhuman', 'factory'];
     for (const p of expected) {
       expect(USER_SCOPE_PATHS[p], `${p} should have user-scope paths`).toBeDefined();
     }
+  });
+
+  it('routes Pi user resources through the default agent directory without duplicate skill roots', () => {
+    const root = path.join(homedir(), '.pi', 'agent');
+    expect(USER_SCOPE_PATHS.pi).toEqual({
+      agents: '',
+      skills: path.join(root, 'skills'),
+      commands: path.join(root, 'prompts'),
+      rules: '',
+      behaviors: path.join(root, 'extensions'),
+    });
+  });
+
+  it('honors PI_CODING_AGENT_DIR for every Pi user resource', async () => {
+    const saved = process.env.PI_CODING_AGENT_DIR;
+    process.env.PI_CODING_AGENT_DIR = '/tmp/pi-user-scope';
+    vi.resetModules();
+    const fresh = await import('../../../src/cli/scope-resolver.js');
+    expect(fresh.USER_SCOPE_PATHS.pi.skills).toBe('/tmp/pi-user-scope/skills');
+    expect(fresh.USER_SCOPE_PATHS.pi.commands).toBe('/tmp/pi-user-scope/prompts');
+    expect(fresh.USER_SCOPE_PATHS.pi.behaviors).toBe('/tmp/pi-user-scope/extensions');
+    if (saved === undefined) delete process.env.PI_CODING_AGENT_DIR;
+    else process.env.PI_CODING_AGENT_DIR = saved;
+    vi.resetModules();
   });
 
   it('uses ~/.agents/skills/ as cross-provider canonical target for the 4 bridge providers', () => {

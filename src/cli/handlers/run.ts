@@ -20,11 +20,15 @@ import { handlerResultFromError } from '../errors.js';
 import * as ui from '../ui.js';
 import { resolveOutputModes } from '../../output-modes/registry.js';
 
-function extractOutputModes(args: string[]): { args: string[]; modes: string[] } {
+export function extractOutputModes(args: string[]): { args: string[]; modes: string[] } {
   const cleaned: string[] = [];
   const modes: string[] = [];
+  let forwarding = false;
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--output-mode') {
+    if (args[i] === '--') {
+      forwarding = true;
+      cleaned.push(args[i]);
+    } else if (!forwarding && args[i] === '--output-mode') {
       const id = args[i + 1];
       if (!id || id.startsWith('-')) throw new Error('--output-mode requires a mode ID');
       modes.push(id);
@@ -71,7 +75,10 @@ export const runHandler: CommandHandler = {
     try { parsed = extractOutputModes(ctx.args); } catch (error) { return { exitCode: 1, message: (error as Error).message }; }
     const scriptName = parsed.args[0];
     const projectDir = getProjectDir(ctx, ctx.args);
-    let outputModeEnv: Record<string, string> = {};
+    let outputModeEnv: Record<string, string> = {
+      AIWG_OUTPUT_MODES: '',
+      AIWG_OUTPUT_MODES_JSON: '[]',
+    };
     try {
       const resolved = await resolveOutputModes(projectDir, ctx.frameworkRoot, parsed.modes);
       if (resolved.modes.length > 0) {

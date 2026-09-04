@@ -15,21 +15,38 @@
     "instructions": { "type": "string" },
     "provenance": {
       "type": "object", "additionalProperties": false, "required": ["source", "license"],
-      "properties": { "source": { "type": "string" }, "license": { "type": "string" } }
+      "properties": { "source": { "type": "string", "minLength": 1 }, "license": { "type": "string", "minLength": 1 } }
     },
     "validation": {
       "type": "object", "additionalProperties": false, "required": ["level"],
       "properties": {
         "level": { "enum": ["advisory", "validated", "conformance"] },
-        "hook": { "type": "string" }, "standardVersion": { "type": "string" }
-      }
+        "hook": { "type": "string", "minLength": 1 }, "standardVersion": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "level": { "enum": ["validated", "conformance"] } }, "required": ["level"] },
+          "then": { "required": ["hook"] }
+        },
+        {
+          "if": { "properties": { "level": { "const": "conformance" } }, "required": ["level"] },
+          "then": { "required": ["standardVersion"] }
+        }
+      ]
     },
-    "compatible": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
-    "conflicts": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
-    "requires": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
-    "supersedes": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
-    "protectedContent": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "compatible": { "type": "array", "items": { "$ref": "#/$defs/modeId" }, "uniqueItems": true },
+    "conflicts": { "type": "array", "items": { "$ref": "#/$defs/modeId" }, "uniqueItems": true },
+    "requires": { "type": "array", "items": { "$ref": "#/$defs/modeId" }, "uniqueItems": true },
+    "supersedes": { "type": "array", "items": { "$ref": "#/$defs/modeId" }, "uniqueItems": true },
+    "protectedContent": {
+      "type": "array",
+      "items": { "enum": ["code", "commands", "citations", "quoted-text", "identifiers", "machine-readable-blocks"] },
+      "uniqueItems": true
+    },
     "contextCost": { "type": "integer", "minimum": 0 },
     "mergeStrategy": { "enum": ["weighted-voice"] }
+  },
+  "$defs": {
+    "modeId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$" }
   }
 }

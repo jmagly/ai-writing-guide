@@ -97,7 +97,7 @@ describe('storage/index resolveStorage', () => {
     ['notion', '#959', { type: 'notion', parent: { pageId: 'abc' } }],
     ['anythingllm', '#960', { type: 'anythingllm', baseUrl: 'http://x', workspace: 'w' }],
     ['s3', '#962', { type: 's3', bucket: 'b', region: 'us-east-1' }],
-    ['webdav', '#963', { type: 'webdav', url: 'http://x', basePath: '/' }],
+    ['webdav', '#963', { type: 'webdav', url: 'http://x' }],
   ] as const)('stub backend %s error points at tracking issue %s (#1087)', async (_type, expectedIssue, backendCfg) => {
     await mkdir(join(projectRoot, '.aiwg'), { recursive: true });
     await writeFile(

@@ -1,6 +1,6 @@
 # Voice Framework Addon
 
-Voice profile system for crafting and applying consistent writing voices. Define custom voices, apply them to content, and create new voices on demand.
+Voice profile and composable output-mode system for crafting and applying consistent writing. Define custom voices, apply runtime language constraints, and create personal or project styles.
 
 ## Overview
 
@@ -29,7 +29,7 @@ Located in `voices/templates/`:
 
 ## Skills
 
-The Voice Framework provides 4 skills (auto-applied based on context):
+The Voice Framework provides 5 skills (auto-applied based on context):
 
 ### voice-apply
 
@@ -67,6 +67,19 @@ Analyze content's current voice characteristics.
 - "What voice is this written in?"
 - "Analyze the tone of this document"
 - "How formal is this content?"
+
+### output-mode-guide
+
+Configure, apply, troubleshoot, or extend composable output modes (also called output masks).
+
+**Triggers:**
+- "Use the Wittgenstein-inspired output mode"
+- "Apply engineering standards language"
+- "Create my preferred syntax style"
+- "Why is this output mask not changing anything?"
+
+See `docs/output-modes.md` for the user guide and links to custom-profile,
+integration, and troubleshooting guidance.
 
 ## Voice Profile Locations
 

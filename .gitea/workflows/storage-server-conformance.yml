@@ -55,7 +55,7 @@ jobs:
 
       - name: Preserve PostgreSQL qualification evidence
         if: always()
-        uses: actions/upload-artifact@c24449f33cd45d4826c6702db7e49f7cdb9b551d  # v3.2.1-node20
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: storage-postgres-${{ gitea.sha }}
           path: test-results/storage/
@@ -102,7 +102,7 @@ jobs:
 
       - name: Preserve PostgREST qualification evidence
         if: always()
-        uses: actions/upload-artifact@c24449f33cd45d4826c6702db7e49f7cdb9b551d  # v3.2.1-node20
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: storage-postgrest-${{ gitea.sha }}
           path: test-results/storage/

@@ -127,6 +127,11 @@ describe('activity-log auto-append hook (#978)', () => {
       expect(existsSync(logPath)).toBe(false);
     });
 
+    it('skips all writes for --dry-run commands', async () => {
+      await activityLogPostCommandHook.execute(makeCtx('use', ['all', '--provider', 'pi', '--dry-run'], { exitCode: 0 }));
+      expect(existsSync(logPath)).toBe(false);
+    });
+
     it('skips when AIWG_SKIP_ACTIVITY_LOG=true (case-insensitive)', async () => {
       process.env.AIWG_SKIP_ACTIVITY_LOG = 'TRUE';
       await activityLogPostCommandHook.execute(makeCtx('use', ['sdlc'], { exitCode: 0 }));

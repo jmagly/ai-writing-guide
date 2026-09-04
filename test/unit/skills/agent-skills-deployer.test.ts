@@ -130,6 +130,7 @@ describe('managed Agent Skills provider matrix', () => {
       ['opencode', 'native'],
       ['openclaw', 'native'],
       ['openhuman', 'projected'],
+      ['pi', 'native'],
       ['warp', 'native'],
       ['windsurf', 'projected'],
       ['generic', 'native'],

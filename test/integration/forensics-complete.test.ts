@@ -418,12 +418,19 @@ describe('Deployment Scaffold', () => {
     // Per issue #1516, scaffold lives under .aiwg/frameworks/forensics-complete/
     // not the legacy top-level .aiwg/forensics/.
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-dfir-use-'));
+    const configDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aiwg-dfir-config-'));
     try {
       const result = spawnSync(process.execPath, [BIN, 'use', 'forensics', '--target', dir, '--provider', 'claude', '--copy-all', '--no-project-local'], {
         cwd: dir,
         encoding: 'utf8',
         timeout: 120_000,
-        env: { ...process.env, AIWG_ROOT: REPO_ROOT },
+        env: {
+          ...process.env,
+          AIWG_ROOT: REPO_ROOT,
+          AIWG_CONFIG: configDir,
+          NO_UPDATE_NOTIFIER: '1',
+          AIWG_NO_UPDATE_CHECK: '1',
+        },
       });
       expect(result.status, result.stdout + result.stderr).toBe(0);
       const scopedBase = path.join(dir, '.aiwg/frameworks/forensics-complete');
@@ -435,6 +442,7 @@ describe('Deployment Scaffold', () => {
       expect(fs.existsSync(path.join(dir, '.aiwg/forensics'))).toBe(false);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
+      fs.rmSync(configDir, { recursive: true, force: true });
     }
   }, 130_000);
 });

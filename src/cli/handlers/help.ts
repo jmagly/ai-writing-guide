@@ -104,6 +104,7 @@ function displayHelp(): void {
   helpGroup('DISPATCH', [
     ['run skill <name>', 'Execute a script-bearing skill'],
     ['run <script-name>', 'Run a user-defined script from .aiwg/aiwg.config'],
+    ['output-mode <action>', 'Configure composable output language and presentation'],
   ]);
 
   helpGroup('FEATURES', [
@@ -167,7 +168,7 @@ function displayHelp(): void {
 
   ui.rule();
   ui.blank();
-  console.log(`  ${ui.dimText('Providers:')} claude (default), copilot, factory, codex, cursor, opencode, warp, windsurf`);
+  console.log(`  ${ui.dimText('Providers:')} 12 — claude (default), codex, copilot, cursor, factory, hermes, opencode, openclaw, openhuman, pi, warp, windsurf (alias: devin)`);
   ui.blank();
   console.log(`  ${ui.dimText('Examples:')}`);
   console.log(`    aiwg use sdlc                   ${ui.dimText('Install SDLC framework')}`);

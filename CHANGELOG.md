@@ -83,6 +83,20 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- **Pi Coding Agent is available as an experimental resource-first provider** -
+  `aiwg use all --provider pi` deploys a Pi-neutral `AGENTS.md`, portable Agent
+  Skills, and native `.pi/prompts` templates at project or relocated user scope.
+  Provider detection, steward/doctor reporting, dry-run safety, deployment
+  receipts, planning records, and end-to-end coverage are included. Public docs
+  now publish the canonical 12-provider inventory, Pi setup and operational
+  guides, and accurate provider counts across the primary site references.
+
+- **Output modes now have a supported extension and discovery surface** - The
+  output-mode registry and protected transformation runtime are exported from
+  the package API, an indexed guide responds to output-mask, Wittgenstein,
+  engineering-language, and custom-syntax requests, and a four-part guide set
+  covers use, personal profiles, runtime integration, and troubleshooting.
+
 - **Ops outputs now cross a mandatory redaction boundary** - A public text,
   stream, and nested-structured API sanitizes common and project-defined secret
   classes before responses or persistent/external sinks. Typed markers preserve
@@ -103,6 +117,13 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   reversible holds and payload-free disposition receipts (jmagly/aiwg#180).
 
 ### Fixed
+
+- **Output-mode selection now fails safe before persistence and execution** -
+  Proposed project and session stacks are validated before state is saved,
+  personal profiles follow the active AIWG user-config resolver, nested runs
+  clear stale mode variables, child flags after `--` remain untouched, strict
+  profile/state validation rejects malformed policy, and protected literals
+  cannot be removed, duplicated, or confused with input text.
 
 - **Ops extension YAML templates now honor their declared schemas** - IT asset,
   service, and network-state templates use strict first-class IT kinds, the

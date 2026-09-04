@@ -352,7 +352,7 @@ async function buildContext(
   rawArgs: string[],
   options: { cwd?: string; signal?: AbortSignal }
 ): Promise<HandlerContext> {
-  const frameworkRoot = await getFrameworkRoot();
+  const frameworkRoot = await getFrameworkRoot({ createIfMissing: !args.includes('--dry-run') });
   const ctx: HandlerContext = {
     args,
     rawArgs,

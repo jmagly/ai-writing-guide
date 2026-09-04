@@ -93,4 +93,31 @@ describe('provider inventory', () => {
     });
     expect(warp.reasons.join(' ')).toContain('Configure or install');
   });
+
+  it('requires runtime evidence for Pi and does not treat configuration as installation', async () => {
+    const { project, home } = await fixture();
+    await writeFile(join(project, '.aiwg/aiwg.config'), JSON.stringify({
+      version: '1', providers: ['pi'], installed: {}, scripts: {},
+    }));
+
+    const configured = await collectProviderInventory(project, {
+      homeDir: home,
+      env: { PATH: '/fixture/bin', PI_CODING_AGENT_DIR: '/fixture/pi-config' },
+      detectProcess: false,
+      findExecutable: async () => null,
+    });
+    expect(configured.providers.find(provider => provider.id === 'pi')).toMatchObject({
+      configured: true, detected: false, available: false,
+    });
+
+    const installed = await collectProviderInventory(project, {
+      homeDir: home,
+      env: { PATH: '/fixture/bin' },
+      detectProcess: false,
+      findExecutable: async names => names.includes('pi') ? '/fixture/bin/pi' : null,
+    });
+    expect(installed.providers.find(provider => provider.id === 'pi')).toMatchObject({
+      configured: true, detected: true, available: true,
+    });
+  });
 });

@@ -20,7 +20,7 @@
  *   --rules-only             Deploy only rules (skip agents)
  *   --dry-run                Show what would be deployed without writing
  *   --force                  Overwrite existing files
- *   --provider <name>        Target provider: claude (default), openai, codex, cursor, opencode, copilot, factory, warp, devin, hermes, or openclaw
+ *   --provider <name>        Target provider: claude (default), openai, codex, cursor, opencode, copilot, factory, pi, warp, devin, hermes, or openclaw
  *   --model <name>            Override model for all tiers (blanket)
  *   --reasoning-model <name> Override model for reasoning tasks
  *   --coding-model <name>    Override model for coding tasks
@@ -52,6 +52,7 @@
  *   devin     - Devin Desktop - .windsurf/agents/, .windsurf/workflows/, .windsurf/skills/, .windsurf/rules/
  *   windsurf  - Deprecated alias for devin
  *   openclaw  - OpenClaw - ~/.openclaw/agents/, ~/.openclaw/commands/, ~/.openclaw/skills/, ~/.openclaw/rules/, ~/.openclaw/behaviors/
+ *   pi        - Pi Coding Agent - .agents/skills/, .pi/skills/, .pi/prompts/, AGENTS.md
  *
  * Defaults:
  *   --source resolves relative to this script's repo root (../..)
@@ -108,9 +109,10 @@ const PROVIDER_ALIASES = {
   'devin-desktop': 'windsurf',
   'devin-local': 'windsurf',
   'cascade': 'windsurf',
+  'pi-coding-agent': 'pi',
 };
 
-const AVAILABLE_PROVIDERS = ['claude', 'factory', 'codex', 'opencode', 'copilot', 'cursor', 'warp', 'windsurf', 'hermes', 'openclaw', 'openhuman'];
+const AVAILABLE_PROVIDERS = ['claude', 'factory', 'codex', 'opencode', 'copilot', 'cursor', 'pi', 'warp', 'windsurf', 'hermes', 'openclaw', 'openhuman'];
 
 const UNSUPPORTED_PROVIDER_HINTS = {
   'devin-cli': [
@@ -152,7 +154,7 @@ const MIRRORED_KERNEL_COMMAND_SKILLS = new Set([
 ]);
 
 function providerUsesSkillsNatively(providerName) {
-  return ['claude', 'cursor', 'hermes', 'openhuman'].includes(providerName);
+  return ['claude', 'cursor', 'hermes', 'openhuman', 'pi'].includes(providerName);
 }
 
 function shouldMirrorStandardCommandSkill(skillName) {
@@ -762,6 +764,10 @@ function deepMerge(target, source) {
 async function promptCommandsMigration(cfg, provider, targetDir) {
   // Home-directory providers share commands across projects — do not delete.
   if (provider.capabilities?.homeDirectoryDeploy) return false;
+  // Some providers intentionally expose both surfaces with different runtime
+  // semantics. Pi prompt templates (/name) are not aliases for Agent Skills
+  // (/skill:name), so command-to-skill migration would destroy valid prompts.
+  if (provider.capabilities?.parallelCommandAndSkillSurfaces) return false;
 
   const commandsRelPath = provider.paths?.commands;
   if (!commandsRelPath) return false;

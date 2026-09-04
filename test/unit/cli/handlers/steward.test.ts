@@ -60,6 +60,19 @@ const sampleMatrix = {
       deploy_target: 'project',
       aggregated_output: false,
     },
+    pi: {
+      display_name: 'Pi Coding Agent',
+      aliases: ['pi-coding-agent'],
+      status: 'experimental',
+      daemon_tier: 'unsupported',
+      daemon_pty_adapter: false,
+      artifact_paths: {},
+      native_features: { cron: false, mission_control: false, daemon: false, tasks: false, mcp: false, behaviors: false },
+      emulation: { cron: 'external-trigger', mission_control: 'aiwg-mc', daemon: null, tasks: 'aiwg-mc', mcp: null, behaviors: null },
+      hook_wiring: { at_link_support: false, context_file: 'AGENTS.md' },
+      deploy_target: 'project',
+      aggregated_output: false,
+    },
   },
 };
 
@@ -194,6 +207,17 @@ describe('steward capabilities --provider', () => {
     expect(output).toContain('cron — ↗ external');
     expect(output).toContain('AIWG does not own the clock');
     expect(output).not.toContain('aiwg-schedule');
+    consoleSpy.mockRestore();
+  });
+
+  it('reports Pi capabilities from the canonical matrix', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const result = await stewardHandler.execute(makeCtx(['capabilities', '--provider', 'pi-coding-agent']));
+    expect(result.exitCode).toBe(0);
+    const output = consoleSpy.mock.calls.map(([value]) => String(value)).join('\n');
+    expect(output).toContain('Provider: Pi Coding Agent');
+    expect(output).toContain('cron — ↗ external');
+    expect(output).toContain('daemon — - not supported');
     consoleSpy.mockRestore();
   });
 
@@ -358,6 +382,18 @@ describe('steward models', () => {
     });
     expect(envelope.capability.id).toMatch(/^aiwg:agent:/);
     expect(envelope.launch.mechanism).toBe('aiwg-mc');
+    consoleSpy.mockRestore();
+  });
+
+  it('rejects Pi model routing explicitly until the Pi runtime adapter exists', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const result = await stewardHandler.execute(makeCtx([
+      'models', '--route', '--provider', 'pi', '--complex',
+      '--capability-type', 'agent', '--capability', 'software-implementer',
+      '--assignment', 'Implement one bounded change.', '--json',
+    ]));
+    expect(result.exitCode).toBe(2);
+    expect(result.error?.message).toContain('Model wrapper routing is not implemented for provider: pi');
     consoleSpy.mockRestore();
   });
 

@@ -411,6 +411,9 @@
     "source": "agentic/code/addons/voice-framework/docs",
     "dest": "docs/addons/voice-framework",
     "files": [
+      "custom-output-modes.md",
+      "output-mode-integration.md",
+      "output-mode-troubleshooting.md",
       "output-modes.md",
       "overview.md",
       "quickstart.md"

@@ -279,6 +279,16 @@
       "max_rank": 5
     },
     {
+      "id": "voice-output-mask",
+      "domain": "voice-framework",
+      "phrase": "output mask",
+      "type_filter": ["skill"],
+      "expected_path": "agentic/code/addons/voice-framework/skills/output-mode-guide/SKILL.md",
+      "expected_type": "skill",
+      "max_rank": 1,
+      "expected_top_path": "agentic/code/addons/voice-framework/skills/output-mode-guide/SKILL.md"
+    },
+    {
       "id": "twelve-factor-audit",
       "domain": "architecture",
       "phrase": "twelve factor audit evidence",

@@ -148,4 +148,6 @@ The voice-apply skill generates all three in a single response, applying the app
 ## References
 
 - `@$AIWG_ROOT/agentic/code/addons/voice-framework/docs/overview.md` — Profile schema and full skill list
+- `@$AIWG_ROOT/agentic/code/addons/voice-framework/docs/output-modes.md` — Apply voices with composable invocation, session, or project policy
+- `@$AIWG_ROOT/agentic/code/addons/voice-framework/docs/custom-output-modes.md` — Turn a preferred syntax into a custom output mode
 - `@$AIWG_ROOT/agentic/code/addons/voice-framework/voices/templates/` — Built-in profile YAML files

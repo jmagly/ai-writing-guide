@@ -20,6 +20,7 @@ const PROVIDER_EXECUTABLES: Partial<Record<Platform, string[]>> = {
   opencode: ['opencode'],
   openclaw: ['openclaw'],
   openhuman: ['openhuman'],
+  pi: ['pi'],
   warp: ['warp'],
   windsurf: ['windsurf'],
 };

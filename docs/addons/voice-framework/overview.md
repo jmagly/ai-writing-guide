@@ -38,7 +38,7 @@ Relaxed, personal, opinion-forward. Appropriate for blog posts, social media, ne
 
 Characteristics: first-person perspective, opinions stated directly (not hedged), shorter paragraphs, conversational connectives.
 
-## The Four Skills
+## The Five Skills
 
 ### voice-apply
 
@@ -67,6 +67,13 @@ Analyze the current voice characteristics of existing content.
 Natural language triggers: "What voice is this written in?," "Analyze the tone of this document," "How formal is this content?"
 
 Output is a structured analysis mapping the content against the profile schema dimensions (formality, confidence, warmth, energy, vocabulary patterns, structural patterns).
+
+### output-mode-guide
+
+Configure, apply, troubleshoot, or extend composable output modes. Natural
+language triggers include “use an output mask,” “use Wittgenstein-inspired
+style,” “apply engineering standards language,” and “create my preferred
+syntax style.”
 
 ## Profile Resolution Order
 
@@ -107,6 +114,10 @@ aiwg use all
 ## References
 
 - `@$AIWG_ROOT/agentic/code/addons/voice-framework/docs/quickstart.md` — Apply your first voice profile
+- `@$AIWG_ROOT/agentic/code/addons/voice-framework/docs/output-modes.md` — Select and compose runtime output modes
+- `@$AIWG_ROOT/agentic/code/addons/voice-framework/docs/custom-output-modes.md` — Author a personal syntax or project house style
+- `@$AIWG_ROOT/agentic/code/addons/voice-framework/docs/output-mode-integration.md` — Integrate a transformer or validator
+- `@$AIWG_ROOT/agentic/code/addons/voice-framework/docs/output-mode-troubleshooting.md` — Diagnose selection and runtime problems
 - `@$AIWG_ROOT/agentic/code/addons/voice-framework/voices/templates/` — Built-in profile files
 - `@$AIWG_ROOT/agentic/code/addons/voice-framework/schemas/voice-profile.schema.json` — Profile schema
 - `@$AIWG_ROOT/agentic/code/addons/voice-framework/schemas/output-mode-profile.schema.json` — Output-mode profile schema

@@ -1137,7 +1137,7 @@ export const outputModeCommand: Extension = {
   description: 'List, inspect, enable, disable, clear, and report composable output modes',
   version: '1.0.0',
   capabilities: ['cli', 'voice', 'output-mode', 'controlled-language', 'presentation'],
-  keywords: ['output-mode', 'voice', 'style', 'asd-ste', 'presentation'],
+  keywords: ['output-mode', 'output-mask', 'voice', 'style', 'syntax', 'wittgenstein', 'asd-ste', 'engineering-language', 'controlled-language', 'presentation'],
   category: 'project',
   platforms: { claude: 'full', generic: 'full' },
   deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },

@@ -32,6 +32,7 @@ const PROVIDERS = [
   { id: 'hermes', root: (_project: string, home: string) => join(home, '.hermes/skills'), standardRoot: (_project: string, home: string) => join(home, '.hermes/skills/.aiwg') },
   { id: 'openclaw', root: (_project: string, home: string) => join(home, '.openclaw/skills/aiwg'), standardRoot: (_project: string, home: string) => join(home, '.openclaw/.aiwg/skills') },
   { id: 'openhuman', root: (_project: string, home: string) => join(home, '.openhuman/skills'), standardRoot: (_project: string, home: string) => join(home, '.openhuman/.aiwg/skills') },
+  { id: 'pi', root: (project: string) => join(project, '.agents/skills'), standardRoot: (project: string) => join(project, '.pi/.aiwg/skills') },
 ] as const;
 
 function skillDirs(parent: string): string[] {
@@ -280,7 +281,7 @@ describe('kernel deployment conformance', () => {
 
   it('matches the command mirror policy for every deployable provider', () => {
     const commandProviders = ['factory', 'opencode', 'warp', 'windsurf', 'copilot', 'codex', 'openclaw'];
-    const nativeOnlyProviders = ['claude', 'cursor', 'hermes', 'openhuman'];
+    const nativeOnlyProviders = ['claude', 'cursor', 'hermes', 'openhuman', 'pi'];
     expect(PROVIDERS.map(provider => provider.id).sort()).toEqual(
       [...commandProviders, ...nativeOnlyProviders].sort(),
     );

@@ -213,8 +213,8 @@ export async function getChannel() {
  * Get the framework root path based on current channel
  * @returns {Promise<string>} Path to framework root
  */
-export async function getFrameworkRoot() {
-  const config = await loadConfig();
+export async function getFrameworkRoot(options = {}) {
+  const config = await loadConfig(options);
 
   if (config.channel === 'edge') {
     // Check if edge installation exists

@@ -1,6 +1,8 @@
 # Cross-Platform Overview
 
-AIWG works across multiple AI platforms. **One command deploys everything.**
+AIWG has 12 named provider integrations plus a provider-neutral `generic`
+fallback adapter. **One command projects AIWG onto the surfaces supported by
+the selected provider.**
 
 ---
 
@@ -11,18 +13,22 @@ AIWG works across multiple AI platforms. **One command deploys everything.**
 | Claude Code | `aiwg use sdlc` | CLAUDE.md |
 | OpenAI/Codex | `aiwg use sdlc --provider codex` | AGENTS.md |
 | GitHub Copilot | `aiwg use sdlc --provider copilot` | copilot-instructions.md |
-| Factory AI | `aiwg use sdlc --provider factory` | AGENTS.md |
 | Cursor | `aiwg use sdlc --provider cursor` | .cursor/rules/ (MDC) |
+| Factory AI | `aiwg use sdlc --provider factory` | AGENTS.md |
+| Hermes | `aiwg use sdlc --provider hermes` | AGENTS.md |
 | OpenCode | `aiwg use sdlc --provider opencode` | AGENTS.md |
+| OpenClaw | `aiwg use sdlc --provider openclaw` | AGENTS.md |
+| OpenHuman | `aiwg use sdlc --provider openhuman` | Provider-managed |
+| Pi Coding Agent | `aiwg use sdlc --provider pi` | AGENTS.md |
 | Warp Terminal | `aiwg use sdlc --provider warp` | WARP.md |
 | Devin Desktop | `aiwg use sdlc --provider devin` | AGENTS.md |
-| OpenClaw | `aiwg use sdlc --provider openclaw` | - |
 
 ---
 
 ## What Gets Deployed
 
-All artifact types deploy automatically in each platform's native format:
+Artifacts deploy in each provider's native or compatibility format when that
+provider exposes the corresponding surface:
 
 - **Agents** - Specialized AI personas (Architecture Designer, Test Engineer, Security Auditor, etc.)
 - **Commands** - Slash commands and CLI commands (`/mention-wire`, `transition`, `where-are-we`)
@@ -39,12 +45,15 @@ All artifact types deploy automatically in each platform's native format:
 | Claude Code | native | native | native | native | - |
 | OpenAI/Codex | native | native | native | conventional | - |
 | GitHub Copilot | native | native | conventional | native | - |
-| Factory AI | native | native | native | conventional | - |
 | Cursor | conventional | conventional | native | native | - |
+| Factory AI | native | native | native | conventional | - |
+| Hermes | unsupported | unsupported | native | unsupported | unsupported |
 | OpenCode | native | native | conventional | conventional | - |
+| OpenClaw | native | native | native | native | native |
+| OpenHuman | unsupported | unsupported | native | conventional | unsupported |
+| Pi Coding Agent | skills-as-agents | native prompts | native | AGENTS.md | reserved extensions |
 | Warp Terminal | aggregated | conventional | native | aggregated | - |
 | Devin Desktop | aggregated | native | native | native | - |
-| OpenClaw | native | native | native | native | native |
 
 **Legend**:
 - **native** - Platform auto-discovers artifacts in standard directories
@@ -83,6 +92,9 @@ Most providers follow `.<provider>/<type>/`:
 | **Devin Desktop** | Agents aggregated to `AGENTS.md`<br>Commands → `.windsurf/workflows/`<br>Rules → `.windsurf/rules/*.md` (with trigger frontmatter)<br>Skills → `.windsurf/skills/`<br>Legacy selector: `windsurf` |
 | **Cursor** | Rules use `.mdc` extension (MDC format) with frontmatter (`description`, `globs`, `alwaysApply`)<br>Skills use native `.cursor/skills/*/SKILL.md` format (2.4+)<br>Also supports `AGENTS.md` with directory inheritance<br>Legacy `.cursorrules` still generated for backward compatibility<br>Cloud Agents support MCP for remote AIWG access |
 | **OpenClaw** | All artifacts deploy to home directory (`~/.openclaw/`)<br>First provider to support behaviors (`~/.openclaw/behaviors/`) |
+| **Pi Coding Agent** | Commands → project `.pi/prompts/*.md`<br>Portable skills and agent roles → project `.agents/skills/*/SKILL.md`<br>AIWG-managed standard skills → `.pi/.aiwg/skills/`<br>Context → `AGENTS.md`<br>User scope honors `${PI_CODING_AGENT_DIR:-~/.pi/agent}` |
+| **Hermes** | Skills deploy at user scope under `~/.hermes/skills/.aiwg/`; unsupported artifact classes are not falsely advertised |
+| **OpenHuman** | Skills and rules deploy at user scope under `~/.openhuman/.aiwg/`; agent and command surfaces are unsupported |
 
 ---
 
@@ -137,6 +149,9 @@ See [Al Guide](../ralph-guide.md) for full documentation.
 | Warp Terminal | [Setup Guide](warp-terminal-quickstart.md) |
 | Devin Desktop | [Setup Guide](windsurf-quickstart.md) |
 | OpenClaw | [Setup Guide](openclaw-quickstart.md) |
+| Hermes | [Setup Guide](hermes-quickstart.md) |
+| OpenHuman | [Setup Guide](openhuman-quickstart.md) |
+| Pi Coding Agent | [Setup Guide](pi-quickstart.md) |
 
 ---
 

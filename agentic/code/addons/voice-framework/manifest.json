@@ -29,7 +29,8 @@
     "voice-apply",
     "voice-create",
     "voice-blend",
-    "voice-analyze"
+    "voice-analyze",
+    "output-mode-guide"
   ],
   "voices": [
     "technical-authority",

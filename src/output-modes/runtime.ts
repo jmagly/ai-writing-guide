@@ -35,8 +35,10 @@ function protectedPattern(classes: string[]): RegExp | null {
 function protect(content: string, classes: string[]): { content: string; literals: ProtectedLiteral[] } {
   const literals: ProtectedLiteral[] = [];
   const pattern = protectedPattern(classes);
+  let tokenPrefix = '\uE000AIWG_OUTPUT_MODE_';
+  while (content.includes(tokenPrefix)) tokenPrefix += '_';
   const protectedContent = pattern ? content.replace(pattern, value => {
-    const token = `\uE000${literals.length}\uE001`;
+    const token = `${tokenPrefix}${literals.length}\uE001`;
     literals.push({ token, value });
     return token;
   }) : content;
@@ -46,8 +48,9 @@ function protect(content: string, classes: string[]): { content: string; literal
 function restore(content: string, literals: ProtectedLiteral[], mode: string): string {
   let restored = content;
   for (const literal of literals) {
-    if (!restored.includes(literal.token)) throw new Error(`Output mode '${mode}' modified or removed a protected literal.`);
-    restored = restored.replaceAll(literal.token, literal.value);
+    const occurrences = restored.split(literal.token).length - 1;
+    if (occurrences !== 1) throw new Error(`Output mode '${mode}' modified, removed, or duplicated a protected literal.`);
+    restored = restored.replace(literal.token, literal.value);
   }
   return restored;
 }
@@ -58,9 +61,9 @@ export async function applyOutputModes(input: string, modes: ResolvedOutputMode[
   const diagnostics: OutputModeValidationDiagnostic[] = [];
   const applied: string[] = [];
   for (const mode of modes) {
-    const snapshot = content;
     const masked = protect(content, mode.protectedContent ?? []);
     const transformed = await options.transform(masked.content, mode);
+    if (typeof transformed !== 'string') throw new Error(`Output mode '${mode.id}' transform returned a non-string result.`);
     content = restore(transformed, masked.literals, mode.id);
     if (mode.validation.level !== 'advisory') {
       if (!options.validate) throw new Error(`Output mode '${mode.id}' declares ${mode.validation.level} validation but no validator is configured.`);
@@ -71,8 +74,6 @@ export async function applyOutputModes(input: string, modes: ResolvedOutputMode[
         return { content: input, diagnostics, applied, fallback: 'unaltered' };
       }
     }
-    // A transform may only change semantic presentation, never return an absent result.
-    if (typeof content !== 'string') content = snapshot;
     applied.push(mode.id);
   }
   return { content, diagnostics, applied, fallback: 'none' };
