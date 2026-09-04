@@ -18,25 +18,33 @@ describe('storage conformance CI gate (#2191)', () => {
     expect(workflow).not.toContain('npm run test:conformance:storage:server');
   });
 
-  it('declares manual-only isolated PostgreSQL and PostgREST evidence jobs', () => {
+  it('declares manual-only isolated PostgreSQL, PostgREST, and Fortemi evidence jobs', () => {
     const workflow = readFileSync(resolve('.gitea/workflows/storage-server-conformance.yml'), 'utf8');
     expect(workflow).toContain('workflow_dispatch:');
     expect(workflow).not.toMatch(/\bpull_request:/);
     expect(workflow).not.toMatch(/\bpush:/);
-    expect(workflow).not.toMatch(/secrets\.AIWG_(?:POSTGRES|POSTGREST)/);
-    expect(workflow.match(/secrets\.VAULT_CI_ROLE_ID/g)).toHaveLength(5);
-    expect(workflow.match(/secrets\.VAULT_CI_SECRET_ID/g)).toHaveLength(5);
+    expect(workflow).not.toMatch(/secrets\.AIWG_(?:POSTGRES|POSTGREST|FORTEMI)/);
+    expect(workflow.match(/secrets\.VAULT_CI_ROLE_ID/g)).toHaveLength(8);
+    expect(workflow.match(/secrets\.VAULT_CI_SECRET_ID/g)).toHaveLength(8);
     expect(workflow).toContain('ci/vault-fetch.storage-postgres.spec');
     expect(workflow).toContain('ci/vault-fetch.storage-postgrest.spec');
     expect(workflow).toContain('ci/vault-fetch.storage-postgrest-auth.spec');
-    expect(workflow.match(/bash ci\/vault-fetch\.sh --cleanup/g)).toHaveLength(2);
+    expect(workflow).toContain('ci/vault-fetch.storage-fortemi.spec');
+    expect(workflow).toContain('ci/vault-fetch.storage-fortemi-auth.spec');
+    expect(workflow.match(/bash ci\/vault-fetch\.sh --cleanup/g)).toHaveLength(3);
     const postgresDriver = workflow.indexOf('pg@8.23.0');
     const postgresSuite = workflow.indexOf('test/integration/storage-postgres-live.test.ts');
     expect(postgresDriver).toBeGreaterThanOrEqual(0);
     expect(postgresSuite).toBeGreaterThan(postgresDriver);
     expect(workflow).toContain('test/integration/storage-postgrest-live.test.ts');
+    expect(workflow).toContain('npm run test:fortemi:live');
+    expect(workflow).toContain("default: false");
+    expect(workflow).toContain('AIWG_FORTEMI_LIVE_ALLOW_WRITE: ${{ github.event.inputs.fortemi_allow_write }}');
+    expect(workflow).toContain('false|\'\') unset AIWG_FORTEMI_LIVE_ALLOW_WRITE');
+    expect(workflow).toContain('name: storage-fortemi-${{ gitea.sha }}');
+    expect(workflow).not.toContain('AIWG_FORTEMI_LIVE_ALLOW_WRITE: 1');
     expect(workflow.match(/AIWG_STORAGE_QUALIFICATION_COMMIT/g)).toHaveLength(1);
-    expect(workflow.match(/actions\/checkout@[0-9a-f]{40}/g)).toHaveLength(2);
-    expect(workflow.match(/actions\/upload-artifact@[0-9a-f]{40}/g)).toHaveLength(2);
+    expect(workflow.match(/actions\/checkout@[0-9a-f]{40}/g)).toHaveLength(3);
+    expect(workflow.match(/actions\/upload-artifact@[0-9a-f]{40}/g)).toHaveLength(3);
   });
 });
