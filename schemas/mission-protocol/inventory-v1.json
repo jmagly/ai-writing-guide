@@ -888,6 +888,7 @@
       "role": "producer-consumer",
       "currentVersion": "unversioned",
       "statusVocabulary": [
+        "completed",
         "unknown"
       ],
       "serialization": "typescript/javascript",
@@ -1682,6 +1683,19 @@
       "role": "fixture-or-test",
       "currentVersion": "unversioned",
       "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
+    },
+    {
+      "path": "test/unit/cli/handlers/team.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "completed",
+        "failed"
+      ],
       "serialization": "typescript/javascript",
       "migrationAction": "retain",
       "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
