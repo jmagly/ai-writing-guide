@@ -1,0 +1,22 @@
+{
+  "upstreamPackage": "@earendil-works/pi-coding-agent",
+  "upstreamVersion": "0.85.0",
+  "upstreamCommit": "47236c84450656043dd8fb21c8513d1421505ae3",
+  "verified": "2026-09-04",
+  "projectResources": [
+    "AGENTS.md",
+    ".agents/skills/example/SKILL.md",
+    ".pi/skills/pi-local/SKILL.md",
+    ".pi/prompts/operator.md",
+    ".pi/extensions/operator.ts",
+    ".pi/settings.json"
+  ],
+  "userRoot": "${PI_CODING_AGENT_DIR:-~/.pi/agent}",
+  "globalResources": [
+    "settings.json",
+    "skills/example/SKILL.md"
+  ],
+  "sessionEnvironment": "PI_CODING_AGENT_SESSION_DIR",
+  "headlessTrustPolicies": ["--approve", "--no-approve"],
+  "machineModes": ["print", "json", "rpc"]
+}

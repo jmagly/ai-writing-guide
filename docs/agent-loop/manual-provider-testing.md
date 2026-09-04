@@ -21,6 +21,8 @@ authenticated.
 - Loop entry point: `tools/ralph-external/index.mjs`
 - Runtime providers: `claude`, `codex`, `opencode`, `factory`
   (registered in `tools/ralph-external/lib/*-adapter.mjs`)
+- Pi is a deployment provider but is **not yet** registered with the external
+  agent loop; do not describe resource-deployment tests as loop execution.
 - The `stub` provider is UAT-only (registered by the test fixture, not the runtime)
 - Each run executes in an isolated scratch workspace (`mktemp -d` by default), so
   the loop's `.aiwg/ralph-external/` output never touches the AIWG repo.
@@ -87,6 +89,10 @@ Expected: all tests pass (includes the resume, stop-semantics, unknown-budget, s
 ## Troubleshooting
 
 - **`Unknown provider '<name>'`** — the provider CLI adapter isn't registered; valid runtime providers are `claude`, `codex`, `opencode`, `factory`. `stub` is UAT-only.
+- **`Unknown provider 'pi'`** — expected until the dedicated Pi headless/RPC
+  adapter is implemented and qualified. Follow
+  [the Pi provider reference](../agents/providers/pi.md) for direct bounded
+  Pi testing.
 - **Loop aborts at iteration 1 with a cost/auth error** — the provider CLI isn't authenticated on this workstation. Authenticate the CLI directly (e.g. `codex login`) and retry.
 - **`budget-stop-report.json` missing under the `budget` scenario** — the task completed before the ceiling was crossed; raise `--max-iterations` or lower the ceiling, or use `--scenario plain` to confirm the loop runs at all first.
 - **Token/spend ceilings never fire on a non-claude provider** — expected and now surfaced: providers that report no usage make token/spend ceilings *unobservable* (a one-time warning is printed). Use `--scenario budget` (wall-clock) for a provider-independent hard stop.

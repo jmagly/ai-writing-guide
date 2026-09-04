@@ -36,8 +36,18 @@ exposes a stable machine-readable interface.
 The model-worker provider matrix deploys only generated files into temporary
 workspaces. It validates exact native model fields for Claude, Codex, Copilot,
 Cursor, Factory, and OpenCode; semantic OpenHuman hints; and honest
-inherited/global/unsupported degradation for OpenClaw, Warp, Windsurf, and
-Hermes. It never launches a provider or spends model tokens.
+inherited/global/unsupported degradation for OpenClaw, Pi, Warp, Windsurf, and
+Hermes. It never launches a provider or spends model tokens. Pi is an AIWG
+deployment provider here; Pi's own `--provider` flag selects an LLM backend
+and is outside this compiler contract.
+
+Pi-specific fixture coverage lives in
+`test/fixtures/providers/pi/`, `test/fixtures/sessions/pi/`, and
+`test/unit/providers/pi-conformance-fixtures.test.ts`. Those fixtures pin the
+audited upstream version and exercise session-tree, compaction, retry,
+unknown-entry, malformed-JSONL, and redaction cases without installing or
+invoking Pi. The production Pi runtime and session adapter remain unimplemented,
+so fixture coverage must not be reported as live conformance.
 
 ## Opt-in live smoke
 
@@ -67,3 +77,12 @@ node tools/models/live-smoke.mjs \
 
 If a model is unavailable, record the observed fallback and account/admin
 constraint rather than treating the configured ID as the resolved model.
+
+For an opt-in Pi/OpenRouter smoke, install
+`@earendil-works/pi-coding-agent`, source `OPENROUTER_API_KEY` from an
+approved secret manager, isolate `PI_CODING_AGENT_DIR` and
+`PI_CODING_AGENT_SESSION_DIR` in temporary directories, and pass either
+`--approve` or `--no-approve` explicitly. The smoke must never depend on a
+pre-existing global Pi configuration. Pi's current flags are documented in the
+[upstream coding-agent README](https://github.com/earendil-works/pi/tree/main/packages/coding-agent#cli-reference)
+(last verified 2026-09-04).

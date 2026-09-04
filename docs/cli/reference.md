@@ -252,7 +252,7 @@ aiwg doctor [--provider <name>] [--all-providers] [--project-local] [--quiet]
 
 **Flags:**
 
-- `--provider <name>` — Inspect a specific provider's deployment paths (claude, factory, codex, copilot, cursor, opencode, warp, devin, openclaw, openhuman, hermes). Defaults to auto-detect across deployed providers.
+- `--provider <name>` — Inspect a specific provider's deployment paths (claude, factory, codex, copilot, cursor, opencode, warp, devin, openclaw, openhuman, hermes, pi). Defaults to auto-detect across deployed providers.
 - `--all-providers` — Enumerate every supported provider, including ones with nothing deployed.
 - `--project-local` — Show only the project-local artifacts section. Exit code reflects only project-local findings.
 - `--quiet` — Suppress informational subsections (counts, shadows). Show only failures.
@@ -541,7 +541,7 @@ aiwg use <framework|addon>
 
 **Options:**
 
-- `--provider <name>` - Target platform (claude, copilot, factory, cursor, devin, warp, codex, opencode, hermes, openclaw, openhuman, local)
+- `--provider <name>` - Target platform (claude, copilot, factory, cursor, devin, warp, codex, opencode, hermes, openclaw, openhuman, pi, local)
 - `--scope user` / `--user` - Additively deploy to the project and mirror the
   artifacts into the provider's user-level discovery paths.
 - `--global` - Install framework and kernel assets into provider user-level

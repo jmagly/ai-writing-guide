@@ -1,0 +1,3 @@
+{"type":"session","version":3,"id":"pi-redaction-fixture","timestamp":"2026-09-04T11:00:00.000Z","cwd":"/fixture/redacted-project"}
+{"type":"message","id":"redacted-user","parentId":null,"timestamp":"2026-09-04T11:00:01.000Z","message":{"role":"user","content":"Use OPENROUTER_API_KEY=[REDACTED] and password=[REDACTED]."}}
+{"type":"custom","id":"redaction-marker","parentId":"redacted-user","timestamp":"2026-09-04T11:00:02.000Z","customType":"aiwg.redaction","data":{"fields":["OPENROUTER_API_KEY","password"],"status":"redacted"}}

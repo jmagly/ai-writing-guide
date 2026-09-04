@@ -1,0 +1,8 @@
+{"type":"session","version":3,"id":"pi-session-fixture","timestamp":"2026-09-04T10:00:00.000Z","cwd":"/fixture/project"}
+{"type":"message","id":"root-user","parentId":null,"timestamp":"2026-09-04T10:00:01.000Z","message":{"role":"user","content":"Inspect the provider without printing secrets."}}
+{"type":"message","id":"root-assistant","parentId":"root-user","timestamp":"2026-09-04T10:00:02.000Z","message":{"role":"assistant","content":[{"type":"text","text":"Initial result"}],"provider":"openrouter","model":"fixture/model","usage":{"input":10,"output":2,"cacheRead":0,"cacheWrite":0,"totalTokens":12,"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0}},"stopReason":"stop","timestamp":1788516002000}}
+{"type":"message","id":"abandoned-branch","parentId":"root-user","timestamp":"2026-09-04T10:00:03.000Z","message":{"role":"user","content":"This branch is not the selected leaf."}}
+{"type":"branch_summary","id":"branch-summary","parentId":"root-assistant","timestamp":"2026-09-04T10:00:04.000Z","fromId":"abandoned-branch","summary":"An alternate branch was explored and abandoned."}
+{"type":"compaction","id":"compact-1","parentId":"branch-summary","timestamp":"2026-09-04T10:00:05.000Z","summary":"Earlier provider inspection was compacted.","firstKeptEntryId":"root-assistant","tokensBefore":1200}
+{"type":"custom","id":"retry-evidence","parentId":"compact-1","timestamp":"2026-09-04T10:00:06.000Z","customType":"aiwg.test.retry","data":{"attempts":2,"settled":true}}
+{"type":"future_entry","id":"unknown-entry","parentId":"retry-evidence","timestamp":"2026-09-04T10:00:07.000Z","payload":{"preserve":"opaque"}}

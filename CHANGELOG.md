@@ -7,6 +7,19 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Changed
+
+- Corrected the Pi Coding Agent package name to
+  `@earendil-works/pi-coding-agent` and synchronized the provider guide,
+  quickstart, CLI reference, trust policy, OpenRouter example, session/RPC
+  boundaries, and upstream verification baseline with Pi 0.85.0.
+
+### Tests
+
+- Added pinned Pi provider and version-3 session conformance fixtures covering
+  resource discovery, explicit headless trust, branches, compaction, retry
+  evidence, opaque future entries, malformed JSONL, and credential redaction.
+
 ## [2026.9.1] - 2026-09-04 - "Governed data, broader provider reach"
 
 ### Added
