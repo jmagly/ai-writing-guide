@@ -93,7 +93,8 @@ silently widen into unrestricted recursion.
 The extension bridge exposes lifecycle, tool, and command registration. It
 installs no default policy. Markdown prompts are not executable commands.
 Permission-request and pre-compaction enforcement are unsupported. See the
-[bridge contract](../../agentic/code/providers/omp/README.md) before activation.
+[bridge contract](https://git.integrolabs.net/roctinam/aiwg/src/commit/8e37a4f4eb57b22f2f3e8e8d21cefbb49351b9bd/agentic/code/providers/omp/README.md)
+before activation.
 
 ## MCP
 

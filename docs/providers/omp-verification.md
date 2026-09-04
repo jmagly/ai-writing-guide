@@ -4,7 +4,7 @@ The experimental provider was reviewed against Oh My Pi 18.1.10, commit
 `5964a0f7649275bcde818f20073193fd032451f2`. The tested Linux x64 standalone
 binary has SHA-256
 `e91d5598ee47e1d4099fd8686dc9f61c9b755f2ea077d5f1774aba1072321f9e`.
-The [machine-readable manifest](../../test/fixtures/providers/omp-conformance/manifest.json)
+The [machine-readable manifest](https://git.integrolabs.net/roctinam/aiwg/src/commit/8e37a4f4eb57b22f2f3e8e8d21cefbb49351b9bd/test/fixtures/providers/omp-conformance/manifest.json)
 is the executable version boundary. Passing this baseline does not imply
 support for arbitrary future versions or other operating systems.
 
@@ -18,7 +18,7 @@ node tools/providers/omp-precedence-conformance.mjs --binary /absolute/omp --sou
 ```
 
 The source check requires the pinned checkout's dependencies installed from its
-lockfile. The [dedicated workflow](../../.gitea/workflows/omp-conformance.yml)
+lockfile. The [dedicated workflow](https://git.integrolabs.net/roctinam/aiwg/src/commit/8e37a4f4eb57b22f2f3e8e8d21cefbb49351b9bd/.gitea/workflows/omp-conformance.yml)
 contains the exact acquisition and dependency commands and retains the reports.
 Local missing prerequisites are explicit skips; `--require` turns them into
 failures. The native MCP check uses local stdio/HTTP servers and a loopback model,
