@@ -24,6 +24,9 @@ jobs:
     runs-on: ubuntu-latest
     container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb
     timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout audited release source
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
