@@ -197,7 +197,7 @@ describe("Fortemi live qualification preflight (#2194)", () => {
     expect(callTool.mock.calls[1][1]).toEqual({ limit: 500, offset: 0 });
     expect(callTool.mock.calls[2][1]).toMatchObject({
       action: "text",
-      limit: 500,
+      limit: 50,
     });
     expect(callTool).not.toHaveBeenCalledWith(
       "upsert_external_notes",

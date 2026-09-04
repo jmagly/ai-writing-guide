@@ -77,6 +77,8 @@ export interface FortemiAdapterOptions {
 
 type ToolSchema = { name: string; inputSchema?: Record<string, unknown> };
 type FortemiToolProfile = 'legacy-note-id' | 'source-addressed-v1';
+const FORTEMI_QUERY_LIMIT = 50;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function schemaProperties(
   tool: ToolSchema | undefined,
@@ -279,6 +281,8 @@ export class FortemiAdapter implements StorageAdapter {
         : { note_id: id },
     )) as {
       note?: { content?: string; revised_content?: string };
+      original?: { content?: string };
+      revised?: { content?: string };
       content?: string;
       revised_content?: string;
       not_found?: boolean;
@@ -287,7 +291,13 @@ export class FortemiAdapter implements StorageAdapter {
     if (!result || result.not_found) return null;
     const note = result.note ?? result;
     if (!note) return null;
-    return note.revised_content ?? note.content ?? null;
+    return (
+      result.revised?.content ??
+      result.original?.content ??
+      note.revised_content ??
+      note.content ??
+      null
+    );
   }
 
   async write(path: string, content: string, meta?: WriteMeta): Promise<void> {
@@ -426,7 +436,7 @@ export class FortemiAdapter implements StorageAdapter {
     const subsystemPrefix = `${this.subsystem}:`;
     const result = (await client.callTool('search', {
       ...(this.profile === 'source-addressed-v1'
-        ? { action: 'text', query: q, limit: 500 }
+        ? { action: 'text', query: q, limit: FORTEMI_QUERY_LIMIT }
         : { query: q, id_prefix: subsystemPrefix, scheme: this.scheme }),
     })) as {
       results?: Array<{
@@ -438,7 +448,27 @@ export class FortemiAdapter implements StorageAdapter {
     } | null;
 
     const results = result?.results ?? [];
-    return results
+    const hydrated = [] as typeof results;
+    for (const resultItem of results.slice(0, FORTEMI_QUERY_LIMIT)) {
+      let item = resultItem;
+      if (
+        this.profile === 'source-addressed-v1' &&
+        typeof item.id === 'string' &&
+        UUID.test(item.id) &&
+        (!item.metadata || typeof item.metadata.aiwg_storage_path !== 'string')
+      ) {
+        const detail = (await client.callTool('get_note', { id: item.id })) as {
+          note?: { id?: string; metadata?: { aiwg_storage_path?: string; subsystem?: string } };
+          not_found?: boolean;
+        } | null;
+        if (!detail || detail.not_found) continue;
+        const note = detail.note;
+        if (!note || note.id !== item.id) continue;
+        item = { ...item, metadata: note.metadata };
+      }
+      hydrated.push(item);
+    }
+    return hydrated
       .map((r) => {
         const path = r.metadata?.aiwg_storage_path;
         return typeof path === 'string' &&

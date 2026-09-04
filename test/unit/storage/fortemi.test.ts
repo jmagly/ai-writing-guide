@@ -276,6 +276,25 @@ describe('storage/backends/fortemi (#972)', () => {
       });
     });
 
+    it('reads Titan nested revised content and falls back to nested original content', async () => {
+      const revised = currentAdapter({
+        get_note: {
+          note: { id: fortemiStableNoteId('kb', 'a.md') },
+          original: { content: 'original body' },
+          revised: { content: 'revised body' },
+        },
+      });
+      expect(await revised.adapter.read('a.md')).toBe('revised body');
+
+      const original = currentAdapter({
+        get_note: {
+          note: { id: fortemiStableNoteId('kb', 'a.md') },
+          original: { content: 'original body' },
+        },
+      });
+      expect(await original.adapter.read('a.md')).toBe('original body');
+    });
+
     it('uses one atomic source-addressed upsert with stable identity and digest', async () => {
       const { adapter, calls } = currentAdapter();
       await adapter.write('a.md', '# body', { contentType: 'text/markdown' });
@@ -341,8 +360,50 @@ describe('storage/backends/fortemi (#972)', () => {
       });
       expect(calls[1]).toMatchObject({
         name: 'search',
-        args: { action: 'text', query: 'alpha', limit: 500 },
+        args: { action: 'text', query: 'alpha', limit: 50 },
       });
+    });
+
+    it('hydrates UUID-only search hits and enforces subsystem scope from get_note', async () => {
+      const scopedId = '299e764d-44e4-5b14-a552-70e46d2d621b';
+      const foreignId = '199e764d-44e4-5b14-a552-70e46d2d621b';
+      const calls: ToolCall[] = [];
+      const client: McpClientLike = {
+        listTools: async () => ({ tools }),
+        callTool: async (name, args) => {
+          calls.push({ name, args });
+          if (name === 'search') return { results: [{ id: scopedId }, { id: foreignId }] };
+          if (name === 'get_note' && args.id === scopedId) {
+            return { note: { id: scopedId, metadata: { subsystem: 'kb', aiwg_storage_path: 'docs/a.md' } } };
+          }
+          return { note: { id: foreignId, metadata: { subsystem: 'other', aiwg_storage_path: 'private.md' } } };
+        },
+      };
+      const adapter = new FortemiAdapter({
+        subsystem: 'kb', config: { type: 'fortemi' }, clientFactory: async () => client,
+      });
+      expect(await adapter.query('alpha')).toEqual([{ path: 'docs/a.md', externalId: scopedId }]);
+      expect(calls.map(({ name }) => name)).toEqual(['search', 'get_note', 'get_note']);
+    });
+
+    it('does not hydrate malformed IDs and propagates hydration authorization errors', async () => {
+      const calls: ToolCall[] = [];
+      const client: McpClientLike = {
+        listTools: async () => ({ tools }),
+        callTool: async (name, args) => {
+          calls.push({ name, args });
+          if (name === 'search') {
+            return { results: [{ id: 'not-a-uuid' }, { id: '299e764d-44e4-5b14-a552-70e46d2d621b' }] };
+          }
+          throw new Error('synthetic authorization denied');
+        },
+      };
+      const adapter = new FortemiAdapter({
+        subsystem: 'kb', config: { type: 'fortemi' }, clientFactory: async () => client,
+      });
+      await expect(adapter.query('alpha')).rejects.toThrow('synthetic authorization denied');
+      expect(calls).toHaveLength(2);
+      expect(calls[1].args.id).toBe('299e764d-44e4-5b14-a552-70e46d2d621b');
     });
 
     it('fails closed on an unknown schema before any tool operation', async () => {
