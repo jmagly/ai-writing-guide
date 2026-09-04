@@ -20,6 +20,11 @@ export const defaultCommandRunner: CommandRunner = (command, args, stdin = "") =
   child.stdout.on("data", (chunk: Buffer) => collect(stdout, chunk));
   child.stderr.on("data", (chunk: Buffer) => collect(stderr, chunk));
   child.once("error", reject);
+  child.stdin.once("error", (error: NodeJS.ErrnoException) => {
+    // A short-lived credential helper may close stdin before Node flushes the
+    // payload. Its process exit remains the authoritative command result.
+    if (error.code !== "EPIPE") reject(error);
+  });
   child.once("close", (code) => resolve({
     stdout: Buffer.concat(stdout).toString("utf8"),
     stderr: Buffer.concat(stderr).toString("utf8"),

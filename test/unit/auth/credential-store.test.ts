@@ -7,6 +7,7 @@ import {
   LinuxSecretServiceStore,
   MacOsKeychainStore,
   WindowsCredentialManagerStore,
+  defaultCommandRunner,
   type CommandRunner,
 } from "../../../src/auth/credential-store.js";
 
@@ -21,6 +22,15 @@ const temporary: string[] = [];
 afterEach(async () => Promise.all(temporary.splice(0).map((entry) => fs.rm(entry, { recursive: true, force: true }))));
 
 describe("credential stores", () => {
+  it("does not surface EPIPE when a credential helper exits before consuming stdin", async () => {
+    const result = await defaultCommandRunner(
+      process.execPath,
+      ["-e", "process.exit(0)"],
+      "x".repeat(8 * 1024 * 1024),
+    );
+    expect(result.exitCode).toBe(0);
+  });
+
   it.each([
     ["macOS", (run: CommandRunner) => new MacOsKeychainStore(run)],
     ["Linux", (run: CommandRunner) => new LinuxSecretServiceStore(run)],
