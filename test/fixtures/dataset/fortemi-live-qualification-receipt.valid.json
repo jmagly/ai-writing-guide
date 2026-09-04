@@ -1,0 +1,38 @@
+{
+  "contract": "aiwg.fortemi-dataset-live-qualification/v1",
+  "outcome": "pending",
+  "diagnostic": "CONFORMANCE_FORTEMI_DATASET_CONTRACT_UNAVAILABLE",
+  "receiptDigest": "sha256:06de82db85e483b1bf82719295d7c2a5712bfe2ca1c754b36b2b97f3b970ccfc",
+  "bindings": {
+    "aiwgCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "endpointFingerprint": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "toolSchemaDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "observed": { "serverName": "fortemi", "serverVersion": "2026.9.1" },
+  "namespace": "aiwg-dataset-qualification-123e4567-e89b-42d3-a456-426614174000",
+  "operations": [
+    {
+      "tool": "dataset_capabilities",
+      "compatible": false,
+      "code": "FORTEMI_DATASET_TOOL_MISSING"
+    },
+    {
+      "tool": "dataset_execute",
+      "compatible": false,
+      "code": "FORTEMI_DATASET_TOOL_MISSING"
+    }
+  ],
+  "mutation": { "authorized": false, "attempted": false },
+  "resources": {
+    "maxDurationMs": 5000,
+    "durationMs": 10,
+    "maxToolCount": 256,
+    "observedToolCount": 0,
+    "maxSchemaBytes": 1048576,
+    "observedSchemaBytes": 2,
+    "networkAttempts": 1,
+    "toolCalls": 0
+  },
+  "startedAt": "2026-09-04T12:00:00.000Z",
+  "endedAt": "2026-09-04T12:00:00.010Z"
+}

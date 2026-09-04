@@ -6,6 +6,30 @@
   "policy": { "strict": true, "compatibility": "backward", "requireFixtures": true },
   "artifacts": [
     {
+      "logicalName": "dataset.fortemi-live-qualification-receipt",
+      "id": "https://aiwg.io/schemas/dataset/fortemi-live-qualification-receipt.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "experimental",
+      "owner": { "id": "aiwg-maintainers" },
+      "authority": { "kind": "canonical", "path": "schemas/dataset/fortemi-live-qualification-receipt.v1.schema.json" },
+      "compatibility": { "mode": "backward" },
+      "consumers": [
+        { "id": "fortemi-dataset-live-preflight", "boundary": "sanitized read-only capability evidence", "path": "src/dataset/fortemi-live-qualification.ts" }
+      ],
+      "fixtures": {
+        "valid": ["test/fixtures/dataset/fortemi-live-qualification-receipt.valid.json"],
+        "invalid": ["test/fixtures/dataset/fortemi-live-qualification-receipt.invalid.json"]
+      },
+      "projections": [
+        { "kind": "types", "path": "src/dataset/fortemi-live-qualification.ts", "generated": false },
+        { "kind": "validator", "path": "src/dataset/fortemi-live-qualification.ts", "generated": false }
+      ],
+      "publication": { "public": true }
+    },
+    {
       "logicalName": "dataset.deprecations",
       "id": "https://aiwg.io/schemas/dataset/dataset-deprecations.v1.schema.json",
       "version": "1.0.0",

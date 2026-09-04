@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/dataset/fortemi-live-qualification-receipt.v1.schema.json",
+  "title": "AIWG Fortemi Dataset Live Qualification Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "outcome",
+    "diagnostic",
+    "receiptDigest",
+    "bindings",
+    "observed",
+    "namespace",
+    "operations",
+    "mutation",
+    "resources",
+    "startedAt",
+    "endedAt"
+  ],
+  "properties": {
+    "contract": { "const": "aiwg.fortemi-dataset-live-qualification/v1" },
+    "outcome": { "enum": ["pending", "supported"] },
+    "diagnostic": {
+      "enum": [
+        "CONFORMANCE_FORTEMI_DATASET_CONTRACT_UNAVAILABLE",
+        "CONFORMANCE_FORTEMI_DATASET_PREFLIGHT_SUPPORTED"
+      ]
+    },
+    "receiptDigest": { "$ref": "#/$defs/digest" },
+    "bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["aiwgCommit", "endpointFingerprint", "toolSchemaDigest"],
+      "properties": {
+        "aiwgCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "endpointFingerprint": { "$ref": "#/$defs/digest" },
+        "toolSchemaDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "observed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["serverName", "serverVersion"],
+      "properties": {
+        "serverName": { "$ref": "#/$defs/safe" },
+        "serverVersion": { "$ref": "#/$defs/safe" }
+      }
+    },
+    "namespace": {
+      "type": "string",
+      "pattern": "^aiwg-dataset-qualification-[0-9a-f-]{36}$"
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["tool", "compatible", "code"],
+        "properties": {
+          "tool": { "enum": ["dataset_capabilities", "dataset_execute"] },
+          "compatible": { "type": "boolean" },
+          "code": {
+            "enum": [
+              "FORTEMI_DATASET_TOOL_SCHEMA_COMPATIBLE",
+              "FORTEMI_DATASET_TOOL_SCHEMA_DRIFT",
+              "FORTEMI_DATASET_TOOL_MISSING"
+            ]
+          }
+        }
+      }
+    },
+    "mutation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authorized", "attempted"],
+      "properties": {
+        "authorized": { "const": false },
+        "attempted": { "const": false }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxDurationMs",
+        "durationMs",
+        "maxToolCount",
+        "observedToolCount",
+        "maxSchemaBytes",
+        "observedSchemaBytes",
+        "networkAttempts",
+        "toolCalls"
+      ],
+      "properties": {
+        "maxDurationMs": {
+          "type": "integer",
+          "minimum": 250,
+          "maximum": 30000
+        },
+        "durationMs": { "type": "integer", "minimum": 0 },
+        "maxToolCount": { "const": 256 },
+        "observedToolCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 256
+        },
+        "maxSchemaBytes": { "const": 1048576 },
+        "observedSchemaBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576
+        },
+        "networkAttempts": { "const": 1 },
+        "toolCalls": { "const": 0 }
+      }
+    },
+    "startedAt": { "$ref": "#/$defs/time" },
+    "endedAt": { "$ref": "#/$defs/time" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "safe": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:/-]+$"
+    },
+    "time": { "type": "string", "format": "date-time", "pattern": "Z$" }
+  }
+}
