@@ -9,6 +9,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- Contributor Covenant 2.0 community standards, enforcement responsibilities,
+  reporting channel, and impact guidelines ([jmagly/aiwg#186](https://github.com/jmagly/aiwg/pull/186)).
 - Experimental Oh My Pi (`omp`, alias `oh-my-pi`) integration with distinct native
   resource paths, profile-aware configuration, agents, owned MCP injection,
   extension bridge, model discovery, JSON/RPC execution, bounded teams, and
