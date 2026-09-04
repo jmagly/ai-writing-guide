@@ -89,4 +89,5 @@ receipted files and preserves operator-owned `.pi/settings.json`, prompts,
 skills, extensions, packages, sessions, and Pi's trust decisions.
 
 For user scope, session handling, OpenRouter examples, limitations, and
-troubleshooting, see the [Pi operational reference](../agents/providers/pi.md).
+troubleshooting, see the [Pi operational
+reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/providers/pi.md).
