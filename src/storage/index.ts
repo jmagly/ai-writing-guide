@@ -55,6 +55,18 @@ export {
 } from './fortemi-qualification.js';
 export type { FortemiQualificationReport } from './fortemi-qualification.js';
 export {
+  createFortemiQualificationReceipt,
+  endpointFingerprint,
+  fortemiReceiptDigest,
+  verifyFortemiQualificationReceipt,
+  writeFortemiQualificationReceipt,
+  FORTEMI_QUALIFICATION_RECEIPT,
+} from './fortemi-qualification-receipt.js';
+export type {
+  FortemiQualificationReceipt,
+  CreateFortemiQualificationReceiptInput,
+} from './fortemi-qualification-receipt.js';
+export {
   STORAGE_BACKEND_CONTRACT,
   STORAGE_BACKEND_MATRIX,
   StorageCapabilityError,

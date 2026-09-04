@@ -1,0 +1,12 @@
+{
+  "contract": "aiwg.fortemi-live-qualification-receipt/v1",
+  "receiptDigest": "https://titan.example/mcp?token=secret",
+  "bindings": {},
+  "observed": {},
+  "namespace": "production",
+  "operations": [],
+  "mutation": { "attempted": false, "objectId": "not-a-uuid" },
+  "startedAt": "not-a-time",
+  "endedAt": "not-a-time",
+  "resources": {}
+}

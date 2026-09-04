@@ -11,6 +11,7 @@
   "domains": [
     "domains/control-plane.json",
     "domains/dataset.json",
+    "domains/storage.json",
     "domains/repository-json-schemas.json"
   ]
 }

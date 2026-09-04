@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/storage/fortemi-live-qualification-receipt.v1.schema.json",
+  "title": "AIWG Fortemi Live Qualification Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "receiptDigest",
+    "bindings",
+    "observed",
+    "namespace",
+    "operations",
+    "mutation",
+    "startedAt",
+    "endedAt",
+    "resources"
+  ],
+  "properties": {
+    "contract": { "const": "aiwg.fortemi-live-qualification-receipt/v1" },
+    "receiptDigest": { "$ref": "#/$defs/digest" },
+    "bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "aiwgCommit",
+        "aiwgRef",
+        "endpointFingerprint",
+        "toolSchemaDigest"
+      ],
+      "properties": {
+        "aiwgCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "aiwgRef": {
+          "type": "string",
+          "pattern": "^(refs/(heads|tags)/[A-Za-z0-9._/-]+|[0-9a-f]{40})$"
+        },
+        "endpointFingerprint": { "$ref": "#/$defs/digest" },
+        "toolSchemaDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "observed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["serverName", "serverVersion", "contractRevision"],
+      "properties": {
+        "serverName": { "$ref": "#/$defs/safe" },
+        "serverVersion": { "$ref": "#/$defs/safe" },
+        "contractRevision": { "$ref": "#/$defs/safe" }
+      }
+    },
+    "namespace": {
+      "type": "string",
+      "pattern": "^aiwg-qualification-[0-9a-f-]{36}$"
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["operation", "tool", "compatible", "code"],
+        "properties": {
+          "operation": { "$ref": "#/$defs/safe" },
+          "tool": { "$ref": "#/$defs/safe" },
+          "compatible": { "type": "boolean" },
+          "code": { "$ref": "#/$defs/safe" }
+        }
+      }
+    },
+    "mutation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempted"],
+      "properties": {
+        "attempted": { "type": "boolean" },
+        "objectId": { "type": "string", "format": "uuid" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "attempted": { "const": true } } },
+          "then": {
+            "properties": {
+              "objectId": { "type": "string", "format": "uuid" }
+            },
+            "required": ["objectId"]
+          }
+        },
+        {
+          "if": { "properties": { "attempted": { "const": false } } },
+          "then": { "not": { "required": ["objectId"] } }
+        }
+      ]
+    },
+    "startedAt": { "$ref": "#/$defs/time" },
+    "endedAt": { "$ref": "#/$defs/time" },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["timeoutMs", "durationMs", "networkAttempts", "toolCount"],
+      "properties": {
+        "timeoutMs": { "type": "integer", "minimum": 250, "maximum": 30000 },
+        "durationMs": { "type": "integer", "minimum": 0 },
+        "networkAttempts": { "type": "integer", "minimum": 0 },
+        "toolCount": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "safe": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:/-]+$"
+    },
+    "time": { "type": "string", "format": "date-time", "pattern": "Z$" }
+  }
+}
