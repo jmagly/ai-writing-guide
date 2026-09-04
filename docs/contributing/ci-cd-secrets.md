@@ -1,7 +1,7 @@
 # CI/CD Secrets Configuration
 
-**Version:** 3.2
-**Last Updated:** 2026-08-28
+**Version:** 3.3
+**Last Updated:** 2026-09-04
 **Target Audience:** Repository maintainers and administrators
 
 AIWG's Gitea CI/CD workflows use vault for repository-managed secrets. Gitea
@@ -33,6 +33,8 @@ issued by the CI system and is still used by PR-comment workflows.
 | `.gitea/workflows/storage-server-conformance.yml` | `ci/vault-fetch.storage-postgres.spec` | `AIWG_POSTGRES_LIVE_URL` |
 | `.gitea/workflows/storage-server-conformance.yml` | `ci/vault-fetch.storage-postgrest.spec` | `AIWG_POSTGREST_LIVE_URL` |
 | `.gitea/workflows/storage-server-conformance.yml` | `ci/vault-fetch.storage-postgrest-auth.spec` | `AIWG_POSTGREST_AUTHORIZATION` |
+| `.gitea/workflows/storage-server-conformance.yml` | `ci/vault-fetch.storage-fortemi.spec` | `AIWG_FORTEMI_LIVE_URL` |
+| `.gitea/workflows/storage-server-conformance.yml` | `ci/vault-fetch.storage-fortemi-auth.spec` | `AIWG_FORTEMI_LIVE_TOKEN` |
 
 The specs contain only `*_VAULT_PATH` and `*_VAULT_FIELD` placeholders. Concrete
 vault paths, metadata paths, hostnames, and fields are stored as private Gitea
@@ -70,11 +72,19 @@ npm run lint:vault-migration
 | `AIWG_POSTGRES_LIVE_URL_VAULT_PATH`, `AIWG_POSTGRES_LIVE_URL_VAULT_FIELD`                  | `ROUTE`         | Gitea Actions variables    |
 | `AIWG_POSTGREST_LIVE_URL_VAULT_PATH`, `AIWG_POSTGREST_LIVE_URL_VAULT_FIELD`                | `ROUTE`         | Gitea Actions variables    |
 | `AIWG_POSTGREST_AUTHORIZATION_VAULT_PATH`, `AIWG_POSTGREST_AUTHORIZATION_VAULT_FIELD`      | `ROUTE`         | Gitea Actions variables    |
+| `AIWG_FORTEMI_LIVE_URL_VAULT_PATH`, `AIWG_FORTEMI_LIVE_URL_VAULT_FIELD`                    | `ROUTE`         | Gitea Actions variables    |
+| `AIWG_FORTEMI_LIVE_TOKEN_VAULT_PATH`, `AIWG_FORTEMI_LIVE_TOKEN_VAULT_FIELD`                | `ROUTE`         | Gitea Actions variables    |
+| `AIWG_FORTEMI_CONTRACT_REVISION`                                                           | `CONFIG`        | Gitea Actions variable     |
 | `VAULT_ADDR`                                                                               | `ROUTE`         | Gitea Actions variable     |
 | `DOCSITE_DEPLOY_HOST`, `DOCSITE_DEPLOY_PORT`, `DOCSITE_DEPLOY_USER`, `DOCSITE_DEPLOY_PATH` | `CONFIG`        | Gitea Actions variables    |
 
 The machine-readable variable manifest is
 [`../../ci/vault-migration-plan.json`](../../ci/vault-migration-plan.json).
+
+The Fortemi workflow input controlling its isolated write probe is not a secret
+or a credential. It defaults to `false` and must be enabled only for a run with
+separate mutation authorization and an approved disposable namespace. Keep it
+disabled for schema/read/list/search qualification.
 
 ## Provisioning
 

@@ -32,6 +32,12 @@ slice.
 The older `fortemi` storage backend in `.aiwg/storage.config` remains an alpha MCP
 persistence adapter and is deprecated for discovery/search routing.
 
+`AIWG_FORTEMI_CORE_LIVE` is a legacy test-only placeholder retained in historical
+migration evidence. It does not contact Fortemi, supply credentials, or enable a
+live-server gate. Do not use it for qualification. Live MCP storage qualification
+uses `AIWG_FORTEMI_LIVE_URL` and the read-only-by-default contract documented in
+[`storage/backends/fortemi.md`](storage/backends/fortemi.md).
+
 Regenerate the release artifact before packing:
 
 ```bash

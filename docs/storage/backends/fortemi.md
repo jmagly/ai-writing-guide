@@ -4,7 +4,11 @@ Routes a subsystem's persistence into [Fortemi](https://github.com/jmagly/aiwg/b
 
 ## Status: alpha MCP storage adapter
 
-The adapter ships with the parameter shapes documented in `phase-4-fortemi-review.md`, but those shapes have **not been formally validated against a live Fortemi instance**. Real-world parameter mismatches surface as MCP errors that bubble up to the consumer.
+As of AIWG 2026.9.1, the adapter includes an opt-in, schema-first live
+qualification gate. Fortemi Server nevertheless remains alpha and uncertified:
+a compatible result from one endpoint is scoped evidence, not a general
+persistence, recovery, migration, or load claim. Real-world parameter
+mismatches fail the qualification preflight and remain visible to the consumer.
 
 This adapter is deprecated for index/search routing. New discovery, artifact
 query, graph traversal, and release-package fallback work uses the Fortemi Core
@@ -122,7 +126,8 @@ Fortemi's design is immutable — no destructive delete. The adapter's `delete()
 
 ## Live qualification
 
-Run the opt-in live gate against a deployed Streamable HTTP MCP endpoint:
+Run the opt-in live gate against an explicitly authorized Streamable HTTP MCP
+endpoint. This command is read-only by default:
 
 ```bash
 AIWG_FORTEMI_LIVE_URL=https://memory.example.internal/mcp \
@@ -133,9 +138,27 @@ npm run test:fortemi:live
 
 Without `AIWG_FORTEMI_LIVE_URL`, the suite is skipped and ordinary CI remains offline. The transport retains the adapter's HTTPS requirement (plain HTTP is accepted only on loopback), and the token value is read from the environment rather than written to configuration or output. `AIWG_FORTEMI_LIVE_TIMEOUT_MS` controls each bounded operation (250–30000 ms; default 5000).
 
-Qualification first requests the MCP tool catalog and reports the server name/version, optional contract revision, and per-operation schema compatibility. If any adapter argument is absent or no longer required, qualification stops before invoking a tool. This makes the currently observed 2026.9.0 drift (`id` UUIDs, `capture_knowledge action=create`, and no `list_notes.id_prefix`) actionable without leaving data behind.
+| Environment variable | Contract |
+| --- | --- |
+| `AIWG_FORTEMI_LIVE_URL` | Authorized live MCP endpoint; required to run rather than skip. |
+| `AIWG_FORTEMI_LIVE_TOKEN` | Optional credential value; keep it in the process environment or approved secret provider. |
+| `AIWG_FORTEMI_CONTRACT_REVISION` | Optional expected/declared contract revision recorded with the observation. |
+| `AIWG_FORTEMI_LIVE_TIMEOUT_MS` | Per-operation bound, clamped to 250–30000 ms. |
+| `AIWG_FORTEMI_LIVE_ALLOW_WRITE` | Mutation gate. Only the exact value `1` enables the isolated write probe; omit it for read-only qualification. |
 
-Reads, list, and search use a fresh `aiwg-qualification-<UUID>` namespace only after schema preflight succeeds. Writes are disabled by default. Set `AIWG_FORTEMI_LIVE_ALLOW_WRITE=1` only when an isolated qualification record may be retained by the server's immutable history.
+Qualification first requests the MCP tool catalog and reports the server name/version, optional contract revision, and per-operation schema compatibility. If any adapter argument is absent or no longer required, qualification stops before invoking a tool. The 2026.9.1 status remains **pre-certification**: the gate detects contract drift, but no checked-in live receipt currently establishes compatible Server persistence, recovery, migration, or load behavior.
+
+Reads, list, and search use a fresh `aiwg-qualification-<UUID>` namespace only after schema preflight succeeds. Writes are disabled by default. Set `AIWG_FORTEMI_LIVE_ALLOW_WRITE=1` only after separate mutation authorization confirms that an isolated qualification record may be retained by the server's immutable history. Endpoint access alone is not mutation authorization.
+
+The manual `Storage Server Conformance` workflow follows the same boundary: it
+defaults to read-only and requires an explicit write input in addition to the
+Vault-gated endpoint. Its evidence-artifact location is reserved for a durable,
+sanitized qualification receipt. Until that receipt implementation lands, do
+not treat console output or an empty artifact upload as durable evidence. The
+intended receipt will generically bind the tested AIWG revision, a non-secret
+endpoint identity, observed server/contract versions, operation outcomes,
+mutation state, timestamps, and resource bounds; its exact versioned schema is
+owned by the receipt implementation rather than this guide.
 
 ## Setup
 
