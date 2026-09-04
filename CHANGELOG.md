@@ -7,9 +7,41 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.9.2] - 2026-09-04 - "Pi from resources to runtime"
+
 ### Changed
 
-- Promote Pi integration coverage across a trust-gated extension bridge, native model discovery, External Ralph headless execution, bounded RPC cancellation, and authorized v3 session ingestion while retaining experimental provider status (#2147, #2150, #2151, #2152).
+- **Pi is now integrated across deployment, model selection, headless execution,
+  and session intelligence** - AIWG deploys a reviewed trust-gated extension
+  bridge, discovers Pi's configured backend/model catalog, launches External
+  Ralph sessions with model, thinking, tools, and session controls, and uses
+  bounded RPC-first cancellation (#2147, #2150, #2151).
+
+- **Pi v3 sessions are a first-class governed source** - Authorized discovery,
+  stable native IDs and tree topology, core-entry normalization, opaque future
+  entries, resource limits, and sensitive tool/custom-data redaction are
+  covered by provider conformance and repository importer gates (#2152).
+
+### Security
+
+- **Headless Pi runs fail closed at trust and tool-policy boundaries** - The
+  managed extension never prompts without a TUI and blocks destructive or
+  package-mutating shell calls; machine protocols keep JSONL on stdout and
+  diagnostics on stderr. MCP remains explicitly unsupported in Pi core.
+
+### Tests
+
+- Qualified Pi Coding Agent 0.85.0 against OpenRouter using isolated agent and
+  session roots. Model discovery, RPC state/abort, strict JSONL, live inference,
+  and terminal `agent_settled` all passed without persisting credentials or raw
+  output.
+
+### Release boundaries
+
+- Pi remains experimental pending its promotion gate. AIWG does not install Pi
+  packages, credentials, or MCP extensions, and operator-owned settings,
+  prompts, skills, extensions, sessions, and trust decisions remain preserved.
+
 
 - Corrected the Pi Coding Agent package name to
   `@earendil-works/pi-coding-agent` and synchronized the provider guide,
