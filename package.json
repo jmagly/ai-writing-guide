@@ -98,6 +98,7 @@
     "qualify:agentic-sandbox-2026.8.3": "node tools/qualification/agentic-sandbox-baseline.mjs",
     "qualify:dataset-adapters": "tsx tools/qualification/dataset-source-adapters.ts",
     "qualify:dataset": "tsx tools/qualification/dataset-conformance.ts",
+    "qualify:dataset:fortemi-live": "tsx tools/qualification/dataset-fortemi-live.ts",
     "verify:dataset-conformance": "tsx tools/qualification/dataset-conformance.ts",
     "test:conformance:dataset": "vitest run --config config/vitest.config.js test/conformance/dataset test/unit/dataset",
     "uat:cockpit-daily": "node apps/cockpit/scripts/cockpit-daily-gate.mjs",
