@@ -543,7 +543,7 @@ The orchestration pattern: **Primary Author → Parallel Reviewers → Synthesiz
 - **128 workflow skills** — natural language triggers for regression testing, forensics, voice profiles, quality gates, and CI/CD integration
 - **35 enforcement rules** — anti-laziness detection, token security, citation integrity, executable feedback, failure mitigation across 6 LLM archetypes
 - **334 artifact templates** — progressive disclosure templates for requirements, architecture, testing, security, deployment, and more
-- **Multi-provider support** — deploy to Claude Code, OpenAI Codex, GitHub Copilot, Cursor, Factory AI, Hermes, OpenCode, OpenClaw, OpenHuman, Pi Coding Agent, Oh My Pi, Warp Terminal, and Devin Desktop
+- **Multi-provider support** — deploy to Claude Code, OpenAI Codex, GitHub Copilot, Cursor, Factory AI, Hermes, OpenCode, OpenClaw, OpenHuman, [Pi Coding Agent](https://pi.dev/), Oh My Pi, Warp Terminal, and Devin Desktop
 - **8 core frameworks + training marketplace package** — SDLC, Digital Forensics, Marketing Operations, Research Management, Media Curation, Ops Infrastructure, Knowledge Base, Security Engineering, plus [`aiwg-training`](https://github.com/jmagly/aiwg-training) for fine-tuning dataset curation (corpus-to-dataset pipeline with DPO/KTO/ORPO/SimPO export)
 - **32 addons** — compound memory, line memory, llm-wiki (Obsidian-native knowledge base), RLM recursive decomposition, fleet operations, browser control, testing quality, and more
 - **40 Claude Code plugins** — the complete framework and addon catalog is installable independently from the AIWG marketplace
@@ -1396,10 +1396,10 @@ AIWG supports 13 named provider integrations. Artifact support varies by provide
 | **OpenCode** | Tested | `.opencode/agent/` | `.opencode/commands/` | `.opencode/skill/` | `.opencode/rule/` | `--provider opencode` |
 | **OpenAI/Codex** | Tested | `.codex/agents/` | `~/.codex/prompts/` | `.agents/skills/` | `.codex/rules/` | `--provider codex` |
 | **Devin Desktop** | Tested compatibility adapter | AGENTS.md | `.windsurf/workflows/` | `.windsurf/skills/` | `.windsurf/rules/` | `--provider devin` |
-| **Hermes** | Experimental | — | — | `~/.hermes/skills/.aiwg/` | — | `--provider hermes` |
+| **Hermes** | Stable | — | — | `~/.hermes/skills/.aiwg/` | — | `--provider hermes` |
 | **OpenClaw** | Tested | `~/.openclaw/agents/` | `~/.openclaw/commands/` | `~/.openclaw/.aiwg/skills/` | `~/.openclaw/rules/` | `--provider openclaw` |
 | **OpenHuman** | Experimental | — | — | `~/.openhuman/.aiwg/skills/` | `~/.openhuman/.aiwg/rules/` | `--provider openhuman` |
-| **Pi Coding Agent** | Experimental | `.agents/skills/` | `.pi/prompts/` | `.agents/skills/` | `AGENTS.md` | `--provider pi` |
+| **[Pi Coding Agent](https://pi.dev/)** | Experimental | `.agents/skills/` | `.pi/prompts/` | `.agents/skills/` | `AGENTS.md` | `--provider pi` |
 | **[Oh My Pi](docs/providers/omp.md)** | Experimental | `.omp/agents/` | `.omp/prompts/` | `.agents/skills/` | `.omp/AGENTS.md` | `--provider omp` |
 
 The legacy `--provider windsurf` selector remains supported and writes the

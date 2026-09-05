@@ -34,7 +34,7 @@ If more than one provider is present, add the tool name to the first sentence.
 | OpenClaw | Project root or OpenClaw workspace | OpenClaw skill and rule paths | “Verify the deployed project and find one capability.” |
 | OpenHuman | Workspace attached to the project | OpenHuman user and project context | “Verify the AIWG context available here.” |
 | Oh My Pi | OMP session in the project root | `.omp/`, `.agents/skills/`, and `.omp/AGENTS.md` | “Verify native OMP agents, context, and one AIWG capability.” |
-| Pi Coding Agent | Pi session in the project root | `AGENTS.md`, `.agents/skills/`, and `.pi/prompts/` | “Invoke an AIWG prompt and verify the Pi handoff.” |
+| Pi Coding Agent (pi.dev) | Pi session in the project root | `AGENTS.md`, `.agents/skills/`, and `.pi/prompts/` | “Invoke an AIWG prompt and verify the Pi handoff.” |
 
 ## Honest validation
 

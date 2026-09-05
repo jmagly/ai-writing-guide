@@ -300,7 +300,7 @@ entry.
 | OpenClaw | `~/.openclaw/skills/aiwg/` | `~/.openclaw/.aiwg/skills/` | `.agents/skills/` |
 | OpenHuman | `~/.openhuman/skills/` | `~/.openhuman/.aiwg/skills/` | `.agents/skills/` |
 | Oh My Pi | `.agents/skills/` | `.agents/skills/` (with `--copy-all`) | `.agents/skills/` |
-| Pi Coding Agent | `.agents/skills/` | `.pi/.aiwg/skills/` | `.agents/skills/` |
+| Pi Coding Agent (pi.dev) | `.agents/skills/` | `.pi/.aiwg/skills/` | `.agents/skills/` |
 | Codex | `.agents/skills/` | `.agents/skills/` (with `--copy-all`) | `.agents/skills/` |
 
 **Notes on the asymmetric providers:**

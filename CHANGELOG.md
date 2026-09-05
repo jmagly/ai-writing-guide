@@ -19,6 +19,9 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Changed
 
+- Promoted the Hermes provider integration from experimental to stable and
+  identified the `pi` provider explicitly as the Pi Coding Agent harness
+  published at [pi.dev](https://pi.dev/) across current provider documentation.
 - Synchronized OMP across the public homepage, provider and capability
   matrices, setup navigation, operator references, and getting-started guides.
   The public platform list now matches the 13 named provider integrations and

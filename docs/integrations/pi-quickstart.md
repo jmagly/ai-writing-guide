@@ -4,6 +4,10 @@
 > [`47236c84450656043dd8fb21c8513d1421505ae3`](https://github.com/earendil-works/pi/commit/47236c84450656043dd8fb21c8513d1421505ae3),
 > verified 2026-09-04.
 
+Pi Coding Agent is the minimal agent harness published at
+[pi.dev](https://pi.dev/). AIWG's `pi` provider targets that harness directly;
+`pi.dev` is not a separate provider ID.
+
 Pi is an experimental AIWG deployment provider. AIWG installs declarative
 context, skills, prompt templates, and a reviewed trust-gated policy extension;
 it does not install Pi packages or credentials. Start with [Install, Connect, and

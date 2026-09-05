@@ -17,6 +17,12 @@ describe('public provider inventory', () => {
     expect(documentedIds).toEqual(namedProviders.map(({ id }) => id));
     expect(inventory).toContain(`**${namedProviders.length} named provider integrations**`);
     expect(inventory).toMatch(/`generic`\s+adapter is a fourteenth registry entry/);
+    for (const provider of namedProviders) {
+      const status = provider.status[0].toUpperCase() + provider.status.slice(1);
+      expect(inventory, provider.id).toMatch(
+        new RegExp('^\\| `' + provider.id + '` \\| .* \\| ' + status + '(?: | \\|)', 'm'),
+      );
+    }
   });
 
   it('keeps primary public surfaces on the same count and includes both OMP and Pi', () => {
@@ -87,7 +93,7 @@ describe('public provider inventory', () => {
       'windsurf-quickstart',
     ]);
     expect(homepage).toContain('href="#integrations/omp-quickstart">Oh My Pi</a>');
-    expect(homepage).toContain('href="#integrations/pi-quickstart">Pi Coding Agent</a>');
+    expect(homepage).toContain('href="#integrations/pi-quickstart">Pi Coding Agent (pi.dev)</a>');
     expect(homepage).not.toMatch(/Local\/Ollama/);
   });
 });

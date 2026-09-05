@@ -1,7 +1,7 @@
 # Connect AIWG to Oh My Pi
 
 > **Status:** Experimental. AIWG currently qualifies Oh My Pi 18.1.10 on
-> Linux x64. OMP is a separate provider from Pi Coding Agent.
+> Linux x64. OMP is a separate provider from the Pi Coding Agent harness at pi.dev.
 
 For the complete first-time journey, start with
 [Install, Connect, and Verify](../getting-started/install-connect-verify.md).

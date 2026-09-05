@@ -361,7 +361,7 @@ providers:
 
   hermes:
     display_name: Hermes
-    status: experimental
+    status: stable
     daemon_tier: unsupported
     daemon_pty_adapter: false
     artifact_paths:

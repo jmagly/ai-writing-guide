@@ -446,7 +446,7 @@ aiwg use sdlc --provider hermes        # Hermes
 aiwg use sdlc --provider openclaw      # OpenClaw
 aiwg use sdlc --provider openhuman     # OpenHuman
 aiwg use sdlc --provider omp           # Oh My Pi (experimental)
-aiwg use sdlc --provider pi            # Pi Coding Agent
+aiwg use sdlc --provider pi            # Pi Coding Agent at pi.dev
 ```
 
 Each platform receives agents, commands, skills, and rules adapted to its conventions automatically. Write once, deploy everywhere.

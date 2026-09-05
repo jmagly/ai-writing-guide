@@ -1,5 +1,7 @@
 # Connect AIWG to Hermes
 
+> **Status:** Stable.
+
 For the complete first-time journey, start with [Install, Connect, and Verify](../getting-started/install-connect-verify.md).
 
 Open a terminal in the project folder attached to the Hermes workspace:

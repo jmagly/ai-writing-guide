@@ -11,16 +11,18 @@ AIWG has **13 named provider integrations**. The source-of-truth registry is
 | `copilot` | GitHub Copilot | Stable | Project |
 | `cursor` | Cursor IDE | Stable | Project |
 | `factory` | Factory AI | Stable | Project |
-| `hermes` | Hermes | Experimental | Mixed project/user |
+| `hermes` | Hermes | Stable | Mixed project/user |
 | `opencode` | OpenCode | Stable | Project |
 | `openclaw` | OpenClaw | Stable | User |
 | `openhuman` | OpenHuman | Experimental | Mixed project/user |
-| `pi` | Pi Coding Agent | Experimental | Project |
+| `pi` | [Pi Coding Agent](https://pi.dev/) | Experimental | Project |
 | `omp` | [Oh My Pi](omp.md) | Experimental | Mixed project/user |
 | `warp` | Warp Terminal | Stable | Project |
 | `windsurf` | Devin Desktop | Stable compatibility adapter | Project |
 
 `oh-my-pi` is an alias for `omp`; OMP is distinct from the original `pi` provider.
+The `pi` provider targets Pi Coding Agent, the minimal agent harness published
+at [pi.dev](https://pi.dev/); it is not a separate fourteenth named integration.
 `devin` is an alias for `windsurf`, not an additional provider. The `generic`
 adapter is a fourteenth registry entry used to emit portable files for custom
 or unknown harnesses; it is deliberately excluded from the named-integration

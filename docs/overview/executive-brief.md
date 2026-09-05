@@ -165,7 +165,7 @@ This isn't academic theory—these are production standards governing billions o
 **Platform flexibility:**
 - Claude Code, GitHub Copilot, Cursor, Warp Terminal
 - Factory AI, OpenCode, OpenAI Codex
-- Hermes, OpenClaw, OpenHuman, Oh My Pi, Pi Coding Agent, Devin Desktop
+- Hermes, OpenClaw, OpenHuman, Oh My Pi, Pi Coding Agent (pi.dev), Devin Desktop
 - Self-hosted MCP server for enterprise deployment
 
 **Integration points:**

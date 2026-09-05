@@ -6,6 +6,8 @@ stable_id: aiwg.agent-reference.provider.hermes
 
 # Hermes Operational Reference
 
+> **AIWG provider status:** Stable.
+
 > **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
 
 Integrate AIWG with [Hermes Agent](https://github.com/NousResearch/hermes-agent) — file-based deployment plus an **optional** MCP sidecar.

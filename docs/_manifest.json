@@ -764,7 +764,7 @@
     },
     {
       "id": "integrations/pi-quickstart",
-      "title": "Pi Coding Agent",
+      "title": "Pi Coding Agent (pi.dev)",
       "summary": "Deploy AIWG context, skills, and prompt templates to Pi",
       "file": "integrations/pi-quickstart.md",
       "parent": "integrations"
