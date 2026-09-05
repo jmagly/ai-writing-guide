@@ -1,0 +1,78 @@
+{
+  "id": "network-analysis",
+  "type": "addon",
+  "name": "Network Analysis",
+  "version": "2026.9.0",
+  "description": "Governed offline PCAP/PCAPNG analysis with TShark, portable packet evidence, and optional local Termshark review.",
+  "core": false,
+  "autoInstall": false,
+  "author": "AIWG Contributors",
+  "license": "MIT",
+  "repository": "https://github.com/jmagly/aiwg",
+  "keywords": [
+    "network-analysis",
+    "pcap",
+    "pcapng",
+    "packet capture",
+    "packets",
+    "tshark",
+    "termshark",
+    "network troubleshooting",
+    "network evidence",
+    "protocol analysis"
+  ],
+  "entry": {
+    "skills": "skills/",
+    "rules": "rules/",
+    "templates": "templates/",
+    "schemas": "schemas/",
+    "docs": "docs/"
+  },
+  "skills": [
+    "analyze-network-capture"
+  ],
+  "rules": [
+    "network-analysis-safety"
+  ],
+  "templates": [
+    "analysis-request",
+    "termshark-handoff"
+  ],
+  "schemas": [
+    "network-analysis-contracts"
+  ],
+  "dependencies": {
+    "required": [],
+    "optional": [
+      "research-complete",
+      "forensics-complete",
+      "security-engineering",
+      "sdlc-complete",
+      "ops-complete"
+    ],
+    "external": [
+      "tshark >=4.4",
+      "capinfos >=4.4",
+      "termshark >=2.4 (optional)"
+    ]
+  },
+  "platform_support": {
+    "claude": "supported",
+    "codex": "supported",
+    "cursor": "supported",
+    "factory": "supported",
+    "hermes": "supported",
+    "opencode": "supported",
+    "openclaw": "supported",
+    "openhuman": "supported",
+    "warp": "supported",
+    "windsurf": "supported"
+  },
+  "security": {
+    "defaultMode": "offline-only",
+    "defaultOutput": "metadata-only",
+    "payload": "explicit-opt-in",
+    "providerTransfer": "separate-policy-decision",
+    "gate": "docs/security/network-analysis-construction-gate.md"
+  }
+}
