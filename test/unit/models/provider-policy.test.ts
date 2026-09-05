@@ -13,7 +13,7 @@ describe('provider model registry', () => {
   it('covers every audited provider with sourced, dated capability entries', () => {
     const registry = loadProviderModelCapabilities();
     expect(Object.keys(registry.providers).sort()).toEqual([
-      'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
+      'antigravity', 'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
       'omp', 'openclaw', 'opencode', 'openhuman', 'pi', 'warp', 'windsurf',
     ]);
     for (const capability of Object.values(registry.providers)) {

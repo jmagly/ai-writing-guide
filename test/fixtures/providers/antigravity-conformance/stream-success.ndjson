@@ -1,0 +1,3 @@
+{"event":"init","init":{"tools":[],"permission_mode":"request-review","model":"fixture-model","agent":"default","json_schema":null}}
+{"event":"step_update","step_update":{"step_index":0,"state":"DONE","step_type":"agent_response","text_delta":""}}
+{"event":"result","result":{"status":"SUCCESS","response":"","duration_seconds":0.1,"num_turns":1}}

@@ -3113,6 +3113,19 @@ export class UseHandler implements CommandHandler {
       const targetIdx = remainingArgs.findIndex(a => a === '--target');
       const target = targetIdx >= 0 && remainingArgs[targetIdx + 1] ? remainingArgs[targetIdx + 1] : process.cwd();
       const dryRunAddon = remainingArgs.includes('--dry-run');
+      let addonScope: 'project' | 'user';
+      try {
+        addonScope = detectScope(remainingArgs);
+        if (addonScope === 'project' && remainingArgs.includes('--user')) addonScope = 'user';
+      } catch (error) {
+        return { exitCode: 1, message: `Error: ${error instanceof Error ? error.message : String(error)}` };
+      }
+      if (addonScope === 'user' && !USER_SCOPE_PATHS[provider]) {
+        return {
+          exitCode: 1,
+          message: `--scope user not supported for provider '${provider}' — see docs/customization/user-scope-deployment.md for the supported list`,
+        };
+      }
 
       const runner = createScriptRunner(frameworkRoot);
       const addonBaseArgs = ['--deploy-commands', '--deploy-skills', '--deploy-rules'];

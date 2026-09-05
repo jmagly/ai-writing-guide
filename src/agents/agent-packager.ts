@@ -15,6 +15,7 @@ export class AgentPackager {
   private getAgentFormatAdapters(): Record<string, AgentFormatAdapter> {
     return {
       'claude-markdown': (agent) => this.convertToClaudeFormat(agent),
+      'antigravity-markdown': (agent) => this.convertToAntigravityFormat(agent),
       'omp-markdown': (agent) => this.convertToOmpFormat(agent),
       'cursor-json': (agent) => this.convertToCursorFormat(agent),
       'codex-markdown': (agent) => this.convertToCodexFormat(agent),
@@ -23,6 +24,22 @@ export class AgentPackager {
       'generic-markdown': (agent) => this.convertToGenericFormat(agent),
       'windsurf-markdown': (agent) => this.convertToWindsurfFormat(agent),
     };
+  }
+
+  /** Antigravity custom agents use Markdown with provider-native tool identifiers. */
+  convertToAntigravityFormat(agent: AgentInfo): string {
+    const lines = ['---', `name: ${agent.metadata.name}`, `description: ${agent.metadata.description}`];
+    const toolMap = new Map([
+      ['Read', 'view_file'],
+      ['Write', 'write_to_file'],
+      ['Edit', 'replace_file_content'],
+      ['Grep', 'grep_search'],
+      ['Bash', 'run_command'],
+    ]);
+    const tools = (agent.metadata.tools ?? []).map(tool => toolMap.get(tool)).filter((tool): tool is string => Boolean(tool));
+    if (tools.length) lines.push('tools:', ...tools.map(tool => `  - ${tool}`));
+    lines.push('---', '', agent.content);
+    return lines.join('\n');
   }
 
   /**

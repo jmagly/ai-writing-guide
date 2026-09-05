@@ -1,10 +1,10 @@
 <div align="center">
 
-<a href="https://aiwg.io"><img src="https://aiwg.io/assets/badges/aiwg-hero-dark.png" alt="AIWG — multi-agent AI framework · one source of truth · 13 provider integrations including Oh My Pi" width="680"></a>
+<a href="https://aiwg.io"><img src="https://aiwg.io/assets/badges/aiwg-hero-dark.png" alt="AIWG — multi-agent AI framework · one source of truth · 14 provider integrations including Google Antigravity CLI" width="680"></a>
 
 # AIWG
 
-**Multi-agent AI framework for 13 provider integrations, including Claude Code, Codex, Copilot, Cursor, Oh My Pi, Pi, and Warp**
+**Multi-agent AI framework for 14 provider integrations, including Antigravity, Claude Code, Codex, Copilot, Cursor, Pi, and Warp**
 
 200+ agents, 109+ CLI commands, 400+ deployable agent/skill/command/rule artifacts, 8 core frameworks, 32 addons, and a 40-plugin Claude Code marketplace. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
 
@@ -85,7 +85,7 @@ Agents and stewards setting up AIWG end-to-end should use the
 [![GitHub Stars](https://img.shields.io/github/stars/jmagly/aiwg?style=flat-square)](https://github.com/jmagly/aiwg/stargazers)
 [![Node Version](https://img.shields.io/badge/node-%E2%89%A520.0.0-brightgreen?style=flat-square&logo=node.js)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
-[![13 Providers](https://img.shields.io/badge/Providers-13-purple?style=flat-square)](#-platform-support)
+[![14 Providers](https://img.shields.io/badge/Providers-14-purple?style=flat-square)](#-platform-support)
 [![Listed on mcpservers.org](https://mcpservers.org/badge.svg)](https://mcpservers.org/servers/docs-aiwg-io)
 
 [![Built With AIWG](https://aiwg.io/assets/badges/built-with-aiwg-dark.png)](https://aiwg.io/badges)
@@ -164,7 +164,7 @@ You can also invoke AIWG without adjusting `PATH` by using `npx aiwg <command>`.
 
 ## What AIWG Is
 
-AIWG is a deployment tool and support utility for AI context. At its core, `aiwg use` copies markdown and YAML source files into the paths each provider reads, so one source of truth works across 13 named provider integrations. A fourteenth `generic` adapter emits portable files for unrecognized or custom harnesses and is not counted as a named integration.
+AIWG is a deployment tool and support utility for AI context. At its core, `aiwg use` copies markdown and YAML source files into the paths each provider reads, so one source of truth works across 14 named provider integrations. A fifteenth `generic` adapter emits portable files for unrecognized or custom harnesses and is not counted as a named integration.
 
 Around that core, AIWG ships agent-facing utilities for things the base platforms do not handle on their own: persistent artifact memory (`.aiwg/`), background orchestration, autonomous loops, artifact indexing, cost telemetry, health diagnostics, and more. These are tools the agent calls when you ask for something AIWG-shaped — you stay in chat. Most are opt-in. The deployment layer works standalone as plain text files the platform reads natively.
 
@@ -543,7 +543,7 @@ The orchestration pattern: **Primary Author → Parallel Reviewers → Synthesiz
 - **128 workflow skills** — natural language triggers for regression testing, forensics, voice profiles, quality gates, and CI/CD integration
 - **35 enforcement rules** — anti-laziness detection, token security, citation integrity, executable feedback, failure mitigation across 6 LLM archetypes
 - **334 artifact templates** — progressive disclosure templates for requirements, architecture, testing, security, deployment, and more
-- **Multi-provider support** — deploy to Claude Code, OpenAI Codex, GitHub Copilot, Cursor, Factory AI, Hermes, OpenCode, OpenClaw, OpenHuman, [Pi Coding Agent](https://pi.dev/), Oh My Pi, Warp Terminal, and Devin Desktop
+- **Multi-provider support** — deploy to Google Antigravity CLI, Claude Code, OpenAI Codex, GitHub Copilot, Cursor, Factory AI, Hermes, OpenCode, OpenClaw, OpenHuman, [Pi Coding Agent](https://pi.dev/), Oh My Pi, Warp Terminal, and Devin Desktop
 - **8 core frameworks + training marketplace package** — SDLC, Digital Forensics, Marketing Operations, Research Management, Media Curation, Ops Infrastructure, Knowledge Base, Security Engineering, plus [`aiwg-training`](https://github.com/jmagly/aiwg-training) for fine-tuning dataset curation (corpus-to-dataset pipeline with DPO/KTO/ORPO/SimPO export)
 - **32 addons** — compound memory, line memory, llm-wiki (Obsidian-native knowledge base), RLM recursive decomposition, fleet operations, browser control, testing quality, and more
 - **40 Claude Code plugins** — the complete framework and addon catalog is installable independently from the AIWG marketplace
@@ -645,6 +645,7 @@ needs. Source-distributed opt-in addons such as Civic Action deploy with
 ### Multi-Platform Deployment
 
 ```bash
+aiwg use all --provider antigravity    # Google Antigravity CLI (alias: agy)
 aiwg use all --provider claude         # Claude Code
 aiwg use all --provider codex          # OpenAI Codex
 aiwg use all --provider copilot        # GitHub Copilot
@@ -1384,10 +1385,11 @@ See [Messaging Guide](docs/messaging-guide.md) for setup and configuration.
 
 ## Platform Support
 
-AIWG supports 13 named provider integrations. Artifact support varies by provider and is adapted to each provider's native or compatibility surfaces.
+AIWG supports 14 named provider integrations. Artifact support varies by provider and is adapted to each provider's native or compatibility surfaces.
 
 | Platform | Status | Agents | Commands | Skills | Rules | Deploy Command |
 |----------|--------|--------|----------|--------|-------|---------------|
+| **[Google Antigravity CLI](docs/providers/antigravity.md)** | Experimental | degraded `.agents/agents/` | — | `.agents/skills/` | `AGENTS.md` | `--provider antigravity` (alias: `agy`) |
 | **Claude Code** | Tested | `.claude/agents/` | `.claude/commands/` | `.claude/skills/` | `.claude/rules/` | `aiwg use sdlc` |
 | **GitHub Copilot** | Tested | `.github/agents/` | `.github/agents/` | `.github/skills/` | `.github/copilot-rules/` | `--provider copilot` |
 | **Warp Terminal** | Tested | `.warp/agents/` + WARP.md | `.warp/commands/` | `.warp/skills/` | `.warp/rules/` | `--provider warp` |
@@ -1480,7 +1482,7 @@ aiwg sdlc-accelerate --from-codebase .
 
 ### Extension System
 
-AIWG uses a unified extension system with 10 extension types, projected onto the supported artifact surfaces of 13 named provider integrations:
+AIWG uses a unified extension system with 10 extension types, projected onto the supported artifact surfaces of 14 named provider integrations:
 
 | Type | Count | Description |
 |------|-------|-------------|
@@ -1858,7 +1860,7 @@ Full research background, citations, and methodology: [docs/research/](docs/rese
 
 ### For Engineering Teams
 
-**Standardize how your team works with AI across 13 provider integrations.** Whether your team uses Claude Code, Codex, Copilot, Cursor, Pi, or Warp, everyone can receive the same source workflows adapted to the provider's supported surfaces. The 35 enforcement rules prevent common AI mistakes: deleting tests to make them pass, fabricating citations, hard-coding tokens, or silently dropping features. Human-in-the-loop gates at phase transitions ensure no AI output reaches production without human review.
+**Standardize how your team works with AI across 14 provider integrations.** Whether your team uses Antigravity, Claude Code, Codex, Copilot, Cursor, Pi, or Warp, everyone can receive the same source workflows adapted to the provider's supported surfaces. The 35 enforcement rules prevent common AI mistakes: deleting tests to make them pass, fabricating citations, hard-coding tokens, or silently dropping features. Human-in-the-loop gates at phase transitions ensure no AI output reaches production without human review.
 
 ### For Platform Engineers
 

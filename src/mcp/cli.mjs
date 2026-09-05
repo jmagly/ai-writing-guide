@@ -54,8 +54,8 @@ Server Options (for add/update):
   --description <text> Optional description
 
 Inject Options:
-  --provider <name>    Target provider (including omp / oh-my-pi)
-  --scope <scope>      project (default) or user; OMP user scope respects OMP_PROFILE
+  --provider <name>    Target provider (including antigravity / agy and omp / oh-my-pi)
+  --scope <scope>      project (default) or user; provider user scope must be documented
   --all                Inject into all previously configured providers
   --servers <a,b,...>  Only inject specific servers (comma-separated names)
   --dry-run            Show what would change without writing

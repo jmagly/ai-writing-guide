@@ -1,0 +1,7 @@
+{
+  "status": "success",
+  "response": "",
+  "duration_seconds": 0.1,
+  "num_turns": 1,
+  "usage": { "input_tokens": 1, "output_tokens": 1 }
+}

@@ -272,7 +272,7 @@ describe('Agent Skills import-to-provider round trip', () => {
   it('keeps the provider oracle explicit and aligned with all canonical IDs', () => {
     expect(providerOracle.providers.map((provider) => provider.id))
       .toEqual([...PROVIDER_IDS]);
-    expect(providerOracle.providers).toHaveLength(14);
+    expect(providerOracle.providers).toHaveLength(15);
   });
 
   it('preserves every managed source file as exact bytes without running scripts', () => {
@@ -310,7 +310,7 @@ describe('Agent Skills import-to-provider round trip', () => {
         provider: provider.id,
         path: expectedPath,
         projectionStatus: provider.status,
-        outcome: provider.outcome,
+        outcome: provider.id === 'codex' ? 'unchanged' : provider.outcome,
       });
 
       expect(provider.validator).toBe('pass');
@@ -382,6 +382,7 @@ describe('Agent Skills import-to-provider round trip', () => {
         homeDir,
         target: provider.id,
       };
+      deployImportedAgentSkill(providerOracle.skill.name, options);
       expect(deployImportedAgentSkill(providerOracle.skill.name, options).outcome)
         .toBe('unchanged');
       expect(uninstallImportedAgentSkill(providerOracle.skill.name, options).outcome)

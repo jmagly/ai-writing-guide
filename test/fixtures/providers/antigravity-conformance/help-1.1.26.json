@@ -1,0 +1,27 @@
+{
+  "provider": "antigravity",
+  "binary": "agy",
+  "version": "1.1.26",
+  "platform": "linux-x64",
+  "captured": "2026-09-04",
+  "sanitized": true,
+  "flags": [
+    "--add-dir",
+    "--agent",
+    "--continue",
+    "--conversation",
+    "--dangerously-skip-permissions",
+    "--disable-slash-commands",
+    "--effort",
+    "--input-format",
+    "--json-schema",
+    "--mode",
+    "--model",
+    "--output-format",
+    "--print",
+    "--print-timeout",
+    "--prompt",
+    "--sandbox"
+  ],
+  "subcommands": ["agent", "agents", "changelog", "install", "mcp", "models", "plugin", "plugins", "remote-control", "update"]
+}

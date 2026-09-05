@@ -153,6 +153,7 @@ const ArtifactPathsSchema = z.object({
 
 const ProviderDefinitionSchema = z.object({
   id: z.enum([
+    'antigravity',
     'claude',
     'codex',
     'copilot',
@@ -266,6 +267,7 @@ const ProviderDefinitionSchema = z.object({
 }) satisfies z.ZodType<ProviderDefinition>;
 
 export const PROVIDER_IDS: readonly Platform[] = [
+  'antigravity',
   'claude',
   'codex',
   'copilot',
@@ -295,6 +297,17 @@ type BuiltInSeed = Omit<ProviderDefinition, 'displayName' | 'status' | 'paths' |
 const VERIFIED_ON = '2026-07-21';
 
 const CONTEXT_CONTRACTS: Record<Platform, ProviderContextContract> = {
+  antigravity: {
+    startupFiles: ['AGENTS.md', 'GEMINI.md'],
+    precedence: ['provider/system', 'project AGENTS.md or GEMINI.md', 'nested project context when selected by the CLI'],
+    loadMode: 'prose-directive', includeSyntax: null, configRegistration: null,
+    bootstrapTargets: ['AGENTS.md'], maxContextBytes: null, recommendedMaxLines: null, nestedContext: true, support: 'supported',
+    verification: {
+      method: 'official Antigravity CLI documentation and sanitized 1.1.26 help evidence',
+      source: 'https://antigravity.google/docs/cli/overview/',
+      lastVerified: '2026-09-04',
+    },
+  },
   claude: {
     startupFiles: ['CLAUDE.md', '.claude/CLAUDE.md'], precedence: ['provider/system', 'nested CLAUDE.md', 'root CLAUDE.md'],
     loadMode: 'native-include', includeSyntax: '@WORKSPACE.md\n@AIWG.md', configRegistration: null,
@@ -391,6 +404,42 @@ const CONTEXT_CONTRACTS: Record<Platform, ProviderContextContract> = {
 };
 
 const BUILT_IN_SEEDS: BuiltInSeed[] = [
+  {
+    id: 'antigravity',
+    displayName: 'Google Antigravity CLI',
+    aliases: ['agy'],
+    status: 'experimental',
+    builtIn: true,
+    surfaces: {
+      primary: 'antigravity',
+      compatibility: ['agy'],
+      precedence: ['AGENTS.md', 'GEMINI.md', '.agents/agents/', '.agents/skills/'],
+      related: [],
+    },
+    detection: { env: [], process: ['agy'], capabilityId: 'antigravity' },
+    paths: {
+      deployTarget: 'project',
+      artifacts: {
+        agents: '.agents/agents', commands: null, skills: '.agents/.aiwg/skills', rules: null, behaviors: null,
+      },
+      kernelSkills: '.agents/skills',
+      contextDiscovery: { agents: '.agents/agents', skills: '.agents/skills', rules: null, behaviors: null },
+      configFile: 'AGENTS.md',
+      contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: null, contextFile: 'AGENTS.md' },
+    },
+    smithPaths: {
+      agents: '.agents/agents', commands: null, skills: '.agents/skills', rules: null,
+      fileExtension: '.md', configFile: 'AGENTS.md', aggregated: false,
+    },
+    skillNamespace: {
+      deploymentGroup: 'deep-recursion', pathType: 'project', skillsBaseDir: '.agents/skills', subdirLayout: true,
+    },
+    adapters: {
+      agentFormat: 'antigravity-markdown', hookBridge: null, mcpInjection: 'antigravity',
+      contextAggregation: 'agents-md', ruleFormat: null,
+    },
+    matrixRef: 'antigravity',
+  },
   {
     id: 'claude',
     displayName: 'Claude Code',

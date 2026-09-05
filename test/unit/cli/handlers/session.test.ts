@@ -141,13 +141,10 @@ describe('sessionHandler.execute — provider resolution', () => {
     expect(mockGetProviderConfig).toHaveBeenCalledWith('opencode');
   });
 
-  it('falls back to claude for unknown --provider value', async () => {
-    mockGetProviderConfig.mockReturnValue({ name: 'Claude Code', binary: 'claude', guidanceMessage: null });
-    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    await sessionHandler.execute(makeCtx(['--provider', 'doesnotexist']));
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Unknown provider 'doesnotexist'"));
-    expect(mockGetProviderConfig).toHaveBeenCalledWith('claude');
-    consoleSpy.mockRestore();
+  it('fails closed for an unknown --provider value', async () => {
+    await expect(sessionHandler.execute(makeCtx(['--provider', 'doesnotexist'])))
+      .rejects.toThrow("Unsupported provider 'doesnotexist'");
+    expect(mockGetProviderConfig).not.toHaveBeenCalled();
   });
 });
 

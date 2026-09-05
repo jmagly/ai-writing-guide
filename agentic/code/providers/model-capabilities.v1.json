@@ -3,6 +3,17 @@
   "version": "1.0.0",
   "verifiedAt": "2026-07-20",
   "providers": {
+    "antigravity": {
+      "agent": "native", "skill": "native", "globalChild": "inherited",
+      "identifierSyntax": "model identifier accepted by Antigravity CLI 1.1.26 --model",
+      "effortValues": ["low", "medium", "high"],
+      "inheritance": "Omitted model and effort inherit the invoking Antigravity session",
+      "invalidPinFallback": "Provider validation/error; never assume fallback",
+      "configTarget": "agy launch arguments; custom-agent model tiers are not projected from generic AIWG model ids",
+      "artifactFormat": "YAML frontmatter plus Markdown; runtime --model and --effort flags",
+      "verification": "Pinned offline contract; authenticated model selection was not executed",
+      "sourceUrl": "https://antigravity.google/docs/cli/subagents/", "verifiedAt": "2026-09-04"
+    },
     "claude": {
       "agent": "native", "skill": "native", "globalChild": "inherited",
       "identifierSyntax": "Claude alias or accepted Anthropic model ID",

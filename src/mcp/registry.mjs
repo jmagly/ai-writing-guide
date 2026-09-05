@@ -208,6 +208,12 @@ function buildServerConfig(server, provider) {
   const mcpDefinition = getMcpInjectionDefinition(provider);
 
   switch (mcpDefinition?.serverConfigFormat) {
+    case 'antigravity': {
+      if (server.type === 'stdio') {
+        return { command: server.command, args: server.args || [], ...(server.env ? { env: server.env } : {}) };
+      }
+      return { serverUrl: server.url, ...(server.headers ? { headers: server.headers } : {}) };
+    }
     case 'standard': {
       if (server.type === 'stdio') {
         return {
@@ -337,8 +343,10 @@ async function injectJson(registry, servers, configPath, provider, dryRun, resul
   try {
     const content = await readFile(configPath, 'utf-8');
     existing = JSON.parse(content);
-  } catch {
-    // File doesn't exist
+  } catch (error) {
+    if (normalizeRuntimeProviderId(provider) === 'antigravity' && error?.code !== 'ENOENT') {
+      throw new Error(`Refusing to overwrite malformed MCP config ${configPath}: ${error.message}`);
+    }
   }
 
   const mcpKey = getMcpInjectionDefinition(provider)?.serversKey || 'mcpServers';
@@ -348,6 +356,7 @@ async function injectJson(registry, servers, configPath, provider, dryRun, resul
   for (const server of servers) {
     if (existingServers[server.name]) {
       result.alreadyPresent.push(server.name);
+      if (normalizeRuntimeProviderId(provider) === 'antigravity') continue;
     }
     newServers[server.name] = buildServerConfig(server, provider);
     result.serversInjected.push(server.name);
@@ -360,7 +369,8 @@ async function injectJson(registry, servers, configPath, provider, dryRun, resul
     await writeFile(configPath, JSON.stringify(merged, null, 2) + '\n', 'utf-8');
 
     for (const server of servers) {
-      await registry.recordInjection(server.name, provider);
+      if (normalizeRuntimeProviderId(provider) === 'antigravity' && !result.serversInjected.includes(server.name)) continue;
+      await registry.recordInjection(server.name, normalizeRuntimeProviderId(provider) || provider);
     }
   }
 

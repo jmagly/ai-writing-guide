@@ -323,6 +323,7 @@
     "providers",
     "providers/capability-matrix",
     "providers/provider-inventory",
+    "providers/antigravity",
     "providers/omp",
     "providers/omp-verification",
     "providers/omp-sessions",
@@ -2549,6 +2550,13 @@
       "title": "Provider Inventory",
       "summary": "Canonical list and count of named provider integrations",
       "file": "providers/provider-inventory.md",
+      "parent": "providers"
+    },
+    {
+      "id": "providers/antigravity",
+      "title": "Google Antigravity CLI Provider Guide",
+      "summary": "Experimental provider selection, project resources, MCP, headless operation, and qualification boundaries",
+      "file": "providers/antigravity.md",
       "parent": "providers"
     },
     {
