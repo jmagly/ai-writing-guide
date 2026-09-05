@@ -124,6 +124,7 @@ const PROVIDERS_NEEDING_COMMANDS = new Set([
  * Providers where skills are deployed natively (no command generation needed).
  */
 const SKILLS_ONLY_PROVIDERS = new Set([
+  'antigravity',
   'claude',
   'cursor',
   'hermes',

@@ -33,7 +33,7 @@ export const AGENTS_MD_PROVIDERS: ReadonlySet<Platform> = new Set(
     .map((definition) => definition.id),
 );
 
-export type AgentsMdProvider = Platform & ('codex' | 'copilot' | 'cursor' | 'windsurf' | 'hermes' | 'pi' | 'omp' | 'warp' | 'factory' | 'opencode');
+export type AgentsMdProvider = Platform & ('antigravity' | 'codex' | 'copilot' | 'cursor' | 'windsurf' | 'hermes' | 'pi' | 'omp' | 'warp' | 'factory' | 'opencode');
 
 /**
  * Whether the context-pipeline has ANY work to do for this provider.
@@ -56,8 +56,8 @@ export function shouldEmitAiwgMd(provider: Platform): boolean {
 
 /**
  * Whether to emit AGENTS.md at project root. True for the AGENTS-MD
- * provider set (codex, copilot, cursor, windsurf, hermes, warp, factory,
- * opencode). False for claude (uses CLAUDE.md hook instead), openclaw,
+ * provider set (antigravity, codex, copilot, cursor, windsurf, hermes, warp,
+ * factory, opencode). False for claude (uses CLAUDE.md hook instead), openclaw,
  * and generic.
  */
 export function shouldEmitAgentsMd(provider: Platform): boolean {

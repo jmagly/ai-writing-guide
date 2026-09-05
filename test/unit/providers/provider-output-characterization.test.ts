@@ -269,6 +269,7 @@ describe('provider output characterization for registry migration', () => {
     } = await import('../../../src/providers/provider-definitions.mjs');
 
     expect(SUPPORTED_PROVIDERS).toEqual([
+      'antigravity',
       'omp',
       'claude-code',
       'cursor',
@@ -281,8 +282,11 @@ describe('provider output characterization for registry migration', () => {
     expect(listMcpInjectProviderIds()).toEqual(SUPPORTED_PROVIDERS);
     expect(normalizeRuntimeProviderId('claude')).toBe('claude-code');
     expect(normalizeRuntimeProviderId('openai')).toBe('codex');
+    expect(normalizeRuntimeProviderId('agy')).toBe('antigravity');
     expect(getMcpInjectionDefinition('openai')?.configFormat).toBe('toml');
     expect(getMcpInjectionDefinition('opencode')?.serversKey).toBe('mcp');
+    expect(getProviderConfigPath('agy', projectDir)).toBe(resolve(projectDir, '.agents/mcp_config.json'));
+    expect(getProviderConfigPath('antigravity', projectDir, { scope: 'user' })).toBe(resolve(homeDir, '.gemini/config/mcp_config.json'));
     expect(getProviderConfigPath('claude-code', projectDir)).toBe(resolve(projectDir, '.claude/settings.local.json'));
     expect(getProviderConfigPath('claude', projectDir)).toBe(resolve(projectDir, '.claude/settings.local.json'));
     expect(getProviderConfigPath('cursor', projectDir)).toBe(resolve(projectDir, '.cursor/mcp.json'));

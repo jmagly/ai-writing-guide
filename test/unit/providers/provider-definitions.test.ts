@@ -8,6 +8,7 @@ import {
 } from '../../../src/providers/provider-definitions.js';
 
 const CURRENT_PLATFORM_IDS = [
+  'antigravity',
   'claude',
   'codex',
   'copilot',

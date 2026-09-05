@@ -1,6 +1,6 @@
 # Cross-Platform Overview
 
-AIWG has 13 named provider integrations plus a provider-neutral `generic`
+AIWG has 14 named provider integrations plus a provider-neutral `generic`
 fallback adapter. **One command projects AIWG onto the surfaces supported by
 the selected provider.**
 
@@ -10,6 +10,7 @@ the selected provider.**
 
 | Platform | Deploy Command | Context File |
 |----------|----------------|--------------|
+| Google Antigravity CLI | `aiwg use sdlc --provider antigravity` (alias `agy`) | AGENTS.md |
 | Claude Code | `aiwg use sdlc` | CLAUDE.md |
 | OpenAI/Codex | `aiwg use sdlc --provider codex` | AGENTS.md |
 | GitHub Copilot | `aiwg use sdlc --provider copilot` | copilot-instructions.md |
@@ -43,6 +44,7 @@ provider exposes the corresponding surface:
 
 | Provider | Agents | Commands | Skills | Rules | Behaviors |
 |----------|--------|----------|--------|-------|-----------|
+| Google Antigravity CLI | degraded | unsupported | native | AGENTS.md | unsupported |
 | Claude Code | native | native | native | native | - |
 | OpenAI/Codex | native | native | native | conventional | - |
 | GitHub Copilot | native | native | conventional | native | - |
@@ -88,6 +90,7 @@ Most providers follow `.<provider>/<type>/`:
 
 | Provider | Special Convention |
 |----------|--------------------|
+| **Google Antigravity CLI** | Experimental, pinned to CLI 1.1.26<br>Agents → `.agents/agents/`; kernel skills → `.agents/skills/`<br>MCP → `.agents/mcp_config.json` (user scope only when explicit)<br>Global skills deferred because official paths conflict<br>Selector `antigravity`; alias and executable `agy` |
 | **OpenAI/Codex** | Commands → `~/.codex/prompts/`<br>Skills → project `.agents/skills/` (legacy AIWG entries under `~/.codex/skills/` are pruned)<br>AGENTS.md is free-form Markdown (no YAML frontmatter or structured directives)<br>Rust CLI is current product; TypeScript CLI is legacy<br>Uses Responses API exclusively (`wire_api = "chat"` removed) |
 | **GitHub Copilot** | Agents use `.agent.md` format<br>Commands → `.github/prompts/*.prompt.md`<br>Rules → `.github/instructions/*.instructions.md` (with `applyTo` globs)<br>MCP → `.vscode/mcp.json` |
 | **Warp Terminal** | Skills natively discovered at `.warp/skills/`; agents and rules aggregated into `WARP.md`; `AGENTS.md` also supported (preferred by Warp, but `WARP.md` takes priority); `.warp/workflows/` for legacy YAML workflows |
@@ -143,6 +146,7 @@ See [Al Guide](../ralph-guide.md) for full documentation.
 
 | Platform | Guide |
 |----------|-------|
+| Google Antigravity CLI | [Provider Guide](../providers/antigravity.md) |
 | Claude Code | [Setup Guide](claude-code-quickstart.md) |
 | OpenAI/Codex | [Setup Guide](codex-quickstart.md) |
 | GitHub Copilot | [Setup Guide](copilot-quickstart.md) |

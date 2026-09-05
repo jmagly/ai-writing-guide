@@ -4,6 +4,14 @@
   "refreshedAt": "2026-07-20",
   "staleAfterDays": 90,
   "providers": {
+    "antigravity": {
+      "roles": {
+        "reasoning": { "id": "configured/reasoning", "status": "unverified", "observed": false },
+        "coding": { "id": "configured/coding", "status": "unverified", "observed": false },
+        "efficiency": { "id": "configured/efficiency", "status": "unverified", "observed": false }
+      },
+      "sourceUrl": "https://antigravity.google/docs/cli/overview/", "verifiedAt": "2026-09-04"
+    },
     "claude": {
       "roles": {
         "reasoning": { "id": "claude-opus-4-7", "status": "active", "observed": false },

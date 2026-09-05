@@ -749,6 +749,7 @@ export interface ResolvedParallelism {
  *   - unknown: conservative 4 default.
  */
 export const PROVIDER_PARALLELISM_DEFAULTS: Record<string, ResolvedParallelism> = {
+  antigravity: { max_parallel_subagents: 4, max_parallel_ralph_loops: 2, max_parallel_mc_missions: 4 },
   claude:   { max_parallel_subagents: 4,  max_parallel_ralph_loops: 2, max_parallel_mc_missions: 4 },
   codex:    { max_parallel_subagents: 10, max_parallel_ralph_loops: 3, max_parallel_mc_missions: 6 },
   copilot:  { max_parallel_subagents: 10, max_parallel_ralph_loops: 3, max_parallel_mc_missions: 6 },

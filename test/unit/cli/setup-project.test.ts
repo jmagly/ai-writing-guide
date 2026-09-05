@@ -3,7 +3,7 @@ import { execFileSync } from 'child_process';
 import { mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { buildSetupProjectPlan, setupHandler } from '../../../src/cli/handlers/setup.js';
+import { buildSetupProjectPlan, parseSetupProjectOptions, setupHandler } from '../../../src/cli/handlers/setup.js';
 import { emptyConfig, getConfigPath, writeAiwgConfig } from '../../../src/config/aiwg-config.js';
 
 function makeTmpDir(name: string): string {
@@ -36,6 +36,11 @@ describe('aiwg setup project', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it('normalizes the Antigravity agy selector before persistence planning', () => {
+    const parsed = parseSetupProjectOptions({ args: ['--providers', 'agy'], cwd: tmp } as never);
+    expect(parsed.providers).toEqual(['antigravity']);
   });
 
   it('builds a new-project policy from detected GitHub origin', async () => {

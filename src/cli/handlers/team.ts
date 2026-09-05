@@ -17,6 +17,7 @@ import { promises as fs } from 'node:fs';
 import { join, basename, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { projectAiwgPath } from '../../config/project-artifacts.js';
+import { normalizeProviderDefinitionId } from '../../providers/provider-definitions.js';
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -50,7 +51,7 @@ interface TeamDefinition {
 
 function detectProvider(args: string[]): string {
   const providerFlag = parseFlag(args, '--provider');
-  if (providerFlag) return providerFlag;
+  if (providerFlag) return normalizeProviderDefinitionId(providerFlag) ?? providerFlag;
 
   // Claude Code sets CLAUDE_CODE_VERSION; API key presence is secondary heuristic
   const isClaudeCode =
@@ -400,7 +401,7 @@ function showTeamHelp(): void {
     info <name>            Show team definition and agent roster
 
   ${ui.bold('Options:')}
-    --provider <p>         Override provider: claude|warp|copilot|cursor|windsurf|opencode|factory|codex|openclaw|omp|oh-my-pi
+    --provider <p>         Override provider: antigravity|agy|claude|warp|copilot|cursor|windsurf|opencode|factory|codex|openclaw|omp|oh-my-pi
     --objective "<text>"   Set objective passed to mc dispatch agents
     --body-file <file>    OMP task JSON with explicit ownership and tools
     --cwd <dir>          OMP working directory (defaults to current workspace)

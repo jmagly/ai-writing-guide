@@ -59,6 +59,7 @@ export type ModelRole = 'reasoning' | 'coding' | 'efficiency';
  * AI provider identifier
  */
 export type Provider =
+  | 'antigravity'
   | 'claude'
   | 'codex'
   | 'copilot'

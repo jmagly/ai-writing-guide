@@ -21,6 +21,8 @@ export const PARALLELISM_BLOCK_END = '<!-- AIWG-PARALLELISM-CAP:END -->';
 
 function delegationSupport(provider: string | undefined): string {
   switch (provider) {
+    case 'antigravity':
+      return '**Provider behavior (antigravity)**: AIWG team execution uses aiwg-mc emulation. The conservative cap is four workers; native Antigravity subagent limits and heterogeneous model pinning remain unqualified.';
     case 'claude':
     case 'codex':
     case 'copilot':

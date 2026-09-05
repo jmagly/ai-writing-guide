@@ -312,6 +312,7 @@ validated Agent Skills name.
 
 | Target ID | Deployed path | Status for conforming fixture | Resource result | Provider behavior |
 |---|---|---|---|---|
+| `antigravity` | `<project>/.agents/skills/<name>` | `native` | exact | Project-local native Agent Skills bundle; global skill deployment remains disabled because Google's documented global paths conflict |
 | `claude` | `<project>/.claude/skills/<name>` | `native` | exact | Recursive native bundle |
 | `codex` | `<project>/.agents/skills/<name>` | `projected` | exact | Project compatibility surface; descriptions over 500 characters are `degraded`/blocked, never truncated |
 | `copilot` | `<project>/.github/skills/<name>` | `native` | exact | Recursive native bundle |

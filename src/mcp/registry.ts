@@ -81,6 +81,8 @@ export interface McpRegistryData {
 }
 
 export type InjectProvider =
+  | 'antigravity'
+  | 'agy'
   | 'omp'
   | 'oh-my-pi'
   | 'claude-code'
@@ -93,7 +95,7 @@ export type InjectProvider =
   | 'windsurf'
   | 'warp';
 
-type McpInjectionAdapter = 'claude-code' | 'cursor' | 'factory' | 'codex' | 'opencode' | 'windsurf' | 'warp' | null;
+type McpInjectionAdapter = 'antigravity' | 'claude-code' | 'cursor' | 'factory' | 'codex' | 'opencode' | 'windsurf' | 'warp' | null;
 
 // ============================================
 // Registry
@@ -269,6 +271,12 @@ function buildServerConfig(
 ): Record<string, unknown> {
   const adapter = getProviderDefinition(provider)?.adapters.mcpInjection as McpInjectionAdapter | undefined;
   switch (adapter) {
+    case 'antigravity': {
+      if (server.type === 'stdio') {
+        return { command: server.command, args: server.args || [], ...(server.env ? { env: server.env } : {}) };
+      }
+      return { serverUrl: server.url, ...(server.headers ? { headers: server.headers } : {}) };
+    }
     case 'claude-code': {
       if (server.type === 'stdio') {
         return {
@@ -390,11 +398,17 @@ export interface InjectResult {
  * Get the config file path for a provider.
  */
 export function getProviderConfigPath(provider: InjectProvider, projectDir = '.', options: { scope?: 'user' | 'project' } = {}): string {
+  if ((provider === 'antigravity' || provider === 'agy') && options.scope === 'user') {
+    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+    return resolve(homeDir, '.gemini/config/mcp_config.json');
+  }
   if ((provider === 'omp' || provider === 'oh-my-pi') && options.scope !== undefined && !['user', 'project'].includes(options.scope)) throw new Error('OMP MCP scope must be user or project');
   if ((provider === 'omp' || provider === 'oh-my-pi') && options.scope === 'user') return resolve(resolveOmpPaths().agentDir, 'mcp.json');
   const homeDir = process.env.HOME || process.env.USERPROFILE || '';
 
   const pathMap: Record<InjectProvider, string> = {
+    antigravity: resolve(projectDir, '.agents/mcp_config.json'),
+    agy: resolve(projectDir, '.agents/mcp_config.json'),
     omp: resolve(projectDir, '.omp/mcp.json'),
     'oh-my-pi': resolve(projectDir, '.omp/mcp.json'),
     'claude-code': resolve(projectDir, '.claude/settings.local.json'),
@@ -479,8 +493,10 @@ async function injectJson(
   try {
     const content = await readFile(configPath, 'utf-8');
     existing = JSON.parse(content);
-  } catch {
-    // File doesn't exist, start fresh
+  } catch (error: any) {
+    if ((provider === 'antigravity' || provider === 'agy') && error?.code !== 'ENOENT') {
+      throw new Error(`Refusing to overwrite malformed MCP config ${configPath}: ${error.message}`);
+    }
   }
 
   // Determine the MCP servers key for this provider
@@ -494,6 +510,7 @@ async function injectJson(
     if (existingServers[server.name]) {
       // Update existing entry in place
       result.alreadyPresent.push(server.name);
+      if (provider === 'antigravity' || provider === 'agy') continue;
     }
     newServers[server.name] = buildServerConfig(server, provider);
     result.serversInjected.push(server.name);
@@ -508,7 +525,8 @@ async function injectJson(
 
     // Record injection in registry
     for (const server of servers) {
-      await registry.recordInjection(server.name, provider);
+      if ((provider === 'antigravity' || provider === 'agy') && !result.serversInjected.includes(server.name)) continue;
+      await registry.recordInjection(server.name, provider === 'agy' ? 'antigravity' : provider);
     }
   }
 
@@ -569,6 +587,7 @@ function escapeRegex(str: string): string {
 
 /** All supported provider names for injection */
 export const SUPPORTED_PROVIDERS: InjectProvider[] = [
+  'antigravity',
   'omp',
   'claude-code',
   'cursor',

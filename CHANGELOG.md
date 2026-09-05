@@ -9,6 +9,10 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- Experimental Google Antigravity CLI provider (`antigravity`, alias and
+  executable `agy`) with project-scoped agents and skills, collision-safe MCP
+  injection, explicit model/session routing, and a bounded offline-qualified
+  headless adapter pinned to CLI 1.1.26 (#2258–#2267).
 - Contributor Covenant 2.0 community standards, enforcement responsibilities,
   reporting channel, and impact guidelines ([jmagly/aiwg#186](https://github.com/jmagly/aiwg/pull/186)).
 - Experimental Oh My Pi (`omp`, alias `oh-my-pi`) integration with distinct native

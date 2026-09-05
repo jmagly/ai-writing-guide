@@ -236,6 +236,7 @@ describe('@aiwg/cli packaged web distribution', () => {
       'tools/_resolve-impl.mjs',
       'tools/agents/deploy-agents.mjs',
       'tools/agents/providers/',
+      'tools/providers/antigravity-transport.mjs',
       'tools/commands/deploy-prompts-codex.mjs',
       'tools/plugin/package-plugins.mjs',
       'tools/skills/deploy-skills-codex.mjs',
@@ -258,6 +259,9 @@ describe('@aiwg/cli packaged web distribution', () => {
     expect(paths).toContain('agentic/code/providers/model-catalog.v1.json');
     expect(paths).toContain('tools/_resolve-impl.mjs');
     expect(paths).toContain('tools/agents/deploy-agents.mjs');
+    expect(paths).toContain('tools/agents/providers/antigravity.mjs');
+    expect(paths).toContain('tools/providers/antigravity-transport.mjs');
+    expect(paths).toContain('agentic/code/providers/antigravity/provider-contract.v1.json');
     expect(paths).toContain('tools/plugin/package-plugins.mjs');
     expect(paths).toContain('README.md');
     expect(installedReadme).toBe(sourceReadme);

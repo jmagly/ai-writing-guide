@@ -65,6 +65,16 @@ describe('AgentPackager', () => {
     });
   });
 
+  describe('convertToAntigravityFormat', () => {
+    it('maps generic tools to documented Antigravity identifiers', () => {
+      const result = packager.convertToAntigravityFormat(createSampleAgent());
+
+      expect(result).toContain('tools:\n  - view_file\n  - write_to_file\n  - run_command');
+      expect(result).not.toContain('tools: Read');
+      expect(result).not.toContain('model: sonnet');
+    });
+  });
+
   describe('convertToCursorFormat', () => {
     it('should convert to JSON format with lowercased tools and handle minimal metadata', () => {
       // Test full metadata

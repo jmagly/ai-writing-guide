@@ -27,7 +27,7 @@ const capabilityData = requireModelResource('model-capabilities.v1.json');
 const catalogData = requireModelResource('model-catalog.v1.json');
 
 const ProviderSchema = z.enum([
-  'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
+  'antigravity', 'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
   'opencode', 'openclaw', 'openhuman', 'omp', 'pi', 'warp', 'windsurf',
 ]);
 const OutcomeSchema = z.enum([
@@ -193,6 +193,7 @@ function catalogRole(policy: CanonicalModelPolicy): ModelRole {
 }
 function fieldNames(provider: Provider): { model?: string; effort?: string } {
   switch (provider) {
+    case 'antigravity': return { model: 'model', effort: 'effort' };
     case 'codex': return { model: 'model', effort: 'model_reasoning_effort' };
     case 'factory': return { model: 'model', effort: 'reasoningEffort' };
     case 'claude': return { model: 'model', effort: 'effort' };
