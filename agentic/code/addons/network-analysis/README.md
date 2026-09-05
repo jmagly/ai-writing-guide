@@ -80,6 +80,10 @@ The [offline analyzer guide](docs/offline-analysis.md) documents the exported
 runtime API, hard bounds, error states, metadata allowlist, and local output
 formats.
 
+The [governed recipe catalog](recipes/README.md) covers overview, endpoints and
+conversations, DNS, TCP, TLS, HTTP metadata, streams, beaconing/timing, and
+before/after comparison with explicit heuristic and compatibility boundaries.
+
 ## License
 
 AIWG content is MIT licensed. Wireshark/TShark and Termshark remain separately

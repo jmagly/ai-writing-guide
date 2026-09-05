@@ -1,0 +1,15 @@
+{
+  "schema_version": "network-analysis.analysis-recipe/v1", "kind": "AnalysisRecipe", "recipe_id": "analysis-recipe:tcp-health-v1", "version": "1.0.0",
+  "title": "TCP handshake and connection health", "purpose": "Inspect handshake state, retransmission, zero-window, reset, duration, and long-lived TCP metadata.", "sensitivity": "internal",
+  "inputs": { "capture_formats": ["pcap", "pcapng"], "live_capture": { "allowed": false }, "required_authorization_refs": ["authorization:saved-capture-review"] },
+  "filters": { "capture_filters": [], "display_filters": [{ "type": "display_filter", "language": "wireshark-display", "expression": "tcp", "applied_after_capture": true }] },
+  "requested_output": {
+    "fields": [{ "name": "frame.number", "required": true }, { "name": "frame.time_epoch", "required": true }, { "name": "ip.src", "required": false }, { "name": "ip.dst", "required": false }, { "name": "ipv6.src", "required": false }, { "name": "ipv6.dst", "required": false }, { "name": "tcp.srcport", "required": true }, { "name": "tcp.dstport", "required": true }, { "name": "tcp.stream", "required": true }, { "name": "tcp.flags.syn", "required": false }, { "name": "tcp.flags.ack", "required": false }, { "name": "tcp.flags.reset", "required": false }, { "name": "tcp.analysis.retransmission", "required": false }, { "name": "tcp.analysis.zero_window", "required": false }, { "name": "tcp.analysis.ack_rtt", "required": false }],
+    "statistics": [{ "name": "tcp-conversations", "tool": "tshark", "required": true }], "artifact_media_types": ["application/json", "text/markdown"], "observation_policy": "separate-observations-and-inferences"
+  },
+  "limits": { "max_capture_bytes": 268435456, "max_frames": 100000, "max_duration_seconds": 300, "max_output_bytes": 33554432, "max_processes": 1, "payload_policy": "metadata-only" },
+  "expected_output": { "packet_evidence_schema": "network-analysis.packet-evidence/v1", "required_citation_locators": ["frame", "stream"], "confidence_vocabulary": ["observed", "high", "probable", "possible", "unknown"] },
+  "interpretation": { "observations": ["Flags, stream identifiers, retransmission/zero-window annotations, and ACK timing are tool-derived observations."], "heuristics": [{ "id": "tcp-degradation", "statement": "A stream may show transport degradation or an application peer closing unexpectedly.", "method": "Correlate repeated retransmissions, zero windows, resets, handshake state, direction, and capture position.", "false_positive_conditions": ["Asymmetric captures, capture loss, offload artifacts, deliberate resets, and short captures can mimic faults."], "attack_techniques": [] }] },
+  "compatibility": { "contract": "network-analysis.analysis-recipe/v1", "minimum_tools": [{ "name": "tshark", "version_range": ">=4.4.0 <4.7.0", "required": true }], "field_fallbacks": [{ "field": "tcp.analysis.ack_rtt", "introduced_in": "4.4.0", "behavior": "omit-optional", "diagnostic": "ACK RTT annotation is unavailable; retain timestamps and report that RTT was not calculated." }], "unsupported_major_policy": "fail-closed" },
+  "extension_points": []
+}

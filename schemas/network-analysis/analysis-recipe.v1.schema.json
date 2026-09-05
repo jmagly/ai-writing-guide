@@ -33,6 +33,7 @@
     "requested_output": { "$ref": "#/$defs/requested_output" },
     "limits": { "$ref": "#/$defs/limits" },
     "expected_output": { "$ref": "#/$defs/expected_output" },
+    "interpretation": { "$ref": "#/$defs/interpretation" },
     "compatibility": { "$ref": "#/$defs/compatibility" },
     "extension_points": { "type": "array", "items": { "$ref": "#/$defs/extension_point" } }
   },
@@ -208,8 +209,51 @@
       "properties": {
         "contract": { "const": "network-analysis.analysis-recipe/v1" },
         "minimum_tools": { "type": "array", "items": { "$ref": "#/$defs/tool_requirement" } },
+        "field_fallbacks": { "type": "array", "items": { "$ref": "#/$defs/field_fallback" } },
         "unsupported_major_policy": { "const": "fail-closed" }
       }
+    },
+    "interpretation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observations", "heuristics"],
+      "properties": {
+        "observations": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "heuristics": { "type": "array", "items": { "$ref": "#/$defs/heuristic" } }
+      }
+    },
+    "heuristic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "statement", "method", "false_positive_conditions", "attack_techniques"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "statement": { "type": "string", "minLength": 1 },
+        "method": { "type": "string", "minLength": 1 },
+        "false_positive_conditions": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "attack_techniques": { "type": "array", "items": { "type": "string", "pattern": "^T[0-9]{4}(?:\\.[0-9]{3})?$" }, "uniqueItems": true }
+      }
+    },
+    "field_fallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "introduced_in", "behavior", "diagnostic"],
+      "properties": {
+        "field": { "type": "string", "minLength": 1 },
+        "introduced_in": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+        "fallback_field": { "type": "string", "minLength": 1 },
+        "behavior": { "enum": ["use-fallback", "omit-optional", "fail-required"] },
+        "diagnostic": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "behavior": { "const": "use-fallback" } }, "required": ["behavior"] },
+          "then": {
+            "properties": { "fallback_field": { "type": "string", "minLength": 1 } },
+            "required": ["fallback_field"]
+          }
+        }
+      ]
     },
     "tool_requirement": {
       "type": "object",

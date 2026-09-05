@@ -1,0 +1,11 @@
+[
+  { "recipe_id": "analysis-recipe:beaconing-timing-v1", "field_count": 11, "heuristics": ["periodic-beacon"], "attack_techniques": ["T1071.001", "T1071.004"] },
+  { "recipe_id": "analysis-recipe:before-after-v1", "field_count": 12, "heuristics": ["change-effect"], "attack_techniques": [] },
+  { "recipe_id": "analysis-recipe:dns-v1", "field_count": 14, "heuristics": ["dns-beacon-or-tunnel"], "attack_techniques": ["T1071.004"] },
+  { "recipe_id": "analysis-recipe:endpoints-conversations-v1", "field_count": 13, "heuristics": ["high-volume-peer"], "attack_techniques": [] },
+  { "recipe_id": "analysis-recipe:http-metadata-v1", "field_count": 7, "heuristics": ["web-protocol-review"], "attack_techniques": ["T1071.001"] },
+  { "recipe_id": "analysis-recipe:overview-v1", "field_count": 4, "heuristics": [], "attack_techniques": [] },
+  { "recipe_id": "analysis-recipe:stream-selection-v1", "field_count": 8, "heuristics": ["stream-selection"], "attack_techniques": [] },
+  { "recipe_id": "analysis-recipe:tcp-health-v1", "field_count": 15, "heuristics": ["tcp-degradation"], "attack_techniques": [] },
+  { "recipe_id": "analysis-recipe:tls-v1", "field_count": 10, "heuristics": ["encrypted-channel-review"], "attack_techniques": ["T1573"] }
+]

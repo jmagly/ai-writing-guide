@@ -1,0 +1,27 @@
+{
+  "schema_version": "network-analysis.analysis-recipe/v1",
+  "kind": "AnalysisRecipe",
+  "recipe_id": "analysis-recipe:overview-v1",
+  "version": "1.0.0",
+  "title": "Capture overview and protocol hierarchy",
+  "purpose": "Summarize capture timing, sizes, protocol hierarchy, and bounded frame identity.",
+  "sensitivity": "internal",
+  "inputs": { "capture_formats": ["pcap", "pcapng"], "live_capture": { "allowed": false, "reason": "Recipe operates only on an authorized saved capture." }, "required_authorization_refs": ["authorization:saved-capture-review"] },
+  "filters": { "capture_filters": [], "display_filters": [{ "type": "display_filter", "language": "wireshark-display", "expression": "frame", "applied_after_capture": true }] },
+  "requested_output": {
+    "fields": [{ "name": "frame.number", "required": true }, { "name": "frame.time_epoch", "required": true }, { "name": "frame.len", "required": true }, { "name": "_ws.col.Protocol", "required": false }],
+    "statistics": [{ "name": "protocol-hierarchy", "tool": "tshark", "required": true }, { "name": "capture-summary", "tool": "capinfos", "required": false }],
+    "artifact_media_types": ["application/json", "application/x-ndjson", "text/markdown"],
+    "observation_policy": "separate-observations-and-inferences"
+  },
+  "limits": { "max_capture_bytes": 268435456, "max_frames": 100000, "max_duration_seconds": 300, "max_output_bytes": 33554432, "max_processes": 2, "payload_policy": "metadata-only" },
+  "expected_output": { "packet_evidence_schema": "network-analysis.packet-evidence/v1", "required_citation_locators": ["frame"], "confidence_vocabulary": ["observed", "high", "probable", "possible", "unknown"] },
+  "interpretation": { "observations": ["Frame count, timestamps, lengths, and decoded protocol labels are observations from the exact capture and tool context."], "heuristics": [] },
+  "compatibility": {
+    "contract": "network-analysis.analysis-recipe/v1",
+    "minimum_tools": [{ "name": "tshark", "version_range": ">=4.4.0 <4.7.0", "required": true }, { "name": "capinfos", "version_range": ">=4.4.0 <4.7.0", "required": false }],
+    "field_fallbacks": [{ "field": "_ws.col.Protocol", "introduced_in": "4.4.0", "fallback_field": "frame.protocols", "behavior": "use-fallback", "diagnostic": "Protocol-column labeling is unavailable; use frame.protocols and record the fallback." }],
+    "unsupported_major_policy": "fail-closed"
+  },
+  "extension_points": []
+}
