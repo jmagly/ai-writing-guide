@@ -22,6 +22,7 @@ export * from '../governance/index.js';
 export * from '../output-modes/index.js';
 export * from '../schema/index.js';
 export * from '../dataset/index.js';
+export * from '../network-analysis/index.js';
 export {
   ARTIFACT_TRUST_ROOT_MEDIA_TYPE,
   ARTIFACT_TRUST_ROOT_SCHEMA_VERSION,

@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "record_type": "provider-disclosure-decision",
+  "decision_id": "disclosure-001",
+  "state": "allow",
+  "capture_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "provider": "approved-provider",
+  "purpose": "summarize approved transport metadata",
+  "allowed_content": ["metadata", "headers"],
+  "allowed_fields": ["frame.number", "ip.src", "ip.dst", "tcp.dstport"],
+  "payload_explicitly_authorized": false,
+  "decided_by": "data-owner",
+  "issued_at": "2026-09-05T20:00:00Z",
+  "expires_at": "2026-09-05T21:00:00Z"
+}

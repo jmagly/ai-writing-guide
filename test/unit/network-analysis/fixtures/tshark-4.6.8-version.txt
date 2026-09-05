@@ -1,0 +1,3 @@
+TShark (Wireshark) 4.6.8
+Compiled (64-bit) using GCC, with GLib, with libpcap, with POSIX capabilities, with zlib, with zstd, with Lua, with GnuTLS, with nghttp2, with brotli, with MaxMind DB resolver.
+Running on Linux, with libpcap version 1.10.4 (with TPACKET_V3), with zlib 1.3, with zstd 1.5.5, with brotli 1.1.0, with GnuTLS 3.8.3, with nghttp2 1.59.0, with Lua 5.4.6.

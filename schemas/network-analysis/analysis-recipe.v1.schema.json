@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/network-analysis/analysis-recipe.v1.schema.json",
+  "title": "AIWG Network Analysis Recipe v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "recipe_id",
+    "version",
+    "title",
+    "purpose",
+    "sensitivity",
+    "inputs",
+    "filters",
+    "requested_output",
+    "limits",
+    "expected_output",
+    "compatibility",
+    "extension_points"
+  ],
+  "properties": {
+    "schema_version": { "const": "network-analysis.analysis-recipe/v1" },
+    "kind": { "const": "AnalysisRecipe" },
+    "recipe_id": { "$ref": "#/$defs/scoped_id" },
+    "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$" },
+    "title": { "type": "string", "minLength": 1 },
+    "purpose": { "type": "string", "minLength": 1 },
+    "sensitivity": { "enum": ["public", "internal", "confidential", "restricted"] },
+    "inputs": { "$ref": "#/$defs/inputs" },
+    "filters": { "$ref": "#/$defs/filters" },
+    "requested_output": { "$ref": "#/$defs/requested_output" },
+    "limits": { "$ref": "#/$defs/limits" },
+    "expected_output": { "$ref": "#/$defs/expected_output" },
+    "interpretation": { "$ref": "#/$defs/interpretation" },
+    "compatibility": { "$ref": "#/$defs/compatibility" },
+    "extension_points": { "type": "array", "items": { "$ref": "#/$defs/extension_point" } }
+  },
+  "examples": [
+    {
+      "schema_version": "network-analysis.analysis-recipe/v1",
+      "kind": "AnalysisRecipe",
+      "recipe_id": "analysis-recipe:dns-summary-v1",
+      "version": "1.0.0",
+      "title": "DNS summary",
+      "purpose": "Extract bounded DNS query metadata from an authorized saved capture.",
+      "sensitivity": "internal",
+      "inputs": {
+        "capture_formats": ["pcap", "pcapng"],
+        "live_capture": { "allowed": false },
+        "required_authorization_refs": ["authorization:local-capture-review"]
+      },
+      "filters": {
+        "capture_filters": [
+          { "type": "capture_filter", "language": "bpf", "expression": "udp port 53", "applied_before_capture": true }
+        ],
+        "display_filters": [
+          { "type": "display_filter", "language": "wireshark-display", "expression": "dns && !icmp", "applied_after_capture": true }
+        ]
+      },
+      "requested_output": {
+        "fields": [
+          { "name": "frame.number", "required": true },
+          { "name": "dns.qry.name", "required": true },
+          { "name": "ip.src", "required": false }
+        ],
+        "statistics": [
+          { "name": "conversation-count", "tool": "tshark", "required": false }
+        ],
+        "artifact_media_types": ["application/json"],
+        "observation_policy": "separate-observations-and-inferences"
+      },
+      "limits": {
+        "max_capture_bytes": 10485760,
+        "max_frames": 5000,
+        "max_duration_seconds": 30,
+        "max_output_bytes": 1048576,
+        "max_processes": 1,
+        "payload_policy": "metadata-only"
+      },
+      "expected_output": {
+        "packet_evidence_schema": "network-analysis.packet-evidence/v1",
+        "required_citation_locators": ["frame", "stream"],
+        "confidence_vocabulary": ["observed", "high", "probable", "possible", "unknown"]
+      },
+      "compatibility": {
+        "contract": "network-analysis.analysis-recipe/v1",
+        "minimum_tools": [
+          { "name": "tshark", "version_range": ">=4.6.0 <4.7.0", "required": true },
+          { "name": "capinfos", "version_range": ">=4.6.0 <4.7.0", "required": false }
+        ],
+        "unsupported_major_policy": "fail-closed"
+      },
+      "extension_points": [
+        { "name": "zeek-enrichment", "status": "reserved", "contract": "network-analysis.zeek-adapter/v1" },
+        { "name": "suricata-alert-correlation", "status": "reserved", "contract": "network-analysis.suricata-adapter/v1" }
+      ]
+    }
+  ],
+  "$defs": {
+    "scoped_id": { "type": "string", "minLength": 3, "maxLength": 1024, "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:.+$" },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capture_formats", "live_capture", "required_authorization_refs"],
+      "properties": {
+        "capture_formats": { "type": "array", "minItems": 1, "items": { "enum": ["pcap", "pcapng"] }, "uniqueItems": true },
+        "live_capture": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["allowed"],
+          "properties": {
+            "allowed": { "const": false },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        },
+        "required_authorization_refs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/scoped_id" }, "uniqueItems": true }
+      }
+    },
+    "filters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capture_filters", "display_filters"],
+      "properties": {
+        "capture_filters": { "type": "array", "items": { "$ref": "#/$defs/capture_filter" } },
+        "display_filters": { "type": "array", "items": { "$ref": "#/$defs/display_filter" } }
+      }
+    },
+    "capture_filter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "language", "expression", "applied_before_capture"],
+      "properties": {
+        "type": { "const": "capture_filter" },
+        "language": { "enum": ["bpf", "libpcap"] },
+        "expression": { "type": "string", "minLength": 1 },
+        "applied_before_capture": { "const": true }
+      }
+    },
+    "display_filter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "language", "expression", "applied_after_capture"],
+      "properties": {
+        "type": { "const": "display_filter" },
+        "language": { "const": "wireshark-display" },
+        "expression": { "type": "string", "minLength": 1 },
+        "applied_after_capture": { "const": true }
+      }
+    },
+    "requested_output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fields", "statistics", "artifact_media_types", "observation_policy"],
+      "properties": {
+        "fields": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/field_request" } },
+        "statistics": { "type": "array", "items": { "$ref": "#/$defs/statistic_request" } },
+        "artifact_media_types": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "observation_policy": { "const": "separate-observations-and-inferences" }
+      }
+    },
+    "field_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "required"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "required": { "type": "boolean" }
+      }
+    },
+    "statistic_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "tool", "required"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "tool": { "enum": ["tshark", "capinfos", "zeek", "suricata", "custom"] },
+        "required": { "type": "boolean" }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_capture_bytes", "max_frames", "max_duration_seconds", "max_output_bytes", "max_processes", "payload_policy"],
+      "properties": {
+        "max_capture_bytes": { "type": "integer", "minimum": 1 },
+        "max_frames": { "type": "integer", "minimum": 1 },
+        "max_duration_seconds": { "type": "integer", "minimum": 1 },
+        "max_output_bytes": { "type": "integer", "minimum": 1 },
+        "max_processes": { "type": "integer", "minimum": 1, "maximum": 4 },
+        "payload_policy": { "enum": ["none", "metadata-only", "truncated"] }
+      }
+    },
+    "expected_output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packet_evidence_schema", "required_citation_locators", "confidence_vocabulary"],
+      "properties": {
+        "packet_evidence_schema": { "const": "network-analysis.packet-evidence/v1" },
+        "required_citation_locators": { "type": "array", "minItems": 1, "items": { "enum": ["frame", "stream"] }, "uniqueItems": true },
+        "confidence_vocabulary": { "type": "array", "items": { "enum": ["observed", "high", "probable", "possible", "unknown"] }, "uniqueItems": true }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract", "minimum_tools", "unsupported_major_policy"],
+      "properties": {
+        "contract": { "const": "network-analysis.analysis-recipe/v1" },
+        "minimum_tools": { "type": "array", "items": { "$ref": "#/$defs/tool_requirement" } },
+        "field_fallbacks": { "type": "array", "items": { "$ref": "#/$defs/field_fallback" } },
+        "unsupported_major_policy": { "const": "fail-closed" }
+      }
+    },
+    "interpretation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observations", "heuristics"],
+      "properties": {
+        "observations": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "heuristics": { "type": "array", "items": { "$ref": "#/$defs/heuristic" } }
+      }
+    },
+    "heuristic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "statement", "method", "false_positive_conditions", "attack_techniques"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "statement": { "type": "string", "minLength": 1 },
+        "method": { "type": "string", "minLength": 1 },
+        "false_positive_conditions": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "attack_techniques": { "type": "array", "items": { "type": "string", "pattern": "^T[0-9]{4}(?:\\.[0-9]{3})?$" }, "uniqueItems": true }
+      }
+    },
+    "field_fallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "introduced_in", "behavior", "diagnostic"],
+      "properties": {
+        "field": { "type": "string", "minLength": 1 },
+        "introduced_in": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+        "fallback_field": { "type": "string", "minLength": 1 },
+        "behavior": { "enum": ["use-fallback", "omit-optional", "fail-required"] },
+        "diagnostic": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "behavior": { "const": "use-fallback" } }, "required": ["behavior"] },
+          "then": {
+            "properties": { "fallback_field": { "type": "string", "minLength": 1 } },
+            "required": ["fallback_field"]
+          }
+        }
+      ]
+    },
+    "tool_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version_range", "required"],
+      "properties": {
+        "name": { "enum": ["tshark", "capinfos", "termshark", "zeek", "suricata", "custom"] },
+        "version_range": { "type": "string", "minLength": 1 },
+        "required": { "type": "boolean" }
+      }
+    },
+    "extension_point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "status", "contract"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["reserved", "experimental", "active"] },
+        "contract": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

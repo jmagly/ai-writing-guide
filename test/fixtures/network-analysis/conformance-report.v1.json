@@ -1,0 +1,62 @@
+{
+  "schema": "aiwg.network-analysis.conformance-report.v1",
+  "generatedAt": "2026-09-05T22:30:00Z",
+  "fixtureManifestDigest": "b4a48fd5f338bdf9995c503f71cb3d8bb7a659cdd51988d80c194bcac8596ab1",
+  "mode": "fixture",
+  "status": "pass",
+  "releaseGate": "npm run test:conformance",
+  "supportedTsharkMatrix": [
+    {
+      "branch": "4.4",
+      "version": "4.4.18",
+      "goldenPolicy": "normalized-v1"
+    },
+    {
+      "branch": "4.6",
+      "version": "4.6.8",
+      "goldenPolicy": "normalized-v1"
+    }
+  ],
+  "coverage": {
+    "recipes": [
+      "overview",
+      "endpoints-conversations",
+      "dns",
+      "tcp-health",
+      "tls",
+      "http-metadata",
+      "stream-selection",
+      "beaconing-timing",
+      "before-after"
+    ],
+    "adapters": [
+      "research",
+      "forensics-security",
+      "sdlc-operations",
+      "termshark-stub"
+    ],
+    "negativeCases": [
+      "empty",
+      "compressed",
+      "truncated",
+      "malformed",
+      "unsupported",
+      "input-limit",
+      "output-limit",
+      "timeout",
+      "cancellation"
+    ],
+    "leakageCanaries": [
+      "credential",
+      "cookie",
+      "token",
+      "identifier",
+      "payload"
+    ]
+  },
+  "liveTshark": {
+    "default": "disabled",
+    "gate": "AIWG_NETWORK_ANALYSIS_LIVE=1",
+    "acquisition": "saved-synthetic-capture-only"
+  }
+}

@@ -18,6 +18,7 @@
       "ai-assisted-forensics.md",
       "attack-mapping.md",
       "methodology.md",
+      "packet-evidence-integration.md",
       "research-guide.md",
       "tool-reference.md"
     ]
@@ -71,6 +72,7 @@
     "files": [
       "extensions-guide.md",
       "overview.md",
+      "packet-verification.md",
       "quickstart.md"
     ]
   },
@@ -88,6 +90,7 @@
       "agent-examples/research-acquisition-agent-examples.md",
       "corpus-data-model.md",
       "overview.md",
+      "packet-evidence.md",
       "quickstart.md",
       "source-tracking.md"
     ]
@@ -145,6 +148,15 @@
       "token-security.md",
       "vendor-detection.md",
       "workspace-cleanup-pattern.md"
+    ]
+  },
+  {
+    "kind": "frameworks",
+    "name": "security-engineering",
+    "source": "agentic/code/frameworks/security-engineering/docs",
+    "dest": "docs/frameworks/security-engineering",
+    "files": [
+      "network-control-review.md"
     ]
   },
   {
@@ -356,6 +368,21 @@
     "files": [
       "getting-started.md",
       "obsidian-integration.md"
+    ]
+  },
+  {
+    "kind": "addons",
+    "name": "network-analysis",
+    "source": "agentic/code/addons/network-analysis/docs",
+    "dest": "docs/addons/network-analysis",
+    "files": [
+      "integrations.md",
+      "maintainer-guide.md",
+      "offline-analysis.md",
+      "operator-guide.md",
+      "overview.md",
+      "release-checklist.md",
+      "termshark-handoff.md"
     ]
   },
   {

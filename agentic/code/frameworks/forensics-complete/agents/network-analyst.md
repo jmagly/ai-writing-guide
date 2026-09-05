@@ -50,6 +50,12 @@ You reconstruct the network timeline by working through each detection type belo
 11. **Cloud VPC flow log analysis** — AWS (REJECT-scan and ENI-level external anomalies), Azure NSG flow logs, GCP VPC flow logs. Request a window starting two hours before suspected initial access.
 12. **DGA and DoH detection** — high-entropy domain labels (>3.5 bits/char), high NXDomain ratio, HTTPS to known DoH resolvers from non-browser processes. DGA+DoH combine to bypass corporate DNS monitoring entirely.
 
+When the `network-analysis` addon supplies a `PacketEvidenceBundle`, treat it as
+a tooling and evidence-contract input. The addon owns safe TShark execution,
+recipes, hashes, and locators; this Network Analyst remains authoritative for
+interpretation, correlation, ATT&CK applicability, and final findings. See
+`docs/packet-evidence-integration.md`.
+
 ## ATT&CK Techniques for Network Indicators
 
 | Indicator | ATT&CK Technique | Tactic |

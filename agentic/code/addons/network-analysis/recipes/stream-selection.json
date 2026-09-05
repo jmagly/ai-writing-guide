@@ -1,0 +1,15 @@
+{
+  "schema_version": "network-analysis.analysis-recipe/v1", "kind": "AnalysisRecipe", "recipe_id": "analysis-recipe:stream-selection-v1", "version": "1.0.0",
+  "title": "Stream selection and reassembly metadata", "purpose": "Select bounded TCP/UDP streams and record frame membership, sequencing metadata, and reassembly indicators without emitting reassembled bytes.", "sensitivity": "restricted",
+  "inputs": { "capture_formats": ["pcap", "pcapng"], "live_capture": { "allowed": false }, "required_authorization_refs": ["authorization:saved-capture-review"] },
+  "filters": { "capture_filters": [], "display_filters": [{ "type": "display_filter", "language": "wireshark-display", "expression": "tcp.stream >= 0 || udp.stream >= 0", "applied_after_capture": true }] },
+  "requested_output": {
+    "fields": [{ "name": "frame.number", "required": true }, { "name": "frame.time_epoch", "required": true }, { "name": "frame.len", "required": true }, { "name": "tcp.stream", "required": false }, { "name": "tcp.seq", "required": false }, { "name": "tcp.ack", "required": false }, { "name": "tcp.reassembled.length", "required": false }, { "name": "udp.stream", "required": false }],
+    "statistics": [{ "name": "stream-frame-membership", "tool": "tshark", "required": true }], "artifact_media_types": ["application/json", "text/markdown"], "observation_policy": "separate-observations-and-inferences"
+  },
+  "limits": { "max_capture_bytes": 268435456, "max_frames": 100000, "max_duration_seconds": 300, "max_output_bytes": 33554432, "max_processes": 1, "payload_policy": "metadata-only" },
+  "expected_output": { "packet_evidence_schema": "network-analysis.packet-evidence/v1", "required_citation_locators": ["frame", "stream"], "confidence_vocabulary": ["observed", "high", "probable", "possible", "unknown"] },
+  "interpretation": { "observations": ["Stream IDs, sequence/acknowledgment numbers, frame membership, and reassembled length are metadata observations scoped to the analysis context."], "heuristics": [{ "id": "stream-selection", "statement": "A stream may be selected for expert review based on observed metadata, without assigning intent.", "method": "Rank streams by an operator-declared question such as resets, duration, timing, or volume; retain the context digest.", "false_positive_conditions": ["Stream numbers change with filters, tool versions, profiles, and capture completeness."], "attack_techniques": [] }] },
+  "compatibility": { "contract": "network-analysis.analysis-recipe/v1", "minimum_tools": [{ "name": "tshark", "version_range": ">=4.4.0 <4.7.0", "required": true }], "field_fallbacks": [{ "field": "tcp.reassembled.length", "introduced_in": "4.4.0", "behavior": "omit-optional", "diagnostic": "Reassembly-length metadata is unavailable; retain frame and stream locators and do not request reassembled bytes." }], "unsupported_major_policy": "fail-closed" },
+  "extension_points": []
+}

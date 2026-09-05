@@ -112,6 +112,7 @@ inputs:
 | `runbook.md` | Step-by-step operational procedure with verification |
 | `incident.md` | Incident report with timeline and RCA |
 | `troubleshooting.md` | Symptom-driven diagnosis tree |
+| [`docs/packet-verification.md`](docs/packet-verification.md) | Privacy-safe packet evidence for troubleshooting and before/after validation |
 
 ### Agents
 

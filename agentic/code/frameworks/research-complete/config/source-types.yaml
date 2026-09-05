@@ -240,6 +240,17 @@ types:
     quality_rules: lecture-grade
     default_radar_cadence: on-demand
 
+  packet-evidence:
+    description: Governed observational evidence derived from a saved network packet capture.
+    aliases: [packet-evidence, packet evidence, pcap-evidence, network-trace, network trace]
+    template: reference-packet-evidence
+    required_sections: ["Evidence Citation", "Collection Context", "Observed Facts", "Inferences", "Limitations", "Provenance"]
+    citation_format: pcap-digest-frame-stream-time
+    acquisition: governed-evidence-bundle
+    storage: sources/evidence
+    quality_rules: observational-evidence-no-grade
+    default_radar_cadence: on-demand
+
   internal-review:
     description: Internal research note or architecture review (not an external source).
     aliases: [internal-review, internal-research, internal-architecture-review, audit]

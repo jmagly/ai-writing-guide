@@ -1,0 +1,68 @@
+{
+  "schema": "aiwg.network-analysis.fixture-manifest.v1",
+  "generatedAt": "2026-09-05T22:30:00Z",
+  "generator": "test/fixtures/network-analysis/generate-fixtures.mjs",
+  "provenance": {
+    "origin": "Generated entirely by AIWG test code; no production or third-party traffic.",
+    "license": "MIT",
+    "addresses": [
+      "192.0.2.10",
+      "198.51.100.53"
+    ],
+    "domains": [
+      "fixture.example",
+      "example.invalid"
+    ],
+    "sensitivity": "synthetic-test-data"
+  },
+  "fixtures": [
+    {
+      "name": "synthetic-dns.pcap",
+      "bytes": 115,
+      "sha256": "3b865de8b91ac25857f72824fe420025acd76a97526249cf93f464925ce47bbd",
+      "description": "One Ethernet/IPv4/UDP DNS query for fixture.example using documentation addresses."
+    },
+    {
+      "name": "synthetic-empty.pcapng",
+      "bytes": 28,
+      "sha256": "4be0e39adfcb63f0796c8a77b7c61f325ba2bad764f64b975ff3d8ae33185f70",
+      "description": "One valid PCAPNG section header with no interfaces or packets."
+    },
+    {
+      "name": "seeded-sensitive.pcap",
+      "bytes": 214,
+      "sha256": "f535245d7ea6c411f6ae354d59ad1b21a2acfb77e8bd6a5b2113b0b68bc8d700",
+      "description": "One UDP packet containing only synthetic credential/cookie/token/payload canaries."
+    },
+    {
+      "name": "empty.pcap",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "description": "Zero-byte input."
+    },
+    {
+      "name": "truncated.pcap",
+      "bytes": 4,
+      "sha256": "3d78026667cae811791959d21144f94faa6d4c150183551c10b8b0ad7acfc473",
+      "description": "Only the four-byte PCAP magic."
+    },
+    {
+      "name": "malformed-record.pcap",
+      "bytes": 43,
+      "sha256": "6b768b3ea0e1943c005ec13007bf0a08435b6873ad9477c288a32bde31c1cab5",
+      "description": "Valid global header followed by a record declaring more bytes than present."
+    },
+    {
+      "name": "unsupported.bin",
+      "bytes": 43,
+      "sha256": "131e318d95f16b5c504b13b560fe122dbcf2e08b4174ed80fe4ed55a7714040b",
+      "description": "Plain text with no supported capture magic."
+    },
+    {
+      "name": "synthetic-dns.pcap.gz",
+      "bytes": 112,
+      "sha256": "f8f943c92c4f1efece154b11429a378861969c8510922ce8cf793b8c5941ddf7",
+      "description": "Deterministic gzip wrapper used to prove compressed input rejection."
+    }
+  ]
+}

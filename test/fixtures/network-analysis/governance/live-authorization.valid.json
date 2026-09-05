@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "record_type": "live-capture-authorization",
+  "authorization_id": "capture-auth-001",
+  "state": "authorized",
+  "authority": {
+    "principal": "case-operator",
+    "basis": "written authorization for lab interface",
+    "approved_by": "security-owner"
+  },
+  "interface": "lab0",
+  "capture_filter": {
+    "type": "capture_filter",
+    "language": "bpf",
+    "expression": "tcp port 443"
+  },
+  "limits": {
+    "duration_seconds": 300,
+    "byte_limit": 104857600,
+    "file_count": 1
+  },
+  "destination": {
+    "path": "/evidence/case-001/capture.pcapng",
+    "overwrite": false
+  },
+  "retention": {
+    "class": "case-evidence",
+    "delete_at": "2026-10-05T20:00:00Z",
+    "disposition": "verified-delete"
+  },
+  "issued_at": "2026-09-05T20:00:00Z",
+  "expires_at": "2026-09-05T21:00:00Z"
+}

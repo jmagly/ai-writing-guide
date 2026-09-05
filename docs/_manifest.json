@@ -475,6 +475,7 @@
     "addons/compound-memory",
     "addons/compound-memory/operator-guide",
     "addons/compound-memory/overview",
+    "addons/network-analysis/overview",
     "frameworks/sdlc-complete/agent-examples/ai-ml-engineer-examples",
     "addons/civic-action/issue-traceability",
     "addons/civic-action/research",
@@ -503,7 +504,18 @@
     "addons/dataset-intelligence/worked-examples",
     "addons/voice-framework/custom-output-modes",
     "addons/voice-framework/output-mode-integration",
-    "addons/voice-framework/output-mode-troubleshooting"
+    "addons/voice-framework/output-mode-troubleshooting",
+    "frameworks/forensics-complete/packet-evidence-integration",
+    "frameworks/ops-complete/packet-verification",
+    "frameworks/research-complete/packet-evidence",
+    "frameworks/security-engineering",
+    "frameworks/security-engineering/network-control-review",
+    "addons/network-analysis/integrations",
+    "addons/network-analysis/maintainer-guide",
+    "addons/network-analysis/offline-analysis",
+    "addons/network-analysis/operator-guide",
+    "addons/network-analysis/release-checklist",
+    "addons/network-analysis/termshark-handoff"
   ],
   "sections": [
     {
@@ -3800,6 +3812,97 @@
       "summary": "aiwg output-mode status",
       "file": "addons/voice-framework/output-mode-troubleshooting.md",
       "parent": "addons/voice-framework"
+    },
+    {
+      "id": "addons/network-analysis",
+      "title": "Network Analysis",
+      "summary": "Governed offline PCAP and PCAPNG evidence",
+      "collapsed": true,
+      "parent": "addons"
+    },
+    {
+      "id": "addons/network-analysis/overview",
+      "title": "Overview",
+      "summary": "Saved-capture workflows, boundaries, tools, and evidence",
+      "file": "addons/network-analysis/overview.md",
+      "parent": "addons/network-analysis"
+    },
+    {
+      "id": "frameworks/forensics-complete/packet-evidence-integration",
+      "title": "Packet Evidence Integration",
+      "summary": "The network-analysis addon owns TShark probing, safe execution, recipe",
+      "file": "frameworks/forensics-complete/packet-evidence-integration.md",
+      "parent": "frameworks/forensics-complete"
+    },
+    {
+      "id": "frameworks/ops-complete/packet-verification",
+      "title": "Packet Verification",
+      "summary": "Use the network-analysis overview, dns, tcp-health, tls, http-metadata,",
+      "file": "frameworks/ops-complete/packet-verification.md",
+      "parent": "frameworks/ops-complete"
+    },
+    {
+      "id": "frameworks/research-complete/packet-evidence",
+      "title": "Packet Evidence",
+      "summary": "packet-evidence is a first-class source type for governed observations from a",
+      "file": "frameworks/research-complete/packet-evidence.md",
+      "parent": "frameworks/research-complete"
+    },
+    {
+      "id": "frameworks/security-engineering",
+      "title": "Security Engineering",
+      "summary": "",
+      "collapsed": true,
+      "parent": "frameworks"
+    },
+    {
+      "id": "frameworks/security-engineering/network-control-review",
+      "title": "Network Control Review",
+      "summary": "Use governed packet evidence to compare intended controls with observed saved",
+      "file": "frameworks/security-engineering/network-control-review.md",
+      "parent": "frameworks/security-engineering"
+    },
+    {
+      "id": "addons/network-analysis/integrations",
+      "title": "Integrations",
+      "summary": "Framework handoffs and ownership boundaries for packet evidence",
+      "file": "addons/network-analysis/integrations.md",
+      "parent": "addons/network-analysis"
+    },
+    {
+      "id": "addons/network-analysis/maintainer-guide",
+      "title": "Maintainer Guide",
+      "summary": "The addon separates schemas, runtime enforcement, source-distributed workflows,",
+      "file": "addons/network-analysis/maintainer-guide.md",
+      "parent": "addons/network-analysis"
+    },
+    {
+      "id": "addons/network-analysis/offline-analysis",
+      "title": "Offline Analysis",
+      "summary": "The analyzer reads an authorized saved PCAP or PCAPNG through a private,",
+      "file": "addons/network-analysis/offline-analysis.md",
+      "parent": "addons/network-analysis"
+    },
+    {
+      "id": "addons/network-analysis/operator-guide",
+      "title": "Operator Guide",
+      "summary": "Use this addon only with a saved PCAP or PCAPNG whose collection and analysis",
+      "file": "addons/network-analysis/operator-guide.md",
+      "parent": "addons/network-analysis"
+    },
+    {
+      "id": "addons/network-analysis/release-checklist",
+      "title": "Release Checklist",
+      "summary": "Complete this checklist for every release that changes the addon, runtime,",
+      "file": "addons/network-analysis/release-checklist.md",
+      "parent": "addons/network-analysis"
+    },
+    {
+      "id": "addons/network-analysis/termshark-handoff",
+      "title": "Termshark Handoff",
+      "summary": "Termshark is an optional local review surface for evidence already produced by",
+      "file": "addons/network-analysis/termshark-handoff.md",
+      "parent": "addons/network-analysis"
     }
   ],
   "pages": [

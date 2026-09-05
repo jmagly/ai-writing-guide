@@ -1,8 +1,8 @@
 {
   "framework": "research-complete",
   "version": "1.0.0",
-  "template_count": 15,
-  "last_updated": "2026-05-27",
+  "template_count": 16,
+  "last_updated": "2026-09-05",
   "templates": [
     {
       "template_id": "literature-note",
@@ -148,6 +148,17 @@
       "reasoning_required": true
     },
     {
+      "template_id": "reference-packet-evidence",
+      "filename": "reference-packet-evidence.md",
+      "type": "document",
+      "format": "markdown",
+      "description": "Governed observational packet-evidence source with digest-bound frame/stream citations and collection limitations",
+      "use_case": "Induct sanitized PacketEvidenceBundle outputs without copying raw captures by default",
+      "primary_agent": "Documentation Agent",
+      "progressive_disclosure": false,
+      "reasoning_required": true
+    },
+    {
       "template_id": "citation-sidecar",
       "filename": "citation-sidecar.md",
       "type": "document",
@@ -176,7 +187,7 @@
     "metadata": ["provenance-record", "acquisition-report"],
     "radar": ["radar-sidecar"],
     "profiles": ["entity-profile"],
-    "induction": ["reference-canonical", "reference-expanded", "reference-media", "citation-sidecar"],
+    "induction": ["reference-canonical", "reference-expanded", "reference-media", "reference-packet-evidence", "citation-sidecar"],
     "discovery": ["source-profile"]
   },
   "usage_sequence": [

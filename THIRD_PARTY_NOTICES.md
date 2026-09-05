@@ -40,6 +40,22 @@ The schema is vendored unchanged to make UHP fixture and compatibility tests
 offline and version-pinned. AIWG's experimental client does not imply UHP
 server conformance.
 
+## Optional network-analysis tools
+
+The `network-analysis` addon interoperates with separately installed tools. No
+Wireshark, TShark, Capinfos, or Termshark executable or source is copied into the
+AIWG npm archives.
+
+- Wireshark project tools: TShark and Capinfos
+- Upstream: <https://www.wireshark.org/download.html>
+- Upstream license: GNU General Public License version 2 or later
+- Termshark upstream: <https://github.com/gcla/termshark>
+- Termshark license: MIT
+
+Operators install and update these programs independently. AIWG discovers only
+explicit executable paths or trusted search roots and does not change host
+capture permissions.
+
 ## Distribution boundary
 
 The `aiwg` and `@aiwg/cli` npm archives do not copy Fortemi or Bytecask object code into their own tarballs. npm resolves those packages separately during installation. AIWG does, however, intentionally import Fortemi in-process at runtime, so separate archive delivery is not by itself a legal conclusion about whether execution forms a combined work.

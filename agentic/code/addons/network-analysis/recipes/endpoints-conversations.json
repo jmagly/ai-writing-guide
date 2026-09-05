@@ -1,0 +1,15 @@
+{
+  "schema_version": "network-analysis.analysis-recipe/v1", "kind": "AnalysisRecipe", "recipe_id": "analysis-recipe:endpoints-conversations-v1", "version": "1.0.0",
+  "title": "Ethernet, IP, TCP, and UDP endpoints and conversations", "purpose": "Count bounded endpoints and transport conversations across Ethernet, IPv4, IPv6, TCP, and UDP.", "sensitivity": "restricted",
+  "inputs": { "capture_formats": ["pcap", "pcapng"], "live_capture": { "allowed": false }, "required_authorization_refs": ["authorization:saved-capture-review"] },
+  "filters": { "capture_filters": [], "display_filters": [{ "type": "display_filter", "language": "wireshark-display", "expression": "eth || ip || ipv6 || tcp || udp", "applied_after_capture": true }] },
+  "requested_output": {
+    "fields": [{ "name": "frame.number", "required": true }, { "name": "eth.src", "required": false }, { "name": "eth.dst", "required": false }, { "name": "ip.src", "required": false }, { "name": "ip.dst", "required": false }, { "name": "ipv6.src", "required": false }, { "name": "ipv6.dst", "required": false }, { "name": "tcp.srcport", "required": false }, { "name": "tcp.dstport", "required": false }, { "name": "tcp.stream", "required": false }, { "name": "udp.srcport", "required": false }, { "name": "udp.dstport", "required": false }, { "name": "udp.stream", "required": false }],
+    "statistics": [{ "name": "endpoints", "tool": "tshark", "required": true }, { "name": "conversations", "tool": "tshark", "required": true }], "artifact_media_types": ["application/json", "text/markdown"], "observation_policy": "separate-observations-and-inferences"
+  },
+  "limits": { "max_capture_bytes": 268435456, "max_frames": 100000, "max_duration_seconds": 300, "max_output_bytes": 33554432, "max_processes": 2, "payload_policy": "metadata-only" },
+  "expected_output": { "packet_evidence_schema": "network-analysis.packet-evidence/v1", "required_citation_locators": ["frame", "stream"], "confidence_vocabulary": ["observed", "high", "probable", "possible", "unknown"] },
+  "interpretation": { "observations": ["Observed addresses, ports, frame counts, byte counts, and tool-context stream identifiers are direct capture observations."], "heuristics": [{ "id": "high-volume-peer", "statement": "A peer pair may be unusually high-volume for the declared environment.", "method": "Compare observed conversation bytes with an operator-supplied baseline; never infer intent from volume alone.", "false_positive_conditions": ["Backups, software distribution, replication, and performance tests can dominate volume."], "attack_techniques": [] }] },
+  "compatibility": { "contract": "network-analysis.analysis-recipe/v1", "minimum_tools": [{ "name": "tshark", "version_range": ">=4.4.0 <4.7.0", "required": true }], "field_fallbacks": [{ "field": "eth.src", "introduced_in": "4.4.0", "behavior": "omit-optional", "diagnostic": "The link type has no Ethernet fields; continue with IP/transport endpoints and state the limitation." }], "unsupported_major_policy": "fail-closed" },
+  "extension_points": []
+}

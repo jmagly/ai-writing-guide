@@ -1,0 +1,5 @@
+tshark: The available capture file types for the "-F" flag are:
+     pcapng - Wireshark/... - pcapng
+     pcap - Wireshark/tcpdump/... - pcap
+     erf - Endace ERF capture
+     snoop - Sun snoop

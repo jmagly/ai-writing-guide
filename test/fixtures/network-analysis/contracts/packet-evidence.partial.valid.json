@@ -1,0 +1,72 @@
+{
+  "schema_version": "network-analysis.packet-evidence/v1",
+  "kind": "PacketEvidenceBundle",
+  "bundle_id": "packet-evidence:timeout-partial-001",
+  "status": "partial",
+  "created_at": "2026-09-05T22:00:00Z",
+  "capture": {
+    "capture_id": "capture:timeout-demo",
+    "capture_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "source_uri": "file:timeout-demo.pcap",
+    "format": "pcap",
+    "observed_time": { "start": "2026-09-05T21:59:59Z", "end": "2026-09-05T21:59:59Z" },
+    "hashes": {
+      "source": { "algorithm": "sha256", "value": "1111111111111111111111111111111111111111111111111111111111111111" }
+    },
+    "tool_versions": [
+      { "name": "tshark", "version": "4.6.8", "executable_path": "/usr/bin/tshark", "capabilities": ["saved-capture-read", "json-fields"] }
+    ],
+    "analysis_contexts": [
+      {
+        "context_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "tool": { "name": "tshark", "version": "4.6.8", "executable_path": "/usr/bin/tshark" },
+        "profile": "aiwg-isolated-empty",
+        "command_argv": ["tshark", "-n", "-r", "pcap:sha256:1111111111111111111111111111111111111111111111111111111111111111", "-c", "1000", "-T", "json", "-e", "frame.number"],
+        "config_digests": ["sha256:3333333333333333333333333333333333333333333333333333333333333333"],
+        "capture_filter_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "display_filter_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "config_versions": [],
+    "data_handling": {
+      "sensitivity": "restricted",
+      "payload_content": "withheld",
+      "redaction": { "state": "withheld", "method": "metadata-only-field-allowlist" },
+      "retention": { "class": "source-controlled-by-owner" },
+      "disclosure": { "state": "withheld", "allowed_audiences": [] }
+    }
+  },
+  "artifacts": [],
+  "evidence_items": [
+    {
+      "evidence_id": "evidence:timeout-frame-1",
+      "basis": "observation",
+      "statement": "Frame 1 metadata was parsed before the runtime limit.",
+      "confidence": "observed",
+      "citations": [
+        {
+          "capture_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "locator": { "type": "frame", "frame_number": 1 }
+        }
+      ],
+      "observed_fields": [{ "name": "frame.number", "value": 1 }]
+    }
+  ],
+  "handoffs": [],
+  "provenance": {
+    "actor": "agent:network-analysis-offline",
+    "activity": "offline-pcap-inspection",
+    "started_at": "2026-09-05T21:59:59Z",
+    "ended_at": "2026-09-05T22:00:00Z",
+    "recipe_id": "analysis-recipe:core-metadata-1.0.0",
+    "authorization_refs": ["authorization:fixture-owner-review"]
+  },
+  "errors": [
+    { "code": "ANALYSIS_TIMEOUT", "message": "Analysis exceeded its runtime limit; one parsed packet record was preserved.", "severity": "error" }
+  ],
+  "compatibility": {
+    "contract": "network-analysis.packet-evidence/v1",
+    "compatible_with": ["network-analysis.analysis-recipe/v1"],
+    "unsupported_major_policy": "fail-closed"
+  }
+}

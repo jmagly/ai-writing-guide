@@ -1,0 +1,3 @@
+Capinfos (Wireshark) 4.6.8
+Print information about capture files.
+Common capture file type evidence includes pcapng and pcap files produced by Wireshark, dumpcap, or tcpdump.

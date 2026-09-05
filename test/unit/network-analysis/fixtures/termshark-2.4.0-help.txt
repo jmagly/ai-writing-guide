@@ -1,0 +1,4 @@
+termshark v2.4.0
+A wireshark-inspired terminal user interface for tshark. Analyze network traffic interactively from your terminal.
+Usage:
+  termshark [FilterOrPcap]

@@ -9,6 +9,8 @@
     "manifest.md",
     "master-test-plan-template.md",
     "performance-test-scenario-card.md",
+    "packet-evidence-defect.md",
+    "packet-evidence-test-plan.md",
     "regression-test-set-card.md",
     "test-case-card.md",
     "test-evaluation-summary-template.md",

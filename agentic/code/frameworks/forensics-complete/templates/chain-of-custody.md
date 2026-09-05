@@ -39,6 +39,19 @@ Each distinct piece of evidence collected during this investigation. Assign a un
 {{collection_notes}}
 ```
 
+### Packet Evidence Bundle Entries (optional)
+
+Add one row when a validated `PacketEvidenceBundle` enters the case. This is an
+additive register; existing evidence rows remain valid.
+
+| Evidence ID | Bundle ID | Capture SHA-256 | Bundle Status | TShark Path / Version | Analysis Context / Filter Digest | Received UTC / From / By | Storage | Authorization |
+|---|---|---|---|---|---|---|---|---|
+| E-XXX | `packet-evidence:...` | `sha256:...` | completed / partial / empty | `/absolute/tshark` / `x.y.z` | `sha256:...` / `sha256:...` | `...` | `...` | `...` |
+
+Keep the full command argv, config digests, derived-artifact hashes, and stable
+frame/stream locators in the machine-readable manifest entry. Raw payload stays
+withheld unless an explicit case policy permits it.
+
 ### Evidence Inventory Commands Used
 
 ```bash

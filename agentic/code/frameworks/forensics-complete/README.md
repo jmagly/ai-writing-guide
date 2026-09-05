@@ -6,6 +6,10 @@ Digital forensics and incident response (DFIR) framework with target profiling, 
 
 This framework provides AI-assisted investigation workflows that produce customizable investigation plans rather than host-specific scripts. It starts by researching the target system to build a parameterized profile, then guides structured forensic analysis through the full DFIR lifecycle.
 
+Saved PCAP/PCAPNG analysis can enter a case through the additive
+[`PacketEvidenceBundle` integration](docs/packet-evidence-integration.md), while
+the existing Network Analyst retains responsibility for interpretation.
+
 **Standards**: NIST SP 800-86, MITRE ATT&CK, Sigma Rules, OCSF, STIX 2.1, RFC 3227
 
 ## Quick Start

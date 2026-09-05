@@ -29,3 +29,11 @@ held to the same fixture outcomes. Contributor metadata explicitly retains its
 Zod runtime authority while JSON Schema publications are parity-tested
 projections. SQL and protocol contracts remain native-format authorities and
 are migration candidates, not files to relabel as JSON Schema.
+
+The `network-analysis` catalog domain registers the experimental v1
+`packet-evidence` and `analysis-recipe` authorities, their contract fixtures,
+and the consuming validation suite. These schemas ship under
+`schemas/network-analysis/`; the addon and framework integrations must reference
+these authorities instead of creating independent copies. The
+[network analysis ADR](network-analysis.md) defines the compatibility boundary
+and the separate construction gate.

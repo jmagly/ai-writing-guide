@@ -1,0 +1,9 @@
+TShark (Wireshark) 4.6.8
+Dump and analyze network traffic.
+
+Output:
+  -T pdml|ps|psml|json|jsonraw|ek|tabs|text|fields
+                           format of text output
+  -e <field>               field to print if -Tfields selected
+  -z <statistics>          various statistics
+  -F <output file type>    set the output file type; default is pcapng
