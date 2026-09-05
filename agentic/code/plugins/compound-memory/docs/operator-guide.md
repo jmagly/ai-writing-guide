@@ -1,5 +1,10 @@
 # Compound Memory operator guide
 
+Compound Memory remains independently supported. Dataset Intelligence may
+register source/run evidence, but does not replace promotion, review, bounded
+context, or maintenance semantics. See the [dataset migration
+guide](../dataset-intelligence/migration-guide.md).
+
 ## Activate
 
 ```bash

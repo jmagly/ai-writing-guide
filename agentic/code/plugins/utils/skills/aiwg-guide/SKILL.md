@@ -31,7 +31,7 @@ Alternate expressions and non-obvious activations (primary phrases are matched a
 | What's new | "what's new in AIWG" | Read `docs/releases/v{version}-announcement.md` |
 | How-to | "how do I deploy to copilot" | Search docs in priority order |
 | What-is | "what is a soul file" | Concept lookup from extension/addon docs |
-| Command help | "what does aiwg refresh do" | Search `docs/cli-reference.md` |
+| Command help | "what does aiwg refresh do" | Search `docs/cli/reference.md` |
 | Provider query | "does cursor support MCP" | Read capability matrix |
 | Status query | "is AIWG healthy" | Steward handoff → `aiwg doctor` |
 | Version query | "what version of AIWG" | Steward handoff → `aiwg version` |
@@ -63,7 +63,7 @@ When triggered:
 
    c. Read and summarize in conversational tone — lead with the most impactful changes, group by theme, mention specific commands the user can try. Offer to go deeper on any feature.
 
-   d. If no announcement file exists, fall back to `CHANGELOG.md` for the version section, then `docs/cli-reference.md`. Note the fallback: "No release announcement found for v{version}. Here's what I can tell from the changelog..."
+   d. If no announcement file exists, fall back to `CHANGELOG.md` for the version section, then `docs/cli/reference.md`. Note the fallback: "No release announcement found for v{version}. Here's what I can tell from the changelog..."
 
 3. **Contextual help mode** (topic or question given):
 
@@ -72,7 +72,7 @@ When triggered:
    | Priority | Source | Best For |
    |----------|--------|----------|
    | 1 | `docs/releases/v{version}-announcement.md` | What's new, recent changes |
-   | 2 | `docs/cli-reference.md` | Command usage, syntax, examples |
+   | 2 | `docs/cli/reference.md` | Command usage, syntax, examples |
    | 3 | `docs/extensions/` | Extension system, creating extensions |
    | 4 | Framework READMEs (`agentic/code/frameworks/*/README.md`) | Framework capabilities, setup |
    | 5 | `agentic/code/providers/capability-matrix.yaml` | Provider features, platform support |
@@ -123,11 +123,11 @@ cat docs/releases/v2026.3.3-announcement.md
 
 **Action**:
 ```bash
-grep -n "schedule" docs/cli-reference.md
+grep -n "schedule" docs/cli/reference.md
 # Read the schedule command section
 ```
 
-**Response**: "You can schedule recurring tasks with the `/schedule` skill or `aiwg ralph-external` for one-off loops. The schedule skill supports cron expressions — see `docs/cli-reference.md` for full syntax."
+**Response**: "You can schedule recurring tasks with the `/schedule` skill or `aiwg ralph-external` for one-off loops. The schedule skill supports cron expressions — see `docs/cli/reference.md` for full syntax."
 
 ### Example 3: Provider query
 
@@ -159,7 +159,7 @@ aiwg doctor
 ## References
 
 - @$AIWG_ROOT/docs/releases/ — Release announcements (primary data source for default mode)
-- @$AIWG_ROOT/docs/cli-reference.md — Command reference
+- @$AIWG_ROOT/docs/cli/reference.md — Command reference
 - @$AIWG_ROOT/docs/extensions/overview.md — Extension system
 - @$AIWG_ROOT/agentic/code/providers/capability-matrix.yaml — Provider features
 - @$AIWG_ROOT/agentic/code/addons/aiwg-utils/agents/aiwg-steward.md — Steward agent (handoff target)

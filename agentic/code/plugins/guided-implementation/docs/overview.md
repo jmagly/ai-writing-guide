@@ -47,7 +47,7 @@ Task: Implement JWT token validation
 
 Attempts:
 - Iter 1: Test failed — undefined token variable
-- Iter 2: Test failed — token missing userId field
+- Iter 2: Test failed — token missing userId field  
 - Iter 3: Test failed — userId format mismatch (string vs number)
 
 Pattern detected: userId type inconsistency between implementation and test

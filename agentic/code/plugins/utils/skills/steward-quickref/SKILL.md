@@ -10,6 +10,7 @@ triggers:
   - select a persona
   - scaffold a project
   - steward routing
+  - steward capabilities
   - steward model routing
   - model catalog routing
   - cheap first model policy

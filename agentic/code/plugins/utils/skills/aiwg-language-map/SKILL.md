@@ -34,6 +34,50 @@ Each section opens with an explicit `aiwg discover "<phrase>"` example. Table ro
 
 ## Addon capability domains
 
+### Dataset intelligence, indexing & provenance
+
+When a user points AIWG at files, an API, a corpus, or another dataset and asks
+for search, indexing, traceability, provenance, lineage, synchronization, or
+safe retirement—even when they do not know those terms.
+
+Example: `aiwg discover "make this searchable"`. Phrases below pass straight to
+`aiwg discover`.
+
+| Need | Phrase | Bundle |
+|---|---|---|
+| Start from only a source and outcome | `use this data` | dataset-intelligence |
+| Recommend custom indexing safely | `make this searchable` | dataset-intelligence |
+| Add evidence-bearing traceability | `trace this dataset` | dataset-intelligence |
+| Explain record or field lineage | `where did this record come from` | dataset-intelligence |
+| Verify freshness and provenance | `verify this dataset` | dataset-intelligence |
+| Resume an incremental source | `sync this source` | dataset-intelligence |
+| Retire data and derived artifacts safely | `retire this dataset` | dataset-intelligence |
+
+The same governed intake and handoff envelopes serve SDLC, research,
+knowledge-base, media, marketing, ops, and project-local bundles. All execution
+delegates to `aiwg dataset`; the addon does not create a shadow runtime.
+
+### Schemas & data contracts
+
+When the user describes a record, configuration file, event, API payload,
+message, import/export, or other structured data—even when they do not know to
+ask for a schema.
+
+Example: `aiwg discover "define data shape"`. Phrases below pass straight to
+`aiwg discover`.
+
+| Need | Phrase | Bundle |
+|---|---|---|
+| Decide whether structured data needs a contract | `define data shape` | schema-governance |
+| Explain schemas and continue examples-first | `why do I need a schema` | schema-governance |
+| Author and register a canonical schema | `create a schema` | schema-governance |
+| Evolve an existing contract safely | `change an existing schema` | schema-governance |
+| Review correctness and readiness | `review a data contract` | schema-governance |
+
+The SDLC discovery track invokes this addon automatically for persistent or
+exchanged data. Users should describe the data need; they need not choose a
+dialect, identifier, lifecycle, or compatibility policy themselves.
+
 ### Loops & iteration
 
 When the user needs an iterative coding loop, recursive context decomposition, eval gates, or guided autonomous implementation.

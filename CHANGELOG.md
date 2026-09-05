@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.9.4] - 2026-09-05 - "Clear recovery for lightweight CLI setup"
+
 ### Fixed
 
 - Bundled setup through `@aiwg/cli` stops before project initialization and

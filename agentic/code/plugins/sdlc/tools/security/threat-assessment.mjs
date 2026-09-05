@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 
 export const THREAT_ASSESSMENT_SCHEMA_VERSION = '1';
-export const THREAT_ASSESSMENT_ENGINE_VERSION = '1.0.0';
+export const THREAT_ASSESSMENT_ENGINE_VERSION = '1.0.1';
 
 export const THREAT_SURFACES = [
   'issue-title',
@@ -89,7 +89,8 @@ const BUILTIN_RULES = [
     patterns: [
       '\\b(printenv|env\\s*\\||env\\s*$|process\\.env|os\\.environ)\\b',
       '\\.env\\b',
-      '\\b(tokens?|api[_-]?keys?|secrets?|cookies?|document\\.cookie)\\b',
+      '\\b(api[_-]?keys?|secrets?|cookies?|document\\.cookie|credentials?|authentication material)\\b',
+      '\\b(?:api|access|auth(?:entication)?|bearer|session|refresh|oauth|jwt|signing|github|gitea|cloud)(?:[_-]?\\s*)tokens?\\b',
       '\\b(id_rsa|ssh keys?|gpg keys?|aws_access_key|cloud credentials?)\\b',
     ],
   },

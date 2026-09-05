@@ -93,8 +93,8 @@ Weak tests identified:
   src/auth/token.ts:validateExpiry()
   - Mutant survived: Changed > to >= on line 47
   - Tests should check boundary: token valid at exactly expiration time
-
-  src/auth/token.ts:generateToken()
+  
+  src/auth/token.ts:generateToken()  
   - Mutant survived: Removed userId from payload on line 23
   - Tests should verify userId is present in generated token
 ```
