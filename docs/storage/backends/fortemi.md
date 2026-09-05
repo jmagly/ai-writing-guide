@@ -84,22 +84,28 @@ name, never its value.
 
 ## How it works
 
-The adapter routes the storage interface to Fortemi MCP tools:
+The adapter selects a tool profile from the discovered MCP input schemas,
+not the server version. `legacy-note-id` supports the older `note_id` contract;
+`source-addressed-v1` requires UUID `get_note` identities and source-addressed
+`upsert_external_notes` fields. Unsupported tool contracts fail initialization.
 
-| AIWG op | Fortemi tool                                  |
-| ------- | --------------------------------------------- |
-| `read`  | `get_note`                                    |
-| `write` (new) | `capture_knowledge`                     |
-| `write` (existing) | `update_note` (versions are first-class) |
-| `list`  | `list_notes` (filtered by `id_prefix`)        |
-| `delete`| `update_note { archived: true }` (Fortemi is immutable) |
-| `query` | `search`                                      |
+| AIWG op | `legacy-note-id` | `source-addressed-v1` |
+| --- | --- | --- |
+| `read` | `get_note { note_id }` | `get_note { id }` with a stable UUID |
+| `write` | `capture_knowledge` for new notes; `update_note` for existing notes | `upsert_external_notes` with `policy: replace` |
+| `list` | `list_notes` with `id_prefix` and optional scheme | `list_notes { limit: 500, offset: 0 }`, then local metadata and prefix filtering |
+| `delete` | `update_note { note_id, archived: true }` | `update_note { id, archived: true }` |
+| `query` | `search` with subsystem `id_prefix` and optional scheme | `search { action: text, query, limit: 50 }`, then metadata filtering |
 
-### Note-id namespacing
+### Entry identity
 
-Each entry stored in Fortemi has `note_id = subsystem + ':' + path`. The subsystem prefix prevents collisions across `kb`/`memory`/`research`/etc. when they share a single Fortemi instance.
-
-Example: `aiwg memory put research-complete/index.md` → Fortemi note_id `memory:research-complete/index.md`.
+The legacy profile uses `note_id = subsystem + ':' + path`, for example
+`memory:research-complete/index.md`. The source-addressed profile derives a
+stable opaque UUID from the subsystem and path. It writes under
+`source_namespace: aiwg.storage.<subsystem>`, with the path as `external_id`,
+the UUID as `caller_stable_id`, and metadata containing `subsystem` and
+`aiwg_storage_path`. An optional scheme is retained in metadata. Returned
+storage paths remain the original relative paths in both profiles.
 
 ### Delete semantics
 
@@ -109,20 +115,29 @@ Fortemi's design is immutable — no destructive delete. The adapter's `delete()
 
 | Operation | Notes                                                          |
 | --------- | -------------------------------------------------------------- |
-| `read`    | Returns `null` for `not_found`; prefers `revised_content`      |
-| `write`   | Calls `capture_knowledge` for new IDs, `update_note` for existing |
-| `list`    | Filters by subsystem prefix; strips prefix from returned paths |
+| `read`    | Returns `null` for `not_found`; reads revised/original nested content and legacy content fields |
+| `write`   | Uses the negotiated profile: legacy create/update or source-addressed upsert |
+| `list`    | Returns subsystem-relative paths; source-addressed listing is bounded to the first 500 server notes |
 | `delete`  | Archives via `update_note`; no-op for missing                  |
 | `query`   | Implemented (Fortemi has native semantic search)               |
 
 ## Caveats
 
-- **Alpha stability.** Parameter shapes are based on the planning doc, not a live API. File issues if you see schema mismatches.
+- **Alpha stability.** Tool profiles are negotiated from MCP schemas; this does not establish general server persistence or recovery certification. Use the live qualification gate to check endpoint compatibility.
 - **Async model.** Fortemi's NLP pipeline runs server-side; `write` returns when the tool call is accepted, not when the artifact is queryable.
 - **Transport security.** Stdio supports local workstation installs. Streamable
   HTTP and legacy SSE support remote services; non-loopback endpoints require
   HTTPS and missing credential references fail closed.
-- **No `update`-on-conflict semantics.** Two concurrent `write`s to the same `note_id` may race at the Fortemi side. Behavior is governed by Fortemi's versioning model, not by the adapter.
+- **Bounded listing and search.** Source-addressed listing requests only the first
+  500 server notes, then filters locally; it does not paginate and may omit
+  subsystem entries beyond that page. Source-addressed search requests at most
+  50 text hits. The adapter processes at most 50 hits in either profile; UUID
+  hits lacking path metadata may each require one `get_note` hydration before
+  subsystem filtering. These bounds can produce fewer matches than the server
+  contains.
+- **Concurrent writes.** The source-addressed profile requests replacement
+  upserts, while the legacy profile uses create/update calls. The adapter
+  provides no cross-client locking or compare-and-swap guarantee.
 
 ## Live qualification
 
