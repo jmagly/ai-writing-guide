@@ -142,6 +142,13 @@ Per-bundle deploy:
 
 `--dry-run` and `--no-project-local` are supported.
 
+Successful project-local reconciliation rebuilds the project capability index
+and synchronizes its Fortemi cache, including pre-existing bundles during
+`use`, `refresh`, and upgrades. Default `aiwg discover` and `aiwg show` also
+fall back to an existing local project index with a bounded warning if the
+cache is absent or stale. Normal capability lookup needs no graph or backend
+flags. Dry runs do not rebuild or synchronize caches.
+
 Each project-local deploy resolves a managed quickref from discovered bundles
 (or a legacy `.aiwg/quickref.json`) and refreshes that provider's project
 quickref. The generated skill stays short: it states local precedence and

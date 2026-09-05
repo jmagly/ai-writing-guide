@@ -3,6 +3,29 @@
 Common failures and how to fix them. Pair with `aiwg doctor --project-local`
 which surfaces most of these automatically.
 
+## Project skill missing from discovery
+
+Use the normal capability commands for existing project-local bundles:
+
+```bash
+aiwg discover "advance roadmap"
+aiwg show skill fortemi-roadmap-skill
+```
+
+Default discovery and show include the local project index when its Fortemi
+cache is absent, stale, or unreadable. A single warning on stderr explains
+the fallback; JSON output and fetched skill bodies remain unchanged. Agents
+do not need graph or backend flags for this flow.
+
+Successful project-local deployment through `use`, `refresh`, or upgrade
+reconciliation rebuilds the project index and synchronizes its cache. To
+repair a cache without redeploying, operators can run `aiwg index sync`.
+If the cache is unavailable and the local index is missing or empty, the
+warning instead directs operators to `aiwg index build --graph project`.
+
+Explicit graph/backend selections retain their diagnostic behavior for
+operators investigating the storage layer.
+
 ## Manifest validation errors
 
 ### "Bundle in .aiwg/extensions/ must declare type: \"extension\""

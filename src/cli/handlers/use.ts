@@ -1590,6 +1590,18 @@ async function deployProjectLocalBundles(opts: {
     }
   }
 
+  // Automatic reconciliation (also used by refresh/upgrade) must restore the
+  // project search cache for existing bundles, just as a named local install
+  // does. Named installs refresh once after all selected providers finish.
+  if (deployed > 0 && !dryRun && !onlyBundleId) {
+    try {
+      await rebuildExternalBundleIndex(projectDir, 'project', verbose);
+    } catch (error) {
+      failed++;
+      ui.warn(`Project-local index refresh failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
   // Refresh the project kernel quickref from either legacy operator input or
   // managed project-local discovery whenever bundles deploy.
   const { hasProjectQuickref, deployProjectQuickref } = await import('../../extensions/project-quickref.js');
