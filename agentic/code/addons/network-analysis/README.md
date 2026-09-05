@@ -84,6 +84,10 @@ The [governed recipe catalog](recipes/README.md) covers overview, endpoints and
 conversations, DNS, TCP, TLS, HTTP metadata, streams, beaconing/timing, and
 before/after comparison with explicit heuristic and compatibility boundaries.
 
+The [Termshark handoff guide](docs/termshark-handoff.md) explains reviewed local
+launches, profiles, remote-host boundaries, large-capture disk behavior, and
+explicit cleanup records.
+
 ## License
 
 AIWG content is MIT licensed. Wireshark/TShark and Termshark remain separately
