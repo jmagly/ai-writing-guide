@@ -6,7 +6,7 @@
 
 **Multi-agent AI framework for 14 provider integrations, including Antigravity, Claude Code, Codex, Copilot, Cursor, Pi, and Warp**
 
-200+ agents, 109+ CLI commands, 400+ deployable agent/skill/command/rule artifacts, 8 core frameworks, 32 addons, and a 40-plugin Claude Code marketplace. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
+200+ agents, 109+ CLI commands, 400+ deployable agent/skill/command/rule artifacts, 8 core frameworks, 33 addons, and a 40-plugin Claude Code marketplace. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
 
 The simplest setup is to paste this into a supported AI provider:
 
@@ -690,11 +690,12 @@ If you ship a product that bundles AIWG and want to be listed here, open an issu
 | **[Ops Complete](agentic/code/frameworks/ops-complete/)** | 12 | 3 | Operational infrastructure — incident management, runbooks, troubleshooting workflows |
 | **[Security Engineering](agentic/code/frameworks/security-engineering/)** | 2 | 5 | Applied security beyond STRIDE/OWASP — cryptographic primitive selection, chain-of-trust integrity, authentication-factor architecture, degraded-mode design, runtime secret hygiene, supply-chain trust, physical-access threats. Pattern-based, product-agnostic |
 
-### Addons (32)
+### Addons (33)
 
 | Addon | What It Does |
 |-------|--------------|
 | **[Civic Action](agentic/code/addons/civic-action/)** | Cited, opt-in decision support for source review, records planning, meeting reconciliation, public-technology research, local-resource profiles, corrections, and publication preparation |
+| **[Network Analysis](agentic/code/addons/network-analysis/)** | Governed offline PCAP/PCAPNG analysis with bounded TShark recipes, reproducible packet evidence, and optional local Termshark review |
 | **[RLM](agentic/code/addons/rlm/)** | Recursive context decomposition — process 10M+ tokens via sub-agent delegation with parallel fan-out |
 | **[Writing Quality](agentic/code/addons/writing-quality/)** | Content validation, AI pattern detection, authentic voice enforcement |
 | **[Testing Quality](agentic/code/addons/testing-quality/)** | TDD enforcement, mutation testing, flaky test detection and repair |

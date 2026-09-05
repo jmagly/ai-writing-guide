@@ -63,3 +63,24 @@ exhaustion is recorded separately. These tests do not substitute for the real
 TShark release matrix required by #2281.
 
 Unit tests use representative synthetic excerpt fixtures for the currently proposed supported versions, `tshark`/`capinfos` `4.6.8` and `termshark` `2.4.0`. The implementation has not performed live local packet-tool qualification because the local host has no packet tools installed, and it does not claim host-level compatibility beyond the deterministic probe behavior covered by tests.
+
+## Compatibility maintenance and deprecation
+
+Review this matrix for every addon release and whenever Wireshark changes its
+stable or old-stable branches. Version recognition is necessary but not
+sufficient: qualify JSON/fields output, conversation statistics,
+`frame.time_epoch`, synthetic PCAP and PCAPNG reads, time/output bounds, and the
+recipe field inventory before expanding support. Record installed-tool skips as
+skips, never as successful qualification.
+
+Schema v1 and recipe v1 changes remain additive. A breaking schema or recipe
+change receives a new identity and migration guide. A runtime API or supported
+tool-line removal must provide a replacement, announce the migration in the
+addon and root changelogs, and remain supported for at least two stable releases
+and 90 days. Security fixes may fail closed sooner; the release note must state
+the affected versions and recovery path.
+
+New Wireshark or Termshark majors are unsupported until explicitly qualified.
+No version fallback may silently widen a declared range. The
+[`network-analysis` release checklist](../../agentic/code/addons/network-analysis/docs/release-checklist.md)
+requires supported-version review and conformance evidence before distribution.

@@ -32,6 +32,11 @@ describe('network-analysis addon scaffold (#2272)', () => {
       'templates/termshark-handoff.md',
       'schemas/network-analysis-contracts.md',
       'docs/overview.md',
+      'docs/operator-guide.md',
+      'docs/maintainer-guide.md',
+      'docs/integrations.md',
+      'docs/release-checklist.md',
+      'CHANGELOG.md',
     ]) expect(read(component).length, component).toBeGreaterThan(50);
   });
 
@@ -61,5 +66,39 @@ describe('network-analysis addon scaffold (#2272)', () => {
     expect(rule).toContain('shell: false');
     expect(rule).toContain('separate policy decision');
     expect(rule).toContain('synthetic or documented sanitized captures');
+  });
+
+  it('ships a complete, safe release documentation set', () => {
+    const operator = read('docs/operator-guide.md');
+    const maintainer = read('docs/maintainer-guide.md');
+    const checklist = read('docs/release-checklist.md');
+    const integrations = read('docs/integrations.md');
+
+    for (const distinction of ['Capture filter', 'Display filter', 'TShark', 'Termshark']) {
+      expect(operator).toContain(distinction);
+    }
+    expect(operator).toMatch(/Do not run\s+AIWG, TShark, or Termshark as root/);
+    expect(operator).toMatch(/provider transfer are two\s+separate decisions/);
+    expect(operator).toContain('Retention and cleanup');
+    expect(maintainer).toContain('two stable releases and 90 days');
+    expect(checklist).toContain('conformance-report.v1');
+    expect(checklist).toContain('npm pack --dry-run --json');
+    for (const framework of ['Research Complete', 'Forensics Complete', 'Security Engineering', 'SDLC Complete', 'Ops Complete']) {
+      expect(integrations).toContain(framework);
+    }
+    for (const doc of [operator, maintainer, checklist, integrations]) {
+      expect(doc).not.toMatch(/(?:^|\s)(?:sudo|doas)\s+(?:tshark|termshark)/m);
+      expect(doc).not.toMatch(/(?:tshark|termshark)\s+-i\s/m);
+      expect(doc).not.toMatch(/(?:upload|send)\s+(?:the\s+)?(?:payload|capture)/i);
+    }
+
+    for (const generated of [
+      'overview.md', 'operator-guide.md', 'offline-analysis.md',
+      'termshark-handoff.md', 'integrations.md', 'maintainer-guide.md',
+      'release-checklist.md',
+    ]) {
+      expect(readFileSync(path.join(root, 'docs/addons/network-analysis', generated), 'utf8'))
+        .toBe(read(`docs/${generated}`));
+    }
   });
 });

@@ -247,6 +247,24 @@ Breaks the implementation into phases, validates each phase before proceeding, a
 
 ---
 
+## Network Analysis — Governed saved-capture evidence
+
+```bash
+aiwg use network-analysis --provider <provider>
+```
+
+Use Network Analysis for an authorized saved PCAP or PCAPNG. It runs bounded,
+metadata-first TShark recipes and returns digest-bound evidence with frame or
+stream locators. Optional Termshark review stays local and requires a separate
+operator action.
+
+Wireshark/TShark, Capinfos, and Termshark are third-party programs and are not
+bundled. The addon never starts live capture, changes privileges, scans hosts,
+or uploads payload. Give the agent the capture authority, purpose, expected
+traffic, retention policy, and question before analysis.
+
+---
+
 ## Installing addons
 
 ```bash

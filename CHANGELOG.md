@@ -7,6 +7,13 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- Opt-in `network-analysis` addon for governed saved-PCAP/PCAPNG analysis with
+  bounded TShark recipes, metadata-first evidence, stable citations, optional
+  local Termshark review, framework handoffs, and deterministic conformance
+  evidence (#2269–#2281).
+
 ## [2026.9.4] - 2026-09-05 - "Clear recovery for lightweight CLI setup"
 
 ### Fixed

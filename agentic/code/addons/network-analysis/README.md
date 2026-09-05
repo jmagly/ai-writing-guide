@@ -76,6 +76,13 @@ decisions.
 | `schemas/network-analysis-contracts.md` | Canonical schema index |
 | `docs/` | Workflow, integration, maintenance, and troubleshooting guides |
 
+Start with the [operator guide](docs/operator-guide.md) for installation,
+analysis decisions, filter terminology, review, retention, cleanup, and
+troubleshooting. Maintainers should use the
+[maintainer guide](docs/maintainer-guide.md),
+[integration index](docs/integrations.md), and
+[release checklist](docs/release-checklist.md).
+
 The [offline analyzer guide](docs/offline-analysis.md) documents the exported
 runtime API, hard bounds, error states, metadata allowlist, and local output
 formats.
@@ -92,6 +99,8 @@ Research integration classifies packet traces as non-scholarly observational
 evidence, preserves digest-bound citations and analyzer provenance, and excludes
 raw captures by default. See the
 [research packet-evidence guide](../../frameworks/research-complete/docs/packet-evidence.md).
+
+See [CHANGELOG.md](CHANGELOG.md) for the addon release history.
 
 ## License
 
