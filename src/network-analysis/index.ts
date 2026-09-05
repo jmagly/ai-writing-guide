@@ -6,3 +6,4 @@ export * from './probe.js';
 export * from './recipes.js';
 export * from './research.js';
 export * from './termshark.js';
+export * from './verification.js';
