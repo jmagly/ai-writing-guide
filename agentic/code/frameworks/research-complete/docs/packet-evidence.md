@@ -17,7 +17,7 @@ authority, source integrity, reproducibility, representativeness, and limits.
    provenance, and observed/inferred claims. It does not include raw capture
    bytes or a raw capture inclusion record.
 4. Write the result into the corpus using
-   [`reference-packet-evidence.md`](../templates/reference-packet-evidence.md).
+   [`reference-packet-evidence.md`](https://github.com/jmagly/aiwg/blob/main/agentic/code/frameworks/research-complete/templates/reference-packet-evidence.md).
 5. Link synthesis claims to the emitted digest-bound frame or context-bound
    stream citations. Keep observations and inferences in separate sections.
 

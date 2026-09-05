@@ -45,7 +45,7 @@ separate decisions; neither follows from permission to analyze locally.
 ## Choose a recipe
 
 Start with `overview`, then select the smallest recipe that answers the stated
-question. The [recipe catalog](../recipes/README.md) identifies direct
+question. The [recipe catalog](https://github.com/jmagly/aiwg/blob/main/agentic/code/addons/network-analysis/recipes/README.md) identifies direct
 observations and heuristic limits for DNS, TCP, TLS, HTTP metadata, streams,
 timing, and before/after comparison.
 
