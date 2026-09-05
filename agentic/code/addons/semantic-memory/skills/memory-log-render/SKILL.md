@@ -3,7 +3,7 @@ name: memory-log-render
 description: Generate a human-readable Markdown view from a consumer's JSON Lines event log
 namespace: aiwg
 category: kernel
-platforms: [claude, copilot, cursor, factory, windsurf, warp, codex, opencode, openclaw, hermes]
+platforms: [all]
 ---
 
 # memory-log-render

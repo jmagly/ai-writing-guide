@@ -7,7 +7,7 @@ commandHint:
   allowedTools: Read, Write, Bash, Glob, Grep
   category: utilities
   orchestration: true
-platforms: [claude-code]
+platforms: [all]
 
 ---
 

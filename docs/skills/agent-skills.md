@@ -13,6 +13,16 @@ policy.
 
 ## Complete workflow
 
+Portable AIWG source skills use `platforms: [all]`, so explicit copies also
+work with newly added providers. Enumerate providers only when a skill
+requires a specific native tool, and document that dependency in its body.
+The shipped help, document consolidation, and semantic-memory workflows use
+generic file operations and CLI commands and need no provider allowlist.
+
+Platform restrictions control copying into provider directories. Indexed
+`aiwg discover` and `aiwg show` still expose the source independently of
+whether the current provider can load or execute a native skill.
+
 The repository fixture at
 `test/fixtures/agent-skills/lifecycle/portable-complete/` is a complete example.
 The commands below assume its directory has been copied to

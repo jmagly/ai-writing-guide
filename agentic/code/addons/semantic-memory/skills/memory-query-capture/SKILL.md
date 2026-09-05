@@ -3,7 +3,7 @@ name: memory-query-capture
 description: Capture query synthesis as durable pages in semantic memory
 namespace: aiwg
 category: kernel
-platforms: [claude, copilot, cursor, factory, windsurf, warp, codex, opencode, openclaw, hermes]
+platforms: [all]
 ---
 
 # memory-query-capture
