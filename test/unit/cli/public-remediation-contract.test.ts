@@ -21,6 +21,7 @@ const EXEMPTIONS: Exemption[] = [
   { path: /^src\/update\/checker\.mjs$/, text: /npm install -g aiwg/, classification: 'bootstrap', rationale: 'self-update fallback repairs the base package itself' },
   { path: /^src\/update\/service\.mjs$/, text: /npm ci && npm run build/, classification: 'contributor', rationale: 'a source checkout must be built by its owner' },
   { path: /^src\/cli\/handlers\/session\.ts$/, text: /npm install -g aiwg/, classification: 'bootstrap', rationale: 'session recovery can repair a broken base install' },
+  { path: /^src\/cli\/handlers\/use\.ts$/, text: /^'  npm install -g aiwg',$/, classification: 'bootstrap', rationale: 'switching from the corpus-free @aiwg/cli distribution to full aiwg requires package installation; self-update retains the current distribution' },
   { path: /^tools\/cli\/doctor\.mjs$/, text: /(?:npm install -g aiwg|npx aiwg)/, classification: 'bootstrap', rationale: 'doctor must recover when the public CLI install is missing or broken' },
   { path: /^tools\/cli\/doctor\.mjs$/, text: /npm run (?:build:cli|release:fortemi-index)/, classification: 'contributor', rationale: 'source and release-package maintenance only' },
   { path: /^src\/cli\/handlers\/ralph-launcher\.ts$/, text: /npm run build.*dev repo/, classification: 'contributor', rationale: 'explicit development-checkout recovery' },
