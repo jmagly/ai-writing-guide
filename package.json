@@ -139,7 +139,8 @@
     "test:contract": "vitest run --config config/vitest.contract.config.js test/contract/",
     "test:integration:serve": "vitest run --config config/vitest.integration.config.js",
     "uat:serve-live": "vitest run --config config/vitest.uat-serve-live.config.js",
-    "test:integration:serve:flake-gate": "node tools/scripts/integration-flake-gate.mjs"
+    "test:integration:serve:flake-gate": "node tools/scripts/integration-flake-gate.mjs",
+    "qualify:dataset:fortemi-execute": "tsx tools/qualification/dataset-fortemi-execute.ts"
   },
   "files": [
     "THIRD_PARTY_NOTICES.md",

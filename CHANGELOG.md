@@ -7,6 +7,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Fixed
+
+- Fortemi dataset qualification discovers the consolidated execution tool,
+  independently validates receipts and approved request digests, and exercises
+  bounded replay, resume, journal recovery, and archive (#2242; Fortemi #1131).
+
 ## [2026.9.4] - 2026-09-05 - "Clear recovery for lightweight CLI setup"
 
 ### Fixed

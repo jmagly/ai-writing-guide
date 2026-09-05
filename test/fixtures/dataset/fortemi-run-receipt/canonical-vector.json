@@ -1,0 +1,7 @@
+{
+  "contract": "fortemi.dataset-canonical-json-vector/v1",
+  "schemaVersion": "1.0.0",
+  "value": { "b": 2, "a": 1 },
+  "canonicalUtf8": "{\"a\":1,\"b\":2}",
+  "digest": "sha256:43258cff783fe7036d8a43033f830adfc60ec037382473548ac742b888292777"
+}

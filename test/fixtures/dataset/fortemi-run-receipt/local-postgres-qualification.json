@@ -1,0 +1,36 @@
+{
+  "profile": "live-remote-persistence",
+  "namespaceId": "bed0e8ac-3663-4d5d-a019-a86cc4bdb31a",
+  "runId": "042e3c32-98bf-4ee9-94e4-94b27402c2b1",
+  "receiptDigest": "sha256:bb76e0c7efa617659185a88f0c19643d658c3194ab9fd336c3f2f35557b618ee",
+  "producerVerified": true,
+  "consumerVerified": true,
+  "replay": true,
+  "resume": true,
+  "durableReplay": true,
+  "archive": {
+    "namespaceId": "bed0e8ac-3663-4d5d-a019-a86cc4bdb31a",
+    "archived": 1,
+    "alreadyArchived": 0,
+    "unresolved": [],
+    "complete": true,
+    "reasonCodes": []
+  },
+  "cleanInstalledConsumer": true,
+  "cleanPackagedMcp": true,
+  "evidenceClass": "pre-release local PostgreSQL qualification",
+  "unrelatedSentinelUnchanged": true,
+  "sentinelRowDigest": "sha256:6a69e96b930dfe2a1de1ef70ababaa9f6456ba3efddbe790ee989e0f86c1a01a",
+  "producerBaseCommit": "f23a377c323ab7b6cacb7ef3da61fc3b137b7ae5",
+  "producerFiles": {
+    "mcp-server/lib/dataset-execution.js": "sha256:27c1afcac55637b8c46712754775039d56e1c13c10daccf50cc8b111fca6bd59",
+    "mcp-server/lib/dataset-run-receipt.schema.json": "sha256:ef99ec0fb7cde6b59746c61ed80a308a25fe1a54fb3052f0f4af97798ee0af5c",
+    "mcp-server/lib/dataset-request.schema.json": "sha256:1016161b24a1f299b31530893033f0a418a08651b6cadaa95925d65dc70e0979",
+    "mcp-server/package-lock.json": "sha256:cc1d3880960c40ace08a5b35b8c4dba4d6c73931feda2084449ab199cb0bb6c1"
+  },
+  "consumerTarballSha256": "sha256:1126150826b098fd8a30794f5a0b724531efbf5bf8dcfcacaf4d69e8fd6bcf1c",
+  "validationRevision": "1.0.1",
+  "requestBindingRevision": "1.0.1",
+  "suiteParity": false,
+  "enterpriseQualification": false
+}

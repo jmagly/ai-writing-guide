@@ -1,0 +1,133 @@
+{
+  "contract": "fortemi.dataset-run-receipt/v1",
+  "schemaVersion": "1.0.0",
+  "runId": "018fd1a0-0000-7000-8000-000000001129",
+  "namespaceId": "018fd1a0-0000-7000-8000-000000001128",
+  "idempotencyKey": "sha256:f7757b617ea6e5e8900353001a2f1e16bad9d000a0a3dc1bef492847670e8312",
+  "requestDigest": "sha256:f7757b617ea6e5e8900353001a2f1e16bad9d000a0a3dc1bef492847670e8312",
+  "bindings": {
+    "planId": "dataset-plan-v1",
+    "sourceRevision": "fixture-r1",
+    "mode": "incremental",
+    "destinationDigest": "sha256:69b2fa3cee989788c12372c097ea971d80afd36bfa2099e6aae6304765b4778d",
+    "planDigest": "sha256:16b85a87c85489ace255fde8b857d356d943c7e022e5c1ac99173baa9081c6f5",
+    "configurationDigest": "sha256:c0b3eb8ad7450c6455101da7f061e36e5ac386a282cb60ac4acd55551d7754bb",
+    "transformationDigest": "sha256:7381b2312b01a99ae042cc86243cc6a8a32e1e9a2ffbee4ae5d1331ff88a3bb5",
+    "inputSchemaDigest": "sha256:3e74291072d1f0994afe31e1ba83303cd50e3e438ab97446936e2dd529be7ba8",
+    "outputSchemaDigest": "sha256:de1e26237190671db0a02c7da8a4d3e034c38f3838692bd3aa62c1ec01234571",
+    "inputDigest": "sha256:a25c6cefb7fdbc0519e9bae8a994abadd80a6f295549521652c8905389a39eff",
+    "outputDigest": "sha256:6bb0bd4f09b3013d916f659f46a9b320883370a186a586f2fc2add36bfd8f92a",
+    "negotiationDigest": "sha256:2f7799206d877af42638cfc81ef93c708b96418c5845238964a70c7757737053",
+    "resourceEnvelopeDigest": "sha256:bebf2291fb6a80986d5afb945639284eaea4e222c97e27984c7fa47ae1f73962"
+  },
+  "contracts": {
+    "capability": "fortemi.dataset-execution-capabilities/v1",
+    "plan": "fortemi.dataset-ingest/v1",
+    "checkpoint": "fortemi.dataset-ingest/v1",
+    "lineage": "fortemi.dataset-lineage/v1",
+    "materialization": "fortemi.dataset-materialization-profile/v1",
+    "receipt": "fortemi.dataset-run-receipt/v1",
+    "resourceEnvelope": "fortemi.dataset-resource-envelope/v1"
+  },
+  "schemas": {
+    "capability": "1.0.0",
+    "plan": "1.0.0",
+    "checkpoint": "1.0.0",
+    "lineage": "1.0.0",
+    "materialization": "1.0.0",
+    "receipt": "1.0.0",
+    "resourceEnvelope": "1.0.0"
+  },
+  "capabilityDecision": {
+    "accepted": true,
+    "runtime": {
+      "id": "fortemi-server-mcp",
+      "version": "2026.9.2",
+      "plane": "live-remote-persistence",
+      "dataClass": "remote-persistence",
+      "maturity": "alpha"
+    },
+    "selected": [
+      "ingest.incremental",
+      "mutation.upsert",
+      "checkpoint.write",
+      "transaction.atomic-batch",
+      "lineage.record",
+      "index.lexical"
+    ],
+    "degradations": [
+      {
+        "requested": "index.graph",
+        "selected": "index.lexical",
+        "reason": "unsupported",
+        "changedGuarantees": [
+          "index.graph replaced by index.lexical"
+        ]
+      }
+    ]
+  },
+  "profiles": {
+    "indexing": {
+      "id": "fortemi-note-materialization",
+      "version": "1.0.0"
+    },
+    "retrieval": {
+      "id": "fortemi-note-retrieval",
+      "version": "1.0.0"
+    },
+    "lineage": {
+      "id": "fortemi-source-identity",
+      "version": "1.0.0"
+    }
+  },
+  "checkpoint": {
+    "after": {
+      "contract": "fortemi.dataset-ingest/v1",
+      "schemaVersion": "1.0.0",
+      "scope": {
+        "tenant": "current",
+        "dataset": "018fd1a0-0000-7000-8000-000000001128",
+        "sourceBinding": "fixture://dataset-execution/v1",
+        "stream": "records"
+      },
+      "opaque": "fixture-page-1",
+      "sequence": 1
+    }
+  },
+  "resourceEnvelope": {
+    "contract": "fortemi.dataset-resource-envelope/v1",
+    "schemaVersion": "1.0.0",
+    "maxRecords": 1,
+    "maxInputBytes": 4096,
+    "maxRecordBytes": 2048,
+    "maxDurationMs": 5000,
+    "maxConcurrency": 1,
+    "maxTraversalDepth": 8,
+    "maxResults": 10,
+    "allowOutboundNetwork": false
+  },
+  "counts": {
+    "attempted": 1,
+    "committed": 1,
+    "rejected": 0
+  },
+  "effects": [
+    {
+      "operation": "upsert",
+      "logicalIdDigest": "sha256:b7462d6ced2c15add3dbe47755277fa9618aceb17c68f507128896d622d4c5ee",
+      "revision": "r1",
+      "digest": "sha256:cc99183f7aa93354a2f55d7a0cb5b586c4cd64484ecb09c180cda0b43cfccfde",
+      "outcome": "committed"
+    }
+  ],
+  "state": "degraded",
+  "verification": "verified",
+  "diagnostics": [],
+  "redaction": {
+    "sourceContentIncluded": false,
+    "logicalIdentifiersIncluded": false,
+    "connectionDetailsIncluded": false
+  },
+  "receiptDigest": "sha256:dbb4cdc3ed2da4c1da92c97ab47238391b271486c3fdac3c729b1642ffd2d743",
+  "undeclared": true
+}

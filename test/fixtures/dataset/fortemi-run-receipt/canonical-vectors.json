@@ -1,0 +1,40 @@
+{
+  "validationRevision": "1.0.1",
+  "vectors": [
+    {
+      "value": {
+        "": 5,
+        "😀": 4,
+        "ä": 3,
+        "a": 2,
+        "A": 1
+      },
+      "canonicalUtf8": "{\"A\":1,\"a\":2,\"ä\":3,\"😀\":4,\"\":5}",
+      "digest": "sha256:7cb69b10cc8256479d337662db590479bb1668d8f4b5d6d742325e0f985b0996"
+    },
+    {
+      "value": [
+        1e-07,
+        -0.0,
+        1e+21,
+        1.25
+      ],
+      "canonicalUtf8": "[1e-7,0,1e+21,1.25]",
+      "digest": "sha256:eebf5129b17141b689148643a7af8fbd8dca294f2e19b16998d0f2cf786388f4"
+    },
+    {
+      "value": {
+        "z": [
+          true,
+          null,
+          {
+            "b": "line\nvalue",
+            "a": "\"quoted\""
+          }
+        ]
+      },
+      "canonicalUtf8": "{\"z\":[true,null,{\"a\":\"\\\"quoted\\\"\",\"b\":\"line\\nvalue\"}]}",
+      "digest": "sha256:c88ecb42e41338d9eb69939530a0a077cdbcf238938688b45cd0e6481889d23f"
+    }
+  ]
+}

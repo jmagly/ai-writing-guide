@@ -7,6 +7,107 @@
   "artifacts": [
     {
       "logicalName": "dataset.fortemi-live-qualification-receipt",
+      "id": "https://aiwg.io/schemas/dataset/fortemi-live-qualification-receipt.v2.schema.json",
+      "version": "2.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "preview",
+      "owner": {
+        "id": "aiwg-maintainers"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/dataset/fortemi-live-qualification-receipt.v2.schema.json"
+      },
+      "compatibility": {
+        "mode": "breaking"
+      },
+      "consumers": [
+        {
+          "id": "fortemi-dataset-live-preflight",
+          "boundary": "sanitized read-only capability evidence",
+          "path": "src/dataset/fortemi-live-qualification.ts"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/dataset/fortemi-live-qualification-receipt.v2.valid.json"
+        ],
+        "invalid": [
+          "test/fixtures/dataset/fortemi-live-qualification-receipt.v2.invalid.json"
+        ]
+      },
+      "projections": [
+        {
+          "kind": "types",
+          "path": "src/dataset/fortemi-live-qualification.ts",
+          "generated": false
+        },
+        {
+          "kind": "validator",
+          "path": "src/dataset/fortemi-live-qualification.ts",
+          "generated": false
+        }
+      ],
+      "publication": {
+        "public": true
+      }
+    },
+    {
+      "logicalName": "dataset.fortemi-run-receipt",
+      "id": "https://fortemi.dev/schemas/dataset-execution/validation/1.0.1/run-receipt.schema.json",
+      "version": "1.0.1",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "preview",
+      "owner": {
+        "id": "Fortemi/fortemi"
+      },
+      "authority": {
+        "kind": "external",
+        "path": "schemas/dataset/fortemi-run-receipt/validation-1.0.1/run-receipt.schema.json",
+        "uri": "https://fortemi.dev/schemas/dataset-execution/validation/1.0.1/run-receipt.schema.json"
+      },
+      "compatibility": {
+        "mode": "none"
+      },
+      "consumers": [
+        {
+          "id": "fortemi-dataset-execution-client",
+          "boundary": "independent verification of bounded live RunReceipts",
+          "path": "src/dataset/fortemi-dataset-execution.ts"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/dataset/fortemi-run-receipt/degraded-run-receipt.json"
+        ],
+        "invalid": [
+          "test/fixtures/dataset/fortemi-run-receipt/invalid.json"
+        ]
+      },
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "schemas/dataset/fortemi-run-receipt/validation-1.0.1/run-receipt.schema.json",
+          "digest": "sha256:ef99ec0fb7cde6b59746c61ed80a308a25fe1a54fb3052f0f4af97798ee0af5c",
+          "generated": true
+        },
+        {
+          "kind": "validator",
+          "path": "src/dataset/fortemi-run-receipt.ts",
+          "generated": false
+        }
+      ],
+      "publication": {
+        "public": true
+      },
+      "digest": "sha256:ef99ec0fb7cde6b59746c61ed80a308a25fe1a54fb3052f0f4af97798ee0af5c"
+    },
+    {
+      "logicalName": "dataset.fortemi-live-qualification-receipt",
       "id": "https://aiwg.io/schemas/dataset/fortemi-live-qualification-receipt.v1.schema.json",
       "version": "1.0.0",
       "format": "json-schema",

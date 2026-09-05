@@ -1,0 +1,190 @@
+{
+  "contract": "fortemi.dataset-receipt-validation-vectors/v1",
+  "validationRevision": "1.0.1",
+  "base": "../../1.0.0/fixtures/degraded-run-receipt.json",
+  "recomputeReceiptDigest": true,
+  "cases": [
+    {
+      "id": "profile-extension",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/profiles/indexing/extra",
+          "value": true
+        }
+      ],
+      "expectedCode": "RECEIPT_STRUCTURE_INVALID"
+    },
+    {
+      "id": "checkpoint-extension",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/checkpoint/after/extra",
+          "value": true
+        }
+      ],
+      "expectedCode": "RECEIPT_STRUCTURE_INVALID"
+    },
+    {
+      "id": "scope-extension",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/checkpoint/after/scope/extra",
+          "value": true
+        }
+      ],
+      "expectedCode": "RECEIPT_STRUCTURE_INVALID"
+    },
+    {
+      "id": "resource-extension",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceEnvelope/extra",
+          "value": true
+        }
+      ],
+      "expectedCode": "RECEIPT_STRUCTURE_INVALID"
+    },
+    {
+      "id": "runtime-extension",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/capabilityDecision/runtime/extra",
+          "value": true
+        }
+      ],
+      "expectedCode": "RECEIPT_STRUCTURE_INVALID"
+    },
+    {
+      "id": "degradation-extension",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/capabilityDecision/degradations/0/extra",
+          "value": true
+        }
+      ],
+      "expectedCode": "RECEIPT_STRUCTURE_INVALID"
+    },
+    {
+      "id": "diagnostic-extension",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/diagnostics",
+          "value": [
+            {
+              "code": "FAILURE",
+              "message": "fixture",
+              "extra": true
+            }
+          ]
+        }
+      ],
+      "expectedCode": "RECEIPT_STRUCTURE_INVALID"
+    },
+    {
+      "id": "invalid-profile",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/profiles/indexing/version",
+          "value": "1.999.0"
+        }
+      ],
+      "expectedCode": "RECEIPT_STRUCTURE_INVALID"
+    },
+    {
+      "id": "invalid-checkpoint",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/checkpoint/after/sequence",
+          "value": -1
+        }
+      ],
+      "expectedCode": "RECEIPT_STRUCTURE_INVALID"
+    },
+    {
+      "id": "invalid-envelope",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceEnvelope/maxConcurrency",
+          "value": 2
+        }
+      ],
+      "expectedCode": "RECEIPT_STRUCTURE_INVALID"
+    },
+    {
+      "id": "mismatched-output-digest",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/bindings/outputDigest",
+          "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expectedCode": "RECEIPT_BINDINGS_INCONSISTENT"
+    },
+    {
+      "id": "mismatched-envelope-digest",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/bindings/resourceEnvelopeDigest",
+          "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expectedCode": "RECEIPT_BINDINGS_INCONSISTENT"
+    },
+    {
+      "id": "mismatched-negotiation-digest",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/bindings/negotiationDigest",
+          "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "expectedCode": "RECEIPT_BINDINGS_INCONSISTENT"
+    },
+    {
+      "id": "mismatched-namespace",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/namespaceId",
+          "value": "018fd1a0-0000-7000-8000-000000001199"
+        }
+      ],
+      "expectedCode": "RECEIPT_CHECKPOINT_INCONSISTENT"
+    },
+    {
+      "id": "impossible-count",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/counts/committed",
+          "value": 2
+        }
+      ],
+      "expectedCode": "RECEIPT_COUNTS_INCONSISTENT"
+    },
+    {
+      "id": "committed-with-degradation",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/state",
+          "value": "committed"
+        }
+      ],
+      "expectedCode": "RECEIPT_STRUCTURE_INVALID"
+    }
+  ]
+}

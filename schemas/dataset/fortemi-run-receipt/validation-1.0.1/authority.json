@@ -1,0 +1,12 @@
+{
+  "producer": "Fortemi/fortemi",
+  "producerIssue": 1131,
+  "consumerIssue": 2242,
+  "validationRevision": "1.0.1",
+  "wireSchemaVersion": "1.0.0",
+  "schemaSha256": "ef99ec0fb7cde6b59746c61ed80a308a25fe1a54fb3052f0f4af97798ee0af5c",
+  "source": "contracts/dataset-execution/validation/1.0.1/run-receipt.schema.json",
+  "producerCommit": "5ba6c39a7021ae30f28f4085813e8b2b88e27fd8",
+  "qualification": "bounded local PostgreSQL live run passed; final delivery pins pending",
+  "requestBindingRevision": "1.0.1"
+}

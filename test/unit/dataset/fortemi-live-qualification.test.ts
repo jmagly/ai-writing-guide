@@ -3,8 +3,6 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it, vi } from "vitest";
 import {
-  FORTEMI_DATASET_CAPABILITIES_TOOL,
-  FORTEMI_DATASET_EXECUTE_TOOL,
   qualifyFortemiDatasetLivePreflight,
   verifyFortemiDatasetLiveReceipt,
   writeFortemiDatasetLiveReceipt,
@@ -12,29 +10,13 @@ import {
 import { fortemiReceiptDigest } from "../../../src/storage/fortemi-qualification-receipt.js";
 
 const commit = "a".repeat(40);
-const compatibleTools = [
-  {
-    name: FORTEMI_DATASET_CAPABILITIES_TOOL,
-    inputSchema: {
-      type: "object",
-      required: ["contract_version"],
-      properties: { contract_version: { type: "string" } },
-    },
-  },
-  {
-    name: FORTEMI_DATASET_EXECUTE_TOOL,
-    inputSchema: {
-      type: "object",
-      required: ["contract_version", "namespace", "plan", "records"],
-      properties: {
-        contract_version: { type: "string" },
-        namespace: { type: "string" },
-        plan: { type: "object" },
-        records: { type: "array" },
-      },
-    },
-  },
-];
+const compatibleTools = [{
+  name: "manage_dataset_execution",
+  inputSchema: { type: "object", required: ["action"], properties: {
+    action: { type: "string", enum: ["capabilities", "preview", "execute", "status", "checkpoint", "cancel", "resume", "retry", "verify", "archive"] },
+    request: { type: "object" }, runId: { type: "string" }, receipt: { type: "object" },
+  } },
+}];
 
 describe("Fortemi dataset live preflight", () => {
   it("records an absent server contract as pending without invoking tools", async () => {

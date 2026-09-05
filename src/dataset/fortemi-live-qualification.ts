@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { link, mkdir, unlink, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { FORTEMI_DATASET_EXECUTION_TOOL } from "./fortemi-dataset-execution.js";
 import type { McpClientLike } from "../storage/backends/fortemi.js";
 import {
   endpointFingerprint,
@@ -8,12 +9,13 @@ import {
 } from "../storage/fortemi-qualification-receipt.js";
 
 export const FORTEMI_DATASET_LIVE_CONTRACT =
-  "aiwg.fortemi-dataset-live-qualification/v1" as const;
+  "aiwg.fortemi-dataset-live-qualification/v2" as const;
+const LEGACY_LIVE_CONTRACT = "aiwg.fortemi-dataset-live-qualification/v1" as const;
 export const FORTEMI_DATASET_CAPABILITIES_TOOL = "dataset_capabilities";
 export const FORTEMI_DATASET_EXECUTE_TOOL = "dataset_execute";
 
 export interface FortemiDatasetLiveReceipt {
-  contract: typeof FORTEMI_DATASET_LIVE_CONTRACT;
+  contract: typeof FORTEMI_DATASET_LIVE_CONTRACT | typeof LEGACY_LIVE_CONTRACT;
   outcome: "pending" | "supported";
   diagnostic:
     | "CONFORMANCE_FORTEMI_DATASET_CONTRACT_UNAVAILABLE"
@@ -46,10 +48,12 @@ const UUID_NAMESPACE = /^aiwg-dataset-qualification-[0-9a-f-]{36}$/u;
 const COMMIT = /^[0-9a-f]{40}$/u;
 const DIGEST = /^sha256:[0-9a-f]{64}$/u;
 const SAFE = /^[A-Za-z0-9._:/-]+$/u;
-const REQUIRED_TOOLS = [
+const LEGACY_TOOLS = [
   FORTEMI_DATASET_CAPABILITIES_TOOL,
   FORTEMI_DATASET_EXECUTE_TOOL,
 ] as const;
+const REQUIRED_TOOLS = [FORTEMI_DATASET_EXECUTION_TOOL] as const;
+const REQUIRED_ACTIONS = ["capabilities", "preview", "execute", "status", "checkpoint", "cancel", "resume", "retry", "verify", "archive"];
 const MAX_TOOL_COUNT = 256;
 const MAX_SCHEMA_BYTES = 1_048_576;
 
@@ -155,29 +159,20 @@ export async function qualifyFortemiDatasetLivePreflight(input: {
     )
       throw new Error("CONFORMANCE_RESOURCE_ENVELOPE_EXCEEDED");
     const tools = new Map(inventory.map((tool) => [tool.name, tool]));
-    const specifications: Array<{
-      tool: string;
-      required: Readonly<Record<string, string>>;
-    }> = [
-      {
-        tool: FORTEMI_DATASET_CAPABILITIES_TOOL,
-        required: { contract_version: "string" },
-      },
-      {
-        tool: FORTEMI_DATASET_EXECUTE_TOOL,
-        required: {
-          contract_version: "string",
-          namespace: "string",
-          plan: "object",
-          records: "array",
-        },
-      },
-    ];
+    const specifications = [{ tool: FORTEMI_DATASET_EXECUTION_TOOL, required: { action: "string" } }];
     const checks = specifications.map(({ tool, required }) => {
       const unique =
         inventory.filter((candidate) => candidate.name === tool).length === 1;
       const compatible =
-        unique && inputSchemaCompatible(tools.get(tool)?.inputSchema, required);
+        unique && inputSchemaCompatible(tools.get(tool)?.inputSchema, required)
+        && (() => {
+          const properties = record(record(tools.get(tool)?.inputSchema)?.properties);
+          const actions = record(properties?.action)?.enum;
+          return Array.isArray(actions) && REQUIRED_ACTIONS.every(action => actions.includes(action))
+            && record(properties?.request)?.type === "object"
+            && record(properties?.runId)?.type === "string"
+            && record(properties?.receipt)?.type === "object";
+        })();
       return {
         tool,
         compatible,
@@ -295,7 +290,7 @@ export function verifyFortemiDatasetLiveReceipt(value: unknown): string[] {
     )
   )
     errors.push("CONFORMANCE_RECEIPT_SHAPE_INVALID");
-  if (receipt.contract !== FORTEMI_DATASET_LIVE_CONTRACT)
+  if (receipt.contract !== FORTEMI_DATASET_LIVE_CONTRACT && receipt.contract !== LEGACY_LIVE_CONTRACT)
     errors.push("CONFORMANCE_RECEIPT_CONTRACT_MISMATCH");
   if (
     !COMMIT.test(receipt.bindings.aiwgCommit) ||
@@ -321,9 +316,10 @@ export function verifyFortemiDatasetLiveReceipt(value: unknown): string[] {
   )
     errors.push("CONFORMANCE_RECEIPT_MUTATION_INVALID");
   const operationNames = receipt.operations.map((operation) => operation.tool);
+  const requiredTools = receipt.contract === LEGACY_LIVE_CONTRACT ? LEGACY_TOOLS : REQUIRED_TOOLS;
   const inventoryValid =
-    receipt.operations.length === REQUIRED_TOOLS.length &&
-    REQUIRED_TOOLS.every(
+    receipt.operations.length === requiredTools.length &&
+    requiredTools.every(
       (tool) => operationNames.filter((name) => name === tool).length === 1,
     );
   if (

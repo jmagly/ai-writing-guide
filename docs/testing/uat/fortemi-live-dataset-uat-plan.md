@@ -4,7 +4,7 @@
 
 **Baseline:** [AIWG #2194](https://git.integrolabs.net/roctinam/aiwg/issues/2194)
 
-**Status:** Planned; execution not started
+**Status:** Bounded execution implemented; delivery qualification in progress
 
 **Scope:** Community live Fortemi dataset behavior only
 
@@ -28,6 +28,37 @@ Tenant/RLS certification, restart or fault injection, backup/restore, full migra
 Each executed case records a case ID, UTC window, AIWG commit/ref, Fortemi version, applicable schema and fixture digests, command/action, expected and observed outcome, receipt reference, cleanup result, and pass/fail/pending status. Secrets and raw locators are replaced by approved fingerprints. A skipped or unavailable live cell is `pending`, never `pass`.
 
 ## UAT matrix
+
+### Implemented bounded execution entry point
+
+`npm run qualify:dataset:fortemi-execute` starts a specified Fortemi MCP package
+and defaults to read-only capabilities/preview. Configure
+`AIWG_FORTEMI_MCP_ROOT`, `AIWG_FORTEMI_LIVE_URL` (the REST service URL), and
+`AIWG_DATASET_REQUEST_FILE`. Optional `AIWG_FORTEMI_LIVE_TOKEN` is passed only
+to the MCP process and is excluded from evidence.
+
+To execute an approved synthetic request, supply
+`AIWG_FORTEMI_LIVE_ALLOW_WRITE=true`, `AIWG_DATASET_APPROVED_DIGEST` equal to the
+preview digest, and `AIWG_DATASET_EVIDENCE_DIR`, then append `-- --execute`.
+The independent consumer recomputes approval identity, validates the returned
+receipt, checks replay/resume, restarts MCP to check durable replay, and archives
+the run twice. It retains the receipt before subsequent checks, so an interrupted
+qualification does not discard the known committed result. A failed or ambiguous
+outcome never becomes a successful qualification report.
+
+The consolidated tool is `manage_dataset_execution`; capability discovery must
+advertise receipt validation and request binding revision 1.0.1. Historical
+discovery v1 receipts remain verifiable; new discovery emits v2 receipts for the
+implemented tool and its lifecycle actions. Discovery remains distinct from
+execution evidence and does not attest persistence.
+
+The schema authority is Fortemi
+`contracts/dataset-execution/validation/1.0.1`, tracked by
+[Fortemi #1131](https://git.integrolabs.net/Fortemi/fortemi/issues/1131).
+AIWG vendors the pinned schema and implements canonical serialization and
+semantic verification independently. The original 1.0.0 producer bundle remains
+immutable; the corrected request-binding revision changes derived idempotency
+keys and does not qualify replay of legacy runs across releases.
 
 ### UAT-LIVE-01 — Smoke and protocol negotiation
 
