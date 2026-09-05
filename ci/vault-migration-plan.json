@@ -29,6 +29,10 @@
     "AIWG_POSTGREST_LIVE_URL_VAULT_FIELD",
     "AIWG_POSTGREST_AUTHORIZATION_VAULT_PATH",
     "AIWG_POSTGREST_AUTHORIZATION_VAULT_FIELD",
+    "AIWG_FORTEMI_LIVE_URL_VAULT_PATH",
+    "AIWG_FORTEMI_LIVE_URL_VAULT_FIELD",
+    "AIWG_FORTEMI_LIVE_TOKEN_VAULT_PATH",
+    "AIWG_FORTEMI_LIVE_TOKEN_VAULT_FIELD",
     "DOCSITE_DEPLOY_HOST",
     "DOCSITE_DEPLOY_PORT",
     "DOCSITE_DEPLOY_USER",
@@ -122,6 +126,22 @@
       "env": "AIWG_POSTGREST_AUTHORIZATION",
       "type": "api-token",
       "purpose": "Authenticated PostgREST and RLS storage qualification"
+    },
+    {
+      "id": "storage-fortemi-live-url",
+      "path_variable": "AIWG_FORTEMI_LIVE_URL_VAULT_PATH",
+      "field_variable": "AIWG_FORTEMI_LIVE_URL_VAULT_FIELD",
+      "env": "AIWG_FORTEMI_LIVE_URL",
+      "type": "service-credential",
+      "purpose": "Fortemi live MCP storage qualification endpoint"
+    },
+    {
+      "id": "storage-fortemi-live-token",
+      "path_variable": "AIWG_FORTEMI_LIVE_TOKEN_VAULT_PATH",
+      "field_variable": "AIWG_FORTEMI_LIVE_TOKEN_VAULT_FIELD",
+      "env": "AIWG_FORTEMI_LIVE_TOKEN",
+      "type": "api-token",
+      "purpose": "Optional authenticated Fortemi live MCP storage qualification"
     }
   ]
 }

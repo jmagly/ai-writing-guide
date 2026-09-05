@@ -11,6 +11,7 @@ import {
 import type { Platform } from '../agents/types.js';
 
 const PROVIDER_EXECUTABLES: Partial<Record<Platform, string[]>> = {
+  antigravity: ['agy'],
   claude: ['claude'],
   codex: ['codex'],
   copilot: ['github-copilot-cli', 'copilot'],
@@ -21,6 +22,7 @@ const PROVIDER_EXECUTABLES: Partial<Record<Platform, string[]>> = {
   openclaw: ['openclaw'],
   openhuman: ['openhuman'],
   pi: ['pi'],
+  omp: ['omp'],
   warp: ['warp'],
   windsurf: ['windsurf'],
 };

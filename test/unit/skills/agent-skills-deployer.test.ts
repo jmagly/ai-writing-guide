@@ -121,6 +121,7 @@ describe('managed Agent Skills provider matrix', () => {
 
     expect(results.map((item) => item.provider)).toEqual([...PROVIDER_IDS]);
     expect(results.map((item) => [item.provider, item.projectionStatus])).toEqual([
+      ['antigravity', 'native'],
       ['claude', 'native'],
       ['codex', 'projected'],
       ['copilot', 'native'],
@@ -131,6 +132,7 @@ describe('managed Agent Skills provider matrix', () => {
       ['openclaw', 'native'],
       ['openhuman', 'projected'],
       ['pi', 'native'],
+      ['omp', 'native'],
       ['warp', 'native'],
       ['windsurf', 'projected'],
       ['generic', 'native'],
@@ -140,7 +142,7 @@ describe('managed Agent Skills provider matrix', () => {
       expect(result.sourceDigest).toMatch(/^[0-9a-f]{64}$/);
       expect(result.path).toContain(name);
       expect(result.reasons.length).toBeGreaterThan(0);
-      expect(result.outcome).toBe('deployed');
+      expect(result.outcome).toBe(result.provider === 'codex' ? 'unchanged' : 'deployed');
       expect(fs.readFileSync(path.join(result.path, AGENT_SKILL_MANAGED_MARKER), 'utf8'))
         .toBe('aiwg-agent-skill-v1\n');
       const sidecar = JSON.parse(fs.readFileSync(
@@ -150,8 +152,8 @@ describe('managed Agent Skills provider matrix', () => {
       expect(sidecar).toMatchObject({
         schemaVersion: 1,
         name,
-        provider: result.provider,
-        projectionStatus: result.projectionStatus,
+        provider: result.provider === 'codex' ? 'antigravity' : result.provider,
+        projectionStatus: result.provider === 'codex' ? 'native' : result.projectionStatus,
         sourceDigest: result.sourceDigest,
         portable: {
           aiwg: {

@@ -37,6 +37,11 @@ export interface ProviderConfig {
 }
 
 export const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
+  antigravity: {
+    binary: 'agy',
+    dangerousFlag: '--dangerously-skip-permissions',
+    name: 'Google Antigravity CLI',
+  },
   claude: {
     binary: 'claude',
     dangerousFlag: '--dangerously-skip-permissions',
@@ -213,9 +218,15 @@ export function splitParams(params: string): string[] {
 
 // ── Provider helpers ──────────────────────────────────────────
 
-/** Get config for a provider, falling back to claude for unknown values. */
+const SPAWN_PROVIDER_ALIASES: Readonly<Record<string, string>> = { agy: 'antigravity' };
+
+/** Get config for a provider. Unknown values fail closed instead of launching another harness. */
 export function getProviderConfig(provider: string): ProviderConfig {
-  return PROVIDER_CONFIGS[provider] ?? PROVIDER_CONFIGS['claude']!;
+  const candidate = provider.trim().toLowerCase();
+  const canonical = SPAWN_PROVIDER_ALIASES[candidate] ?? candidate;
+  const config = PROVIDER_CONFIGS[canonical];
+  if (!config) throw new Error(`Unsupported provider '${provider}'`);
+  return config;
 }
 
 /** Returns true if the provider has a CLI binary that can be spawned. */

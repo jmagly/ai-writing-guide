@@ -312,6 +312,7 @@ validated Agent Skills name.
 
 | Target ID | Deployed path | Status for conforming fixture | Resource result | Provider behavior |
 |---|---|---|---|---|
+| `antigravity` | `<project>/.agents/skills/<name>` | `native` | exact | Project-local native Agent Skills bundle; global skill deployment remains disabled because Google's documented global paths conflict |
 | `claude` | `<project>/.claude/skills/<name>` | `native` | exact | Recursive native bundle |
 | `codex` | `<project>/.agents/skills/<name>` | `projected` | exact | Project compatibility surface; descriptions over 500 characters are `degraded`/blocked, never truncated |
 | `copilot` | `<project>/.github/skills/<name>` | `native` | exact | Recursive native bundle |
@@ -321,6 +322,7 @@ validated Agent Skills name.
 | `opencode` | `<project>/.opencode/skill/<name>` | `native` | exact | Recursive native bundle |
 | `openclaw` | `~/.openclaw/skills/<name>` | `native` | exact | Global recursive native bundle |
 | `openhuman` | `~/.openhuman/skills/<name>` | `projected` | exact | Verified global one-level skill layout |
+| `omp` | `<project>/.omp/skills/<name>` | `native` | exact | OMP project-local imported Agent Skills bundle; native one-level discovery |
 | `pi` | `<project>/.pi/skills/<name>` | `native` | exact | Pi project-local Agent Skills bundle; loading remains subject to Pi project trust |
 | `warp` | `<project>/.warp/skills/<name>` | `native` | exact | Recursive native bundle |
 | `windsurf` | `<project>/.windsurf/skills/<name>` | `projected` | exact | One bundle directly below the one-level surface |

@@ -1,0 +1,81 @@
+import { mkdir, readFile, writeFile, rm, symlink } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+const source = process.env.AIWG_OMP_PINNED_SOURCE!;
+const sandbox = process.env.AIWG_OMP_PRECEDENCE_SANDBOX!;
+const project = join(sandbox, 'sdk-project'); const home = join(sandbox, 'sdk-home');
+const agentDir = process.env.PI_CODING_AGENT_DIR!;
+const { getConfigDirs } = await import(join(source, 'packages/coding-agent/src/config.ts'));
+const userAgents = getConfigDirs('agents', { project: false }).find((entry: any) => entry.source === '.omp')!.path;
+const { parseAgent } = await import(join(source, 'packages/coding-agent/src/task/agents.ts'));
+const { transformAgent } = await import(join(process.env.AIWG_OMP_AIWG_ROOT!, 'src/providers/omp-agent.mjs'));
+const { discoverAgents } = await import(join(source, 'packages/coding-agent/src/task/discovery.ts'));
+const { enableProvider, disableProvider, enableUserSource, disableUserSource } = await import(join(source, 'packages/coding-agent/src/capability/index.ts'));
+const { clearClaudePluginRootsCache } = await import(join(source, 'packages/coding-agent/src/discovery/helpers.ts'));
+const { clearCache } = await import(join(source, 'packages/coding-agent/src/capability/fs.ts'));
+const checks: Record<string, boolean> = {};
+for (const [role, relative] of Object.entries({ research: 'frameworks/research-complete/agents/research-acquisition-agent.md', sdlc: 'frameworks/sdlc-complete/agents/requirements-analyst.md', coding: 'frameworks/sdlc-complete/agents/software-implementer.md', efficiency: 'addons/aiwg-utils/agents/aiwg-model-efficiency-worker.md' })) {
+  const sourceFile = join(process.env.AIWG_OMP_AIWG_ROOT!, 'agentic/code', relative);
+  const transformed = transformAgent(sourceFile, await readFile(sourceFile, 'utf8'), { quiet: true });
+  const expectedBody = transformed.replace(/^---\n[\s\S]*?\n---\n/, '').trim();
+  const parsed = parseAgent(sourceFile, transformed, 'project', 'throw');
+  checks[`${role}NativeAgentRoundtrip`] = Boolean(parsed?.name && parsed?.description && parsed.systemPrompt.trim() === expectedBody && parsed.tools?.includes('yield') && (!parsed.tools.includes('task') || parsed.spawns !== '*'));
+}
+async function file(name: string, body: string) { const parent = name.slice(0, name.lastIndexOf('/')); await mkdir(parent, { recursive: true }); await writeFile(name, body); }
+const agent = (description: string) => `---\nname: scout\ndescription: ${description}\ntools: [read]\nspawns: []\n---\n${description}_BODY\n`;
+const plugin = join(sandbox, 'omp-extension'); await file(join(plugin, 'index.ts'), 'export default function() {}\n');
+await file(join(plugin, 'agents/scout.md'), agent('PLUGIN_PRECEDENCE'));
+const roots = { explicit: [plugin], configured: [], configuredLevel: 'user', mode: 'explicit-only' };
+await file(join(project, '.omp/agents/scout.md'), agent('PROJECT_PRECEDENCE'));
+await file(join(userAgents, 'scout.md'), agent('USER_PRECEDENCE'));
+function reset() { clearCache(); clearClaudePluginRootsCache(); }
+async function selected(discoveryHome = home) { reset(); return (await discoverAgents(project, discoveryHome, roots)).agents.find((entry: any) => entry.name === 'scout'); }
+enableProvider('omp-plugins'); disableProvider('claude-plugins');
+checks.projectOverridesUserAndPlugin = (await selected())?.systemPrompt.includes('PROJECT_PRECEDENCE_BODY') === true;
+await rm(join(project, '.omp/agents/scout.md'));
+checks.userOverridesPlugin = (await selected())?.systemPrompt.includes('USER_PRECEDENCE_BODY') === true;
+await rm(join(userAgents, 'scout.md'));
+checks.extensionOverridesBundled = (await selected())?.systemPrompt.includes('PLUGIN_PRECEDENCE_BODY') === true;
+const installedRoot = join(sandbox, 'config-root/plugins');
+const installedPackage = join(installedRoot, 'node_modules/fixture-installed');
+await file(join(installedRoot, 'package.json'), JSON.stringify({ private: true, dependencies: { 'fixture-installed': '1.0.0' } }));
+await file(join(installedPackage, 'package.json'), JSON.stringify({ name: 'fixture-installed', version: '1.0.0', omp: {} }));
+await file(join(installedPackage, 'agents/scout.md'), agent('INSTALLED_PRECEDENCE'));
+roots.mode = 'merge';
+checks.explicitExtensionOverridesInstalledPackage = (await selected(homedir()))?.systemPrompt.includes('PLUGIN_PRECEDENCE_BODY') === true;
+roots.explicit = [];
+checks.installedPackageOverridesBundled = (await selected(homedir()))?.systemPrompt.includes('INSTALLED_PRECEDENCE_BODY') === true;
+const linkedPackage = join(sandbox, 'linked-package');
+await file(join(linkedPackage, 'package.json'), JSON.stringify({ name: 'fixture-linked', version: '1.0.0', omp: {} }));
+await file(join(linkedPackage, 'agents/scout.md'), agent('LINKED_PRECEDENCE'));
+await symlink(linkedPackage, join(installedRoot, 'node_modules/fixture-linked'));
+await file(join(installedRoot, 'omp-plugins.lock.json'), JSON.stringify({ plugins: { 'fixture-linked': { enabled: true } } }));
+await rm(installedPackage, { recursive: true });
+checks.linkedPackageOverridesBundled = (await selected(homedir()))?.systemPrompt.includes('LINKED_PRECEDENCE_BODY') === true;
+disableProvider('omp-plugins');
+const bundled = await selected(); checks.disabledExtensionFallsBackToBundled = bundled?.description.includes('MUST be used for exploratory codebase research') === true;
+const foreignPlugin = join(home, 'plugin-cache/foreign');
+await file(join(foreignPlugin, 'agents/foreign.md'), '---\nname: foreign-only\ndescription: foreign fixture\ntools: [read]\n---\nFOREIGN_PLUGIN_BODY\n');
+await file(join(home, '.claude/plugins/installed_plugins.json'), JSON.stringify({ version: 2, plugins: { 'foreign@fixture': [{ installPath: foreignPlugin, version: '1.0.0', scope: 'user', installedAt: '2026-09-01T00:00:00Z', lastUpdated: '2026-09-01T00:00:00Z' }] } }));
+enableProvider('claude-plugins'); disableUserSource('claude-plugins'); disableUserSource('claude');
+async function foreignPresent() { reset(); return (await discoverAgents(project, home, roots)).agents.some((entry: any) => entry.name === 'foreign-only' && entry.systemPrompt.includes('FOREIGN_PLUGIN_BODY')); }
+checks.foreignUserDefaultExcluded = !(await foreignPresent());
+enableUserSource('claude-plugins'); checks.foreignUserOptInLoads = await foreignPresent();
+disableProvider('claude-plugins'); checks.disabledProviderOverridesUserOptIn = !(await foreignPresent());
+const { discoverRuleFromMarkdown } = await import(join(source, 'packages/coding-agent/src/discovery/helpers.ts'));
+const { TtsrManager } = await import(join(source, 'packages/coding-agent/src/export/ttsr.ts'));
+const { bucketRules } = await import(join(source, 'packages/coding-agent/src/capability/rule-buckets.ts'));
+async function rule(name: string) { const path = join(process.env.AIWG_OMP_RULE_PROJECT!, '.omp/rules', `${name}.md`); return discoverRuleFromMarkdown(name, await readFile(path, 'utf8'), path, { provider: 'native', path, level: 'project' }); }
+const always = await rule('always'); const disabled = await rule('disabled'); const conditional = await rule('conditional');
+checks.nativeDisabledRuleOmitted = disabled === null;
+const manager = new TtsrManager(); const buckets = bucketRules([always!, conditional!], manager);
+checks.nativeAlwaysRuleBucket = buckets.alwaysApplyRules.some((entry: any) => entry.name === 'always');
+checks.conditionalGlobNonmatchExcluded = manager.checkSnapshot('TRIGGER', { source: 'tool', toolName: 'write', filePaths: ['notes.md'], streamKey: 'nonmatch' }).length === 0;
+checks.conditionalGlobMatchIncluded = manager.checkSnapshot('TRIGGER', { source: 'tool', toolName: 'write', filePaths: ['src/index.ts'], streamKey: 'match' }).some((entry: any) => entry.name === 'conditional');
+const { loadExtensions } = await import(join(source, 'packages/coding-agent/src/extensibility/extensions/loader.ts'));
+const brokenExtension = join(sandbox, 'broken-extension.ts');
+await writeFile(brokenExtension, 'export default function() { throw new Error("AIWG_EXTENSION_FAILURE_CANARY"); }\n');
+const failedExtension = await loadExtensions([brokenExtension], project);
+checks.nativeExtensionFailureDiagnostic = failedExtension.errors.some((entry: any) => entry.error.includes('AIWG_EXTENSION_FAILURE_CANARY') && entry.error.includes('Failed to load extension'));
+await writeFile(process.env.AIWG_OMP_PRECEDENCE_REPORT!, JSON.stringify(checks));
+if (!Object.values(checks).every(Boolean)) process.exitCode = 1;

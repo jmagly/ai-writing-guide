@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "https://github.com/can1357/oh-my-pi",
+    "commit": "5964a0f7649275bcde818f20073193fd032451f2"
+  },
+  "release": {
+    "tag": "v18.1.10",
+    "version": "18.1.10",
+    "platforms": {
+      "linux-x64": {
+        "url": "https://github.com/can1357/oh-my-pi/releases/download/v18.1.10/omp-linux-x64",
+        "sha256": "e91d5598ee47e1d4099fd8686dc9f61c9b755f2ea077d5f1774aba1072321f9e"
+      }
+    }
+  },
+  "unverified": [
+    "Other binary platforms"
+  ],
+  "separateGates": [
+    "Native SDK typecheck: tools/providers/omp-conformance-api.mjs",
+    "Native MCP, prompt expansion, team dispatch/cancellation: tools/providers/omp-mcp-conformance.mjs",
+    "Native discovery precedence, foreign-user opt-in and conditional rule matching: tools/providers/omp-precedence-conformance.mjs"
+  ],
+  "verifiedLocalCoverage": [
+    {
+      "area": "Native extension API typecheck",
+      "evidence": ".aiwg/working/oh-my-pi/implementation/omp-api-conformance.json"
+    },
+    {
+      "area": "Native resources, context and RPC",
+      "evidence": ".aiwg/working/oh-my-pi/implementation/omp-native-conformance.json"
+    },
+    {
+      "area": "MCP, prompt expansion and task execution with a local model endpoint",
+      "evidence": ".aiwg/testing/oh-my-pi-implementation/native-mcp.json"
+    },
+    {
+      "area": "Hosted model smoke",
+      "evidence": ".aiwg/testing/oh-my-pi-implementation/hosted-smoke.json"
+    },
+    {
+      "area": "Context/provider/agent precedence, conditional rules and native extension failure diagnostics",
+      "evidence": ".aiwg/testing/oh-my-pi-implementation/native-precedence.json"
+    }
+  ]
+}

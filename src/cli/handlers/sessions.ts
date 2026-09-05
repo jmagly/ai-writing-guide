@@ -26,6 +26,8 @@ import {
   OpenHumanSessionAdapter,
   PI_ADAPTER_VERSION,
   PiSessionAdapter,
+  OmpSessionAdapter,
+  OMP_ADAPTER_VERSION,
   WARP_ADAPTER_VERSION,
   WarpSessionAdapter,
   DEVIN_DESKTOP_ADAPTER_VERSION,
@@ -147,6 +149,7 @@ Options:
   --manifest <path>  Override the discovery manifest path
   --provider-home <path>  Override the provider home root (testing/portable homes)
   --codex-root <path>  Explicitly authorize a shared Codex sessions/export root
+  --omp-root <path>  Explicitly authorize an OMP profile sessions root
   --confirm, --yes  Confirm a persistent discovered batch import
   --lock-wait-ms <n>  Maximum import-lease wait (default 5000)
   --inactivity-threshold <duration>  Historical inactivity threshold (default 24h)
@@ -763,7 +766,7 @@ async function importSource(
   if (provider !== 'generic' && provider !== 'claude' && provider !== 'codex'
     && provider !== 'copilot' && provider !== 'cursor' && provider !== 'factory'
     && provider !== 'hermes' && provider !== 'opencode' && provider !== 'openclaw'
-    && provider !== 'openhuman' && provider !== 'pi' && provider !== 'warp' && provider !== 'devin-desktop') {
+    && provider !== 'openhuman' && provider !== 'pi' && provider !== 'omp' && provider !== 'warp' && provider !== 'devin-desktop') {
     throw new CliError('UNSUPPORTED_OPERATION', `session import is not implemented for ${provider}`, EXIT.unsupported);
   }
   const sourceId = requiredValue(args, '--source-id');
@@ -780,9 +783,10 @@ async function importSource(
   const isOpenClaw = provider === 'openclaw';
   const isOpenHuman = provider === 'openhuman';
   const isPi = provider === 'pi';
+  const isOmp = provider === 'omp';
   const isWarp = provider === 'warp';
   const isDevinDesktop = provider === 'devin-desktop';
-  const adapter: SessionSourceAdapter = isClaude
+  const adapter: SessionSourceAdapter = isOmp ? new OmpSessionAdapter() : isClaude
     ? new ClaudeSessionAdapter()
     : isCodex
       ? new CodexSessionAdapter()
@@ -807,7 +811,7 @@ async function importSource(
                       : isDevinDesktop
                         ? new DevinDesktopSessionAdapter()
                         : new GenericSessionInterchangeAdapter();
-  const locatorClass = isClaude
+  const locatorClass = isOmp ? 'omp-session-v3-jsonl' : isClaude
     ? (input.endsWith('.hooks.jsonl') ? 'claude-hook-jsonl' : 'claude-transcript-jsonl')
     : isCodex
       ? (input.endsWith('.app-server.jsonl') ? 'codex-app-server-jsonl' : 'codex-rollout-jsonl')
@@ -839,7 +843,7 @@ async function importSource(
   const probe = await adapter.inspect(selectedSource);
   const source = SessionSourceSchema.parse({
     contractVersion: SESSION_CONTRACT_VERSION, sourceId, provider,
-    providerProfile: isClaude
+    providerProfile: isOmp ? 'native-title-slot-v3' : isClaude
       ? 'documented-local-jsonl'
       : isCodex
         ? 'app-server-v2-rollout-fallback'
@@ -863,7 +867,7 @@ async function importSource(
                           ? 'opt-in-cascade-transcript-hook'
                           : 'manual-interchange',
     locatorClass, redactedLocator: redactSourceLocator(input),
-    adapterVersion: isClaude
+    adapterVersion: isOmp ? OMP_ADAPTER_VERSION : isClaude
       ? CLAUDE_ADAPTER_VERSION
       : isCodex
         ? CODEX_ADAPTER_VERSION
@@ -890,11 +894,11 @@ async function importSource(
     disposition: isWarp
       ? 'manual-only'
       : isClaude || isCodex || isCopilot || isCursor || isFactory || isHermes
-        || isOpenCode || isOpenClaw || isOpenHuman || isDevinDesktop
+        || isOpenCode || isOpenClaw || isOpenHuman || isDevinDesktop || isOmp
         ? 'implemented' : 'manual-only',
     operationalState: probe.operationalState,
     consistency: probe.consistency, authorizedAt: new Date().toISOString(),
-    extensions: isClaude
+    extensions: isOmp ? { 'native.omp': {} } : isClaude
       ? { 'native.claude': {} }
       : isCodex
         ? { 'native.codex': {} }
@@ -970,6 +974,8 @@ async function discoverWorkspace(
     providerHome: args.values.has('--provider-home')
       ? resolve(ctx.cwd, args.values.get('--provider-home')!)
       : undefined,
+    ompRoot: args.values.has('--omp-root')
+      ? resolve(ctx.cwd, args.values.get('--omp-root')!) : undefined,
     codexRoot: args.values.has('--codex-root')
       ? resolve(ctx.cwd, args.values.get('--codex-root')!)
       : undefined,
@@ -1191,6 +1197,19 @@ function providerDisposition(provider: SessionProviderId): Record<string, unknow
       },
     };
   }
+  if (provider === 'omp') {
+    return {
+      provider, disposition: 'implemented', operationalState: 'available',
+      supportedOperations: ['discover', 'inspect', 'stream'],
+      acquisitionModes: ['jsonl'], reasonCode: null,
+      remediation: 'Authorize the selected OMP profile sessions root or an explicit native JSONL file.',
+      evidence: {
+        adapterVersion: OMP_ADAPTER_VERSION,
+        verifiedAt: '2026-09-04',
+        documentation: 'https://github.com/can1357/oh-my-pi/blob/main/packages/coding-agent/src/session/session-entries.ts',
+      },
+    };
+  }
   if (provider === 'pi') {
     return {
       provider, disposition: 'implemented', operationalState: 'available',
@@ -1306,7 +1325,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     '--entity', '--sensitivity', '--extraction-state', '--page-size', '--max-documents',
     '--state', '--reviewer', '--reason', '--policy-version', '--min-confidence',
     '--consumer', '--actor-class', '--reason-code', '--dependent-action', '--basis',
-    '--manifest', '--provider-home', '--codex-root', '--lock-wait-ms', '--min-coverage', '--gap',
+    '--manifest', '--provider-home', '--codex-root', '--omp-root', '--lock-wait-ms', '--min-coverage', '--gap',
     '--inactivity-threshold',
     '--control-events',
     '--session', '--status', '--actor', '--group-by',

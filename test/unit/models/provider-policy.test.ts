@@ -13,8 +13,8 @@ describe('provider model registry', () => {
   it('covers every audited provider with sourced, dated capability entries', () => {
     const registry = loadProviderModelCapabilities();
     expect(Object.keys(registry.providers).sort()).toEqual([
-      'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
-      'openclaw', 'opencode', 'openhuman', 'pi', 'warp', 'windsurf',
+      'antigravity', 'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
+      'omp', 'openclaw', 'opencode', 'openhuman', 'pi', 'warp', 'windsurf',
     ]);
     for (const capability of Object.values(registry.providers)) {
       expect(capability.sourceUrl).toMatch(/^https:\/\//);
@@ -145,6 +145,8 @@ describe('provider-aware compilation', () => {
     ['opencode', 'native', true],
     ['openclaw', 'native', true],
     ['openhuman', 'compiled', true],
+    ['omp', 'native', true],
+    ['pi', 'native', true],
     ['warp', 'global-only', false],
     ['windsurf', 'unsupported', false],
   ] as const)(

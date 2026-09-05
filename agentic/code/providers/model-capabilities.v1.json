@@ -3,6 +3,17 @@
   "version": "1.0.0",
   "verifiedAt": "2026-07-20",
   "providers": {
+    "antigravity": {
+      "agent": "native", "skill": "native", "globalChild": "inherited",
+      "identifierSyntax": "model identifier accepted by Antigravity CLI 1.1.26 --model",
+      "effortValues": ["low", "medium", "high"],
+      "inheritance": "Omitted model and effort inherit the invoking Antigravity session",
+      "invalidPinFallback": "Provider validation/error; never assume fallback",
+      "configTarget": "agy launch arguments; custom-agent model tiers are not projected from generic AIWG model ids",
+      "artifactFormat": "YAML frontmatter plus Markdown; runtime --model and --effort flags",
+      "verification": "Pinned offline contract; authenticated model selection was not executed",
+      "sourceUrl": "https://antigravity.google/docs/cli/subagents/", "verifiedAt": "2026-09-04"
+    },
     "claude": {
       "agent": "native", "skill": "native", "globalChild": "inherited",
       "identifierSyntax": "Claude alias or accepted Anthropic model ID",
@@ -75,6 +86,26 @@
       "artifactFormat": "Saved profile / run control plane",
       "verification": "Inspect active profile and run metadata",
       "sourceUrl": "https://docs.warp.dev/agent-platform/capabilities/agent-profiles-permissions", "verifiedAt": "2026-07-20"
+    },
+    "omp": {
+      "agent": "native",
+      "skill": "inherited",
+      "globalChild": "native",
+      "identifierSyntax": "provider/model identifier accepted by OMP --model",
+      "effortValues": [
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "inheritance": "Omitted model and thinking level inherit the invoking Pi session",
+      "invalidPinFallback": "Pi resolves against its configured catalog and exits on invalid explicit selection",
+      "configTarget": "OMP native agent frontmatter and runtime launch arguments",
+      "artifactFormat": "model and thinkingLevel frontmatter; --model and --thinking runtime flags",
+      "verification": "Pinned OMP 18.1.10 source and live OpenRouter smoke; individual role defaults remain operator configured",
+      "sourceUrl": "https://github.com/can1357/oh-my-pi/tree/5964a0f7649275bcde818f20073193fd032451f2/packages/coding-agent",
+      "verifiedAt": "2026-09-04"
     },
     "pi": {
       "agent": "native", "skill": "inherited", "globalChild": "native",

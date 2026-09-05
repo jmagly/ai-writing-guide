@@ -17,14 +17,24 @@ AIWG_POSTGREST_LIVE_URL='https://…' npm run test:conformance:storage:server
 ```
 
 The Gitea `Storage Server Conformance` workflow exposes separate manual-only
-PostgreSQL Direct and PostgREST jobs. Each job is guarded by the Vault AppRole
+PostgreSQL Direct, PostgREST, and Fortemi jobs. Each job is guarded by the Vault AppRole
 bootstrap pair and its service-URL Vault mapping, binds reports to the workflow
 commit/ref, and uploads sanitized JSON evidence. Gitea stores only
 `VAULT_CI_ROLE_ID` and `VAULT_CI_SECRET_ID`; repository variables select the
-Vault paths and fields for the URLs and optional PostgREST authorization. These
+Vault paths and fields for the URLs and optional service authorization. These
 jobs do not run for pull requests or ordinary main pushes. The direct
 PostgreSQL job installs the feature catalog's exact `pg@8.23.0` driver before
 the live suite; deployed operators continue to use `aiwg features install postgres`.
+The Fortemi job is read-only by default. Its explicit write input is a separate
+mutation gate and may create one retained, UUID-namespaced qualification record;
+endpoint authorization must not be interpreted as permission to enable it.
+
+As of AIWG 2026.9.1, Fortemi live qualification remains pre-certification. The
+workflow writes sanitized `aiwg.fortemi-live-qualification-receipt/v1` evidence
+under `test-results/storage/`. The receipt binds the AIWG revision, non-secret endpoint identity, observed server and
+contract versions, operation outcomes, mutation state, timestamps, and resource
+bounds. Until an approved live run exists and its receipt verifies, an uploaded
+directory or console report is not certification evidence.
 
 The `aiwg.storage-qualification/v1` report records backend, branch, commit,
 dataset, declared and observed scope, readers/writers, operation count, exact

@@ -1,0 +1,429 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-04T21:15:57.614Z",
+  "scope": "Local Linux x64 qualification; remote CI and issue closure are recorded separately.",
+  "source": {
+    "repository": "https://github.com/can1357/oh-my-pi",
+    "commit": "5964a0f7649275bcde818f20073193fd032451f2"
+  },
+  "release": "v18.1.10",
+  "platform": "linux-x64",
+  "node": "v24.12.0",
+  "nativeBinary": {
+    "status": "passed",
+    "checks": {
+      "binaryDigest": true,
+      "version": true,
+      "rpc": {
+        "ready": true,
+        "negotiate": true,
+        "state": true,
+        "abort": true
+      },
+      "nativeResources": {
+        "contextImport": true,
+        "nestedContext": false,
+        "foreignExcluded": true,
+        "ruleLoaded": true,
+        "skillLoaded": true,
+        "promptListedByCommandAPI": false,
+        "agentDiscovered": true,
+        "toolsAvailable": true,
+        "mode": "rpc",
+        "runtime": {
+          "bun": "1.4.1",
+          "platform": "linux",
+          "arch": "x64"
+        },
+        "commandNames": [
+          "autoresearch",
+          "skill:conformance-skill"
+        ]
+      },
+      "nativeNestedContext": {
+        "nearestContextLoaded": true,
+        "foreignExcluded": true,
+        "ancestorContextAutoIncluded": false,
+        "ancestorRuleAutoIncluded": false
+      }
+    },
+    "binaryVersion": "omp/18.1.10",
+    "runner": "tools/providers/omp-conformance.mjs"
+  },
+  "nativeSdk": {
+    "status": "passed",
+    "checks": {
+      "sourceRevision": true,
+      "trackedSourcePristine": true,
+      "nativeExtensionTypes": true
+    },
+    "bridgeSha256": "9674ab024edbe12f1606e088bf48fc40ab71d78de8b5abda8e4e65990f194c6f",
+    "compiler": "7.0.2"
+  },
+  "precedence": {
+    "schemaVersion": 1,
+    "status": "passed",
+    "modelCalls": 0,
+    "checks": {
+      "binaryPinned": true,
+      "versionMatched": true,
+      "sourcePinned": true,
+      "canonicalImportsExactlyOnce": true,
+      "deployedKernelAndStandardSkillsLoaded": true,
+      "nativeAlwaysAndDisabledRules": true,
+      "nativeContextPrecedesForeignProject": true,
+      "disabledNativeContext": true,
+      "disabledForeignContext": true,
+      "foreignUserExplicitDirectoryOptIn": true,
+      "disabledForeignOverridesDirectoryOptIn": true,
+      "nativeSdk": {
+        "researchNativeAgentRoundtrip": true,
+        "sdlcNativeAgentRoundtrip": true,
+        "codingNativeAgentRoundtrip": true,
+        "efficiencyNativeAgentRoundtrip": true,
+        "projectOverridesUserAndPlugin": true,
+        "userOverridesPlugin": true,
+        "extensionOverridesBundled": true,
+        "explicitExtensionOverridesInstalledPackage": true,
+        "installedPackageOverridesBundled": true,
+        "linkedPackageOverridesBundled": true,
+        "disabledExtensionFallsBackToBundled": true,
+        "foreignUserDefaultExcluded": true,
+        "foreignUserOptInLoads": true,
+        "disabledProviderOverridesUserOptIn": true,
+        "nativeDisabledRuleOmitted": true,
+        "nativeAlwaysRuleBucket": true,
+        "conditionalGlobNonmatchExcluded": true,
+        "conditionalGlobMatchIncluded": true,
+        "nativeExtensionFailureDiagnostic": true
+      }
+    },
+    "unverified": [],
+    "baseline": {
+      "kernelSkill": false,
+      "standardSkill": false,
+      "workspaceOccurrences": 1,
+      "aiwgOccurrences": 1,
+      "alwaysRule": true,
+      "disabledRule": false,
+      "nativeContext": true,
+      "foreignProjectContext": false,
+      "foreignUserContext": false
+    }
+  },
+  "mcp": {
+    "sourceVersion": "18.1.10",
+    "runtimeVersion": "omp/18.1.10",
+    "credentialFree": true,
+    "configGeneratedBy": "src/mcp/omp-config.mjs manageOmpMcp",
+    "model": "deterministic loopback fixture (not a hosted model)",
+    "nativeTools": [
+      "mcp__fixture_http_echo",
+      "mcp__fixture_stdio_echo"
+    ],
+    "profileTools": [
+      "mcp__fixture_profile_echo"
+    ],
+    "profileIsolated": true,
+    "disabledSuppressed": true,
+    "projectOverrideSuppressed": true,
+    "promptExpanded": true,
+    "teamAllowlistVerified": true,
+    "nativeCancelled": true,
+    "disabledAndShadowedAbsent": true,
+    "resultSuccess": true,
+    "httpMethods": [
+      "initialize",
+      "notifications/initialized",
+      "tools/list",
+      "tools/call",
+      "initialize",
+      "notifications/initialized",
+      "tools/list",
+      "initialize",
+      "notifications/initialized",
+      "tools/list",
+      "disconnect",
+      "disconnect",
+      "initialize",
+      "notifications/initialized",
+      "tools/list",
+      "initialize",
+      "notifications/initialized",
+      "tools/list",
+      "disconnect",
+      "disconnect"
+    ],
+    "stdioMethods": [
+      "initialize",
+      "notifications/initialized",
+      "tools/list",
+      "tools/call",
+      "initialize",
+      "notifications/initialized",
+      "tools/list",
+      "initialize",
+      "notifications/initialized",
+      "tools/list",
+      "disconnect",
+      "disconnect",
+      "initialize",
+      "notifications/initialized",
+      "tools/list",
+      "disconnect",
+      "disconnect"
+    ],
+    "childAlive": false,
+    "checkedSubprocesses": 4,
+    "pass": true,
+    "tasks": [
+      {
+        "id": "research",
+        "status": "completed",
+        "requestedModel": "fixture/fixture",
+        "results": [
+          {
+            "id": "research",
+            "exitCode": 0,
+            "truncated": false,
+            "resolvedModel": "fixture/fixture",
+            "aborted": false
+          }
+        ]
+      },
+      {
+        "id": "sdlc",
+        "status": "completed",
+        "requestedModel": "fixture/fixture",
+        "results": [
+          {
+            "id": "sdlc",
+            "exitCode": 0,
+            "truncated": false,
+            "resolvedModel": "fixture/fixture",
+            "aborted": false
+          }
+        ]
+      }
+    ]
+  },
+  "hosted": {
+    "schemaVersion": 1,
+    "mode": "live",
+    "status": "passed",
+    "reason": "LIVE_CHECKS_PASSED",
+    "checks": {
+      "optedIn": true,
+      "credentialPresent": true,
+      "modelSelected": true,
+      "binaryProvided": true,
+      "binaryPinned": true,
+      "versionMatched": true,
+      "completion": true,
+      "context": true,
+      "readTool": true,
+      "sessionPersisted": true
+    },
+    "promptSubmissions": 2,
+    "model": "openrouter/openai/gpt-4.1-mini"
+  },
+  "unverified": [
+    "Other operating systems and binary architectures"
+  ],
+  "bridgeLoader": {
+    "version": "18.1.10",
+    "modelCalls": 0,
+    "ready": true,
+    "supportedProtocolVersions": [
+      1,
+      2
+    ],
+    "commandDiscovered": "aiwg-bridge-status",
+    "passed": true,
+    "scope": "Explicit extension loading; SDK typecheck recorded separately."
+  },
+  "shutdownRegression": {
+    "containerImage": "node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb",
+    "fix": "Abort plus EOF permits native disposal for up to 5000ms, then SIGTERM and 500ms SIGKILL fallback. Container-after/local-after all four tracked PIDs absent before polling.",
+    "gate": "Any tracked PID still present including zombies or unknown status fails. PID start time detects reuse. Reports preserve launch parent and final state/ownership.",
+    "before": {
+      "pass": false,
+      "childAlive": true,
+      "checkedSubprocesses": 4,
+      "cleanup": {
+        "initial": [
+          {
+            "pid": 58,
+            "state": "Z",
+            "parentPid": 1,
+            "processGroup": 58,
+            "startTime": "10974107",
+            "present": true,
+            "identityChanged": false
+          },
+          {
+            "pid": 163,
+            "state": "Z",
+            "parentPid": 1,
+            "processGroup": 163,
+            "startTime": "10974435",
+            "present": true,
+            "identityChanged": false
+          },
+          {
+            "pid": 172,
+            "state": "Z",
+            "parentPid": 1,
+            "processGroup": 172,
+            "startTime": "10974476",
+            "present": true,
+            "identityChanged": false
+          },
+          {
+            "pid": 261,
+            "state": "Z",
+            "parentPid": 1,
+            "processGroup": 261,
+            "startTime": "10974809",
+            "present": true,
+            "identityChanged": false
+          }
+        ],
+        "final": [
+          {
+            "pid": 58,
+            "state": "Z",
+            "parentPid": 1,
+            "processGroup": 58,
+            "startTime": "10974107",
+            "present": true,
+            "identityChanged": false
+          },
+          {
+            "pid": 163,
+            "state": "Z",
+            "parentPid": 1,
+            "processGroup": 163,
+            "startTime": "10974435",
+            "present": true,
+            "identityChanged": false
+          },
+          {
+            "pid": 172,
+            "state": "Z",
+            "parentPid": 1,
+            "processGroup": 172,
+            "startTime": "10974476",
+            "present": true,
+            "identityChanged": false
+          },
+          {
+            "pid": 261,
+            "state": "Z",
+            "parentPid": 1,
+            "processGroup": 261,
+            "startTime": "10974809",
+            "present": true,
+            "identityChanged": false
+          }
+        ],
+        "elapsedMs": 3001,
+        "complete": false
+      }
+    },
+    "after": {
+      "pass": true,
+      "childAlive": false,
+      "checkedSubprocesses": 4,
+      "cleanup": {
+        "initial": [
+          {
+            "pid": 58,
+            "present": false
+          },
+          {
+            "pid": 162,
+            "present": false
+          },
+          {
+            "pid": 172,
+            "present": false
+          },
+          {
+            "pid": 260,
+            "present": false
+          }
+        ],
+        "final": [
+          {
+            "pid": 58,
+            "present": false
+          },
+          {
+            "pid": 162,
+            "present": false
+          },
+          {
+            "pid": 172,
+            "present": false
+          },
+          {
+            "pid": 260,
+            "present": false
+          }
+        ],
+        "elapsedMs": 0,
+        "complete": true
+      }
+    },
+    "hostAfter": {
+      "pass": true,
+      "childAlive": false,
+      "checkedSubprocesses": 4,
+      "cleanup": {
+        "initial": [
+          {
+            "pid": 2623311,
+            "present": false
+          },
+          {
+            "pid": 2623770,
+            "present": false
+          },
+          {
+            "pid": 2623826,
+            "present": false
+          },
+          {
+            "pid": 2624226,
+            "present": false
+          }
+        ],
+        "final": [
+          {
+            "pid": 2623311,
+            "present": false
+          },
+          {
+            "pid": 2623770,
+            "present": false
+          },
+          {
+            "pid": 2623826,
+            "present": false
+          },
+          {
+            "pid": 2624226,
+            "present": false
+          }
+        ],
+        "elapsedMs": 1,
+        "complete": true
+      }
+    },
+    "tests": {
+      "command": "npx vitest run test/unit/providers/omp-runtime.test.ts",
+      "passed": 25
+    }
+  }
+}

@@ -20,7 +20,7 @@
  *   --rules-only             Deploy only rules (skip agents)
  *   --dry-run                Show what would be deployed without writing
  *   --force                  Overwrite existing files
- *   --provider <name>        Target provider: claude (default), openai, codex, cursor, opencode, copilot, factory, pi, warp, devin, hermes, or openclaw
+ *   --provider <name>        Target provider: antigravity (agy), claude (default), openai, codex, cursor, opencode, copilot, factory, pi, omp, warp, devin, hermes, or openclaw
  *   --model <name>            Override model for all tiers (blanket)
  *   --reasoning-model <name> Override model for reasoning tasks
  *   --coding-model <name>    Override model for coding tasks
@@ -53,6 +53,7 @@
  *   windsurf  - Deprecated alias for devin
  *   openclaw  - OpenClaw - ~/.openclaw/agents/, ~/.openclaw/commands/, ~/.openclaw/skills/, ~/.openclaw/rules/, ~/.openclaw/behaviors/
  *   pi        - Pi Coding Agent - .agents/skills/, .pi/skills/, .pi/prompts/, AGENTS.md
+ *   omp       - Oh My Pi - .omp/agents/, .omp/prompts/, .agents/skills/, .omp/AGENTS.md
  *
  * Defaults:
  *   --source resolves relative to this script's repo root (../..)
@@ -104,15 +105,17 @@ function getDeployVersion(srcRoot) {
 // ============================================================================
 
 const PROVIDER_ALIASES = {
+  agy: 'antigravity',
   'openai': 'codex',
   'devin': 'windsurf',
   'devin-desktop': 'windsurf',
   'devin-local': 'windsurf',
   'cascade': 'windsurf',
   'pi-coding-agent': 'pi',
+  'oh-my-pi': 'omp',
 };
 
-const AVAILABLE_PROVIDERS = ['claude', 'factory', 'codex', 'opencode', 'copilot', 'cursor', 'pi', 'warp', 'windsurf', 'hermes', 'openclaw', 'openhuman'];
+const AVAILABLE_PROVIDERS = ['antigravity', 'claude', 'factory', 'codex', 'opencode', 'copilot', 'cursor', 'pi', 'omp', 'warp', 'windsurf', 'hermes', 'openclaw', 'openhuman'];
 
 const UNSUPPORTED_PROVIDER_HINTS = {
   'devin-cli': [
@@ -154,7 +157,7 @@ const MIRRORED_KERNEL_COMMAND_SKILLS = new Set([
 ]);
 
 function providerUsesSkillsNatively(providerName) {
-  return ['claude', 'cursor', 'hermes', 'openhuman', 'pi'].includes(providerName);
+  return ['antigravity', 'claude', 'cursor', 'hermes', 'openhuman', 'pi', 'omp'].includes(providerName);
 }
 
 function shouldMirrorStandardCommandSkill(skillName) {

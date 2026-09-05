@@ -252,7 +252,7 @@ aiwg doctor [--provider <name>] [--all-providers] [--project-local] [--quiet]
 
 **Flags:**
 
-- `--provider <name>` — Inspect a specific provider's deployment paths (claude, factory, codex, copilot, cursor, opencode, warp, devin, openclaw, openhuman, hermes, pi). Defaults to auto-detect across deployed providers.
+- `--provider <name>` — Inspect a specific provider's deployment paths (claude, codex, copilot, cursor, factory, hermes, opencode, openclaw, openhuman, omp, pi, warp, or devin). Defaults to auto-detect across deployed providers.
 - `--all-providers` — Enumerate every supported provider, including ones with nothing deployed.
 - `--project-local` — Show only the project-local artifacts section. Exit code reflects only project-local findings.
 - `--quiet` — Suppress informational subsections (counts, shadows). Show only failures.
@@ -2020,7 +2020,7 @@ aiwg skills export aiwg-status --out ./agent-skill-exports --json
 
 Validation uses `aiwg validate-metadata --profile <profile>`, where the profile
 is `strict`, `compatible`, or `discovery`. Provider projection details, trust
-rules, diagnostics, sidecars, updates, and all 12 target paths are documented
+rules, diagnostics, sidecars, updates, and all 14 target paths are documented
 in [Agent Skills import and deployment](../skills/agent-skills.md).
 
 **Capabilities:** cli, skills, registry, import, validation, deployment
@@ -2917,7 +2917,10 @@ aiwg mc stop mc-abc123 --drain
 
 ## Agent Team Commands
 
-Agent teams provide a provider-agnostic abstraction for multi-agent collaboration. On Claude Code, teams use native agent dispatch. On all other providers (Copilot, Cursor, Warp, Windsurf, OpenCode, Factory, Codex, OpenClaw), teams are emulated via `aiwg mc` (Mission Control) orchestration.
+Agent teams provide a provider-agnostic abstraction for multi-agent
+collaboration. Claude Code, Factory AI, and Oh My Pi use their reviewed native
+team or task surfaces. Providers without a native team surface route through
+`aiwg mc` (Mission Control) orchestration when that emulation is available.
 
 ### team
 
@@ -2929,7 +2932,8 @@ aiwg teams <subcommand> [options]
 ```
 
 **Capabilities:** orchestration, agent-teams, multi-provider, mission-control
-**Platforms:** All (native on Claude Code, emulated via aiwg mc on others)
+**Platforms:** All (native on Claude Code, Factory AI, and Oh My Pi; emulated
+via `aiwg mc` where supported)
 **Category:** orchestration
 
 #### Subcommands
@@ -2942,10 +2946,12 @@ aiwg teams <subcommand> [options]
 
 #### Provider Routing
 
-| Provider                                                            | Backend             | Behavior                                      |
-| ------------------------------------------------------------------- | ------------------- | --------------------------------------------- |
-| Claude Code                                                         | Native              | @agent-name dispatch instructions             |
-| Warp, Copilot, Cursor, Windsurf, OpenCode, Factory, Codex, OpenClaw | `aiwg mc` emulation | Generates `mc start` + `mc dispatch` commands |
+| Provider | Backend | Behavior |
+| --- | --- | --- |
+| Claude Code | Native | Agent dispatch instructions |
+| Factory AI | Native | Factory Missions and task dispatch |
+| Oh My Pi | Native | Bounded native task-agent scheduling |
+| Other supported providers | `aiwg mc` emulation | Generates `mc start` and `mc dispatch` commands when available |
 
 #### Options
 
@@ -4130,7 +4136,7 @@ and the
 
 ### Best-practice usage guidance
 
-Discovery is the operator surface that makes the **kernel + on-demand model** work across all 12 named provider integrations (Claude Code, OpenAI Codex, GitHub Copilot, Cursor, Factory AI, Hermes, OpenCode, OpenClaw, OpenHuman, Pi Coding Agent, Warp Terminal, and Devin Desktop). Each provider deploys a small kernel set on its supported skill surface; everything else is reached via `aiwg discover`.
+Discovery is the operator surface that makes the **kernel + on-demand model** work across all 14 named provider integrations (Google Antigravity CLI, Claude Code, OpenAI Codex, GitHub Copilot, Cursor, Factory AI, Hermes, OpenCode, OpenClaw, OpenHuman, Pi Coding Agent from pi.dev, Oh My Pi, Warp Terminal, and Devin Desktop). Each provider deploys a small kernel set on its supported skill surface; everything else is reached via `aiwg discover`.
 
 **Lead with discovery, not with memory.** When a user describes a capability, query first:
 

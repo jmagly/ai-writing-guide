@@ -361,7 +361,7 @@ providers:
 
   hermes:
     display_name: Hermes
-    status: experimental
+    status: stable
     daemon_tier: unsupported
     daemon_pty_adapter: false
     artifact_paths:
@@ -470,6 +470,51 @@ providers:
     deploy_target: mixed
     aggregated_output: true
 
+  antigravity:
+    display_name: Google Antigravity CLI
+    aliases:
+      - agy
+    status: experimental
+    executable: agy
+    qualified_version: 1.1.26
+    qualification_evidence: agentic/code/providers/antigravity/provider-contract.v1.json
+    daemon_tier: unsupported
+    daemon_pty_adapter: false
+    artifact_paths:
+      agents: .agents/agents/
+      commands: "(not deployed; no qualified native command surface)"
+      skills: .agents/skills/
+      rules: AGENTS.md
+      behaviors: "(not supported)"
+      mcp_project: .agents/mcp_config.json
+      mcp_user: "~/.gemini/config/mcp_config.json"
+    native_features:
+      cron: false
+      agent_teams: false
+      tasks: false
+      mcp: true
+      behaviors: false
+      mission_control: false
+      daemon: false
+    emulation:
+      cron: external-trigger
+      agent_teams: aiwg-mc
+      tasks: aiwg-mc
+      mcp: native
+      behaviors: null
+      mission_control: aiwg-mc
+      daemon: null
+    hook_wiring:
+      at_link_support: false
+      fallback: full-inject
+      context_file: AGENTS.md
+    interaction:
+      structured_questions: none
+      fallback: markdown
+      notes: No stable structured-question tool contract was qualified for CLI 1.1.26.
+    deploy_target: project
+    aggregated_output: false
+
   pi:
     display_name: Pi Coding Agent
     aliases:
@@ -508,6 +553,47 @@ providers:
       structured_questions: none
       fallback: markdown
       notes: Pi does not expose a built-in structured question tool.
+    deploy_target: project
+    aggregated_output: false
+
+  omp:
+    display_name: Oh My Pi
+    aliases:
+      - oh-my-pi
+    status: experimental
+    daemon_tier: unsupported
+    daemon_pty_adapter: false
+    artifact_paths:
+      agents: .omp/agents/
+      commands: .omp/prompts/
+      skills: .agents/skills/
+      skills_cross_agent: .agents/skills/
+      rules: .omp/rules/
+      behaviors: .omp/extensions/
+    native_features:
+      cron: false
+      agent_teams: true
+      tasks: true
+      mcp: true
+      behaviors: true
+      mission_control: false
+      daemon: false
+    emulation:
+      cron: external-trigger
+      agent_teams: null
+      tasks: null
+      mcp: null
+      behaviors: null
+      mission_control: aiwg-mc
+      daemon: null
+    hook_wiring:
+      at_link_support: true
+      fallback: full-inject
+      context_file: .omp/AGENTS.md
+    interaction:
+      structured_questions: none
+      fallback: markdown
+      notes: OMP integration uses Markdown questions; native UI questions require an interactive runtime.
     deploy_target: project
     aggregated_output: false
 

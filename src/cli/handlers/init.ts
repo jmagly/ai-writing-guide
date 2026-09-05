@@ -30,6 +30,7 @@ import { writeNormalizedAiwgMd } from '../../smiths/context-pipeline/finalizatio
 import { ensureWorkspaceContext } from '../../smiths/context-pipeline/workspace-context.js';
 
 const PROVIDER_LABELS: Record<string, string> = {
+  antigravity: 'Google Antigravity .agents/',
   claude:    'Claude Code       .claude/',
   copilot:   'GitHub Copilot    .github/',
   cursor:    'Cursor            .cursor/',
@@ -40,6 +41,7 @@ const PROVIDER_LABELS: Record<string, string> = {
   codex:     'OpenAI Codex      ~/.codex/',
   openclaw:  'OpenClaw          ~/.openclaw/',
   hermes:    'Hermes (MCP)      aiwg mcp',
+  omp:       'Oh My Pi         .omp/ + .agents/skills/',
   pi:        'Pi Coding Agent   .pi/ + .agents/skills/',
 };
 

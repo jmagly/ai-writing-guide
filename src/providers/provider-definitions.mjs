@@ -1,7 +1,24 @@
+import { resolveOmpPaths } from './omp-paths.mjs';
 import { homedir } from 'os';
 import { resolve } from 'path';
 
 const MCP_INJECTION_DEFINITIONS = [
+  {
+    id: 'antigravity', aliases: ['agy'],
+    mcp: { providerId: 'antigravity', includeInSupportedProviders: true, configFormat: 'json',
+      serverConfigFormat: 'antigravity', serversKey: 'mcpServers',
+      configPath: { scope: 'project', path: '.agents/mcp_config.json' },
+      supportsEphemeral: false,
+      unsupportedReason: 'Antigravity uses project or user persistent MCP configuration; temporary injection is not qualified.' },
+  },
+  {
+    id: 'omp', aliases: ['oh-my-pi'],
+    mcp: { providerId: 'omp', includeInSupportedProviders: true, configFormat: 'json',
+      serverConfigFormat: 'standard', serversKey: 'mcpServers',
+      configPath: { scope: 'project', path: '.omp/mcp.json' },
+      supportsEphemeral: false,
+      unsupportedReason: 'OMP uses owned persistent MCP configuration; temporary injection is not supported.' },
+  },
   {
     id: 'claude',
     aliases: ['claude-code'],
@@ -147,7 +164,14 @@ export function listMcpInjectProviderIds() {
     .map((definition) => definition.providerId);
 }
 
-export function resolveMcpConfigPath(provider, projectDir = '.') {
+export function resolveMcpConfigPath(provider, projectDir = '.', options = {}) {
+  if (normalizeRuntimeProviderId(provider) === 'antigravity' && options.scope === 'user') {
+    const home = process.env.HOME || process.env.USERPROFILE || homedir();
+    return resolve(home, '.gemini/config/mcp_config.json');
+  }
+  if (normalizeRuntimeProviderId(provider) === 'omp' && options.scope === 'user') {
+    return resolve(resolveOmpPaths(options).agentDir, 'mcp.json');
+  }
   const definition = getMcpInjectionDefinition(provider);
   if (!definition) return '';
 

@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from 'fs';
+import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import type { HandlerContext } from '../../../../src/cli/handlers/types.js';
@@ -202,5 +202,43 @@ describe('team run', () => {
     const result = await teamHandler.execute(makeCtx(['run', 'sdlc-review', '--provider', 'cursor']));
     expect(result.exitCode).toBe(0);
     consoleSpy.mockRestore();
+  });
+});
+
+
+describe('OMP public team execution', () => {
+  function runtimeFixture() {
+    const runtimeDir = join(frameworkRoot, 'tools', 'providers');
+    mkdirSync(runtimeDir, { recursive: true });
+    writeFileSync(join(runtimeDir, 'omp-teams.mjs'), `import { writeFileSync } from 'node:fs';
+export async function runOmpTeam(options) { writeFileSync(${JSON.stringify(join(tmpDir, 'omp-invocation.json'))}, JSON.stringify({ ...options, hasSignal: Boolean(options.signal) })); return { provider: 'omp', results: options.tasks.map(task => ({ id: task.id, status: task.fail ? 'failed' : 'completed' })) }; }
+`);
+  }
+  it.each(['omp', 'oh-my-pi'])('routes %s to the bounded native runner with explicit paths, model, profile and signal', async provider => {
+    runtimeFixture();
+    const tasks = [{ id: 'research', agent: 'researcher', prompt: 'inspect', tools: ['read'], ownership: ['findings.md'] }];
+    writeFileSync(join(tmpDir, 'tasks.json'), JSON.stringify({ tasks }));
+    const before = process.listenerCount('SIGINT');
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      const result = await teamHandler.execute(makeCtx(['run', '--provider', provider, '--body-file', 'tasks.json', '--cwd', 'work', '--output-root', 'results', '--max-parallel', '2', '--model', 'fixture/model', '--profile', 'review']));
+      expect(result.exitCode).toBe(0);
+      expect(JSON.parse(readFileSync(join(tmpDir, 'omp-invocation.json'), 'utf8'))).toMatchObject({ tasks, cwd: join(tmpDir, 'work'), outputDir: join(tmpDir, 'results'), maxParallel: 2, model: 'fixture/model', profile: 'review', hasSignal: true });
+      expect(process.listenerCount('SIGINT')).toBe(before);
+      expect(log.mock.calls.flat().join(' ')).not.toContain('Mission Control');
+    } finally { log.mockRestore(); }
+  });
+  it('propagates native worker failure through the public command exit code', async () => {
+    runtimeFixture(); writeFileSync(join(tmpDir, 'tasks.json'), JSON.stringify({ tasks: [{ id: 'failed', fail: true }] }));
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try { expect((await teamHandler.execute(makeCtx(['run', '--provider', 'omp', '--body-file', 'tasks.json']))).exitCode).toBe(1); }
+    finally { log.mockRestore(); }
+  });
+  it.each([
+    ['run', '--provider', 'omp'],
+    ['run', '--provider', 'omp', '--body-file', 'tasks.json', '--max-parallel', '0'],
+    ['run', '--provider', 'omp', '--body-file', 'tasks.json', '--unexpected'],
+  ])('rejects incomplete OMP controls before dispatch: %j', async (...args) => {
+    expect((await teamHandler.execute(makeCtx(args))).exitCode).toBe(1);
   });
 });

@@ -10,6 +10,9 @@ stable_id: aiwg.agent-reference.provider.pi
 > [`47236c84450656043dd8fb21c8513d1421505ae3`](https://github.com/earendil-works/pi/commit/47236c84450656043dd8fb21c8513d1421505ae3),
 > verified 2026-09-04.
 
+Pi Coding Agent is the minimal agent harness published at
+[pi.dev](https://pi.dev/). The AIWG provider ID for this harness is `pi`.
+
 AIWG's Pi integration remains experimental while its promotion gate is open. It
 projects context, Agent Skills, prompt templates, and a reviewed policy bridge;
 discovers configured models; supports External Ralph headless execution; and

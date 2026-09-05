@@ -536,6 +536,7 @@ export class AgentGenerator {
         model,
         modelRole: modelPolicy.role,
         modelTier: modelPolicy.tier,
+        ...(platform === 'omp' && effort ? { thinkingLevel: effort } : {}),
         tools,
         category: category as any,
         version,

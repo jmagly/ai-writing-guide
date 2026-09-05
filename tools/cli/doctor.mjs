@@ -90,6 +90,7 @@ const checks = [];
 // Each entry exposes .paths via dynamic import so we don't pull all ten
 // provider modules eagerly when the user hasn't deployed to any of them.
 const PROVIDER_LABELS = {
+  antigravity: 'Google Antigravity CLI',
   claude:   'Claude Code',
   factory:  'Factory',
   codex:    'Codex',
@@ -100,6 +101,7 @@ const PROVIDER_LABELS = {
   windsurf: 'Windsurf',
   openclaw: 'OpenClaw',
   openhuman: 'OpenHuman',
+  omp: 'Oh My Pi',
   hermes:   'Hermes',
 };
 
@@ -107,6 +109,7 @@ const PROVIDER_LABELS = {
 // Mirrors the agents path each provider exports. Kept literal here so the
 // check is fast and string-greppable without loading every provider module.
 const PROVIDER_AGENT_DIRS = {
+  antigravity: '.agents/agents',
   claude:   '.claude/agents',
   factory:  '.factory/droids',
   codex:    '.codex/agents',
@@ -116,6 +119,7 @@ const PROVIDER_AGENT_DIRS = {
   warp:     '.warp/agents',
   windsurf: '.windsurf/agents',
   openhuman: '.agents/agents',
+  omp: '.omp/agents',
   // openclaw/hermes deploy to ~/.{provider}/ — handled separately
 };
 
@@ -943,7 +947,7 @@ async function runDoctor() {
   if (!noBudgetCheck) {
     try {
       const supported = providersToCheck.filter((name) =>
-        ['claude', 'codex', 'copilot', 'cursor', 'factory', 'opencode', 'pi', 'warp', 'windsurf', 'hermes', 'openhuman'].includes(name),
+        ['antigravity', 'claude', 'codex', 'copilot', 'cursor', 'factory', 'opencode', 'pi', 'omp', 'warp', 'windsurf', 'hermes', 'openhuman'].includes(name),
       );
       const firewall = await scanContextMemoryFirewall({
         rootDir: process.cwd(),

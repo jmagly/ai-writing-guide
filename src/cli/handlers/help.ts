@@ -11,6 +11,7 @@
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import * as ui from '../ui.js';
 import { maybePrintCommunityFooter } from '../../community/footer.js';
+import { listProviderDefinitions } from '../../providers/provider-definitions.js';
 
 /**
  * Help command handler
@@ -168,7 +169,8 @@ function displayHelp(): void {
 
   ui.rule();
   ui.blank();
-  console.log(`  ${ui.dimText('Providers:')} 12 — claude (default), codex, copilot, cursor, factory, hermes, opencode, openclaw, openhuman, pi, warp, windsurf (alias: devin)`);
+  const providers = listProviderDefinitions().filter(({ id }) => id !== 'generic');
+  console.log(`  ${ui.dimText('Providers:')} ${providers.length} — ${providers.map(({ id }) => id).join(', ')} (default: claude; aliases: agy → antigravity, devin → windsurf, oh-my-pi → omp)`);
   ui.blank();
   console.log(`  ${ui.dimText('Examples:')}`);
   console.log(`    aiwg use sdlc                   ${ui.dimText('Install SDLC framework')}`);

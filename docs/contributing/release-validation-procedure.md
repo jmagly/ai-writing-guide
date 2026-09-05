@@ -48,7 +48,9 @@ aiwg status --probe --json | jq '{migration: .workspace.migration, isFrameworkSc
 
 **Pass criteria — provider-dependent.** The migration/scoped probe is a *project-local* signal; it does not apply uniformly across providers.
 
-*Project-local providers* (claude-code, codex, copilot, cursor, factory, opencode, warp, windsurf) deploy into the project and migrate a framework-scoped `.aiwg/` workspace:
+*Project-local providers* (claude-code, codex, copilot, cursor, factory,
+opencode, omp, pi, warp, windsurf) deploy into the project and migrate a
+framework-scoped `.aiwg/` workspace:
 - `aiwg use` exits 0.
 - `migration.status` is `"completed"` (not `"partial"`) on a fresh workspace (regression check for #1516).
 - `isFrameworkScoped` is `true`.

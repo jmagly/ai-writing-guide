@@ -1,0 +1,56 @@
+{
+  "$schema": "../domain-manifest.v1.schema.json",
+  "schemaVersion": "1",
+  "domain": "storage",
+  "owner": { "id": "aiwg-maintainers" },
+  "policy": {
+    "strict": true,
+    "compatibility": "backward",
+    "requireFixtures": true
+  },
+  "artifacts": [
+    {
+      "logicalName": "storage.fortemi-live-qualification-receipt",
+      "id": "https://aiwg.io/schemas/storage/fortemi-live-qualification-receipt.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": { "id": "aiwg-maintainers" },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/storage/fortemi-live-qualification-receipt.v1.schema.json"
+      },
+      "compatibility": { "mode": "backward" },
+      "consumers": [
+        {
+          "id": "fortemi-live-qualification",
+          "boundary": "sanitized durable live qualification evidence",
+          "path": "src/storage/fortemi-qualification-receipt.ts"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/storage/fortemi-live-qualification-receipt.valid.json"
+        ],
+        "invalid": [
+          "test/fixtures/storage/fortemi-live-qualification-receipt.invalid.json"
+        ]
+      },
+      "projections": [
+        {
+          "kind": "types",
+          "path": "src/storage/fortemi-qualification-receipt.ts",
+          "generated": false
+        },
+        {
+          "kind": "validator",
+          "path": "src/storage/fortemi-qualification-receipt.ts",
+          "generated": false
+        }
+      ],
+      "publication": { "public": true }
+    }
+  ]
+}

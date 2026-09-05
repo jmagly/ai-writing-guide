@@ -180,7 +180,7 @@ When a stack trace or error points into build output, the required research acti
 ## Platform Applicability
 
 Applies universally across all AI coding platforms:
-- Claude Code, Codex, Copilot, Cursor, Warp, Factory, OpenCode, Windsurf
+- Every supported provider
 - Any agent performing debugging, code review, error tracing, or stack trace analysis
 
 ## Checklist

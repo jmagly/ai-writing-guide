@@ -187,9 +187,11 @@ export async function fingerprintSourceFile(
 export async function fingerprintSourcePrefix(
   authorization: SourceAuthorization,
   length: number,
+  skipPrefixBytes = 0,
 ): Promise<{ digest: string; size: number; mtimeMs: number; fileIdentity: string }> {
   const allowed = await authorizeSourceFile(authorization);
-  if (!Number.isSafeInteger(length) || length < 0 || length > allowed.size) {
+  if (!Number.isSafeInteger(length) || length < 0 || length > allowed.size
+    || !Number.isSafeInteger(skipPrefixBytes) || skipPrefixBytes < 0 || skipPrefixBytes > allowed.size) {
     throw new SessionContractError(
       'SCHEMA_DRIFT',
       'checkpoint source position is beyond the current source size',
@@ -199,7 +201,7 @@ export async function fingerprintSourcePrefix(
   const hash = createHash('sha256');
   try {
     const buffer = Buffer.allocUnsafe(64 * 1024);
-    let position = 0;
+    let position = skipPrefixBytes;
     while (position < length) {
       const result = await handle.read(
         buffer,

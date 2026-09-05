@@ -8,6 +8,7 @@ import {
 } from '../../../src/providers/provider-definitions.js';
 
 const CURRENT_PLATFORM_IDS = [
+  'antigravity',
   'claude',
   'codex',
   'copilot',
@@ -18,6 +19,7 @@ const CURRENT_PLATFORM_IDS = [
   'openclaw',
   'openhuman',
   'pi',
+  'omp',
   'warp',
   'windsurf',
   'generic',

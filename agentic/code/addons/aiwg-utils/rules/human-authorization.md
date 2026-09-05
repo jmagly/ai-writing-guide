@@ -171,7 +171,7 @@ Both are required. A well-researched unauthorized action is still a violation.
 ## Platform Applicability
 
 This rule applies universally across all AI coding platforms:
-- Claude Code, Codex, Copilot, Cursor, Warp, Factory, OpenCode, Windsurf
+- Every supported provider
 - Any agent that modifies files, manages artifacts, or takes actions with lasting effects
 
 Authorization is not a platform feature. It is an agent responsibility.

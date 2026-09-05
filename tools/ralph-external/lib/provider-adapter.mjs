@@ -283,6 +283,7 @@ async function registerBuiltinProviders() {
   } catch { /* ignore if not found */ }
   try {
     await import('./pi-adapter.mjs');
+    await import('./omp-adapter.mjs');
   } catch { /* ignore if not found */ }
 }
 

@@ -13,6 +13,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import { pathToFileURL } from 'node:url';
+import { resolveOmpPaths } from '../../providers/omp-paths.mjs';
 import YAML from 'yaml';
 import { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { createScriptRunner } from './script-runner.js';
@@ -1225,7 +1227,7 @@ async function reconcileDeployedSkillAssets(
   bundlePath: string,
   target: string,
   provider: string,
-  options: { strictReferences?: boolean } = {},
+  options: { strictReferences?: boolean; scope?: 'user' | 'project'; skipUndeployed?: boolean } = {},
 ): Promise<void> {
   const strictReferences = options.strictReferences ?? true;
   const skillsRoot = path.join(bundlePath, 'skills');
@@ -1239,16 +1241,18 @@ async function reconcileDeployedSkillAssets(
   }
   const paths = getProviderPaths(provider);
   const kernelSkillsPath = getProviderKernelSkillsPath(provider);
-  const deployRoots = [...new Set([
-    paths.skills,
-    kernelSkillsPath,
-  ].filter((value): value is string => Boolean(value)).map(value => resolveDeployPath(target, value)))];
+  const deployRoots = provider === 'omp' && options.scope === 'user'
+    ? [path.join(resolveOmpPaths({ cwd: target }).agentDir, 'skills')]
+    : [...new Set([paths.skills, kernelSkillsPath]
+      .filter((value): value is string => Boolean(value)).map(value => resolveDeployPath(target, value)))];
 
   for (const skillName of skillDirs) {
     const sourceSkillDir = path.join(skillsRoot, skillName);
     const sourceSkillMd = path.join(sourceSkillDir, 'SKILL.md');
     let content: string;
     try { content = await fs.readFile(sourceSkillMd, 'utf8'); } catch { continue; }
+    if (options.skipUndeployed && !(await Promise.all(deployRoots.map(root =>
+      fileExists(path.join(root, skillName, 'SKILL.md'))))).some(Boolean)) continue;
     const frontmatter = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? '';
     const declaredEntrypoint = frontmatter
       .match(/^[ \t]+entrypoint:\s*["']?([^"'\s]+)["']?\s*$/m)?.[1];
@@ -1287,6 +1291,11 @@ async function reconcileDeployedSkillAssets(
       }
       if (!deployedSkillRoot) throw new Error(`deployed skill '${skillName}' not found while reconciling support assets`);
       const destination = path.join(deployedSkillRoot, skillName, ...normalized.split('/'));
+      if (provider === 'omp') {
+        const adapter = await import(pathToFileURL(path.join(await getFrameworkRoot(), 'tools/agents/providers/omp.mjs')).href);
+        adapter.deploySkillSupportAsset(source, destination, { quiet: true });
+        continue;
+      }
       await fs.mkdir(path.dirname(destination), { recursive: true });
       await fs.copyFile(source, destination);
       const mode = (await fs.stat(source)).mode & 0o777;
@@ -2288,6 +2297,57 @@ async function rebuildExternalBundleIndex(
   ui.dim(`  Refreshed ${graph}-scope capability index`);
 }
 
+/** User OMP writes use native ownership receipts instead of an unconditional copy. */
+async function deployOmpUserSource(opts: {
+  frameworkRoot: string; source: string; target: string; bundle: string; copyAll: boolean; mode?: string;
+}): Promise<void> {
+  const adapter = await import(pathToFileURL(path.join(opts.frameworkRoot, 'tools/agents/providers/omp.mjs')).href);
+  await adapter.deploy({ srcRoot: opts.source, target: opts.target, provider: 'omp', scope: 'user',
+    mode: opts.mode ?? 'general', deployCommands: true, deploySkills: true, deployRules: true,
+    copyStandardSkills: opts.copyAll, quiet: true, deployVersion: (await getVersionInfo()).version });
+  const sourceBundles = new Set([opts.source]);
+  const { resourceDirs } = resolveOmpPaths({ cwd: opts.target });
+  const entries: Record<'agents' | 'commands' | 'skills' | 'rules' | 'behaviors', string[]> = {
+    agents: [], commands: [], skills: [], rules: [], behaviors: [],
+  };
+  const belongsToBundle = (entry: { provider?: string; source?: string; transformation?: string }) => {
+    if (entry.provider !== 'omp' || typeof entry.source !== 'string') return false;
+    if (entry.transformation === 'omp-extension') return true;
+    const relative = path.relative(opts.source, entry.source);
+    return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+  };
+  const locations = resourceDirs;
+  for (const kind of Object.keys(entries) as Array<keyof typeof entries>) {
+    const directory = locations[kind];
+    if (kind === 'skills') {
+      let children: string[]; try { children = await fs.readdir(directory); } catch { continue; }
+      for (const child of children) {
+        try {
+          const receipt = JSON.parse(await fs.readFile(path.join(directory, child, '.aiwg-manifest.json'), 'utf8'));
+          if (receipt.managed?.['SKILL.md'] && belongsToBundle(receipt.managed['SKILL.md'])) {
+            entries.skills.push(child);
+            const source = receipt.managed['SKILL.md'].source;
+            if (typeof source === 'string') sourceBundles.add(path.dirname(path.dirname(path.dirname(source))));
+          }
+        } catch { /* operator resources have no OMP receipt */ }
+      }
+    } else {
+      try {
+        const receipt = JSON.parse(await fs.readFile(path.join(directory, '.aiwg-manifest.json'), 'utf8'));
+        entries[kind] = Object.entries(receipt.managed ?? {}).filter(([, entry]) =>
+          belongsToBundle(entry as { provider?: string; source?: string; transformation?: string })).map(([name]) => name);
+      } catch { /* no deployed resources of this kind */ }
+    }
+  }
+  for (const source of sourceBundles) await reconcileDeployedSkillAssets(source, opts.target, 'omp',
+    { strictReferences: false, scope: 'user', skipUndeployed: !opts.copyAll });
+  const { recordUserDeploy } = await import('../../config/user-registry.js');
+  await recordUserDeploy({ framework: opts.bundle, provider: 'omp',
+    version: (await getVersionInfo()).version, source: 'bundled',
+    counts: { agents: entries.agents.length, commands: entries.commands.length,
+      skills: entries.skills.length, rules: entries.rules.length }, entries });
+}
+
 async function mirrorProjectLocalBundleToUserScope(opts: {
   bundle: ProjectLocalBundle;
   provider: string;
@@ -3049,10 +3109,23 @@ export class UseHandler implements CommandHandler {
     if (isAddon || isExtension) {
       const providerIdx = remainingArgs.findIndex(a => a === '--provider' || a === '--platform');
       const explicitAddonProvider = providerIdx >= 0 && remainingArgs[providerIdx + 1] ? remainingArgs[providerIdx + 1] : null;
-      const provider = explicitAddonProvider ?? (config?.providers?.[0] ?? 'claude');
+      const provider = resolveBuiltInProviderForUse(explicitAddonProvider ?? (config?.providers?.[0] ?? 'claude')).provider;
       const targetIdx = remainingArgs.findIndex(a => a === '--target');
       const target = targetIdx >= 0 && remainingArgs[targetIdx + 1] ? remainingArgs[targetIdx + 1] : process.cwd();
       const dryRunAddon = remainingArgs.includes('--dry-run');
+      let addonScope: 'project' | 'user';
+      try {
+        addonScope = detectScope(remainingArgs);
+        if (addonScope === 'project' && remainingArgs.includes('--user')) addonScope = 'user';
+      } catch (error) {
+        return { exitCode: 1, message: `Error: ${error instanceof Error ? error.message : String(error)}` };
+      }
+      if (addonScope === 'user' && !USER_SCOPE_PATHS[provider]) {
+        return {
+          exitCode: 1,
+          message: `--scope user not supported for provider '${provider}' — see docs/customization/user-scope-deployment.md for the supported list`,
+        };
+      }
 
       const runner = createScriptRunner(frameworkRoot);
       const addonBaseArgs = ['--deploy-commands', '--deploy-skills', '--deploy-rules'];
@@ -3144,6 +3217,11 @@ export class UseHandler implements CommandHandler {
             message: `${kind} '${framework}' skill asset deployment failed: ${error instanceof Error ? error.message : String(error)}`,
           };
         }
+      }
+
+      if (!dryRunAddon && provider === 'omp' && (detectScope(remainingArgs) === 'user' || remainingArgs.includes('--user'))) {
+        try { await deployOmpUserSource({ frameworkRoot, source: addonSource, target, bundle: framework, copyAll: true }); }
+        catch (error) { return { exitCode: 1, message: `OMP user deployment failed: ${error instanceof Error ? error.message : String(error)}` }; }
       }
 
       // Register only artifacts actually written by a confirmed deployment.
@@ -3286,7 +3364,7 @@ export class UseHandler implements CommandHandler {
         // Profile selection is optional — don't fail deployment
       }
 
-      if (framework === 'aiwg-utils' && provider !== 'pi' && !remainingArgs.includes('--dry-run')) {
+      if (framework === 'aiwg-utils' && !['pi', 'omp'].includes(provider) && !remainingArgs.includes('--dry-run')) {
         const wrapperValidation = await validateDeployedModelWrappers({
           provider: normalizeProviderDefinitionId(provider) ?? provider,
           target,
@@ -3394,7 +3472,7 @@ export class UseHandler implements CommandHandler {
       ? withProviderOverride(deployFilteredArgs, provider)
       : deployFilteredArgs;
     const bulkKernelOnly = framework === 'all'
-      && provider !== 'pi'
+      && !['pi', 'omp'].includes(provider)
       && !remainingArgs.includes('--copy-all')
       && !remainingArgs.includes('--copy-standard-skills');
     if (bulkKernelOnly) providerDeployArgs.push('--kernel-only');
@@ -3607,7 +3685,7 @@ export class UseHandler implements CommandHandler {
     // Pi model selection/headless routing is delivered by #2151. Until that
     // adapter exists, do not require model-wrapper artifacts that Pi cannot
     // load; resource deployment remains independently valid.
-    if (!dryRun && !skipUtils && !bulkKernelOnly && provider !== 'pi') {
+    if (!dryRun && !skipUtils && !bulkKernelOnly && !['pi', 'omp'].includes(provider)) {
       const wrapperValidation = await validateDeployedModelWrappers({
         provider,
         target,
@@ -3802,7 +3880,13 @@ export class UseHandler implements CommandHandler {
     // mirror, record the deploy in the per-user registry at
     // ~/.aiwg/installed.json so `aiwg list --scope user` and `aiwg remove
     // --scope user` can find it from any cwd.
-    if (scope === 'user' && provider !== 'openhuman' && !dryRun) {
+    if (scope === 'user' && provider === 'omp' && !dryRun) {
+      try {
+        await deployOmpUserSource({ frameworkRoot, source: frameworkRoot, target, bundle: framework, mode,
+          copyAll: remainingArgs.includes('--copy-all') || remainingArgs.includes('--copy-standard-skills') });
+      } catch (error) { return { exitCode: 1, message: `OMP user deployment failed: ${error instanceof Error ? error.message : String(error)}` }; }
+    }
+    if (scope === 'user' && provider !== 'openhuman' && provider !== 'omp' && !dryRun) {
       try {
         const paths = getProviderPaths(provider);
         const resolveProjectPath = (p: string): string =>

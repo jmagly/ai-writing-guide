@@ -69,7 +69,10 @@ and common repair paths.
 
 **Ask The Steward To Route You** — You want AIWG to choose a path for your goal. Ask the steward in chat for one recommendation; the agent verifies it against AIWG's capability index before answering.
 
-**Provider Handoff** — You know whether you are using Claude Code, OpenAI Codex, GitHub Copilot, Cursor, Factory AI, Hermes, OpenCode, OpenClaw, OpenHuman, Pi Coding Agent, Warp Terminal, or Devin Desktop, and need the short handoff from local deployment to that tool.
+**Provider Handoff** — You know whether you are using Claude Code, OpenAI
+Codex, GitHub Copilot, Cursor, Factory AI, Hermes, OpenCode, OpenClaw,
+OpenHuman, Oh My Pi, Pi Coding Agent (pi.dev), Warp Terminal, or Devin Desktop, and need
+the short handoff from local deployment to that tool.
 
 **Scope And Recovery** — You may have run AIWG from the wrong folder, or you need to understand project-scoped setup versus global/user-scoped setup.
 

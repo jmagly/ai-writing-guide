@@ -236,10 +236,24 @@ describe('routing documentation regressions', () => {
 
   it('Fortemi storage docs stay separate from Fortemi Core index/search', () => {
     const doc = read('docs/storage/backends/fortemi.md');
+    const qualification = read('docs/storage/qualification.md');
+    const secrets = read('docs/contributing/ci-cd-secrets.md');
+    const prebuilt = read('docs/fortemi-core-prebuilt-indices.md');
     expect(doc).toContain('Fortemi MCP storage adapter');
     expect(doc).toMatch(/not the Fortemi\s+Core index\/search backend/);
     expect(doc).toContain('aiwg index sync');
     expect(doc).toContain('"type": "fortemi"');
+    expect(doc).toContain('This command is read-only by default');
+    expect(doc).toContain('Only the exact value `1` enables');
+    expect(doc).toContain('Endpoint access alone is not mutation authorization');
+    expect(doc).toContain('aiwg.fortemi-live-qualification-receipt/v1');
+    expect(qualification).toContain('PostgreSQL Direct, PostgREST, and Fortemi jobs');
+    expect(qualification).toContain('an uploaded');
+    expect(qualification).toContain('directory or console report is not certification evidence');
+    expect(secrets).toContain('ci/vault-fetch.storage-fortemi.spec');
+    expect(secrets).toContain('ci/vault-fetch.storage-fortemi-auth.spec');
+    expect(prebuilt).toContain('`AIWG_FORTEMI_CORE_LIVE` is a legacy test-only placeholder');
+    expect(prebuilt).toContain('It does not contact Fortemi');
   });
 
   it('documents provider-neutral corpus ingest and credential references (#1508)', () => {

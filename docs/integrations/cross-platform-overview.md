@@ -1,6 +1,6 @@
 # Cross-Platform Overview
 
-AIWG has 12 named provider integrations plus a provider-neutral `generic`
+AIWG has 14 named provider integrations plus a provider-neutral `generic`
 fallback adapter. **One command projects AIWG onto the surfaces supported by
 the selected provider.**
 
@@ -10,6 +10,7 @@ the selected provider.**
 
 | Platform | Deploy Command | Context File |
 |----------|----------------|--------------|
+| Google Antigravity CLI | `aiwg use sdlc --provider antigravity` (alias `agy`) | AGENTS.md |
 | Claude Code | `aiwg use sdlc` | CLAUDE.md |
 | OpenAI/Codex | `aiwg use sdlc --provider codex` | AGENTS.md |
 | GitHub Copilot | `aiwg use sdlc --provider copilot` | copilot-instructions.md |
@@ -19,7 +20,8 @@ the selected provider.**
 | OpenCode | `aiwg use sdlc --provider opencode` | AGENTS.md |
 | OpenClaw | `aiwg use sdlc --provider openclaw` | AGENTS.md |
 | OpenHuman | `aiwg use sdlc --provider openhuman` | Provider-managed |
-| Pi Coding Agent | `aiwg use sdlc --provider pi` | AGENTS.md |
+| Oh My Pi | `aiwg use sdlc --provider omp` | .omp/AGENTS.md |
+| Pi Coding Agent ([pi.dev](https://pi.dev/)) | `aiwg use sdlc --provider pi` | AGENTS.md |
 | Warp Terminal | `aiwg use sdlc --provider warp` | WARP.md |
 | Devin Desktop | `aiwg use sdlc --provider devin` | AGENTS.md |
 
@@ -42,6 +44,7 @@ provider exposes the corresponding surface:
 
 | Provider | Agents | Commands | Skills | Rules | Behaviors |
 |----------|--------|----------|--------|-------|-----------|
+| Google Antigravity CLI | degraded | unsupported | native | AGENTS.md | unsupported |
 | Claude Code | native | native | native | native | - |
 | OpenAI/Codex | native | native | native | conventional | - |
 | GitHub Copilot | native | native | conventional | native | - |
@@ -51,7 +54,8 @@ provider exposes the corresponding surface:
 | OpenCode | native | native | conventional | conventional | - |
 | OpenClaw | native | native | native | native | native |
 | OpenHuman | unsupported | unsupported | native | conventional | unsupported |
-| Pi Coding Agent | skills-as-agents | native prompts | native | AGENTS.md | reserved extensions |
+| Oh My Pi | native | native prompts | native | native | extension bridge |
+| Pi Coding Agent ([pi.dev](https://pi.dev/)) | skills-as-agents | native prompts | native | AGENTS.md | reserved extensions |
 | Warp Terminal | aggregated | conventional | native | aggregated | - |
 | Devin Desktop | aggregated | native | native | native | - |
 
@@ -86,13 +90,15 @@ Most providers follow `.<provider>/<type>/`:
 
 | Provider | Special Convention |
 |----------|--------------------|
+| **Google Antigravity CLI** | Experimental, pinned to CLI 1.1.26<br>Agents → `.agents/agents/`; kernel skills → `.agents/skills/`<br>MCP → `.agents/mcp_config.json` (user scope only when explicit)<br>Global skills deferred because official paths conflict<br>Selector `antigravity`; alias and executable `agy` |
 | **OpenAI/Codex** | Commands → `~/.codex/prompts/`<br>Skills → project `.agents/skills/` (legacy AIWG entries under `~/.codex/skills/` are pruned)<br>AGENTS.md is free-form Markdown (no YAML frontmatter or structured directives)<br>Rust CLI is current product; TypeScript CLI is legacy<br>Uses Responses API exclusively (`wire_api = "chat"` removed) |
 | **GitHub Copilot** | Agents use `.agent.md` format<br>Commands → `.github/prompts/*.prompt.md`<br>Rules → `.github/instructions/*.instructions.md` (with `applyTo` globs)<br>MCP → `.vscode/mcp.json` |
 | **Warp Terminal** | Skills natively discovered at `.warp/skills/`; agents and rules aggregated into `WARP.md`; `AGENTS.md` also supported (preferred by Warp, but `WARP.md` takes priority); `.warp/workflows/` for legacy YAML workflows |
 | **Devin Desktop** | Agents aggregated to `AGENTS.md`<br>Commands → `.windsurf/workflows/`<br>Rules → `.windsurf/rules/*.md` (with trigger frontmatter)<br>Skills → `.windsurf/skills/`<br>Legacy selector: `windsurf` |
 | **Cursor** | Rules use `.mdc` extension (MDC format) with frontmatter (`description`, `globs`, `alwaysApply`)<br>Skills use native `.cursor/skills/*/SKILL.md` format (2.4+)<br>Also supports `AGENTS.md` with directory inheritance<br>Legacy `.cursorrules` still generated for backward compatibility<br>Cloud Agents support MCP for remote AIWG access |
 | **OpenClaw** | All artifacts deploy to home directory (`~/.openclaw/`)<br>First provider to support behaviors (`~/.openclaw/behaviors/`) |
-| **Pi Coding Agent** | Commands → project `.pi/prompts/*.md`<br>Portable skills and agent roles → project `.agents/skills/*/SKILL.md`<br>AIWG-managed standard skills → `.pi/.aiwg/skills/`<br>Context → `AGENTS.md`<br>User scope honors `${PI_CODING_AGENT_DIR:-~/.pi/agent}` |
+| **Oh My Pi** | Experimental integration, distinct from Pi<br>Agents → `.omp/agents/`; prompts → `.omp/prompts/`; rules → `.omp/rules/`<br>Kernel and explicitly copied skills → one-level `.agents/skills/`; standard corpus stays lazy by default<br>Context → `.omp/AGENTS.md` native imports of WORKSPACE.md and AIWG.md<br>User scope honors OMP profiles; lifecycle bridge → `.omp/extensions/` |
+| **Pi Coding Agent ([pi.dev](https://pi.dev/))** | Commands → project `.pi/prompts/*.md`<br>Portable skills and agent roles → project `.agents/skills/*/SKILL.md`<br>AIWG-managed standard skills → `.pi/.aiwg/skills/`<br>Context → `AGENTS.md`<br>User scope honors `${PI_CODING_AGENT_DIR:-~/.pi/agent}` |
 | **Hermes** | Skills deploy at user scope under `~/.hermes/skills/.aiwg/`; unsupported artifact classes are not falsely advertised |
 | **OpenHuman** | Skills and rules deploy at user scope under `~/.openhuman/.aiwg/`; agent and command surfaces are unsupported |
 
@@ -140,6 +146,7 @@ See [Al Guide](../ralph-guide.md) for full documentation.
 
 | Platform | Guide |
 |----------|-------|
+| Google Antigravity CLI | [Provider Guide](../providers/antigravity.md) |
 | Claude Code | [Setup Guide](claude-code-quickstart.md) |
 | OpenAI/Codex | [Setup Guide](codex-quickstart.md) |
 | GitHub Copilot | [Setup Guide](copilot-quickstart.md) |
@@ -151,7 +158,8 @@ See [Al Guide](../ralph-guide.md) for full documentation.
 | OpenClaw | [Setup Guide](openclaw-quickstart.md) |
 | Hermes | [Setup Guide](hermes-quickstart.md) |
 | OpenHuman | [Setup Guide](openhuman-quickstart.md) |
-| Pi Coding Agent | [Setup Guide](pi-quickstart.md) |
+| Oh My Pi | [Setup Guide](omp-quickstart.md) · [Full provider guide](../providers/omp.md) |
+| Pi Coding Agent ([pi.dev](https://pi.dev/)) | [Setup Guide](pi-quickstart.md) |
 
 ---
 

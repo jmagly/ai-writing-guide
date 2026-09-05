@@ -30,6 +30,15 @@
   },
   "providers": [
     {
+      "id": "antigravity",
+      "location": "project",
+      "root": ".agents/skills",
+      "status": "native",
+      "outcome": "deployed",
+      "validator": "pass",
+      "resources": "exact"
+    },
+    {
       "id": "claude",
       "location": "project",
       "root": ".claude/skills",
@@ -115,6 +124,15 @@
       "id": "pi",
       "location": "project",
       "root": ".pi/skills",
+      "status": "native",
+      "outcome": "deployed",
+      "validator": "pass",
+      "resources": "exact"
+    },
+    {
+      "id": "omp",
+      "location": "project",
+      "root": ".omp/skills",
       "status": "native",
       "outcome": "deployed",
       "validator": "pass",

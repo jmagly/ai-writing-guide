@@ -25,7 +25,7 @@
  *
  * CLI usage: --provider <platform> or --platform <platform>
  */
-export type Platform = 'claude' | 'codex' | 'copilot' | 'cursor' | 'factory' | 'hermes' | 'opencode' | 'openclaw' | 'openhuman' | 'pi' | 'warp' | 'windsurf' | 'generic';
+export type Platform = 'antigravity' | 'claude' | 'codex' | 'copilot' | 'cursor' | 'factory' | 'hermes' | 'opencode' | 'openclaw' | 'openhuman' | 'pi' | 'omp' | 'warp' | 'windsurf' | 'generic';
 export type AgentCategory = 'writing-quality' | 'sdlc' | 'security' | 'testing' | 'architecture' | 'documentation' | 'general';
 export type ArtifactType = 'agent' | 'command' | 'skill' | 'rule';
 export type SupportLevel = 'native' | 'conventional' | 'aggregated';
@@ -58,6 +58,16 @@ export interface AgentMetadata {
   description: string;
   category?: AgentCategory;
   model?: string;
+  /** OMP native model priority order, when explicitly configured. */
+  modelPriority?: string[];
+  thinkingLevel?: string;
+  spawns?: string[] | '*';
+  blocking?: boolean;
+  output?: unknown;
+  autoloadSkills?: string[];
+  readSummarize?: boolean;
+  prewalk?: boolean | string;
+  advisor?: boolean | string;
   modelRole?: 'reasoning' | 'coding' | 'efficiency';
   modelTier?: 'economy' | 'standard' | 'premium' | 'max-quality';
   tools?: string[];

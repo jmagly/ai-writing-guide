@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { FortemiAdapter, type McpClientLike } from "./backends/fortemi.js";
+import {
+  FortemiAdapter,
+  fortemiStableNoteId,
+  type McpClientLike,
+} from "./backends/fortemi.js";
 
 export const FORTEMI_QUALIFICATION_VERSION =
   "aiwg.fortemi-live-qualification/v1" as const;
@@ -7,6 +11,7 @@ export interface FortemiQualificationReport {
   schema: typeof FORTEMI_QUALIFICATION_VERSION;
   compatible: boolean;
   mutationAttempted: boolean;
+  mutationObjectId?: string;
   server: { name?: string; version?: string; contractRevision?: string };
   namespace: string;
   operations: Array<{
@@ -18,7 +23,7 @@ export interface FortemiQualificationReport {
   }>;
 }
 
-const EXPECTED: Record<
+const LEGACY_EXPECTED: Record<
   string,
   { tool: string; required: string[]; properties: string[] }
 > = {
@@ -38,6 +43,41 @@ const EXPECTED: Record<
     tool: "search",
     required: ["query"],
     properties: ["query", "id_prefix"],
+  },
+};
+
+const SOURCE_ADDRESSED_EXPECTED: Record<
+  string,
+  { tool: string; required: string[]; properties: string[] }
+> = {
+  read: { tool: "get_note", required: ["id"], properties: ["id"] },
+  write: {
+    tool: "upsert_external_notes",
+    required: [
+      "source_namespace",
+      "source_schema_version",
+      "import_run_id",
+      "items",
+    ],
+    properties: [
+      "source_namespace",
+      "source_schema_version",
+      "import_run_id",
+      "batch_id",
+      "policy",
+      "items",
+    ],
+  },
+  update: {
+    tool: "update_note",
+    required: ["id"],
+    properties: ["id", "content", "archived"],
+  },
+  list: { tool: "list_notes", required: [], properties: ["limit", "offset"] },
+  query: {
+    tool: "search",
+    required: ["action"],
+    properties: ["action", "query", "limit"],
   },
 };
 
@@ -68,6 +108,7 @@ export async function qualifyLiveFortemi(
     timeoutMs?: number;
     allowMutation?: boolean;
     contractRevision?: string;
+    onToolSchemas?: (schemas: unknown) => void;
   } = {},
 ): Promise<FortemiQualificationReport> {
   const timeoutMs = Math.max(250, Math.min(options.timeoutMs ?? 5_000, 30_000));
@@ -93,10 +134,23 @@ export async function qualifyLiveFortemi(
       timeoutMs,
       "tools/list",
     );
+    options.onToolSchemas?.(discovered.tools ?? []);
     const tools = new Map(
       (discovered.tools ?? []).map((tool) => [tool.name, tool]),
     );
-    for (const [operation, expected] of Object.entries(EXPECTED)) {
+    const getProperties = tools.get("get_note")?.inputSchema?.properties;
+    const profile =
+      tools.has("upsert_external_notes") &&
+      getProperties &&
+      typeof getProperties === "object" &&
+      "id" in getProperties
+        ? "source-addressed-v1"
+        : "legacy-note-id";
+    const expectedOperations =
+      profile === "source-addressed-v1"
+        ? SOURCE_ADDRESSED_EXPECTED
+        : LEGACY_EXPECTED;
+    for (const [operation, expected] of Object.entries(expectedOperations)) {
       const tool = tools.get(expected.tool);
       const schema = tool?.inputSchema;
       const properties =
@@ -114,10 +168,29 @@ export async function qualifyLiveFortemi(
       const missingRequired = expected.required.filter(
         (name) => !required.includes(name),
       );
+      const itemProperties =
+        operation === "write" && profile === "source-addressed-v1"
+          ? ((
+              properties.items as
+                { items?: { properties?: Record<string, unknown> } } | undefined
+            )?.items?.properties ?? {})
+          : {};
+      const missingItemProperties =
+        operation === "write" && profile === "source-addressed-v1"
+          ? [
+              "external_id",
+              "content",
+              "content_digest",
+              "caller_stable_id",
+              "metadata",
+              "policy",
+            ].filter((name) => !(name in itemProperties))
+          : [];
       const compatible =
         Boolean(tool && schema) &&
         missing.length === 0 &&
-        missingRequired.length === 0;
+        missingRequired.length === 0 &&
+        missingItemProperties.length === 0;
       report.operations.push({
         operation,
         tool: expected.tool,
@@ -129,7 +202,7 @@ export async function qualifyLiveFortemi(
             : "FORTEMI_TOOL_MISSING",
         detail: compatible
           ? "expected adapter arguments are accepted"
-          : `missing properties: ${missing.join(", ") || "none"}; not required: ${missingRequired.join(", ") || "none"}`,
+          : `missing properties: ${missing.join(", ") || "none"}; not required: ${missingRequired.join(", ") || "none"}; missing item properties: ${missingItemProperties.join(", ") || "none"}`,
       });
     }
     report.compatible = report.operations.every((item) => item.compatible);
@@ -149,8 +222,13 @@ export async function qualifyLiveFortemi(
     );
     if (options.allowMutation) {
       report.mutationAttempted = true;
+      const mutationPath = randomUUID();
+      report.mutationObjectId =
+        profile === "source-addressed-v1"
+          ? fortemiStableNoteId(namespace, mutationPath)
+          : `${namespace}:${mutationPath}`;
       await bounded(
-        adapter.write(randomUUID(), `AIWG live qualification ${namespace}`, {
+        adapter.write(mutationPath, `AIWG live qualification ${namespace}`, {
           contentType: "text/plain",
         }),
         timeoutMs,

@@ -79,6 +79,9 @@ export const PROVIDER_DISCOVERY_DECISIONS: Record<string, ProviderDiscoveryDecis
     reason: 'OpenHuman profiles accept semantic model hints but expose no standardized local model-list command.',
     documentation: 'https://github.com/roctinam/openhuman',
   },
+  omp: { provider: 'omp', status: 'native', interface: 'omp models --json --no-extensions',
+    reason: 'OMP JSON catalog reports credential-available LLM models; ambient extensions are disabled by default.',
+    documentation: 'https://github.com/can1357/oh-my-pi/blob/5964a0f7649275bcde818f20073193fd032451f2/packages/coding-agent/src/commands/models.ts' },
   pi: {
     provider: 'pi',
     status: 'native',
@@ -105,6 +108,7 @@ export const PROVIDER_DISCOVERY_DECISIONS: Record<string, ProviderDiscoveryDecis
 export interface DiscoveredModel {
   id: string;
   displayName?: string;
+  llmProvider?: string;
   hidden?: boolean;
   isDefault?: boolean;
   reasoningEfforts?: string[];
@@ -130,7 +134,7 @@ export interface CommandResult {
 export type ModelDiscoveryCommandRunner = (
   command: string,
   args: string[],
-  options?: { cwd?: string; timeoutMs?: number },
+  options?: { cwd?: string; timeoutMs?: number; env?: NodeJS.ProcessEnv },
 ) => Promise<CommandResult>;
 
 export interface DynamicModelCatalog {
@@ -163,6 +167,7 @@ export interface ModelDiscoveryOptions {
   allowNetwork?: boolean;
   fetchImpl?: typeof fetch;
   now?: () => Date;
+  omp?: { profile?: string; config?: string[]; extensions?: boolean; cwd?: string };
   nativeDiscoverers?: Record<string, () => Promise<ProviderModelDiscovery>>;
 }
 
@@ -195,7 +200,7 @@ export const runModelDiscoveryCommand: ModelDiscoveryCommandRunner = (
 ) => new Promise(resolveCommand => {
   const child = spawn(command, args, {
     cwd: options.cwd,
-    env: process.env,
+    env: options.env ?? process.env,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let stdout = '';
@@ -207,8 +212,8 @@ export const runModelDiscoveryCommand: ModelDiscoveryCommandRunner = (
     clearTimeout(timer);
     resolveCommand({ stdout, stderr, exitCode });
   };
-  child.stdout.on('data', chunk => { stdout += String(chunk); });
-  child.stderr.on('data', chunk => { stderr += String(chunk); });
+  child.stdout.on('data', chunk => { stdout += String(chunk); if (Buffer.byteLength(stdout) > 8 * 1024 * 1024) { stdout = ''; stderr = 'Model catalog exceeded 8 MiB limit'; child.kill('SIGKILL'); finish(1); } });
+  child.stderr.on('data', chunk => { stderr = (stderr + String(chunk)).slice(-4096); });
   child.on('error', error => {
     stderr = `${stderr}${stderr ? '\n' : ''}${error.message}`;
     finish(127);
@@ -553,7 +558,7 @@ export async function resolveDynamicModelCatalog(
   const homeDir = options.homeDir ?? homedir();
   const cacheFile = options.cacheFile ?? join(homeDir, '.cache/aiwg/model-catalog.v1.json');
   const staticFile = join(options.aiwgRoot, 'agentic/code/providers/model-catalog.v1.json');
-  const signature = inventorySignature(options.inventory);
+  const signature = inventorySignature(options.inventory) + JSON.stringify({ omp: options.omp, profile: process.env.OMP_PROFILE ?? process.env.PI_PROFILE, config: process.env.PI_CONFIG_DIR, data: process.env.XDG_DATA_HOME, cache: process.env.XDG_CACHE_HOME, agent: process.env.PI_CODING_AGENT_DIR });
   const staticCatalog = await readCatalog(staticFile);
   if (!staticCatalog) throw new Error(`Invalid or missing static model catalog: ${staticFile}`);
   const useCache = !process.env.VITEST || options.cacheFile !== undefined || options.homeDir !== undefined;
@@ -618,6 +623,7 @@ export async function resolveDynamicModelCatalog(
     opencode: () => discoverOpenCodeModels(),
     openclaw: () => discoverOpenClawModels(),
     pi: () => discoverPiModels(),
+    omp: () => discoverOmpModels(process.env.AIWG_OMP_BIN || 'omp', runModelDiscoveryCommand, options.omp),
   };
   const providerDiscovery: Record<string, ProviderModelDiscovery> = {};
   for (const provider of available) {
@@ -625,7 +631,7 @@ export async function resolveDynamicModelCatalog(
     if (discoverer) {
       try {
         providerDiscovery[provider] = await discoverer();
-        const selected = selectRoleModels(providerDiscovery[provider].models);
+        const selected = provider === 'omp' ? {} : selectRoleModels(providerDiscovery[provider].models);
         const providerCatalog = catalog.providers[provider];
         if (providerCatalog) {
           for (const role of ['reasoning', 'coding', 'efficiency'] as const) {
@@ -678,4 +684,30 @@ export async function resolveDynamicModelCatalog(
   };
   await atomicWrite(cacheFile, `${JSON.stringify(resolved, null, 2)}\n`);
   return resolved;
+}
+
+/** Explicit OMP discovery; no ambient extension execution unless requested. */
+export async function discoverOmpModels(command = 'omp', runner: ModelDiscoveryCommandRunner = runModelDiscoveryCommand,
+  options: { profile?: string; config?: string[]; extensions?: boolean; cwd?: string } = {}): Promise<ProviderModelDiscovery> {
+  const base: ProviderModelDiscovery = { provider: 'omp', source: 'native', observedAt: new Date().toISOString(), accountScope: 'local-runtime', models: [] };
+  const args = [...(options.profile ? ['--profile', options.profile] : []), 'models', '--json'];
+  if (!options.extensions) args.push('--no-extensions');
+  for (const config of options.config ?? []) args.push('--config', config);
+  try {
+    const result = await runner(command, args, { cwd: options.cwd ?? tmpdir(), timeoutMs: 15000 });
+    base.runtimeVersion = await runtimeVersion(command, runner);
+    if (result.exitCode !== 0) return { ...base, errorKind: result.exitCode === 124 ? 'timeout' : /unknown|unsupported|not found/i.test(result.stderr) ? 'unsupported' : classifyDiscoveryError(result.stderr), error: 'OMP model discovery failed; check CLI version, selected profile/config, and credential availability.' };
+    const payload = JSON.parse(result.stdout);
+    if (!Array.isArray(payload.models) || payload.models.some((m: any) => !m || typeof m.id !== 'string' || !m.id || typeof m.provider !== 'string' || !m.provider)) throw new Error('shape');
+    base.models = payload.models.map((m: any) => ({ id: `${m.provider}/${m.id}`, llmProvider: m.provider, displayName: m.name, reasoningEfforts: Array.isArray(m.thinking) ? m.thinking : undefined }));
+    return base;
+  } catch { return { ...base, errorKind: 'invalid-output', error: 'OMP returned invalid model catalog JSON or discovery could not run.' }; }
+}
+
+/** Never guess an unrelated model when a requested mapping is unavailable. */
+export function resolveOmpRoleModel(catalog: ProviderModelDiscovery, role: string, mappings: Record<string, string>, explicit?: string): string {
+  if (explicit) return explicit;
+  const id = mappings[role];
+  if (!id || !catalog.models.some(model => model.id === id)) throw new Error(`OMP ${role} model unavailable; configure a model from omp models --json or supply an explicit model.`);
+  return id;
 }

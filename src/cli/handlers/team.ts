@@ -1,10 +1,10 @@
 /**
  * Team Command Handler
  *
- * Extends Claude Code's native agent teams feature to all 9 AIWG providers.
+ * Routes declared teams across AIWG providers, including bounded native OMP tasks.
  * Provides a provider-agnostic abstraction for declaring, deploying, and
  * invoking agent teams. On Claude Code, delegates to native team mechanisms.
- * On all other providers, emulates via aiwg mc (Mission Control) orchestration.
+ * OMP executes explicit task files; other providers use aiwg mc orchestration.
  *
  * Subcommands: run, list, info
  *
@@ -14,8 +14,10 @@
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import * as ui from '../ui.js';
 import { promises as fs } from 'node:fs';
-import { join, basename } from 'node:path';
+import { join, basename, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { projectAiwgPath } from '../../config/project-artifacts.js';
+import { normalizeProviderDefinitionId } from '../../providers/provider-definitions.js';
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -49,7 +51,7 @@ interface TeamDefinition {
 
 function detectProvider(args: string[]): string {
   const providerFlag = parseFlag(args, '--provider');
-  if (providerFlag) return providerFlag;
+  if (providerFlag) return normalizeProviderDefinitionId(providerFlag) ?? providerFlag;
 
   // Claude Code sets CLAUDE_CODE_VERSION; API key presence is secondary heuristic
   const isClaudeCode =
@@ -142,7 +144,52 @@ async function listAllTeams(frameworkRoot: string, cwd: string): Promise<TeamDef
 
 // ── Subcommand: run ──────────────────────────────────────────
 
+/** Public OMP dispatch delegates to the same bounded native runtime used by conformance. */
+async function teamRunOmp(ctx: HandlerContext): Promise<HandlerResult> {
+  const allowed = new Set(['--provider', '--body-file', '--cwd', '--output-root', '--max-parallel', '--model', '--profile']);
+  const values: Record<string, string> = {};
+  for (let i = 0; i < ctx.args.length; i++) {
+    const flag = ctx.args[i];
+    if (flag === '--json') continue;
+    if (!allowed.has(flag) || !ctx.args[i + 1] || ctx.args[i + 1].startsWith('--')) {
+      ui.error('OMP usage: aiwg team run --provider omp --body-file tasks.json [--cwd DIR] [--output-root DIR] [--max-parallel N] [--model provider/model] [--profile NAME]');
+      return { exitCode: 1 };
+    }
+    values[flag] = ctx.args[++i];
+  }
+  if (!values['--body-file']) {
+    ui.error('OMP native team dispatch requires --body-file tasks.json with explicit task ownership and tools.');
+    return { exitCode: 1 };
+  }
+  const maxParallel = values['--max-parallel'] === undefined ? 4 : Number(values['--max-parallel']);
+  if (!Number.isInteger(maxParallel) || maxParallel < 1) {
+    ui.error('OMP --max-parallel must be a positive integer.');
+    return { exitCode: 1 };
+  }
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  process.once('SIGINT', abort); process.once('SIGTERM', abort);
+  try {
+    const payload = JSON.parse(await fs.readFile(resolve(ctx.cwd, values['--body-file']), 'utf8'));
+    const { runOmpTeam } = await import(pathToFileURL(join(ctx.frameworkRoot, 'tools/providers/omp-teams.mjs')).href);
+    const result = await runOmpTeam({
+      tasks: payload.tasks,
+      cwd: values['--cwd'] ? resolve(ctx.cwd, values['--cwd']) : ctx.cwd,
+      outputDir: values['--output-root'] ? resolve(ctx.cwd, values['--output-root']) : undefined,
+      maxParallel, model: values['--model'], profile: values['--profile'], signal: controller.signal,
+    });
+    console.log(JSON.stringify(result, null, 2));
+    return { exitCode: result.results.every((task: { status: string }) => task.status === 'completed') ? 0 : 1 };
+  } catch (error) {
+    ui.error(error instanceof SyntaxError ? 'OMP task body is invalid JSON.' : error instanceof Error ? error.message : 'OMP team dispatch failed.');
+    return { exitCode: 1 };
+  } finally {
+    process.removeListener('SIGINT', abort); process.removeListener('SIGTERM', abort);
+  }
+}
+
 async function teamRun(ctx: HandlerContext): Promise<HandlerResult> {
+  if (['omp', 'oh-my-pi'].includes(detectProvider(ctx.args))) return teamRunOmp(ctx);
   const positional = getPositionalArgs(ctx.args);
   const slug = positional[0];
 
@@ -238,7 +285,7 @@ async function teamList(ctx: HandlerContext): Promise<HandlerResult> {
     return { exitCode: 0 };
   }
 
-  const backend = isNativeTeamsProvider(provider)
+  const backend = ['omp', 'oh-my-pi'].includes(provider) ? 'native (Oh My Pi)' : isNativeTeamsProvider(provider)
     ? 'native (Claude Code)'
     : `aiwg mc emulation (${provider})`;
 
@@ -348,21 +395,30 @@ function showTeamHelp(): void {
   ${ui.bold('Usage:')} aiwg team <subcommand> [options]
 
   ${ui.bold('Subcommands:')}
-    run <name>             Execute a team (native on Claude Code, aiwg mc on others)
+    run <name>             Run a declared team (Claude native guidance or aiwg mc)
+    run --provider omp --body-file tasks.json   Execute bounded native OMP tasks
     list                   List available teams
     info <name>            Show team definition and agent roster
 
   ${ui.bold('Options:')}
-    --provider <p>         Override provider: claude|warp|copilot|cursor|windsurf|opencode|factory|codex|openclaw
+    --provider <p>         Override provider: antigravity|agy|claude|warp|copilot|cursor|windsurf|opencode|factory|codex|openclaw|omp|oh-my-pi
     --objective "<text>"   Set objective passed to mc dispatch agents
+    --body-file <file>    OMP task JSON with explicit ownership and tools
+    --cwd <dir>          OMP working directory (defaults to current workspace)
+    --output-root <dir>  OMP result and control artifact directory
+    --max-parallel <n>   OMP requested worker cap (workspace ceiling still applies)
+    --model <id>         OMP coordinator/worker model selector
+    --profile <name>     OMP native profile
     --json                 Machine-readable output
 
   ${ui.bold('Provider Routing:')}
     Claude Code            Native agent team dispatch (@agent-name invocation)
+    Oh My Pi               Bounded native task execution from --body-file
     All others             aiwg mc emulation (Mission Control sequential/parallel dispatch)
 
   ${ui.bold('Examples:')}
     aiwg team run sdlc-review
+    aiwg team run --provider omp --body-file tasks.json
     aiwg team run sdlc-review --provider cursor --objective "Phase gate review"
     aiwg team run security-review --objective "Pre-release audit"
     aiwg team list

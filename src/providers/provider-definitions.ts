@@ -153,6 +153,7 @@ const ArtifactPathsSchema = z.object({
 
 const ProviderDefinitionSchema = z.object({
   id: z.enum([
+    'antigravity',
     'claude',
     'codex',
     'copilot',
@@ -163,6 +164,7 @@ const ProviderDefinitionSchema = z.object({
     'openclaw',
     'openhuman',
     'pi',
+    'omp',
     'warp',
     'windsurf',
     'generic',
@@ -265,6 +267,7 @@ const ProviderDefinitionSchema = z.object({
 }) satisfies z.ZodType<ProviderDefinition>;
 
 export const PROVIDER_IDS: readonly Platform[] = [
+  'antigravity',
   'claude',
   'codex',
   'copilot',
@@ -275,6 +278,7 @@ export const PROVIDER_IDS: readonly Platform[] = [
   'openclaw',
   'openhuman',
   'pi',
+  'omp',
   'warp',
   'windsurf',
   'generic',
@@ -293,6 +297,17 @@ type BuiltInSeed = Omit<ProviderDefinition, 'displayName' | 'status' | 'paths' |
 const VERIFIED_ON = '2026-07-21';
 
 const CONTEXT_CONTRACTS: Record<Platform, ProviderContextContract> = {
+  antigravity: {
+    startupFiles: ['AGENTS.md', 'GEMINI.md'],
+    precedence: ['provider/system', 'project AGENTS.md or GEMINI.md', 'nested project context when selected by the CLI'],
+    loadMode: 'prose-directive', includeSyntax: null, configRegistration: null,
+    bootstrapTargets: ['AGENTS.md'], maxContextBytes: null, recommendedMaxLines: null, nestedContext: true, support: 'supported',
+    verification: {
+      method: 'official Antigravity CLI documentation and sanitized 1.1.26 help evidence',
+      source: 'https://antigravity.google/docs/cli/overview/',
+      lastVerified: '2026-09-04',
+    },
+  },
   claude: {
     startupFiles: ['CLAUDE.md', '.claude/CLAUDE.md'], precedence: ['provider/system', 'nested CLAUDE.md', 'root CLAUDE.md'],
     loadMode: 'native-include', includeSyntax: '@WORKSPACE.md\n@AIWG.md', configRegistration: null,
@@ -347,6 +362,17 @@ const CONTEXT_CONTRACTS: Record<Platform, ProviderContextContract> = {
     bootstrapTargets: ['AGENTS.md'], maxContextBytes: null, recommendedMaxLines: null, nestedContext: false, support: 'degraded',
     verification: { method: 'AIWG mixed-scope adapter contract; host loading remains capability-dependent', source: 'agentic/code/providers/capability-matrix.yaml', lastVerified: VERIFIED_ON },
   },
+  omp: {
+    startupFiles: ['.omp/AGENTS.md', 'AGENTS.md'],
+    precedence: ['provider/system', 'native nearest nonempty .omp', 'compatibility context ordered by depth; exact paragraph deduplication'],
+    loadMode: 'native-include', includeSyntax: '@<relative-path>', configRegistration: null,
+    bootstrapTargets: ['.omp/AGENTS.md'], maxContextBytes: null, recommendedMaxLines: null, nestedContext: true, support: 'supported',
+    verification: {
+      method: 'OMP 18.1.10 source and live context import smoke',
+      source: 'https://github.com/can1357/oh-my-pi/blob/5964a0f7649275bcde818f20073193fd032451f2/packages/coding-agent/src/system-prompt.ts#L451',
+      lastVerified: '2026-09-04',
+    },
+  },
   pi: {
     startupFiles: ['AGENTS.override.md', 'AGENTS.md', 'CLAUDE.md'],
     precedence: ['provider/system', 'root-to-cwd context chain', 'AGENTS.override.md supersedes same-directory AGENTS.md and CLAUDE.md'],
@@ -378,6 +404,42 @@ const CONTEXT_CONTRACTS: Record<Platform, ProviderContextContract> = {
 };
 
 const BUILT_IN_SEEDS: BuiltInSeed[] = [
+  {
+    id: 'antigravity',
+    displayName: 'Google Antigravity CLI',
+    aliases: ['agy'],
+    status: 'experimental',
+    builtIn: true,
+    surfaces: {
+      primary: 'antigravity',
+      compatibility: ['agy'],
+      precedence: ['AGENTS.md', 'GEMINI.md', '.agents/agents/', '.agents/skills/'],
+      related: [],
+    },
+    detection: { env: [], process: ['agy'], capabilityId: 'antigravity' },
+    paths: {
+      deployTarget: 'project',
+      artifacts: {
+        agents: '.agents/agents', commands: null, skills: '.agents/.aiwg/skills', rules: null, behaviors: null,
+      },
+      kernelSkills: '.agents/skills',
+      contextDiscovery: { agents: '.agents/agents', skills: '.agents/skills', rules: null, behaviors: null },
+      configFile: 'AGENTS.md',
+      contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: null, contextFile: 'AGENTS.md' },
+    },
+    smithPaths: {
+      agents: '.agents/agents', commands: null, skills: '.agents/skills', rules: null,
+      fileExtension: '.md', configFile: 'AGENTS.md', aggregated: false,
+    },
+    skillNamespace: {
+      deploymentGroup: 'deep-recursion', pathType: 'project', skillsBaseDir: '.agents/skills', subdirLayout: true,
+    },
+    adapters: {
+      agentFormat: 'antigravity-markdown', hookBridge: null, mcpInjection: 'antigravity',
+      contextAggregation: 'agents-md', ruleFormat: null,
+    },
+    matrixRef: 'antigravity',
+  },
   {
     id: 'claude',
     displayName: 'Claude Code',
@@ -823,6 +885,27 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       ruleFormat: 'agents-md-section',
     },
     matrixRef: 'openhuman',
+  },
+  {
+    id: 'omp',
+    aliases: ['oh-my-pi'],
+    builtIn: true,
+    surfaces: {
+      primary: 'omp', compatibility: ['oh-my-pi'],
+      precedence: ['.omp/AGENTS.md', 'AGENTS.md', '.agents/skills/', '.omp/skills/', '.omp/prompts/'], related: [],
+    },
+    detection: { env: [], process: ['omp', '@oh-my-pi/pi-coding-agent'], capabilityId: 'omp' },
+    paths: {
+      artifacts: { agents: '.omp/agents', commands: '.omp/prompts', skills: '.agents/skills', rules: '.omp/rules', behaviors: '.omp/extensions' },
+      kernelSkills: '.agents/skills',
+      contextDiscovery: { agents: '.omp/agents', skills: '.agents/skills', rules: '.omp/rules', behaviors: '.omp/extensions' },
+      configFile: '.omp/AGENTS.md',
+      contextFiles: { aiwgMd: true, agentsMd: false, claudeMdHook: false, hookFile: '.omp/AGENTS.md', contextFile: '.omp/AGENTS.md' },
+    },
+    smithPaths: { agents: '.omp/agents', commands: '.omp/prompts', skills: '.agents/skills', rules: '.omp/rules', fileExtension: '.md', configFile: '.omp/AGENTS.md', aggregated: false },
+    skillNamespace: { deploymentGroup: 'one-level', pathType: 'project', skillsBaseDir: '.omp/skills', subdirLayout: false },
+    adapters: { agentFormat: 'omp-markdown', hookBridge: 'omp', mcpInjection: 'omp', contextAggregation: 'agents-md', ruleFormat: 'omp-markdown' },
+    matrixRef: 'omp',
   },
   {
     id: 'pi',

@@ -54,11 +54,23 @@ npm run qualify:dataset -- --mode cross-repo \
   --report test-results/dataset-cross-repo.json
 ```
 
+Live Fortemi Server work begins with the read-only contract preflight:
+
+```bash
+npm run qualify:dataset:fortemi-live
+```
+
+The durable execution procedure and Community/Enterprise boundary are defined
+in the [Fortemi live dataset UAT plan](uat/fortemi-live-dataset-uat-plan.md).
+Until the authority contract tracked by Fortemi Server issue #1128 is
+available, the live dataset cell remains pending rather than passing or being
+skipped.
+
 The repository-local cells execute the canonical Dataset Orchestration Service
 for capability negotiation, replay, checkpoint boundaries, verified offline
 cache behavior, and provenance. Cross-repository mode executes the focused
 Fortemi capability, ingest, lineage, and materialization suites from an exact
 clean commit and binds that commit and lockfile digest into the receipt.
 Prior-version migration remains pending until a stable predecessor exists, and
-Fortemi Server remains pending without the separate #2194 authorization and
-controlled infrastructure. Neither pending cell is silently skipped.
+Fortemi Server remains pending without the separately authorized execution
+window and controlled infrastructure. Neither pending cell is silently skipped.

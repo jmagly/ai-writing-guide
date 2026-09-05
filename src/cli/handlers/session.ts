@@ -36,6 +36,7 @@ import {
 } from '../agent-spawn.js';
 import { useHandler as useFrameworkHandler } from './use.js';
 import { debug } from '../log.js';
+import { normalizeProviderDefinitionId } from '../../providers/provider-definitions.js';
 
 // ── Provider resolution ──────────────────────────────────────────────────────
 
@@ -48,13 +49,11 @@ async function resolveProvider(
   cwd: string,
 ): Promise<string> {
   if (explicitProvider) {
-    if (!VALID_PROVIDERS.includes(explicitProvider as never)) {
-      console.warn(
-        `  WARN  Unknown provider '${explicitProvider}' — falling back to 'claude'`,
-      );
-      return 'claude';
+    const normalized = normalizeProviderDefinitionId(explicitProvider);
+    if (!normalized || normalized === 'generic' || !VALID_PROVIDERS.includes(normalized as never)) {
+      throw new Error(`Unsupported provider '${explicitProvider}'`);
     }
-    return explicitProvider;
+    return normalized;
   }
 
   const config = await readAiwgConfig(cwd);

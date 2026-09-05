@@ -192,7 +192,7 @@ A TAO iteration that goes Thought→Edit→Error without any Read/Search/Grep ac
 ## Platform Applicability
 
 This rule applies universally across all AI coding platforms:
-- Claude Code, Codex, Copilot, Cursor, Warp, Factory, OpenCode, Windsurf
+- Every supported provider
 - Any agent that modifies code or makes technical decisions
 
 Research is not optional. It is the minimum bar for competent assistance.

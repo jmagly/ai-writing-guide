@@ -541,8 +541,8 @@ export function buildProviderBootstrapBlock(provider: Platform | string): string
     ? [
         'Load the canonical project context first, then the generated AIWG framework context:',
         '',
-        '@WORKSPACE.md',
-        '@AIWG.md',
+        provider === 'omp' ? '@../WORKSPACE.md' : '@WORKSPACE.md',
+        provider === 'omp' ? '@../AIWG.md' : '@AIWG.md',
       ]
     : contract.loadMode === 'config-registration'
       ? [

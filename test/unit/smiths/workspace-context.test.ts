@@ -97,7 +97,9 @@ describe('WORKSPACE.md canonical context graph (#1811)', () => {
       expect(contract?.verification.source).toBeTruthy();
       const bootstrap = buildProviderBootstrapBlock(provider.id);
       if (contract?.loadMode === 'native-include') {
-        expect(bootstrap.indexOf('@WORKSPACE.md')).toBeLessThan(bootstrap.indexOf('@AIWG.md'));
+        const prefix = provider.id === 'omp' ? '@../' : '@';
+        expect(bootstrap).toContain(`${prefix}WORKSPACE.md`);
+        expect(bootstrap.indexOf(`${prefix}WORKSPACE.md`)).toBeLessThan(bootstrap.indexOf(`${prefix}AIWG.md`));
       } else if (contract?.loadMode === 'unsupported') {
         expect(bootstrap).toContain('no verified project-local automatic context loader');
       } else {

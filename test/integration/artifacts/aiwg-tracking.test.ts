@@ -45,6 +45,14 @@ describe('AIWG artifact root tracking and distribution (integration)', () => {
       expect(blanketIgnore, '.aiwg/ should be blanket-ignored in the public product repo').toBe(true);
     });
 
+    it('should not track repo-local .aiwg/ artifacts', () => {
+      const tracked = execFileSync('git', ['ls-files', '.aiwg/**'], {
+        cwd: REPO_ROOT,
+        encoding: 'utf-8',
+      }).trim();
+      expect(tracked, 'durable product artifacts belong outside the ignored .aiwg/ workspace').toBe('');
+    });
+
     it('should ignore the local artifact-root pointer file', () => {
       const gitignore = fs.readFileSync(path.join(REPO_ROOT, '.gitignore'), 'utf-8');
       expect(gitignore).toContain('.aiwg-location');

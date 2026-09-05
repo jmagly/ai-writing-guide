@@ -39,6 +39,7 @@
     "tools/_resolve-impl.mjs",
     "tools/agents/deploy-agents.mjs",
     "tools/agents/providers/",
+    "tools/providers/antigravity-transport.mjs",
     "tools/commands/deploy-prompts-codex.mjs",
     "tools/plugin/package-plugins.mjs",
     "tools/skills/deploy-skills-codex.mjs",

@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "contractVersion": "1.0.0",
+  "provider": "antigravity",
+  "aliases": ["agy"],
+  "displayName": "Google Antigravity CLI",
+  "status": "experimental",
+  "qualifiedCli": {
+    "executable": "agy",
+    "version": "1.1.26",
+    "platform": "linux-x64",
+    "observedOn": "2026-09-04",
+    "authenticatedExecution": false
+  },
+  "evidence": [
+    {
+      "id": "official-transition",
+      "url": "https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/",
+      "retrieved": "2026-09-04",
+      "confidence": "high"
+    },
+    {
+      "id": "official-install",
+      "url": "https://antigravity.google/docs/cli/install/",
+      "retrieved": "2026-09-04",
+      "confidence": "high"
+    },
+    {
+      "id": "official-headless",
+      "url": "https://antigravity.google/docs/cli/headless/",
+      "retrieved": "2026-09-04",
+      "confidence": "high"
+    },
+    {
+      "id": "official-mcp",
+      "url": "https://antigravity.google/docs/cli/mcp/",
+      "retrieved": "2026-09-04",
+      "confidence": "high"
+    },
+    {
+      "id": "official-skills",
+      "url": "https://antigravity.google/docs/cli/plugins/",
+      "retrieved": "2026-09-04",
+      "confidence": "medium",
+      "notes": "Official pages disagree about the global skills directory and flat versus nested project layouts."
+    },
+    {
+      "id": "official-subagents",
+      "url": "https://antigravity.google/docs/cli/subagents/",
+      "retrieved": "2026-09-04",
+      "confidence": "high"
+    },
+    {
+      "id": "local-cli-help",
+      "path": "test/fixtures/providers/antigravity-conformance/help-1.1.26.json",
+      "retrieved": "2026-09-04",
+      "confidence": "high",
+      "sanitized": true
+    }
+  ],
+  "surfaces": {
+    "selection": { "classification": "native", "canonical": "antigravity", "aliases": ["agy"] },
+    "context": {
+      "classification": "native",
+      "projectFiles": ["AGENTS.md", "GEMINI.md"],
+      "precedence": "provider-defined; no undocumented include syntax assumed"
+    },
+    "workspaceSkills": {
+      "classification": "native",
+      "path": ".agents/skills",
+      "layout": "nested-skill-md",
+      "notes": "AIWG deploys directories containing SKILL.md and preserves unrelated children."
+    },
+    "globalSkills": {
+      "classification": "unknown",
+      "enabled": false,
+      "candidates": ["~/.gemini/antigravity-cli/skills", "~/.gemini/config/skills"],
+      "reason": "Conflicting official documentation; deferred pending a safe version-pinned probe."
+    },
+    "customAgents": {
+      "classification": "native",
+      "projectPaths": [".agents/agents/<name>.md", ".agents/agents/<name>/agent.md"],
+      "selectedLayout": "flat-markdown",
+      "projection": "degraded",
+      "reason": "Only AIWG tool names with documented Antigravity equivalents are projected; provider-specific model policy remains runtime-scoped."
+    },
+    "mcp": {
+      "classification": "native",
+      "projectPath": ".agents/mcp_config.json",
+      "userPath": "~/.gemini/config/mcp_config.json",
+      "serversKey": "mcpServers",
+      "remoteUrlKey": "serverUrl",
+      "merge": "preserve unrelated top-level keys and operator-owned server names"
+    },
+    "headless": {
+      "classification": "native",
+      "baseArgs": ["-p"],
+      "jsonArgs": ["--output-format", "json"],
+      "streamArgs": ["--output-format", "stream-json"],
+      "interactiveStreamArgs": ["--input-format", "stream-json", "--output-format", "stream-json"],
+      "continueFlags": ["--continue", "--conversation"],
+      "dangerousFlag": "--dangerously-skip-permissions",
+      "defaultPermissionMode": "request-review",
+      "stdout": "protocol",
+      "stderr": "diagnostics"
+    },
+    "teams": { "classification": "emulated", "adapter": "aiwg-mc" },
+    "cron": { "classification": "external", "adapter": "operator-owned scheduler invoking the bounded headless adapter" },
+    "tasks": { "classification": "emulated", "adapter": "aiwg-mc" },
+    "behaviors": { "classification": "unsupported" },
+    "missionControl": { "classification": "emulated", "adapter": "aiwg-mc" },
+    "daemon": { "classification": "unsupported" },
+    "plugins": { "classification": "unknown", "enabled": false }
+  },
+  "safety": {
+    "normalCi": "offline-only",
+    "readsUserConfiguration": false,
+    "writesAuthOrPermissionSettings": false,
+    "liveSmoke": "opt-in-only"
+  }
+}

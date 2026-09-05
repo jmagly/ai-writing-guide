@@ -1,6 +1,6 @@
 {
   "contractVersion": "1.0.0",
-  "canonicalProviderCount": 13,
+  "canonicalProviderCount": 14,
   "providers": [
     {
       "provider": "claude",
@@ -101,6 +101,16 @@
       "tests": "test/unit/sessions/pi-adapter.test.ts",
       "documentation": "docs/providers/pi-sessions.md",
       "conformance": {"locatorClass": "pi-session-v3-jsonl", "malformed": ["malformed.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.jsonl", "UNKNOWN_SCHEMA_MAJOR"]}
+    },
+    {
+      "provider": "omp",
+      "issue": 2253,
+      "status": "implemented",
+      "operations": ["discover", "inspect", "stream"],
+      "fixtures": "test/fixtures/sessions/omp",
+      "tests": "test/unit/sessions/omp-adapter.test.ts",
+      "documentation": "docs/providers/omp-sessions.md",
+      "conformance": {"locatorClass": "omp-session-v3-jsonl", "malformed": ["missing-header.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.jsonl", "UNKNOWN_SCHEMA_MAJOR"]}
     },
     {
       "provider": "warp",

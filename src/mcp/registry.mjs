@@ -1,3 +1,5 @@
+import { manageOmpMcp } from './omp-config.mjs';
+import { resolveOmpPaths } from '../providers/omp-paths.mjs';
 /**
  * MCP Server Registry (Runtime ESM)
  *
@@ -206,6 +208,12 @@ function buildServerConfig(server, provider) {
   const mcpDefinition = getMcpInjectionDefinition(provider);
 
   switch (mcpDefinition?.serverConfigFormat) {
+    case 'antigravity': {
+      if (server.type === 'stdio') {
+        return { command: server.command, args: server.args || [], ...(server.env ? { env: server.env } : {}) };
+      }
+      return { serverUrl: server.url, ...(server.headers ? { headers: server.headers } : {}) };
+    }
     case 'standard': {
       if (server.type === 'stdio') {
         return {
@@ -281,15 +289,16 @@ function buildServerToml(server) {
   return lines.join('\n');
 }
 
-export function getProviderConfigPath(provider, projectDir = '.') {
-  return resolveMcpConfigPath(provider, projectDir);
+export function getProviderConfigPath(provider, projectDir = '.', options = {}) {
+  if (normalizeRuntimeProviderId(provider) === 'omp' && options.scope !== undefined && !['user', 'project'].includes(options.scope)) throw new Error('OMP MCP scope must be user or project');
+  return resolveMcpConfigPath(provider, projectDir, options);
 }
 
 export async function injectServers(registry, provider, options = {}) {
   const { servers: serverFilter, projectDir = '.', dryRun = false } = options;
   const normalizedProvider = normalizeRuntimeProviderId(provider);
   const mcpDefinition = getMcpInjectionDefinition(provider);
-  const configPath = getProviderConfigPath(provider, projectDir);
+  const configPath = getProviderConfigPath(provider, projectDir, options);
   const result = {
     provider,
     configPath,
@@ -312,6 +321,16 @@ export async function injectServers(registry, provider, options = {}) {
     return result;
   }
 
+  if (normalizedProvider === 'omp') {
+    try {
+      const managed = await manageOmpMcp(configPath, allServers, { dryRun });
+      if (!dryRun) for (const server of allServers) await registry.recordInjection(server.name, 'omp');
+      return { ...result, ...managed };
+    } catch (error) {
+      return { ...result, error: error instanceof Error ? error.message : String(error) };
+    }
+  }
+
   if (mcpDefinition?.configFormat === 'toml') {
     return injectToml(registry, allServers, configPath, provider, dryRun, result);
   }
@@ -324,8 +343,10 @@ async function injectJson(registry, servers, configPath, provider, dryRun, resul
   try {
     const content = await readFile(configPath, 'utf-8');
     existing = JSON.parse(content);
-  } catch {
-    // File doesn't exist
+  } catch (error) {
+    if (normalizeRuntimeProviderId(provider) === 'antigravity' && error?.code !== 'ENOENT') {
+      throw new Error(`Refusing to overwrite malformed MCP config ${configPath}: ${error.message}`);
+    }
   }
 
   const mcpKey = getMcpInjectionDefinition(provider)?.serversKey || 'mcpServers';
@@ -335,6 +356,7 @@ async function injectJson(registry, servers, configPath, provider, dryRun, resul
   for (const server of servers) {
     if (existingServers[server.name]) {
       result.alreadyPresent.push(server.name);
+      if (normalizeRuntimeProviderId(provider) === 'antigravity') continue;
     }
     newServers[server.name] = buildServerConfig(server, provider);
     result.serversInjected.push(server.name);
@@ -347,7 +369,8 @@ async function injectJson(registry, servers, configPath, provider, dryRun, resul
     await writeFile(configPath, JSON.stringify(merged, null, 2) + '\n', 'utf-8');
 
     for (const server of servers) {
-      await registry.recordInjection(server.name, provider);
+      if (normalizeRuntimeProviderId(provider) === 'antigravity' && !result.serversInjected.includes(server.name)) continue;
+      await registry.recordInjection(server.name, normalizeRuntimeProviderId(provider) || provider);
     }
   }
 

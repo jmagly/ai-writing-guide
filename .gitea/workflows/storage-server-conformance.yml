@@ -6,6 +6,12 @@ name: Storage Server Conformance
 
 on:
   workflow_dispatch:
+    inputs:
+      fortemi_allow_write:
+        description: 'Allow one isolated Fortemi qualification record to be retained (default is read-only)'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -25,6 +31,10 @@ env:
   AIWG_POSTGREST_LIVE_URL_VAULT_FIELD: ${{ vars.AIWG_POSTGREST_LIVE_URL_VAULT_FIELD }}
   AIWG_POSTGREST_AUTHORIZATION_VAULT_PATH: ${{ vars.AIWG_POSTGREST_AUTHORIZATION_VAULT_PATH }}
   AIWG_POSTGREST_AUTHORIZATION_VAULT_FIELD: ${{ vars.AIWG_POSTGREST_AUTHORIZATION_VAULT_FIELD }}
+  AIWG_FORTEMI_LIVE_URL_VAULT_PATH: ${{ vars.AIWG_FORTEMI_LIVE_URL_VAULT_PATH }}
+  AIWG_FORTEMI_LIVE_URL_VAULT_FIELD: ${{ vars.AIWG_FORTEMI_LIVE_URL_VAULT_FIELD }}
+  AIWG_FORTEMI_LIVE_TOKEN_VAULT_PATH: ${{ vars.AIWG_FORTEMI_LIVE_TOKEN_VAULT_PATH }}
+  AIWG_FORTEMI_LIVE_TOKEN_VAULT_FIELD: ${{ vars.AIWG_FORTEMI_LIVE_TOKEN_VAULT_FIELD }}
 
 jobs:
   postgres-direct:
@@ -109,5 +119,58 @@ jobs:
           if-no-files-found: warn
 
       - name: Remove fetched PostgREST qualification material
+        if: always()
+        run: bash ci/vault-fetch.sh --cleanup
+
+  fortemi:
+    name: Fortemi Live Qualification
+    if: ${{ secrets.VAULT_CI_ROLE_ID != '' && secrets.VAULT_CI_SECRET_ID != '' && vars.AIWG_FORTEMI_LIVE_URL_VAULT_PATH != '' && vars.AIWG_FORTEMI_LIVE_URL_VAULT_FIELD != '' }}
+    runs-on: ubuntu-latest
+    container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb  # node 24.15.0 / npm 11.12.1
+    timeout-minutes: 15
+    env:
+      AIWG_FORTEMI_LIVE_ALLOW_WRITE: ${{ github.event.inputs.fortemi_allow_write }}
+      AIWG_FORTEMI_CONTRACT_REVISION: ${{ vars.AIWG_FORTEMI_CONTRACT_REVISION }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends curl jq
+          npm ci
+
+      - name: Fetch Fortemi qualification endpoint from Vault
+        env:
+          VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
+          VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
+        run: bash ci/vault-fetch.sh --spec ci/vault-fetch.storage-fortemi.spec
+
+      - name: Fetch optional Fortemi authorization from Vault
+        if: ${{ vars.AIWG_FORTEMI_LIVE_TOKEN_VAULT_PATH != '' && vars.AIWG_FORTEMI_LIVE_TOKEN_VAULT_FIELD != '' }}
+        env:
+          VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
+          VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
+        run: bash ci/vault-fetch.sh --spec ci/vault-fetch.storage-fortemi-auth.spec
+
+      - name: Enforce explicit Fortemi write opt-in
+        run: |
+          case "$AIWG_FORTEMI_LIVE_ALLOW_WRITE" in
+            true) export AIWG_FORTEMI_LIVE_ALLOW_WRITE=1 ;;
+            false|'') unset AIWG_FORTEMI_LIVE_ALLOW_WRITE ;;
+            *) echo 'fortemi_allow_write must be true or false' >&2; exit 2 ;;
+          esac
+          npm run test:fortemi:live
+
+      - name: Preserve Fortemi qualification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: storage-fortemi-${{ gitea.sha }}
+          path: test-results/storage/
+          if-no-files-found: warn
+
+      - name: Remove fetched Fortemi qualification material
         if: always()
         run: bash ci/vault-fetch.sh --cleanup

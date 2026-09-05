@@ -1,0 +1,20 @@
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { afterEach, expect, it, vi } from 'vitest';
+import { sessionsHandler } from '../../../src/cli/handlers/sessions.js';
+const roots: string[] = [];
+afterEach(async () => { vi.restoreAllMocks(); await Promise.all(roots.splice(0).map(root=>rm(root,{recursive:true,force:true}))); });
+it('registers OMP sources and imports/replays native v3 through the CLI handler', async () => {
+  const root=await mkdtemp(join(tmpdir(),'omp-cli-')); roots.push(root);
+  const log=vi.spyOn(console,'log').mockImplementation(()=>{});
+  const execute=(args:string[])=>sessionsHandler.execute({args,rawArgs:['sessions',...args],cwd:root,frameworkRoot:process.cwd()});
+  const output=()=>JSON.parse(String(log.mock.calls.at(-1)?.[0]));
+  expect(await execute(['sources','--json'])).toMatchObject({exitCode:0});
+  expect(JSON.stringify(output())).toContain('omp');
+  const args=['import',resolve('test/fixtures/sessions/omp/title-slot.jsonl'),'--provider','omp','--source-id','omp-cli','--workspace',root,'--db',join(root,'catalog.sqlite'),'--json'];
+  expect(await execute(args)).toMatchObject({exitCode:0});
+  expect(output()).toMatchObject({status:'ok',data:{totals:{eventsInserted:8}}});
+  expect(await execute(args)).toMatchObject({exitCode:0});
+  expect(output()).toMatchObject({status:'ok',data:{totals:{eventsInserted:0}}});
+});

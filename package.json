@@ -1,7 +1,7 @@
 {
   "name": "aiwg",
   "version": "2026.9.2",
-  "description": "Deployment tool and support utility for AI context. Copies agents, skills, commands, rules, and behaviors into the paths each AI provider reads, so one source of truth works across 12 named provider integrations plus a generic fallback adapter. Optional utilities support persistent artifact memory, background orchestration, autonomous loops, and artifact indexing.",
+  "description": "Deployment tool and support utility for AI context. Copies agents, skills, commands, rules, and behaviors into the paths each AI provider reads, so one source of truth works across 14 named provider integrations plus a generic fallback adapter. Optional utilities support persistent artifact memory, background orchestration, autonomous loops, and artifact indexing.",
   "type": "module",
   "bin": {
     "aiwg": "bin/aiwg.mjs"
@@ -47,6 +47,8 @@
     "ci:fortemi-index": "npm run lint:discovery-coverage && npm run test:release-discovery && npm run lint:fortemi-prebuilt-package",
     "smoke:web-resources:live": "node tools/release/web-resource-live-smoke.mjs",
     "smoke:pi:live": "node tools/providers/pi-live-smoke.mjs",
+    "smoke:omp:live": "node tools/providers/omp-live-smoke.mjs",
+    "smoke:antigravity:live": "node tools/providers/antigravity-live-smoke.mjs",
     "validate-metadata": "aiwg validate-metadata",
     "package-plugins": "node tools/plugin/package-plugins.mjs --all",
     "package-plugins:clean": "node tools/plugin/package-plugins.mjs --all --clean",
@@ -97,6 +99,7 @@
     "qualify:agentic-sandbox-2026.8.3": "node tools/qualification/agentic-sandbox-baseline.mjs",
     "qualify:dataset-adapters": "tsx tools/qualification/dataset-source-adapters.ts",
     "qualify:dataset": "tsx tools/qualification/dataset-conformance.ts",
+    "qualify:dataset:fortemi-live": "tsx tools/qualification/dataset-fortemi-live.ts",
     "verify:dataset-conformance": "tsx tools/qualification/dataset-conformance.ts",
     "test:conformance:dataset": "vitest run --config config/vitest.config.js test/conformance/dataset test/unit/dataset",
     "uat:cockpit-daily": "node apps/cockpit/scripts/cockpit-daily-gate.mjs",

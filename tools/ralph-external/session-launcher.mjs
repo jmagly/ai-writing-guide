@@ -31,6 +31,7 @@
  * - Have monitoring and abort procedures ready
  */
 
+import { StringDecoder } from 'node:string_decoder';
 import { spawn } from 'child_process';
 import { createWriteStream, mkdirSync, existsSync, readFileSync, copyFileSync } from 'fs';
 import { dirname, join } from 'path';
@@ -187,7 +188,8 @@ export class SessionLauncher extends EventEmitter {
       const args = this.providerAdapter
         ? this.providerAdapter.buildSessionArgs({
             prompt: options.prompt,
-            sessionId: options.sessionId,
+            // AIWG's tracking UUID is not an OMP native session to resume.
+            sessionId: this.providerAdapter.getName() === 'omp' ? options.resumeSession : options.sessionId,
             model: options.model,
             budget: options.budget,
             maxTurns: options.maxTurns,
@@ -206,6 +208,10 @@ export class SessionLauncher extends EventEmitter {
 
       // Buffer for last portion of stdout (for quick analysis)
       let stdoutBuffer = '';
+      const isOmp = this.providerAdapter?.getName() === 'omp';
+      let ompOutput = '';
+      const ompTextDecoder = new StringDecoder('utf8');
+      let ompInvalid = false;
       const maxBufferSize = 100000; // 100KB
 
       // Spawn process using provider adapter or legacy Claude defaults
@@ -215,6 +221,7 @@ export class SessionLauncher extends EventEmitter {
       const abortInput = this.providerAdapter?.getAbortInput?.();
       this.currentProcess = spawn(binary, args, {
         cwd: options.workingDir,
+        detached: isOmp && process.platform !== 'win32',
         stdio: [abortInput ? 'pipe' : 'ignore', 'pipe', 'pipe'],
         env: {
           ...process.env,
@@ -223,9 +230,14 @@ export class SessionLauncher extends EventEmitter {
       });
 
       const child = this.currentProcess;
+      const terminate = (signal) => { try { if (isOmp && process.platform !== 'win32' && child.pid) process.kill(-child.pid, signal); else child.kill(signal); } catch { /* process already exited */ } };
 
       // Capture stdout
       child.stdout.on('data', (chunk) => {
+        if (isOmp && !ompInvalid) {
+          ompOutput += ompTextDecoder.write(chunk);
+          if (Buffer.byteLength(ompOutput) > 64 * 1024 * 1024) { ompInvalid = true; ompOutput = ''; terminate('SIGKILL'); }
+        }
         stdoutStream.write(chunk);
         stdoutBuffer += chunk.toString();
         // Keep buffer size manageable
@@ -251,11 +263,11 @@ export class SessionLauncher extends EventEmitter {
           this.emit('timeout');
           if (abortInput && child.stdin?.writable) child.stdin.write(abortInput);
           const terminateDelay = abortInput ? 2000 : 0;
-          setTimeout(() => child.kill('SIGTERM'), terminateDelay);
+          setTimeout(() => terminate('SIGTERM'), terminateDelay);
           // Force kill after bounded graceful-abort and termination windows.
           setTimeout(() => {
-            if (!child.killed) {
-              child.kill('SIGKILL');
+            if (child.exitCode === null && child.signalCode === null) {
+              terminate('SIGKILL');
             }
           }, terminateDelay + 5000);
         }, options.timeoutMs);
@@ -263,6 +275,7 @@ export class SessionLauncher extends EventEmitter {
 
       // Handle process completion
       child.on('close', (code) => {
+        if (isOmp) terminate('SIGKILL');
         if (timeoutId) {
           clearTimeout(timeoutId);
         }
@@ -275,7 +288,7 @@ export class SessionLauncher extends EventEmitter {
         stderrStream.end();
 
         const result = {
-          exitCode: code || 0,
+          exitCode: isOmp && (ompInvalid || !this.providerAdapter.parseOutput(ompOutput, { exitCode: code ?? 1 })?.success) ? (code || 1) : (code ?? 1),
           stdoutPath: options.stdoutPath,
           stderrPath: options.stderrPath,
           duration,
@@ -574,7 +587,12 @@ export class SessionLauncher extends EventEmitter {
    */
   kill(signal = 'SIGTERM') {
     if (this.currentProcess && !this.currentProcess.killed) {
-      this.currentProcess.kill(signal);
+      if (this.providerAdapter?.getName() === 'omp' && process.platform !== 'win32') {
+        const child = this.currentProcess;
+        try { process.kill(-child.pid, signal); } catch { /* already exited */ }
+        const timer = setTimeout(() => { if (child.exitCode === null && child.signalCode === null) { try { process.kill(-child.pid, 'SIGKILL'); } catch { /* already exited */ } } }, 500);
+        timer.unref();
+      } else this.currentProcess.kill(signal);
     }
   }
 

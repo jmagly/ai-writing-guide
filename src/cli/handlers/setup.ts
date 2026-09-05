@@ -22,6 +22,7 @@ import { askChoice, askString, askYesNo, createPromptInterface } from '../prompt
 import * as ui from '../ui.js';
 import type { CommandHandler, HandlerContext, HandlerResult } from './types.js';
 import { projectAiwgPath } from '../../config/project-artifacts.js';
+import { normalizeProviderDefinitionId } from '../../providers/provider-definitions.js';
 
 type IssueProvider = IssueProviderConfig;
 type DeliveryMode = 'direct' | 'feature-branch' | 'pr-required';
@@ -130,7 +131,11 @@ function parseStringList(raw: string | undefined): string[] | undefined {
 
 function parseProviders(raw: string, fallback: string[]): string[] {
   const providers = parseStringList(raw);
-  return providers && providers.length > 0 ? providers : fallback;
+  return providers && providers.length > 0 ? normalizeProviders(providers) : fallback;
+}
+
+function normalizeProviders(providers: string[]): string[] {
+  return providers.map(provider => normalizeProviderDefinitionId(provider) ?? provider);
 }
 
 export function parseSetupProjectOptions(ctx: HandlerContext): SetupProjectOptions {
@@ -163,7 +168,10 @@ export function parseSetupProjectOptions(ctx: HandlerContext): SetupProjectOptio
     trackerActorVia: parseEnum(flagValue(args, '--tracker-actor-via'), TRACKER_VIA, '--tracker-actor-via'),
     customerTrackerActorLogin: flagValue(args, '--customer-tracker-actor-login'),
     customerTrackerActorVia: parseEnum(flagValue(args, '--customer-tracker-actor-via'), TRACKER_VIA, '--customer-tracker-actor-via'),
-    providers: parseStringList(flagValue(args, '--providers')),
+    providers: (() => {
+      const providers = parseStringList(flagValue(args, '--providers'));
+      return providers ? normalizeProviders(providers) : undefined;
+    })(),
   };
 }
 

@@ -31,3 +31,5 @@ export * from './adapters/openhuman.js';
 export * from './adapters/pi.js';
 export * from './adapters/warp.js';
 export * from './adapters/windsurf.js';
+
+export * from './adapters/omp.js';

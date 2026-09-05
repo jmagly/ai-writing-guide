@@ -1,0 +1,82 @@
+name: OMP pinned native conformance
+on:
+  pull_request:
+    paths:
+      - 'src/providers/**'
+      - 'src/mcp/**'
+      - 'src/agents/**'
+      - 'src/cli/handlers/team.ts'
+      - 'src/cli/handlers/use.ts'
+      - 'tools/agents/providers/omp.*'
+      - 'src/sessions/**'
+      - 'tools/providers/omp-*.mjs'
+      - 'tools/ralph-external/**'
+      - 'src/models/**'
+      - 'test/unit/providers/omp-runtime.test.ts'
+      - 'tools/providers/omp-mcp-conformance.mjs'
+      - 'agentic/code/providers/omp/**'
+      - 'test/fixtures/providers/omp-conformance/**'
+      - 'test/fixtures/providers/omp-precedence/**'
+      - '.gitea/workflows/omp-conformance.yml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/providers/**'
+      - 'src/mcp/**'
+      - 'src/agents/**'
+      - 'src/cli/handlers/team.ts'
+      - 'src/cli/handlers/use.ts'
+      - 'tools/agents/providers/omp.*'
+      - 'src/sessions/**'
+      - 'tools/providers/omp-*.mjs'
+      - 'tools/ralph-external/**'
+      - 'src/models/**'
+      - 'test/unit/providers/omp-runtime.test.ts'
+      - 'tools/providers/omp-mcp-conformance.mjs'
+      - 'agentic/code/providers/omp/**'
+      - 'test/fixtures/providers/omp-conformance/**'
+      - 'test/fixtures/providers/omp-precedence/**'
+      - '.gitea/workflows/omp-conformance.yml'
+  workflow_dispatch:
+
+jobs:
+  linux-x64-native:
+    runs-on: ubuntu-latest
+    container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci
+      - name: Acquire reviewed binary and verify immutable digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = x86_64
+          curl --fail --location --silent --show-error \
+            https://github.com/can1357/oh-my-pi/releases/download/v18.1.10/omp-linux-x64 \
+            --output /tmp/aiwg-omp-conformance
+          echo 'e91d5598ee47e1d4099fd8686dc9f61c9b755f2ea077d5f1774aba1072321f9e  /tmp/aiwg-omp-conformance' | sha256sum --check --strict
+          chmod 700 /tmp/aiwg-omp-conformance
+      - name: Native parser, resource, context and RPC gate without credentials
+        run: node tools/providers/omp-conformance.mjs --binary /tmp/aiwg-omp-conformance --require --output artifacts/omp-native-conformance.json
+      - name: Native MCP lifecycle and loopback-model contracts
+        run: node tools/providers/omp-mcp-conformance.mjs /tmp/aiwg-omp-conformance artifacts/omp-mcp-conformance.json
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - name: Pinned source SDK bridge typecheck
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none --no-checkout https://github.com/can1357/oh-my-pi /tmp/aiwg-omp-source
+          git -C /tmp/aiwg-omp-source checkout --detach 5964a0f7649275bcde818f20073193fd032451f2
+          bun install --cwd /tmp/aiwg-omp-source --ignore-scripts --frozen-lockfile
+          node tools/providers/omp-conformance-api.mjs --source /tmp/aiwg-omp-source --require --output artifacts/omp-api-conformance.json
+      - name: Native discovery precedence and conditional rule matching
+        run: node tools/providers/omp-precedence-conformance.mjs --binary /tmp/aiwg-omp-conformance --source /tmp/aiwg-omp-source --output artifacts/omp-precedence-conformance.json
+      - name: Retain versioned evidence including explicit unverified checks
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: omp-linux-x64-conformance
+          path: artifacts/omp-*-conformance.json

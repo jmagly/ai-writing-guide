@@ -2,7 +2,7 @@
   <header>
     <p class="eyebrow">AIWG</p>
     <h1>Deploy a Virtual Organization</h1>
-    <p class="lead">Architects, engineers, testers, forensics analysts, researchers, marketers — 90+ specialized agents that collaborate like a real team. Six frameworks, a growing addon catalog, one CLI.</p>
+    <p class="lead">Architects, engineers, testers, forensics analysts, researchers, marketers — 200+ specialized agents that collaborate like a real team. Eight core frameworks, 32 addons, one CLI.</p>
   </header>
 
   <div class="content-box">
@@ -38,6 +38,14 @@
         <div class="layer">
           <div class="layer-title">Ops Complete</div>
           <div class="layer-desc">Operational infrastructure — fleet management, CMDB, CI/CD, and streaming pipelines. YAML-native artifact design with four extensions: sys, it, dev, stream</div>
+        </div>
+        <div class="layer">
+          <div class="layer-title">Knowledge Base</div>
+          <div class="layer-desc">Document ingest, semantic memory, wiki operations, and knowledge-base health checks</div>
+        </div>
+        <div class="layer">
+          <div class="layer-title">Security Engineering</div>
+          <div class="layer-desc">Cryptographic decisions, chain-of-trust design, authentication factors, supply-chain trust, and incident readiness</div>
         </div>
       </div>
     </article>
@@ -83,24 +91,26 @@
 
   <div class="doc-grid">
     <article>
-      <h2>Platform Support</h2>
+      <h2>Platform Support — 14 Named Provider Integrations</h2>
       <table class="spec-table">
         <thead>
           <tr><th>Platform</th><th>Status</th></tr>
         </thead>
         <tbody>
-          <tr><td><a href="https://claude.ai/code" target="_blank" rel="noopener">Claude Code</a></td><td>Multi-agent orchestration</td></tr>
-          <tr><td><a href="https://github.com/features/copilot" target="_blank" rel="noopener">GitHub Copilot</a></td><td>Native agent format</td></tr>
-          <tr><td><a href="https://www.warp.dev" target="_blank" rel="noopener">Warp Terminal</a></td><td>Terminal-native workflows</td></tr>
-          <tr><td><a href="https://www.factory.ai" target="_blank" rel="noopener">Factory AI</a></td><td>Native droid format</td></tr>
-          <tr><td><a href="https://opencode.ai" target="_blank" rel="noopener">OpenCode</a></td><td>Agent-native workflows</td></tr>
-          <tr><td><a href="https://www.cursor.com" target="_blank" rel="noopener">Cursor</a></td><td>Rules-based integration</td></tr>
-          <tr><td><a href="https://platform.openai.com" target="_blank" rel="noopener">OpenAI/Codex</a></td><td>Skills-based deployment</td></tr>
-          <tr><td><a href="https://windsurf.com" target="_blank" rel="noopener">Windsurf</a></td><td>Rules-based integration</td></tr>
-          <tr><td><a href="https://github.com/NousResearch/hermes-agent" target="_blank" rel="noopener">Hermes</a></td><td>First-class deployment target</td></tr>
-          <tr><td>OpenClaw</td><td>Native behaviors support</td></tr>
-          <tr><td><a href="https://github.com/tinyhumansai/openhuman" target="_blank" rel="noopener">OpenHuman</a></td><td>Personal-AI runtime, global skill install</td></tr>
-          <tr><td><a href="https://ollama.com" target="_blank" rel="noopener">Local/Ollama</a></td><td>First-class provider</td></tr>
+          <tr><td><a href="#integrations/claude-code-quickstart">Claude Code</a></td><td>Stable</td></tr>
+          <tr><td><a href="#integrations/codex-quickstart">OpenAI Codex</a></td><td>Stable</td></tr>
+          <tr><td><a href="#integrations/copilot-quickstart">GitHub Copilot</a></td><td>Stable</td></tr>
+          <tr><td><a href="#integrations/cursor-quickstart">Cursor</a></td><td>Stable</td></tr>
+          <tr><td><a href="#integrations/factory-quickstart">Factory AI</a></td><td>Stable</td></tr>
+          <tr><td><a href="#integrations/hermes-quickstart">Hermes</a></td><td>Stable</td></tr>
+          <tr><td><a href="#integrations/opencode-quickstart">OpenCode</a></td><td>Stable</td></tr>
+          <tr><td><a href="#integrations/openclaw-quickstart">OpenClaw</a></td><td>Stable</td></tr>
+          <tr><td><a href="#integrations/openhuman-quickstart">OpenHuman</a></td><td>Experimental</td></tr>
+          <tr><td><a href="#providers/antigravity">Google Antigravity CLI</a></td><td>Experimental</td></tr>
+          <tr><td><a href="#integrations/omp-quickstart">Oh My Pi</a></td><td>Experimental</td></tr>
+          <tr><td><a href="#integrations/pi-quickstart">Pi Coding Agent (pi.dev)</a></td><td>Experimental</td></tr>
+          <tr><td><a href="#integrations/warp-terminal-quickstart">Warp Terminal</a></td><td>Stable</td></tr>
+          <tr><td><a href="#integrations/windsurf-quickstart">Devin Desktop</a></td><td>Stable compatibility adapter</td></tr>
         </tbody>
       </table>
     </article>
@@ -146,6 +156,8 @@ aiwg use voice             # Voice profiles
 aiwg use sdlc --provider hermes   # Hermes
 aiwg use sdlc --provider copilot  # GitHub Copilot
 aiwg use sdlc --provider codex    # OpenAI Codex
+aiwg use sdlc --provider antigravity  # Google Antigravity CLI (alias: agy)
+aiwg use sdlc --provider omp      # Oh My Pi
 
 # Reopen the platform, then regenerate project context in its chat
 /aiwg-regenerate   # Slash-command platforms
@@ -176,7 +188,7 @@ $aiwg-regenerate   # Native Codex skill
     </a>
     <a href="#cli-reference" class="card">
       <h3>CLI Reference</h3>
-      <p>67+ commands with examples</p>
+      <p>109+ commands with examples</p>
     </a>
     <a href="https://github.com/jmagly/aiwg" class="external-cta">
       View on GitHub

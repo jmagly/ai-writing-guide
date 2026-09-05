@@ -1,0 +1,58 @@
+{
+  "contract": "aiwg.fortemi-live-qualification-receipt/v1",
+  "receiptDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "outcome": "failed",
+  "bindings": {
+    "aiwgCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "aiwgRef": "refs/heads/main",
+    "endpointFingerprint": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "toolSchemaDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "observed": {
+    "serverName": "fortemi",
+    "serverVersion": "2026.9.1",
+    "contractRevision": "2026-07-06"
+  },
+  "namespace": "aiwg-qualification-123e4567-e89b-42d3-a456-426614174000",
+  "operations": [
+    {
+      "operation": "read",
+      "tool": "get_note",
+      "compatible": false,
+      "code": "FORTEMI_TOOL_SCHEMA_DRIFT"
+    },
+    {
+      "operation": "write",
+      "tool": "upsert_external_notes",
+      "compatible": true,
+      "code": "FORTEMI_TOOL_SCHEMA_COMPATIBLE"
+    },
+    {
+      "operation": "update",
+      "tool": "update_note",
+      "compatible": true,
+      "code": "FORTEMI_TOOL_SCHEMA_COMPATIBLE"
+    },
+    {
+      "operation": "list",
+      "tool": "list_notes",
+      "compatible": true,
+      "code": "FORTEMI_TOOL_SCHEMA_COMPATIBLE"
+    },
+    {
+      "operation": "query",
+      "tool": "search",
+      "compatible": true,
+      "code": "FORTEMI_TOOL_SCHEMA_COMPATIBLE"
+    }
+  ],
+  "mutation": { "attempted": false },
+  "startedAt": "2026-09-04T12:00:00Z",
+  "endedAt": "2026-09-04T12:00:01Z",
+  "resources": {
+    "timeoutMs": 5000,
+    "durationMs": 1000,
+    "networkAttempts": 2,
+    "toolCount": 5
+  }
+}

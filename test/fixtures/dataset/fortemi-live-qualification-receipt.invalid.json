@@ -1,0 +1,23 @@
+{
+  "contract": "aiwg.fortemi-dataset-live-qualification/v1",
+  "outcome": "supported",
+  "diagnostic": "CONFORMANCE_FORTEMI_DATASET_PREFLIGHT_SUPPORTED",
+  "receiptDigest": "https://deployment.invalid/mcp",
+  "bindings": {},
+  "observed": {},
+  "namespace": "production",
+  "operations": [],
+  "mutation": { "authorized": true, "attempted": true },
+  "resources": {
+    "maxDurationMs": null,
+    "durationMs": -1,
+    "maxToolCount": 256,
+    "observedToolCount": 300,
+    "maxSchemaBytes": 1048576,
+    "observedSchemaBytes": 2000000,
+    "networkAttempts": 2,
+    "toolCalls": 1
+  },
+  "startedAt": "not-a-time",
+  "endedAt": "not-a-time"
+}
