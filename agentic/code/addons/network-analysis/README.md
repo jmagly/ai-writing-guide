@@ -88,6 +88,11 @@ The [Termshark handoff guide](docs/termshark-handoff.md) explains reviewed local
 launches, profiles, remote-host boundaries, large-capture disk behavior, and
 explicit cleanup records.
 
+Research integration classifies packet traces as non-scholarly observational
+evidence, preserves digest-bound citations and analyzer provenance, and excludes
+raw captures by default. See the
+[research packet-evidence guide](../../frameworks/research-complete/docs/packet-evidence.md).
+
 ## License
 
 AIWG content is MIT licensed. Wireshark/TShark and Termshark remain separately

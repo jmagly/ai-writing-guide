@@ -16,6 +16,7 @@ The Research Framework provides a complete workflow for academic research manage
 | Tracking paper sources | Persistent REF-XXX identifiers | Always organized |
 | Paywalled papers | Unpaywall integration + manual upload | Streamlined access |
 | Talks, lectures, podcasts | Media REF template + timestamp citations | Consistent induction |
+| Saved packet evidence | Packet REF template + digest-bound locators | Reproducible observations |
 | Reading papers | RAG-based summarization | 75% faster (20min → 5min) |
 | Preventing hallucinations | Claim validation against source | 0% vs 56% hallucination rate |
 | Quality assessment | Automated GRADE scoring | Consistent standards |
