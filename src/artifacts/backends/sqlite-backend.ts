@@ -66,22 +66,30 @@ export class SqliteGraphBackend implements GraphBackend {
       );
     }
 
-    this.assertSafeSqliteVersion();
-    const requestedJournal = dbPath === ':memory:' ? 'memory' : 'wal';
-    const actualJournal = String(this.db.pragma(`journal_mode = ${requestedJournal}`, { simple: true })).toLowerCase();
-    if (actualJournal !== requestedJournal) {
+    try {
+      // Changing journal mode may return SQLITE_BUSY without invoking SQLite's
+      // busy handler during a lock upgrade. Retry initialization as a whole:
+      // pragmas are idempotent and failed schema transactions roll back.
+      this.withBusyContext('initializing the graph database', () => {
+        this.assertSafeSqliteVersion();
+        const requestedJournal = dbPath === ':memory:' ? 'memory' : 'wal';
+        const actualJournal = String(this.db.pragma(`journal_mode = ${requestedJournal}`, { simple: true })).toLowerCase();
+        if (actualJournal !== requestedJournal) {
+          throw new Error(`sqlite backend requested journal_mode=${requestedJournal} but received ${actualJournal}`);
+        }
+        this.db.pragma(`synchronous = ${options.synchronous ?? 'NORMAL'}`);
+        this.db.pragma('wal_autocheckpoint = 1000');
+        this.migrateSchema();
+      });
+    } catch (error) {
       this.db.close();
-      throw new Error(`sqlite backend requested journal_mode=${requestedJournal} but received ${actualJournal}`);
+      throw error;
     }
-    this.db.pragma(`synchronous = ${options.synchronous ?? 'NORMAL'}`);
-    this.db.pragma('wal_autocheckpoint = 1000');
-    this.migrateSchema();
   }
 
   private assertSafeSqliteVersion(): void {
     const version = String(this.db.prepare('SELECT sqlite_version() AS version').get().version);
     if (!isWalResetSafeVersion(version)) {
-      this.db.close();
       throw new Error(
         `sqlite backend requires a WAL-reset-safe SQLite build (3.44.6, 3.50.7, or >=3.51.3); found ${version}`,
       );
@@ -91,7 +99,6 @@ export class SqliteGraphBackend implements GraphBackend {
   private migrateSchema(): void {
     const current = Number(this.db.pragma('user_version', { simple: true }));
     if (current > SCHEMA_VERSION) {
-      this.db.close();
       throw new Error(`sqlite graph schema ${current} is newer than supported schema ${SCHEMA_VERSION}`);
     }
     if (current === SCHEMA_VERSION) return;
