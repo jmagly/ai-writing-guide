@@ -23,6 +23,7 @@ export default defineConfig({
       'test/conformance/executor-v1/**/*.test.mjs',
       'test/conformance/fleet-workload-v1/**/*.test.mjs',
       'test/conformance/activity-v1/**/*.test.mjs',
+      'test/conformance/network-analysis-v1/**/*.test.ts',
     ],
     exclude: [
       'node_modules/**',
