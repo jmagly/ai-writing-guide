@@ -3,7 +3,7 @@ name: memory-ingest
 description: Ingest a source into any consumer's semantic memory by reading the topology contract
 namespace: aiwg
 category: kernel
-platforms: [claude, copilot, cursor, factory, windsurf, warp, codex, opencode, openclaw, hermes]
+platforms: [all]
 triggers:
   - "help my AI remember what we decided"
   - "help me preserve project decisions between sessions"

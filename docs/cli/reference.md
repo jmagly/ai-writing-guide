@@ -698,6 +698,9 @@ reload are shown with `--verbose`.
 
 | Platform       | `--provider` ID | Artifact dirs                                                                                                         | Behaviors |
 | -------------- | --------------- | --------------------------------------------------------------------------------------------------------------------- | --------- |
+| Google Antigravity CLI (experimental) | `antigravity` (`agy`) | `.agents/agents/`, `.agents/skills/`, project `AGENTS.md`; global skills unsupported | — |
+| Oh My Pi (experimental) | `omp` (`oh-my-pi`) | `.omp/agents/`, `.omp/prompts/`, `.omp/rules/`, `.agents/skills/`, `.omp/AGENTS.md` | Explicit extension bridge |
+| Pi Coding Agent (experimental) | `pi` | `.agents/skills/`, `.pi/prompts/`, `.pi/.aiwg/skills/`, project `AGENTS.md` | — |
 | Claude Code    | `claude`        | `.claude/agents/`, `.claude/commands/`, `.claude/skills/`, `.claude/rules/`                                           | —         |
 | GitHub Copilot | `copilot`       | `.github/agents/`, `.github/copilot-rules/`, `.github/skills/`                                                        | —         |
 | Factory AI     | `factory`       | `.factory/droids/`, `.factory/commands/`, `.factory/skills/`, `.factory/rules/`                                       | —         |
@@ -3946,7 +3949,12 @@ aiwg discover "<phrase>" [options]
 - `--format text` — Emit readable text output (default).
 - `--pretty` — Pretty-print JSON output with indentation (default for compatibility).
 - `--compact` — Emit single-line JSON output for scripts.
-- `--graph <name>` — Override the default graph. Defaults to `framework` (the AIWG capability graph), which is rebuilt automatically after every `aiwg use`.
+- `--graph <name>` — Select one graph explicitly. Default local capability
+  discovery combines `project`, `user` (when project policy permits), and
+  `framework`. Default discovery and show use an existing local project index
+  when its Fortemi cache is unavailable or stale, with one actionable warning
+  on stderr. Normal lookup needs no graph or backend override; explicit graph
+  selection retains cache diagnostics.
 - `--backend <fortemi-core|local>` — Query backend. Default is
   `fortemi-core`; `local` selects the legacy local fallback. The Fortemi Core
   backend reads the static cache created by `aiwg index sync`. For the

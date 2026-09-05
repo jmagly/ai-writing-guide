@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.9.3] - 2026-09-05 - "Broader provider support, reliable project discovery"
+
 ### Added
 
 - Experimental Google Antigravity CLI provider (`antigravity`, alias and
@@ -20,6 +22,11 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   extension bridge, model discovery, JSON/RPC execution, bounded teams, and
   title-prefixed session imports. See the [provider guide](docs/providers/omp.md)
   for the pinned version, support limits, and removal workflow (#2244–#2256).
+- Opt-in Fortemi live storage qualification now produces sanitized, durable
+  receipts binding the tested revision, endpoint identity, server contract,
+  complete operation inventory, mutation status, and resource bounds. Dataset
+  workflows also gain a schema-first live contract preflight and durable UAT
+  plan; these checks do not certify Server persistence or recovery.
 
 ### Changed
 
@@ -28,8 +35,37 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   published at [pi.dev](https://pi.dev/) across current provider documentation.
 - Synchronized OMP across the public homepage, provider and capability
   matrices, setup navigation, operator references, and getting-started guides.
-  The public platform list now matches the 13 named provider integrations and
-  no longer counts Ollama, an LLM backend, as an AIWG deployment provider.
+  Together with Antigravity, the public platform list now matches 14 named
+  provider integrations and no longer counts Ollama, an LLM backend, as an
+  AIWG deployment provider.
+
+### Fixed
+
+- Existing project-local skills remain discoverable when their Fortemi Core
+  project cache is missing, stale, or corrupt. Discovery falls back to the existing
+  local project index, and framework deployment, refresh, and upgrade synchronize
+  the project index after local bundle reconciliation (#2155).
+- Portable workflows, including `aiwg-guide`, documentation consolidation,
+  and semantic-memory skills, declare `platforms: [all]` across canonical and
+  plugin copies. Newly supported providers can deploy them without stale
+  provider allowlists silently excluding them (#2282).
+- Fortemi MCP reads accept nested original/revised content, and search results
+  with opaque note IDs retrieve missing path metadata before applying subsystem
+  filtering. Search hydration is bounded to 50 results.
+- Concurrent SQLite graph initialization now retries journal-mode and schema
+  contention within the configured busy timeout and closes failed connections.
+  Deterministic lock regressions and renewed source-bound benchmark evidence
+  cover the change.
+
+### Release boundaries
+
+- OMP remains experimental at its reviewed 18.1.10 baseline. Antigravity remains
+  experimental with offline conformance pinned to 1.1.26; authenticated model
+  execution has not been qualified.
+- Fortemi Server remains alpha and pre-certification. Live probes require an
+  explicitly configured endpoint, default to read-only, and gate writes
+  separately. Fortemi Core capability discovery is a separate static-cache
+  path and does not require a live Server endpoint.
 
 ## [2026.9.2] - 2026-09-04 - "Pi from resources to runtime"
 

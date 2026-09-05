@@ -138,6 +138,25 @@ function withIndexProvenance(entry: MetadataEntry, graph: GraphType): Provenance
   return { ...entry, indexGraph: graph, indexScope: graphScope(graph) };
 }
 
+/** Keep existing project capabilities visible while their derived cache is unavailable. */
+function projectCapabilityFallback(cwd: string): MetadataEntry[] | null {
+  const index = loadGraphIndexFile<ArtifactIndex>(cwd, 'metadata.json', 'project');
+  if (index) {
+    const entries = Object.values(index.entries).map((entry) => withIndexProvenance(entry, 'project'));
+    if (entries.length > 0) {
+      // One diagnostic per command, on stderr so JSON and skill bodies stay parseable.
+      console.error('Warning: project capability cache is unavailable or stale; using the local project index. Run `aiwg index sync` to repair the cache.');
+      return entries;
+    }
+  }
+  if (['extensions', 'addons', 'frameworks', 'plugins', 'skills'].some(
+    (dir) => fs.existsSync(projectAiwgPath(cwd, dir)),
+  )) {
+    console.error('Warning: project capabilities could not be loaded: the cache is unavailable and the local project index is missing or empty. Run `aiwg index build --graph project` to repair discovery.');
+  }
+  return index ? [] : null;
+}
+
 function discoveryIdForEntry(entry: MetadataEntry): string {
   return stableRecordId(recordTypeForEntry(entry, 'v2'), entry.path);
 }
@@ -1067,6 +1086,13 @@ export async function discoverCapability(
     let unavailableReason: string | undefined;
     for (const graph of graphs) {
       const loaded = loadFortemiCoreMetadataEntries(cwd, graph, verifiedSourcePaths);
+      if (loaded.reason && graph === 'project' && !params.graph) {
+        const fallback = projectCapabilityFallback(cwd);
+        if (fallback) {
+          entries.push(...fallback);
+          continue;
+        }
+      }
       if (loaded.reason) unavailableReason ??= loaded.reason;
       entries.push(...loaded.entries.map((entry) => withIndexProvenance(entry, graph)));
       const discovered = await queryFortemiCoreAiwgDiscovery(cwd, {
@@ -1570,6 +1596,13 @@ async function loadShowEntries(
     let unavailableReason: string | undefined;
     for (const graph of graphs) {
       const loaded = loadFortemiCoreMetadataEntries(cwd, graph);
+      if (loaded.reason && graph === 'project' && !params.graph) {
+        const fallback = projectCapabilityFallback(cwd);
+        if (fallback) {
+          entries.push(...fallback);
+          continue;
+        }
+      }
       if (loaded.reason) unavailableReason ??= loaded.reason;
       entries.push(...loaded.entries.map((entry) => withIndexProvenance(entry, graph)));
     }

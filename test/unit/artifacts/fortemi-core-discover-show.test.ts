@@ -156,6 +156,83 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
     return createHash("sha256").update(text).digest("hex");
   }
 
+  it.each(['absent', 'stale', 'corrupt'])(
+    'keeps a pre-existing bundle discoverable and showable with a %s project cache (#2155)',
+    async (cacheState) => {
+      const skillPath = '.aiwg/extensions/fortemi-roadmap/skills/fortemi-roadmap-skill/SKILL.md';
+      fs.mkdirSync(path.dirname(path.join(tmp, skillPath)), { recursive: true });
+      fs.writeFileSync(path.join(tmp, skillPath), [
+        '---', 'name: fortemi-roadmap-skill',
+        'description: Advance the project roadmap',
+        'triggers:', '  - "advance roadmap"', '---',
+        '# Project Roadmap', '', 'Follow the required project roadmap procedure.',
+      ].join('\n'));
+      // An existing workspace has a local index, without going through new-bundle.
+      await buildIndex(tmp, { graph: 'project', quiet: true });
+      if (cacheState !== 'absent') {
+        syncFortemiCoreIndex(tmp, { graph: 'project' });
+        const status = getFortemiCoreSyncStatus(tmp, 'project');
+        if (cacheState === 'corrupt') {
+          fs.writeFileSync(status.exportPath, '{broken');
+        } else {
+          const metadataPath = path.join(getGraphIndexDir(tmp, 'project'), 'metadata.json');
+          const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+          metadata.builtAt = new Date(Date.now() + 60_000).toISOString();
+          fs.writeFileSync(metadataPath, JSON.stringify(metadata));
+        }
+        expect(getFortemiCoreSyncStatus(tmp, 'project').stale).toBe(true);
+      } else {
+        expect(getFortemiCoreSyncStatus(tmp, 'project').optedIn).toBe(false);
+      }
+      // A healthy framework export used to mask the missing project graph.
+      writeProjectGraph(tmp, [entry({
+        path: 'agentic/code/addons/roadmap/skills/packaged-roadmap/SKILL.md',
+        name: 'packaged-roadmap', title: 'Packaged Roadmap',
+      })], undefined, 'framework');
+      syncFortemiCoreIndex(tmp, { graph: 'framework' });
+      consoleSpy.mockClear();
+      consoleErrorSpy.mockClear();
+      const cwdSpy = vi.spyOn(process, 'cwd').mockReturnValue(tmp);
+      try {
+        await indexCliMain(['discover', 'advance roadmap', '--json']);
+        const found = readConsoleJson();
+        expect(found.results[0].name).toBe('fortemi-roadmap-skill');
+        expect(found.results[0].provenance).toEqual({ graph: 'project', scope: 'project' });
+        expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+        expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('using the local project index'));
+        for (const name of ['fortemi-roadmap-skill', found.results[0].id]) {
+          consoleSpy.mockClear();
+          consoleErrorSpy.mockClear();
+          await indexCliMain(['show', 'skill', name, '--json']);
+          expect(readConsoleJson().content).toContain('Follow the required project roadmap procedure.');
+          expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+        }
+      } finally {
+        cwdSpy.mockRestore();
+      }
+    },
+  );
+
+  it.each(['missing', 'empty'])('warns when the project cache is absent and its index is %s', async (state) => {
+    fs.mkdirSync(path.join(tmp, '.aiwg/extensions/existing/skills'), { recursive: true });
+    if (state === 'empty') writeProjectGraph(tmp, []);
+    writeProjectGraph(tmp, [entry({
+      path: 'agentic/code/addons/intake/skills/intake-wizard/SKILL.md',
+    })], undefined, 'framework');
+    syncFortemiCoreIndex(tmp, { graph: 'framework' });
+    consoleSpy.mockClear();
+    consoleErrorSpy.mockClear();
+    await discoverCapability(tmp, { phrase: 'intake', json: true });
+    expect(readConsoleJson().results[0].name).toBe('intake-wizard');
+    expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('aiwg index build --graph project'));
+    consoleSpy.mockClear();
+    consoleErrorSpy.mockClear();
+    await showArtifact(tmp, { name: 'intake-wizard', json: true, backend: 'fortemi-core' });
+    expect(readConsoleJson().content).toContain('Intake Wizard');
+    expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+  });
+
   it("refreshes the project Fortemi Core cache after index build", async () => {
     const skillDir = path.join(tmp, ".aiwg", "addons", "schema-registry", "skills", "schema-registry");
     fs.mkdirSync(skillDir, { recursive: true });
@@ -901,6 +978,8 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
   });
 
   it("fails explicitly when the Fortemi Core cache is unavailable", async () => {
+    // Explicit operator queries must not silently switch to this valid index.
+    writeProjectGraph(tmp, [entry({})]);
     const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("process.exit");
     });
@@ -920,6 +999,12 @@ describe("Fortemi Core discover/show parity adapter (#1688)", () => {
         "pass '--backend local' to use the legacy local index",
       );
       expect(exitSpy).toHaveBeenCalledWith(1);
+      consoleSpy.mockClear();
+      await expect(showArtifact(tmp, {
+        name: 'intake-wizard', typeFilter: ['skill'], graph: 'project',
+        json: true, backend: 'fortemi-core',
+      })).rejects.toThrow('process.exit');
+      expect(readConsoleJson().error).toContain('aiwg index sync');
     } finally {
       exitSpy.mockRestore();
     }

@@ -3,7 +3,7 @@ name: memory-lint
 description: Health-check any consumer's semantic memory by composing structural and domain-specific checks
 namespace: aiwg
 category: kernel
-platforms: [claude, copilot, cursor, factory, windsurf, warp, codex, opencode, openclaw, hermes]
+platforms: [all]
 ---
 
 # memory-lint

@@ -5,7 +5,7 @@
  * @implements #729
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createRequire } from 'module';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -332,6 +332,29 @@ describe.skipIf(!sqliteAvailable)('SqliteGraphBackend', () => {
         locker.exec('ROLLBACK');
         locker.close();
         contender.close();
+        await rm(root, { recursive: true, force: true });
+      }
+    });
+
+    it('closes a failed initialization and reports bounded journal lock exhaustion', async () => {
+      const root = await mkdtemp(join(tmpdir(), 'aiwg-sqlite-init-busy-'));
+      const dbPath = join(root, 'graph.db');
+      const { requireFeaturePackage } = await import('../../../src/features/runtime.js');
+      const Database = requireFeaturePackage('better-sqlite3') as new (path: string) => {
+        exec(sql: string): void;
+        close(): void;
+      };
+      const locker = new Database(dbPath);
+      locker.exec('CREATE TABLE seed (id TEXT); BEGIN IMMEDIATE');
+      const closeSpy = vi.spyOn(Database.prototype, 'close');
+      try {
+        expect(() => new SqliteGraphBackend(dbPath, { busyTimeoutMs: 20 }))
+          .toThrow(expect.objectContaining({ code: 'AIWG_SQLITE_BUSY' }));
+        expect(closeSpy).toHaveBeenCalledTimes(1);
+      } finally {
+        closeSpy.mockRestore();
+        locker.exec('ROLLBACK');
+        locker.close();
         await rm(root, { recursive: true, force: true });
       }
     });

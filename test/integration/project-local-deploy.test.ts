@@ -201,6 +201,46 @@ describe('project-local deploy integration (#1046)', () => {
     cleanup(env);
   });
 
+  it.each([
+    ['use', ['use', 'sdlc', '--provider', 'claude', '--quiet']],
+    ['refresh', ['refresh', '--skip-update', '--provider', 'claude', '--quiet']],
+    ['upgrade', ['upgrade', '--skip-check', '--provider', 'claude']],
+  ])('%s synchronizes existing project-local skills without a project cache (#2155)', (_command, args) => {
+    // Model an established workspace whose bundles predate the Fortemi cache.
+    // No scaffold command or named local install has populated its index.
+    writeFileSync(path.join(env.projectDir, '.aiwg', 'aiwg.config'), JSON.stringify({
+      version: '1',
+      providers: ['claude'],
+      installed: { sdlc: {
+        version: '1.0', source: 'bundled', installedAt: '2026-01-01T00:00:00Z',
+        deployedTo: { claude: { agents: 0, commands: 0, skills: 0, rules: 0 } },
+      } },
+    }));
+    mkdirSync(path.join(env.projectDir, '.aiwg', 'frameworks'), { recursive: true });
+    writeFileSync(path.join(env.projectDir, '.aiwg', 'frameworks', 'registry.json'), JSON.stringify({
+      version: '1.0',
+      frameworks: [{ id: 'sdlc-complete', installed: '2026-01-01', version: '1.0' }],
+    }));
+    const cache = path.join(env.projectDir, '.aiwg', '.index', 'fortemi-core', 'project', 'aiwg-fortemi-index-v2.json');
+    expect(existsSync(cache)).toBe(false);
+
+    const result = runAiwg(env, args);
+
+    expect(result.status, result.stdout).toBe(0);
+    expect(existsSync(cache), result.stdout).toBe(true);
+    const exported = JSON.parse(readFileSync(cache, 'utf8'));
+    expect(exported.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'demo-skill' }),
+    ]));
+  }, 180_000);
+
+  it('automatic local reconciliation leaves the project cache absent on dry-run (#2155)', () => {
+    writeFileSync(path.join(env.projectDir, '.aiwg', 'aiwg.config'), JSON.stringify({ providers: ['claude'] }));
+    const result = runAiwg(env, ['use', 'sdlc', '--provider', 'claude', '--dry-run', '--quiet']);
+    expect(result.status, result.stdout).toBe(0);
+    expect(existsSync(path.join(env.projectDir, '.aiwg', '.index', 'fortemi-core', 'project'))).toBe(false);
+  }, 180_000);
+
   it('bootstraps a managed quickref preview from bundles with zero dry-run writes', () => {
     writeFileSync(
       path.join(env.projectDir, '.aiwg', 'aiwg.config'),

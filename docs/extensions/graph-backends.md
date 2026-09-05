@@ -210,11 +210,11 @@ source digests, database/WAL size, CPU/RSS, throughput, latency percentiles,
 and event-loop delay.
 
 <!-- aiwg-storage-benchmark-claim:sqlite-local-reference-v1:start -->
-A 2026-08-28 reference-host qualification on linux x64, Node 24.12.0, better-sqlite3 12.8.0, and SQLite 3.51.3 produced:
+A 2026-09-05 reference-host qualification on linux x64, Node 24.12.0, better-sqlite3 12.8.0, and SQLite 3.51.3 produced:
 
 | Nodes / edges | Write throughput | Query + traversal pairs | Write latency p50/p95/p99 | Query latency p50/p95/p99 | Event-loop delay p95 | DB / peak WAL bytes |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 10,000 / 9,999 | 4,011 ops/s | 506 pairs/s | 254.77 / 378.22 / 378.22 ms | 1.2 / 1.97 / 2.74 ms | 378.27 ms | 2,379,776 / 4,157,112 |
+| 10,000 / 9,999 | 5,081 ops/s | 538 pairs/s | 202.21 / 225.59 / 225.59 ms | 1.09 / 2 / 2.7 ms | 225.93 ms | 2,379,776 / 4,157,112 |
 
 Evidence: [sqlite-local-reference-v1](../storage/evidence/sqlite-local-reference-v1.json). The release gate rejects this claim when its correctness digest, source digest, freshness window, or rendered values no longer match.
 <!-- aiwg-storage-benchmark-claim:sqlite-local-reference-v1:end -->

@@ -3,7 +3,7 @@ name: memory-log-append
 description: Append a structured event to a consumer's semantic memory log
 namespace: aiwg
 category: kernel
-platforms: [claude, copilot, cursor, factory, windsurf, warp, codex, opencode, openclaw, hermes]
+platforms: [all]
 ---
 
 # memory-log-append
