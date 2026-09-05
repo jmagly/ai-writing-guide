@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/network-analysis/governance-record.v1.schema.json",
+  "title": "Network Analysis Governance Record",
+  "description": "Machine-enforceable policy, live-capture authorization, and provider-disclosure records for network-analysis operations.",
+  "oneOf": [
+    { "$ref": "#/$defs/governancePolicy" },
+    { "$ref": "#/$defs/liveCaptureAuthorization" },
+    { "$ref": "#/$defs/providerDisclosureDecision" }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "absolutePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^(?:/|[A-Za-z]:[\\\\/])",
+      "not": { "pattern": "\\u0000" }
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "captureFilter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "language", "expression"],
+      "properties": {
+        "type": { "const": "capture_filter" },
+        "language": { "const": "bpf" },
+        "expression": { "type": "string", "minLength": 1, "maxLength": 8192, "not": { "pattern": "\\u0000" } }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["principal", "basis", "approved_by"],
+      "properties": {
+        "principal": { "type": "string", "minLength": 1 },
+        "basis": { "type": "string", "minLength": 1 },
+        "approved_by": { "type": "string", "minLength": 1 }
+      }
+    },
+    "captureLimits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["duration_seconds", "byte_limit", "file_count"],
+      "properties": {
+        "duration_seconds": { "type": "integer", "minimum": 1, "maximum": 86400 },
+        "byte_limit": { "type": "integer", "minimum": 1, "maximum": 10737418240 },
+        "file_count": { "type": "integer", "minimum": 1, "maximum": 100 }
+      }
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["class", "delete_at", "disposition"],
+      "properties": {
+        "class": { "enum": ["ephemeral", "case-evidence", "case-work-product"] },
+        "delete_at": { "$ref": "#/$defs/timestamp" },
+        "disposition": { "const": "verified-delete" }
+      }
+    },
+    "governancePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "record_type", "policy_id", "created_at", "defaults", "raw_capture_sensitivity"],
+      "properties": {
+        "schema_version": { "const": "1.0.0" },
+        "record_type": { "const": "governance-policy" },
+        "policy_id": { "type": "string", "minLength": 1 },
+        "created_at": { "$ref": "#/$defs/timestamp" },
+        "defaults": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["acquisition", "output", "payload_access", "provider_transfer"],
+          "properties": {
+            "acquisition": { "enum": ["offline-only", "live-capture-explicit-authorization"] },
+            "output": { "enum": ["metadata-only", "metadata-and-headers"] },
+            "payload_access": { "enum": ["deny", "explicit-opt-in"] },
+            "provider_transfer": { "enum": ["deny", "explicit-decision"] }
+          }
+        },
+        "raw_capture_sensitivity": { "const": "restricted" }
+      }
+    },
+    "liveCaptureAuthorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "record_type", "authorization_id", "state", "authority", "interface", "capture_filter", "limits", "destination", "retention", "issued_at", "expires_at"],
+      "properties": {
+        "schema_version": { "const": "1.0.0" },
+        "record_type": { "const": "live-capture-authorization" },
+        "authorization_id": { "type": "string", "minLength": 1 },
+        "state": { "enum": ["authorized", "denied", "revoked"] },
+        "authority": { "$ref": "#/$defs/authority" },
+        "interface": { "type": "string", "minLength": 1, "maxLength": 255, "not": { "pattern": "\\u0000" } },
+        "capture_filter": { "$ref": "#/$defs/captureFilter" },
+        "limits": { "$ref": "#/$defs/captureLimits" },
+        "destination": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "overwrite"],
+          "properties": {
+            "path": { "$ref": "#/$defs/absolutePath" },
+            "overwrite": { "const": false }
+          }
+        },
+        "retention": { "$ref": "#/$defs/retention" },
+        "issued_at": { "$ref": "#/$defs/timestamp" },
+        "expires_at": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "providerDisclosureDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "record_type", "decision_id", "state", "capture_digest", "provider", "purpose", "allowed_content", "allowed_fields", "payload_explicitly_authorized", "decided_by", "issued_at", "expires_at"],
+      "properties": {
+        "schema_version": { "const": "1.0.0" },
+        "record_type": { "const": "provider-disclosure-decision" },
+        "decision_id": { "type": "string", "minLength": 1 },
+        "state": { "enum": ["allow", "deny", "revoked"] },
+        "capture_digest": { "$ref": "#/$defs/sha256" },
+        "provider": { "type": "string", "minLength": 1 },
+        "purpose": { "type": "string", "minLength": 1 },
+        "allowed_content": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "enum": ["metadata", "headers", "raw-packets", "payload"] },
+          "uniqueItems": true
+        },
+        "allowed_fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "payload_explicitly_authorized": { "type": "boolean" },
+        "decided_by": { "type": "string", "minLength": 1 },
+        "issued_at": { "$ref": "#/$defs/timestamp" },
+        "expires_at": { "$ref": "#/$defs/timestamp" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": { "const": "allow" },
+              "allowed_content": {
+                "type": "array",
+                "contains": { "enum": ["raw-packets", "payload"] }
+              }
+            },
+            "required": ["state", "allowed_content"]
+          },
+          "then": {
+            "properties": { "payload_explicitly_authorized": { "const": true } }
+          }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "1.0.0",
+      "record_type": "governance-policy",
+      "policy_id": "network-analysis-default-v1",
+      "created_at": "2026-09-05T20:00:00Z",
+      "defaults": {
+        "acquisition": "offline-only",
+        "output": "metadata-only",
+        "payload_access": "deny",
+        "provider_transfer": "deny"
+      },
+      "raw_capture_sensitivity": "restricted"
+    }
+  ]
+}

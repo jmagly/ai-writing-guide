@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "record_type": "governance-policy",
+  "policy_id": "network-analysis-default-v1",
+  "created_at": "2026-09-05T20:00:00Z",
+  "defaults": {
+    "acquisition": "offline-only",
+    "output": "metadata-only",
+    "payload_access": "deny",
+    "provider_transfer": "deny"
+  },
+  "raw_capture_sensitivity": "restricted"
+}

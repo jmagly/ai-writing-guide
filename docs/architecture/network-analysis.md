@@ -1,6 +1,6 @@
 # ADR: Network analysis addon architecture and contracts
 
-- Status: Proposed - contract implementation under review; construction gate pending #2279
+- Status: Proposed - contract implementation complete; construction gate pending #2279 approval
 - Date: 2026-09-05
 - Issue: #2270
 - Decision owners: AIWG maintainers
@@ -55,7 +55,9 @@ digest equality, derived artifact references, and citation/context membership.
 `resolvePacketCitation` checks a locator against the reader's verified capture
 identity and frame/stream inventory. These checks do not compute file hashes;
 the future reader must verify source and derived bytes before supplying those
-identities. A syntactically valid digest alone is not proof of integrity.
+identities. `src/network-analysis/governance.ts` supplies the source and derived
+file hashing/re-verification boundary; a syntactically valid digest alone is not
+proof of integrity.
 
 `AnalysisRecipe` is the canonical bounded-analysis request. It separates
 capture filters from display filters structurally: capture filters require
@@ -71,6 +73,14 @@ may record an operator command and display filter for interactive review, but
 automation must not scrape Termshark screens or depend on private Termshark
 cache files. Zeek and Suricata enrichment can be added later through explicit
 adapter contracts without changing the packet-evidence identity model.
+
+Security and privacy behavior is defined by the versioned governance-record
+schema and the construction gate in
+`docs/security/network-analysis-construction-gate.md`. The default policy is
+offline-only, metadata-only, payload-denied, and provider-transfer-denied.
+Live capture and provider disclosure are separate decisions with exact scopes
+and expiry. Approval of the construction gate does not authorize either
+operation.
 
 ## Alternatives Considered
 
@@ -126,6 +136,11 @@ version and migration notes. Unsupported major versions fail closed.
   `schemas/network-analysis/packet-evidence.v1.schema.json`
 - Analysis recipe schema:
   `schemas/network-analysis/analysis-recipe.v1.schema.json`
+- Governance record schema:
+  `schemas/network-analysis/governance-record.v1.schema.json`
+- Threat model and gate:
+  `docs/security/network-analysis-threat-model.md` and
+  `docs/security/network-analysis-construction-gate.md`
 - Fixtures:
   `test/fixtures/network-analysis/contracts/`
 - Contract tests:
