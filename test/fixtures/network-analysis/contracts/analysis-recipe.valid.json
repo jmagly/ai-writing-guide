@@ -1,0 +1,59 @@
+{
+  "schema_version": "network-analysis.analysis-recipe/v1",
+  "kind": "AnalysisRecipe",
+  "recipe_id": "analysis-recipe:dns-summary-v1",
+  "version": "1.0.0",
+  "title": "DNS summary",
+  "purpose": "Extract bounded DNS query metadata from an authorized saved capture.",
+  "sensitivity": "internal",
+  "inputs": {
+    "capture_formats": ["pcap", "pcapng"],
+    "live_capture": { "allowed": false },
+    "required_authorization_refs": ["authorization:local-capture-review"]
+  },
+  "filters": {
+    "capture_filters": [
+      { "type": "capture_filter", "language": "bpf", "expression": "udp port 53", "applied_before_capture": true }
+    ],
+    "display_filters": [
+      { "type": "display_filter", "language": "wireshark-display", "expression": "dns && !icmp", "applied_after_capture": true }
+    ]
+  },
+  "requested_output": {
+    "fields": [
+      { "name": "frame.number", "required": true },
+      { "name": "dns.qry.name", "required": true },
+      { "name": "ip.src", "required": false }
+    ],
+    "statistics": [
+      { "name": "conversation-count", "tool": "tshark", "required": false }
+    ],
+    "artifact_media_types": ["application/json"],
+    "observation_policy": "separate-observations-and-inferences"
+  },
+  "limits": {
+    "max_capture_bytes": 10485760,
+    "max_frames": 5000,
+    "max_duration_seconds": 30,
+    "max_output_bytes": 1048576,
+    "max_processes": 1,
+    "payload_policy": "metadata-only"
+  },
+  "expected_output": {
+    "packet_evidence_schema": "network-analysis.packet-evidence/v1",
+    "required_citation_locators": ["frame", "stream"],
+    "confidence_vocabulary": ["observed", "high", "probable", "possible", "unknown"]
+  },
+  "compatibility": {
+    "contract": "network-analysis.analysis-recipe/v1",
+    "minimum_tools": [
+      { "name": "tshark", "version_range": ">=4.6.0 <4.7.0", "required": true },
+      { "name": "capinfos", "version_range": ">=4.6.0 <4.7.0", "required": false }
+    ],
+    "unsupported_major_policy": "fail-closed"
+  },
+  "extension_points": [
+    { "name": "zeek-enrichment", "status": "reserved", "contract": "network-analysis.zeek-adapter/v1" },
+    { "name": "suricata-alert-correlation", "status": "reserved", "contract": "network-analysis.suricata-adapter/v1" }
+  ]
+}

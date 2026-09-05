@@ -1,0 +1,7 @@
+F	Epoch Time	frame.time_epoch	FT_RELATIVE_TIME	frame	BASE_NONE	0x0
+F	Frame Number	frame.number	FT_UINT32	frame	BASE_DEC	0x0
+F	Source	ip.src	FT_IPv4	ip	BASE_NONE	0x0
+F	Destination	ip.dst	FT_IPv4	ip	BASE_NONE	0x0
+F	Transmission Control Protocol	tcp	FT_PROTOCOL	tcp	BASE_NONE	0x0
+F	User Datagram Protocol	udp	FT_PROTOCOL	udp	BASE_NONE	0x0
+P	Protocol Only Row	protocol.only

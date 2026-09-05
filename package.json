@@ -179,6 +179,7 @@
     "schemas/catalog/",
     "schemas/policy/",
     "schemas/storage/",
+    "schemas/network-analysis/",
     "test/conformance/activity-v1/fixtures/",
     "schemas/marketplace/",
     "vscode-extension/schemas/aiwg.config.v1.json",

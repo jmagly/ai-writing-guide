@@ -1,0 +1,136 @@
+{
+  "schema_version": "network-analysis.packet-evidence/v1",
+  "kind": "PacketEvidenceBundle",
+  "bundle_id": "packet-evidence:demo-dns-001",
+  "status": "completed",
+  "created_at": "2026-09-05T19:00:00Z",
+  "capture": {
+    "capture_id": "capture:demo-dns",
+    "capture_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "source_uri": "file://captures/demo-dns.pcapng",
+    "format": "pcapng",
+    "observed_time": { "start": "2026-09-05T18:59:00Z", "end": "2026-09-05T18:59:05Z" },
+    "hashes": {
+      "source": { "algorithm": "sha256", "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+      "derived": [
+        {
+          "artifact_id": "artifact:demo-dns-fields",
+          "digest": { "algorithm": "sha256", "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
+          "derivation": "tshark-json-fields"
+        }
+      ]
+    },
+    "tool_versions": [
+      { "name": "tshark", "version": "4.6.8", "executable_path": "/usr/bin/tshark", "capabilities": ["read-pcapng", "display-filter"] }
+    ],
+    "analysis_contexts": [
+      {
+        "context_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "tool": { "name": "tshark", "version": "4.6.8", "executable_path": "/usr/bin/tshark" },
+        "profile": "default",
+        "command_argv": ["tshark", "-r", "captures/demo-dns.pcapng", "-Y", "dns && !icmp", "-T", "json"],
+        "config_digests": ["sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"],
+        "capture_filter_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "display_filter_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      }
+    ],
+    "config_versions": [
+      {
+        "name": "dns-summary",
+        "version": "1.0.0",
+        "digest": { "algorithm": "sha256", "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" }
+      }
+    ],
+    "data_handling": {
+      "sensitivity": "restricted",
+      "payload_content": "payload-present",
+      "redaction": { "state": "unredacted" },
+      "retention": { "class": "case-work-product", "retain_until": "2026-12-31" },
+      "disclosure": { "state": "restricted", "allowed_audiences": ["case-team"] }
+    }
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact:demo-dns-fields",
+      "class": "derived",
+      "media_type": "application/json",
+      "uri": "aiwg://artifacts/network-analysis/demo-dns-fields.json",
+      "digest": { "algorithm": "sha256", "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
+      "data_handling": {
+        "sensitivity": "internal",
+        "payload_content": "metadata-only",
+        "redaction": { "state": "redacted", "method": "ip-hostname-tokenization" },
+        "retention": { "class": "case-work-product", "retain_until": "2026-12-31" },
+        "disclosure": { "state": "restricted", "allowed_audiences": ["case-team"] }
+      }
+    }
+  ],
+  "evidence_items": [
+    {
+      "evidence_id": "evidence:demo-dns-frame-42",
+      "basis": "observation",
+      "statement": "Frame 42 contains a DNS query for the configured test domain.",
+      "confidence": "observed",
+      "citations": [
+        {
+          "capture_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "locator": { "type": "frame", "frame_number": 42 }
+        }
+      ],
+      "observed_fields": [
+        { "name": "frame.number", "value": 42 },
+        { "name": "dns.qry.name", "value": "example.test" }
+      ]
+    },
+    {
+      "evidence_id": "evidence:demo-dns-stream-7",
+      "basis": "inference",
+      "statement": "The stream is probably a short-lived DNS lookup path.",
+      "confidence": "probable",
+      "citations": [
+        {
+          "capture_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "locator": {
+            "type": "stream",
+            "protocol": "udp",
+            "stream_id": 7,
+            "context_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+          }
+        }
+      ],
+      "inference": {
+        "method": "recipe:dns-summary",
+        "inputs": ["evidence:demo-dns-frame-42"],
+        "false_positive_notes": "A single stream can include retry behavior or resolver forwarding."
+      }
+    }
+  ],
+  "handoffs": [
+    {
+      "handoff_id": "handoff:research-demo-dns",
+      "target": "research",
+      "interface": "packet-evidence",
+      "requires_termshark": false,
+      "citations": [
+        {
+          "capture_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "locator": { "type": "frame", "frame_number": 42 }
+        }
+      ]
+    }
+  ],
+  "provenance": {
+    "actor": "agent:network-analysis-offline",
+    "activity": "offline-pcap-inspection",
+    "started_at": "2026-09-05T18:59:10Z",
+    "ended_at": "2026-09-05T18:59:12Z",
+    "recipe_id": "analysis-recipe:dns-summary-v1",
+    "authorization_refs": ["authorization:fixture-owner-review"]
+  },
+  "errors": [],
+  "compatibility": {
+    "contract": "network-analysis.packet-evidence/v1",
+    "compatible_with": ["network-analysis.analysis-recipe/v1"],
+    "unsupported_major_policy": "fail-closed"
+  }
+}

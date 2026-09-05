@@ -1,0 +1,483 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiwg.io/schemas/network-analysis/packet-evidence.v1.schema.json",
+  "title": "AIWG Network Analysis Packet Evidence Bundle v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "bundle_id",
+    "status",
+    "created_at",
+    "capture",
+    "artifacts",
+    "evidence_items",
+    "handoffs",
+    "provenance",
+    "errors",
+    "compatibility"
+  ],
+  "properties": {
+    "schema_version": { "const": "network-analysis.packet-evidence/v1" },
+    "kind": { "const": "PacketEvidenceBundle" },
+    "bundle_id": { "$ref": "#/$defs/scoped_id" },
+    "status": { "enum": ["completed", "empty", "error"] },
+    "created_at": { "$ref": "#/$defs/timestamp" },
+    "capture": { "$ref": "#/$defs/capture_source" },
+    "artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } },
+    "evidence_items": { "type": "array", "items": { "$ref": "#/$defs/evidence_item" } },
+    "handoffs": { "type": "array", "items": { "$ref": "#/$defs/framework_handoff" } },
+    "provenance": { "$ref": "#/$defs/provenance" },
+    "errors": { "type": "array", "items": { "$ref": "#/$defs/analysis_error" } },
+    "compatibility": { "$ref": "#/$defs/compatibility" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "completed" } }, "required": ["status"] },
+      "then": {
+        "properties": {
+          "artifacts": { "type": "array", "minItems": 1 },
+          "evidence_items": { "type": "array", "minItems": 1 },
+          "errors": { "type": "array", "maxItems": 0 }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "error" } }, "required": ["status"] },
+      "then": { "properties": { "errors": { "type": "array", "minItems": 1 } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "empty" } }, "required": ["status"] },
+      "then": { "properties": { "evidence_items": { "type": "array", "maxItems": 0 } } }
+    }
+  ],
+  "examples": [
+    {
+      "schema_version": "network-analysis.packet-evidence/v1",
+      "kind": "PacketEvidenceBundle",
+      "bundle_id": "packet-evidence:demo-dns-001",
+      "status": "completed",
+      "created_at": "2026-09-05T19:00:00Z",
+      "capture": {
+        "capture_id": "capture:demo-dns",
+        "capture_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "source_uri": "file://captures/demo-dns.pcapng",
+        "format": "pcapng",
+        "observed_time": { "start": "2026-09-05T18:59:00Z", "end": "2026-09-05T18:59:05Z" },
+        "hashes": {
+          "source": { "algorithm": "sha256", "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+          "derived": [
+            {
+              "artifact_id": "artifact:demo-dns-fields",
+              "digest": { "algorithm": "sha256", "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
+              "derivation": "tshark-json-fields"
+            }
+          ]
+        },
+        "tool_versions": [
+          { "name": "tshark", "version": "4.6.8", "capabilities": ["read-pcapng", "display-filter"] }
+        ],
+        "analysis_contexts": [
+          {
+            "context_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            "tool": { "name": "tshark", "version": "4.6.8", "executable_path": "/usr/bin/tshark" },
+            "profile": "default",
+            "command_argv": ["tshark", "-r", "captures/demo-dns.pcapng", "-Y", "dns && !icmp", "-T", "json"],
+            "config_digests": ["sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"],
+            "capture_filter_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+            "display_filter_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+          }
+        ],
+        "config_versions": [
+          {
+            "name": "dns-summary",
+            "version": "1.0.0",
+            "digest": { "algorithm": "sha256", "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" }
+          }
+        ],
+        "data_handling": {
+          "sensitivity": "restricted",
+          "payload_content": "payload-present",
+          "redaction": { "state": "unredacted" },
+          "retention": { "class": "case-work-product", "retain_until": "2026-12-31" },
+          "disclosure": { "state": "restricted", "allowed_audiences": ["case-team"] }
+        }
+      },
+      "artifacts": [
+        {
+          "artifact_id": "artifact:demo-dns-fields",
+          "class": "derived",
+          "media_type": "application/json",
+          "uri": "aiwg://artifacts/network-analysis/demo-dns-fields.json",
+          "digest": { "algorithm": "sha256", "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
+          "data_handling": {
+            "sensitivity": "internal",
+            "payload_content": "metadata-only",
+            "redaction": { "state": "redacted", "method": "ip-hostname-tokenization" },
+            "retention": { "class": "case-work-product", "retain_until": "2026-12-31" },
+            "disclosure": { "state": "restricted", "allowed_audiences": ["case-team"] }
+          }
+        }
+      ],
+      "evidence_items": [
+        {
+          "evidence_id": "evidence:demo-dns-frame-42",
+          "basis": "observation",
+          "statement": "Frame 42 contains a DNS query for the configured test domain.",
+          "confidence": "observed",
+          "citations": [
+            {
+              "capture_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "locator": { "type": "frame", "frame_number": 42 }
+            }
+          ],
+          "observed_fields": [
+            { "name": "frame.number", "value": 42 },
+            { "name": "dns.qry.name", "value": "example.test" }
+          ]
+        },
+        {
+          "evidence_id": "evidence:demo-dns-stream-7",
+          "basis": "inference",
+          "statement": "The stream is probably a short-lived DNS lookup path.",
+          "confidence": "probable",
+          "citations": [
+            {
+              "capture_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "locator": {
+                "type": "stream",
+                "protocol": "udp",
+                "stream_id": 7,
+                "context_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+              }
+            }
+          ],
+          "inference": {
+            "method": "recipe:dns-summary",
+            "inputs": ["evidence:demo-dns-frame-42"],
+            "false_positive_notes": "A single stream can include retry behavior or resolver forwarding."
+          }
+        }
+      ],
+      "handoffs": [
+        {
+          "handoff_id": "handoff:research-demo-dns",
+          "target": "research",
+          "interface": "packet-evidence",
+          "requires_termshark": false,
+          "citations": [
+            {
+              "capture_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "locator": { "type": "frame", "frame_number": 42 }
+            }
+          ]
+        }
+      ],
+      "provenance": {
+        "actor": "agent:network-analysis-offline",
+        "activity": "offline-pcap-inspection",
+        "started_at": "2026-09-05T18:59:10Z",
+        "ended_at": "2026-09-05T18:59:12Z",
+        "recipe_id": "analysis-recipe:dns-summary-v1",
+        "authorization_refs": ["authorization:fixture-owner-review"]
+      },
+      "errors": [],
+      "compatibility": {
+        "contract": "network-analysis.packet-evidence/v1",
+        "compatible_with": ["network-analysis.analysis-recipe/v1"],
+        "unsupported_major_policy": "fail-closed"
+      }
+    }
+  ],
+  "$defs": {
+    "scoped_id": { "type": "string", "minLength": 3, "maxLength": 1024, "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:.+$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "date": { "type": "string", "format": "date" },
+    "sha256_digest_string": { "type": "string", "minLength": 71, "maxLength": 71, "pattern": "^sha256:[a-f0-9]{64}$" },
+    "digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": { "const": "sha256" },
+        "value": { "type": "string", "minLength": 64, "maxLength": 64, "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "data_handling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sensitivity", "payload_content", "redaction", "retention", "disclosure"],
+      "properties": {
+        "sensitivity": { "enum": ["public", "internal", "confidential", "restricted"] },
+        "payload_content": { "enum": ["none", "metadata-only", "truncated", "payload-present", "withheld"] },
+        "redaction": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state"],
+          "properties": {
+            "state": { "enum": ["not-required", "redacted", "withheld", "unredacted"] },
+            "method": { "type": "string", "minLength": 1 },
+            "redacted_fields": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+          }
+        },
+        "retention": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["class"],
+          "properties": {
+            "class": { "type": "string", "minLength": 1 },
+            "retain_until": { "$ref": "#/$defs/date" },
+            "delete_after_days": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "disclosure": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "allowed_audiences"],
+          "properties": {
+            "state": { "enum": ["public", "restricted", "withheld"] },
+            "allowed_audiences": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+          }
+        }
+      }
+    },
+    "capture_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capture_id",
+        "capture_digest",
+        "format",
+        "observed_time",
+        "hashes",
+        "tool_versions",
+        "analysis_contexts",
+        "config_versions",
+        "data_handling"
+      ],
+      "properties": {
+        "capture_id": { "$ref": "#/$defs/scoped_id" },
+        "capture_digest": { "$ref": "#/$defs/sha256_digest_string" },
+        "source_uri": { "type": "string", "minLength": 1 },
+        "format": { "enum": ["pcap", "pcapng", "unknown"] },
+        "observed_time": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["start", "end"],
+          "properties": {
+            "start": { "oneOf": [{ "$ref": "#/$defs/timestamp" }, { "type": "null" }] },
+            "end": { "oneOf": [{ "$ref": "#/$defs/timestamp" }, { "type": "null" }] }
+          }
+        },
+        "hashes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source"],
+          "properties": {
+            "source": { "$ref": "#/$defs/digest" },
+            "derived": { "type": "array", "items": { "$ref": "#/$defs/derived_hash" } }
+          }
+        },
+        "tool_versions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/tool_version" } },
+        "analysis_contexts": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/analysis_context" } },
+        "config_versions": { "type": "array", "items": { "$ref": "#/$defs/config_version" } },
+        "data_handling": { "$ref": "#/$defs/data_handling" }
+      }
+    },
+    "derived_hash": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "digest", "derivation"],
+      "properties": {
+        "artifact_id": { "$ref": "#/$defs/scoped_id" },
+        "digest": { "$ref": "#/$defs/digest" },
+        "derivation": { "type": "string", "minLength": 1 }
+      }
+    },
+    "tool_version": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "enum": ["tshark", "capinfos", "termshark", "zeek", "suricata", "custom"] },
+        "version": { "type": "string", "minLength": 1 },
+        "executable_path": { "type": "string", "minLength": 1 },
+        "capabilities": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      }
+    },
+    "analysis_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["context_digest", "tool", "profile", "command_argv", "config_digests", "capture_filter_digest", "display_filter_digest"],
+      "properties": {
+        "context_digest": { "$ref": "#/$defs/sha256_digest_string" },
+        "tool": { "$ref": "#/$defs/tool_version" },
+        "profile": { "type": "string", "minLength": 1 },
+        "command_argv": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "config_digests": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/sha256_digest_string" }, "uniqueItems": true },
+        "capture_filter_digest": { "$ref": "#/$defs/sha256_digest_string" },
+        "display_filter_digest": { "$ref": "#/$defs/sha256_digest_string" }
+      }
+    },
+    "config_version": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "digest"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "class", "media_type", "uri", "digest", "data_handling"],
+      "properties": {
+        "artifact_id": { "$ref": "#/$defs/scoped_id" },
+        "class": { "enum": ["raw", "derived", "redaction-map", "report", "handoff"] },
+        "media_type": { "type": "string", "minLength": 1 },
+        "uri": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/digest" },
+        "data_handling": { "$ref": "#/$defs/data_handling" }
+      }
+    },
+    "citation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capture_digest", "locator"],
+      "properties": {
+        "capture_digest": { "$ref": "#/$defs/sha256_digest_string" },
+        "locator": {
+          "anyOf": [
+            { "$ref": "#/$defs/frame_locator" },
+            { "$ref": "#/$defs/stream_locator" }
+          ]
+        }
+      }
+    },
+    "frame_locator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "frame_number"],
+      "properties": {
+        "type": { "const": "frame" },
+        "frame_number": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 }
+      }
+    },
+    "stream_locator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "protocol", "stream_id", "context_digest"],
+      "properties": {
+        "type": { "const": "stream" },
+        "protocol": { "enum": ["tcp", "udp"] },
+        "stream_id": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "context_digest": { "$ref": "#/$defs/sha256_digest_string" },
+        "conversation_id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "observed_field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "value": {
+          "anyOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "inference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "inputs", "false_positive_notes"],
+      "properties": {
+        "method": { "type": "string", "minLength": 1 },
+        "inputs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/scoped_id" }, "uniqueItems": true },
+        "false_positive_notes": { "type": "string", "minLength": 1 }
+      }
+    },
+    "evidence_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "basis", "statement", "confidence", "citations"],
+      "properties": {
+        "evidence_id": { "$ref": "#/$defs/scoped_id" },
+        "basis": { "enum": ["observation", "inference"] },
+        "statement": { "type": "string", "minLength": 1 },
+        "confidence": { "enum": ["observed", "high", "probable", "possible", "unknown"] },
+        "citations": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/citation" } },
+        "observed_fields": { "type": "array", "items": { "$ref": "#/$defs/observed_field" } },
+        "inference": { "$ref": "#/$defs/inference" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "basis": { "const": "observation" } }, "required": ["basis"] },
+          "then": {
+            "properties": { "observed_fields": true },
+            "required": ["observed_fields"],
+            "not": { "properties": { "inference": true }, "required": ["inference"] }
+          }
+        },
+        {
+          "if": { "properties": { "basis": { "const": "inference" } }, "required": ["basis"] },
+          "then": { "properties": { "inference": true }, "required": ["inference"] }
+        }
+      ]
+    },
+    "framework_handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["handoff_id", "target", "interface", "requires_termshark", "citations"],
+      "properties": {
+        "handoff_id": { "$ref": "#/$defs/scoped_id" },
+        "target": { "enum": ["research", "forensics", "security-engineering", "sdlc", "ops", "custom"] },
+        "interface": { "enum": ["packet-evidence", "evidence-summary", "operator-handoff"] },
+        "requires_termshark": { "const": false },
+        "citations": { "type": "array", "items": { "$ref": "#/$defs/citation" } },
+        "operator_command": { "type": "string", "minLength": 1 }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actor", "activity", "started_at", "recipe_id", "authorization_refs"],
+      "properties": {
+        "actor": { "$ref": "#/$defs/scoped_id" },
+        "activity": { "type": "string", "minLength": 1 },
+        "started_at": { "$ref": "#/$defs/timestamp" },
+        "ended_at": { "$ref": "#/$defs/timestamp" },
+        "recipe_id": { "$ref": "#/$defs/scoped_id" },
+        "authorization_refs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/scoped_id" }, "uniqueItems": true }
+      }
+    },
+    "analysis_error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "severity"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 },
+        "severity": { "enum": ["info", "warning", "error", "fatal"] },
+        "citation": { "$ref": "#/$defs/citation" }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract", "compatible_with", "unsupported_major_policy"],
+      "properties": {
+        "contract": { "const": "network-analysis.packet-evidence/v1" },
+        "compatible_with": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "unsupported_major_policy": { "const": "fail-closed" }
+      }
+    }
+  }
+}

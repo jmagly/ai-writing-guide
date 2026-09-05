@@ -1,0 +1,9 @@
+tshark: The available statistics for the "-z" option are:
+     conv,eth
+     conv,ip
+     conv,tcp
+     endpoints,eth
+     endpoints,ip
+     io,stat
+     expert
+     protocols

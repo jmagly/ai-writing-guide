@@ -1,0 +1,84 @@
+{
+  "$schema": "../domain-manifest.v1.schema.json",
+  "schemaVersion": "1",
+  "domain": "network-analysis",
+  "owner": {
+    "id": "network-analysis"
+  },
+  "policy": {
+    "strict": true,
+    "compatibility": "backward",
+    "requireFixtures": true
+  },
+  "artifacts": [
+    {
+      "logicalName": "network-analysis.packet-evidence",
+      "id": "https://aiwg.io/schemas/network-analysis/packet-evidence.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "experimental",
+      "owner": {
+        "id": "network-analysis"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/network-analysis/packet-evidence.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "backward"
+      },
+      "consumers": [
+        {
+          "id": "network-analysis-contract-tests",
+          "boundary": "Provider-neutral packet evidence and recipe validation",
+          "path": "test/unit/network-analysis/contracts.test.ts"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/network-analysis/contracts/packet-evidence.valid.json",
+          "test/fixtures/network-analysis/contracts/packet-evidence.error.valid.json"
+        ]
+      },
+      "publication": {
+        "public": true
+      }
+    },
+    {
+      "logicalName": "network-analysis.analysis-recipe",
+      "id": "https://aiwg.io/schemas/network-analysis/analysis-recipe.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "experimental",
+      "owner": {
+        "id": "network-analysis"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "schemas/network-analysis/analysis-recipe.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "backward"
+      },
+      "consumers": [
+        {
+          "id": "network-analysis-contract-tests",
+          "boundary": "Provider-neutral packet evidence and recipe validation",
+          "path": "test/unit/network-analysis/contracts.test.ts"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/network-analysis/contracts/analysis-recipe.valid.json"
+        ]
+      },
+      "publication": {
+        "public": true
+      }
+    }
+  ]
+}
