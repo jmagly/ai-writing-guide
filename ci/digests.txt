@@ -44,7 +44,7 @@ container  node:24         sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1
 
 action  actions/checkout            34e114876b0b11c390a56381ad16ebd13914f8d5  v4.3.1   2026-05-12  Wave 2 pin (#1281) — .gitea/workflows/* (gitea-runner-host is Node 20 native; doesn't trigger the Node 20 deprecation that affects GH-hosted runners)
 action  actions/checkout            93cb6efe18208431cddfb8368fd83d5badbf9bfd  v5.0.1   2026-05-12  bump for GH Actions Node 24 transition (rc.1 retag #5 — used by .github/workflows/* only)
-action  actions/upload-artifact     c24449f33cd45d4826c6702db7e49f7cdb9b551d  v3.2.1-node20  2026-07-27  superseded for Gitea workflows by runner 3 cache service v2; retained for traceability
+action  actions/upload-artifact     c24449f33cd45d4826c6702db7e49f7cdb9b551d  v3.2.1-node20  2026-07-27  Gitea-compatible artifact protocol for .gitea/workflows/ci.yml (#1932)
 action  actions/upload-artifact     ea165f8d65b6e75b540449e92b4886f43607fa02  v4.6.2   2026-05-12  initial pin (Wave 2 of #1278)
 action  actions/setup-node          a0853c24544627f65ddf259abe73b1d18a591444  v5.0.0   2026-05-12  bump for GH Actions Node 24 transition (rc.1 retag #5 — used by .github/workflows/npm-publish.yml)
 
@@ -55,9 +55,9 @@ action  actions/setup-node          a0853c24544627f65ddf259abe73b1d18a591444  v5
 #   semantic version so readers see at a glance what the SHA refers to.
 # - actions/checkout: v4 (floating) currently aliases the v4.3.1 immutable
 #   patch tag. v4.3.0 release date 2025-08-11; v4.3.1 followed.
-# - actions/upload-artifact: Gitea Runner 3 implements cache service v2, so
-#   Gitea and GitHub workflows use v4.6.2 (release date 2025-03-19). The v3
-#   row remains above only as update history.
+# - actions/upload-artifact: Gitea CI uses v3.2.1-node20 because Gitea does
+#   not implement v4's artifact-service v2 protocol; compatible workflows
+#   remain on v4.6.2 (release date 2025-03-19).
 # - actions/setup-node: v4.4.0 used by .github/workflows/npm-publish.yml.
 #
 # ============================================================================
