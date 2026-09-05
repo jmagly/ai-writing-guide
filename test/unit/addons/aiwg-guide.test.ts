@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFile, access } from 'fs/promises';
 import { join } from 'path';
 import { constants } from 'fs';
+import { parse as parseYaml } from 'yaml';
 
 const SKILL_PATH = 'agentic/code/addons/aiwg-utils/skills/aiwg-guide';
 const SKILL_FILE = join(SKILL_PATH, 'SKILL.md');
@@ -20,7 +21,8 @@ describe('aiwg-guide skill (#616)', () => {
       expect(content).toMatch(/\n---\n/);
       expect(content).toMatch(/description:/);
       expect(content).toMatch(/platforms:/);
-      expect(content).toContain('claude-code');
+      const frontmatter = parseYaml(content.split('---')[1]);
+      expect(frontmatter.platforms).toEqual(['all']);
     });
 
     it('should follow standard section ordering', async () => {
