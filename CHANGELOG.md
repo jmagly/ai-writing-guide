@@ -7,6 +7,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Fixed
+
+- Bundled setup through `@aiwg/cli` stops before project initialization and
+  explains how to install the full `aiwg` package, instead of starting an
+  incomplete deployment and crashing on a missing addons directory (#2287).
+
 ## [2026.9.3] - 2026-09-05 - "Broader provider support, reliable project discovery"
 
 ### Added

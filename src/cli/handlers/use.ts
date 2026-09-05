@@ -334,6 +334,35 @@ function resolveFrameworkDir(framework: string): string | undefined {
  */
 export const USE_ALL_DISALLOW = new Set(['aiwg-dev']);
 
+/** Full-framework setup requires the corpus omitted by the lightweight CLI. */
+async function bundledSetupPrerequisiteMessage(frameworkRoot: string): Promise<string | undefined> {
+  let packageName: string | undefined;
+  try {
+    packageName = JSON.parse(await fs.readFile(path.join(frameworkRoot, 'package.json'), 'utf8')).name;
+  } catch {
+    // Embedded callers and source fixtures need not have package metadata.
+    return undefined;
+  }
+  if (packageName !== '@aiwg/cli') return undefined;
+
+  const hasCorpus = (await Promise.all(['frameworks', 'addons'].map(async (kind) => {
+    try {
+      return (await fs.stat(path.join(frameworkRoot, 'agentic/code', kind))).isDirectory();
+    } catch {
+      return false;
+    }
+  }))).every(Boolean);
+  if (hasCorpus) return undefined;
+
+  return [
+    'Bundled framework setup requires the full aiwg package. This @aiwg/cli installation does not include framework and addon sources.',
+    'Replace the lightweight global package, then rerun your setup command:',
+    '  npm uninstall -g @aiwg/cli',
+    '  npm install -g aiwg',
+    '@aiwg/cli can still query signed web resources and deploy external project-local bundles.',
+  ].join('\n');
+}
+
 /**
  * Discover all addon names from the filesystem, minus the disallow list.
  */
@@ -2630,6 +2659,13 @@ export class UseHandler implements CommandHandler {
     const modelDeployArgs = collectUseModelDeployArgs(remainingArgs);
     if (framework === 'cockpit') {
       return installCockpit(ctx, remainingArgs);
+    }
+
+    // Check before auto-init, global staging, or deployment can alter a project.
+    // Web lookup does not materialize the corpus required by bundled setup.
+    if (VALID_FRAMEWORKS.includes(framework as Framework)) {
+      const prerequisite = await bundledSetupPrerequisiteMessage(ctx.frameworkRoot || await getFrameworkRoot());
+      if (prerequisite) return { exitCode: 1, message: prerequisite };
     }
 
     // Structured logger for this invocation. Records go to both stderr (if

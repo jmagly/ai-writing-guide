@@ -961,6 +961,27 @@ If both `aiwg` and `@aiwg/cli` were installed into the same prefix, the most
 recent install owns the shared executable link. Remove both, then install the
 distribution you intend to use.
 
+### Bundled setup requires the full package
+
+`aiwg use all` and named framework setup such as `aiwg use sdlc` need the
+framework and addon sources included in `aiwg`. The lightweight `@aiwg/cli`
+package supports signed web lookup and external project-local bundle deployment;
+web lookup does not download a complete source tree for bundled setup.
+
+If setup reports that the full package is required, replace the lightweight
+global installation and rerun setup with your provider:
+
+```bash
+npm uninstall -g @aiwg/cli
+npm install -g aiwg
+aiwg use all --provider pi
+```
+
+Older CLI versions can instead report `ENOENT` while scanning
+`@aiwg/cli/agentic/code/addons`. The same recovery applies. Existing project
+files are retained; the prerequisite check now stops before deployment or
+project initialization, including in dry-run mode.
+
 ## Migrating Between Distributions
 
 From full AIWG to the lightweight package:

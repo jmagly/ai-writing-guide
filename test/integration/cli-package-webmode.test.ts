@@ -293,6 +293,28 @@ describe('@aiwg/cli packaged web distribution', () => {
     }
   });
 
+  it.each([
+    ['all-pi', ['use', 'all', '--provider', 'pi']],
+    ['sdlc-codex', ['use', 'sdlc', '--provider', 'codex']],
+    ['all-dry-run', ['use', 'all', '--dry-run']],
+  ])('rejects bundled setup %s with full-package guidance before project mutation', async (label, args) => {
+    const project = path.join(tempRoot, `bundled-setup-${label}`);
+    await mkdir(project, { recursive: true });
+    const original = '# Existing project\n\nPreserve operator content.\n';
+    await writeFile(path.join(project, 'README.md'), original);
+
+    const result = await runCli(args, project);
+    const output = `${result.stdout}\n${result.stderr}`;
+
+    expect(result.code, output).not.toBe(0);
+    expect(output).toContain('@aiwg/cli');
+    expect(output).toMatch(/full (?:aiwg )?package/i);
+    expect(output).toContain('npm install -g aiwg');
+    expect(output).not.toMatch(/ENOENT|Installing|scandir/i);
+    expect(await readdir(project), output).toEqual(['README.md']);
+    expect(await readFile(path.join(project, 'README.md'), 'utf8')).toBe(original);
+  }, 30_000);
+
   it('routes verify help through the installed CLI', async () => {
     const help = await runCli(['verify', '--help']);
     expect(help.code, help.stderr).toBe(0);
