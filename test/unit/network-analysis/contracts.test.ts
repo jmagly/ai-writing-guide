@@ -12,6 +12,7 @@ const schemas = {
 const fixtures = {
   'packet-evidence': JSON.parse(readFileSync(path.join(root, 'test/fixtures/network-analysis/contracts/packet-evidence.valid.json'), 'utf8')),
   'packet-evidence-error': JSON.parse(readFileSync(path.join(root, 'test/fixtures/network-analysis/contracts/packet-evidence.error.valid.json'), 'utf8')),
+  'packet-evidence-partial': JSON.parse(readFileSync(path.join(root, 'test/fixtures/network-analysis/contracts/packet-evidence.partial.valid.json'), 'utf8')),
   'analysis-recipe': JSON.parse(readFileSync(path.join(root, 'test/fixtures/network-analysis/contracts/analysis-recipe.valid.json'), 'utf8')),
 };
 const invalidFixtures = JSON.parse(readFileSync(path.join(root, 'test/fixtures/network-analysis/contracts/invalid.json'), 'utf8')) as {
@@ -37,6 +38,11 @@ describe('network-analysis architecture contracts (#2270)', () => {
     expect(validators['packet-evidence'](fixtures['packet-evidence']), JSON.stringify(validators['packet-evidence'].errors)).toBe(true);
     expect(validators['analysis-recipe'](fixtures['analysis-recipe']), JSON.stringify(validators['analysis-recipe'].errors)).toBe(true);
     expect(validators['packet-evidence'](fixtures['packet-evidence-error']), JSON.stringify(validators['packet-evidence'].errors)).toBe(true);
+    expect(validators['packet-evidence'](fixtures['packet-evidence-partial']), JSON.stringify(validators['packet-evidence'].errors)).toBe(true);
+    expect(fixtures['packet-evidence-partial']).toEqual(expect.objectContaining({
+      status: 'partial',
+      errors: [expect.objectContaining({ code: 'ANALYSIS_TIMEOUT' })],
+    }));
   });
 
   it('binds packet citations to capture digest plus frame or stream locators', () => {

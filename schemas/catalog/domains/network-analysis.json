@@ -39,7 +39,8 @@
       "fixtures": {
         "valid": [
           "test/fixtures/network-analysis/contracts/packet-evidence.valid.json",
-          "test/fixtures/network-analysis/contracts/packet-evidence.error.valid.json"
+          "test/fixtures/network-analysis/contracts/packet-evidence.error.valid.json",
+          "test/fixtures/network-analysis/contracts/packet-evidence.partial.valid.json"
         ]
       },
       "publication": {

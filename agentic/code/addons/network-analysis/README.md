@@ -76,6 +76,10 @@ decisions.
 | `schemas/network-analysis-contracts.md` | Canonical schema index |
 | `docs/` | Workflow, integration, maintenance, and troubleshooting guides |
 
+The [offline analyzer guide](docs/offline-analysis.md) documents the exported
+runtime API, hard bounds, error states, metadata allowlist, and local output
+formats.
+
 ## License
 
 AIWG content is MIT licensed. Wireshark/TShark and Termshark remain separately

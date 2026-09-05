@@ -22,7 +22,7 @@
     "schema_version": { "const": "network-analysis.packet-evidence/v1" },
     "kind": { "const": "PacketEvidenceBundle" },
     "bundle_id": { "$ref": "#/$defs/scoped_id" },
-    "status": { "enum": ["completed", "empty", "error"] },
+    "status": { "enum": ["completed", "empty", "partial", "error"] },
     "created_at": { "$ref": "#/$defs/timestamp" },
     "capture": { "$ref": "#/$defs/capture_source" },
     "artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } },
@@ -45,6 +45,10 @@
     },
     {
       "if": { "properties": { "status": { "const": "error" } }, "required": ["status"] },
+      "then": { "properties": { "errors": { "type": "array", "minItems": 1 } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "partial" } }, "required": ["status"] },
       "then": { "properties": { "errors": { "type": "array", "minItems": 1 } } }
     },
     {
