@@ -1,4 +1,5 @@
 import { OmpSessionAdapter, OMP_ADAPTER_VERSION } from './adapters/omp.js';
+import { DeepSeekHarnessSessionAdapter, DEEPSEEK_HARNESS_ADAPTER_VERSION } from './adapters/deepseek-harness.js';
 import { stat } from 'node:fs/promises';
 import {
   CLAUDE_ADAPTER_VERSION,
@@ -318,6 +319,7 @@ async function assertManifestSourceUnchanged(source: DiscoveryManifestSource): P
 }
 
 function adapterFor(provider: DiscoveryManifestSource['provider']): SessionSourceAdapter {
+  if (provider === 'deepseek-harness') return new DeepSeekHarnessSessionAdapter();
   if (provider === 'omp') return new OmpSessionAdapter();
   if (provider === 'claude') return new ClaudeSessionAdapter();
   if (provider === 'codex') return new CodexSessionAdapter();
@@ -352,6 +354,7 @@ async function sessionSource(
 }
 
 function adapterVersion(provider: DiscoveryManifestSource['provider']): string {
+  if (provider === 'deepseek-harness') return DEEPSEEK_HARNESS_ADAPTER_VERSION;
   if (provider === 'omp') return OMP_ADAPTER_VERSION;
   if (provider === 'claude') return CLAUDE_ADAPTER_VERSION;
   if (provider === 'codex') return CODEX_ADAPTER_VERSION;
@@ -364,6 +367,7 @@ function providerProfile(
   provider: DiscoveryManifestSource['provider'],
   locatorClass: string,
 ): string {
+  if (provider === 'deepseek-harness') return 'native-session-v2-jsonl';
   if (provider === 'omp') return 'native-title-slot-v3';
   if (provider === 'claude') return 'documented-local-jsonl';
   if (provider === 'codex') return 'app-server-v2-rollout-fallback';

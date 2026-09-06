@@ -34,8 +34,8 @@ interface ParsedArgs {
 }
 const TIERS = new Set(['economy', 'standard', 'premium', 'max-quality']);
 const PROVIDERS = new Set([
-  'antigravity', 'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
-  'opencode', 'openclaw', 'openhuman', 'warp', 'windsurf',
+  'antigravity', 'claude', 'codex', 'copilot', 'cursor', 'deepseek-harness', 'factory', 'hermes',
+  'opencode', 'openclaw', 'openhuman', 'omp', 'pi', 'warp', 'windsurf',
 ]);
 
 function parseArgs(args: string[]): ParsedArgs {

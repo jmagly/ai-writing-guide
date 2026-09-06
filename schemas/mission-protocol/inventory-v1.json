@@ -602,6 +602,16 @@
       "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
+      "path": "docs/providers/deepseek-harness.md",
+      "owner": "docs/providers",
+      "role": "documentation-example",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
+      "serialization": "markdown",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
       "path": "docs/releases/v2026.3.3-announcement.md",
       "owner": "docs/releases",
       "role": "documentation-example",

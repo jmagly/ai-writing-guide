@@ -9,6 +9,11 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- Experimental DeepSeek Harness provider (`deepseek-harness`, alias `dsh`) with
+  AGENTS-first context, native filesystem skills, least-authority Cordis
+  defaults, exact-version-gated headless and SDK JSON-RPC execution, raw v2
+  session import, credential-reference-only OpenRouter conformance, and public
+  provider/site documentation (#2160, #2162–#2167, #2290).
 - Opt-in `network-analysis` addon for governed saved-PCAP/PCAPNG analysis with
   bounded TShark recipes, metadata-first evidence, stable citations, optional
   local Termshark review, framework handoffs, and deterministic conformance

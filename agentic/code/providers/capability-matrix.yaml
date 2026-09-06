@@ -515,6 +515,48 @@ providers:
     deploy_target: project
     aggregated_output: false
 
+  deepseek-harness:
+    display_name: DeepSeek Harness
+    aliases:
+      - dsh
+    status: experimental
+    daemon_tier: unsupported
+    daemon_pty_adapter: false
+    artifact_paths:
+      agents: .agents/skills/
+      commands: null
+      skills: .agents/skills/
+      rules: AGENTS.md
+      behaviors: null
+      cordis_patch: .dsh/aiwg.cordis.patch.yml
+    native_features:
+      cron: false
+      agent_teams: true
+      tasks: true
+      mcp: true
+      behaviors: true
+      mission_control: false
+      daemon: false
+    emulation:
+      cron: external-trigger
+      agent_teams: native
+      tasks: native
+      mcp: native
+      behaviors: null
+      mission_control: aiwg-mc
+      daemon: null
+    hook_wiring:
+      at_link_support: false
+      fallback: full-inject
+      context_file: AGENTS.md
+      max_bytes: 65536
+    interaction:
+      structured_questions: none
+      fallback: markdown
+      notes: Headless and SDK profiles do not expose an interactive question UI.
+    deploy_target: project
+    aggregated_output: false
+
   pi:
     display_name: Pi Coding Agent
     aliases:

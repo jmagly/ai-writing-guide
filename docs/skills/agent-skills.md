@@ -327,6 +327,7 @@ validated Agent Skills name.
 | `codex` | `<project>/.agents/skills/<name>` | `projected` | exact | Project compatibility surface; descriptions over 500 characters are `degraded`/blocked, never truncated |
 | `copilot` | `<project>/.github/skills/<name>` | `native` | exact | Recursive native bundle |
 | `cursor` | `<project>/.cursor/skills/<name>` | `native` | exact | Recursive native bundle |
+| `deepseek-harness` | `<project>/.agents/skills/<name>` | `native` | exact | DeepSeek Harness native filesystem skill surface, shared with other `.agents/skills` consumers |
 | `factory` | `<project>/.factory/skills/<name>` | `projected` | exact | Adds Factory description guidance, then strictly reparses |
 | `hermes` | `~/.hermes/skills/<name>` | `native` | exact | User-global recursive bundle with managed ownership sidecars |
 | `opencode` | `<project>/.opencode/skill/<name>` | `native` | exact | Recursive native bundle |

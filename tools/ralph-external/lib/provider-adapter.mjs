@@ -285,6 +285,9 @@ async function registerBuiltinProviders() {
     await import('./pi-adapter.mjs');
     await import('./omp-adapter.mjs');
   } catch { /* ignore if not found */ }
+  try {
+    await import('./deepseek-harness-adapter.mjs');
+  } catch { /* ignore if not found */ }
 }
 
 // Run registration — store promise so callers can await it

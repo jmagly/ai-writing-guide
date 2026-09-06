@@ -26,6 +26,8 @@ import {
   OpenHumanSessionAdapter,
   PI_ADAPTER_VERSION,
   PiSessionAdapter,
+  DEEPSEEK_HARNESS_ADAPTER_VERSION,
+  DeepSeekHarnessSessionAdapter,
   OmpSessionAdapter,
   OMP_ADAPTER_VERSION,
   WARP_ADAPTER_VERSION,
@@ -150,6 +152,7 @@ Options:
   --provider-home <path>  Override the provider home root (testing/portable homes)
   --codex-root <path>  Explicitly authorize a shared Codex sessions/export root
   --omp-root <path>  Explicitly authorize an OMP profile sessions root
+  --dsh-root <path>  Explicitly authorize a DeepSeek Harness sessions root
   --confirm, --yes  Confirm a persistent discovered batch import
   --lock-wait-ms <n>  Maximum import-lease wait (default 5000)
   --inactivity-threshold <duration>  Historical inactivity threshold (default 24h)
@@ -766,7 +769,7 @@ async function importSource(
   if (provider !== 'generic' && provider !== 'claude' && provider !== 'codex'
     && provider !== 'copilot' && provider !== 'cursor' && provider !== 'factory'
     && provider !== 'hermes' && provider !== 'opencode' && provider !== 'openclaw'
-    && provider !== 'openhuman' && provider !== 'pi' && provider !== 'omp' && provider !== 'warp' && provider !== 'devin-desktop') {
+    && provider !== 'openhuman' && provider !== 'pi' && provider !== 'omp' && provider !== 'deepseek-harness' && provider !== 'warp' && provider !== 'devin-desktop') {
     throw new CliError('UNSUPPORTED_OPERATION', `session import is not implemented for ${provider}`, EXIT.unsupported);
   }
   const sourceId = requiredValue(args, '--source-id');
@@ -784,9 +787,10 @@ async function importSource(
   const isOpenHuman = provider === 'openhuman';
   const isPi = provider === 'pi';
   const isOmp = provider === 'omp';
+  const isDsh = provider === 'deepseek-harness';
   const isWarp = provider === 'warp';
   const isDevinDesktop = provider === 'devin-desktop';
-  const adapter: SessionSourceAdapter = isOmp ? new OmpSessionAdapter() : isClaude
+  const adapter: SessionSourceAdapter = isDsh ? new DeepSeekHarnessSessionAdapter() : isOmp ? new OmpSessionAdapter() : isClaude
     ? new ClaudeSessionAdapter()
     : isCodex
       ? new CodexSessionAdapter()
@@ -811,7 +815,7 @@ async function importSource(
                       : isDevinDesktop
                         ? new DevinDesktopSessionAdapter()
                         : new GenericSessionInterchangeAdapter();
-  const locatorClass = isOmp ? 'omp-session-v3-jsonl' : isClaude
+  const locatorClass = isDsh ? 'deepseek-harness-session-v2-jsonl' : isOmp ? 'omp-session-v3-jsonl' : isClaude
     ? (input.endsWith('.hooks.jsonl') ? 'claude-hook-jsonl' : 'claude-transcript-jsonl')
     : isCodex
       ? (input.endsWith('.app-server.jsonl') ? 'codex-app-server-jsonl' : 'codex-rollout-jsonl')
@@ -843,7 +847,7 @@ async function importSource(
   const probe = await adapter.inspect(selectedSource);
   const source = SessionSourceSchema.parse({
     contractVersion: SESSION_CONTRACT_VERSION, sourceId, provider,
-    providerProfile: isOmp ? 'native-title-slot-v3' : isClaude
+    providerProfile: isDsh ? 'native-session-v2-jsonl' : isOmp ? 'native-title-slot-v3' : isClaude
       ? 'documented-local-jsonl'
       : isCodex
         ? 'app-server-v2-rollout-fallback'
@@ -867,7 +871,7 @@ async function importSource(
                           ? 'opt-in-cascade-transcript-hook'
                           : 'manual-interchange',
     locatorClass, redactedLocator: redactSourceLocator(input),
-    adapterVersion: isOmp ? OMP_ADAPTER_VERSION : isClaude
+    adapterVersion: isDsh ? DEEPSEEK_HARNESS_ADAPTER_VERSION : isOmp ? OMP_ADAPTER_VERSION : isClaude
       ? CLAUDE_ADAPTER_VERSION
       : isCodex
         ? CODEX_ADAPTER_VERSION
@@ -894,11 +898,11 @@ async function importSource(
     disposition: isWarp
       ? 'manual-only'
       : isClaude || isCodex || isCopilot || isCursor || isFactory || isHermes
-        || isOpenCode || isOpenClaw || isOpenHuman || isDevinDesktop || isOmp
+        || isOpenCode || isOpenClaw || isOpenHuman || isDevinDesktop || isOmp || isDsh || isPi
         ? 'implemented' : 'manual-only',
     operationalState: probe.operationalState,
     consistency: probe.consistency, authorizedAt: new Date().toISOString(),
-    extensions: isOmp ? { 'native.omp': {} } : isClaude
+    extensions: isDsh ? { 'native.deepseek-harness': {} } : isOmp ? { 'native.omp': {} } : isClaude
       ? { 'native.claude': {} }
       : isCodex
         ? { 'native.codex': {} }
@@ -976,6 +980,8 @@ async function discoverWorkspace(
       : undefined,
     ompRoot: args.values.has('--omp-root')
       ? resolve(ctx.cwd, args.values.get('--omp-root')!) : undefined,
+    dshRoot: args.values.has('--dsh-root')
+      ? resolve(ctx.cwd, args.values.get('--dsh-root')!) : undefined,
     codexRoot: args.values.has('--codex-root')
       ? resolve(ctx.cwd, args.values.get('--codex-root')!)
       : undefined,
@@ -1210,6 +1216,19 @@ function providerDisposition(provider: SessionProviderId): Record<string, unknow
       },
     };
   }
+  if (provider === 'deepseek-harness') {
+    return {
+      provider, disposition: 'implemented', operationalState: 'available',
+      supportedOperations: ['discover', 'inspect', 'stream'], acquisitionModes: ['jsonl'],
+      reasonCode: null,
+      remediation: 'Authorize an explicit DeepSeek Harness raw JSONL sessions root. Compressed .zstd histories must be exported as raw JSONL first.',
+      evidence: {
+        adapterVersion: DEEPSEEK_HARNESS_ADAPTER_VERSION,
+        verifiedAt: '2026-09-05',
+        documentation: 'https://github.com/deepseek-ai/deepseek-harness/tree/main/packages/session/session-persistence-jsonl',
+      },
+    };
+  }
   if (provider === 'pi') {
     return {
       provider, disposition: 'implemented', operationalState: 'available',
@@ -1325,7 +1344,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     '--entity', '--sensitivity', '--extraction-state', '--page-size', '--max-documents',
     '--state', '--reviewer', '--reason', '--policy-version', '--min-confidence',
     '--consumer', '--actor-class', '--reason-code', '--dependent-action', '--basis',
-    '--manifest', '--provider-home', '--codex-root', '--omp-root', '--lock-wait-ms', '--min-coverage', '--gap',
+    '--manifest', '--provider-home', '--codex-root', '--omp-root', '--dsh-root', '--lock-wait-ms', '--min-coverage', '--gap',
     '--inactivity-threshold',
     '--control-events',
     '--session', '--status', '--actor', '--group-by',

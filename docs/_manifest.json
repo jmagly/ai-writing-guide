@@ -58,6 +58,7 @@
     "integrations/claude-code-quickstart",
     "integrations/factory-quickstart",
     "integrations/cursor-quickstart",
+    "integrations/deepseek-harness-quickstart",
     "integrations/copilot-quickstart",
     "integrations/codex-quickstart",
     "integrations/opencode-quickstart",
@@ -327,6 +328,8 @@
     "providers/capability-matrix",
     "providers/provider-inventory",
     "providers/antigravity",
+    "providers/deepseek-harness",
+    "providers/deepseek-harness-sessions",
     "providers/omp",
     "providers/omp-verification",
     "providers/omp-sessions",
@@ -769,6 +772,13 @@
       "title": "OpenClaw",
       "summary": "Connect AIWG to an OpenClaw workspace",
       "file": "integrations/openclaw-quickstart.md",
+      "parent": "integrations"
+    },
+    {
+      "id": "integrations/deepseek-harness-quickstart",
+      "title": "DeepSeek Harness",
+      "summary": "Deploy and verify AIWG with the experimental DeepSeek Harness provider",
+      "file": "integrations/deepseek-harness-quickstart.md",
       "parent": "integrations"
     },
     {
@@ -2593,6 +2603,20 @@
       "title": "Google Antigravity CLI Provider Guide",
       "summary": "Experimental provider selection, project resources, MCP, headless operation, and qualification boundaries",
       "file": "providers/antigravity.md",
+      "parent": "providers"
+    },
+    {
+      "id": "providers/deepseek-harness",
+      "title": "DeepSeek Harness Provider Guide",
+      "summary": "Safe deployment, runtime profiles, credential references, and qualification boundaries",
+      "file": "providers/deepseek-harness.md",
+      "parent": "providers"
+    },
+    {
+      "id": "providers/deepseek-harness-sessions",
+      "title": "DeepSeek Harness Session Import",
+      "summary": "Authorized, bounded import of native raw session-v2 JSONL",
+      "file": "providers/deepseek-harness-sessions.md",
       "parent": "providers"
     },
     {

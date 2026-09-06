@@ -28,8 +28,8 @@ const OPERATIONAL_TYPES = new Map([
 ]);
 const COMPONENT_ROOTS = ['addons', 'frameworks', 'extensions'];
 const PROVIDERS = [
-  'antigravity', 'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
-  'openclaw', 'opencode', 'openhuman', 'pi', 'warp', 'windsurf',
+  'antigravity', 'claude', 'codex', 'copilot', 'cursor', 'deepseek-harness', 'factory', 'hermes',
+  'openclaw', 'opencode', 'openhuman', 'omp', 'pi', 'warp', 'windsurf',
 ];
 
 function parseArgs(argv) {

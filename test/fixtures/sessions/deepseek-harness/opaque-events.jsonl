@@ -1,0 +1,5 @@
+{"type":"session","version":2,"id":"dsh-opaque","createdAt":1788600000000,"isSeeded":false,"delegationDepth":0}
+{"type":"assistant/attempt","seq":0,"time":1788600000001,"data":{"retry":1,"reasoning":"not imported"}}
+{"type":"session/compact","seq":1,"time":1788600000002,"data":{"summary":"not imported"}}
+{"type":"plugin/future","seq":2,"time":1788600000003,"data":{"private":"not imported"}}
+{"type":"turn/end","seq":3,"time":1788600000004,"data":{"reason":{"kind":"completed"}}}
