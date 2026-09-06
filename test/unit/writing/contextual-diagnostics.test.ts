@@ -58,6 +58,8 @@ describe('contextual writing diagnostics', () => {
     const p = 'This limitation still applies.';
     const result = diagnoseWriting(`${p}\n\nAnother point.\n\n${p}`);
     expect(result.diagnostics.map(d => d.ruleId)).toEqual(['repetition:paragraph']);
+    expect(result.diagnostics[0].explanation).toContain('earlier prose');
+    expect(result.diagnostics[0].explanation).not.toContain('document');
     const batch = diagnoseWritingBatch([{ id: 'a', content: p }, { id: 'b', content: p }]);
     expect(batch.get('b')?.diagnostics[0].explanation).toContain('document a');
     expect(() => diagnoseWritingBatch([{ id: 'a', content: p }, { id: 'a', content: p }])).toThrow('Duplicate');

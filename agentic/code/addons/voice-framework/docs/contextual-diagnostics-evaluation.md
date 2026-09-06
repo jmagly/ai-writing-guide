@@ -42,7 +42,7 @@ The French accent-initial regression expects the full `été été` span, preven
 SHA-256 anchors for this measured run:
 
 - `test/fixtures/writing/contextual-diagnostics.v1.json`: `179a54c637e2526b863b79afd6063564f9d3893f72a04fd8be40298e373300cd`
-- `src/writing/contextual-diagnostics.ts`: `179cc4e4fd19f5bd89703b03dd4a1748b52a08efcd00b73ca5176ee6780e0c96`
+- `src/writing/contextual-diagnostics.ts`: `4eda6746eff88132216880fe3f2ed5490adee32243b02cec9facbc9f64591976`
 - `test/unit/writing/contextual-diagnostics-evaluation.test.ts`: `e72c50f1cd5b1aa62d6dcc8a87f0ba2e981aa5bae8e29f1d6272bc8c7e5ab03e`
 
 ## Coverage and limits

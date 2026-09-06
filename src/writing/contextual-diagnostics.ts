@@ -148,7 +148,7 @@ function diagnoseDocument(content: string, options: DiagnosticOptions, priorPara
     const span = { start: match.index!, end: match.index! + match[0].length };
     if (contextAt(span, contexts, true) !== 'prose') continue;
     const priorDocument = priorParagraphs.get(text);
-    if (seen.has(text) || priorDocument !== undefined) emit(span, repetitionOverride ?? { ...repetitionRule, explanation: priorDocument !== undefined ? `This paragraph also occurs in document ${priorDocument}; repetition may be intentional.` : repetitionRule.explanation }, 'prose');
+    if (seen.has(text) || priorDocument !== undefined) emit(span, repetitionOverride ?? { ...repetitionRule, explanation: priorDocument !== undefined && priorDocument !== documentId ? `This paragraph also occurs in document ${priorDocument}; repetition may be intentional.` : repetitionRule.explanation }, 'prose');
     seen.add(text);
     if (priorDocument === undefined) priorParagraphs.set(text, documentId);
   }
