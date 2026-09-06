@@ -160,6 +160,48 @@ describe('provider transformation receipts', () => {
     })).status).toBe('verified');
   });
 
+  it('routes project receipts through a pointer-configured external artifact root', async () => {
+    const projectRoot = await mkdtemp(path.join(tmpdir(), 'aiwg-receipt-project-'));
+    const corpusRoot = await mkdtemp(path.join(tmpdir(), 'aiwg-receipt-corpus-'));
+    roots.push(projectRoot, corpusRoot);
+    await writeFile(path.join(projectRoot, '.aiwg-location'), `${corpusRoot}\n`);
+    await mkdir(path.join(projectRoot, '.codex', 'rules'), { recursive: true });
+    await writeFile(path.join(projectRoot, '.codex', 'rules', 'managed.md'), '<!-- aiwg-managed -->\n');
+    const receipt = await createProviderTransformationReceipt({
+      projectRoot,
+      provider: 'codex', scope: 'project', source, transformer,
+      outputPaths: ['.codex/rules/managed.md'],
+    });
+
+    const destination = await writeProviderTransformationReceipt(projectRoot, receipt);
+
+    expect(destination).toBe(path.join(corpusRoot, 'receipts', 'providers', 'codex.project.json'));
+    await expect(readFile(path.join(projectRoot, '.aiwg', 'receipts', 'providers', 'codex.project.json')))
+      .rejects.toMatchObject({ code: 'ENOENT' });
+    expect((await diagnoseProviderTransformationReceipt({
+      projectRoot, provider: 'codex', scope: 'project', source, transformer,
+    })).status).toBe('verified');
+  });
+
+  it('refuses to recreate an unavailable external root or fall back locally', async () => {
+    const projectRoot = await mkdtemp(path.join(tmpdir(), 'aiwg-receipt-offline-'));
+    roots.push(projectRoot);
+    const externalRoot = path.join(projectRoot, '..', `offline-${path.basename(projectRoot)}`, '.aiwg');
+    await writeFile(path.join(projectRoot, '.aiwg-location'), `${externalRoot}\n`);
+    const receipt = validateProviderTransformationReceipt({
+      schemaVersion: 'aiwg.provider-transformation-receipt.v1',
+      generatedAt: new Date().toISOString(),
+      provider: 'codex', scope: 'project', source, transformer,
+      outputs: [{ path: '.codex/rules/managed.md', sha256: 'a'.repeat(64), bytes: 1 }],
+    });
+
+    await expect(writeProviderTransformationReceipt(projectRoot, receipt)).rejects.toThrow(
+      /Configured external AIWG artifact root is unavailable/,
+    );
+    await expect(readFile(path.join(projectRoot, '.aiwg', 'receipts', 'providers', 'codex.project.json')))
+      .rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
   it('rejects symbolic-link outputs instead of hashing data outside the output root', async () => {
     const root = await mkdtemp(path.join(tmpdir(), 'aiwg-receipt-link-'));
     roots.push(root);

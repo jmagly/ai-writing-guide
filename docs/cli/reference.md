@@ -4231,7 +4231,7 @@ aiwg index <subcommand> [options]
 Manage the configured project AIWG artifact root.
 
 ```bash
-aiwg artifacts path [--json]
+aiwg artifacts path [--json] [--check-write]
 aiwg artifacts move --to <path> [--from <path>] [--dry-run] [--no-reindex] [--no-sync]
 aiwg artifacts attach --to <existing-path> [--dry-run] [--no-reindex] [--no-sync]
 aiwg artifacts repair --dry-run
@@ -4241,6 +4241,10 @@ aiwg artifacts repair --apply
 `path` prints the resolved absolute artifact root for scripts and agent
 workflows; `--json` returns the stable `aiwg.artifacts.path.v1` envelope. It
 honors artifact-root environment overrides and `.aiwg-location`.
+The JSON envelope reports whether the root is external and write-ready, plus
+the exact repository-local control-file exceptions. Add `--check-write` before
+an agent or workflow write: it exits non-zero when an explicitly external root
+is unavailable instead of recreating or falling back to local payload.
 
 `move` relocates or renames the current artifact root, writes `.aiwg-location`
 in the project root, updates `.gitignore` so the pointer remains local,
@@ -4252,9 +4256,13 @@ writes the same pointer, and rebuilds the external index.
 Both commands retain a minimal repository-local control plane (`AIWG.md`,
 `aiwg.config`, and `frameworks/registry.json`) while corpus-heavy directories
 live under the configured artifact root. `repair` audits legacy split-root
-workspaces, previews restoration of missing control files, and removes only
-byte-identical local corpus duplicates when `--apply` is explicit. Divergent
-files are never overwritten or removed automatically. The same classification
+workspaces and previews every action. With explicit `--apply`, local-only
+payload is copied to the external corpus, byte-identical duplicates are
+deduplicated, and divergent local variants are preserved under
+`archive/local-corpus-migration/conflicts/local/` with a content-hash suffix.
+The external variant is never overwritten, and local payload is removed only
+after byte-for-byte verification of its external or archived copy. Divergent
+control-plane files still require manual reconciliation. The same classification
 is reported by `aiwg status --probe --json` and `aiwg doctor`.
 `AIWG_ARTIFACTS_PATH` still has highest precedence for per-call overrides.
 

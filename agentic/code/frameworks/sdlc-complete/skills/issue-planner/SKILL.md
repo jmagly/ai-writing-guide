@@ -33,6 +33,23 @@ commandHint:
 
 Transform a high-level objective into a fully researched, SDLC-gated issue backlog — ready for `address-issues` — without a human having to manually research, write docs, or decide priority order.
 
+## Artifact-root preflight (mandatory)
+
+Before reading or writing any logical `.aiwg/...` path, run:
+
+```bash
+aiwg artifacts path --json --check-write
+```
+
+Use the returned `artifact_root` as the physical replacement for the logical
+`.aiwg` prefix in every research, synthesis, requirements, planning, and report
+path below. Do not create repository-local payload when the resolved root is
+external. The only repository-local `.aiwg` exceptions are the control files
+`AIWG.md`, `aiwg.config`, and `frameworks/registry.json`. If the resolved
+external root is unavailable, stop with an actionable diagnostic; never fall
+back to `<project>/.aiwg`. Path resolution does not synchronize Git remotes:
+remote fetch/pull/push remains a separate, explicit operator workflow.
+
 ## Triggers
 
 Alternate expressions and non-obvious activations (primary phrases are matched automatically from the skill description):

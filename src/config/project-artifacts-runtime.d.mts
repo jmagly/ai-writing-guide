@@ -8,6 +8,9 @@ export function expandProjectArtifactPath(pathValue: string, projectDir: string)
 export function parseProjectArtifactLocation(contents: string): string | null;
 export function readProjectArtifactLocation(projectDir: string): string | null;
 export function resolveProjectAiwgDir(projectDir: string, env?: ProjectArtifactEnv): string;
+export function isProjectArtifactRootExternal(projectDir: string, env?: ProjectArtifactEnv): boolean;
+export function resolveProjectAiwgDirForWrite(projectDir: string, env?: ProjectArtifactEnv): string;
 export function resolveProjectControlDir(projectDir: string): string;
 export function projectAiwgPath(projectDir: string, ...segments: string[]): string;
+export function projectAiwgWritePath(projectDir: string, ...segments: string[]): string;
 export function projectControlPath(projectDir: string, ...segments: string[]): string;

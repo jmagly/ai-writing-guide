@@ -26,7 +26,7 @@ describe('artifactsHandler', () => {
     const result = await artifactsHandler.execute(ctx(['--help']));
     expect(result.exitCode).toBe(0);
     expect(result.message).toContain('aiwg artifacts move --to <path>');
-    expect(result.message).toContain('aiwg artifacts path [--json]');
+    expect(result.message).toContain('aiwg artifacts path [--json] [--check-write]');
     expect(result.message).toContain('aiwg artifacts attach --to <existing-path>');
     expect(result.message).toContain('aiwg artifacts repair --dry-run');
   });
@@ -57,7 +57,32 @@ describe('artifactsHandler', () => {
         schema: 'aiwg.artifacts.path.v1',
         project_root: project,
         artifact_root: join(project, '.aiwg'),
+        external: false,
+        write_ready: true,
+        write_error: null,
+        local_control_files: ['AIWG.md', 'aiwg.config', 'frameworks/registry.json'],
       });
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('reports and enforces write readiness for an offline external root', async () => {
+    const project = mkdtempSync(join(tmpdir(), 'aiwg-artifact-offline-json-'));
+    try {
+      writeFileSync(join(project, '.aiwg-location'), 'offline-corpus/.aiwg\n');
+      const inspect = await artifactsHandler.execute({ ...ctx(['path', '--json']), cwd: project });
+      expect(JSON.parse(inspect.message ?? '{}')).toMatchObject({
+        external: true,
+        write_ready: false,
+        local_control_files: ['AIWG.md', 'aiwg.config', 'frameworks/registry.json'],
+      });
+      expect(JSON.parse(inspect.message ?? '{}').write_error).toMatch(/external AIWG artifact root is unavailable/);
+
+      const checked = await artifactsHandler.execute({ ...ctx(['path', '--check-write']), cwd: project });
+      expect(checked.exitCode).toBe(1);
+      expect(checked.message).toMatch(/will not fall back to repository-local \.aiwg payload/);
+      expect(existsSync(join(project, '.aiwg'))).toBe(false);
     } finally {
       rmSync(project, { recursive: true, force: true });
     }

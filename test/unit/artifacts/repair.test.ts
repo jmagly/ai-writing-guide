@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { repairProjectArtifacts } from '../../../src/artifacts/repair.js';
@@ -45,5 +45,29 @@ describe('repairProjectArtifacts', () => {
 
     writeFileSync(join(projectDir, '.aiwg', 'AIWG.md'), '# Diverged\n');
     await expect(repairProjectArtifacts({ projectDir, apply: true })).rejects.toThrow(/diverges/);
+  });
+
+  it('migrates new payload and archives divergent local variants without data loss', async () => {
+    const { projectDir, artifactRoot } = fixture();
+    await repairProjectArtifacts({ projectDir, apply: true });
+    mkdirSync(join(projectDir, '.aiwg', 'research'), { recursive: true });
+    mkdirSync(join(artifactRoot, 'research'), { recursive: true });
+    writeFileSync(join(projectDir, '.aiwg', 'research', 'new.md'), '# Local only\n');
+    writeFileSync(join(projectDir, '.aiwg', 'research', 'divergent.md'), '# Local variant\n');
+    writeFileSync(join(artifactRoot, 'research', 'divergent.md'), '# External variant\n');
+
+    const preview = await repairProjectArtifacts({ projectDir });
+    expect(preview.migrated).toEqual(['research/new.md']);
+    expect(preview.archivedConflicts).toHaveLength(1);
+    expect(preview.archivedConflicts[0]).toMatch(/^archive\/local-corpus-migration\/conflicts\/local\/research\/divergent\.md\.[a-f0-9]{12}$/);
+    expect(existsSync(join(projectDir, '.aiwg', 'research', 'new.md'))).toBe(true);
+
+    const applied = await repairProjectArtifacts({ projectDir, apply: true });
+    expect(applied.after.classification).toBe('healthy-split-root');
+    expect(existsSync(join(projectDir, '.aiwg', 'research', 'new.md'))).toBe(false);
+    expect(existsSync(join(projectDir, '.aiwg', 'research', 'divergent.md'))).toBe(false);
+    expect(readFileSync(join(artifactRoot, 'research', 'new.md'), 'utf8')).toBe('# Local only\n');
+    expect(readFileSync(join(artifactRoot, 'research', 'divergent.md'), 'utf8')).toBe('# External variant\n');
+    expect(readFileSync(join(artifactRoot, applied.archivedConflicts[0]), 'utf8')).toBe('# Local variant\n');
   });
 });

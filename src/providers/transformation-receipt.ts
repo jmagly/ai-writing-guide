@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { lstat, mkdir, readFile, realpath, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { projectAiwgPath, projectAiwgWritePath } from '../config/project-artifacts.js';
 
 export const PROVIDER_TRANSFORMATION_RECEIPT_SCHEMA = 'aiwg.provider-transformation-receipt.v1' as const;
 
@@ -109,7 +110,7 @@ export function providerTransformationReceiptPath(
 ): string {
   filenameSegment(provider, 'provider');
   if (scope !== 'project' && scope !== 'user') throw new Error('scope must be project or user');
-  return path.join(projectRoot, '.aiwg', 'receipts', 'providers', `${provider}.${scope}.json`);
+  return projectAiwgPath(projectRoot, 'receipts', 'providers', `${provider}.${scope}.json`);
 }
 
 export function validateProviderTransformationReceipt(value: unknown): ProviderTransformationReceipt {
@@ -174,7 +175,9 @@ export async function writeProviderTransformationReceipt(
   receipt: ProviderTransformationReceipt,
 ): Promise<string> {
   validateProviderTransformationReceipt(receipt);
-  const destination = providerTransformationReceiptPath(projectRoot, receipt.provider, receipt.scope);
+  const destination = projectAiwgWritePath(
+    projectRoot, 'receipts', 'providers', `${receipt.provider}.${receipt.scope}.json`,
+  );
   await mkdir(path.dirname(destination), { recursive: true });
   try {
     const existing = validateProviderTransformationReceipt(JSON.parse(await readFile(destination, 'utf8')));

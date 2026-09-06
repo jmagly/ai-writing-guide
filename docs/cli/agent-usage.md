@@ -308,7 +308,7 @@ with the project pointer file written by the CLI:
 
 ```bash
 aiwg artifacts path
-aiwg artifacts path --json
+aiwg artifacts path --json --check-write
 aiwg artifacts move --to ../aiwg-web-release-ops/corpus/.aiwg
 ```
 
@@ -328,8 +328,10 @@ aiwg artifacts repair --dry-run
 aiwg artifacts repair --apply
 ```
 
-Repair never overwrites divergent content and removes only verified identical
-local corpus duplicates. For one-off sessions,
+Repair migrates local-only payload, deduplicates identical content, and archives
+divergent local variants without overwriting the external version. It removes
+local payload only after byte verification; remote Git synchronization remains
+a separate operator step. For one-off sessions,
 `AIWG_ARTIFACTS_PATH` can still point at an absolute, project-relative, or
 `~/`-relative artifact directory and takes precedence over `.aiwg-location`.
 

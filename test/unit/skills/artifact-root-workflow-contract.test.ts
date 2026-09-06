@@ -16,6 +16,8 @@ const DOC_SYNC_SKILLS = [
   'agentic/code/plugins/utils/skills/doc-sync/SKILL.md',
 ];
 
+const ISSUE_PLANNER = 'agentic/code/frameworks/sdlc-complete/skills/issue-planner/SKILL.md';
+
 function skill(path: string): string {
   return readFileSync(resolve(path), 'utf8');
 }
@@ -35,5 +37,14 @@ describe('split-root workflow contracts', () => {
     expect(content).toContain('$AIWG_ARTIFACT_ROOT/working/doc-sync/');
     expect(content).toContain('$AIWG_ARTIFACT_ROOT/reports/');
     expect(content).toContain('Never write these payloads to a literal project-local');
+  });
+
+  it('resolves issue-planning research and planning payload through the artifact root', () => {
+    const content = skill(ISSUE_PLANNER);
+    expect(content).toContain('aiwg artifacts path --json --check-write');
+    expect(content).toContain('Use the returned `artifact_root` as the physical replacement');
+    expect(content).toContain('`AIWG.md`, `aiwg.config`, and `frameworks/registry.json`');
+    expect(content).toContain('back to `<project>/.aiwg`');
+    expect(content).toContain('remote fetch/pull/push remains a separate');
   });
 });

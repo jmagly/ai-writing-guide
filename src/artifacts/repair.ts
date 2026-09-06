@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import {
@@ -15,7 +16,26 @@ export interface RepairProjectArtifactsResult {
   before: ReturnType<typeof auditProjectArtifactHealth>;
   after: ReturnType<typeof auditProjectArtifactHealth>;
   copied: string[];
+  migrated: string[];
+  archivedConflicts: string[];
   removed: string[];
+}
+
+async function optionalBytes(filePath: string): Promise<Buffer | null> {
+  try {
+    return await readFile(filePath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    throw error;
+  }
+}
+
+async function writeAndVerify(destination: string, bytes: Buffer): Promise<void> {
+  await mkdir(path.dirname(destination), { recursive: true });
+  await writeFile(destination, bytes, { flag: 'wx' });
+  if (!(await readFile(destination)).equals(bytes)) {
+    throw new Error(`Byte verification failed after copying artifact payload: ${destination}`);
+  }
 }
 
 export async function repairProjectArtifacts(
@@ -24,6 +44,8 @@ export async function repairProjectArtifacts(
   const projectDir = path.resolve(options.projectDir);
   const before = auditProjectArtifactHealth(projectDir);
   const copied: string[] = [];
+  const migrated: string[] = [];
+  const archivedConflicts: string[] = [];
   const removed: string[] = [];
 
   if (!before.external_configured) {
@@ -32,12 +54,9 @@ export async function repairProjectArtifacts(
   if (!before.external_reachable) {
     throw new Error(`External AIWG artifact corpus is unavailable: ${before.artifact_root}`);
   }
-  if (before.divergent_control_files.length || before.divergent_local_corpus_files.length) {
+  if (before.divergent_control_files.length) {
     throw new Error(
-      `Automatic repair refused because local and external content diverges: ${[
-        ...before.divergent_control_files,
-        ...before.divergent_local_corpus_files,
-      ].join(', ')}`,
+      `Automatic repair refused because local and external control-plane content diverges: ${before.divergent_control_files.join(', ')}`,
     );
   }
 
@@ -55,9 +74,35 @@ export async function repairProjectArtifacts(
   }
 
   for (const relativePath of before.duplicated_local_corpus_files) {
+    const localPath = path.join(before.local_control_root, relativePath);
+    const externalPath = path.join(before.artifact_root, relativePath);
+    const localBytes = await readFile(localPath);
+    const externalBytes = await optionalBytes(externalPath);
+    if (externalBytes === null) {
+      migrated.push(relativePath);
+      if (options.apply) await writeAndVerify(externalPath, localBytes);
+    } else if (!externalBytes.equals(localBytes)) {
+      const digest = createHash('sha256').update(localBytes).digest('hex').slice(0, 12);
+      const archiveRelative = path.join('archive', 'local-corpus-migration', 'conflicts', 'local', `${relativePath}.${digest}`);
+      archivedConflicts.push(archiveRelative.split(path.sep).join('/'));
+      if (options.apply) {
+        const archivePath = path.join(before.artifact_root, archiveRelative);
+        const archived = await optionalBytes(archivePath);
+        if (archived === null) await writeAndVerify(archivePath, localBytes);
+        else if (!archived.equals(localBytes)) throw new Error(`Conflict archive path already contains different bytes: ${archivePath}`);
+      }
+    }
     removed.push(relativePath);
     if (options.apply) {
-      await rm(path.join(before.local_control_root, relativePath), { force: false });
+      const preservedPath = externalBytes === null
+        ? externalPath
+        : externalBytes.equals(localBytes)
+          ? externalPath
+          : path.join(before.artifact_root, archivedConflicts.at(-1)!);
+      if (!(await readFile(preservedPath)).equals(localBytes)) {
+        throw new Error(`Refusing to remove local payload before byte verification: ${relativePath}`);
+      }
+      await rm(localPath, { force: false });
     }
   }
 
@@ -66,6 +111,8 @@ export async function repairProjectArtifacts(
     before,
     after: options.apply ? auditProjectArtifactHealth(projectDir) : before,
     copied,
+    migrated,
+    archivedConflicts,
     removed,
   };
 }
