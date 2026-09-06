@@ -94,6 +94,9 @@
     "configuration/aiwg-config",
     "architecture/adr-artifact-output-destinations",
     "context-tier-model",
+    "context-engineering-contract",
+    "verification-contracts",
+    "autonomy-and-human-roles",
     "skills-budget-guide",
     "security/threat-assessment-policy",
     "security/context-memory-firewall",
@@ -1021,6 +1024,27 @@
       "title": "Context Tier Model",
       "summary": "Keep standing provider context small with discoverable on-demand references",
       "file": "context-tier-model.md",
+      "parent": "reference"
+    },
+    {
+      "id": "context-engineering-contract",
+      "title": "Context Engineering Contract",
+      "summary": "Provider-neutral context packets, budgets, resets, and handoffs",
+      "file": "context-engineering-contract.md",
+      "parent": "reference"
+    },
+    {
+      "id": "verification-contracts",
+      "title": "Verification Contracts",
+      "summary": "Completion evidence for research and planning dispatches",
+      "file": "verification-contracts.md",
+      "parent": "reference"
+    },
+    {
+      "id": "autonomy-and-human-roles",
+      "title": "Autonomy and Human Roles",
+      "summary": "Risk-based execution modes, checkpoints, and human responsibilities",
+      "file": "autonomy-and-human-roles.md",
       "parent": "reference"
     },
     {
