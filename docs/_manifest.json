@@ -93,6 +93,7 @@
     "architecture/adr-agent-skills-portability-contract",
     "reports/agentskills-standard-audit-2026-07-25",
     "configuration/aiwg-config",
+    "architecture/adr-deepseek-harness-runtime",
     "architecture/adr-artifact-output-destinations",
     "context-tier-model",
     "context-engineering-contract",
@@ -1020,6 +1021,13 @@
       "title": "AIWG Project Config",
       "summary": "Project and multi-repository workspace configuration reference",
       "file": "configuration/aiwg-config.md",
+      "parent": "reference"
+    },
+    {
+      "id": "architecture/adr-deepseek-harness-runtime",
+      "title": "DeepSeek Harness Runtime Boundary",
+      "summary": "Runtime, lifecycle, credential, and session-import decisions for the experimental provider",
+      "file": "architecture/adr-deepseek-harness-runtime.md",
       "parent": "reference"
     },
     {
