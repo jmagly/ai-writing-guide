@@ -1,5 +1,16 @@
 # Voice Framework Overview
 
+## Natural voice evidence contract
+
+The [evidence and ownership ADR](natural-voice/ADR-001-evidence-and-ownership.md)
+and [versioned evidence ledger](natural-voice/evidence-ledger.v1.json) pin the
+eight inducted sources and distinguish research findings from editorial policy
+and product qualification. Additional evaluation and retrieval papers remain
+deferred pending full-method assessment. This evidence contract does not claim
+that author profiles, revisions or human quality qualification have shipped.
+Existing output-mode resolution and the default unaltered behavior remain the
+integration contract.
+
 The voice framework addon provides a profile-based approach to writing consistency. Instead of maintaining a list of banned patterns, you define the voice you want and apply it to content. Four built-in profiles cover the most common technical writing registers; you can create custom profiles or blend existing ones with weighted ratios.
 
 ## Why Profile-Based Instead of Pattern-Avoidance

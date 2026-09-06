@@ -9,6 +9,11 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- Natural voice evidence ledger and ownership ADR with pinned research artifacts,
+  bounded claim mappings, deferred additional-source assessments, and validation
+  rejecting anecdotal release thresholds (#2293). This establishes the evidence
+  contract; it does not qualify generated voice quality.
+
 - Experimental DeepSeek Harness provider (`deepseek-harness`, alias `dsh`) with
   AGENTS-first context, native filesystem skills, least-authority Cordis
   defaults, exact-version-gated headless and SDK JSON-RPC execution, raw v2

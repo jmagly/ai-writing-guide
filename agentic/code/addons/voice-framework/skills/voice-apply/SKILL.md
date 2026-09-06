@@ -18,6 +18,15 @@ triggers:
 
 Transform content to match a specified voice profile. This skill loads voice profiles and applies their characteristics (tone, vocabulary, structure, perspective) to new or existing content.
 
+Evidence constraints are recorded in [the natural voice ownership ADR](../../docs/natural-voice/ADR-001-evidence-and-ownership.md)
+and [versioned ledger](../../docs/natural-voice/evidence-ledger.v1.json).
+Treat phrase highlights as contextual editorial suggestions, never authorship
+probabilities. Preserve supplied facts, uncertainty and author intent; an assertive
+tone does not strengthen evidence. Author notes were already part of the cited
+post-editing study. Neither topic-matched examples nor a fixed example count is
+established as a universally best choice. The ledger is an evidence contract,
+not a claim that the planned natural voice pipeline has been qualified.
+
 ## When This Skill Applies
 
 - User asks to "write in X voice" or "use Y tone"
