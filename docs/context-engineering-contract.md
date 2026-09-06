@@ -20,7 +20,7 @@ Reset when the objective changes, instructions conflict, provenance cannot be re
 ## Provider adapters
 
 - Claude Code: project memory/imports plus `/compact` or a fresh session; see [Claude context budget](providers/claude-context-budget.md).
-- Codex: `AGENTS.md`, skills, and goal/commentary summaries; see [Codex provider guidance](agents/providers/codex.md#skills-context-budget-2-ceiling).
+- Codex: `AGENTS.md`, skills, and goal/commentary summaries; see the public [Codex quickstart](integrations/codex-quickstart.md) and its provider-reference links.
 - Generic fallback: packet manifest plus resolvable paths and a persisted handoff; begin a new conversation at reset criteria.
 
 Adapters preserve packet fields, thresholds, artifact-first persistence, and the verification link.
