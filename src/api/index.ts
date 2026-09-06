@@ -48,3 +48,7 @@ export {
   type ArtifactTrustPolicySettings,
   type TrustedChannelState,
 } from '../security/artifact-trust.js';
+
+export * from '../writing/writer-profile.js';
+export * from '../writing/writer-profile-store.js';
+export * from '../writing/writer-profile-legacy.js';

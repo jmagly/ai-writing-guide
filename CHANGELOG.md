@@ -9,6 +9,11 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- Opt-in writer profile sidecars with approved sample evidence, author overrides,
+  lossless legacy attachments, scoped revisioned storage, controlled exports,
+  revocation, and advisory output-mode compilation (#2294). Legacy voice files
+  retain their existing loading behavior.
+
 - Contextual writing diagnostics with UTF-16 spans, protected contexts,
   reasoned exceptions, explicit rule overrides and repetition review across
   words, paragraphs and documents (#2297). Legacy validator fields remain
