@@ -1520,6 +1520,26 @@
       ]
     },
     {
+      "logicalName": "agentic.code.frameworks.sdlc.complete.schemas.verification.contract",
+      "id": "https://aiwg.io/schemas/verification-contract.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "lifecycle": "active",
+      "stability": "stable",
+      "owner": {
+        "id": "bundle-sdlc-complete"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/frameworks/sdlc-complete/schemas/verification-contract.schema.json"
+      },
+      "compatibility": {
+        "mode": "unknown"
+      },
+      "consumers": []
+    },
+    {
       "logicalName": "agentic.code.addons.aiwg.utils.workflow.schemas.workflow.capability",
       "id": "https://aiwg.io/schemas/workflow/v1/workflow-capability.schema.json",
       "version": "1.0.0",
