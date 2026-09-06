@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "fixtureVersion": "1.0.0",
+  "description": "Developer-authored synthetic prose and declared descriptors for deterministic selector comparison; no model or human quality evaluation.",
+  "seed": "voice-ablation-v1",
+  "budget": 750,
+  "sampleCounts": [
+    1,
+    2,
+    3
+  ],
+  "target": {
+    "length": 70,
+    "topicTags": [
+      "engineering"
+    ]
+  },
+  "samples": [
+    {
+      "id": "a",
+      "text": "The cache expires after an hour. Check the timestamp before retrying.",
+      "genre": "engineering",
+      "topicTags": [
+        "engineering"
+      ],
+      "styleTags": [
+        "short",
+        "direct"
+      ]
+    },
+    {
+      "id": "b",
+      "text": "I watched the light settle over the lake, leaving the hillside nearly blue.",
+      "genre": "article",
+      "topicTags": [
+        "landscape"
+      ],
+      "styleTags": [
+        "reflective",
+        "imagery"
+      ]
+    },
+    {
+      "id": "c",
+      "text": "Can we meet Tuesday? Send a time that works for you.",
+      "genre": "email",
+      "topicTags": [
+        "planning"
+      ],
+      "styleTags": [
+        "reflective",
+        "question"
+      ]
+    },
+    {
+      "id": "d",
+      "text": "First inspect the failing request. Then compare the result with the documented response.",
+      "genre": "engineering",
+      "topicTags": [
+        "engineering",
+        "debugging"
+      ],
+      "styleTags": [
+        "procedural",
+        "direct"
+      ]
+    },
+    {
+      "id": "e",
+      "text": "Small changes help. Keep the useful ones.",
+      "genre": "social",
+      "topicTags": [
+        "improvement"
+      ],
+      "styleTags": [
+        "short",
+        "reflective"
+      ]
+    },
+    {
+      "id": "f",
+      "text": "The proposal includes several independent options, each with a different balance of initial effort and maintenance cost, so the team should record which assumptions govern its choice before committing to a schedule.",
+      "genre": "article",
+      "topicTags": [
+        "planning",
+        "engineering"
+      ],
+      "styleTags": [
+        "long",
+        "qualified"
+      ]
+    }
+  ]
+}

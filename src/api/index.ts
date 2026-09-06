@@ -52,3 +52,6 @@ export {
 export * from '../writing/writer-profile.js';
 export * from '../writing/writer-profile-store.js';
 export * from '../writing/writer-profile-legacy.js';
+export * from '../writing/exemplar-selection.js';
+export * from '../writing/writing-brief.js';
+export * from '../writing/fidelity.js';

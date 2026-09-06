@@ -1,0 +1,332 @@
+{
+  "schemaVersion": 1,
+  "offsetEncoding": "utf-16",
+  "fixtures": [
+    {
+      "id": "omp",
+      "source": {
+        "repository": "/home/roctinam/dev/strategy",
+        "commit": "2197634ce5273f79310538c98c530254c65c05e3",
+        "path": "marketing/social/aiwg-omp-provider-2026-09/article.md",
+        "sha256": "659e4fc803195a2050a23f74c27ae161c0b22e00a8bfe3dbd4d2cee0a22b5a19",
+        "evidenceAsOf": "2026-09-04",
+        "historical": true,
+        "evidenceCaveat": "Historical launch wording and claim-ledger date; not current runtime requalification or live-publication evidence."
+      },
+      "excerpts": [
+        {
+          "id": "line-5",
+          "line": 5,
+          "originalSpan": {
+            "start": 132,
+            "end": 206
+          },
+          "text": "When a coding agent is a fork, should an integration treat it as an alias?",
+          "sha256": "017843f35c8bc0a04223b4bc9c80c17531c967f08c387f781354e519d621324e"
+        },
+        {
+          "id": "line-11",
+          "line": 11,
+          "originalSpan": {
+            "start": 403,
+            "end": 816
+          },
+          "text": "AIWG now has experimental support for Oh My Pi, usually called OMP. The integration uses the AIWG provider id `omp`, with `oh-my-pi` as an alias, and keeps original Pi support separate. That distinction matters because OMP is not just Pi with a different package name. It has its own native directories, profile behavior, task-agent surface, MCP configuration, model discovery, runtime modes, and session details.",
+          "sha256": "0b22bdfcb49b3249f089685ae6a40d7ae8e5cc80b1598aa2015d9f3de426e638"
+        },
+        {
+          "id": "line-29",
+          "line": 29,
+          "originalSpan": {
+            "start": 2378,
+            "end": 2443
+          },
+          "text": "For AIWG’s announcement language, the safe attribution is narrow:",
+          "sha256": "5867060ef084a22c41ca93100bb38b99e885eea2874080f0d963adb2f6accbed"
+        },
+        {
+          "id": "line-98",
+          "line": 98,
+          "originalSpan": {
+            "start": 5669,
+            "end": 5878
+          },
+          "text": "AIWG does not install OMP. It does not choose your LLM backend. It does not write credentials. It does not turn OMP trust into AIWG trust. It does not claim every upstream feature is an AIWG-supported feature.",
+          "sha256": "5a3bb4f8401471d687a9e9264b259740d0b60fb78d639e9ec58a715fb5a331ec"
+        },
+        {
+          "id": "line-100",
+          "line": 100,
+          "originalSpan": {
+            "start": 5880,
+            "end": 6163
+          },
+          "text": "That last point matters. OMP has a wide native surface. AIWG can report a capability as native, bridged, unsupported, or unverified. Skipped conformance is not the same thing as support. A local Linux smoke result is not the same thing as verified behavior on every operating system.",
+          "sha256": "af4b7c6e9bd8ec819aa02dd99489aaaf3f7064da1c9361a784bda3bce443ded3"
+        }
+      ],
+      "annotations": [
+        {
+          "kind": "reader-first-opening",
+          "excerptId": "line-5",
+          "instruction": "Lead with the existing deployment task and experimental OMP support; retain omp/oh-my-pi identities and separation from Pi."
+        },
+        {
+          "kind": "remove-internal-review-language",
+          "excerptId": "line-29",
+          "instruction": "Remove campaign/announcement editorial instructions from reader-facing text; preserve attribution and support qualifications."
+        },
+        {
+          "kind": "retain-qualification",
+          "excerptId": "line-11",
+          "literal": "experimental",
+          "instruction": "Voice or channel changes must not strengthen the historical support claim."
+        },
+        {
+          "kind": "retain-limitation",
+          "excerptId": "line-100",
+          "instruction": "Retain the evidence boundary; edits require independent review of meaning."
+        }
+      ],
+      "brief": {
+        "schemaVersion": 1,
+        "id": "launch-omp",
+        "operation": "edit-existing",
+        "reader": {
+          "task": "Preview deployment of AIWG workflow resources into Oh My Pi.",
+          "audience": "Developers using AIWG with the named CLI",
+          "requirements": [
+            "State the useful action early",
+            "Keep necessary support limits near the relevant action"
+          ]
+        },
+        "intendedAction": "Inspect a dry-run before deploying resources.",
+        "exclusions": [
+          "Internal campaign-review instructions",
+          "Unsupported partnership or runtime qualification claims"
+        ],
+        "inputs": [
+          {
+            "id": "historical-draft",
+            "kind": "existing-draft",
+            "text": "When a coding agent is a fork, should an integration treat it as an alias?\n\nAIWG now has experimental support for Oh My Pi, usually called OMP. The integration uses the AIWG provider id `omp`, with `oh-my-pi` as an alias, and keeps original Pi support separate. That distinction matters because OMP is not just Pi with a different package name. It has its own native directories, profile behavior, task-agent surface, MCP configuration, model discovery, runtime modes, and session details.\n\nFor AIWG’s announcement language, the safe attribution is narrow:\n\nAIWG does not install OMP. It does not choose your LLM backend. It does not write credentials. It does not turn OMP trust into AIWG trust. It does not claim every upstream feature is an AIWG-supported feature.\n\nThat last point matters. OMP has a wide native surface. AIWG can report a capability as native, bridged, unsupported, or unverified. Skipped conformance is not the same thing as support. A local Linux smoke result is not the same thing as verified behavior on every operating system.",
+            "sha256": "225cb5bd6de80cc2746ac37e9034c443bcffe3dc61d446543036002d9ccd6c39",
+            "provenance": {
+              "source": "marketing/social/aiwg-omp-provider-2026-09/article.md@2197634ce5273f79310538c98c530254c65c05e3",
+              "version": "2026-09-04"
+            },
+            "authorApproved": false
+          }
+        ],
+        "propositions": [
+          {
+            "id": "experimental-support",
+            "text": "AIWG now has experimental support for Oh My Pi, usually called OMP.",
+            "evidenceStrength": "experimental",
+            "evidence": [
+              {
+                "inputId": "historical-draft",
+                "start": 76,
+                "end": 143
+              }
+            ],
+            "qualifiers": [
+              "experimental"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "id": "qualification-boundary",
+            "text": "That last point matters. OMP has a wide native surface. AIWG can report a capability as native, bridged, unsupported, or unverified. Skipped conformance is not the same thing as support. A local Linux smoke result is not the same thing as verified behavior on every operating system.",
+            "evidenceStrength": "reported",
+            "evidence": [
+              {
+                "inputId": "historical-draft",
+                "start": 769,
+                "end": 1052
+              }
+            ],
+            "qualifiers": [
+              "local Linux smoke result"
+            ]
+          }
+        ],
+        "authorClaims": [],
+        "sourceInputId": "historical-draft",
+        "permissions": {
+          "rephrase": true,
+          "reorder": true,
+          "addContent": false,
+          "corrections": []
+        }
+      }
+    },
+    {
+      "id": "antigravity",
+      "source": {
+        "repository": "/home/roctinam/dev/strategy",
+        "commit": "2197634ce5273f79310538c98c530254c65c05e3",
+        "path": "marketing/social/aiwg-antigravity-provider-2026-09/article.md",
+        "sha256": "585f5de238a71fdd6059b001dc2f285e30654a3b88567aac2f162d395dc3fed5",
+        "evidenceAsOf": "2026-09-05",
+        "historical": true,
+        "evidenceCaveat": "Historical launch wording and claim-ledger date; not current runtime requalification or live-publication evidence."
+      },
+      "excerpts": [
+        {
+          "id": "line-5",
+          "line": 5,
+          "originalSpan": {
+            "start": 163,
+            "end": 224
+          },
+          "text": "Google Antigravity is not one thing for integration purposes.",
+          "sha256": "35838ef939cf7874ea62ecc3bc38833234ad4b3910c8c15f36abbb99dbb8612c"
+        },
+        {
+          "id": "line-9",
+          "line": 9,
+          "originalSpan": {
+            "start": 449,
+            "end": 626
+          },
+          "text": "AIWG now has experimental support for Google Antigravity CLI. The provider id is `antigravity`, and `agy` is accepted as the alias because `agy` is Google's CLI executable name.",
+          "sha256": "31662fd560405192f3642899a9e30ae5fc1b23d4288e86d4cfdf7be415bd7ed8"
+        },
+        {
+          "id": "line-57",
+          "line": 57,
+          "originalSpan": {
+            "start": 2936,
+            "end": 3259
+          },
+          "text": "The provider refuses undocumented global skill deployment. That is not a missing marketing bullet; it is the safer implementation choice. The local AIWG assessment found conflicting Google documentation for global skill paths, so initial support stays with workspace skills until that behavior is version-pinned and tested.",
+          "sha256": "2a62c7eaa28f3bb5d4a9f43b55365f5a0672beddaf0e574991449cb90589633e"
+        },
+        {
+          "id": "line-65",
+          "line": 65,
+          "originalSpan": {
+            "start": 3768,
+            "end": 4035
+          },
+          "text": "Authenticated model execution has not been qualified for this provider announcement. The support claim is narrower: offline conformance is pinned to a local Antigravity CLI `1.1.26` observation, and normal CI uses sanitized fixtures for JSON and stream JSON behavior.",
+          "sha256": "41c481a35ff06cb6d9646de871c49183de0d658c914557a9bf6ed63b792a05bd"
+        },
+        {
+          "id": "line-73",
+          "line": 73,
+          "originalSpan": {
+            "start": 4530,
+            "end": 4744
+          },
+          "text": "That is a normal kind of drift for a fast-moving tool, but it affects support language. The campaign should not say \"latest\" or imply universal runtime qualification. It should say exactly what was tested and when.",
+          "sha256": "22f013eb11b62cf504775efcf24cf91c10f6dc2bd36da9829d47f59984225b57"
+        }
+      ],
+      "annotations": [
+        {
+          "kind": "reader-first-opening",
+          "excerptId": "line-5",
+          "instruction": "Lead with project-scoped deployment into Antigravity CLI and retain experimental status; do not extend the claim to desktop, SDK or IDE surfaces."
+        },
+        {
+          "kind": "remove-internal-review-language",
+          "excerptId": "line-57",
+          "instruction": "Remove the marketing-bullet and safer-choice editorial framing; retain the documented global-path conflict and project-only limitation."
+        },
+        {
+          "kind": "remove-internal-review-language",
+          "excerptId": "line-73",
+          "instruction": "Remove campaign/announcement editorial instructions from reader-facing text; preserve attribution and support qualifications."
+        },
+        {
+          "kind": "retain-qualification",
+          "excerptId": "line-9",
+          "literal": "experimental",
+          "instruction": "Voice or channel changes must not strengthen the historical support claim."
+        },
+        {
+          "kind": "retain-limitation",
+          "excerptId": "line-65",
+          "instruction": "Retain the evidence boundary; edits require independent review of meaning."
+        }
+      ],
+      "brief": {
+        "schemaVersion": 1,
+        "id": "launch-antigravity",
+        "operation": "edit-existing",
+        "reader": {
+          "task": "Preview project-scoped AIWG resource deployment into Antigravity CLI.",
+          "audience": "Developers using AIWG with the named CLI",
+          "requirements": [
+            "State the useful action early",
+            "Keep necessary support limits near the relevant action"
+          ]
+        },
+        "intendedAction": "Inspect a dry-run before deploying resources.",
+        "exclusions": [
+          "Internal campaign-review instructions",
+          "Unsupported partnership or runtime qualification claims"
+        ],
+        "inputs": [
+          {
+            "id": "historical-draft",
+            "kind": "existing-draft",
+            "text": "Google Antigravity is not one thing for integration purposes.\n\nAIWG now has experimental support for Google Antigravity CLI. The provider id is `antigravity`, and `agy` is accepted as the alias because `agy` is Google's CLI executable name.\n\nThe provider refuses undocumented global skill deployment. That is not a missing marketing bullet; it is the safer implementation choice. The local AIWG assessment found conflicting Google documentation for global skill paths, so initial support stays with workspace skills until that behavior is version-pinned and tested.\n\nAuthenticated model execution has not been qualified for this provider announcement. The support claim is narrower: offline conformance is pinned to a local Antigravity CLI `1.1.26` observation, and normal CI uses sanitized fixtures for JSON and stream JSON behavior.\n\nThat is a normal kind of drift for a fast-moving tool, but it affects support language. The campaign should not say \"latest\" or imply universal runtime qualification. It should say exactly what was tested and when.",
+            "sha256": "a798e1d34b2887753f3303cdf6b1eeac1703e8d354d352ee59772c863112046b",
+            "provenance": {
+              "source": "marketing/social/aiwg-antigravity-provider-2026-09/article.md@2197634ce5273f79310538c98c530254c65c05e3",
+              "version": "2026-09-05"
+            },
+            "authorApproved": false
+          }
+        ],
+        "propositions": [
+          {
+            "id": "experimental-support",
+            "text": "AIWG now has experimental support for Google Antigravity CLI.",
+            "evidenceStrength": "experimental",
+            "evidence": [
+              {
+                "inputId": "historical-draft",
+                "start": 63,
+                "end": 124
+              }
+            ],
+            "qualifiers": [
+              "experimental"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "id": "qualification-boundary",
+            "text": "Authenticated model execution has not been qualified for this provider announcement. The support claim is narrower: offline conformance is pinned to a local Antigravity CLI `1.1.26` observation, and normal CI uses sanitized fixtures for JSON and stream JSON behavior.",
+            "evidenceStrength": "reported",
+            "evidence": [
+              {
+                "inputId": "historical-draft",
+                "start": 567,
+                "end": 834
+              }
+            ],
+            "qualifiers": [
+              "has not been qualified",
+              "1.1.26"
+            ]
+          }
+        ],
+        "authorClaims": [],
+        "sourceInputId": "historical-draft",
+        "permissions": {
+          "rephrase": true,
+          "reorder": true,
+          "addContent": false,
+          "corrections": []
+        }
+      }
+    }
+  ]
+}

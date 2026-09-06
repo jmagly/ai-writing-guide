@@ -9,6 +9,14 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- Deterministic, profile-scoped exemplar selection with four budgeted strategies,
+  split leakage checks and reproducible receipts (#2295). Fixture ablations
+  measure selector behavior; model-quality comparison remains unqualified.
+- Structured fact/intent/audience briefs and authorized proofreading with
+  grounded author claims and pinned provider-launch annotations (#2296).
+- Conservative fidelity review and final mandatory output-mode validation,
+  including accurate attempted/retained fallback receipts (#2298).
+
 - Opt-in writer profile sidecars with approved sample evidence, author overrides,
   lossless legacy attachments, scoped revisioned storage, controlled exports,
   revocation, and advisory output-mode compilation (#2294). Legacy voice files
