@@ -13,6 +13,7 @@ const CURRENT_PLATFORM_IDS = [
   'codex',
   'copilot',
   'cursor',
+  'deepseek-harness',
   'factory',
   'hermes',
   'opencode',
@@ -54,6 +55,7 @@ describe('provider definition registry', () => {
     expect(normalizeProviderDefinitionId('devin-local')).toBe('windsurf');
     expect(normalizeProviderDefinitionId('cascade')).toBe('windsurf');
     expect(normalizeProviderDefinitionId('pi-coding-agent')).toBe('pi');
+    expect(normalizeProviderDefinitionId('dsh')).toBe('deepseek-harness');
     expect(normalizeProviderDefinitionId('missing-provider')).toBeNull();
   });
 

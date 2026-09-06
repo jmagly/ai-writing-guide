@@ -1,0 +1,10 @@
+# AIWG-owned safe defaults for DeepSeek Harness. No secrets belong here.
+- id: session-persistence-jsonl
+  config:
+    compression: none
+- id: session-telemetry-otel
+  disabled: true
+- id: sandbox-policy
+  config:
+    mode: workspace-write
+    workspaceRoot: !!js process.cwd()

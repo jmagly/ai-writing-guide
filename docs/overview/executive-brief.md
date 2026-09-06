@@ -8,7 +8,7 @@
 
 ## What AIWG Does
 
-AIWG is a deployment tool and support utility for AI context. It copies markdown and YAML source files — agents, skills, commands, rules, templates — into the paths each provider reads, including the portable `.agents/skills/` surface, so one source of truth works across 14 named provider integrations, including Google Antigravity CLI. A separate `generic` fallback adapter supports custom harnesses and is not included in that count. Around that core, it ships optional utilities the base providers do not provide: persistent `.aiwg/` artifact memory, multi-agent orchestration, workflow recovery loops, artifact indexing, and cost telemetry.
+AIWG is a deployment tool and support utility for AI context. It copies markdown and YAML source files — agents, skills, commands, rules, templates — into the paths each provider reads, including the portable `.agents/skills/` surface, so one source of truth works across 15 named provider integrations, including Google Antigravity CLI and DeepSeek Harness. A separate `generic` fallback adapter supports custom harnesses and is not included in that count. Around that core, it ships optional utilities the base providers do not provide: persistent `.aiwg/` artifact memory, multi-agent orchestration, workflow recovery loops, artifact indexing, and cost telemetry.
 
 Unlike simple prompt tools, AIWG gives AI systems the memory to maintain project context across sessions, the coordination mechanisms to synthesize multiple perspectives, and the recovery protocols to handle failures systematically — all expressed as file conventions and deployment rules rather than a monolithic runtime you depend on.
 

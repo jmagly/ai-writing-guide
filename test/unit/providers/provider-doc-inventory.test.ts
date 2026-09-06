@@ -10,13 +10,13 @@ describe('public provider inventory', () => {
   it('matches the named built-in provider registry exactly', () => {
     const namedProviders = listProviderDefinitions().filter(({ id }) => id !== 'generic');
     const inventory = readFileSync(resolve(projectRoot, 'docs/providers/provider-inventory.md'), 'utf8');
-    const documentedIds = [...inventory.matchAll(/^\| `([a-z]+)` \|/gm)].map((match) => match[1]);
+    const documentedIds = [...inventory.matchAll(/^\| `([a-z-]+)` \|/gm)].map((match) => match[1]);
 
-    expect(namedProviders).toHaveLength(14);
-    expect(listProviderDefinitions()).toHaveLength(15);
+    expect(namedProviders).toHaveLength(15);
+    expect(listProviderDefinitions()).toHaveLength(16);
     expect(documentedIds).toEqual(namedProviders.map(({ id }) => id));
     expect(inventory).toContain(`**${namedProviders.length} named provider integrations**`);
-    expect(inventory).toMatch(/`generic`\s+adapter is a fifteenth registry entry/);
+    expect(inventory).toMatch(/`generic`\s+adapter is a sixteenth registry entry/);
     for (const provider of namedProviders) {
       const status = provider.status[0].toUpperCase() + provider.status.slice(1);
       expect(inventory, provider.id).toMatch(
@@ -25,7 +25,7 @@ describe('public provider inventory', () => {
     }
   });
 
-  it('keeps primary public surfaces on the same count and includes both OMP and Pi', () => {
+  it('keeps primary public surfaces on the same count and includes DeepSeek Harness, OMP, and Pi', () => {
     const publicFiles = [
       'README.md',
       'docs/config.json',
@@ -38,10 +38,11 @@ describe('public provider inventory', () => {
 
     for (const relativePath of publicFiles) {
       const content = readFileSync(resolve(projectRoot, relativePath), 'utf8');
-      expect(content, relativePath).toMatch(/14 (?:named )?provider integrations/i);
+      expect(content, relativePath).toMatch(/15 (?:named )?provider integrations/i);
       expect(content, relativePath).toMatch(/Antigravity/i);
       expect(content, relativePath).toMatch(/Pi Coding Agent/i);
       expect(content, relativePath).toMatch(/Oh My Pi/i);
+      expect(content, relativePath).toMatch(/DeepSeek Harness/i);
     }
   });
 
@@ -54,8 +55,13 @@ describe('public provider inventory', () => {
 
     expect(new Set(docsManifest.order).size).toBe(docsManifest.order.length);
     expect(docsManifest.order).toContain('integrations/omp-quickstart');
+    expect(docsManifest.order).toContain('integrations/deepseek-harness-quickstart');
     expect(integrationManifest.order).toContain('omp-quickstart');
+    expect(integrationManifest.order).toContain('deepseek-harness-quickstart');
     expect(sectionIds).toContain('integrations/omp-quickstart');
+    expect(sectionIds).toContain('integrations/deepseek-harness-quickstart');
+    expect(sectionIds).toContain('providers/deepseek-harness');
+    expect(sectionIds).toContain('providers/deepseek-harness-sessions');
     expect(sectionIds).toContain('providers/omp');
     expect(sectionIds).toContain('providers/omp-verification');
     expect(sectionIds).toContain('providers/omp-sessions');
@@ -83,6 +89,7 @@ describe('public provider inventory', () => {
       'codex-quickstart',
       'copilot-quickstart',
       'cursor-quickstart',
+      'deepseek-harness-quickstart',
       'factory-quickstart',
       'hermes-quickstart',
       'opencode-quickstart',
@@ -95,6 +102,7 @@ describe('public provider inventory', () => {
     ]);
     expect(homepage).toContain('href="#integrations/omp-quickstart">Oh My Pi</a>');
     expect(homepage).toContain('href="#integrations/pi-quickstart">Pi Coding Agent (pi.dev)</a>');
+    expect(homepage).toContain('href="#integrations/deepseek-harness-quickstart">DeepSeek Harness</a>');
     expect(homepage).not.toMatch(/Local\/Ollama/);
   });
 });

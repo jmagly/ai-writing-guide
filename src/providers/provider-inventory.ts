@@ -16,6 +16,7 @@ const PROVIDER_EXECUTABLES: Partial<Record<Platform, string[]>> = {
   codex: ['codex'],
   copilot: ['github-copilot-cli', 'copilot'],
   cursor: ['cursor'],
+  'deepseek-harness': ['dsh'],
   factory: ['droid'],
   hermes: ['hermes'],
   opencode: ['opencode'],

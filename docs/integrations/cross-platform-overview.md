@@ -1,6 +1,6 @@
 # Cross-Platform Overview
 
-AIWG has 14 named provider integrations plus a provider-neutral `generic`
+AIWG has 15 named provider integrations plus a provider-neutral `generic`
 fallback adapter. **One command projects AIWG onto the surfaces supported by
 the selected provider.**
 
@@ -15,6 +15,7 @@ the selected provider.**
 | OpenAI/Codex | `aiwg use sdlc --provider codex` | AGENTS.md |
 | GitHub Copilot | `aiwg use sdlc --provider copilot` | copilot-instructions.md |
 | Cursor | `aiwg use sdlc --provider cursor` | .cursor/rules/ (MDC) |
+| DeepSeek Harness | `aiwg use sdlc --provider dsh` | AGENTS.md |
 | Factory AI | `aiwg use sdlc --provider factory` | AGENTS.md |
 | Hermes | `aiwg use sdlc --provider hermes` | AGENTS.md |
 | OpenCode | `aiwg use sdlc --provider opencode` | AGENTS.md |

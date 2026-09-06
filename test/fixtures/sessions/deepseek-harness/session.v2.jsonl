@@ -1,0 +1,7 @@
+{"type":"session","version":2,"id":"dsh-session-1","createdAt":1788600000000,"cwd":"/workspace","isSeeded":false,"delegationDepth":0,"agentPreset":"standard"}
+{"type":"turn/start","seq":0,"time":1788600000001,"data":{"turn":1}}
+{"type":"user/message","seq":1,"time":1788600000002,"data":{"id":"user-1","role":"user","content":[{"type":"text","text":"hello"}],"source":{"kind":"user"}}}
+{"type":"request/context","seq":2,"time":1788600000003,"data":{"system":"sensitive system projection"}}
+{"type":"assistant/message","seq":3,"time":1788600000004,"data":{"turn":1,"step":1,"message":{"id":"assistant-1","role":"assistant","content":[{"type":"reasoning","text":"private reasoning"},{"type":"text","text":"hello back"}],"source":{"kind":"model","provider":"openrouter","model":"deepseek/deepseek-chat-v3.1"}}}}
+{"type":"tool/result","seq":4,"time":1788600000005,"data":{"id":"tool-1","toolName":"read","content":"secret tool output"}}
+{"type":"turn/end","seq":5,"time":1788600000006,"data":{"turn":1,"reason":{"kind":"completed"}}}

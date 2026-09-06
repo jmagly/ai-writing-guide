@@ -89,6 +89,14 @@
       },
       "sourceUrl": "https://github.com/earendil-works/pi/tree/main/packages/coding-agent#providers--models", "verifiedAt": "2026-09-04"
     },
+    "deepseek-harness": {
+      "roles": {
+        "reasoning": { "id": "configured/reasoning", "status": "unverified", "observed": false },
+        "coding": { "id": "configured/coding", "status": "unverified", "observed": false },
+        "efficiency": { "id": "configured/efficiency", "status": "unverified", "observed": false }
+      },
+      "sourceUrl": "https://github.com/deepseek-ai/deepseek-harness", "verifiedAt": "2026-09-05"
+    },
     "warp": {
       "roles": {
         "reasoning": { "id": "profile-selected", "status": "unverified", "observed": false },

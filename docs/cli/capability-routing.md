@@ -12,7 +12,7 @@ stable_id: aiwg.agent-reference.capability-routing
 > [Start Here](../getting-started/start-here.md).
 
 > **Version**: 2026.5.0+
-> **Status**: Active — landed across all 13 named provider integrations
+> **Status**: Active — landed across all 15 named provider integrations
 > **Reference**: epics [#1212](https://git.integrolabs.net/roctinam/aiwg/issues/1212), [#1217](https://git.integrolabs.net/roctinam/aiwg/issues/1217), [#1218](https://git.integrolabs.net/roctinam/aiwg/issues/1218); [`skill-discovery`](../../agentic/code/addons/aiwg-utils/rules/skill-discovery.md) rule (HIGH)
 
 ## What changed and why
@@ -283,7 +283,7 @@ Two-step pattern by design. **Discover** ranks candidates and returns metadata. 
 
 ## Per-provider deployment paths
 
-The kernel + standard split applies across all 13 named integrations. Each
+The kernel + standard split applies across all 15 named integrations. Each
 provider honors `--copy-all` on the skill surface defined by its registry
 entry.
 

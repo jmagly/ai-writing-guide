@@ -19,12 +19,13 @@ import {
 } from '../../../src/sessions/index.js';
 
 describe('session contracts', () => {
-  it('asserts exactly 14 canonical provider IDs with the documented Windsurf alias', () => {
+  it('asserts exactly 15 canonical provider IDs with documented compatibility aliases', () => {
     expect(SESSION_PROVIDER_IDS).toEqual([
       'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
-      'opencode', 'openclaw', 'openhuman', 'pi', 'omp', 'warp', 'devin-desktop', 'generic',
+      'opencode', 'openclaw', 'openhuman', 'pi', 'omp', 'deepseek-harness', 'warp', 'devin-desktop', 'generic',
     ]);
     expect(assertSessionProviderId('windsurf')).toBe('devin-desktop');
+    expect(assertSessionProviderId('dsh')).toBe('deepseek-harness');
     expect(() => assertSessionProviderId('factory-ai')).toThrowError(
       expect.objectContaining({ code: 'UNKNOWN_PROVIDER' }),
     );

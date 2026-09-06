@@ -3,16 +3,17 @@ import { z } from 'zod';
 export const SESSION_CONTRACT_VERSION = '1.0.0' as const;
 export const SESSION_PROVIDER_IDS = [
   'claude', 'codex', 'copilot', 'cursor', 'factory', 'hermes',
-  'opencode', 'openclaw', 'openhuman', 'pi', 'omp', 'warp', 'devin-desktop', 'generic',
+  'opencode', 'openclaw', 'openhuman', 'pi', 'omp', 'deepseek-harness', 'warp', 'devin-desktop', 'generic',
 ] as const satisfies readonly [
   string, string, string, string, string, string,
-  string, string, string, string, string, string, string, string,
+  string, string, string, string, string, string, string, string, string,
 ];
 
 export const SessionProviderIdSchema = z.enum(SESSION_PROVIDER_IDS);
 export type SessionProviderId = z.infer<typeof SessionProviderIdSchema>;
 export const SESSION_PROVIDER_ALIASES = Object.freeze({
   windsurf: 'devin-desktop',
+  dsh: 'deepseek-harness',
 } as const);
 const CompatibleSessionProviderIdSchema = z.preprocess(
   (value) => typeof value === 'string'

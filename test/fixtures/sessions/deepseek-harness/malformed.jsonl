@@ -1,0 +1,2 @@
+{"type":"session","version":2,"id":"dsh-malformed","createdAt":1788600000000,"isSeeded":false,"delegationDepth":0}
+{"type":"turn/start","seq":"not-an-integer","time":1788600000001,"data":{}}

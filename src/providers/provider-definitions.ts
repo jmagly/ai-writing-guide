@@ -129,6 +129,13 @@ export interface ProviderDefinition {
   aliases: string[];
   status: ProviderStatus;
   builtIn: boolean;
+  upstream?: {
+    source: string;
+    version: string;
+    revision: string;
+    runtime: string;
+    lastVerified: string;
+  };
   surfaces: ProviderSurface;
   detection: ProviderDetection;
   paths: ProviderPaths;
@@ -158,6 +165,7 @@ const ProviderDefinitionSchema = z.object({
     'codex',
     'copilot',
     'cursor',
+    'deepseek-harness',
     'factory',
     'hermes',
     'opencode',
@@ -173,6 +181,13 @@ const ProviderDefinitionSchema = z.object({
   aliases: z.array(z.string().min(1)),
   status: z.enum(['stable', 'experimental', 'deprecated']),
   builtIn: z.boolean(),
+  upstream: z.object({
+    source: z.string().url(),
+    version: z.string().min(1),
+    revision: z.string().regex(/^[0-9a-f]{40}$/),
+    runtime: z.string().min(1),
+    lastVerified: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }).optional(),
   surfaces: z.object({
     primary: z.string().min(1),
     compatibility: z.array(z.string().min(1)),
@@ -272,6 +287,7 @@ export const PROVIDER_IDS: readonly Platform[] = [
   'codex',
   'copilot',
   'cursor',
+  'deepseek-harness',
   'factory',
   'hermes',
   'opencode',
@@ -331,6 +347,17 @@ const CONTEXT_CONTRACTS: Record<Platform, ProviderContextContract> = {
     loadMode: 'prose-directive', includeSyntax: null, configRegistration: null,
     bootstrapTargets: ['AGENTS.md'], maxContextBytes: null, recommendedMaxLines: 500, nestedContext: false, support: 'supported',
     verification: { method: 'official Cursor rules and CLI documentation', source: 'https://docs.cursor.com/context/rules-for-ai', lastVerified: VERIFIED_ON },
+  },
+  'deepseek-harness': {
+    startupFiles: ['AGENTS.md', 'CLAUDE.md'],
+    precedence: ['provider/system', 'project AGENTS.md or CLAUDE.md', 'nested project context'],
+    loadMode: 'prose-directive', includeSyntax: null, configRegistration: null,
+    bootstrapTargets: ['AGENTS.md'], maxContextBytes: 65536, recommendedMaxLines: null, nestedContext: true, support: 'supported',
+    verification: {
+      method: 'DeepSeek Harness instruction and filesystem-skill source review',
+      source: 'https://github.com/deepseek-ai/deepseek-harness',
+      lastVerified: '2026-09-05',
+    },
   },
   factory: {
     startupFiles: ['AGENTS.md', '~/.factory/AGENTS.md'], precedence: ['provider/system', 'nearest AGENTS.md', 'root AGENTS.md', 'personal override'],
@@ -885,6 +912,35 @@ const BUILT_IN_SEEDS: BuiltInSeed[] = [
       ruleFormat: 'agents-md-section',
     },
     matrixRef: 'openhuman',
+  },
+  {
+    id: 'deepseek-harness',
+    displayName: 'DeepSeek Harness',
+    aliases: ['dsh'],
+    builtIn: true,
+    upstream: {
+      source: 'https://github.com/deepseek-ai/deepseek-harness',
+      version: 'dsh-v0.1.3-alpha.1',
+      revision: 'd347e703908d0406b7a7ef80e3a0e594d86b2215',
+      runtime: 'Node.js ^22.19.0 || >=24.0.0',
+      lastVerified: '2026-09-05',
+    },
+    surfaces: {
+      primary: 'dsh', compatibility: ['deepseek-harness'],
+      precedence: ['AGENTS.md', 'CLAUDE.md', '.agents/skills/', '.dsh/skills/', '.dsh/aiwg.cordis.patch.yml'], related: [],
+    },
+    detection: { env: ['DSH_HOME'], process: ['dsh'], capabilityId: 'deepseek-harness' },
+    paths: {
+      artifacts: { agents: '.agents/skills', commands: null, skills: '.agents/skills', rules: null, behaviors: null },
+      kernelSkills: '.agents/skills',
+      contextDiscovery: { agents: '.agents/skills', skills: '.agents/skills', rules: null, behaviors: null },
+      configFile: '.dsh/aiwg.cordis.patch.yml',
+      contextFiles: { aiwgMd: true, agentsMd: true, claudeMdHook: false, hookFile: null, contextFile: 'AGENTS.md' },
+    },
+    smithPaths: { agents: '.agents/skills', commands: null, skills: '.agents/skills', rules: null, fileExtension: '.md', configFile: '.dsh/aiwg.cordis.patch.yml', aggregated: false },
+    skillNamespace: { deploymentGroup: 'deep-recursion', pathType: 'project', skillsBaseDir: '.agents/skills', subdirLayout: true },
+    adapters: { agentFormat: 'agents-md', hookBridge: null, mcpInjection: null, contextAggregation: 'agents-md', ruleFormat: 'agents-md-section' },
+    matrixRef: 'deepseek-harness',
   },
   {
     id: 'omp',

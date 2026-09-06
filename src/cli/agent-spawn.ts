@@ -63,6 +63,12 @@ export const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     dangerousFlag: '--dangerously-bypass-approvals-and-sandbox',
     name: 'OpenAI Codex',
   },
+  'deepseek-harness': {
+    binary: 'dsh',
+    dangerousFlag: null,
+    name: 'DeepSeek Harness',
+    promptPrefix: ['--profile', 'headless'],
+  },
   hermes: {
     // Hermes is a model series (NousResearch), not a confirmed standalone CLI.
     // Treat as IDE/runtime-integrated until a CLI is confirmed.
@@ -218,7 +224,10 @@ export function splitParams(params: string): string[] {
 
 // ── Provider helpers ──────────────────────────────────────────
 
-const SPAWN_PROVIDER_ALIASES: Readonly<Record<string, string>> = { agy: 'antigravity' };
+const SPAWN_PROVIDER_ALIASES: Readonly<Record<string, string>> = {
+  agy: 'antigravity',
+  dsh: 'deepseek-harness',
+};
 
 /** Get config for a provider. Unknown values fail closed instead of launching another harness. */
 export function getProviderConfig(provider: string): ProviderConfig {

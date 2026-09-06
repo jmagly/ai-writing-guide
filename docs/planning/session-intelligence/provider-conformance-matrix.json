@@ -1,6 +1,6 @@
 {
   "contractVersion": "1.0.0",
-  "canonicalProviderCount": 14,
+  "canonicalProviderCount": 15,
   "providers": [
     {
       "provider": "claude",
@@ -111,6 +111,16 @@
       "tests": "test/unit/sessions/omp-adapter.test.ts",
       "documentation": "docs/providers/omp-sessions.md",
       "conformance": {"locatorClass": "omp-session-v3-jsonl", "malformed": ["missing-header.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.jsonl", "UNKNOWN_SCHEMA_MAJOR"]}
+    },
+    {
+      "provider": "deepseek-harness",
+      "issue": 2165,
+      "status": "implemented",
+      "operations": ["discover", "inspect", "stream"],
+      "fixtures": "test/fixtures/sessions/deepseek-harness",
+      "tests": "test/unit/sessions/deepseek-harness-adapter.test.ts",
+      "documentation": "docs/providers/deepseek-harness-sessions.md",
+      "conformance": {"locatorClass": "deepseek-harness-session-v2-jsonl", "malformed": ["malformed.jsonl", "MALFORMED_SOURCE"], "schemaEvolution": ["unknown-major.jsonl", "UNKNOWN_SCHEMA_MAJOR"]}
     },
     {
       "provider": "warp",

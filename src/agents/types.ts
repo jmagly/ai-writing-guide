@@ -21,11 +21,12 @@
  * | openclaw   | ~/.openclaw/agents/      | AGENTS.md            | ✅ Full       |
  * | openhuman  | .agents/agents/          | AGENTS.md            | ✅ Full       |
  * | pi         | .agents/skills/          | AGENTS.md            | experimental |
+ * | deepseek-harness | .agents/skills/    | AGENTS.md            | experimental |
  * | generic    | agents/                  | varies               | ✅ Full       |
  *
  * CLI usage: --provider <platform> or --platform <platform>
  */
-export type Platform = 'antigravity' | 'claude' | 'codex' | 'copilot' | 'cursor' | 'factory' | 'hermes' | 'opencode' | 'openclaw' | 'openhuman' | 'pi' | 'omp' | 'warp' | 'windsurf' | 'generic';
+export type Platform = 'antigravity' | 'claude' | 'codex' | 'copilot' | 'cursor' | 'deepseek-harness' | 'factory' | 'hermes' | 'opencode' | 'openclaw' | 'openhuman' | 'pi' | 'omp' | 'warp' | 'windsurf' | 'generic';
 export type AgentCategory = 'writing-quality' | 'sdlc' | 'security' | 'testing' | 'architecture' | 'documentation' | 'general';
 export type ArtifactType = 'agent' | 'command' | 'skill' | 'rule';
 export type SupportLevel = 'native' | 'conventional' | 'aggregated';

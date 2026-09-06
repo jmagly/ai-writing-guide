@@ -12,6 +12,7 @@ import { FactorySessionAdapter } from './adapters/factory.js';
 import { OmpSessionAdapter, readOmpSessionHeader } from './adapters/omp.js';
 import { resolveOmpPaths } from '../providers/omp-paths.mjs';
 import { PiSessionAdapter } from './adapters/pi.js';
+import { DeepSeekHarnessSessionAdapter } from './adapters/deepseek-harness.js';
 import {
   SESSION_PROVIDER_IDS,
   sha256,
@@ -70,11 +71,12 @@ export interface DiscoverWorkspaceOptions {
   operatorHome?: string;
   codexRoot?: string;
   ompRoot?: string;
+  dshRoot?: string;
   createdAt?: string;
 }
 
 interface DiscoverableProvider {
-  provider: 'claude' | 'codex' | 'cursor' | 'factory' | 'pi' | 'omp';
+  provider: 'claude' | 'codex' | 'cursor' | 'factory' | 'pi' | 'omp' | 'deepseek-harness';
   adapter: SessionSourceAdapter;
   roots: string[];
 }
@@ -93,6 +95,9 @@ export async function discoverWorkspaceHistories(
   const keyWithLeadingDash = workspaceKey(workspacePath, true);
   const keyWithoutLeadingDash = workspaceKey(workspacePath, false);
   const discoverable: DiscoverableProvider[] = [
+    { provider: 'deepseek-harness', adapter: new DeepSeekHarnessSessionAdapter(), roots: options.dshRoot
+      ? [resolve(options.dshRoot)] : options.providerHome
+        ? [join(resolve(options.providerHome), '.dsh', 'sessions')] : [] },
     { provider: 'omp', adapter: new OmpSessionAdapter(), roots: options.ompRoot
       ? [resolve(options.ompRoot)] : options.providerHome
         ? [resolveOmpPaths({ home: resolve(options.providerHome), cwd: workspacePath }).sessionsDir] : [] },
@@ -148,7 +153,7 @@ export async function discoverWorkspaceHistories(
       if (await pathExists(root)) availableRoots.push(await canonicalPath(root));
     }
     if (availableRoots.length === 0) {
-      const codexNeedsAuthorization = (entry.provider === 'codex' || entry.provider === 'omp')
+      const codexNeedsAuthorization = (entry.provider === 'codex' || entry.provider === 'omp' || entry.provider === 'deepseek-harness')
         && entry.roots.length === 0;
       reports.set(entry.provider, providerReport(
         entry.provider,

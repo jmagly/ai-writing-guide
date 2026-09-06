@@ -1,0 +1,20 @@
+# Project Agent Instructions
+
+Read and follow `WORKSPACE.md` first. Then read `AIWG.md` for AIWG discovery,
+quick references, and framework routing.
+
+DeepSeek Harness loads applicable `AGENTS.md` or `CLAUDE.md` files from the
+workspace. Keep this bootstrap compact: the provider instruction loader limits
+each context file to 65,536 bytes.
+
+{{REMOTES_TOPOLOGY}}
+## AIWG resources
+
+- Shared skills are discovered natively from `.agents/skills/`.
+- The AIWG-owned Cordis overlay is `.dsh/aiwg.cordis.patch.yml`.
+- Start one-shot work with `dsh --profile headless --patch .dsh/aiwg.cordis.patch.yml`.
+- Start JSON-RPC integration with `dsh --profile sdk --patch .dsh/aiwg.cordis.patch.yml`.
+
+Credential values must be supplied through the environment variable named by
+an ephemeral route overlay. Never put credential values in this repository,
+`AGENTS.md`, Cordis patches, command arguments, or session fixtures.

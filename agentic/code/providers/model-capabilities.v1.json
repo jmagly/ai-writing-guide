@@ -118,6 +118,17 @@
       "verification": "Inspect strict JSONL state and the selected provider/model",
       "sourceUrl": "https://github.com/earendil-works/pi/tree/main/packages/coding-agent#cli-reference", "verifiedAt": "2026-09-04"
     },
+    "deepseek-harness": {
+      "agent": "native", "skill": "inherited", "globalChild": "native",
+      "identifierSyntax": "provider/model passed through the SDK initialize request or agent-default-model Cordis row",
+      "effortValues": ["minimal", "low", "medium", "high", "xhigh"],
+      "inheritance": "Subagents inherit the configured Harness route unless explicitly overridden",
+      "invalidPinFallback": "Explicit unavailable routes or models fail the request",
+      "configTarget": "Ephemeral Cordis route patch and SDK initialize request",
+      "artifactFormat": "agent-default-model config; JSON-RPC initialize params",
+      "verification": "Pinned source contract plus opt-in headless OpenRouter smoke",
+      "sourceUrl": "https://github.com/deepseek-ai/deepseek-harness", "verifiedAt": "2026-09-05"
+    },
     "windsurf": {
       "agent": "unsupported", "skill": "unsupported", "globalChild": "inherited",
       "identifierSyntax": "UI-selected provider model",
