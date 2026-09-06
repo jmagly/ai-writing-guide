@@ -103,7 +103,7 @@ This template provides a structured approach to creating SEO-optimized blog post
 **Primary CTA**:
 - Action: `[e.g., Download guide, Request demo, Subscribe to newsletter]`
 - Link: `[URL with UTM parameters]`
-- Placement: `[Mid-post and conclusion]`
+- Placement: `[At the relevant reader action; repeat only when useful]`
 
 **Secondary CTAs** (optional):
 - `[Additional conversion opportunities]`
@@ -167,8 +167,8 @@ This template provides a structured approach to creating SEO-optimized blog post
 
 **H2: `[Optional Fourth Section]`**
 
-**Conclusion (100-150 words)**:
-- Summary: `[Recap key takeaways - 2-3 bullets]`
+**Ending (only if the reader needs one)**:
+- Summary: `[Optional; omit a recap that repeats the article]`
 - CTA: `[Primary call-to-action with link]`
 - Next Steps: `[What should the reader do next?]`
 
@@ -251,7 +251,7 @@ This template provides a structured approach to creating SEO-optimized blog post
 
 **Conclusion**:
 
-`[Write 100-150 word conclusion with key takeaways and CTA]`
+`[End when the reader task is answered. Add a next action if useful; no fixed-length recap is required.]`
 
 ---
 
@@ -292,7 +292,7 @@ This template provides a structured approach to creating SEO-optimized blog post
 - [ ] **Data Visualization**: Stats presented visually where appropriate
 - [ ] **Examples**: Real-world examples or case studies included
 - [ ] **Quotes**: Expert or customer quotes add credibility
-- [ ] **CTA Placement**: Primary CTA in mid-post and conclusion
+- [ ] **CTA Placement**: CTA appears where the reader can act; scope limitations remain beside that action
 - [ ] **CTA Clarity**: CTA is specific, actionable, and benefits-oriented
 - [ ] **Social Sharing**: Social share buttons enabled
 - [ ] **Related Content**: "Read Next" or related posts suggested

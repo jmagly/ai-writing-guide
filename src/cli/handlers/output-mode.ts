@@ -31,7 +31,7 @@ async function execute(ctx: HandlerContext): Promise<HandlerResult> {
     const resolved = await resolveOutputModes(ctx.cwd, ctx.frameworkRoot, invocation);
     if (resolved.modes.length === 0) return { exitCode: 0, rawOutput: true, message: 'Effective output mode: unaltered\nContext cost: 0 tokens\nNo transformations active.' };
     const lines = resolved.modes.map((p, i) => `${i + 1}. ${p.id} [${p.kind}/${p.stage}] source=${p.source} scope=${p.scope} validation=${p.validation.level} context≈${p.contextCost ?? 0}`);
-    return { exitCode: 0, rawOutput: true, message: `Effective ordered stack:\n${lines.join('\n')}\nEstimated context cost: ${resolved.modes.reduce((n, p) => n + (p.contextCost ?? 0), 0)} tokens` };
+    return { exitCode: 0, rawOutput: true, message: `Selected ordered stack (no provider interception):\n${lines.join('\n')}\nDelivered/applied/validated: not observed by this status command.\nEstimated context cost: ${resolved.modes.reduce((n, p) => n + (p.contextCost ?? 0), 0)} tokens` };
   }
   if (!['enable', 'disable', 'clear'].includes(action)) return { exitCode: 1, message: `Unknown output-mode action '${action}'.` };
   const scope = parseScope(ctx.args);

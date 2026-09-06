@@ -6,6 +6,17 @@ Voice profile and composable output-mode system for crafting and applying consis
 
 The Voice Framework replaces pattern-avoidance approaches (like banned-patterns lists) with positive voice definition. Instead of listing what to avoid, define the voice you want and let the framework apply it consistently.
 
+## Author-controlled writing
+
+[Writing workflows](docs/writing-workflows.md) documents the local plan/proofread
+CLI, five channel packs, bounded revision, explicit learning, scoped MCP reads
+and separate receipts. These are opt-in consumers with explicit state reporting.
+Selection alone does not apply a profile to provider responses.
+
+Legacy YAML voices below remain supported as expression presets. Their numeric
+tone fields are not evidence-confidence or authorship measures, and signature
+phrase examples are optional author choices rather than automatic insertions.
+
 ## Installation
 
 ```bash
@@ -29,7 +40,7 @@ Located in `voices/templates/`:
 
 ## Skills
 
-The Voice Framework provides 5 skills (auto-applied based on context):
+The Voice Framework provides 5 skills discoverable from task context:
 
 ### voice-apply
 

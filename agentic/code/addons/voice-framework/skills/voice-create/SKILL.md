@@ -164,3 +164,11 @@ Works with other voice-framework skills:
 - Schema: `../../../schemas/voice-profile.schema.json`
 - Dimensions guide: `../voice-apply/references/voice-dimensions.md`
 - Built-in templates: `../../voices/templates/`
+
+## Downstream writing handoff
+
+Use [author-controlled writing workflows](../../docs/writing-workflows.md) for
+briefs, explicit profile selection, channel/revision APIs and receipts. Analysis
+or blending does not establish author identity, approve sample rights or activate
+a provider transformation. Keep legacy imports explicit and use separately
+accepted sidecar preferences for author-controlled execution.

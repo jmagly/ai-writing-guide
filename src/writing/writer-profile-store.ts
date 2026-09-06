@@ -25,6 +25,11 @@ export class WriterProfileStore {
     return path.join(this.directory, `${id}.json`);
   }
 
+  managedMigrationBackupDirectory(id: string): string {
+    this.profilePath(id);
+    return path.join(this.directory, 'migration-backups', id);
+  }
+
   private async regularFile(file: string): Promise<void> {
     const stat = await lstat(file);
     if (!stat.isFile() || stat.isSymbolicLink()) throw new Error('Writer profile must be a regular file');
@@ -63,7 +68,7 @@ export class WriterProfileStore {
   }
 
   /** expectedRevision=0 creates; updates require the current revision. */
-  async save(input: unknown, expectedRevision: number): Promise<WriterProfile> {
+  async save(input: unknown, expectedRevision: number, options: { preserveMigrationBackups?: boolean } = {}): Promise<WriterProfile> {
     const profile = parseWriterProfile(input);
     return this.locked(profile.id, async () => {
       let current: WriterProfile | undefined;
@@ -76,19 +81,20 @@ export class WriterProfileStore {
       try {
         await writeFile(temporary, JSON.stringify(next, null, 2) + '\n', { mode: 0o600, flag: 'wx' });
         // Invalidate before publishing: an interrupted update may lose cache, never retain stale text.
-        await this.invalidate(profile.id);
+        await this.invalidate(profile.id, options);
         await rename(temporary, file);
       } finally { await rm(temporary, { force: true }); }
       return next;
     });
   }
 
-  private async invalidate(id: string): Promise<void> {
+  private async invalidate(id: string, options: { preserveMigrationBackups?: boolean } = {}): Promise<void> {
     this.profilePath(id);
     // This store deliberately retains no historical sample content.
     for (const kind of ['cache', 'history']) {
       await rm(path.join(this.directory, kind, id), { recursive: true, force: true });
     }
+    if (!options.preserveMigrationBackups) await rm(this.managedMigrationBackupDirectory(id), { recursive: true, force: true });
   }
 
   async delete(id: string, expectedRevision: number): Promise<void> {

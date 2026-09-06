@@ -116,7 +116,7 @@ async function bounded<T>(action: () => Promise<T> | T, milliseconds: number): P
 export async function applyOutputModes(input: string, modes: ResolvedOutputMode[], options: OutputModeRuntimeOptions): Promise<OutputModeRuntimeResult> {
   options = { ...options, ...(options.fidelity ? { fidelity: { brief: parseWritingBrief(options.fidelity.brief) } } : {}) };
   if (modes.length === 0 && !options.requireFinalValidator && !options.fidelity && !options.validateFinal) return { content: input, diagnostics: [], applied: [], fallback: 'none' };
-  const activeModes = structuredClone(modes);
+  const activeModes = structuredClone(modes).filter(mode => mode.id !== 'unaltered');
   const brief = options.fidelity ? parseWritingBrief(options.fidelity.brief) : undefined;
   let content = input;
   const diagnostics: OutputModeValidationDiagnostic[] = [];

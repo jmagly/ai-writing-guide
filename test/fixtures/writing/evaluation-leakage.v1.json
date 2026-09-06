@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "status": "synthetic-only",
+  "documents": [
+    {"id":"dev","authorId":"developer","topic":"tools","split":"development","text":"A brass compass marked the northern edge of the map."},
+    {"id":"a-enroll","authorId":"author-a","topic":"gardens","split":"enrollment","text":"Our tomatoes ripened slowly beside the old brick wall."},
+    {"id":"a-test","authorId":"author-a","topic":"travel","split":"heldout","text":"The train stopped outside a village after midnight."},
+    {"id":"b-enroll","authorId":"author-b","topic":"music","split":"enrollment","text":"My cello teacher counted each bar with her pencil."},
+    {"id":"b-test","authorId":"author-b","topic":"travel","split":"heldout","text":"Pack wool socks for the coastal ferry crossing."}
+  ],
+  "leakageCases": [
+    {"kind":"normalized-copy","from":"a-test","replacement":"THE TRAIN STOPPED OUTSIDE A VILLAGE AFTER MIDNIGHT!"},
+    {"kind":"near-copy","from":"a-test","replacement":"The train stopped outside a village after midnight again."}
+  ],
+  "boundaries": ["No real authors, judges or provider calls", "Lexical duplicate checks do not detect semantic paraphrases", "Synthetic numbers are not study outcomes"]
+}

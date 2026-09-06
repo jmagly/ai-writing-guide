@@ -1,40 +1,81 @@
 {
   "name": "voice-framework-skills",
-  "description": "Voice profile management and application skills",
+  "description": "Legacy voice workflows and opt-in author-controlled writing, channel, revision and receipt guidance",
   "version": "1.0.0",
   "type": "skills-catalog",
   "skills": [
     {
       "name": "voice-apply",
-      "description": "Apply voice profiles to content with style transformation",
-      "triggers": ["apply voice", "rewrite in [voice]", "use [persona] voice", "transform to [style]"],
-      "scripts": ["scripts/voice_transformer.py"]
+      "description": "Apply selected expression guidance with a grounded brief, channel constraints, fidelity review and truthful consumer state",
+      "triggers": [
+        "apply voice",
+        "rewrite in [voice]",
+        "use [persona] voice",
+        "transform to [style]"
+      ],
+      "scripts": [
+        "scripts/voice_loader.py"
+      ]
     },
     {
       "name": "voice-create",
       "description": "Create new voice profiles from examples or specifications",
-      "triggers": ["create voice", "new voice profile", "define voice", "build persona voice"],
-      "scripts": ["scripts/voice_creator.py"]
+      "triggers": [
+        "create voice",
+        "new voice profile",
+        "define voice",
+        "build persona voice"
+      ],
+      "scripts": [
+        "scripts/voice_generator.py"
+      ]
     },
     {
       "name": "voice-blend",
       "description": "Blend multiple voice profiles with weighted combinations",
-      "triggers": ["blend voices", "mix profiles", "combine voices", "hybrid voice"],
-      "scripts": ["scripts/voice_blender.py"]
+      "triggers": [
+        "blend voices",
+        "mix profiles",
+        "combine voices",
+        "hybrid voice"
+      ],
+      "scripts": [
+        "scripts/voice_blender.py"
+      ]
     },
     {
       "name": "voice-analyze",
       "description": "Analyze content to detect voice characteristics",
-      "triggers": ["analyze voice", "detect style", "what voice is this", "voice characteristics"],
-      "scripts": ["scripts/voice_analyzer.py"]
+      "triggers": [
+        "analyze voice",
+        "detect style",
+        "what voice is this",
+        "voice characteristics"
+      ],
+      "scripts": [
+        "scripts/voice_analyzer.py"
+      ]
     },
     {
       "name": "output-mode-guide",
       "description": "Configure, use, troubleshoot, and extend composable output modes",
-      "triggers": ["use output mask", "configure output modes", "Wittgenstein-inspired style", "engineering standards language", "custom syntax style"]
+      "triggers": [
+        "use output mask",
+        "configure output modes",
+        "Wittgenstein-inspired style",
+        "engineering standards language",
+        "custom syntax style",
+        "writing plan",
+        "proofread authorized corrections",
+        "channel writing packs",
+        "writing receipts"
+      ]
     }
   ],
   "dependencies": {
-    "references": ["banned-patterns.md", "sophistication-guide.md"]
+    "references": [
+      "../docs/writing-workflows.md",
+      "../docs/natural-voice/ADR-001-evidence-and-ownership.md"
+    ]
   }
 }

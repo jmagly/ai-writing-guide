@@ -5,6 +5,9 @@ import { createHash } from 'node:crypto';
 import { dirname, extname, join, resolve } from 'node:path';
 import { parse, stringify } from 'yaml';
 import { z } from 'zod';
+import { getWritingChannelPack, type WritingChannel } from '../writing/channel-packs.js';
+import { WriterProfileStore } from '../writing/writer-profile-store.js';
+import { compileWriterProfile } from '../writing/writer-profile.js';
 import { resolveUserConfigDir } from '../config/user-config-dir.mjs';
 import type { OutputModeProfile, OutputModeScope, OutputModeState, ResolvedOutputMode } from './types.js';
 
@@ -45,6 +48,12 @@ const outputModeProfileSchema = z.object({
 });
 
 const BUILTINS: OutputModeProfile[] = [
+  ...(['article', 'social', 'email', 'engineering', 'conversation'] as WritingChannel[]).map(channel => ({
+    id: `channel-${channel}`, version: '1.0.0', description: `Advisory ${channel} structure pack`,
+    kind: 'structure' as const, stage: 'structure' as const, order: 300,
+    instructions: getWritingChannelPack(channel).instructions, provenance: { source: 'AIWG channel packs', license: 'MIT' },
+    validation: { level: 'advisory' as const }, protectedContent: [...PROTECTED],
+  })),
   {
     id: 'unaltered', version: '1.0.0', description: 'No-op mode; preserves the provider output path unchanged.',
     kind: 'presentation', stage: 'presentation', order: -1000, instructions: '',
@@ -126,12 +135,28 @@ async function loadVoiceAdapters(frameworkRoot: string): Promise<ResolvedOutputM
   return result;
 }
 
+async function loadWriterAdapters(cwd: string, scope: 'project' | 'user'): Promise<ResolvedOutputMode[]> {
+  const store = new WriterProfileStore({ cwd, scope });
+  const result: ResolvedOutputMode[] = [];
+  for (const id of await store.list()) {
+    const compiled = compileWriterProfile(await store.read(id));
+    result.push({ ...validateOutputModeProfile(compiled.profile), source: scope, sourcePath: join(store.directory, `${id}.json`) });
+  }
+  return result;
+}
+
 export async function loadOutputModeRegistry(cwd: string, frameworkRoot: string): Promise<Map<string, ResolvedOutputMode>> {
   const registry = new Map<string, ResolvedOutputMode>();
   for (const profile of BUILTINS) registry.set(profile.id, { ...profile, source: 'builtin' });
   for (const profile of await loadVoiceAdapters(frameworkRoot)) if (!registry.has(profile.id)) registry.set(profile.id, profile);
   // User overrides built-ins; project overrides user.
-  for (const entry of [...profileDirs(cwd)].reverse()) for (const profile of await loadDirectory(entry.dir, entry.source)) registry.set(profile.id, profile);
+  for (const entry of [...profileDirs(cwd)].reverse()) {
+    const profiles = await loadDirectory(entry.dir, entry.source);
+    const writers = await loadWriterAdapters(cwd, entry.source as 'project' | 'user');
+    const ids = new Set(profiles.map(profile => profile.id));
+    for (const writer of writers) if (ids.has(writer.id)) throw new Error(`Duplicate output mode '${writer.id}' from a writer sidecar and a mode file in the same scope.`);
+    for (const profile of [...profiles, ...writers]) registry.set(profile.id, profile);
+  }
   return registry;
 }
 
@@ -191,7 +216,11 @@ export async function resolveOutputModes(
     const a = modes[i], b = modes[j];
     if (a.conflicts?.includes(b.id) || b.conflicts?.includes(a.id)) throw new Error(`Output modes '${a.id}' and '${b.id}' conflict. Disable one or configure an explicit merge strategy.`);
     if (a.kind === b.kind && a.kind !== 'voice') throw new Error(`Output modes '${a.id}' and '${b.id}' share kind '${a.kind}' without a merge strategy.`);
-    if (a.kind === 'voice' && b.kind === 'voice' && a.mergeStrategy !== 'weighted-voice' && b.mergeStrategy !== 'weighted-voice') throw new Error(`Voice modes '${a.id}' and '${b.id}' require an explicit weighted-voice merge strategy.`);
+    const writerSelected = a.id.startsWith('writer-') || b.id.startsWith('writer-');
+    const missingMerge = writerSelected
+      ? a.mergeStrategy !== 'weighted-voice' || b.mergeStrategy !== 'weighted-voice'
+      : a.mergeStrategy !== 'weighted-voice' && b.mergeStrategy !== 'weighted-voice';
+    if (a.kind === 'voice' && b.kind === 'voice' && missingMerge) throw new Error(`Voice modes '${a.id}' and '${b.id}' require an explicit weighted-voice merge strategy.`);
   }
   for (const mode of modes) for (const requirement of mode.requires ?? []) if (!effective.has(requirement)) throw new Error(`Output mode '${mode.id}' requires '${requirement}'.`);
   if (modes.length === 0) diagnostics.push('unaltered: no configured modes; no instructions or post-processing are added');

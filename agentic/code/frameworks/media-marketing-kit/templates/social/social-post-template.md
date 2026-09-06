@@ -250,3 +250,9 @@ utm_term={optional_keyword}
 ---
 
 *Template version: 1.0 | MMK Framework*
+
+## Single-post chat announcements
+
+For Telegram and Discord, place the announcement and its engagement CTA in one post record. State each necessary limitation once beside the related action. Supply the actual destination character constraint to the channel adapter; if the announcement cannot fit with its qualifications, retain the original for review or fail. Never silently truncate, drop a caveat, or create a separate engagement record to satisfy a limit. Platform-specific counting and publication approval remain the publisher's responsibility.
+
+The external Strategy social-publisher contract currently requires two chat records. Treat that integration as an incompatible manual handoff until its adapter is updated; this template does not change the external contract.

@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "status": "developer-proposed-awaiting-author-review",
+  "pilots": [
+    {
+      "id": "omp",
+      "sourcePath": "/home/roctinam/dev/strategy/marketing/social/aiwg-omp-provider-2026-09/article.md",
+      "sourceFileSha256": "659e4fc803195a2050a23f74c27ae161c0b22e00a8bfe3dbd4d2cee0a22b5a19",
+      "sourceExcerpt": "Before looking at the resource map, ask one question:\n\nIf OMP is a Pi fork, can AIWG safely map `omp` to the existing `pi` provider?\n\nThe answer is no.",
+      "excerptSha256": "4ac32f3954e99da7d58a796c21a6471e7c5f0341f9879d22ae6292875ae52bf2",
+      "proposed": "AIWG has an experimental Oh My Pi integration with the provider id `omp`. Its native paths and session behavior require a distinct adapter.\n\nPreview with `aiwg use sdlc --provider omp --dry-run`. Installation, models, credentials and trust decisions remain operator-owned. Local Linux checks do not qualify every runtime configuration.\n\nWhich workflow should we test first?",
+      "cta": "Which workflow should we test first?",
+      "requiredLiterals": [
+        "experimental",
+        "`omp`",
+        "`aiwg use sdlc --provider omp --dry-run`",
+        "operator-owned",
+        "Local Linux checks"
+      ],
+      "forbiddenLiterals": [
+        "The campaign should",
+        "ask one question:"
+      ],
+      "annotation": "Proposed fixture edit replaces rhetorical or internal review framing with reader-facing facts and places each scope limitation once beside the preview action. Facts derive from the pinned article; proposed text awaits author review. No publication or generation model was run."
+    },
+    {
+      "id": "antigravity",
+      "sourcePath": "/home/roctinam/dev/strategy/marketing/social/aiwg-antigravity-provider-2026-09/article.md",
+      "sourceFileSha256": "585f5de238a71fdd6059b001dc2f285e30654a3b88567aac2f162d395dc3fed5",
+      "sourceExcerpt": "That is a normal kind of drift for a fast-moving tool, but it affects support language. The campaign should not say \"latest\" or imply universal runtime qualification. It should say exactly what was tested and when.",
+      "excerptSha256": "22f013eb11b62cf504775efcf24cf91c10f6dc2bd36da9829d47f59984225b57",
+      "proposed": "AIWG has an experimental Google Antigravity CLI integration: `antigravity`, with alias `agy`. Workspace skills use `.agents/skills/`; global skill paths remain unresolved.\n\nPreview with `aiwg use sdlc --provider antigravity --dry-run`. Offline conformance is pinned to local CLI `1.1.26` observation; authenticated model execution has not been qualified. Installation, authentication, model selection and permissions remain operator-owned.\n\nWhich CLI workflow should we test first?",
+      "cta": "Which CLI workflow should we test first?",
+      "requiredLiterals": [
+        "experimental",
+        "`antigravity`",
+        "`agy`",
+        "`.agents/skills/`",
+        "global skill paths remain unresolved",
+        "`1.1.26`",
+        "authenticated model execution has not been qualified"
+      ],
+      "forbiddenLiterals": [
+        "The campaign should",
+        "ask one question:"
+      ],
+      "annotation": "Proposed fixture edit replaces rhetorical or internal review framing with reader-facing facts and places each scope limitation once beside the preview action. Facts derive from the pinned article; proposed text awaits author review. No publication or generation model was run."
+    }
+  ]
+}

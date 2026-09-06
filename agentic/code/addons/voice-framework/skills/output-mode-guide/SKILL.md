@@ -17,6 +17,18 @@ triggers:
 
 Help the user configure, inspect, apply, troubleshoot, or author AIWG output modes.
 
+## Local writing and participating consumer recipes
+
+Use [author-controlled writing workflows](../../docs/writing-workflows.md) for the
+actual `aiwg writing plan` and `aiwg writing proofread` commands, channel APIs,
+bounded revision, explicit learning, scoped MCP resources and separate receipts.
+Planning creates a structured artifact; proofreading applies exact listed
+author-authorized corrections without a model or voice rewrite. A selected mode
+is not an applied transformation. Unsupported consumers use explicit instruction
+exports; never claim every provider response is intercepted. Keep original text
+and unresolved review decisions recoverable. Publication controls remain with
+the user's existing workflow.
+
 ## Route the request
 
 1. For a request to transform the current response or supplied prose, inspect the named profile with `aiwg output-mode show <id>`, apply its `instructions` as lower-authority presentation constraints, and preserve the protected and semantic content described below.

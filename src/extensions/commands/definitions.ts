@@ -1130,6 +1130,16 @@ export const sessionCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const writingCommand: Extension = {
+  id: 'writing', type: 'command', name: 'Writing',
+  description: 'Prepare grounded writing plans and apply authorized proofreading corrections with canonical receipts',
+  version: '1.0.0', capabilities: ['cli', 'voice', 'writing', 'proofread'],
+  keywords: ['writing', 'brief', 'proofread', 'author', 'receipt'],
+  category: 'project', platforms: { claude: 'full', generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: { type: 'command', template: 'utility', argumentHint: '<plan|proofread> --brief <file> --profile <id> [--output <new-file>]', allowedTools: ['Read', 'Write', 'Bash'] } satisfies CommandMetadata,
+};
+
 export const writerProfileCommand: Extension = {
   id: 'writer-profile', type: 'command', name: 'Writer Profiles',
   description: 'Import, inspect, export, version, compile, revoke, and delete author-controlled writer sidecars',
@@ -4023,6 +4033,7 @@ export const commandDefinitions: Extension[] = [
   sessionsCommand,
   outputModeCommand,
   writerProfileCommand,
+  writingCommand,
   schemaCommand,
   datasetCommand,
 ];

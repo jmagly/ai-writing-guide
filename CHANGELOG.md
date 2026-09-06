@@ -9,6 +9,19 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- Five opt-in channel structure packs with bounded local consumer adapters,
+  one-post chat constraints and explicit unsupported-consumer coverage (#2301).
+- Canonical writing receipts, opt-in legacy migration/rollback and a local
+  `writing plan|proofread` CLI path (#2303). No publication is performed.
+
+- Bounded voice revision, individual human edit decisions, explicit profile-learning
+  proposals and undo (#2299). Reported usage and reserved budgets remain distinct.
+- Writer sidecars in the existing mode resolver, truthful participating-consumer
+  state and scoped shared MCP profile resources (#2300). Selection alone does
+  not intercept provider responses.
+- Voice evaluation design, blinding, clustered analysis and leakage checks
+  (#2302). Real pilot data, human ratings and model comparisons remain required.
+
 - Deterministic, profile-scoped exemplar selection with four budgeted strategies,
   split leakage checks and reproducible receipts (#2295). Fixture ablations
   measure selector behavior; model-quality comparison remains unqualified.

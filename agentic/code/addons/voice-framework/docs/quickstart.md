@@ -2,7 +2,16 @@
 
 > **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
 
-Apply your first voice profile to content in about 2 minutes.
+Start with an explicit voice selection or a grounded local writing task.
+
+## Grounded writing entry point
+
+See [author-controlled writing workflows](writing-workflows.md) for copyable
+`writing plan` / `writing proofread` commands, invocation/session/project
+selection, MCP resources, channel and revision APIs, receipts and rollback.
+The examples below illustrate prompt-guided legacy voices; they are not recorded
+model runs or evidence that all provider responses are transformed. Personal
+voice and channel quality remain subject to the documented qualification gates.
 
 ## Installation
 

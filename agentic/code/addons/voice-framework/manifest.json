@@ -3,7 +3,7 @@
   "type": "addon",
   "name": "Voice Framework",
   "version": "1.0.0",
-  "description": "Voice profiles and composable runtime-selectable output modes for controlled writing and presentation.",
+  "description": "Opt-in voice profiles, author-controlled writing briefs and composable output modes with explicit consumer handoffs; no automatic provider interception.",
   "core": false,
   "autoInstall": false,
   "author": "AIWG Contributors",
@@ -15,9 +15,13 @@
     "style",
     "writing",
     "profiles",
-    "customization"
-    ,"output-modes"
-    ,"controlled-language"
+    "customization",
+    "output-modes",
+    "controlled-language",
+    "writing-briefs",
+    "writer-profiles",
+    "channel-packs",
+    "writing-receipts"
   ],
   "entry": {
     "rules": "rules/",

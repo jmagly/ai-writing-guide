@@ -140,6 +140,7 @@ import { jobHandler } from './job.js';
 import { costReportHandler } from './cost-report.js';
 import { evidenceHandler } from './evidence.js';
 import { artifactVerifyHandler } from './artifact-verify.js';
+import { writingHandler } from './writing.js';
 import { writerProfileHandler } from './writer-profile.js';
 import { outputModeHandler } from './output-mode.js';
 import { installationHandler } from './installation.js';
@@ -184,6 +185,7 @@ export {
   artifactVerifyHandler,
   outputModeHandler,
   writerProfileHandler,
+  writingHandler,
   schemaHandler,
   datasetHandler,
   installationHandler,
@@ -375,6 +377,7 @@ export const allHandlers: CommandHandler[] = [
   artifactVerifyHandler,
   outputModeHandler,
   writerProfileHandler,
+  writingHandler,
   schemaHandler,
   datasetHandler,
 
