@@ -1,7 +1,9 @@
 #!/usr/bin/env node
+import { writeSync } from 'node:fs';
+
 const args = process.argv.slice(2);
 if (args[0] === '--version') {
-  process.stdout.write(`${process.env.FAKE_DSH_VERSION || 'dsh v0.1.3-alpha.1'}\n`);
+  writeSync(1, `${process.env.FAKE_DSH_VERSION || 'dsh v0.1.3-alpha.1'}\n`);
   process.exit(0);
 }
 
@@ -10,14 +12,14 @@ if (args.includes('--profile') && args[args.indexOf('--profile') + 1] === 'headl
     process.on('SIGTERM', () => {});
     setInterval(() => {}, 1_000);
   } else {
-    process.stderr.write('fake diagnostic\n');
-    process.stdout.write('fake final\n');
+    writeSync(2, 'fake diagnostic\n');
+    writeSync(1, 'fake final\n');
     process.exit(0);
   }
 }
 
 let seq = 0;
-const send = value => process.stdout.write(`${JSON.stringify(value)}\r\n`);
+const send = value => writeSync(1, `${JSON.stringify(value)}\r\n`);
 const notify = (method, params) => send({ jsonrpc: '2.0', method, params });
 const event = (sessionId, type, data) => notify('session.event', {
   sessionId,

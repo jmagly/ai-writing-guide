@@ -319,7 +319,16 @@ function runBounded(binary, args, { cwd, env, timeoutMs, terminateGraceMs = 1_00
     const terminate = error => {
       if (settled || stopError) return;
       stopError = error;
+      // A descendant may retain pipes after the direct child exits. Keep the
+      // deadline bounded even when there is no live direct child to terminate.
+      if (child.exitCode !== null || child.signalCode !== null) {
+        child.stdout.destroy();
+        child.stderr.destroy();
+        finish(error);
+        return;
+      }
       child.kill('SIGTERM');
+      if (settled) return;
       escalation = setTimeout(() => {
         if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
       }, terminateGraceMs);
@@ -336,6 +345,14 @@ function runBounded(binary, args, { cwd, env, timeoutMs, terminateGraceMs = 1_00
     };
     child.stdout.on('data', chunk => { try { stdout = capture(stdout, chunk); } catch (error) { terminate(error); } });
     child.stderr.on('data', chunk => { try { stderr = capture(stderr, chunk); } catch (error) { terminate(error); } });
-    child.once('exit', (code, exitSignal) => finish(stopError, { code, signal: exitSignal, stdout, stderr }));
+    child.once('exit', () => {
+      if (stopError) {
+        child.stdout.destroy();
+        child.stderr.destroy();
+        finish(stopError);
+      }
+    });
+    // 'exit' can precede the final stdout/stderr data events.
+    child.once('close', (code, exitSignal) => finish(stopError, { code, signal: exitSignal, stdout, stderr }));
   });
 }
