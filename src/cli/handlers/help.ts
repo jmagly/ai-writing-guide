@@ -105,6 +105,7 @@ function displayHelp(): void {
   helpGroup('DISPATCH', [
     ['run skill <name>', 'Execute a script-bearing skill'],
     ['run <script-name>', 'Run a user-defined script from .aiwg/aiwg.config'],
+    ['writer-profile <action>', 'Manage author-controlled writer profile sidecars'],
     ['output-mode <action>', 'Configure composable output language and presentation'],
   ]);
 

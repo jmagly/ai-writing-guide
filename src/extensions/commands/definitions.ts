@@ -1130,6 +1130,20 @@ export const sessionCommand: Extension = {
   } satisfies SkillMetadata,
 };
 
+export const writerProfileCommand: Extension = {
+  id: 'writer-profile', type: 'command', name: 'Writer Profiles',
+  description: 'Import, inspect, export, version, compile, revoke, and delete author-controlled writer sidecars',
+  version: '1.0.0', capabilities: ['cli', 'voice', 'writer-profile'],
+  keywords: ['writer-profile', 'author', 'voice', 'sample', 'provenance'],
+  category: 'project', platforms: { claude: 'full', generic: 'full' },
+  deployment: { pathTemplate: '.{platform}/commands/{id}.md', core: true },
+  metadata: {
+    type: 'command', template: 'utility',
+    argumentHint: '<list|import|inspect|export|version|compile|revoke|delete> [id] [--scope project|user]',
+    allowedTools: ['Read', 'Write', 'Bash'],
+  } satisfies CommandMetadata,
+};
+
 export const outputModeCommand: Extension = {
   id: 'output-mode',
   type: 'command',
@@ -4008,6 +4022,7 @@ export const commandDefinitions: Extension[] = [
   sessionCommand,
   sessionsCommand,
   outputModeCommand,
+  writerProfileCommand,
   schemaCommand,
   datasetCommand,
 ];
