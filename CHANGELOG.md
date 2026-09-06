@@ -9,6 +9,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- Contextual writing diagnostics with UTF-16 spans, protected contexts,
+  reasoned exceptions, explicit rule overrides and repetition review across
+  words, paragraphs and documents (#2297). Legacy validator fields remain
+  compatible but are labeled deprecated heuristics. The 32 labeled regression
+  cases are fixture measurements, not human voice qualification.
+
 - Natural voice evidence ledger and ownership ADR with pinned research artifacts,
   bounded claim mappings, deferred additional-source assessments, and validation
   rejecting anecdotal release thresholds (#2293). This establishes the evidence

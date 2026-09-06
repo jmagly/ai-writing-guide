@@ -856,9 +856,9 @@ export class ExampleGenerator {
     if (afterValidation.humanMarkers.length > beforeValidation.humanMarkers.length) {
       changes.push({
         type: 'voice',
-        original: 'No authenticity markers',
+        original: 'Few legacy specificity features',
         replacement: 'Added opinions, trade-offs, or problem acknowledgments',
-        reasoning: 'Human writers acknowledge complexity and make trade-offs'
+        reasoning: 'Review added opinions and trade-offs against supplied facts and author intent; they do not establish authorship'
       });
     }
 
@@ -872,8 +872,9 @@ export class ExampleGenerator {
   ): string {
     const lines: string[] = [];
 
-    lines.push(`Original content scored ${beforeValidation.score}/100 (AI-detected).`);
-    lines.push(`Improved content scores ${afterValidation.score}/100 (human-like).`);
+    lines.push(`Original content legacy heuristic: ${beforeValidation.score}/100.`);
+    lines.push(`Revised content legacy heuristic: ${afterValidation.score}/100.`);
+    lines.push('These deprecated scores do not identify authorship or establish quality; review facts and author intent independently.');
     lines.push(`Delta: +${afterValidation.score - beforeValidation.score} points.\n`);
 
     if (changes.length > 0) {
@@ -921,7 +922,7 @@ export class ExampleGenerator {
 
     const hasSpecificity = example.changes.some(c => c.type === 'specificity');
     if (hasSpecificity) {
-      learnings.push('Adding specific metrics and technologies significantly improves authenticity');
+      learnings.push('Supplied metrics and technologies can clarify relevant details; never invent them to raise a legacy heuristic score');
     }
 
     const hasStructure = example.changes.some(c => c.type === 'structure');
@@ -930,7 +931,7 @@ export class ExampleGenerator {
     }
 
     if (example.score.after >= 75) {
-      learnings.push('Final score 75+ indicates human-like quality');
+      learnings.push('The legacy heuristic exceeded 75; this does not establish authorship, quality or publication readiness');
     }
 
     return learnings;

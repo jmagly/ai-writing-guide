@@ -6,9 +6,15 @@
 
 ## Overview
 
-The Writing Quality addon provides content validation and writing improvement capabilities. It works alongside the Voice Framework to ensure consistent, natural writing that matches your intended voice.
+The Writing Quality addon provides content validation and writing improvement capabilities. It works alongside the Voice Framework to review clarity and fit to your intended voice.
 
 > **Recommended**: Use the **[Voice Framework](../voice-framework/README.md)** addon for positive voice definition. The Voice Framework provides voice profiles that define the voice you *want*—the preferred approach for consistent writing.
+
+## Diagnostic and Compatibility Boundaries
+
+These are editorial preferences, not evidence of human or AI authorship. Apply only the requirements chosen by the author or project; other phrase and structure suggestions are advisory. Preserve quotations, code, literal terms, inventories, checklists, questionnaires, intentional punctuation, necessary uncertainty and domain terminology. A flagged phrase can be retained with a reason. Zero highlights and numeric scores are not publication gates. Never invent metrics, experiences, opinions or failures to satisfy a style marker.
+
+`WritingValidationEngine.diagnose(content, options)` and the exported `diagnoseWriting` API return contextual diagnostics with UTF-16 spans, explanations and reasoned exceptions, with `publicationGate: false`. The Python scanner in `skills/ai-pattern-detection/scripts/` remains a legacy regex implementation; it does not implement that API. Its `authenticity_score` and `grade`, and the legacy validator’s `score`, `authenticityScore` and `aiPatternScore`, are deprecated heuristic compatibility output. Existing numeric fields and calculations remain available; they are not human-authorship probabilities or quality guarantees.
 
 ## Components
 
@@ -16,7 +22,7 @@ The Writing Quality addon provides content validation and writing improvement ca
 
 | Agent | Purpose |
 |-------|---------|
-| `writing-validator` | Validates content for voice consistency and authenticity |
+| `writing-validator` | Reviews editorial patterns and author requirements without certifying authorship |
 | `prompt-optimizer` | Enhances prompts using AIWG principles |
 | `content-diversifier` | Generates varied examples and perspectives |
 

@@ -47,11 +47,15 @@ ${colorize('Usage:', 'bright')} aiwg-validate-writing [options] <file|directory>
 ${colorize('Options:', 'bright')}
   --context <type>     Validation context: academic|technical|executive|casual
   --format <type>      Output format: text|json|html (default: text)
-  --threshold <num>    Minimum score to pass (default: 70)
+  --threshold <num>    Legacy heuristic diagnostic cutoff (default: 70)
   --recursive          Validate all markdown files in directory
   --fix                Auto-fix common issues (experimental, not yet implemented)
-  --ci                 CI mode: exit code 1 on failure
+  --ci                 Legacy CI cutoff: exit code 1 below threshold
   -h, --help           Show help
+
+Legacy scores (score, authenticityScore, aiPatternScore) are deprecated heuristics.
+They are not evidence or probabilities of human authorship. Thresholds and CI
+exit codes are legacy diagnostics, not publication gates; review findings in context.
 
 ${colorize('Examples:', 'bright')}
   # Validate single file
@@ -63,7 +67,7 @@ ${colorize('Examples:', 'bright')}
   # Validate directory recursively
   aiwg-validate-writing --recursive docs/
 
-  # CI mode with custom threshold
+  # Legacy diagnostic CI cutoff (not a publication decision)
   aiwg-validate-writing --ci --threshold 80 README.md
 
   # Generate HTML report
@@ -174,6 +178,7 @@ function printProgressBar(current, total, prefix = '') {
 }
 
 function printTextResult(result, filePath, options) {
+  console.log('Deprecated heuristic scores are not human authorship evidence or publication gates.');
   const scoreColor = result.score >= options.threshold ? 'green' :
                      result.score >= 50 ? 'yellow' : 'red';
 
@@ -183,9 +188,9 @@ function printTextResult(result, filePath, options) {
   console.log(colorize('='.repeat(80), 'gray'));
   console.log('');
 
-  console.log(`${colorize('Overall Score:', 'bright')} ${colorize(result.score.toFixed(1), scoreColor)}/100`);
-  console.log(`${colorize('Authenticity:', 'cyan')} ${result.summary.authenticityScore.toFixed(1)}/100`);
-  console.log(`${colorize('AI Pattern Score:', 'cyan')} ${result.summary.aiPatternScore.toFixed(1)}/100 ${colorize('(lower is better)', 'gray')}`);
+  console.log(`${colorize('Legacy Heuristic Score (deprecated):', 'bright')} ${colorize(result.score.toFixed(1), scoreColor)}/100`);
+  console.log(`${colorize('Legacy Authenticity Heuristic (deprecated):', 'cyan')} ${result.summary.authenticityScore.toFixed(1)}/100`);
+  console.log(`${colorize('Legacy AI Pattern Heuristic (deprecated):', 'cyan')} ${result.summary.aiPatternScore.toFixed(1)}/100 ${colorize('(pattern frequency; not authorship evidence)', 'gray')}`);
   console.log('');
 
   console.log(`${colorize('Issues:', 'bright')} ${result.summary.totalIssues}`);
@@ -235,7 +240,7 @@ function printTextResult(result, filePath, options) {
 
   if (result.humanMarkers.length > 0) {
     console.log('');
-    console.log(colorize('Human Markers Found:', 'green'));
+    console.log(colorize('Editorial Markers Found (legacy humanMarkers):', 'green'));
     result.humanMarkers.forEach(marker => {
       console.log(`  ${colorize('✓', 'green')} ${marker}`);
     });
@@ -243,7 +248,7 @@ function printTextResult(result, filePath, options) {
 
   if (result.aiTells.length > 0) {
     console.log('');
-    console.log(colorize('AI Tells Found:', 'red'));
+    console.log(colorize('Phrase Patterns Found (legacy aiTells):', 'red'));
     result.aiTells.forEach(tell => {
       console.log(`  ${colorize('✗', 'red')} ${tell}`);
     });
@@ -253,9 +258,10 @@ function printTextResult(result, filePath, options) {
 }
 
 function printBatchSummary(results, options) {
+  console.log('Deprecated heuristic scores are not human authorship evidence or publication gates.');
   console.log('');
   console.log(colorize('='.repeat(80), 'gray'));
-  console.log(colorize('Batch Validation Summary', 'bright'));
+  console.log(colorize('Batch Legacy Diagnostic Summary', 'bright'));
   console.log(colorize('='.repeat(80), 'gray'));
   console.log('');
 
@@ -279,9 +285,9 @@ function printBatchSummary(results, options) {
                    avgScore >= 50 ? 'yellow' : 'red';
 
   console.log(`${colorize('Total Files:', 'bright')} ${results.size}`);
-  console.log(`${colorize('Average Score:', 'bright')} ${colorize(avgScore.toFixed(1), avgColor)}/100`);
-  console.log(`${colorize('Passed:', 'green')} ${passed} (>= ${options.threshold})`);
-  console.log(`${colorize('Failed:', 'red')} ${failed} (< ${options.threshold})`);
+  console.log(`${colorize('Average Legacy Heuristic (deprecated):', 'bright')} ${colorize(avgScore.toFixed(1), avgColor)}/100`);
+  console.log(`${colorize('At/Above Diagnostic Cutoff:', 'green')} ${passed} (>= ${options.threshold})`);
+  console.log(`${colorize('Below Diagnostic Cutoff:', 'red')} ${failed} (< ${options.threshold})`);
   console.log('');
 
   console.log(colorize('File Results:', 'bright'));
@@ -289,7 +295,7 @@ function printBatchSummary(results, options) {
     .sort((a, b) => a.result.score - b.result.score) // Sort by score (worst first)
     .forEach(({ file, result }) => {
       const status = result.score >= options.threshold ?
-        colorize('PASS', 'green') : colorize('FAIL', 'red');
+        colorize('AT/ABOVE CUTOFF', 'green') : colorize('BELOW CUTOFF', 'red');
 
       const scoreColor = result.score >= options.threshold ? 'green' :
                         result.score >= 50 ? 'yellow' : 'red';
@@ -394,7 +400,7 @@ async function main() {
       if (options.ci) {
         const failedCount = Array.from(results.values()).filter(r => r.score < options.threshold).length;
         if (failedCount > 0) {
-          console.error(colorize(`CI Mode: ${failedCount} file(s) failed validation`, 'red'));
+          console.error(colorize(`Legacy CI diagnostic: ${failedCount} file(s) below cutoff (not a publication decision)`, 'red'));
           process.exit(1);
         }
       }

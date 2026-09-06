@@ -1,5 +1,7 @@
 # Content Validation Checklist
 
+These are editorial preferences, not evidence of human or AI authorship. Apply only the requirements chosen by the author or project; other phrase and structure suggestions are advisory. Preserve quotations, code, literal terms, inventories, checklists, questionnaires, intentional punctuation, necessary uncertainty and domain terminology. A flagged phrase can be retained with a reason. Zero highlights and numeric scores are not publication gates. Never invent metrics, experiences, opinions or failures to satisfy a style marker.
+
 ## Pre-Writing Validation
 
 - [ ] Have I read the actual source material (not just searched)?
@@ -11,9 +13,9 @@
 
 ### Phrase Check
 
-- [ ] Searched for "seamlessly" → Removed
-- [ ] Searched for "Moreover" → Removed
-- [ ] Searched for "crucial role" → Replaced
+- [ ] Searched for "seamlessly" → Reviewed in context
+- [ ] Searched for "Moreover" → Reviewed in context
+- [ ] Searched for "crucial role" → Reviewed in context
 - [ ] Searched for "comprehensive" → Made specific
 - [ ] Searched for "innovative" → Used actual technique name
 - [ ] Searched for "transform" → Found better verb
@@ -25,7 +27,7 @@
 - [ ] Different paragraph openings
 - [ ] No formulaic intro → body → conclusion pattern
 - [ ] Mixed sentence lengths
-- [ ] No summary paragraph at end
+- [ ] Ending fits the purpose; a useful summary may remain
 
 ### Voice Check
 
@@ -62,19 +64,17 @@ Could you imagine:
 - [ ] This being said in a stand-up meeting?
 - [ ] This appearing in a Slack message?
 
-### The AI Detection Test
+### Contextual Pattern Review
 
-Count occurrences:
+- [ ] Punctuation reflects author intent
+- [ ] Lists, inventories and questionnaires preserve their required structure
+- [ ] Domain terms retain their intended meaning
+- [ ] Transitions support the document’s structure
+- [ ] Claims, uncertainty and outcomes match the supplied facts
 
-- [ ] Em-dashes: Maximum 2 per document
-- [ ] Three-item lists: Maximum 1
-- [ ] "Solution" uses: Try for zero
-- [ ] Formal transitions: Should be zero
-- [ ] Perfect outcomes: Should have some problems
+### Optional Editorial Features
 
-### The Authenticity Score
-
-Give yourself 1 point for each:
+The former authenticity checklist score is deprecated. Consider relevant features without adding points:
 
 - [ ] Specific metric included
 - [ ] Problem or failure mentioned
@@ -87,11 +87,7 @@ Give yourself 1 point for each:
 - [ ] Team dynamic referenced
 - [ ] Learning or mistake admitted
 
-**Score interpretation:**
-
-- 0-3: Too polished, likely AI-detected
-- 4-6: Getting better, needs more authenticity
-- 7-10: Sounds human and experienced
+**Interpretation:** These features can support a particular writing brief. Their presence or count cannot establish authorship, naturalness or publication readiness.
 
 ## Quick Fixes for Common Issues
 
@@ -101,11 +97,11 @@ Give yourself 1 point for each:
 2. Replace "utilize" with "use"
 3. Cut sentence length in half
 4. Add a contraction
-5. Include a fragment
+5. Keep complete sentences unless the author intentionally prefers fragments
 
 ### If it sounds too positive
 
-1. Add what went wrong
+1. Include what went wrong only if supplied and relevant
 2. Mention the trade-off
 3. Include the constraint
 4. State what you'd do differently
@@ -113,7 +109,7 @@ Give yourself 1 point for each:
 
 ### If it sounds too vague
 
-1. Add a specific number
+1. Add a source-supported number when useful
 2. Name the technology
 3. Give the timeline
 4. State the metric
@@ -135,13 +131,13 @@ Before submitting, answer:
 2. **Does this sound like me on a normal day?** Y/N
 3. **Did I mention anything that went wrong?** Y/N
 4. **Are my numbers specific?** Y/N
-5. **Did I avoid all banned phrases?** Y/N
+5. **Did I resolve applicable author rules and review advisory phrases in context?** Y/N
 
-If any answer is No, revise.
+Revise factual errors or unmet requirements. Other answers may be not applicable; record deliberate editorial choices.
 
 ## Remember
 
-Perfect content is suspicious. Real content has:
+Polish does not indicate authorship. When relevant, the supplied material may include:
 
 - Rough edges
 - Strong opinions
@@ -149,4 +145,4 @@ Perfect content is suspicious. Real content has:
 - Actual problems
 - Human voice
 
-Ship it when it sounds real, not when it sounds perfect.
+Publish only through the project’s existing author review and approval process.

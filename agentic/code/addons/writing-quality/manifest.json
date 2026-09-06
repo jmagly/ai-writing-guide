@@ -3,7 +3,7 @@
   "type": "addon",
   "name": "Writing Quality",
   "version": "1.0.0",
-  "description": "AI pattern detection, voice consistency, and writing quality enforcement for authentic content",
+  "description": "Editorial phrase diagnostics, author requirements and voice consistency review; legacy heuristic scores do not certify authorship",
   "core": false,
   "autoInstall": false,
   "author": "AIWG Contributors",

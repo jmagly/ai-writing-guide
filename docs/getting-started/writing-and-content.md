@@ -89,7 +89,9 @@ After writing, run the validation:
 /writing-validator path/to/content.md
 ```
 
-This checks for AI-pattern phrases, passive voice overuse, vague hedging language, and structural issues. It's the same validator AIWG uses on its own documentation.
+This checks phrase patterns, passive voice, hedging and structure for editorial review. A match can be appropriate in context, including necessary uncertainty, quotations and technical terms.
+
+The numeric `score`, `authenticityScore` and `aiPatternScore` fields are deprecated legacy heuristics, not evidence or probabilities of human authorship. The CLI retains threshold options and exit codes for compatibility; those are legacy diagnostics, not publication gates. Review the findings and retain useful wording rather than aim for zero highlights.
 
 ---
 

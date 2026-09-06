@@ -2,7 +2,7 @@
 
 ## The Fundamental Problem
 
-AI-generated content has recognizable patterns that make it feel inauthentic:
+Some writing patterns can feel formulaic in a particular context; they do not identify human or AI authorship:
 
 - Over-polished and formulaic
 - Marketing-speak instead of expertise
@@ -36,7 +36,7 @@ Good:
 
 ### Principle 3: Specific Beats General
 
-**Numbers, names, and details create authenticity.**
+**Source-supported numbers, names and details can improve specificity. They do not prove authorship.**
 
 Bad:
 > "Significantly improved system performance"
@@ -123,24 +123,24 @@ Avoid:
 - Predictable structure
 - Summary sentences
 
-## The Authenticity Test
+## Audience and Voice Review
 
 Read your content aloud. Does it sound like:
 
 1. **A Wikipedia article?** Too formal, no personality
 2. **Marketing copy?** Too polished, selling something
-3. **A technical paper?** Too academic, no human voice
+3. **A technical paper?** Formal language may be appropriate for the audience
 4. **Someone explaining their work?** ✅ This is the goal
 
 ## Examples of Authentic Voice
 
-### Bad (AI-typical)
+### Generic Example
 
 > "Furthermore, the implementation of advanced caching mechanisms dramatically improved response times, showcasing the
 > transformative power of modern optimization techniques. This comprehensive approach underscores the vital role that
 > performance tuning plays in contemporary web applications."
 
-### Good (Human expert)
+### Specific Example (Requires Supporting Facts)
 
 > "Response times sucked - 3 seconds for a simple query. Added Redis caching and got it down to 200ms. Should've done it
 > from the start but we were rushing to launch."

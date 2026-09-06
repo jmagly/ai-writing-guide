@@ -173,7 +173,7 @@ Complete catalog of skills across all AIWG packages.
 | `voice-analyze` | voice-framework | `voice_analyzer.py` | 561 | Reverse-engineer voice profiles from sample content |
 | `voice-blend` | voice-framework | `voice_blender.py` | 438 | Weighted mixing of multiple voice profiles |
 | `tdd-enforce` | testing-quality | `tdd_setup.py` | 433 | Pre-commit hooks, CI coverage gates, TDD enforcement |
-| `ai-pattern-detection` | writing-quality | `pattern_scanner.py` | 231 | Regex-based AI pattern detection, authenticity scoring |
+| `ai-pattern-detection` | writing-quality | `pattern_scanner.py` | 231 | Regex phrase matching, deprecated legacy heuristic scoring |
 
 **Total:** 12 scripts, ~4,836 lines of Python
 
@@ -350,7 +350,7 @@ python pattern_scanner.py document.md
 python pattern_scanner.py --text "This plays a crucial role in our comprehensive platform."
 ```
 
-Output: JSON with authenticity score (0-100), pattern matches, severity grades
+Output: JSON with a deprecated legacy authenticity heuristic (0–100), pattern matches and severity grades. The score is not evidence or a probability of human authorship. A score threshold or zero matches is not a publication gate.
 
 ### Known Issues
 

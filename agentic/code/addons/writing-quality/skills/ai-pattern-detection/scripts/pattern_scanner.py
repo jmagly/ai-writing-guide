@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """
-AI Pattern Scanner - Detects AI-generated writing patterns in text.
+Legacy Pattern Scanner - Reviews regex phrase patterns; does not detect authorship.
 
 Usage:
     python pattern_scanner.py <input_file>
     python pattern_scanner.py --text "Your text here"
 
 Output:
-    JSON report with pattern matches, frequency analysis, and authenticity score.
+    JSON report with pattern matches, frequency analysis, and deprecated heuristic
+    authenticity_score and grade. Neither is authorship evidence or a publication gate.
+    This legacy scanner does not implement contextual diagnostics or exceptions.
 """
 
 import re
@@ -17,7 +19,7 @@ from pathlib import Path
 from collections import Counter
 from typing import NamedTuple
 
-# Critical patterns - immediate AI detection signals
+# Legacy high-priority phrase patterns; matches do not identify authorship
 CRITICAL_PATTERNS = [
     # Corporate/Marketing Speak
     r"\bplays?\s+a\s+(vital|crucial|key|essential)\s+role",
@@ -159,7 +161,7 @@ def scan_text(text: str) -> dict:
                         severity="info"
                     ))
 
-    # Calculate authenticity score
+    # Calculate deprecated compatibility heuristic (not an authorship or quality measure)
     critical_count = sum(1 for m in matches if m.severity == "critical")
     warning_count = sum(1 for m in matches if m.severity == "warning")
     info_count = sum(1 for m in matches if m.severity == "info")
@@ -174,6 +176,12 @@ def scan_text(text: str) -> dict:
     return {
         "word_count": word_count,
         "authenticity_score": score,
+        "legacy_score_notice": {
+            "deprecated": True,
+            "fields": ["authenticity_score", "grade"],
+            "meaning": "Legacy regex editorial heuristic; not authorship evidence or a publication gate",
+            "contextual_diagnostics": False
+        },
         "summary": {
             "critical": critical_count,
             "warning": warning_count,
@@ -195,7 +203,7 @@ def scan_text(text: str) -> dict:
 
 
 def _score_to_grade(score: int) -> str:
-    """Convert numeric score to letter grade."""
+    """Convert legacy heuristic to a compatibility band, not a quality certification."""
     if score >= 90:
         return "A"
     elif score >= 80:

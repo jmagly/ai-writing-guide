@@ -37,9 +37,9 @@ Resolve security findings:
 /ralph "Fix the security issues from the audit" --completion "security-gate passes"
 ```
 
-Write until quality threshold is met:
+Prepare a documentation review:
 ```
-/ralph "Write the API documentation" --completion "writing-validator score >= 0.85"
+/ralph "Write the API documentation and prepare a review of facts, examples and editorial findings"
 ```
 
 Resolve issues:
@@ -133,10 +133,12 @@ Apply a profile to existing content:
 /voice-apply path/to/document.md --profile technical-authority
 ```
 
-Check content for AI-pattern language:
+Review content for editorial phrase patterns:
 ```
 /writing-validator path/to/content.md
 ```
+
+Legacy score fields and threshold results are deprecated heuristics, not human authorship evidence or publication gates. Review findings in context; zero highlights is not required.
 
 Flags passive voice overuse, vague hedging language, AI-characteristic phrase patterns, and structural issues.
 

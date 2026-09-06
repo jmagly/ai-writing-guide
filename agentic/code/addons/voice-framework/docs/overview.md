@@ -11,6 +11,11 @@ that author profiles, revisions or human quality qualification have shipped.
 Existing output-mode resolution and the default unaltered behavior remain the
 integration contract.
 
+For implemented editorial review APIs, see [contextual diagnostics](contextual-diagnostics.md)
+and the [labeled fixture report](contextual-diagnostics-evaluation.md). These
+return located, reviewable findings and explicit exceptions without an authorship
+score or a publication gate. Legacy validator scores remain deprecated adapters.
+
 The voice framework addon provides a profile-based approach to writing consistency. Instead of maintaining a list of banned patterns, you define the voice you want and apply it to content. Four built-in profiles cover the most common technical writing registers; you can create custom profiles or blend existing ones with weighted ratios.
 
 ## Why Profile-Based Instead of Pattern-Avoidance

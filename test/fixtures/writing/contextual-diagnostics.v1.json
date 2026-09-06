@@ -1,0 +1,711 @@
+{
+  "schemaVersion": 1,
+  "fixtureVersion": "1.0.0",
+  "labelOrigin": "Developer-authored editorial regression expectations; no independent human study.",
+  "sampling": "Purposive coverage of documented behaviors and counterexamples, not a representative population sample.",
+  "spanEncoding": "utf-16",
+  "cases": [
+    {
+      "id": "en-prose-delve",
+      "language": "en",
+      "context": "prose",
+      "content": "Delve into the topic.",
+      "options": {
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 0,
+          "end": 5,
+          "text": "Delve",
+          "ruleId": "phrase:delve",
+          "expectedDiagnostic": true,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-prose-metaphor-unicode",
+      "language": "en",
+      "context": "prose",
+      "content": "🧵 A rich tapestry of features.",
+      "options": {
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 5,
+          "end": 18,
+          "text": "rich tapestry",
+          "ruleId": "phrase:rich-tapestry",
+          "expectedDiagnostic": true,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-prose-closing",
+      "language": "en",
+      "context": "prose",
+      "content": "In conclusion, the limit applies.",
+      "options": {
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 0,
+          "end": 13,
+          "text": "In conclusion",
+          "ruleId": "phrase:in-conclusion",
+          "expectedDiagnostic": true,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-word-boundaries",
+      "language": "en",
+      "context": "prose",
+      "content": "The developer delves into implementation.",
+      "options": {
+        "language": "en"
+      },
+      "labels": []
+    },
+    {
+      "id": "en-user-overlap",
+      "language": "en",
+      "context": "prose",
+      "content": "A rich tapestry of features.",
+      "options": {
+        "rules": [
+          {
+            "id": "custom:tapestry",
+            "phrase": "tapestry",
+            "authority": "user",
+            "explanation": "Explicit author preference for this fixture.",
+            "suggestion": "Review in context.",
+            "enabled": true
+          }
+        ],
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 2,
+          "end": 15,
+          "text": "rich tapestry",
+          "ruleId": "phrase:rich-tapestry",
+          "expectedDiagnostic": true,
+          "resolution": "review"
+        },
+        {
+          "start": 7,
+          "end": 15,
+          "text": "tapestry",
+          "ruleId": "custom:tapestry",
+          "expectedDiagnostic": true,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-disabled-default",
+      "language": "en",
+      "context": "prose",
+      "content": "Delve here.",
+      "options": {
+        "overrides": [
+          {
+            "id": "phrase:delve",
+            "phrase": "delve",
+            "authority": "user",
+            "explanation": "Explicit author preference for this fixture.",
+            "suggestion": "Review in context.",
+            "enabled": false
+          }
+        ],
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 0,
+          "end": 5,
+          "text": "Delve",
+          "ruleId": "phrase:delve",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-code-fence",
+      "language": "en",
+      "context": "code",
+      "content": "~~~text\nDelve here\n~~~~",
+      "options": {
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 8,
+          "end": 13,
+          "text": "Delve",
+          "ruleId": "phrase:delve",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-code-open-fence",
+      "language": "en",
+      "context": "code",
+      "content": "```text\nA rich tapestry",
+      "options": {
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 10,
+          "end": 23,
+          "text": "rich tapestry",
+          "ruleId": "phrase:rich-tapestry",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-code-inline",
+      "language": "en",
+      "context": "code",
+      "content": "Use `Delve` as an identifier.",
+      "options": {
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 5,
+          "end": 10,
+          "text": "Delve",
+          "ruleId": "phrase:delve",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-quote-block",
+      "language": "en",
+      "context": "quote",
+      "content": "> Delve into this.\n> In conclusion, stop.",
+      "options": {
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 2,
+          "end": 7,
+          "text": "Delve",
+          "ruleId": "phrase:delve",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        },
+        {
+          "start": 21,
+          "end": 34,
+          "text": "In conclusion",
+          "ruleId": "phrase:in-conclusion",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-quote-inline",
+      "language": "en",
+      "context": "quote",
+      "content": "They wrote “a rich tapestry”.",
+      "options": {
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 14,
+          "end": 27,
+          "text": "rich tapestry",
+          "ruleId": "phrase:rich-tapestry",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-literal-textile",
+      "language": "en",
+      "context": "literal",
+      "content": "A rich tapestry hangs on the wall.",
+      "options": {
+        "contexts": [
+          {
+            "start": 0,
+            "end": 34,
+            "context": "literal"
+          }
+        ],
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 2,
+          "end": 15,
+          "text": "rich tapestry",
+          "ruleId": "phrase:rich-tapestry",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-inventory",
+      "language": "en",
+      "context": "inventory",
+      "content": "- A rich tapestry\n- Batteries included",
+      "options": {
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 4,
+          "end": 17,
+          "text": "rich tapestry",
+          "ruleId": "phrase:rich-tapestry",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-checklist",
+      "language": "en",
+      "context": "checklist",
+      "content": "- [ ] Delve into the source",
+      "options": {
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 6,
+          "end": 11,
+          "text": "Delve",
+          "ruleId": "phrase:delve",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-questionnaire",
+      "language": "en",
+      "context": "questionnaire",
+      "content": "Delve deeper? What did you find?",
+      "options": {
+        "contexts": [
+          {
+            "start": 0,
+            "end": 32,
+            "context": "questionnaire"
+          }
+        ],
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 0,
+          "end": 5,
+          "text": "Delve",
+          "ruleId": "phrase:delve",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-intentional-punctuation",
+      "language": "en",
+      "context": "prose",
+      "content": "Wait — listen; then respond. Why? Because the result matters.",
+      "options": {
+        "language": "en"
+      },
+      "labels": []
+    },
+    {
+      "id": "en-uncertainty",
+      "language": "en",
+      "context": "prose",
+      "content": "The experimental API may fail; perhaps latency depends on the protocol.",
+      "options": {
+        "language": "en"
+      },
+      "labels": []
+    },
+    {
+      "id": "en-domain-terminology",
+      "language": "en",
+      "context": "prose",
+      "content": "Delve is the debugger used here.",
+      "options": {
+        "terminology": [
+          "Delve"
+        ],
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 0,
+          "end": 5,
+          "text": "Delve",
+          "ruleId": "phrase:delve",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-user-inventory",
+      "language": "en",
+      "context": "inventory",
+      "content": "- Delve here",
+      "options": {
+        "rules": [
+          {
+            "id": "custom:delve",
+            "phrase": "delve",
+            "authority": "user",
+            "explanation": "Explicit author preference for this fixture.",
+            "suggestion": "Review in context.",
+            "enabled": true
+          }
+        ],
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 2,
+          "end": 7,
+          "text": "Delve",
+          "ruleId": "phrase:delve",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        },
+        {
+          "start": 2,
+          "end": 7,
+          "text": "Delve",
+          "ruleId": "custom:delve",
+          "expectedDiagnostic": true,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-user-literal-regex",
+      "language": "en",
+      "context": "prose",
+      "content": "a+b differs from aaab.",
+      "options": {
+        "rules": [
+          {
+            "id": "custom:literal",
+            "phrase": "a+b",
+            "authority": "user",
+            "explanation": "Explicit author preference for this fixture.",
+            "suggestion": "Review in context.",
+            "enabled": true
+          }
+        ],
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 0,
+          "end": 3,
+          "text": "a+b",
+          "ruleId": "custom:literal",
+          "expectedDiagnostic": true,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-retained-phrase",
+      "language": "en",
+      "context": "prose",
+      "content": "Delve into this.",
+      "options": {
+        "exceptions": [
+          {
+            "start": 0,
+            "end": 5,
+            "ruleId": "phrase:delve",
+            "contentHash": "6032c2455dbae4c610eeef9a217330d5b671b2d9edf2d7fab476d5915c83e923",
+            "reason": "Intentional author choice"
+          }
+        ],
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 0,
+          "end": 5,
+          "text": "Delve",
+          "ruleId": "phrase:delve",
+          "expectedDiagnostic": true,
+          "resolution": "retained"
+        }
+      ]
+    },
+    {
+      "id": "en-word-repetition",
+      "language": "en",
+      "context": "prose",
+      "content": "This is very very useful.",
+      "options": {
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 8,
+          "end": 17,
+          "text": "very very",
+          "ruleId": "repetition:word",
+          "expectedDiagnostic": true,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-separated-paragraph",
+      "language": "en",
+      "context": "prose",
+      "content": "The limit still applies.\n\nA different point.\n\nThe limit still applies.",
+      "options": {
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 46,
+          "end": 70,
+          "text": "The limit still applies.",
+          "ruleId": "repetition:paragraph",
+          "expectedDiagnostic": true,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-repeated-prose-with-code",
+      "language": "en",
+      "context": "prose",
+      "content": "Keep the `value` safe.\n\nAnother point.\n\nKeep the `value` safe.",
+      "options": {
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 40,
+          "end": 62,
+          "text": "Keep the `value` safe.",
+          "ruleId": "repetition:paragraph",
+          "expectedDiagnostic": true,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "en-cross-document",
+      "language": "en",
+      "context": "prose",
+      "content": "The limit still applies.",
+      "options": {
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 0,
+          "end": 24,
+          "text": "The limit still applies.",
+          "ruleId": "repetition:paragraph",
+          "expectedDiagnostic": true,
+          "resolution": "review"
+        }
+      ],
+      "priorDocuments": [
+        {
+          "id": "earlier",
+          "content": "The limit still applies."
+        }
+      ]
+    },
+    {
+      "id": "en-cross-document-code",
+      "language": "en",
+      "context": "code",
+      "content": "`Delve`",
+      "options": {
+        "language": "en"
+      },
+      "labels": [
+        {
+          "start": 1,
+          "end": 6,
+          "text": "Delve",
+          "ruleId": "phrase:delve",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        },
+        {
+          "start": 0,
+          "end": 7,
+          "text": "`Delve`",
+          "ruleId": "repetition:paragraph",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        }
+      ],
+      "priorDocuments": [
+        {
+          "id": "earlier",
+          "content": "`Delve`"
+        }
+      ]
+    },
+    {
+      "id": "fr-unsupported-default",
+      "language": "fr",
+      "context": "prose",
+      "content": "Delve dans le sujet.",
+      "options": {
+        "language": "fr"
+      },
+      "labels": [
+        {
+          "start": 0,
+          "end": 5,
+          "text": "Delve",
+          "ruleId": "phrase:delve",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "fr-explicit-rule",
+      "language": "fr",
+      "context": "prose",
+      "content": "Ce résultat est remarquable.",
+      "options": {
+        "rules": [
+          {
+            "id": "custom:remarquable",
+            "phrase": "remarquable",
+            "authority": "user",
+            "explanation": "Explicit author preference for this fixture.",
+            "suggestion": "Review in context.",
+            "enabled": true
+          }
+        ],
+        "language": "fr"
+      },
+      "labels": [
+        {
+          "start": 16,
+          "end": 27,
+          "text": "remarquable",
+          "ruleId": "custom:remarquable",
+          "expectedDiagnostic": true,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "fr-quoted-rule",
+      "language": "fr",
+      "context": "quote",
+      "content": "Il écrit « test » puis “remarquable”.",
+      "options": {
+        "rules": [
+          {
+            "id": "custom:remarquable",
+            "phrase": "remarquable",
+            "authority": "user",
+            "explanation": "Explicit author preference for this fixture.",
+            "suggestion": "Review in context.",
+            "enabled": true
+          }
+        ],
+        "language": "fr"
+      },
+      "labels": [
+        {
+          "start": 24,
+          "end": 35,
+          "text": "remarquable",
+          "ruleId": "custom:remarquable",
+          "expectedDiagnostic": false,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "fr-repetition",
+      "language": "fr",
+      "context": "prose",
+      "content": "C’est très très utile.",
+      "options": {
+        "language": "fr"
+      },
+      "labels": [
+        {
+          "start": 6,
+          "end": 15,
+          "text": "très très",
+          "ruleId": "repetition:word",
+          "expectedDiagnostic": true,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "fr-accent-initial-repetition",
+      "language": "fr",
+      "context": "prose",
+      "content": "été été",
+      "options": {
+        "language": "fr"
+      },
+      "labels": [
+        {
+          "start": 0,
+          "end": 7,
+          "text": "été été",
+          "ruleId": "repetition:word",
+          "expectedDiagnostic": true,
+          "resolution": "review"
+        }
+      ]
+    },
+    {
+      "id": "fr-uncertainty",
+      "language": "fr",
+      "context": "prose",
+      "content": "Le résultat pourrait dépendre du protocole.",
+      "options": {
+        "language": "fr"
+      },
+      "labels": []
+    }
+  ]
+}

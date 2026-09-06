@@ -2,7 +2,7 @@
 
 > **⚠️ DEPRECATION NOTICE**
 >
-> This document is **deprecated** as of December 2025. Modern frontier models (Claude Opus 4.5, GPT-5, etc.) naturally produce varied, authentic content without needing explicit pattern avoidance lists.
+> This legacy list is **deprecated**. Phrase patterns do not establish authorship, and no model version guarantees naturalness. Treat entries as advisory unless an applicable author or project rule explicitly requires them.
 >
 > **Use Instead**: The [Voice Framework](../../voice-framework/) addon provides voice profiles for crafting consistent, authentic writing styles. Rather than avoiding patterns, define the voice you want.
 >
@@ -17,13 +17,11 @@
 
 ## Usage Frequency Guidelines
 
-Some words are acceptable when used sparingly (1:1000 or 1:10000 word ratio) but become AI detection signals when
-overused (1:100 ratio). Words like "manifest," "revolutionary," and "next-generation" should only appear when they are
-truly the most salient option, not as default descriptors.
+Frequency can inform an editorial review, but no universal 1:1000 or 1:100 ratio establishes acceptable writing or authorship. Consider domain, language and author intent. Retain literal terminology, quotations and deliberate repetition where useful.
 
 ## Critical Banned Phrases
 
-These phrases immediately identify content as AI-generated. **Never use them.**
+These phrases do not identify AI-generated content. Review meaning in context; retain a phrase with a reason when it serves the author’s purpose. Zero matches is not a publication gate.
 
 ### Corporate/Marketing Speak
 
@@ -141,7 +139,7 @@ skip lists entirely
 
 ❌ "Implementation Of The New System" ✅ "Implementation of the new system" or "IMPLEMENTATION"
 
-## Detection Red Flags
+## Advisory Review Patterns
 
 ### Hedge Words (Overused)
 
@@ -155,7 +153,7 @@ skip lists entirely
 ### Overly Balanced Statements
 
 ❌ "While X presents challenges, it also offers opportunities" ❌ "Although Y has limitations, its benefits outweigh..." ✅
-Pick a side or state facts directly
+State supported facts and preserve necessary uncertainty; do not invent a position
 
 ### Academic Passive Voice
 

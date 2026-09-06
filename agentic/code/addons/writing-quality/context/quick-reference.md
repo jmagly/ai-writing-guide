@@ -10,7 +10,7 @@
 
 ## The Core Formula
 
-Formula: Expert talking to peer + specific details + real trade-offs = authentic content
+Editorial goal: fit the author’s audience, use supported details and preserve relevant trade-offs. These features do not prove authorship or naturalness.
 
 ## Instant Fixes
 
@@ -27,7 +27,7 @@ Formula: Expert talking to peer + specific details + real trade-offs = authentic
 
 ## Voice Calibration
 
-### Too Formal (AI-like)
+### Formal (Review Against the Requested Register)
 
 > "Furthermore, the implementation leverages cutting-edge methodologies to deliver transformative results."
 
@@ -57,7 +57,7 @@ Instead of formal conjunctions:
 - "Turns out..." (discovery)
 - "Problem was..." (direct statement)
 
-## Authenticity Markers
+## Optional Editorial Features
 
 Add at least one per section:
 
@@ -91,7 +91,7 @@ Be specific:
 
 ## Emergency Rewrite
 
-If something sounds too AI-like, try:
+If wording feels formulaic for the requested register, consider:
 
 1. Cut it in half
 2. Add a specific number

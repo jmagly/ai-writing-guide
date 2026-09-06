@@ -2,7 +2,7 @@
 /**
  * Writing Validator CLI
  *
- * Validates content files for AI detection patterns and calculates authenticity scores.
+ * Reviews writing patterns and reports deprecated legacy heuristic scores.
  *
  * Usage:
  *   node tools/writing/writing-validator.mjs <file-or-directory> [options]
@@ -11,9 +11,9 @@
  *   --context <type>    Validation context: academic, technical, executive, casual
  *   --format <type>     Output format: text, json, html (default: text)
  *   --output <path>     Save report to file
- *   --threshold <num>   Minimum passing score (default: 70)
+ *   --threshold <num>   Legacy heuristic diagnostic cutoff (default: 70)
  *   --verbose           Show detailed analysis
- *   --quiet             Only show score and pass/fail
+ *   --quiet             Show legacy score and diagnostic cutoff result
  *   --help              Show this help message
  *
  * @module tools/writing/writing-validator
@@ -25,7 +25,7 @@ import { join, resolve, extname, dirname } from 'path';
 import { importImpl } from '../_resolve-impl.mjs';
 
 /**
- * Convert 0-100 score to Likert scale (1-5)
+ * Convert deprecated heuristic score to a legacy 1-5 band (not a human rating)
  */
 function scoreToLikert(score) {
   if (score < 40) return 1;
@@ -36,15 +36,15 @@ function scoreToLikert(score) {
 }
 
 /**
- * Get Likert scale description
+ * Describe a deprecated heuristic band (not an authorship classification)
  */
 function getLikertDescription(likert) {
   const descriptions = {
-    1: 'Very Low (AI-like)',
-    2: 'Low',
-    3: 'Moderate',
-    4: 'High',
-    5: 'Very High (Human-like)'
+    1: 'Very low legacy heuristic (deprecated)',
+    2: 'Low legacy heuristic (deprecated)',
+    3: 'Moderate legacy heuristic (deprecated)',
+    4: 'High legacy heuristic (deprecated)',
+    5: 'Very high legacy heuristic (deprecated)'
   };
   return descriptions[likert] || 'Unknown';
 }
@@ -99,7 +99,7 @@ function printHelp() {
   console.log(`
 Writing Validator CLI
 
-Validates content files for AI detection patterns and calculates authenticity scores.
+Reviews writing patterns and reports deprecated legacy heuristic scores.
 
 USAGE:
   node tools/writing/writing-validator.mjs <file-or-directory> [options]
@@ -111,20 +111,17 @@ OPTIONS:
   --context <type>      Validation context: academic, technical, executive, casual
   --format <type>       Output format: text, json, html (default: text)
   --output <path>       Save report to file
-  --threshold <num>     Minimum passing score 0-100 (default: 70)
+  --threshold <num>     Legacy diagnostic cutoff 0-100 (default: 70)
   --verbose, -v         Show detailed analysis
-  --quiet, -q           Only show score and pass/fail
+  --quiet, -q           Show legacy score and diagnostic cutoff result
   --help, -h            Show this help message
 
-SCORING:
-  The validator produces two scores:
-  - Raw Score (0-100): Higher is more authentic/human-like
-  - Likert Scale (1-5): Converted authenticity rating
-    1 = Very Low (AI-like)
-    2 = Low
-    3 = Moderate
-    4 = High
-    5 = Very High (Human-like)
+LEGACY SCORING (DEPRECATED):
+  score, authenticityScore and aiPatternScore are numeric editorial heuristics.
+  likertScore is a legacy 1-5 conversion, not a human evaluator rating.
+  None is evidence or a probability of human authorship.
+  Thresholds, passed fields and exit codes are legacy diagnostics, not publication
+  gates. Review findings in context; zero highlights is not required to publish.
 
 EXAMPLES:
   # Validate a single file
@@ -173,12 +170,12 @@ async function findFiles(dirPath, extensions = ['.md', '.txt', '.markdown']) {
 function formatResult(filePath, result, options) {
   const likert = scoreToLikert(result.score);
   const passed = result.score >= options.threshold;
-  const status = passed ? '✓ PASS' : '✗ FAIL';
+  const status = passed ? '✓ AT/ABOVE CUTOFF' : '✗ BELOW CUTOFF';
   const statusColor = passed ? '\x1b[32m' : '\x1b[31m';
   const reset = '\x1b[0m';
 
   if (options.quiet) {
-    return `${statusColor}${status}${reset} ${filePath}: ${result.score}/100 (Likert: ${likert}/5)`;
+    return `${statusColor}${status}${reset} ${filePath}: ${result.score}/100 (deprecated heuristic band: ${likert}/5; not authorship evidence or a publication gate)`;
   }
 
   const lines = [];
@@ -186,11 +183,11 @@ function formatResult(filePath, result, options) {
   lines.push(`${statusColor}${status}${reset} ${filePath}`);
   lines.push(`${'='.repeat(60)}`);
 
-  lines.push(`\nSCORES:`);
-  lines.push(`  Raw Score:      ${result.score}/100`);
-  lines.push(`  Likert Scale:   ${likert}/5 (${getLikertDescription(likert)})`);
-  lines.push(`  Authenticity:   ${result.summary.authenticityScore}/100`);
-  lines.push(`  AI Pattern:     ${result.summary.aiPatternScore}/100 (lower is better)`);
+  lines.push(`\nLEGACY HEURISTICS (DEPRECATED; NOT AUTHORSHIP EVIDENCE OR PUBLICATION GATES):`);
+  lines.push(`  Legacy Score:   ${result.score}/100`);
+  lines.push(`  Legacy Band:    ${likert}/5 (${getLikertDescription(likert)})`);
+  lines.push(`  Authenticity heuristic: ${result.summary.authenticityScore}/100`);
+  lines.push(`  AI pattern heuristic: ${result.summary.aiPatternScore}/100 (pattern frequency; not authorship evidence)`);
 
   lines.push(`\nSTATISTICS:`);
   lines.push(`  Word Count:     ${result.summary.wordCount}`);
@@ -202,12 +199,12 @@ function formatResult(filePath, result, options) {
 
   if (options.verbose) {
     if (result.humanMarkers.length > 0) {
-      lines.push(`\nHUMAN MARKERS FOUND:`);
+      lines.push(`\nEDITORIAL MARKERS FOUND (legacy humanMarkers):`);
       result.humanMarkers.forEach(m => lines.push(`  ✓ ${m}`));
     }
 
     if (result.aiTells.length > 0) {
-      lines.push(`\nAI TELLS FOUND:`);
+      lines.push(`\nPHRASE PATTERNS FOUND (legacy aiTells):`);
       result.aiTells.forEach(t => lines.push(`  ✗ ${t}`));
     }
 
@@ -260,12 +257,12 @@ function formatBatchSummary(results, options) {
 
   const lines = [];
   lines.push(`\n${'='.repeat(60)}`);
-  lines.push(`BATCH SUMMARY`);
+  lines.push(`BATCH LEGACY DIAGNOSTIC SUMMARY (NOT A PUBLICATION GATE)`);
   lines.push(`${'='.repeat(60)}`);
   lines.push(`  Files Validated:  ${results.size}`);
-  lines.push(`  Average Score:    ${avgScore.toFixed(1)}/100 (Likert: ${avgLikert}/5)`);
-  lines.push(`  Passed (>=${options.threshold}):  ${passed}`);
-  lines.push(`  Failed (<${options.threshold}):   ${failed}`);
+  lines.push(`  Average deprecated heuristic: ${avgScore.toFixed(1)}/100 (legacy band: ${avgLikert}/5; not authorship evidence)`);
+  lines.push(`  At/above cutoff (>=${options.threshold}):  ${passed}`);
+  lines.push(`  Below cutoff (<${options.threshold}):   ${failed}`);
   lines.push(`  Total Issues:     ${totalIssues}`);
 
   return lines.join('\n');
@@ -344,6 +341,7 @@ async function main() {
     if (options.format === 'json') {
       const output = {
         ...result,
+        legacyScoreNotice: 'Deprecated editorial heuristics, not human authorship evidence. passed and exit codes reflect a legacy diagnostic cutoff, not publication readiness.',
         likertScore: scoreToLikert(result.score),
         likertDescription: getLikertDescription(scoreToLikert(result.score)),
         passed: result.score >= options.threshold
@@ -372,6 +370,7 @@ async function main() {
       results.forEach((result, filePath) => {
         output[filePath] = {
           ...result,
+          legacyScoreNotice: 'Deprecated editorial heuristics, not human authorship evidence. passed and exit codes reflect a legacy diagnostic cutoff, not publication readiness.',
           likertScore: scoreToLikert(result.score),
           likertDescription: getLikertDescription(scoreToLikert(result.score)),
           passed: result.score >= options.threshold

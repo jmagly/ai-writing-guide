@@ -1,8 +1,8 @@
 /**
  * Writing Validation Engine
  *
- * Core validation engine that scans text for AI detection patterns, banned phrases,
- * and authenticity markers. Provides comprehensive scoring and issue reporting.
+ * Contextual writing review with a deprecated heuristic scoring adapter.
+ * Pattern matches and legacy scores do not establish human or machine authorship.
  *
  * @implements @.aiwg/requirements/use-cases/UC-001-validate-ai-generated-content.md
  * @architecture @.aiwg/architecture/software-architecture-doc.md - Section 5.1 WritingValidator
@@ -17,6 +17,7 @@ import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { ValidationRuleLoader, RuleSet, ValidationContext, Severity } from './validation-rules.js';
 import { loadScoringConfig, getScoringConfig } from './scoring-config-loader.js';
+import { diagnoseWriting, type DiagnosticOptions, type ContextualDiagnosticResult } from './contextual-diagnostics.js';
 
 export interface ValidationIssue {
   type: 'banned_phrase' | 'ai_pattern' | 'missing_authenticity' | 'formulaic_structure';
@@ -38,14 +39,19 @@ export interface ValidationSummary {
   criticalCount: number;
   warningCount: number;
   infoCount: number;
-  authenticityScore: number; // 0-100
-  aiPatternScore: number; // 0-100 (higher = more AI-like)
+  /** @deprecated Uncalibrated legacy feature heuristic, not authorship evidence. */
+  authenticityScore: number;
+  /** @deprecated Uncalibrated legacy pattern heuristic, not authorship evidence. */
+  aiPatternScore: number;
   wordCount: number;
   sentenceCount: number;
 }
 
 export interface ValidationResult {
-  score: number; // 0-100 (0 = clearly AI, 100 = authentic human)
+  /** @deprecated Uncalibrated compatibility heuristic; never a publication gate. */
+  score: number;
+  scoreSemantics?: 'deprecated-uncalibrated-heuristic';
+  contextualDiagnostics?: ContextualDiagnosticResult;
   issues: ValidationIssue[];
   summary: ValidationSummary;
   suggestions: string[];
@@ -64,6 +70,11 @@ export interface AuthenticityAnalysis {
  * Core Writing Validation Engine
  */
 export class WritingValidationEngine {
+  /** Contextual editorial review without an authorship score or publication gate. */
+  diagnose(content: string, options?: DiagnosticOptions): ContextualDiagnosticResult {
+    return diagnoseWriting(content, options);
+  }
+
   private ruleLoader: ValidationRuleLoader;
   private ruleSet: RuleSet | null = null;
   private initialized = false;
@@ -121,9 +132,9 @@ export class WritingValidationEngine {
       issues.push({
         type: 'missing_authenticity',
         severity: 'info',
-        message: 'Content lacks authenticity markers',
+        message: 'Legacy heuristic found few specificity features; this says nothing about authorship',
         location: { start: 0, end: 0, line: 1, column: 1 },
-        suggestion: `Consider adding: ${authenticityAnalysis.missingMarkers.join(', ')}`,
+        suggestion: `Only if supported by supplied facts and author intent, consider: ${authenticityAnalysis.missingMarkers.join(', ')}`,
         context: authenticityAnalysis.missingMarkers.slice(0, 3).join('; ')
       });
     }
@@ -142,6 +153,8 @@ export class WritingValidationEngine {
       issues,
       summary,
       suggestions,
+      scoreSemantics: 'deprecated-uncalibrated-heuristic',
+      contextualDiagnostics: this.diagnose(content),
       humanMarkers: authenticityAnalysis.humanMarkers,
       aiTells: authenticityAnalysis.aiTells
     };
@@ -556,7 +569,7 @@ export class WritingValidationEngine {
 
     // Missing authenticity
     if (authenticityAnalysis.missingMarkers.length > 0) {
-      suggestions.push(`Add authenticity markers: ${authenticityAnalysis.missingMarkers.slice(0, 2).join(', ')}`);
+      suggestions.push(`Legacy authenticity heuristic: add details only when supported by supplied facts and author intent (${authenticityAnalysis.missingMarkers.slice(0, 2).join(', ')}); never invent experiences or numbers`);
     }
 
     // Specific improvements
@@ -573,7 +586,7 @@ export class WritingValidationEngine {
     // If score is low, provide general guidance
     const score = this.calculateOverallScore(summary, authenticityAnalysis);
     if (score < config.thresholds.lowScoreWarning) {
-      suggestions.push('Consider adding: specific metrics, problem acknowledgments, and technical details');
+      suggestions.push('Consider adding supplied metrics, problem acknowledgments and technical details where relevant; never invent them to raise a legacy heuristic score');
     }
 
     return suggestions;
@@ -602,7 +615,7 @@ export class WritingValidationEngine {
           adjustments.scoreModifier += 10;
         }
         if (!/\b\d+(%|ms|MB|GB)\b/.test(content)) {
-          adjustments.suggestions.push('Technical context: Include specific metrics and performance numbers');
+          adjustments.suggestions.push('Technical context: Include metrics and performance numbers only when supplied and relevant');
         }
         break;
 
@@ -611,7 +624,7 @@ export class WritingValidationEngine {
         const hedgeCount = (content.match(/\b(may|might|could|perhaps)\b/gi) || []).length;
         if (hedgeCount > 3) {
           adjustments.scoreModifier -= 10;
-          adjustments.suggestions.push('Executive context: Reduce hedging - make direct assertions');
+          adjustments.suggestions.push('Executive context: Review unnecessary hedging while preserving uncertainty and evidence strength');
         }
         break;
 
@@ -630,9 +643,16 @@ export class WritingValidationEngine {
     const lines: string[] = [];
 
     lines.push('=== Writing Validation Report ===\n');
-    lines.push(`Overall Score: ${result.score}/100`);
-    lines.push(`Authenticity Score: ${result.summary.authenticityScore}/100`);
-    lines.push(`AI Pattern Score: ${result.summary.aiPatternScore}/100 (lower is better)\n`);
+    lines.push('Legacy scores below are deprecated, uncalibrated heuristics; they do not identify authorship or determine publication readiness.');
+    lines.push(`Overall Score (legacy heuristic): ${result.score}/100`);
+    lines.push(`Specificity features (legacy authenticityScore): ${result.summary.authenticityScore}/100`);
+    lines.push(`Pattern matches (legacy aiPatternScore): ${result.summary.aiPatternScore}/100\n`);
+    if (result.contextualDiagnostics) {
+      lines.push('=== Contextual Editorial Review ===');
+      for (const d of result.contextualDiagnostics.diagnostics) lines.push(`[${d.resolution}] ${d.start}:${d.end} ${d.ruleId}: ${d.explanation}${d.reason ? ` Retained: ${d.reason}` : ''}`);
+      lines.push(...result.contextualDiagnostics.notices);
+      lines.push('Zero highlights is not a publication gate.\n');
+    }
 
     lines.push(`Total Issues: ${result.summary.totalIssues}`);
     lines.push(`  Critical: ${result.summary.criticalCount}`);
@@ -669,13 +689,13 @@ export class WritingValidationEngine {
     }
 
     if (result.humanMarkers.length > 0) {
-      lines.push('=== Human Markers Found ===');
+      lines.push('=== Legacy Specificity Features ===');
       result.humanMarkers.forEach(m => lines.push(`  ✓ ${m}`));
       lines.push('');
     }
 
     if (result.aiTells.length > 0) {
-      lines.push('=== AI Tells Found ===');
+      lines.push('=== Legacy Pattern Matches ===');
       result.aiTells.forEach(t => lines.push(`  ✗ ${t}`));
       lines.push('');
     }
@@ -694,6 +714,7 @@ export class WritingValidationEngine {
 
     const lines: string[] = [];
     lines.push('=== Batch Validation Report ===\n');
+    lines.push('Deprecated heuristic threshold comparisons only; these are not authorship or publication judgments.\n');
     lines.push(`Total Files: ${results.size}\n`);
 
     let totalScore = 0;
@@ -752,15 +773,16 @@ export class WritingValidationEngine {
 </head>
 <body>
   <h1>Writing Validation Report</h1>
+  <p>Deprecated, uncalibrated legacy heuristics. These scores do not identify authorship or determine publication readiness. Zero highlights is not a publication gate.</p>
   <div class="score">${result.score}/100</div>
 
   <div class="summary">
     <div class="metric">
-      <div>Authenticity Score</div>
+      <div>Legacy specificity heuristic (authenticityScore)</div>
       <div class="metric-value">${result.summary.authenticityScore}/100</div>
     </div>
     <div class="metric">
-      <div>AI Pattern Score</div>
+      <div>Legacy pattern heuristic (aiPatternScore)</div>
       <div class="metric-value">${result.summary.aiPatternScore}/100</div>
     </div>
     <div class="metric">

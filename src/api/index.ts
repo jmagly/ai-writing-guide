@@ -20,6 +20,7 @@ export * from '../uhp/index.js';
 export * from '../mission-protocol/index.js';
 export * from '../governance/index.js';
 export * from '../output-modes/index.js';
+export * from '../writing/contextual-diagnostics.js';
 export * from '../schema/index.js';
 export * from '../dataset/index.js';
 export * from '../network-analysis/index.js';
