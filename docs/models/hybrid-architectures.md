@@ -1,5 +1,7 @@
 # Hybrid Model Architecture Guide
 
+Model routing does not grant authority. Apply [autonomy classification and human operating roles](../autonomy-and-human-roles.md); the most restrictive risk dimension controls checkpoints.
+
 Cost-optimized strategies for routing AIWG workloads across multiple models and providers. Covers cascade patterns, task classification, cost modeling, and AIWG configuration templates for multi-provider setups.
 
 ---

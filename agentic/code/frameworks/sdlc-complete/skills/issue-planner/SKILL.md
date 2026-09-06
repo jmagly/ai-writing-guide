@@ -31,6 +31,8 @@ commandHint:
 
 # Issue Planner
 
+Before dispatch, declare the [context packet](../../../../../../docs/context-engineering-contract.md) and [verification contract](../../../../../../docs/verification-contracts.md). Record expected tracker artifacts, checks, outcomes, and evidence; missing or failed required evidence cannot be success. Choose execution mode with [autonomy and human roles](../../../../../../docs/autonomy-and-human-roles.md).
+
 Transform a high-level objective into a fully researched, SDLC-gated issue backlog — ready for `address-issues` — without a human having to manually research, write docs, or decide priority order.
 
 ## Artifact-root preflight (mandatory)

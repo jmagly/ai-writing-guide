@@ -14,6 +14,8 @@ commandHint:
 
 # Induct Research
 
+Before dispatch, apply the shared [context engineering contract](../../../../../../docs/context-engineering-contract.md) and [verification contract](../../../../../../docs/verification-contracts.md). Missing source, fixity, sidecar, GRADE, or lint evidence makes the result incomplete or blocked, never complete.
+
 Process one or more research sources — an issue, a file, a directory of papers, or a URI — and file structured induction tasks into a research repository so nothing gets lost. The analogue of `address-issues` for research corpora.
 
 ## Kernel Delegation

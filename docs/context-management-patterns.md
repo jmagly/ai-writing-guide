@@ -2,6 +2,8 @@
 
 This guide documents AIWG's context management strategies, including partial summarization, multi-directory skill discovery, and cross-platform considerations.
 
+The normative packet, budget, reset, handoff, and persistence rules for research and planning are in the [provider-neutral context engineering contract](context-engineering-contract.md).
+
 ## Partial Summarization
 
 Partial summarization (also called "Summarize from here") is a Claude Code feature that allows you to compact conversation history while preserving recent work.
