@@ -231,3 +231,7 @@ To add new built-in voices:
 ## License
 
 MIT - See [LICENSE](../../../../LICENSE)
+
+## Reviewed voice transformation
+
+See the [selected workflow and output impact](docs/voice-output-impact.md) for the development default, neutral profile policy, measured acceptance, fallback behavior and qualification limits.

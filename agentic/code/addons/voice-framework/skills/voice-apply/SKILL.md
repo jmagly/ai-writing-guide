@@ -26,6 +26,10 @@ exports; never claim every provider response is intercepted. Keep original text
 and unresolved review decisions recoverable. Publication controls remain with
 the user's existing workflow.
 
+## Reviewed voice application
+
+For model-driven voice transformation, use the packaged [criticism/correction flow](../../flows/voice-critique-correction.flow.yaml) and [output impact guide](../../docs/voice-output-impact.md). The selected development lane uses one Astra draw and at most one correction with the primary session as reviewer. Neutral analytical packets are required; private author provenance stays outside generator and corrector context. Preserve the original unless a hash-bound review accepts both fidelity and cadence. This does not change deterministic proofread-only behavior or qualify all channels.
+
 ## Brief and fidelity contract
 
 For author-controlled writing, prepare a structured
@@ -109,28 +113,28 @@ profile = load_voice_profile("technical-authority")
 
 **Tone Calibration**:
 - Adjust formality level (word choice, contractions)
-- Calibrate confidence (hedging vs assertion)
+- Preserve evidence strength and all required hedging; adjust expression only
 - Set warmth (clinical vs personable)
 - Tune energy (measured vs enthusiastic)
 
 **Vocabulary Transformation**:
 - Replace words per `prefer`/`avoid` guidance
 - Introduce domain terminology naturally
-- Weave in signature phrases where appropriate
+- Use characteristic phrasing only where natural and supported; never insert signatures mechanically
 
 **Structure Adjustment**:
 - Modify sentence length distribution
 - Adjust paragraph breaks
-- Add/remove lists, examples, analogies as specified
+- Reorganize supported material within edit permissions; do not invent examples or analogies that add claims
 
 **Perspective Shift**:
 - Adjust narrative person (I, we, you, they)
-- Calibrate opinion expression
+- Preserve supported opinions and attribution; do not invent a viewpoint
 - Set reader relationship tone
 
 ### 4. Verify Authenticity Markers
 
-Ensure output includes profile's authenticity characteristics:
+Check these properties only when supported by the source; never invent them to satisfy a profile:
 - Acknowledges uncertainty (if specified)
 - Shows tradeoffs (if specified)
 - Uses specific numbers (if specified)
@@ -225,9 +229,9 @@ Voice Applied: technical-authority
 
 Transformations:
 - Formality: 0.4 → 0.7 (increased)
-- Confidence: 0.5 → 0.9 (increased)
+- Evidence strength: unchanged; original qualifications retained
 - Vocabulary: 12 replacements
-- Structure: Added 2 examples, removed 1 rhetorical question
+- Structure: reordered supported clauses within approved edit scope
 
 Authenticity Check:
 ✓ Acknowledges tradeoffs

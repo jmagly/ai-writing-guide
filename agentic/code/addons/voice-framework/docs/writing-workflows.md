@@ -47,3 +47,7 @@ Read `aiwg://writer-profiles/catalog` for scoped identifiers and metadata. An ex
 Disable unwanted session/project mode selections to restore the empty-stack path. Use review undo for text edits and the separate learning undo artifact for accepted preference changes; stale state is rejected. Legacy migrations are dry-run plans followed by explicit application and managed rollback, described in the migration guide. Revocation removes local sample text and dependent inferred preferences, but cannot recall previous exports or remote caches.
 
 Before widening use, consult [qualification gates](../../../../../docs/voice/qualification.md). These recipes describe implemented interfaces; packaged smoke results and real author/model evaluation must be recorded separately.
+
+## Reviewed voice transformation
+
+See the [selected workflow and output impact](voice-output-impact.md) for the development default, neutral profile policy, measured acceptance, fallback behavior and qualification limits.
