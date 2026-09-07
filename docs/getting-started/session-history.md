@@ -80,5 +80,5 @@ queries, pagination, timelines, tool/HITL analytics, citations and coverage gaps
 `session-analyst` and the `session-investigation` flow collect and synthesize
 bounded evidence. `session-harvest` previews extraction and carries reviewed
 candidate versions through memory promotion. See the
-[exploration recipes](../../agentic/code/addons/aiwg-utils/skills/session-explore/references/recipes.md)
+[exploration recipes](https://git.integrolabs.net/roctinam/aiwg/src/branch/main/agentic/code/addons/aiwg-utils/skills/session-explore/references/recipes.md)
 for acquisition, comparison, investigation, maintenance and handoff examples.
