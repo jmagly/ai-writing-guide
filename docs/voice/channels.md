@@ -55,3 +55,5 @@ A [paired core-guidance handoff study](evidence/core-guidance-development-2026-0
 The [TinyStyler mechanism trial](evidence/tinystyler-development-2026-09-07.md) and [bounded expression-edit comparison](evidence/expression-edits-development-2026-09-07.md) did not establish joint voice passes. Paragraph-range addressing improved proposal applicability on four follow-up cases; factual and cadence review remain separate obligations.
 
 Current-model evaluation follows the [model eligibility record](evidence/model-eligibility.md). GPT-OSS20b reports are historical debugging evidence and do not qualify current model-family coverage.
+
+The [current Qwen/Gemma expression study](evidence/current-model-expression-2026-09-07.md) records three primary-reviewed Qwen joint passes, remaining semantic failures, and Gemma edit-format failures. It does not establish full channel qualification.

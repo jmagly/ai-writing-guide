@@ -1,0 +1,99 @@
+{
+  "qwen": {
+    "status": "complete-reviewed",
+    "model": "qwen3.8:27b",
+    "methods": [
+      {
+        "method": "whole-rewrite",
+        "calls": 8,
+        "normal": 8,
+        "valid": 8,
+        "exact_literals": 7,
+        "fidelity": 3,
+        "joint": 1,
+        "tokens": 27128
+      },
+      {
+        "method": "bounded-edits",
+        "calls": 8,
+        "normal": 3,
+        "valid": 2,
+        "exact_literals": 2,
+        "fidelity": 2,
+        "joint": 1,
+        "tokens": 39557
+      },
+      {
+        "method": "paragraph-anchors",
+        "calls": 4,
+        "normal": 3,
+        "valid": 3,
+        "exact_literals": 3,
+        "fidelity": 1,
+        "joint": 1,
+        "tokens": 20542
+      }
+    ],
+    "calls": 20,
+    "normal": 14,
+    "valid": 13,
+    "fidelity": 6,
+    "joint": 3,
+    "joint_ids": [
+      "case-04-draw-1",
+      "case-14-draw-1",
+      "case-19-draw-1"
+    ],
+    "independent": false,
+    "service_cycle_seconds": 633.86,
+    "fortemi_restored": true,
+    "model_unloaded": true
+  },
+  "gemma": {
+    "status": "complete-reviewed",
+    "model": "gemma4:31b",
+    "runtime_alias": "aiwg-voice-gemma4-31b-8k:latest",
+    "methods": [
+      {
+        "method": "whole-rewrite",
+        "calls": 8,
+        "normal": 8,
+        "valid": 8,
+        "exact_literals": 8,
+        "fidelity": 1,
+        "joint": 0,
+        "tokens": 11562
+      },
+      {
+        "method": "bounded-edits",
+        "calls": 8,
+        "normal": 8,
+        "valid": 0,
+        "exact_literals": 0,
+        "fidelity": 0,
+        "joint": 0,
+        "tokens": 14340
+      },
+      {
+        "method": "paragraph-anchors",
+        "calls": 4,
+        "normal": 4,
+        "valid": 0,
+        "exact_literals": 0,
+        "fidelity": 0,
+        "joint": 0,
+        "tokens": 7623
+      }
+    ],
+    "calls": 20,
+    "normal": 20,
+    "valid": 8,
+    "fidelity": 1,
+    "joint": 0,
+    "semantic_review_unavailable_due_format": 12,
+    "independent": false,
+    "service_cycle_seconds": 328.09,
+    "fortemi_restored": true,
+    "model_unloaded": true
+  }
+}

@@ -9,6 +9,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Documentation
 
+- Record forty current Qwen/Gemma expression revalidation calls, primary-reviewed passes, strict-format failures and resource/settings limits.
+
 - Retire GPT-OSS20b from current-model qualification and retain its existing reports as historical evidence pending eligible-model revalidation.
 
 - Record the TinyStyler negative mechanism trial and the bounded-expression/paragraph-addressing comparison, including failed proposals and unresolved cadence.
