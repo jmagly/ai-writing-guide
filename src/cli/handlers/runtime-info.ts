@@ -187,7 +187,7 @@ async function handleRuntimeInfo(args: string[], cwd = process.cwd()): Promise<v
         console.log(`Aggregated output: ${caps.aggregated_output}`);
         console.log(`\nArtifact paths:`);
         for (const [type, path] of Object.entries(caps.artifact_paths)) {
-          console.log(`  ${type}: ${path ?? '(none)'}`);
+          console.log(`  ${type}: ${path || 'Indexed (aiwg discover / aiwg show)'}`);
         }
         console.log(`\nFeatures:`);
         for (const [feat, native] of Object.entries(caps.native_features)) {

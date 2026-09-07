@@ -19,7 +19,7 @@ export const name = 'antigravity';
 export const aliases = ['agy'];
 export const paths = { agents: '.agents/agents', commands: '', skills: '.agents/skills', rules: '' };
 export const kernelSkillsPath = '.agents/skills';
-export const support = { agents: 'degraded', commands: 'unsupported', skills: 'native', rules: 'context' };
+export const support = { agents: 'degraded', commands: 'indexed', skills: 'native', rules: 'context' };
 export const capabilities = {
   skills: true,
   rules: false,

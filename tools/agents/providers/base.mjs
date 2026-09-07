@@ -2964,8 +2964,8 @@ export const ProviderInterface = {
   aliases: [],
 
   // ── Path Configuration ──────────────────────────────────────────────
-  // ALL four paths are REQUIRED for v2. Every provider deploys every artifact type.
-  // Provider dictates which directories to use; null paths are no longer allowed.
+  // Paths describe native or conventional deployment only. Empty paths mean
+  // indexed access via aiwg discover/show, not an unavailable artifact class.
   paths: {
     agents: null,
     commands: null,
@@ -2978,6 +2978,7 @@ export const ProviderInterface = {
   //   'native'       - Platform natively discovers and uses these files
   //   'conventional' - AIWG directory convention; available for @-mention context loading
   //   'aggregated'   - Content included in aggregated file AND deployed as discrete files
+  //   'indexed'      - Full source body available via aiwg discover/show without a native loader
   support: {
     agents: 'conventional',
     commands: 'conventional',

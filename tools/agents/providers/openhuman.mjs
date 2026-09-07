@@ -61,8 +61,8 @@ export const paths = {
 export const kernelSkillsPath = path.join(os.homedir(), '.openhuman', 'skills');
 
 export const support = {
-  agents: 'none',           // Native TOML harness agents are emitted by the CLI
-  commands: 'none',
+  agents: 'indexed',        // Personas via aiwg discover/show; native TOML harness agents are opt-in
+  commands: 'indexed',      // Full command bodies via aiwg discover/show
   skills: 'native',         // .openhuman/skills/ natively scanned
   rules: 'indexed',         // `aiwg show rule`
 };

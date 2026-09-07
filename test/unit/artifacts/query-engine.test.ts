@@ -110,6 +110,40 @@ describe('Artifact Query Engine', () => {
     consoleErrorSpy.mockRestore();
   });
 
+  it.each(['hermes', 'openhuman', 'antigravity', 'future-agent'])(
+    'discovers and reads every core artifact without native deployment for %s',
+    async (provider) => {
+      const previous = process.env.AIWG_PROVIDER;
+      process.env.AIWG_PROVIDER = provider;
+      try {
+        const entries: Record<string, MetadataEntry> = {};
+        for (const type of ['agent', 'command', 'skill', 'rule'] as const) {
+          const file = `.aiwg/${type}s/portable-${type}.md`;
+          fs.mkdirSync(path.dirname(path.join(tmpDir, file)), { recursive: true });
+          fs.writeFileSync(path.join(tmpDir, file), `---\nname: portable-${type}\nplatforms: [claude-code]\n---\n# Portable ${type} body\n`);
+          entries[file] = createMockEntry({ path: file, type, name: `portable-${type}`, title: `portable-${type}` });
+        }
+        fs.mkdirSync(getGraphIndexDir(tmpDir, 'project'), { recursive: true });
+        fs.writeFileSync(path.join(getGraphIndexDir(tmpDir, 'project'), 'metadata.json'), JSON.stringify({
+          version: '1.0.0', builtAt: new Date().toISOString(), buildTimeMs: 1, entries,
+        } satisfies ArtifactIndex));
+        for (const type of ['agent', 'command', 'skill', 'rule'] as const) {
+          consoleSpy.mockClear();
+          await discoverCapability(tmpDir, { phrase: `portable-${type}`, typeFilter: [type], graph: 'project', backend: 'local', json: true });
+          const found = JSON.parse(consoleSpy.mock.calls.map(c => c[0]).join(''));
+          expect(found.results).toHaveLength(1);
+          consoleSpy.mockClear();
+          await showArtifact(tmpDir, { name: found.results[0].id, typeFilter: [type], graph: 'project', backend: 'local', json: true });
+          const shown = JSON.parse(consoleSpy.mock.calls.map(c => c[0]).join(''));
+          expect(shown.content).toContain(`# Portable ${type} body`);
+        }
+      } finally {
+        if (previous === undefined) delete process.env.AIWG_PROVIDER;
+        else process.env.AIWG_PROVIDER = previous;
+      }
+    },
+  );
+
   it('should find entries by keyword in title', async () => {
     await queryIndex(tmpDir, { text: 'Login' }, { backend: 'local' });
     const output = consoleSpy.mock.calls.map(c => c[0]).join('\n');

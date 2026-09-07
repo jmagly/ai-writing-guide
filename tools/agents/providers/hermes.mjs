@@ -128,7 +128,7 @@ export const hermesHome = HERMES_HOME;
 
 export const support = {
   agents: 'aggregated',      // Agents aggregated into lean AGENTS.md
-  commands: 'none',          // Hermes has no AIWG slash-command file surface
+  commands: 'indexed',       // Full command bodies via aiwg discover/show; no native file loader
   skills: 'native',          // $HERMES_HOME/skills/ is the native skill location
   rules: 'agents-md+cli',    // compressed in AGENTS.md; full bodies via CLI/MCP
 };

@@ -370,7 +370,7 @@ providers:
       # bridge. The "MCP:" entries below are the optional enrichment path, not a
       # requirement. Broader MCP modernization: #1533.
       agents: AGENTS.md
-      commands: "AGENTS.md bridge + aiwg discover/show (MCP command-run optional)"
+      commands: "Indexed: aiwg discover / aiwg show command (MCP command-run optional)"
       skills: "~/.hermes/skills/"
       skills_cross_agent: "~/.hermes/skills/.aiwg/"
       rules: "AGENTS.md ### Rule sections + aiwg show rule (MCP rule-list/rule-show optional)"
@@ -442,8 +442,8 @@ providers:
     daemon_tier: unsupported
     daemon_pty_adapter: false
     artifact_paths:
-      agents: ".agents/agents/"                          # markdown personas (workspace-scoped — the coding hosts OpenHuman drives); harness TOML is Tier-2 (#1559)
-      commands: "AGENTS.md bridge (no native command surface)"
+      agents: "Indexed: aiwg discover / aiwg show agent"   # native TOML harness agents are opt-in (#1559)
+      commands: "Indexed: aiwg discover / aiwg show command"
       skills: "~/.openhuman/skills/"                      # global/home-dir like OpenClaw — ungated user-scope native scan (ops_discover.rs); same root OpenHuman's own installer writes to (#1553)
       skills_cross_agent: "~/.openhuman/.aiwg/skills/"
       rules: "AGENTS.md ### Rule sections + aiwg show rule"

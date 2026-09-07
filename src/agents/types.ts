@@ -29,7 +29,7 @@
 export type Platform = 'antigravity' | 'claude' | 'codex' | 'copilot' | 'cursor' | 'deepseek-harness' | 'factory' | 'hermes' | 'opencode' | 'openclaw' | 'openhuman' | 'pi' | 'omp' | 'warp' | 'windsurf' | 'generic';
 export type AgentCategory = 'writing-quality' | 'sdlc' | 'security' | 'testing' | 'architecture' | 'documentation' | 'general';
 export type ArtifactType = 'agent' | 'command' | 'skill' | 'rule';
-export type SupportLevel = 'native' | 'conventional' | 'aggregated';
+export type SupportLevel = 'native' | 'conventional' | 'aggregated' | 'indexed';
 
 /**
  * Provider path configuration (all four artifact types required)
