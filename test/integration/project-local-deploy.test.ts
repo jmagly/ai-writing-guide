@@ -201,6 +201,45 @@ describe('project-local deploy integration (#1046)', () => {
     cleanup(env);
   });
 
+  it.each(['relative', 'absolute'])('indexes external bundle sources in a nested member via %s roots (#2308)', (source) => {
+    const memberDir = path.join(env.projectDir, 'member');
+    const member = { ...env, projectDir: memberDir };
+    mkdirSync(path.join(memberDir, '.aiwg'), { recursive: true });
+    const externalRoot = path.join(env.projectDir, '.aiwg');
+    writeFileSync(path.join(memberDir, '.aiwg', 'aiwg.config'), JSON.stringify({
+      version: '1', providers: ['codex'], installed: {}, scripts: {},
+      projectLocal: { searchPaths: [source === 'relative' ? '../.aiwg' : externalRoot] },
+    }));
+    // Unrelated parent artifacts do not belong in the member's surface.
+    const unrelated = path.join(externalRoot, 'unrelated.md');
+    writeFileSync(unrelated, '# Unrelated parent artifact\n');
+    expect(existsSync(path.join(memberDir, '.aiwg', '.index'))).toBe(false);
+
+    const deployed = runAiwg(member, ['use', 'pl-test', '--provider', 'codex', '--json']);
+    expect(deployed.status, deployed.stdout).toBe(0);
+    expect(deployed.stdout).not.toContain('index-surface-missing:project');
+    expect(existsSync(path.join(memberDir, '.codex', 'agents', 'pl-agent.toml'))).toBe(true);
+    const quickref = path.join(memberDir, '.agents', 'skills', 'aiwg-project-member-quickref', 'SKILL.md');
+    expect(existsSync(quickref), deployed.stdout).toBe(true);
+    expect(readFileSync(quickref, 'utf-8')).toContain('aiwg show agent PL Agent');
+
+    const rebuilt = runAiwg(member, ['index', 'build', '--graph', 'project']);
+    expect(rebuilt.status, rebuilt.stdout).toBe(0);
+    const metadata = JSON.parse(readFileSync(path.join(memberDir, '.aiwg', '.index', 'project', 'metadata.json'), 'utf-8'));
+    expect(metadata.entries[path.join(env.bundleDir, 'agents', 'pl-agent.md')]).toMatchObject({ type: 'agent' });
+    expect(Object.keys(metadata.entries).some(file => /unrelated|escaped/.test(file))).toBe(false);
+    for (const backend of [[], ['--backend', 'local']]) {
+      const discovery = runAiwg(member, ['discover', 'pl-agent', '--json', ...backend]);
+      expect(discovery.status, discovery.stdout).toBe(0);
+      expect(JSON.parse(discovery.stdout).results).toEqual(expect.arrayContaining([
+        expect.objectContaining({ type: 'agent', name: 'PL Agent', provenance: { graph: 'project', scope: 'project' } }),
+      ]));
+      const shown = runAiwg(member, ['show', 'agent', 'PL Agent', '--json', ...backend]);
+      expect(shown.status, shown.stdout).toBe(0);
+      expect(shown.stdout).toContain('Agent from project-local bundle');
+    }
+  }, 180_000);
+
   it.each([
     ['use', ['use', 'sdlc', '--provider', 'claude', '--quiet']],
     ['refresh', ['refresh', '--skip-update', '--provider', 'claude', '--quiet']],

@@ -103,6 +103,28 @@ Reverts the deployed file. The bundle source under `.aiwg/extensions/`
 is **never** deleted by `remove` — only `rm -rf` does that, and only
 when you ask for it explicitly.
 
+## Share bundles with a nested project
+
+In a member project's `.aiwg/aiwg.config`, add a search root whose children
+include `extensions/`, `addons/`, or the other bundle directories:
+
+```json
+{
+  "projectLocal": {
+    "searchPaths": ["../.aiwg"]
+  }
+}
+```
+
+Paths resolve from the member project; absolute paths and
+`AIWG_PROJECT_LOCAL_PATHS` are also supported. Run `aiwg use <bundle> --provider codex`
+from that member. The deployed bundle's sources become available through its
+default `aiwg discover`, `aiwg show`, and managed project quickref. A subsequent
+`aiwg index build --graph project` includes the same validated bundle payloads.
+Unrelated files beside the external bundles are excluded, as are payload links
+that escape their bundle. Removing a search root and rebuilding prunes its
+entries from the local project index.
+
 ## What just happened
 
 | You ran | What happened |

@@ -20,6 +20,7 @@ import {
   resolveProjectAiwgDir,
 } from '../config/project-artifacts.js';
 import { workspaceLinkedFiles } from '../smiths/context-pipeline/workspace-context.js';
+import { discoverProjectLocalBundles } from '../extensions/project-local-discovery.js';
 
 function pathContains(parent: string, child: string): boolean {
   const relative = path.relative(parent, child);
@@ -55,6 +56,7 @@ function walkArtifactFiles(
   dir: string,
   extensions: readonly string[],
   seenRealDirs: Set<string>,
+  boundary?: string,
 ): string[] {
   const results: string[] = [];
   if (!fs.existsSync(dir)) return results;
@@ -74,12 +76,13 @@ function walkArtifactFiles(
     let stat: fs.Stats;
     try {
       stat = fs.statSync(fullPath);
+      if (boundary && !pathContains(boundary, fs.realpathSync(fullPath))) continue;
     } catch {
       continue;
     }
     if (stat.isDirectory()) {
       if (entry.name.startsWith('.')) continue;
-      results.push(...walkArtifactFiles(fullPath, extensions, seenRealDirs));
+      results.push(...walkArtifactFiles(fullPath, extensions, seenRealDirs, boundary));
     } else if (stat.isFile() && extensions.some(extension => entry.name.endsWith(extension))) {
       results.push(fullPath);
     }
@@ -104,6 +107,18 @@ export async function collectGraphIndexFiles(cwd: string, graph?: GraphType): Pr
   }
 
   if (!graph || graph === 'project') {
+    // Additional search roots authorize bundle payloads, not the surrounding
+    // external corpus. Reuse deployment's validated source resolution, including
+    // plugin payloads, and prevent payload symlinks from escaping that boundary.
+    const { bundles } = await discoverProjectLocalBundles(cwd);
+    for (const bundle of bundles) {
+      if (scanDirs.some(scanDir => pathContains(scanDir, bundle.artifactPath))) continue;
+      const boundary = fs.realpathSync(bundle.artifactPath);
+      for (const file of walkArtifactFiles(bundle.artifactPath, extensions, new Set(), boundary)) {
+        files.add(file);
+      }
+    }
+
     const workspacePath = path.join(cwd, 'WORKSPACE.md');
     const contextFiles = [
       ...(fs.existsSync(workspacePath) ? [workspacePath] : []),
