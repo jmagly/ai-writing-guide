@@ -7,6 +7,10 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Documentation
+- Publish paired Qwen/GPT-OSS channel development results, including failed slices, reused baseline provenance and the remaining qualification limits.
+
+
 ### Fixed
 - Route negation, qualification and first-person lexical changes to explicit semantic review instead of treating wording differences as conclusive fidelity failures. Quantity, command, citation and protected-content invariants still fail closed; final reviewers can inspect a cloned assessment.
 

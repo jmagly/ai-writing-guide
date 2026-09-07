@@ -1,0 +1,88 @@
+{
+  "gpt_oss": {
+    "cases": 20,
+    "normal": 20,
+    "restored": 18,
+    "fidelity": 5,
+    "joint": 0,
+    "runtime_retained": 0
+  },
+  "by_author": {
+    "charles-darwin": {
+      "cases": 10,
+      "normal": 10,
+      "restored": 10,
+      "fidelity": 2,
+      "joint": 0,
+      "runtime_retained": 0
+    },
+    "jds": {
+      "cases": 10,
+      "normal": 10,
+      "restored": 8,
+      "fidelity": 3,
+      "joint": 0,
+      "runtime_retained": 0
+    }
+  },
+  "by_channel": {
+    "article": {
+      "cases": 4,
+      "normal": 4,
+      "restored": 3,
+      "fidelity": 0,
+      "joint": 0,
+      "runtime_retained": 0
+    },
+    "conversation": {
+      "cases": 4,
+      "normal": 4,
+      "restored": 4,
+      "fidelity": 0,
+      "joint": 0,
+      "runtime_retained": 0
+    },
+    "email": {
+      "cases": 4,
+      "normal": 4,
+      "restored": 3,
+      "fidelity": 1,
+      "joint": 0,
+      "runtime_retained": 0
+    },
+    "engineering": {
+      "cases": 4,
+      "normal": 4,
+      "restored": 4,
+      "fidelity": 0,
+      "joint": 0,
+      "runtime_retained": 0
+    },
+    "social": {
+      "cases": 4,
+      "normal": 4,
+      "restored": 4,
+      "fidelity": 4,
+      "joint": 0,
+      "runtime_retained": 0
+    }
+  },
+  "tokens": 51698,
+  "service_cycle_seconds": 219.32781291007996,
+  "fortemi_restored": true,
+  "model_unloaded": true,
+  "paired_prompt_hashes_verified": true,
+  "judge": "primary-session model; development evidence only",
+  "runtime_commit": "a66e8968aa62d4c3bb307454ce86f64b0d4dee81",
+  "model_digest": "17052f91a42e97930aa6e28a6c6c06a983e6a58dbb00434885a0cf5313e376f7",
+  "qwen_baseline": {
+    "cases": 20,
+    "normal": 20,
+    "restored": 19,
+    "fidelity": 11,
+    "joint": 0,
+    "runtime_retained": 0,
+    "reused_pilot02": 18,
+    "reused_pilot03": 2
+  }
+}
