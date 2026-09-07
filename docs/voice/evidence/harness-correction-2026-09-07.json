@@ -1,0 +1,240 @@
+{
+  "run_id": "harness-correction-01",
+  "status": "complete",
+  "design": "paired correction extension, importing frozen initial outputs; not a prospective full-flow replication",
+  "flow_sha256": "5f07444fb25375dd3e00afdb330b35f5d36295f0a1219ad42fbfc47bcf5b9b01",
+  "frozen_inputs_verified": true,
+  "judge": "primary session only",
+  "independent": false,
+  "models": {
+    "astra": {
+      "requested_model": "gpt-6-astra",
+      "planned": 15,
+      "initial_joint": 4,
+      "correction_eligible": 11,
+      "correction_attempts": 11,
+      "correction_completions": 11,
+      "correction_valid": 11,
+      "correction_literals_pass": 11,
+      "correction_fidelity": 11,
+      "corrected_joint": 5,
+      "rescued_ids": [
+        "case-01-draw-1",
+        "case-04-draw-1",
+        "case-07-draw-1",
+        "case-09-draw-1",
+        "case-13-draw-1"
+      ],
+      "final_joint": 9,
+      "original_preserved": 6,
+      "invalid_to_valid": [],
+      "valid_to_invalid": [],
+      "fidelity_repaired": [
+        "case-01-draw-1",
+        "case-09-draw-1"
+      ],
+      "joint_transitions": {
+        "fail_to_pass": 5,
+        "fail_to_fail": 6,
+        "pass_to_pass_measured": 0,
+        "pass_to_fail_measured": 0,
+        "passing_uncorrected_controls": 4
+      },
+      "semantic_unscorable_pairs": [],
+      "by_voice": {
+        "virginia-woolf": {
+          "planned": 5,
+          "initial_joint": 0,
+          "correction_attempts": 5,
+          "corrected_joint": 3,
+          "final_joint": 3
+        },
+        "mark-twain": {
+          "planned": 5,
+          "initial_joint": 2,
+          "correction_attempts": 3,
+          "corrected_joint": 1,
+          "final_joint": 3
+        },
+        "charles-darwin": {
+          "planned": 5,
+          "initial_joint": 2,
+          "correction_attempts": 3,
+          "corrected_joint": 1,
+          "final_joint": 3
+        }
+      },
+      "by_source_cohort": {
+        "equipment-library": {
+          "planned": 9,
+          "initial_joint": 4,
+          "correction_attempts": 5,
+          "corrected_joint": 5,
+          "final_joint": 9
+        },
+        "omp": {
+          "planned": 6,
+          "initial_joint": 0,
+          "correction_attempts": 6,
+          "corrected_joint": 0,
+          "final_joint": 0
+        }
+      },
+      "by_mechanism": {
+        "whole-rewrite": {
+          "planned": 6,
+          "initial_joint": 1,
+          "correction_attempts": 5,
+          "corrected_joint": 2,
+          "final_joint": 3
+        },
+        "bounded-edits": {
+          "planned": 6,
+          "initial_joint": 2,
+          "correction_attempts": 4,
+          "corrected_joint": 1,
+          "final_joint": 3
+        },
+        "paragraph-anchors": {
+          "planned": 3,
+          "initial_joint": 1,
+          "correction_attempts": 2,
+          "corrected_joint": 2,
+          "final_joint": 3
+        }
+      },
+      "channel": "source-derived development fixture, not separately channel-qualified",
+      "output_type": "reader-facing explanation",
+      "mode": "source-derived expression; no length-reduction mandate",
+      "transport_errors": 0,
+      "missing": 0,
+      "replay_applicable_corrections": 11,
+      "no_review_controls_preserved": 11,
+      "tokens": null,
+      "cost": null,
+      "per_stage_latency": null
+    },
+    "sol": {
+      "requested_model": "gpt-5.6-sol",
+      "planned": 15,
+      "initial_joint": 3,
+      "correction_eligible": 12,
+      "correction_attempts": 12,
+      "correction_completions": 12,
+      "correction_valid": 11,
+      "correction_literals_pass": 11,
+      "correction_fidelity": 10,
+      "corrected_joint": 1,
+      "rescued_ids": [
+        "case-01-draw-1"
+      ],
+      "final_joint": 4,
+      "original_preserved": 11,
+      "invalid_to_valid": [
+        "case-04-draw-1",
+        "case-07-draw-1"
+      ],
+      "valid_to_invalid": [
+        "case-08-draw-1"
+      ],
+      "fidelity_repaired": [
+        "case-01-draw-1",
+        "case-02-draw-1",
+        "case-03-draw-1",
+        "case-05-draw-1"
+      ],
+      "joint_transitions": {
+        "fail_to_pass": 1,
+        "fail_to_fail": 11,
+        "pass_to_pass_measured": 0,
+        "pass_to_fail_measured": 0,
+        "passing_uncorrected_controls": 3
+      },
+      "semantic_unscorable_pairs": [
+        "case-04-draw-1",
+        "case-07-draw-1",
+        "case-08-draw-1"
+      ],
+      "by_voice": {
+        "virginia-woolf": {
+          "planned": 5,
+          "initial_joint": 0,
+          "correction_attempts": 5,
+          "corrected_joint": 1,
+          "final_joint": 1
+        },
+        "mark-twain": {
+          "planned": 5,
+          "initial_joint": 0,
+          "correction_attempts": 5,
+          "corrected_joint": 0,
+          "final_joint": 0
+        },
+        "charles-darwin": {
+          "planned": 5,
+          "initial_joint": 3,
+          "correction_attempts": 2,
+          "corrected_joint": 0,
+          "final_joint": 3
+        }
+      },
+      "by_source_cohort": {
+        "equipment-library": {
+          "planned": 9,
+          "initial_joint": 3,
+          "correction_attempts": 6,
+          "corrected_joint": 1,
+          "final_joint": 4
+        },
+        "omp": {
+          "planned": 6,
+          "initial_joint": 0,
+          "correction_attempts": 6,
+          "corrected_joint": 0,
+          "final_joint": 0
+        }
+      },
+      "by_mechanism": {
+        "whole-rewrite": {
+          "planned": 6,
+          "initial_joint": 1,
+          "correction_attempts": 5,
+          "corrected_joint": 1,
+          "final_joint": 2
+        },
+        "bounded-edits": {
+          "planned": 6,
+          "initial_joint": 1,
+          "correction_attempts": 5,
+          "corrected_joint": 0,
+          "final_joint": 1
+        },
+        "paragraph-anchors": {
+          "planned": 3,
+          "initial_joint": 1,
+          "correction_attempts": 2,
+          "corrected_joint": 0,
+          "final_joint": 1
+        }
+      },
+      "channel": "source-derived development fixture, not separately channel-qualified",
+      "output_type": "reader-facing explanation",
+      "mode": "source-derived expression; no length-reduction mandate",
+      "transport_errors": 0,
+      "missing": 0,
+      "replay_applicable_corrections": 11,
+      "no_review_controls_preserved": 11,
+      "tokens": null,
+      "cost": null,
+      "per_stage_latency": null
+    }
+  },
+  "actual_model_resolution": "unavailable; requested model labels only",
+  "unknown_measurements": [
+    "tokens",
+    "cost",
+    "per-call latency",
+    "actual provider reasoning execution"
+  ],
+  "completed_at": "2026-09-07T19:40:28.756828+00:00"
+}
