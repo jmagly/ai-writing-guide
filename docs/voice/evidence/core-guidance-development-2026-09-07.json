@@ -1,0 +1,32 @@
+{
+  "cases": 20,
+  "normal": 20,
+  "restored": 20,
+  "baseline_fidelity": 17,
+  "guidance_fidelity": 14,
+  "fidelity_gains": 3,
+  "fidelity_losses": 6,
+  "joint": 0,
+  "baseline_joint": 0,
+  "guidance_tokens": 56893,
+  "matched_baseline_tokens": 43228,
+  "service_cycle_seconds": 156.03487277030945,
+  "fortemi_restored": true,
+  "model_unloaded": true,
+  "runtime_fallbacks": 24,
+  "frozen_inputs_verified": true,
+  "core_guidance_only_addition": true,
+  "independent_human_evaluation": false,
+  "guidance_sources": [
+    {
+      "author": "jds",
+      "file_sha256": "f6d8a8c56293c15fd353afbde03319d5767f70787a4d9c22ffa59f5544afd76b",
+      "excerpt_sha256": "d2bbd3fdf7c40d68cf2049aa66ff9ce2fd06d3a069bd522f746598f033bde1a7"
+    },
+    {
+      "author": "charles-darwin",
+      "file_sha256": "00b1a59264fefe773bcad60e3499c7f9fd65f00c15114e51b46f6a67959ffd71",
+      "excerpt_sha256": "d0901f0ef2f7e70365ab525d3049300a3bd37d0e7f4884db27a677dfff8acaee"
+    }
+  ]
+}

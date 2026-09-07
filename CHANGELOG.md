@@ -7,6 +7,10 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Documentation
+
+- Record the negative paired core-guidance handoff result, including factual regressions, unchanged voice acceptance and additional token cost.
+
 ### Fixed
 - Protect explicit channel CTAs and required literals before generation, merging overlaps with existing code/Markdown protection while retaining final constraint checks.
 
