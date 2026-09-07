@@ -1,5 +1,7 @@
 # Explicit channel literal protection: development pilot
 
+**Historical model evidence:** GPT-OSS20b results are excluded from current-model qualification by operator direction. Preserve the observations; revalidate conclusions on eligible models. See [model eligibility](model-eligibility.md).
+
 Twenty new GPT-OSS20b generations used the same facts, examples, compiled expression guidance and decoding as channel-family-02. Only the masked source and marker list changed. The existing CTA was declared explicitly for all five channels. Source facts, profile text, prompts and code hashes were verified against frozen inputs.
 
 | Outcome | Prior GPT-OSS run | Explicit literal pilot |

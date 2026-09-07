@@ -1,5 +1,7 @@
 # Existing core guidance handoff: development result
 
+**Historical model evidence:** GPT-OSS20b results are excluded from current-model qualification by operator direction. Preserve the observations; revalidate conclusions on eligible models. See [model eligibility](model-eligibility.md).
+
 The channel prompts previously supplied closed expression settings and one author example but omitted the companion core guidance documented by the JDS and Darwin contracts. Twenty new GPT-OSS20b calls added only that existing core-guidance excerpt. Facts, style examples, channel packs, literal transport and decoding stayed fixed; source and prompt hashes verified. The latest matched baseline combines sixteen literal-pilot01 cases and four literal-pilot02 social cases.
 
 | Outcome | Matched baseline | Core guidance added |

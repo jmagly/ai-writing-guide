@@ -1,5 +1,7 @@
 # Paired channel development comparison: Qwen and GPT-OSS
 
+**Historical model evidence:** GPT-OSS20b results are excluded from current-model qualification by operator direction. Preserve the observations; revalidate conclusions on eligible models. See [model eligibility](model-eligibility.md).
+
 Twenty GPT-OSS generations used exactly the same prompt bytes as the latest twenty Qwen channel cases: eighteen from channel-pilot-02 and two article-context-corrected cases from channel-pilot-03. JDS and Darwin each cover OMP and Antigravity across article, social, email, engineering and conversation. These are two historical development topic clusters, not independent held-out qualification.
 
 | Outcome | Qwen baseline | GPT-OSS |

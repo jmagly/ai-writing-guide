@@ -53,3 +53,5 @@ The [explicit-literal development pilot](evidence/channel-literals-development-2
 A [paired core-guidance handoff study](evidence/core-guidance-development-2026-09-07.md) supplied the existing JDS/Darwin companion guidance that the coarse JSON controls cannot encode. It did not establish a voice-quality gain and reduced factual passes in that development slice. Supplying more descriptive guidance is not a qualified remedy by itself.
 
 The [TinyStyler mechanism trial](evidence/tinystyler-development-2026-09-07.md) and [bounded expression-edit comparison](evidence/expression-edits-development-2026-09-07.md) did not establish joint voice passes. Paragraph-range addressing improved proposal applicability on four follow-up cases; factual and cadence review remain separate obligations.
+
+Current-model evaluation follows the [model eligibility record](evidence/model-eligibility.md). GPT-OSS20b reports are historical debugging evidence and do not qualify current model-family coverage.

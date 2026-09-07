@@ -1,5 +1,7 @@
 # Bounded expression editing and paragraph addressing
 
+**Historical model evidence:** GPT-OSS20b results are excluded from current-model qualification by operator direction. Preserve the observations; revalidate conclusions on eligible models. See [model eligibility](model-eligibility.md).
+
 The initial sixteen-call GPT-OSS20b comparison tested whole rewriting against up to three bounded expression edits across four voices and two sources.
 
 | Result | Whole rewrite | Exact-span edits |
