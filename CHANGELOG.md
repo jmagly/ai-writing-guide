@@ -9,6 +9,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Documentation
 
+- Add the native subagent harness voice-evaluation lane and record thirty Astra/Sol cases, primary reviews, replay outcomes and comparison limits.
+
 - Record the Gemma native-schema follow-up: format recovery, remaining edit-budget and fidelity failures, and unchanged rejection of unqualified voice revisions.
 
 - Record forty current Qwen/Gemma expression revalidation calls, primary-reviewed passes, strict-format failures and resource/settings limits.

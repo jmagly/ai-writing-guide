@@ -1,0 +1,37 @@
+{
+  "astra": {
+    "model_requested": "gpt-6-astra",
+    "model_resolved": "not independently verified",
+    "cases": 15,
+    "artifacts": 15,
+    "valid": 15,
+    "exact_literals": 14,
+    "fidelity": 13,
+    "joint": 4,
+    "joint_ids": [
+      "case-05-draw-1",
+      "case-06-draw-1",
+      "case-08-draw-1",
+      "case-15-draw-1"
+    ],
+    "judge": "primary session model",
+    "independent": false
+  },
+  "sol": {
+    "model_requested": "gpt-5.6-sol",
+    "model_resolved": "not independently verified",
+    "cases": 15,
+    "artifacts": 15,
+    "valid": 13,
+    "exact_literals": 13,
+    "fidelity": 8,
+    "joint": 3,
+    "joint_ids": [
+      "case-06-draw-1",
+      "case-09-draw-1",
+      "case-15-draw-1"
+    ],
+    "judge": "primary session model",
+    "independent": false
+  }
+}
