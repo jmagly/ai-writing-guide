@@ -28,6 +28,10 @@ aiwg use all --provider pi --dry-run
 aiwg use all --provider pi
 ```
 
+The deployment command refreshes AIWG's shared project context and prints a
+verification result. Follow any reload notice in that output before starting a
+Pi session.
+
 Here, AIWG's `--provider pi` selects the **coding-agent integration**. It is
 not Pi's own `--provider` option, which selects an LLM backend such as
 OpenRouter. Pi documents its model flags in the [coding-agent
@@ -50,6 +54,17 @@ pi
 aiwg doctor --provider pi
 aiwg steward capabilities --provider pi
 ```
+
+Try one small task immediately after trust and verification:
+
+```text
+Review this project's README and getting-started docs for unclear positioning,
+missing setup steps, or unsupported claims. Return the three highest-priority
+fixes with file references and a recommended next edit.
+```
+
+Success means Pi names the intended project, loads `AGENTS.md` and the trusted
+AIWG project resources, and produces a concrete review you can inspect.
 
 For a bounded, non-interactive check that loads trusted project resources:
 

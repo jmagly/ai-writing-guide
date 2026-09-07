@@ -2,18 +2,27 @@
 
 For the complete first-time journey, start with [Install, Connect, and Verify](../getting-started/install-connect-verify.md).
 
-Open a terminal in the project’s main folder:
+Factory is the **provider** in this guide. Complete the [safe Node.js setup](../getting-started/install-node.md) first
+if `node` or `npm` is unavailable.
+
+From a terminal opened in the project's main folder, install AIWG and deploy the complete system:
 
 ```bash
 npm install -g aiwg
 aiwg use all --provider factory
 ```
 
-Restart Factory from that folder. Ask the Factory agent to run
-`aiwg-regenerate`, preview and preserve existing project instructions, then
-apply the tailored context. Ask it to report the project root, Factory/AGENTS
-files it reads, installed frameworks, and one next AIWG action.
+The deployment command refreshes AIWG's shared project context and prints a verification result. Restart the Factory
+runtime if the `aiwg use` output says a reload is required. After that, ask Factory to verify AIWG by reporting the
+project root, provider files it can read, installed frameworks, and one useful next action.
 
-Use [Install Node.js and npm Safely](../getting-started/install-node.md) if the
-first command is unavailable. Agent-only details live in the
-[Factory operational reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/providers/factory.md).
+Try one small task immediately after verification:
+
+```text
+Review this project's README and getting-started docs for unclear positioning, missing setup steps, or unsupported claims. Save the three highest-priority fixes with file references and a recommended next edit at .aiwg/marketing/brand/audit/readme-review.md. Leave the reviewed files unchanged.
+```
+
+Success means Factory names the intended project, follows the AIWG bootstrap into `WORKSPACE.md` and `AIWG.md` or the
+provider-specific adapter, and produces a concrete review you can inspect. For advanced flags, compatibility notes,
+and recovery details, see the [Factory operational
+reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/providers/factory.md).

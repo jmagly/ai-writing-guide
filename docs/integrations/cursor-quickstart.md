@@ -2,18 +2,27 @@
 
 For the complete first-time journey, start with [Install, Connect, and Verify](../getting-started/install-connect-verify.md).
 
-Open a terminal in the project folder you open with Cursor:
+Cursor is the **provider** in this guide. Complete the [safe Node.js setup](../getting-started/install-node.md) first
+if `node` or `npm` is unavailable.
+
+From a terminal opened in the project's main folder, install AIWG and deploy the complete system:
 
 ```bash
 npm install -g aiwg
 aiwg use all --provider cursor
 ```
 
-Reload Cursor in that folder. In the Cursor chat, type `/aiwg-regenerate`,
-review the preview, and let the agent tailor the context without replacing your
-project instructions. Ask it to report whether AIWG is active, which `.cursor/`
-files it reads, the installed frameworks, and one useful next action.
+The deployment command refreshes AIWG's shared project context and prints a verification result. Reload the Cursor
+workspace if the `aiwg use` output says a reload is required. After that, ask Cursor to verify AIWG by reporting the
+project root, provider files it can read, installed frameworks, and one useful next action.
 
-For Node.js/npm help, use the [safe installation
-guide](../getting-started/install-node.md). Advanced details are in the
-[Cursor operational reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/providers/cursor.md).
+Try one small task immediately after verification:
+
+```text
+Review this project's README and getting-started docs for unclear positioning, missing setup steps, or unsupported claims. Save the three highest-priority fixes with file references and a recommended next edit at .aiwg/marketing/brand/audit/readme-review.md. Leave the reviewed files unchanged.
+```
+
+Success means Cursor names the intended project, follows the AIWG bootstrap into `WORKSPACE.md` and `AIWG.md` or the
+provider-specific adapter, and produces a concrete review you can inspect. For advanced flags, compatibility notes,
+and recovery details, see the [Cursor operational
+reference](https://github.com/jmagly/aiwg/blob/main/docs/agents/providers/cursor.md).

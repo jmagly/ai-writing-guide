@@ -1,14 +1,18 @@
 # Key Addons
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](install-connect-verify.md). This guide assumes
+AIWG is connected to the target project and your provider session can read the deployed context.
 
-Addons extend AIWG's core capabilities. They're optional — deploy the ones that match your workflow. Some are essential for serious use; others are specialized for specific contexts.
+Addons extend AIWG's core capabilities. Start from the complete setup path,
+then focus on the addon that matches the result you need.
 
 ---
 
 ## Al — Iterative task completion
 
-Al is the most-used addon in AIWG. It transforms single-pass AI execution into iterative completion loops that keep running until verifiable criteria are met.
+Al turns a bounded task into an iterative loop with an explicit completion
+check. Use it after you can name the task, the files in scope, and the command
+or evidence that proves completion.
 
 ```bash
 aiwg use ralph
@@ -23,7 +27,9 @@ Execute → Verify → Learn → Iterate
    until: criteria met OR limits reached
 ```
 
-You give Al a task and a completion criterion. It executes, checks whether the criterion is met, learns from what happened, and tries again. It doesn't stop because it ran out of ideas — it stops when the work is actually done.
+You give Al a task and a completion criterion. It executes, checks whether the
+criterion is met, learns from what happened, and tries again until the criterion
+passes, a limit is reached, or it needs your input.
 
 ### Common uses
 
@@ -58,7 +64,9 @@ Resolve issues:
 
 ### Why it matters
 
-Most AI-assisted work fails at the verification step — you generate something, it seems right, it turns out not to be. Al makes verification explicit and automatic. The loop doesn't complete until the criterion is actually satisfied, not just approximated.
+Many AI-assisted tasks fail at the verification step: the first answer seems
+plausible, then tests or review expose a gap. Al makes the completion criterion
+explicit and records the loop state so you can inspect what changed.
 
 ---
 
@@ -72,8 +80,8 @@ aiwg use rlm
 
 ### When you need it
 
-- Analyzing a codebase with 500+ files
-- Processing a research corpus of 200+ papers
+- Analyzing a codebase that is too large to read in one session
+- Processing a research corpus that exceeds the active context window
 - Running queries across large documentation sets
 - Parallel fan-out over many files simultaneously
 
@@ -90,7 +98,9 @@ aiwg use rlm
 /rlm-status --cost
 ```
 
-RLM decomposes the task recursively — spawning sub-agents to handle portions of the context, then synthesizing their results. Up to 3x cheaper than loading full context because agents only read what's relevant.
+RLM decomposes the task recursively, lets focused workers read bounded slices,
+then synthesizes their results. Check `/rlm-status --cost` when cost matters;
+actual savings depend on the task shape and provider.
 
 ---
 
@@ -176,7 +186,8 @@ Security gates run at key points:
 /flow-security-review-cycle       # Full review with multi-agent analysis
 ```
 
-The `security-sentinel` behavior (if you have behaviors enabled) runs automatically on file saves and before deploys — no manual invocation needed.
+The `security-sentinel` behavior can run on file saves or before deploys when
+behaviors are enabled and configured for the provider.
 
 ---
 
@@ -184,7 +195,9 @@ The `security-sentinel` behavior (if you have behaviors enabled) runs automatica
 
 Filters context to remove distractors before task execution. The Context Curator pre-reads available artifacts and removes irrelevant content before passing context to working agents.
 
-This addresses a specific LLM failure pattern (Archetype 3): when irrelevant context is present, models sometimes anchor on it instead of the actual task. The curator removes that noise automatically.
+This addresses a common failure pattern: when irrelevant context is present,
+models sometimes anchor on it instead of the actual task. The curator helps
+remove that noise before work starts.
 
 Particularly useful in large SDLC projects where `.aiwg/` has accumulated many artifacts and you want an agent focused on a specific phase.
 
@@ -196,7 +209,9 @@ Particularly useful in large SDLC projects where `.aiwg/` has accumulated many a
 aiwg use auto-memory
 ```
 
-Agents accumulate memory across sessions — what approaches worked, what the user corrected, project-specific conventions. Instead of re-explaining context at the start of every session, the agent recalls what it already knows about how you work.
+Agents can accumulate memory across sessions: approaches that worked, user
+corrections, and project-specific conventions. Use it when repeated context is
+slowing down normal work.
 
 Memory is organized by type: user preferences, project state, feedback on past work, and references to external systems. Old memories get updated when they're no longer accurate.
 
@@ -208,7 +223,11 @@ Memory is organized by type: user preferences, project state, feedback on past w
 aiwg use semantic-memory   # core addon, auto-installed
 ```
 
-Core addon (installed automatically on every project) that factors common semantic memory operations — ingest, lint, cross-reference maintenance, contradiction detection, event logging — out of individual frameworks and into a shared kernel. Any framework or addon that declares a `memory.topology` contract in its `manifest.json` gets these capabilities for free.
+Core addon used by memory-aware frameworks. It factors common semantic memory
+operations — ingest, lint, cross-reference maintenance, contradiction
+detection, event logging — out of individual frameworks and into a shared
+kernel. Frameworks or addons that declare a `memory.topology` contract in
+their `manifest.json` can use these shared capabilities.
 
 Five skills ship:
 
@@ -231,7 +250,9 @@ aiwg use llm-wiki
 
 A thin topology on top of the semantic memory kernel that ships five page-template profiles. Cross-references use `[[wikilink]]` style — directly consumable by Obsidian's graph view, Dataview queries, and Marp slide rendering.
 
-Use it for domains that don't fit a pre-packaged framework: book companions, personal knowledge bases, research deep-dives, team wikis. Install once, pick a profile, start ingesting sources. The kernel handles contradiction detection, cross-reference maintenance, and log rendering.
+Use it for domains that do not fit a packaged framework: book companions,
+personal knowledge bases, research deep-dives, and team wikis. Pick a profile,
+ingest sources, then review the generated pages and cross-references.
 
 Docs on Obsidian integration (Web Clipper, Graph View, Dataview patterns, hotkeys) ship with the addon.
 
@@ -267,16 +288,21 @@ traffic, retention policy, and question before analysis.
 
 ---
 
-## Installing addons
+## Enabling Addons
+
+Complete setup is the default route for new users. These commands remain useful
+when you intentionally want a targeted addon or framework:
 
 ```bash
 aiwg use ralph              # Al iterative loops
 aiwg use rlm                # Recursive language models
 aiwg use writing            # Voice framework + writing quality
-aiwg use all                # All frameworks and addons (auto-discovers all addons except devOnly ones)
+aiwg use all                # Complete supported AIWG surface for this project
 ```
 
-Individual `aiwg use <addon>` calls remain valid for targeted installs. `aiwg use all` auto-discovers every addon in `agentic/code/addons/` and deploys them all, skipping only those marked `devOnly` in their manifest (currently only `aiwg-dev`).
+Individual `aiwg use <addon>` calls remain valid for targeted deployments.
+Use [Install, Connect, and Verify](install-connect-verify.md) when you are not
+sure which setup route applies.
 
 Or install specific addons:
 
@@ -289,3 +315,7 @@ List what's installed:
 ```bash
 aiwg list
 ```
+
+Success means the addon is discoverable in the current provider session and
+you have one output to review: a loop report, source plan, quality report,
+memory page, or other artifact tied to the task you chose.

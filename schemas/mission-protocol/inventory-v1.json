@@ -412,16 +412,6 @@
       "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
-      "path": "docs/architecture-overview.md",
-      "owner": "docs/architecture-overview.md",
-      "role": "documentation-example",
-      "currentVersion": "unversioned",
-      "statusVocabulary": [],
-      "serialization": "markdown",
-      "migrationAction": "adapt",
-      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
-    },
-    {
       "path": "docs/architecture/adr-mission-protocol-v1.md",
       "owner": "docs/architecture",
       "role": "documentation-example",

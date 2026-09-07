@@ -1,6 +1,17 @@
 # Knowledge Base Framework — Overview
 
-## The Problem with Domain-Specific Frameworks
+The Knowledge Base framework helps you build a linked project wiki from loose sources, notes, and decisions. Use it
+when you want a durable reference that can grow as the domain becomes clearer, without forcing the rigor of a formal
+research workflow on every note.
+
+## Common Use Cases
+
+- Build a team wiki for tools, vendors, internal systems, or domain concepts.
+- Ingest articles and meeting notes, then connect them to entities and decisions.
+- Compare options without repeating the same analysis in future sessions.
+- Turn repeated source summaries into synthesis notes that explain what the team now believes.
+
+## Why It Exists
 
 AIWG's existing frameworks — `research-complete`, `media-curator`, `sdlc-complete` — are purpose-built for specific workflows. They assume you know upfront what kind of work you are doing and impose structure to match: GRADE scoring, citation graphs, phase gates, provenance tracking.
 
@@ -58,11 +69,18 @@ A knowledge base that is never audited becomes unreliable. The `kb-health` skill
 
 The recommended maintenance cadence is: run `kb-health` after every batch ingest session and before any synthesis work.
 
+## Next Step
+
+Deploy the framework with `aiwg use knowledge-base`, then ask your assistant to ingest a small source set and run
+`kb-health` before writing a synthesis note.
+
 ## Anti-Patterns
 
 **Over-structuring early.** Do not create a deep folder hierarchy before you have content to fill it. Start flat — all entities in `entities/`, all concepts in `concepts/` — and create subdirectories only when a directory has more than ~20 pages.
 
-**Capturing without connecting.** A source summary with no connections to entity or concept pages is a dead end. The `kb-ingest` skill always creates connections; when adding pages manually, always populate the Relationships or Connected Pages section.
+**Capturing without connecting.** A source summary with no connections to entity or concept pages is a dead end. The
+`kb-ingest` workflow is designed to create connections; when adding pages manually, populate the Relationships or
+Connected Pages section.
 
 **Synthesis as summary.** A synthesis note should make a claim that is not in any single source. If it just restates what one source says, it belongs in that source's summary, not a synthesis note.
 

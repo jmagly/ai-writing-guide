@@ -1,6 +1,7 @@
 # Marketing Quick Start
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed and connected to the target project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](getting-started/install-connect-verify.md).
+This guide assumes AIWG is already installed and connected to the target project.
 
 Start with the campaign outcome, audience, and constraints:
 
@@ -37,6 +38,6 @@ Confirm that the final report names the target audience, intended outcome,
 review status, publication approval state, and the metrics that will determine
 whether the work succeeded.
 
-For installation or engagement help, use the [general quick
-start](quickstart.md). Agent/operator execution details live in the
+For installation or engagement help, use [Install, Connect, and
+Verify](getting-started/install-connect-verify.md). Agent/operator execution details live in the
 [agent reference corpus](https://github.com/jmagly/aiwg/tree/main/docs/agents/).

@@ -1,711 +1,103 @@
 # What Is AIWG?
 
-**Document Type**: Conceptual Overview
-**Audience**: Technical practitioners, architects, engineering leaders
-**Reading Time**: 10-12 minutes
+AIWG gives your AI assistant reusable project context and specialist workflows, so you can carry decisions forward and
+review complex work in the tools you already use.
 
----
+It is useful for work that spans several tasks or sessions: planning a software change, preparing a campaign,
+investigating a problem, or organizing research. You describe the outcome in your AI tool. AIWG supplies instructions
+and workflows that help the agent produce reviewable work and save context for the next task.
 
-## The Elevator Pitch
+## Three examples
 
-AIWG is a deployment tool and support utility for AI context. At its core, `aiwg use` copies markdown and YAML source files into the paths each provider reads — `.claude/agents/`, `.agents/skills/`, `.cursor/rules/`, `.github/prompts/`, and provider-specific equivalents — so one source of truth works across 15 named provider integrations, including Google Antigravity CLI and DeepSeek Harness. A separate `generic` fallback adapter is available for custom harnesses and is not included in that count. Around that core, AIWG ships utilities for things the base providers do not handle on their own: persistent artifact memory, background orchestration, autonomous loops, artifact indexing, cost telemetry, and health diagnostics. Most utilities are opt-in; the deployment layer works standalone as plain text.
+| Situation | What you ask for | What you keep |
+|---|---|---|
+| You inherited a codebase | Identify the main components and the most important missing tests | A report with source references and prioritized test recommendations |
+| You are preparing a launch | Review the README for unclear positioning and missing onboarding steps | A messaging review with specific fixes |
+| You are investigating a technical question | Compare the available sources and distinguish findings from uncertainty | Source notes and a synthesis with traceable citations |
 
-The compounding story matters more than any single file. Hundreds of small artifacts — each a readable, editable `.md` file — snap together into multi-agent workflows (SDLC, forensics, marketing, research) that would otherwise take a bespoke agent platform to build. AIWG implements patterns from cognitive science, multi-agent systems, and software engineering as file conventions and deployment rules, not as a runtime you depend on.
+Each output can become input to later work. For example, the next session can read a README review and revise the
+first section. You can inspect the saved report instead of relying on the previous conversation being available.
 
-If you have used AI coding assistants and thought "this is amazing for small tasks but falls apart on anything complex," AIWG is the missing infrastructure layer that scales AI assistance to multi-week projects.
+Try the [first-result walkthrough](../getting-started/just-try-it.md), or use the [capability guide](capabilities.md)
+to choose a different task.
 
----
+## What you install
 
-## What Problem Does AIWG Solve?
+AIWG places agents, skills, commands, and rules in locations your AI tool can read. Those files describe roles, tasks,
+and constraints. A framework groups them around a domain, such as software development or marketing. Templates give
+the resulting documents a consistent structure.
 
-Base AI assistants (Claude, GPT-4, Copilot without frameworks) have three fundamental limitations:
+The deployment layer is a CLI tool. Optional utilities support artifact search, workflow orchestration, recovery, and
+other tasks. Some require additional services or provider capabilities. The [architecture
+overview](../architecture-overview.md) separates deployment from optional runtime components.
 
-### 1. No Memory Across Sessions
+You continue working in your existing assistant. AIWG supplies context and procedures; the provider supplies the model
+and its available tools. Native agent execution, discovery, permissions, and reload behavior vary by provider.
 
-Each conversation starts fresh. The assistant has no idea what happened yesterday, what requirements you already documented, or what decisions you made last week. You end up re-explaining context repeatedly.
+## How work carries forward
 
-**The Cost**: Projects stall as context rebuilding eats time. Complex initiatives require continuity, not fresh starts every morning.
+Project outputs live in the `.aiwg/` artifact area. A software workflow might save requirements, a design decision,
+and a test plan. A marketing workflow might save a campaign brief and a messaging review. Links between those
+documents help later tasks find their supporting context.
 
-### 2. No Recovery Patterns
+A typical review proceeds through a draft, specialist feedback, and a combined result. The agent may use parallel
+reviewers when supported, or work through the roles sequentially. The workflow defines what to check and what to save;
+your project policy controls required approvals.
 
-When an AI generates broken code or flawed designs, you manually intervene, explain the problem, and hope the next attempt works better. There is no systematic learning from failures, no structured retry strategy, no checkpoint-and-resume capability.
+Saved context still needs maintenance. Outdated decisions should be revised, conflicting findings resolved, and
+important claims checked against their sources. An artifact being present does not prove that the assistant consulted
+it or interpreted it correctly.
 
-**The Cost**: Research shows 47% of AI workflows produce inconsistent outputs without reproducibility constraints. Debugging becomes trial-and-error instead of root cause analysis.
+## When it fits
 
-### 3. No Quality Gates
+AIWG is a useful fit when you want to:
 
-Base assistants optimize for "sounds plausible" not "actually works." They lack domain specialization (a general assistant critiques security, performance, maintainability simultaneously—poorly), multi-perspective review, and human approval checkpoints.
+- keep project decisions available across sessions;
+- give a team reusable instructions across supported AI tools;
+- structure reviews around different areas of expertise;
+- connect plans, implementation work, and verification;
+- build project-specific workflows you can inspect and version.
 
-**The Cost**: Production code generated without architectural review, security validation, or operational feasibility assessment. What ships fast often fails hard.
+A single short question may not benefit from this structure. Start with one task before committing to a larger
+process. You can use a focused workflow without adopting every phase of a framework.
 
----
+## Provider support
 
-## What AIWG Provides
+AIWG has **15 named provider integrations**: Google Antigravity CLI, Claude Code, OpenAI Codex, GitHub Copilot,
+Cursor, DeepSeek Harness, Factory AI, Hermes, OpenCode, OpenClaw, OpenHuman, Oh My Pi, Pi Coding Agent, Warp Terminal,
+and Devin Desktop. The separate `generic` adapter provides portable files for custom harnesses.
 
-AIWG is, first, a **deployment tool**: it places markdown and YAML artifacts into the paths each AI platform reads. Second, it is a **support utility**: an optional set of CLI tools and services (memory indexing, background orchestration, autonomous loops, MCP servers, cost telemetry, diagnostics) that handle what base platforms do not.
+The [provider inventory](../providers/provider-inventory.md) tracks integration status and deployment scope. The
+[comparison and setup guides](../integrations/cross-platform-overview.md) explain the supported surfaces and
+provider-specific handoff. Integration does not imply identical capabilities on every tool.
 
-The combined system implements a **cognitive architecture** — a term borrowed from cognitive science (SOAR, ACT-R) describing systems with memory, reasoning, learning, verification, planning, and controllable output generation. AIWG expresses that architecture through file conventions (where artifacts live, how they cross-reference), deployment rules (which platform gets which artifacts), and optional runtime helpers — not through a monolithic runtime you install and depend on.
+## Costs and limitations
 
----
+Specialist reviews, context retrieval, and recovery attempts can add model calls and review effort. Their value
+depends on the task, model, tools, and quality criteria. Set a bounded first task and examine the result before
+increasing autonomy.
 
-## The Six Core Components
+AIWG's templates and checks support review and traceability; they do not guarantee correct output, perfect citations,
+regulatory compliance, or deterministic reproduction. A prompt-based rule is an instruction to the agent, and
+technical enforcement depends on the configured tools and checks.
 
-### 1. Memory: Structured Semantic Memory
+Research on structured artifacts, multi-agent work, and recovery informs the design. Results measured for those
+research systems are not AIWG benchmarks. See the [reading list](reading-list.md) for sources, and the [executive
+brief](executive-brief.md) for a pilot that measures usefulness in your own work.
 
-**What It Is**: The `.aiwg/` directory is a persistent artifact repository storing requirements, architecture, test plans, risks, and decisions across sessions.
+## Start with a saved review
 
-**The Research Foundation**: This implements Retrieval-Augmented Generation patterns (Lewis et al., 2020), extending LLM working memory with external storage. Unlike pure parametric models trained once with static knowledge, AIWG agents retrieve from an evolving knowledge base.
+Follow [Install, Connect, and Verify](../getting-started/install-connect-verify.md), then ask:
 
-**How It Works**:
-```
-.aiwg/
-├── intake/          # Project goals, constraints
-├── requirements/    # Use cases, user stories, NFRs
-├── architecture/    # Software architecture doc, ADRs
-├── planning/        # Phase plans, iteration plans
-├── risks/           # Risk register, mitigations
-├── testing/         # Test strategy, test plans
-├── security/        # Threat models, security gates
-└── deployment/      # Deployment plans, runbooks
-```
-
-Each artifact is discoverable via `@-mentions` (like `@.aiwg/requirements/use-cases/UC-001-login.md`). Agents read prior work instead of regenerating from scratch.
-
-**What This Enables**:
-- Continuity across days, weeks, months
-- Context sharing between agents (requirements analyst hands off to architect)
-- Provenance tracking (what artifacts derived from what sources)
-- Human review without losing work (edit artifacts in place)
-
-**The Difference**: A substantial project accumulates 50-100 interconnected artifacts. Later phases build on earlier ones automatically, because memory persists.
-
-**Handling Large Projects**: The segmentation of `.aiwg/` is what makes large projects tractable. Even when individual code files grow large, agents don't need to load the entire project — they load the relevant slice. Debugging a deployment issue? Load `@deployment/` and `@architecture/`. Writing acceptance tests? Load `@requirements/` and `@testing/`. The directory structure maps naturally to problem domains, so context stays focused regardless of overall project scale.
-
-**The Index Multiplier**: `aiwg index` builds a searchable index of all project artifacts and their relationships. Without any tooling, agents browse 3-6 documents before finding what they need. AIWG's structured memory cuts this to 2-3. With the index active, artifact lookups resolve in a single query more often than not — the agent gets a direct hit on the right requirement, architecture decision, or test case without scanning.
-
----
-
-### 2. Reasoning: Multi-Agent Deliberation with Synthesis
-
-**What It Is**: Instead of a single general-purpose assistant, AIWG provides 162 specialized agents across 5 frameworks (SDLC, Forensics, Marketing, Research, Media Curator). Complex artifacts (architecture docs, security assessments) go through multi-agent review panels with synthesis.
-
-**The Research Foundation**: Mixture of Experts pattern (Jacobs et al., 1991) and Self-Consistency reasoning (Wang et al., 2023)—sampling multiple reasoning paths and aggregating improves accuracy by 15-20% on complex tasks.
-
-**How It Works**:
-```
-Architecture Document Creation:
-  1. Primary Agent (Architecture Designer) drafts
-  2. Review Panel (3-5 specialized agents):
-     - Security Auditor (threat perspective)
-     - Performance Architect (scalability perspective)
-     - Maintainability Reviewer (evolution perspective)
-     - Test Strategist (testability perspective)
-  3. Synthesizer aggregates findings into coherent review
-  4. Human approval gate (accept, iterate, escalate)
+```text
+Use AIWG to review this project's README for unclear positioning and missing
+onboarding steps. Save a report at
+.aiwg/marketing/brand/audit/readme-review.md with file references and the
+three highest-priority fixes. Leave the README unchanged.
 ```
 
-**Agent Specialization Examples**:
-- API Designer focuses on interface contracts, versioning, backward compatibility
-- Test Engineer focuses on coverage, edge cases, test data strategy
-- Security Auditor focuses on threat modeling, STRIDE analysis, mitigation controls
-- DevOps Engineer focuses on deployment automation, monitoring, incident response
-
-**What This Enables**:
-- Domain expertise applied at the right moment (security review by security specialist)
-- Divergent perspectives surface trade-offs (performance vs maintainability)
-- Cost optimization (expensive models for complex decisions, cheaper models for routine tasks)
-
-**The Difference**: Research shows 84% cost reduction with human-in-the-loop validation versus fully autonomous systems. AIWG keeps humans on judgment calls, automates clerical work.
-
----
-
-### 3. Learning: Failure Analysis and Strategy Adaptation (Al)
-
-**What It Is**: Al is a closed-loop self-correction system that executes tasks iteratively, learns from failures, and adapts strategy based on error patterns.
-
-**The Research Foundation**: Control theory principles and findings from Roig (2025) showing recovery capability—not initial correctness—predicts agentic task success. Self-Refine (Madaan et al., NeurIPS 2023) and Reflexion (Shinn et al., 2023) provide the iterative improvement patterns.
-
-**How It Works**:
-```
-Agent Loop (TAO: Thought → Action → Observation):
-  1. Execute task with current strategy
-  2. Verify results (test pass, lint pass, format valid)
-  3. If failure:
-     a. Analyze root cause (what specific error occurred)
-     b. Extract structured learning (add to debug memory)
-     c. Adapt strategy (try different approach informed by accumulated learnings)
-     d. Log iteration state (checkpoint for resume)
-  4. Repeat until success or iteration limit
-  5. Terminate gracefully (provide human-readable summary)
-```
-
-**Two Execution Modes**:
-
-| Mode | Duration | Resilience | Use Case |
-|------|----------|-----------|----------|
-| **In-Session Al** | Minutes to hours | Within single session | Fix tests, reach coverage target, refactor module |
-| **External Al** | Hours to days | Crash-resilient (PID file, checkpoints, auto-restart) | TypeScript migration, full test suite repair, multi-file refactor |
-
-External Al runs as a **persistent background process** that survives terminal disconnects, process crashes, and system reboots. State persists in `.aiwg/ralph-external/` with checkpoint-and-resume capability.
-
-**Issue-Driven Al**: The `/issue-driven-al` command drives issues with 2-way human-AI collaboration — the agent posts cycle status to issue threads and incorporates human feedback at each iteration.
-
-**Scheduled Agents**: Recurring autonomous tasks via `/schedule` — daily code reviews, weekly dependency updates, continuous monitoring with completion criteria and automatic evaluation.
-
-**Failure Modes Addressed** (from Roig 2025):
-- Archetype 1: Ungrounded Reasoning — Al grounds with external verification (run tests, check types)
-- Archetype 3: Context Pollution — Al uses focused iterations to avoid distractor interference
-- Archetype 4: Fragile Execution Under Load — Al saves checkpoints, enabling resume after interruption
-
-**What This Enables**:
-- Automatic retry with strategy modification (not blind "try again")
-- Learning accumulation (debug memory persists failure patterns across iterations)
-- Reproducibility (execution logs enable replay and debugging)
-- Graceful degradation (terminate with useful partial results if full success impossible)
-- Long-horizon autonomous operation (6-8+ hours with crash recovery)
-- Human-in-the-loop iteration (issue-driven mode with feedback incorporation)
-
-**The Difference**: Base assistants fail once and wait for you to fix the problem. Al tries multiple strategies, documents what did not work, learns from each failure, and presents options when stuck. External Al does this for hours without supervision.
-
----
-
-### 4. Verification: Dual-Representation Consistency Checking
-
-**What It Is**: AIWG maintains bidirectional traceability between documentation and code, ensuring artifacts stay synchronized as projects evolve.
-
-**The Research Foundation**: Requirements traceability (Gotel & Finkelstein, 1994) extended with anti-hallucination patterns from LitLLM (ServiceNow, 2025)—retrieval-first architecture reduces citation hallucination from 56% to 0%.
-
-**How It Works**:
-```typescript
-// src/auth/login.ts
-/**
- * @implements @.aiwg/requirements/use-cases/UC-001-login.md
- * @architecture @.aiwg/architecture/software-architecture-doc.md#section-4.2
- * @tests @test/unit/auth/login.test.ts
- */
-export function authenticateUser(credentials: Credentials): Promise<AuthResult> {
-  // Implementation
-}
-```
-
-```markdown
-# .aiwg/requirements/use-cases/UC-001-login.md
-
-## Implementation
-- @src/auth/login.ts - Core authentication logic
-- @test/unit/auth/login.test.ts - Test coverage
-```
-
-**Verification Types**:
-1. **Doc → Code**: Requirements reference implementations, architecture docs reference modules
-2. **Code → Doc**: Source files reference requirements, design docs, test plans
-3. **Code → Tests**: Implementations reference test files (bidirectional)
-4. **Citations → Sources**: All research claims reference verified papers (no fabricated citations)
-
-**What This Enables**:
-- Impact analysis (changing UC-001 affects which source files?)
-- Coverage validation (which requirements lack implementation?)
-- Audit trails (who made this decision, when, based on what rationale?)
-- Anti-hallucination (citations must resolve to real sources)
-
-**The Difference**: Traditional AI assistants cite nonexistent papers, reference outdated APIs, and lose track of requirements. AIWG enforces grounding throughout.
-
----
-
-### 5. Planning: Hierarchical Decomposition with Phase Gates
-
-**What It Is**: AIWG structures work using stage-gate processes from product development, breaking multi-month projects into manageable phases with explicit quality criteria.
-
-**The Research Foundation**: Stage-Gate Systems (Cooper, 1990) combined with cognitive load optimization (Miller, 1956; Sweller, 1988)—working memory handles 7±2 items, requiring hierarchical decomposition for complex tasks.
-
-**SDLC Phases**:
-```
-Inception → Elaboration → Construction → Transition
-    ↓            ↓              ↓              ↓
-  LOM          ABM            IOC             PR
-(Lifecycle     (Architecture  (Initial        (Production
-Objectives     Baseline       Operational     Release
-Milestone)     Milestone)     Capability)     Milestone)
-```
-
-**Phase Gate Pattern**:
-- **Entry criteria**: What must be complete before starting (e.g., Elaboration requires approved intake)
-- **Activities**: What happens during the phase (e.g., architecture design, ADRs, threat modeling)
-- **Exit criteria**: What must be validated before proceeding (e.g., architecture passes security review)
-- **Human approval**: Explicit sign-off required (prevents runaway automation)
-
-**Cognitive Load Management**:
-- 4 phases (not 12 or 37)
-- 3-5 artifacts per phase (not 20)
-- 5-7 section headings per template (not 15)
-- 3-5 reviewers per panel (not 10)
-
-**What This Enables**:
-- Bounded scope per phase (avoid "boil the ocean" paralysis)
-- Clear decision points (proceed, iterate, pivot, abort)
-- Cost control (no phase 2 spending without phase 1 approval)
-- Risk management (catch architectural flaws before coding begins)
-
-**The Difference**: Base assistants generate code immediately. AIWG ensures you are building the right thing (Inception), the right way (Elaboration), before committing resources (Construction).
-
----
-
-### 6. Style: Controllable Generation via Voice Parameters
-
-**What It Is**: Voice profiles provide continuous control over AI writing style—from casual conversational to technical authority—ensuring output matches audience and context.
-
-**The Research Foundation**: Neural style transfer principles applied to text generation. Instead of binary "formal/informal," voice profiles use 12 continuous parameters.
-
-**Voice Parameters** (0.0 to 1.0 scales):
-```yaml
-voice_profile:
-  formality: 0.7              # Moderately formal
-  technical_depth: 0.8        # Deep technical detail
-  sentence_variety: 0.6       # Mix of structures
-  jargon_density: 0.5         # Balanced terminology
-  personal_tone: 0.3          # Mostly impersonal
-  humor: 0.1                  # Minimal humor
-  directness: 0.8             # Direct communication
-  examples_ratio: 0.4         # Some examples
-  uncertainty_acknowledgment: 0.7  # Acknowledge limits
-  opinion_strength: 0.5       # Balanced opinions
-  transition_style: 0.6       # Moderate transitions
-  authenticity_markers: 0.4   # Some authentic elements
-```
-
-**Built-In Voices**:
-- **technical-authority** (documentation, RFCs, design docs)
-- **friendly-explainer** (tutorials, onboarding guides)
-- **executive-brief** (summaries for decision-makers)
-- **casual-conversational** (internal team communication)
-
-**What This Enables**:
-- Audience-appropriate communication (explain async/await differently for junior vs senior developers)
-- Consistency across artifacts (all ADRs use same formality level)
-- Template-specific defaults (executive briefs auto-use executive-brief voice)
-- Custom voice creation (define your team's standard communication style)
-
-**The Difference**: Base assistants use a single "helpful assistant" voice. AIWG adapts tone, depth, and structure to the document type and audience.
-
----
-
-## Standards Alignment
-
-AIWG aligns with internationally recognized standards to ensure professional credibility and interoperability:
-
-| Standard | Endorsement | AIWG Application |
-|----------|-------------|------------------|
-| **FAIR Principles** | G20, EU, NIH (17,000+ citations) | REF-XXX persistent identifiers, research corpus management |
-| **OAIS (ISO 14721)** | International archival standard | Research intake lifecycle (SIP→AIP→DIP) |
-| **W3C PROV** | W3C Recommendation (2013) | Artifact provenance tracking (wasDerivedFrom chains) |
-| **GRADE** | 100+ organizations (WHO, Cochrane, NICE) | Source quality assessment (high/moderate/low evidence) |
-| **MCP** | Linux Foundation (10,000+ servers) | Tool/resource exposure via Model Context Protocol |
-| **NIST SP 800-86** | U.S. National Institute of Standards | Digital forensics evidence handling |
-| **MITRE ATT&CK** | MITRE Corporation | Threat technique mapping in forensics framework |
-| **STIX 2.1** | OASIS Open | Indicator of Compromise formatting |
-| **Sigma Rules** | SigmaHQ community | Threat detection rule format |
-| **IEEE 830** | IEEE Standards Association | Requirements specification traceability |
-| **CalVer** | Community convention | Calendar versioning (YYYY.M.PATCH) |
-
-**Why Standards Matter**: They provide established vocabulary, proven patterns, and institutional validation. AIWG does not reinvent data management or provenance tracking—it implements research-backed best practices.
-
----
-
-## How the Components Work Together
-
-How long each phase takes depends entirely on the project. AIWG is a force multiplier — it doesn't make production work happen faster, but it lets teams do more with less. Most projects arrive at a complete, reviewed document set in hours to a day. What takes time is the human work that matters: reviewing, editing, and making decisions. The more input your team provides, the better the output. AIWG memory gives operators the ability to participate through the tools they already use — industry-standard documents and templates, issues, and knowledge bases.
-
-### Inception Phase
-
-**Memory**: Create intake documents capturing project goals, constraints, stakeholders in `.aiwg/intake/`
-
-**Planning**: Executive Orchestrator guides through intake questionnaire, ensuring completeness
-
-**Reasoning**: Business Analyst drafts initial requirements, Product Manager reviews from stakeholder perspective
-
-**Verification**: Requirements reference intake forms, ensuring alignment
-
-**Human Gate**: Stakeholder reviews intake, approves transition to Elaboration
-
----
-
-### Elaboration Phase
-
-**Memory**: Build architecture doc, ADRs, threat model, test strategy in `.aiwg/architecture/` and `.aiwg/testing/`
-
-**Planning**: Phase checklist ensures coverage (architecture, security, testing, risks all addressed)
-
-**Reasoning**: Multi-agent review panels:
-  - Architecture Designer drafts Software Architecture Document
-  - Security Auditor, Performance Architect, Maintainability Reviewer critique
-  - Synthesizer consolidates feedback
-  - Architecture Designer revises based on synthesis
-
-**Learning**: AI iterates on ADRs (generate options, evaluate, refine based on feedback)
-
-**Verification**: Architecture references requirements, code stubs reference architecture sections
-
-**Style**: Technical documents use technical-authority voice, stakeholder summaries use executive-brief voice
-
-**Human Gate**: Architect reviews final SAD, security team approves threat model, transition approved
-
----
-
-### Construction Phase
-
-**Memory**: Test plans, implementation code, deployment scripts accumulate in `.aiwg/testing/`, `src/`, `.aiwg/deployment/`
-
-**Planning**: Iteration plans break construction into bounded sprints
-
-**Reasoning**: Test Engineer creates test strategy, DevOps Engineer plans deployment, multiple developers implement features
-
-**Learning**: AI handles implementation iterations:
-  - Execute: Generate code for feature X
-  - Verify: Run tests, type check, lint
-  - Learn: "Test failed due to async race condition"
-  - Adapt: Add proper synchronization primitives
-  - Repeat: Re-run tests until pass
-
-**Verification**: Code references requirements (@implements UC-XXX), tests reference code (@source src/...)
-
-**Style**: Code comments use technical-authority, README uses friendly-explainer
-
-**Human Gate**: Code review approves merges, QA approves test results
-
----
-
-### Transition Phase
-
-**Memory**: Deployment plans, operational runbooks, post-mortem reports in `.aiwg/deployment/`, `.aiwg/reports/`
-
-**Planning**: Deployment checklist (monitoring, rollback plan, incident response)
-
-**Reasoning**: DevOps Engineer creates deployment automation, Technical Writer documents operations
-
-**Learning**: AI retries deployment steps if environments fail validation
-
-**Verification**: Deployment scripts reference architecture (which services, what order), runbooks reference code (how to debug service X)
-
-**Style**: Runbooks use technical-authority with step-by-step instructions
-
-**Human Gate**: Operations team reviews deployment plan, approves production release
-
----
-
-### Throughout: Research Management
-
-**Memory**: Research papers stored in `.aiwg/research/` with REF-XXX identifiers
-
-**Verification**: All citations resolve to verified sources (retrieval-first architecture)
-
-**Standards**: FAIR-aligned metadata, OAIS archival lifecycle, W3C PROV provenance tracking
-
-**Learning**: Quality assessment using GRADE evidence levels (high/moderate/low)
-
----
-
-## Beyond SDLC: Five Complete Frameworks
-
-While the walkthrough above focuses on the SDLC framework, AIWG provides five complete frameworks — each deployable independently:
-
-### Frameworks
-
-| Framework | Agents | What It Covers |
-|-----------|--------|---------------|
-| **SDLC Complete** | 98 | Full software development lifecycle — Inception through Production with 23 enforcement rules, 150+ templates, 24 flow commands, DORA metrics |
-| **Forensics Complete** | 13 | Digital forensics & incident response — NIST SP 800-86 evidence handling, MITRE ATT&CK mapping, Sigma rule hunting, STIX 2.1 IOC formatting, timeline reconstruction |
-| **Media/Marketing Kit** | 37 | End-to-end marketing operations — strategy, content creation, campaign management, brand compliance, analytics, 87+ templates |
-| **Research Complete** | 8 | Academic research automation — paper discovery, citation management, RAG-based summarization, GRADE quality scoring, FAIR compliance, W3C PROV provenance |
-| **Media Curator** | 6 | Intelligent media archive management — discography analysis, source discovery, quality filtering, metadata curation, export to Plex/Jellyfin/MPD |
-
-### Key Addons
-
-| Addon | What It Adds |
-|-------|-------------|
-| **RLM (Recursive Language Models)** | Process 10M+ tokens via sub-agent delegation with parallel fan-out — handles codebases and documents far beyond any model's context window |
-| **Testing Quality** | TDD enforcement via pre-commit hooks, mutation testing, flaky test detection and repair, coverage gates |
-| **Writing Quality** | Content validation, AI pattern detection, authentic voice enforcement |
-| **Voice Framework** | 4 built-in voice profiles with create/analyze/blend/apply skills using 12 continuous parameters |
-| **UAT-MCP Toolkit** | User acceptance testing with MCP-powered test execution, coverage tracking, regression detection |
-| **AIWG Evals** | Agent evaluation framework — archetype resistance testing (Roig 2025), performance benchmarks, quality scoring (target >=85%) |
-
-### Multi-Platform Deployment
-
-All frameworks can be projected onto the supported surfaces of 15 named provider integrations, including DeepSeek Harness, with a single command:
-
-```bash
-aiwg use sdlc                          # Claude Code (default)
-aiwg use sdlc --provider copilot       # GitHub Copilot
-aiwg use sdlc --provider cursor        # Cursor
-aiwg use sdlc --provider warp          # Warp Terminal
-aiwg use sdlc --provider factory       # Factory AI
-aiwg use sdlc --provider opencode      # OpenCode
-aiwg use sdlc --provider codex         # OpenAI Codex
-aiwg use sdlc --provider devin         # Devin Desktop
-aiwg use sdlc --provider hermes        # Hermes
-aiwg use sdlc --provider openclaw      # OpenClaw
-aiwg use sdlc --provider openhuman     # OpenHuman
-aiwg use sdlc --provider antigravity   # Google Antigravity CLI (experimental; alias: agy)
-aiwg use sdlc --provider omp           # Oh My Pi (experimental)
-aiwg use sdlc --provider pi            # Pi Coding Agent at pi.dev
-```
-
-Each platform receives agents, commands, skills, and rules adapted to its conventions automatically. Write once, deploy everywhere.
-
-### YAML Metalanguage (Declarative Workflow Definitions)
-
-AIWG is pioneering a declarative YAML metalanguage for multi-agent workflow orchestration. Schema-validated YAML (JSON Schema 2020-12) defines agent topology, workflow DAGs, gate conditions, and artifact contracts — while natural language handles behavioral logic.
-
-```yaml
-flow:
-  id: inception-to-elaboration
-  model: opus
-  steps:
-    - id: requirements-analysis
-      agent: requirements-analyst
-      parallel_group: reviews
-    - id: architecture-baseline
-      agent: architecture-designer
-      parallel_group: reviews
-    - id: synthesis
-      agent: documentation-synthesizer
-      depends_on: [requirements-analysis, architecture-baseline]
-  exit_criteria:
-    gate: ABM
-    decision: [GO, CONDITIONAL_GO, NO_GO]
-```
-
-Schema definitions for `flow.yaml`, `agent.yaml`, `rule.yaml`, and `skill.yaml` enable static validation, IDE autocompletion, and constrained generation of valid workflow definitions.
-
-### 47 CLI Commands
-
-AIWG provides a complete CLI for framework management, project scaffolding, iterative execution, metrics, and reproducibility:
-
-```bash
-aiwg use sdlc              # Deploy framework
-aiwg new my-project        # Scaffold project
-aiwg doctor                # Health check
-aiwg ralph "Fix tests"     # Iterative execution
-aiwg ralph-external "..."  # Crash-resilient long-running
-aiwg index build           # Artifact discovery
-aiwg doc-sync              # Bidirectional doc sync
-aiwg sdlc-accelerate "..." # Idea to construction-ready
-aiwg cost-report --fleet   # OpenRouter fleet cost observation
-```
-
-Full reference: `@docs/cli/reference.md`
-
----
-
-## What Makes AIWG Different
-
-### Compared to Base AI Assistants (Claude, GPT-4, Copilot)
-
-| Feature | Base Assistant | AIWG |
-|---------|----------------|------|
-| Memory across sessions | None | Persistent `.aiwg/` artifacts (50-100+ per project) |
-| Specialized agents | General assistant | 162 role-specific agents across 5 frameworks |
-| Quality gates | Ad-hoc | Phase gates with entry/exit criteria + human approval |
-| Recovery patterns | Manual retry | agent loop closed-loop learning (in-session + crash-resilient external) |
-| Long-running tasks | Babysit the terminal | External Al runs 6-8+ hours autonomously |
-| Citation integrity | Can hallucinate | Retrieval-first (0% hallucination rate) |
-| Standards compliance | None | FAIR, OAIS, PROV, GRADE, MCP, NIST, MITRE ATT&CK |
-| Platform support | Single platform | Multi-platform (Claude Code, Copilot, Cursor, Warp, Factory, OpenCode, Codex, Devin Desktop, and more) |
-| Reproducibility | Non-deterministic | Strict mode (temperature=0), checkpoints, validation |
-| Context beyond window | Lost | RLM recursive decomposition (10M+ tokens) |
-
----
-
-### Compared to Multi-Agent Frameworks (AutoGPT, MAGIS)
-
-| Feature | AutoGPT-style | AIWG |
-|---------|---------------|------|
-| Execution pattern | Autonomous loops | Human-gated phases |
-| Cost control | Token limits | Phase gates prevent runaway |
-| Auditability | Limited provenance | Full W3C PROV chain of custody |
-| Reproducibility | Non-deterministic | Checkpointing, execution logs |
-| Cross-platform | Single environment | Claude, Cursor, Copilot, Warp, Factory, OpenCode, Codex, Devin Desktop, and more |
-| Long-running tasks | Token limit = hard stop | External Al with crash recovery (hours to days) |
-| Scheduled agents | Not supported | Cron-based recurring tasks with completion criteria |
-
-**Key Difference**: AIWG prioritizes reliability and auditability over full autonomy. Research shows 84% cost reduction keeping humans on high-stakes decisions rather than removing them.
-
----
-
-### Compared to Simple Prompt Templates
-
-| Feature | Prompt Template | AIWG |
-|---------|-----------------|------|
-| Scope | Single task | End-to-end SDLC |
-| Memory | None | Persistent artifact store |
-| Recovery | None | Structured failure learning |
-| Standards | Ad-hoc | Research-backed patterns |
-
-**Key Difference**: Templates help with individual tasks. AIWG provides the cognitive architecture for multi-month projects.
-
----
-
-## When to Use AIWG
-
-### Good Fit
-
-**Multi-week or multi-month projects** where:
-- Requirements evolve over time (need memory)
-- Multiple stakeholders with different concerns (need multi-perspective review)
-- Quality gates required (security, compliance, operational readiness)
-- Auditability matters (who decided what, when, why)
-- Context exceeds conversation limits (need artifact repository)
-
-**Examples**:
-- Building a new product feature with architecture, security, and operational implications
-- Migrating a legacy system (requires planning, risk analysis, phased rollback strategy)
-- Research projects requiring literature review, methodology design, reproducibility
-- Compliance-heavy domains (healthcare, finance, aerospace) needing audit trails
-
----
-
-### Poor Fit
-
-**Single-session tasks** where:
-- No memory needed across sessions
-- Quality gates overkill (quick prototype, throwaway experiment)
-- Overhead exceeds value (one-off script, simple bug fix)
-
-**Examples**:
-- "Write a Python script to parse this CSV" (single task, no follow-up)
-- "Fix this typo in the README" (trivial change, no review needed)
-- "Explain how this code works" (no artifact creation)
-
----
-
-### The Trade-off
-
-AIWG adds structure (templates, phases, gates) that slows down trivial tasks but scales to complex multi-week workflows. If your project fits in a single conversation, use a base assistant. If it spans days, weeks, or months, AIWG provides the infrastructure to maintain quality and context.
-
----
-
-## Quantified Claims and Evidence
-
-AIWG makes specific, falsifiable claims backed by peer-reviewed research:
-
-| Claim | Evidence | Source |
-|-------|----------|--------|
-| 84% cost reduction with human-in-the-loop vs fully autonomous | Agent Laboratory study | Schmidgall et al. (2025) |
-| 47% workflow failure rate without reproducibility constraints | R-LAM evaluation | Sureshkumar et al. (2026) |
-| 0% hallucination with retrieval-first vs 56% generation-only | LitLLM benchmarks | ServiceNow (2025) |
-| 17.9% improvement with multi-path review | GSM8K benchmarks | Wang et al. (2023) |
-| 18.5× improvement with tree search on planning tasks | Game of 24 results | Yao et al. (2023) |
-
-Full references available in `docs/research/research-background.md` and `.aiwg/research/paper-analysis/INDEX.md`.
-
----
-
-## Known Limitations
-
-AIWG is transparent about limitations to maintain credibility:
-
-### 1. Evaluation Gap
-
-Automated metrics (test pass, lint clean, type check) do not perfectly correlate with human quality assessment. Human gates remain mandatory at phase transitions.
-
-### 2. Token Cost Trade-offs
-
-Multi-agent review (3-5 agents) costs 4-5× more tokens than single-agent generation. AIWG mitigates via hierarchical cost optimization (expensive models for complex decisions, cheaper models for routine tasks).
-
-### 3. Reproducibility Overhead
-
-R-LAM reproducibility constraints add 8-12% execution time. This is acceptable for audit/debug benefits but not zero-cost.
-
-### 4. Scale Dependency
-
-Chain-of-thought reasoning requires large models (>100B parameters). AIWG assumes access to frontier models (Claude Opus, GPT-4 class), not optimized for small models.
-
----
-
-## Next Steps
-
-### For Practitioners: Quick Start
-
-1. Install AIWG: `npm install -g aiwg`
-2. Deploy framework: `aiwg use sdlc` (or `forensics`, `marketing`, `media-curator`, `research`, `all`)
-3. Start project: `/intake-wizard "Your project description" --interactive`
-4. Check health: `aiwg doctor`
-5. Read: `@docs/quickstart.md` for hands-on walkthrough
-
-### For Architects: Deep Dive
-
-1. Review research foundations: `@docs/research/research-background.md`
-2. Study agent capabilities: `@agentic/code/frameworks/sdlc-complete/agents/manifest.json`
-3. Explore templates: `@agentic/code/frameworks/sdlc-complete/templates/`
-4. Understand phase gates: `@agentic/code/frameworks/sdlc-complete/flows/phase-gates.md`
-
-### For Researchers: Evaluation
-
-1. Examine research corpus: `.aiwg/research/paper-analysis/INDEX.md`
-2. Review standards compliance: REF-056 (FAIR), REF-061 (OAIS), REF-062 (PROV)
-3. Identify gaps: `.aiwg/research/research-gap-analysis.md` (planned)
-4. Compare to related work: `@docs/research/research-background.md#comparison-to-related-work`
-
-### For Decision-Makers: Executive Summary
-
-Read: `@docs/overview/executive-brief.md` (1-2 pages, business value focused)
-
----
-
-## Glossary Quick Reference
-
-AIWG uses dual terminology (informal + professional) for accessibility and credibility:
-
-| Informal | Professional | Meaning |
-|----------|--------------|---------|
-| Context stacks | Structured Semantic Memory | Working memory extended with external storage |
-| Multi-agent review | Ensemble Validation | Multiple specialized agents critique artifacts |
-| Agent loop | Closed-Loop Self-Correction | Iterative execution with failure learning |
-| External Al | Crash-Resilient Autonomous Execution | Long-running agents with PID tracking and checkpoint recovery |
-| .aiwg/ directory | Artifact Repository | Persistent storage for project knowledge |
-| @-mentions | Traceability Links | References enabling provenance tracking |
-| Phase gates | Stage-Gate Process | Quality checkpoints with human approval |
-| Voice profiles | Continuous Style Representation | Parametric control of writing style |
-| RLM | Recursive Language Models | Sub-agent delegation for context beyond window limits |
-| YAML metalanguage | Declarative Workflow Schema | Schema-validated YAML for agent topology and workflow DAGs |
-| Debug memory | Executable Feedback Store | Accumulated failure patterns informing subsequent iterations |
-| Scheduled agents | Temporal Agency | Cron-based recurring autonomous tasks |
-
-Full glossary: `@docs/research/glossary.md`
-
----
-
-## References
-
-This document draws on findings from:
-
-- **Cognitive Science**: Miller (1956), Sweller (1988)
-- **Reasoning Patterns**: Wei et al. (2022), Wang et al. (2023), Yao et al. (2023)
-- **Multi-Agent Systems**: Jacobs et al. (1991), Tao et al. (2024), Schmidgall et al. (2025)
-- **Memory & Retrieval**: Lewis et al. (2020), ServiceNow (2025)
-- **Standards**: Wilkinson et al. (2016), ISO 14721, W3C (2013), GRADE, MCP
-
-Full bibliography with paper analysis: `@.aiwg/research/paper-analysis/INDEX.md` (138+ papers)
-
----
-
-## Document Profile
-
-| Attribute | Value |
-|-----------|-------|
-| Document Type | Conceptual Overview (Tier 2) |
-| Intended Audience | Technical practitioners, architects, engineering leaders |
-| Formality | Moderate (professional with informal explanations) |
-| Reading Time | 10-12 minutes |
-| Next Steps | @docs/quickstart.md (hands-on) or @docs/research/research-background.md (theory) |
-
----
-
-## Cross-References
-
-- @docs/overview/executive-brief.md - Business value summary (Tier 1)
-- @docs/research/research-background.md - Full literature review (Tier 3)
-- @docs/quickstart.md - Installation and first project guide
-- @docs/research/glossary.md - Professional terminology mapping
-- @.aiwg/planning/documentation-professionalization-plan.md - Documentation strategy
-- @.aiwg/research/paper-analysis/INDEX.md - Complete research corpus (138+ papers analyzed)
+Check that each recommendation identifies a real passage, explains the reader's problem, and proposes a concrete fix.
+In the next session, ask the agent to read the report and implement the first agreed change.
+
+For a wider project, continue with [software development](../quickstart-sdlc.md), [marketing](../quickstart-mmk.md),
+or [another workflow](capabilities.md).

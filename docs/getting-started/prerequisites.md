@@ -1,6 +1,7 @@
 # Prerequisites
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](install-connect-verify.md). This guide assumes
+AIWG is connected to the target project and your provider session can read the deployed context.
 
 Before installing AIWG, ensure you have the following requirements.
 
@@ -44,7 +45,9 @@ global-package permission errors such as `EACCES` under `/usr/local/lib/node_mod
 | **Cursor** | IDE-native rules | [cursor.sh](https://cursor.sh/) |
 | **GitHub Copilot** | GitHub integration | VS Code extension |
 
-Deploy the complete system separately for each provider your team uses:
+After Node and an AI platform are available, continue with
+[Install, Connect, and Verify](install-connect-verify.md). Teams that use more
+than one provider can repeat the deployment step for each provider:
 
 ```bash
 aiwg use all --provider claude
@@ -53,18 +56,18 @@ aiwg use all --provider factory
 aiwg use all --provider cursor
 ```
 
-## Platform Support Status
+## Provider Deployment Surface
 
-| Platform | Status | Notes |
-|----------|--------|-------|
-| **Claude Code** | ✅ Tested & Validated | Multi-agent orchestration, native plugins |
-| **GitHub Copilot** | ✅ Tested & Validated | copilot-instructions.md |
-| **Warp Terminal** | ✅ Tested & Validated | Terminal-native workflows |
-| **Factory AI** | ✅ Tested & Validated | Native droid format, AGENTS.md |
-| **OpenCode** | ✅ Tested & Validated | AGENTS.md |
-| **Cursor** | ✅ Tested & Validated | Native rules format, AGENTS.md |
-| **OpenAI/Codex** | ✅ Tested & Validated | Native prompts format, AGENTS.md |
-| **Devin Desktop** | ✅ Supported | Uses the tested `.windsurf/` compatibility adapter; select with `devin` |
+| Platform | Notes |
+|----------|-------|
+| **Claude Code** | Multi-agent orchestration and native plugin paths |
+| **GitHub Copilot** | `copilot-instructions.md` and GitHub-facing context |
+| **Warp Terminal** | Terminal-native workflows |
+| **Factory AI** | Native droid format and `AGENTS.md` |
+| **OpenCode** | `AGENTS.md` and OpenCode paths |
+| **Cursor** | Native rules format and `AGENTS.md` |
+| **OpenAI/Codex** | Native prompts format and `AGENTS.md` |
+| **Devin Desktop** | Uses the `.windsurf/` compatibility adapter; select with `devin` |
 
 ## Operating Systems
 
@@ -107,4 +110,4 @@ factory --version 2>/dev/null && echo "✅ Factory AI" || echo "ℹ️ Factory A
 git --version && echo "✅ Git" || echo "ℹ️ Git optional"
 ```
 
-**All checks passed?** Continue to [Quick Start](../quickstart.md)
+**All checks passed?** Continue to [Install, Connect, and Verify](install-connect-verify.md).

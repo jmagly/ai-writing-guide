@@ -1,6 +1,7 @@
 # Writing and Content
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](install-connect-verify.md). This guide assumes
+AIWG is connected to the target project and your provider session can read the deployed context.
 
 You want the AI to write the way you write — not in that recognizable AI voice that sounds the same as everything else.
 
@@ -10,14 +11,8 @@ AIWG's voice framework lets you define or select a writing style, then apply it 
 
 ## Quickest path
 
-```bash
-npm install -g aiwg
-cd /path/to/your/project
-aiwg use writing
-claude .
-```
-
-Then:
+Open your AI tool in the connected project and ask for one concrete writing
+result:
 
 ```
 Write a README for this project in a clear, direct, technical tone
@@ -30,6 +25,13 @@ Rewrite this section so it sounds less like an AI wrote it
 ```
 Write a blog post about what we built. Keep it conversational and specific — no generic hype.
 ```
+
+Success means the draft preserves the facts, names the voice or guidance used,
+and gives you a short review note for anything that needs human judgment.
+
+If you intentionally run a targeted deployment instead of the complete setup
+path, `aiwg use writing` remains the manual command for the writing and voice
+tools.
 
 ---
 

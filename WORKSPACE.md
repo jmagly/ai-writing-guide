@@ -43,7 +43,9 @@ then to AIWG.md for framework discovery and routing.
 ### Package (source: [`package.json`](./package.json))
 
 - Name: `aiwg`
-- Description: Deployment tool and support utility for AI context. Copies agents, skills, commands, rules, and behaviors into the paths each AI platform reads (Claude Code, Codex, Copilot, Cursor, Warp, OpenClaw, and 6 more) so one source of truth works across 10 platforms. Optional utilities for persistent artifact memory, background orchestration, autonomous loops, and…
+- Description: Reusable project context and specialist workflows for the AI tools you already use. AIWG places agents,
+  skills, commands, and rules in provider-readable locations, with optional utilities for artifact memory, workflow
+  orchestration, recovery, and discovery.
 - Runtime: `node >=20.0.0`
 
 ### Common Commands (source: [`package.json`](./package.json))
@@ -54,7 +56,7 @@ then to AIWG.md for framework discovery and routing.
 
 ### Purpose (source: [`README.md`](./README.md))
 
-Multi-agent AI framework for Claude Code, Copilot, Cursor, Warp, and 6 more platforms
+Reusable project context and specialist workflows for the AI tools you already use.
 
 ### Stack and Tooling
 
@@ -77,6 +79,7 @@ Multi-agent AI framework for Claude Code, Copilot, Cursor, Warp, and 6 more plat
 - [`.gitea/workflows/build-plugins.yml`](./.gitea/workflows/build-plugins.yml)
 - [`.gitea/workflows/ci.yml`](./.gitea/workflows/ci.yml)
 - [`.gitea/workflows/conformance.yml`](./.gitea/workflows/conformance.yml)
+- [`.gitea/workflows/dataset-intelligence-conformance.yml`](./.gitea/workflows/dataset-intelligence-conformance.yml)
 - [`.gitea/workflows/docsite-build.yml`](./.gitea/workflows/docsite-build.yml)
 - [`.gitea/workflows/docsite-deploy.yml`](./.gitea/workflows/docsite-deploy.yml)
 - [`.gitea/workflows/fortemi-shard-conformance.yml`](./.gitea/workflows/fortemi-shard-conformance.yml)
@@ -86,6 +89,7 @@ Multi-agent AI framework for Claude Code, Copilot, Cursor, Warp, and 6 more plat
 - [`.gitea/workflows/metadata-validation.yml`](./.gitea/workflows/metadata-validation.yml)
 - [`.gitea/workflows/notify-site.yml`](./.gitea/workflows/notify-site.yml)
 - [`.gitea/workflows/npm-publish.yml`](./.gitea/workflows/npm-publish.yml)
+- [`.gitea/workflows/omp-conformance.yml`](./.gitea/workflows/omp-conformance.yml)
 - [`.gitea/workflows/scheduled-docs-release.yml`](./.gitea/workflows/scheduled-docs-release.yml)
 - [`.gitea/workflows/skill-lint-pr.yml`](./.gitea/workflows/skill-lint-pr.yml)
 - [`.gitea/workflows/storage-server-conformance.yml`](./.gitea/workflows/storage-server-conformance.yml)

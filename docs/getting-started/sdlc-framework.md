@@ -1,21 +1,26 @@
 # SDLC Framework
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](install-connect-verify.md). This guide assumes
+AIWG is connected to the target project and your provider session can read the deployed context.
 
 You're building software. You want structure without bureaucracy — requirements that don't drift, architecture decisions that don't get forgotten, tests that actually cover what matters, and a way to hand off work to other engineers without spending two hours explaining everything.
 
-The SDLC framework is AIWG's largest framework. It covers the full lifecycle from idea to production, with specialized agents for every role, commands that orchestrate multi-agent workflows, and an artifact directory that keeps project context across every session. It's featured prominently because good software development is the foundation everything else builds on.
+The SDLC framework covers the full lifecycle from idea to production: intake,
+requirements, architecture decisions, tests, security review, release planning,
+and project status. Use it when you want durable project artifacts instead of
+a one-off chat answer.
 
 ---
 
-## Deploy it
+## Before You Start
 
-```bash
-npm install -g aiwg
-cd /path/to/your/project
-aiwg use sdlc
-claude .
-```
+Complete [Install, Connect, and Verify](install-connect-verify.md) first. If
+you intentionally run a targeted deployment instead of the complete system,
+`aiwg use sdlc` remains the manual command for this framework.
+
+The first useful result should be an intake artifact, audit report, or
+Construction Ready Brief you can inspect. Readiness checks are prerequisites,
+not the outcome.
 
 ---
 
@@ -69,9 +74,11 @@ You don't have to run intake to use the agents. The framework adds structure whe
 
 ---
 
-## The agent roster
+## Common Specialist Roles
 
-The SDLC framework deploys 90 specialized agents, each with a defined role and area of expertise. A few you'll use constantly:
+The framework includes specialist roles for requirements, architecture,
+security, testing, DevOps, documentation, review, and data design. A few
+you'll use constantly:
 
 | Agent | When to invoke |
 |-------|---------------|
@@ -107,7 +114,8 @@ These commands run throughout the lifecycle, not just at phase boundaries:
 /flow-performance-optimization        # Performance baseline and optimization
 ```
 
-Each one orchestrates multiple agents, runs them in parallel where possible, synthesizes their output, and generates artifacts in `.aiwg/`.
+Each one coordinates the relevant roles, synthesizes their output, and
+generates artifacts in `.aiwg/`.
 
 ---
 
@@ -158,7 +166,8 @@ Everything lands in `.aiwg/`:
 └── reports/          # Generated reports
 ```
 
-Commit this directory and every session — yours and your teammates' — starts with full project context.
+Commit this directory so future sessions and teammates can pick up the same
+project context.
 
 ---
 
@@ -187,5 +196,5 @@ Al keeps iterating — fix, test, fix again — until the criterion is met or it
 - `/project-status` — Where are we, what's next
 - `/project-health-check` — Overall project health metrics
 - `/flow-gate-check <phase>` — Can we move forward?
-- `@docs/cli/reference.md` — All 53 commands
+- `@docs/cli/reference.md` — CLI command reference
 - `@docs/getting-started/flow-and-gate-process.md` — How intake, flows, gates, and sdlc-accelerate fit together

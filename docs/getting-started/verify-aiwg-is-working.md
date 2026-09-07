@@ -1,11 +1,12 @@
 # First Success: Verify AIWG Is Working
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](install-connect-verify.md). This guide assumes
+AIWG is connected to the target project and your provider session can read the deployed context.
 
 Use this recipe before depending on AIWG for project work.
 
-For full installation from a fresh machine or fresh project, use the
-[Agentic Install Runbook](../agentic-install-runbook.md) first.
+For full installation from a fresh machine or fresh project, use
+[Install, Connect, and Verify](install-connect-verify.md) first.
 
 You stay in the chat. The agent checks the deployment state, runs the status probe, and reports back. You do not need to type the probe commands yourself — they are the agent's tool, not yours.
 
@@ -42,14 +43,15 @@ You do not need to interpret raw probe JSON yourself. The agent does that.
 
 ## What You Actually Type
 
-If AIWG is not installed at all, install it once:
+If AIWG is not installed or the project is not connected, ask the agent to
+follow the canonical setup path:
 
 ```text
 Install or repair AIWG for this project by following
 https://aiwg.io/setup.aiwg.yaml
 ```
 
-After that, the user-side commands you might run by hand are limited to:
+After that, the user-side commands you might run by hand are usually limited to:
 
 - `aiwg wizard` — guided setup when starting from scratch
 - `aiwg use all --provider <provider>` — deploy the preferred complete system
@@ -73,11 +75,12 @@ If the agent says AIWG is not installed or not on PATH, install or fix PATH:
 npm install -g aiwg
 ```
 
-Or, if `aiwg` is installed but unreachable, see the [Installation Troubleshooting](https://github.com/jmagly/aiwg/blob/main/README.md#installation-troubleshooting) section in the README.
+Or, if `aiwg` is installed but unreachable, see the [installation troubleshooting guide](../troubleshooting/index.md).
 
 If the probe reports `not-configured` or `partial`, ask the agent for the one
-action that will finish setup. Usually that is the agentic installer, `aiwg
-wizard`, or `aiwg use all --provider <provider>`.
+action that will finish setup. Usually that is
+[Install, Connect, and Verify](install-connect-verify.md), the wizard, or
+`aiwg use all --provider <provider>`.
 
 If the probe reports `needs-repair`, ask:
 
@@ -92,7 +95,7 @@ Once verification succeeds, pick one focused recipe: [Find One Capability](first
 ## Related
 
 - [Start Here](start-here.md)
-- [Agentic Install Runbook](../agentic-install-runbook.md)
+- [Install, Connect, and Verify](install-connect-verify.md)
 - [Beginner Language Map](language-map.md)
 - [Provider Handoff](provider-handoff.md)
 - [Scope And Recovery](scope-and-recovery.md)

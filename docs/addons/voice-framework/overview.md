@@ -1,16 +1,41 @@
 # Voice Framework Overview
 
-The voice framework addon provides a profile-based approach to writing consistency. Instead of maintaining a list of banned patterns, you define the voice you want and apply it to content. Four built-in profiles cover the most common technical writing registers; you can create custom profiles or blend existing ones with weighted ratios.
+## Natural voice evidence contract
 
-## Why Profile-Based Instead of Pattern-Avoidance
+The [evidence and ownership ADR](https://git.integrolabs.net/roctinam/aiwg/src/branch/main/agentic/code/addons/voice-framework/docs/natural-voice/ADR-001-evidence-and-ownership.md)
+and [versioned evidence ledger](https://git.integrolabs.net/roctinam/aiwg/src/branch/main/agentic/code/addons/voice-framework/docs/natural-voice/evidence-ledger.v1.json) pin the
+eight inducted sources and distinguish research findings from editorial policy
+and product qualification. Additional evaluation and retrieval papers remain
+deferred pending full-method assessment. This evidence contract does not claim
+that author profiles, revisions or human quality qualification have shipped.
+Existing output-mode resolution and the default unaltered behavior remain the
+integration contract.
 
-Pattern-avoidance approaches (ban "leverage," avoid "utilize," don't write "seamlessly") are reactive. They tell you what to stop doing but not what to do instead. The result is content that avoids the listed patterns while still lacking consistent voice.
+For implemented editorial review APIs, see [contextual diagnostics](https://git.integrolabs.net/roctinam/aiwg/src/branch/main/agentic/code/addons/voice-framework/docs/contextual-diagnostics.md)
+and the [labeled fixture report](https://git.integrolabs.net/roctinam/aiwg/src/branch/main/agentic/code/addons/voice-framework/docs/contextual-diagnostics-evaluation.md). These
+return located, reviewable findings and explicit exceptions without an authorship
+score or a publication gate. Legacy validator scores remain deprecated adapters.
 
-Voice profiles are positive definitions. They specify tone dimensions, vocabulary preferences, structural patterns, and authenticity markers. The result is content that sounds like something, not just content that avoids sounding like something else.
+The voice framework addon helps teams define and reuse a consistent writing voice. Use it when documentation, release
+notes, marketing copy, or internal reports need a named style that can be applied, analyzed, adjusted, and shared
+across sessions.
+
+## Common Use Cases
+
+- Rewrite a draft in a technical, executive, friendly, or conversational register.
+- Create a project voice profile from a description or sample text.
+- Blend two profiles when content needs both precision and approachability.
+- Analyze whether a document matches the intended house style before publication.
+
+## Why Voice Profiles
+
+Pattern checks are useful for catching obvious problems, but they do not define what good writing should sound like.
+Voice profiles specify tone dimensions, vocabulary preferences, structural patterns, and authenticity markers so the
+assistant has a positive target to match.
 
 This addon replaces the earlier `banned-patterns.md` and `ai-pattern-detection` skill, which are now deprecated.
 
-## The Four Built-in Profiles
+## Built-in Profiles
 
 Located in `@$AIWG_ROOT/agentic/code/addons/voice-framework/voices/templates/`.
 
@@ -38,7 +63,7 @@ Relaxed, personal, opinion-forward. Appropriate for blog posts, social media, ne
 
 Characteristics: first-person perspective, opinions stated directly (not hedged), shorter paragraphs, conversational connectives.
 
-## The Five Skills
+## Core Skills
 
 ### voice-apply
 
@@ -113,7 +138,7 @@ aiwg use all
 
 ## References
 
-- `@$AIWG_ROOT/agentic/code/addons/voice-framework/docs/quickstart.md` — Apply your first voice profile
+- [Quickstart](quickstart.md) — Apply your first voice profile
 - `@$AIWG_ROOT/agentic/code/addons/voice-framework/docs/output-modes.md` — Select and compose runtime output modes
 - `@$AIWG_ROOT/agentic/code/addons/voice-framework/docs/custom-output-modes.md` — Author a personal syntax or project house style
 - `@$AIWG_ROOT/agentic/code/addons/voice-framework/docs/output-mode-integration.md` — Integrate a transformer or validator

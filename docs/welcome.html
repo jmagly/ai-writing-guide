@@ -1,98 +1,48 @@
 <section class="section doc">
   <header>
     <p class="eyebrow">AIWG</p>
-    <h1>Deploy a Virtual Organization</h1>
-    <p class="lead">Architects, engineers, testers, forensics analysts, researchers, marketers — 200+ specialized agents that collaborate like a real team. Eight core frameworks, 32 addons, one CLI.</p>
+    <h1>Give your AI assistant project context and specialist workflows</h1>
+    <p class="lead">Carry decisions forward and review complex work in the AI tools you already use. AIWG supplies reusable instructions and workflows that help your assistant produce inspectable results and save context for the next task.</p>
   </header>
 
   <div class="content-box">
-    <div class="box-title">New to AIWG?</div>
-    <p>Start with one useful result before learning the framework catalog.</p>
-    <p><a href="#getting-started/start-here">Start Here</a> or ask the agent: <code>How best can we use AIWG for this project?</code></p>
+    <h2 class="box-title">Start with one useful result</h2>
+    <p>Open your project in your AI tool and follow <a href="#getting-started/install-connect-verify">Install, Connect, and Verify</a>. The agent should preserve your existing work, verify the connection, and report whether your tool needs a reload.</p>
+    <p>Once connected, ask for a README review:</p>
+    <pre><code class="language-text">Use AIWG to review this project's README for unclear positioning and missing
+onboarding steps. Save a report at
+.aiwg/marketing/brand/audit/readme-review.md with file references and the
+three highest-priority fixes. Leave the README unchanged.</code></pre>
+    <p>Open the report. Check that its findings identify real passages, explain the reader's problem, and recommend specific changes. In a later session, ask the agent to read the report and implement the first agreed fix.</p>
+    <p><a href="#quickstart">Follow the quickstart</a> or see <a href="#getting-started/just-try-it">an illustrative result and alternative tasks</a>.</p>
   </div>
 
+  <h2>Choose the work you need to do</h2>
   <div class="doc-grid">
-    <article>
-      <h2>Frameworks</h2>
-      <div class="layer-stack">
-        <div class="layer">
-          <div class="layer-title">SDLC Complete</div>
-          <div class="layer-desc">Full software lifecycle — 90+ agents, stage-gate workflows, multi-agent orchestration from intake to production</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">Forensics Complete</div>
-          <div class="layer-desc">Digital forensics and incident response — evidence acquisition, timeline building, IOC analysis, Sigma hunting</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">Research Complete</div>
-          <div class="layer-desc">Academic research workflows — discovery, acquisition, RAG-based documentation, FAIR-aligned citation management</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">Media/Marketing Kit</div>
-          <div class="layer-desc">Campaign orchestration from strategy through analytics, creative production, and channel management</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">Media Curator</div>
-          <div class="layer-desc">Intelligent media archive management — discography analysis, quality filtering, metadata curation, multi-platform export</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">Ops Complete</div>
-          <div class="layer-desc">Operational infrastructure — fleet management, CMDB, CI/CD, and streaming pipelines. YAML-native artifact design with four extensions: sys, it, dev, stream</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">Knowledge Base</div>
-          <div class="layer-desc">Document ingest, semantic memory, wiki operations, and knowledge-base health checks</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">Security Engineering</div>
-          <div class="layer-desc">Cryptographic decisions, chain-of-trust design, authentication factors, supply-chain trust, and incident readiness</div>
-        </div>
-      </div>
-    </article>
-
-    <article>
-      <h2>Addons</h2>
-      <div class="layer-stack">
-        <div class="layer">
-          <div class="layer-title">RLM</div>
-          <div class="layer-desc">Recursive context decomposition — process 10M+ tokens via sub-agent delegation</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">Compound Memory</div>
-          <div class="layer-desc">Persistent, provenance-aware memory — immutable intake, linked wiki knowledge, bounded line facts, reviewed updates, and auditable maintenance</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">Voice Framework</div>
-          <div class="layer-desc">4 built-in voice profiles with create, blend, and apply skills for consistent brand tone</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">Testing Quality</div>
-          <div class="layer-desc">TDD enforcement, mutation testing, flaky test detection</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">Writing Quality</div>
-          <div class="layer-desc">AI pattern detection, content validation, authenticity scoring</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">Verbalized Sampling</div>
-          <div class="layer-desc">Diversity addon for generating varied, non-repetitive output — content-diversifier agent and three prompt strategies</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">Color Palette</div>
-          <div class="layer-desc">Generate accessible color palettes with WCAG contrast checking and trend analysis</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">UAT-MCP Toolkit</div>
-          <div class="layer-desc">User acceptance testing with MCP-powered test execution and coverage tracking</div>
-        </div>
-      </div>
-    </article>
+    <a href="#quickstart-sdlc" class="card">
+      <h3>Software development</h3>
+      <p>Plan a change, review its implementation, and connect decisions to tests.</p>
+    </a>
+    <a href="#quickstart-mmk" class="card">
+      <h3>Marketing and content</h3>
+      <p>Prepare a campaign brief, review messaging, and refine a draft.</p>
+    </a>
+    <a href="#frameworks/research-complete/overview" class="card">
+      <h3>Research and knowledge</h3>
+      <p>Organize sources, trace citations, and keep findings available for later work.</p>
+    </a>
+    <a href="#overview/capabilities" class="card">
+      <h3>More workflows</h3>
+      <p>Explore security reviews, forensics, media curation, operational runbooks, and optional utilities.</p>
+    </a>
   </div>
 
-  <div class="doc-grid">
-    <article>
-      <h2>Platform Support — 15 Named Provider Integrations</h2>
-      <table class="spec-table">
+  <h2>Use your existing AI tool</h2>
+  <p>AIWG places readable instructions in locations your provider supports. Workflows can save plans, findings, and decisions in the project's <code>.aiwg/</code> directory. Your assistant still needs to consult those artifacts, and its conclusions still need checking.</p>
+  <p>Integration status, deployment scope, and native capabilities vary. Consult the <a href="#providers/provider-inventory">provider inventory</a> and <a href="#integrations/cross-platform-overview">provider setup guides</a> for your tool. Optional services and external actions require their corresponding configuration and integrations.</p>
+
+  <p>AIWG has 15 named provider integrations:</p>
+  <table class="spec-table">
         <thead>
           <tr><th>Platform</th><th>Status</th></tr>
         </thead>
@@ -114,85 +64,25 @@
           <tr><td><a href="#integrations/windsurf-quickstart">Devin Desktop</a></td><td>Stable compatibility adapter</td></tr>
         </tbody>
       </table>
-    </article>
 
-    <article>
-      <h2>Reliability Patterns</h2>
-      <div class="layer-stack">
-        <div class="layer">
-          <div class="layer-title">Agent Loop</div>
-          <div class="layer-desc">Iterative task execution with automatic error recovery and crash resilience</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">Mission Control</div>
-          <div class="layer-desc">Multi-loop background orchestration — dispatch missions, monitor all from a status dashboard, react to completions without blocking the primary context</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">Ensemble Validation</div>
-          <div class="layer-desc">Multi-agent review with mixture-of-experts architecture and quality gates</div>
-        </div>
-        <div class="layer">
-          <div class="layer-title">@-Mention Traceability</div>
-          <div class="layer-desc">Bidirectional linking from requirements through architecture, code, and tests</div>
-        </div>
-      </div>
-    </article>
-  </div>
-
-  <div class="content-box">
-    <div class="box-title">Quick Start</div>
-    <pre><code class="language-bash"># Install globally
-npm install -g aiwg
-
-# Deploy a framework
-aiwg use sdlc              # Software lifecycle
-aiwg use forensics         # Digital forensics
-aiwg use ops --ext sys,dev # Operational infrastructure
-
-# Add capabilities
-aiwg use rlm               # Recursive context decomposition
-aiwg use voice             # Voice profiles
-
-# Deploy to a specific platform
-aiwg use sdlc --provider hermes   # Hermes
-aiwg use sdlc --provider copilot  # GitHub Copilot
-aiwg use sdlc --provider codex    # OpenAI Codex
-aiwg use sdlc --provider antigravity  # Google Antigravity CLI (alias: agy)
-aiwg use sdlc --provider omp      # Oh My Pi
-
-# Reopen the platform, then regenerate project context in its chat
-/aiwg-regenerate   # Slash-command platforms
-$aiwg-regenerate   # Native Codex skill
-
-# Start working — just describe what you need
-"transition to elaboration"
-"run security review"
-"where are we?"</code></pre>
-  </div>
-
+  <h2>Learn more</h2>
   <div class="doc-grid">
-    <a href="#getting-started/start-here" class="card">
-      <h3>Start Here</h3>
-      <p>Get one useful AIWG result before learning the whole system</p>
+    <a href="#overview/what-is-aiwg" class="card">
+      <h3>What is AIWG?</h3>
+      <p>Examples, building blocks, and practical limitations.</p>
     </a>
-    <a href="#getting-started/language-map" class="card">
-      <h3>Beginner Language Map</h3>
-      <p>Describe your goal and find the right AIWG path</p>
+    <a href="#overview/executive-brief" class="card">
+      <h3>Plan a team pilot</h3>
+      <p>Assess adoption effort, review quality, and cost on a bounded task.</p>
     </a>
-    <a href="#quickstart" class="card">
-      <h3>Quick Start</h3>
-      <p>Get AIWG running in 60 seconds</p>
+    <a href="#architecture-overview" class="card">
+      <h3>How the pieces work</h3>
+      <p>See deployment, project artifacts, and optional runtime components.</p>
     </a>
-    <a href="#quickstart-sdlc" class="card">
-      <h3>SDLC Framework</h3>
-      <p>Manage projects like an enterprise</p>
-    </a>
-    <a href="#cli-reference" class="card">
-      <h3>CLI Reference</h3>
-      <p>109+ commands with examples</p>
-    </a>
-    <a href="https://github.com/jmagly/aiwg" class="external-cta">
-      View on GitHub
+    <a href="#cli/reference" class="card">
+      <h3>CLI reference</h3>
+      <p>Exact commands for manual operation and automation.</p>
     </a>
   </div>
+  <p><a href="https://github.com/jmagly/aiwg" class="external-cta">View on GitHub</a></p>
 </section>

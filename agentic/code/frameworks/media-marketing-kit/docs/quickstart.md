@@ -1,13 +1,16 @@
 # Media/Marketing Kit Quickstart
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and
+Verify](../../getting-started/install-connect-verify.md). This guide assumes AIWG is already installed and connected
+to the target project.
 
-Deploy the MMK framework and run your first campaign workflow in about 15 minutes.
+Use the media-marketing kit when you want an AI assistant to turn a campaign
+goal into reviewable strategy, content, and approval artifacts.
 
 ## Installation
 
 ```bash
-# Deploy marketing framework to Claude Code
+# Deploy marketing framework to your current provider
 aiwg use marketing
 
 # Or deploy to a specific provider
@@ -15,12 +18,27 @@ aiwg use marketing --provider copilot
 aiwg use marketing --provider cursor
 ```
 
-Verify what was deployed:
+`aiwg use` refreshes shared project context and prints verification, including
+any provider reload step. Verify what was deployed:
 
 ```bash
 aiwg list
 # media-marketing-kit    installed
 ```
+
+## First Campaign Task
+
+Start with a prompt that gives the agent a concrete deliverable:
+
+```text
+Use AIWG's marketing framework to plan this campaign. Ask only the questions
+that change the strategy, then produce a one-page campaign brief with audience,
+offer, channels, approvals, risks, and success measures.
+```
+
+Success means the agent saves or returns a campaign brief you can review,
+identifies missing decisions, and names the next artifact, such as a channel
+plan, content calendar, or review checklist.
 
 ## Starting a Campaign
 
@@ -34,9 +52,10 @@ If you know what you want to do but have no existing materials:
 /marketing-intake-wizard "Q1 product launch for enterprise CRM targeting mid-market B2B" --interactive
 ```
 
-The wizard asks targeted questions about goals, audience, budget, timeline, and channels. When complete, validated intake files are saved to `.aiwg/marketing/intake/` and you can proceed directly to Strategy.
+The wizard asks targeted questions about goals, audience, budget, timeline, and channels. When complete, intake files
+are saved to `.aiwg/marketing/intake/` and you can proceed directly to Strategy.
 
-For a faster path with less guidance:
+For a shorter path with less guidance:
 
 ```
 /marketing-intake-wizard "Holiday email campaign" --guidance "6-week deadline, $30k budget, email and social only"
@@ -199,7 +218,8 @@ When using MMK alongside sdlc-complete for a product launch, the frameworks shar
 
 ## Troubleshooting
 
-**Agents not found after installation**: Re-run `aiwg use marketing` and verify with `aiwg list`.
+**Agents not found after installation**: Follow the reload action printed by `aiwg use`. If files are missing, re-run
+`aiwg use marketing` and verify with `aiwg list`.
 
 **Intake validation fails**: Check that required fields (campaign goals, target audience, budget range, timeline) are present in your intake files. Run `/marketing-intake-wizard --complete` to fill gaps interactively.
 
@@ -209,5 +229,5 @@ When using MMK alongside sdlc-complete for a product launch, the frameworks shar
 
 - `@$AIWG_ROOT/agentic/code/frameworks/media-marketing-kit/docs/overview.md` — Framework overview
 - `@$AIWG_ROOT/agentic/code/frameworks/media-marketing-kit/agents/` — Agent catalog
-- `@$AIWG_ROOT/agentic/code/frameworks/media-marketing-kit/templates/` — All 87+ templates
+- `@$AIWG_ROOT/agentic/code/frameworks/media-marketing-kit/templates/` — Framework templates
 - `@$AIWG_ROOT/agentic/code/frameworks/media-marketing-kit/plan-act-mmk.md` — Phase lifecycle details

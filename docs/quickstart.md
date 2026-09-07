@@ -1,62 +1,43 @@
 # Quick Start
 
-AIWG’s everyday interface is your conversation with an agent. Start with the
-outcome, not a command:
+AIWG gives your AI assistant reusable project context and specialist workflows. This quickstart takes you from a
+connected project to a saved README review you can use in a later session.
+
+## 1. Connect your project
+
+Open the intended project in your AI tool and follow [Install, Connect, and
+Verify](getting-started/install-connect-verify.md). The agent should preserve existing work, verify the connection,
+and report whether your tool needs a reload.
+
+Already connected? Continue to the task below.
+
+## 2. Get a useful result
+
+Paste into the agent conversation:
 
 ```text
-Help me use AIWG to get one useful result in this project. Check whether AIWG
-is connected, recommend one path, explain what you will change, ask for any
-approval you need, and verify the result with concrete evidence.
+Use AIWG to review this project's README for unclear positioning and missing
+onboarding steps. Save a report at
+.aiwg/marketing/brand/audit/readme-review.md with file references and the
+three highest-priority fixes. Leave the README unchanged.
 ```
 
-The agent should:
+The agent should inspect the README and save a review. Open the report: each finding should point to a concrete
+passage or missing step, explain why it matters, and propose a specific fix. The [full
+walkthrough](getting-started/just-try-it.md) includes an illustrative output and alternative tasks.
 
-1. identify the current project and provider;
-2. inspect the available AIWG capabilities;
-3. recommend one path and one fallback;
-4. preview material file or configuration changes;
-5. ask for required approval;
-6. complete the setup or workflow; and
-7. report the outcome and verification evidence.
+## 3. Carry the work forward
 
-## First-time setup
+In a later session, ask the agent to read the saved report and implement the first agreed fix. Check that it consulted
+the report and addressed the finding. This is how a workflow output becomes context for the next task.
 
-```text
-Install or repair AIWG for this project by following
-https://aiwg.io/setup.aiwg.yaml
-Inspect first, explain the plan, preserve my existing work, use the complete
-supported setup unless project policy says otherwise, and verify engagement
-when you finish.
-```
+## Choose another starting point
 
-See [Install, Connect, and Verify](getting-started/install-connect-verify.md)
-for provider-specific prompts, approval boundaries, success criteria, and
-recovery guidance.
+- [New Project](getting-started/new-project.md) to turn an idea into a plan.
+- [Existing Project](getting-started/existing-project.md) to orient the agent to your codebase.
+- [Software Development](quickstart-sdlc.md) for a bounded development task.
+- [Marketing](quickstart-mmk.md) for a campaign brief or content review.
+- [Capability Guide](overview/capabilities.md) for other workflows.
 
-## Choose a starting point
-
-- [Start Here](getting-started/start-here.md) for the complete beginner path.
-- [New Project](getting-started/new-project.md) to turn an idea into a planned
-  project.
-- [Existing Project](getting-started/existing-project.md) to orient AIWG to a
-  codebase.
-- [Provider Handoff](getting-started/provider-handoff.md) when setup is complete
-  but the AI tool needs a restart or workspace handoff.
-- [Verify AIWG Is Working](getting-started/verify-aiwg-is-working.md) for an
-  evidence-based engagement check.
-
-## Verify success
-
-```text
-Is AIWG active in this workspace? Report the engaged state, project root,
-provider files, installed frameworks and addons, and the next action. Explain
-the evidence in plain language and propose a safe recovery if anything is
-partial or degraded.
-```
-
-Success means the agent reports the expected project and provider, identifies
-at least one installed AIWG capability, and gives evidence for its conclusion.
-
-If no working agent can run, use the dedicated
-[CLI reference](cli/reference.md). Exact installation, deployment, status,
-repair, and automation syntax is intentionally kept out of user journeys.
+If the connection is incomplete, use [Verify AIWG Is Working](getting-started/verify-aiwg-is-working.md) or [Provider
+Handoff](getting-started/provider-handoff.md). For manual operation, use the [CLI reference](cli/reference.md).

@@ -10,11 +10,14 @@ line is one memory. The oldest line is least recent; the last line is newest.
 Adding, listing, searching, or touching an entry can move it to the newest
 position, so frequently reused facts survive retention pruning.
 
-## When to use it
+## Common Use Cases
 
-Use line memory when you need a small, inspectable set of facts such as a
-canonical tracker, a stable command convention, or a project-specific testing
-constraint.
+- Record a canonical tracker, deployment convention, or test command that agents should find quickly.
+- Keep a bounded set of current project facts without building a wiki.
+- Import reviewed session-intelligence candidates as concise facts.
+- Search or list only the needed slice during an AI session.
+
+## When to use it
 
 Use `llm-wiki` or `semantic-memory` instead when you need multiple pages,
 citations, cross-references, contradiction handling, entity profiles, or

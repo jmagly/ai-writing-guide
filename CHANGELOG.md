@@ -7,6 +7,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Changed
+
+- Clarify first-use onboarding, workflow examples, provider setup, and public documentation navigation while retaining
+  the full capability reference.
+- Report indexed artifact access for Hermes, OpenHuman, and Antigravity when native artifact deployment is unavailable.
+
 ### Documentation
 
 - Add the native subagent harness voice-evaluation lane and record thirty Astra/Sol cases, primary reviews, replay outcomes and comparison limits.

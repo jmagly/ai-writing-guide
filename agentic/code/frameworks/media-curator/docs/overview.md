@@ -1,17 +1,23 @@
 # Media Curator Framework Overview
 
-## What It Does
-
 The Media Curator framework enables AI agents to build, curate, and maintain
 comprehensive media collections. It handles the full lifecycle from
 type-flexible assessment through acquisition, organization, verification,
 transcription where needed, research handoff, and multi-platform export.
 
+## Common Use Cases
+
+- Audit an existing archive, identify missing metadata, and create a cleanup plan.
+- Research an artist, venue, creator, or event series before acquiring material.
+- Acquire media from approved sources, then tag and verify the collection.
+- Prepare transcripts, playlists, exports, or research handoffs from a curated archive.
+
 ## Design Philosophy
 
 ### Issue-Driven Development
 
-This framework emerged from a real prototype: cataloging Twenty One Pilots' complete discography (1,109 files, 94GB). Every agent, command, and skill reflects patterns that were field-tested in production.
+This framework emerged from a real prototype: cataloging a large artist discography with mixed official, unofficial,
+live, and archival material. The agents, commands, and skills reflect patterns from that field test.
 
 ### Quality Over Quantity
 
@@ -34,7 +40,7 @@ Every archive includes self-verifying SHA-256 checksums and W3C PROV-compliant p
 
 ## Framework Components
 
-### Agents (6)
+### Agents
 
 | Agent | Purpose |
 |-------|---------|
@@ -45,7 +51,7 @@ Every archive includes self-verifying SHA-256 checksums and W3C PROV-compliant p
 | Metadata Curator | Tag, name, organize |
 | Completeness Tracker | Gap analysis and prioritization |
 
-### Commands (9)
+### Commands
 
 | Command | Purpose |
 |---------|---------|
@@ -127,5 +133,10 @@ analyze-artist → find-sources → acquire → tag-collection → verify-archiv
 ## Related
 
 - Epic issue: #75
-- Prototype: Twenty One Pilots collection (1,109 files, 94GB)
+- Prototype: large artist collection field test
 - Standards: ID3v2.4, SHA-256, PREMIS 3.0, W3C PROV-O, ISO 8601
+
+## Next Step
+
+Deploy the framework with `aiwg use media-curator`, then ask your assistant to assess one existing media folder and
+produce an acquisition, metadata, and verification plan before downloading or rewriting files.

@@ -1,8 +1,12 @@
 # ops-complete Quickstart
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and
+Verify](../../getting-started/install-connect-verify.md). This guide assumes AIWG is already installed and connected
+to the target project.
 
-Deploy the ops-complete framework and write your first validated runbook in about 10 minutes.
+Use ops-complete when a repository needs runbooks, fleet inventory, incident
+records, deployment operations, or other operational procedures that an AI
+assistant can inspect and update with evidence.
 
 ## Before You Start
 
@@ -28,6 +32,8 @@ aiwg list
 ```
 
 You should see `ops-complete` (and any extensions) listed as installed frameworks.
+`aiwg use` also refreshes shared project context and prints any provider reload
+step needed before the assistant sees the new framework.
 
 ## Extension Selection Guide
 
@@ -40,7 +46,21 @@ You should see `ops-complete` (and any extensions) listed as installed framework
 
 Extensions are additive. The base `ops` framework is always required; extensions cannot run standalone.
 
-## Your First Runbook
+## First Useful Task
+
+Start with an existing operational need and ask for one reviewable artifact:
+
+```text
+Use AIWG's ops framework to draft a restart runbook for our API service. Ask
+only for missing operational facts, include verification and rollback steps,
+and mark any assumptions that require operator approval.
+```
+
+Success means you have a runbook draft or review report with targets,
+pre-flight checks, rollback conditions, evidence requirements, and the next
+operator decision.
+
+## Manual Runbook Example
 
 Create a new runbook using the template:
 

@@ -1,6 +1,22 @@
 # Media/Marketing Kit Overview
 
-The Media/Marketing Kit (MMK) is a complete campaign management framework for AI-assisted marketing work. It provides 37 specialized agents, 87+ templates, phase-based workflows, and validation tooling covering the full marketing lifecycle from strategy through performance analysis.
+The Media/Marketing Kit (MMK) helps teams plan, produce, review, and measure marketing work with reusable campaign
+artifacts. Use it when a campaign needs positioning, copy, creative briefs, legal or brand review, publication
+planning, and performance analysis that other sessions can inspect later.
+
+## Use Cases
+
+**New product launch**: Define positioning and messaging, produce launch content for blog, email, and social, validate
+claims legally, publish on launch day, and track KPIs.
+
+**Ongoing content programs**: Use the creation workflows in a repeating cycle with content calendar commands to
+produce consistent output across channels.
+
+**Agency handoff**: Use `/intake-from-campaign` to analyze existing materials and generate structured intake
+documentation before production begins.
+
+**PR and media relations**: Use PR and media-kit artifacts for press releases, spokesperson briefs, embargo
+management, and crisis response.
 
 ## What It Is
 
@@ -16,21 +32,11 @@ The lifecycle runs in five phases:
 | **Publication** | Deploy, schedule, launch | Go-Live Ready (GL) |
 | **Analysis** | Measure, report, optimize | Performance Review (PR) |
 
-## Use Cases
-
-**New product launch**: Define positioning and messaging (Strategy), produce launch content for blog, email, and social (Creation), validate claims legally (Review), publish on launch day (Publication), track KPIs (Analysis).
-
-**Ongoing content programs**: Use the Creation phase workflows in a repeating cycle with the content calendar commands to produce consistent output across channels.
-
-**Agency handoff**: Use `/intake-from-campaign` to analyze existing materials and generate structured intake documentation, then pass to the framework for structured production.
-
-**PR and media relations**: The PR specialist agent and media kit templates support press releases, spokesperson briefs, embargo management, and crisis response.
-
 ## What Gets Deployed
 
-When you run `aiwg use marketing`, the framework deploys:
+When you run `aiwg use marketing`, the framework deploys role-specific agents, lifecycle flow commands, content
+generators, templates, and validation commands for campaign work.
 
-- **37 agents** organized by function: strategy and planning (7), content creation (8), creative production (5), brand and governance (4), communications (3), analytics and optimization (5), orchestration and coordination (5)
 - **Phase transition flow commands**: `flow-strategy-to-creation`, `flow-creation-to-review`, `flow-review-to-publication`, `flow-publication-to-analysis`
 - **Continuous workflow commands**: brand compliance, content production, creative review, performance optimization
 - **Content generators**: campaign strategy, content calendar, social content, email sequences, media kit
@@ -63,7 +69,9 @@ All campaign artifacts go in `.aiwg/marketing/`:
 
 ## Template Library
 
-87+ templates organized by marketing discipline. Categories include intake, strategy, brand, content, social, email, advertising, PR, sales enablement, product marketing, events, analytics, creative production, governance, and operations.
+Templates are organized by marketing discipline. Categories include intake, strategy, brand, content, social, email,
+advertising, PR, sales enablement, product marketing, events, analytics, creative production, governance, and
+operations.
 
 All templates follow the `card-metadata-standard.md` format used across AIWG frameworks, enabling consistent metadata, traceability, and index generation.
 
@@ -85,7 +93,7 @@ MMK provides templates, workflows, and validation — not execution infrastructu
 
 ## References
 
-- `@$AIWG_ROOT/agentic/code/frameworks/media-marketing-kit/docs/quickstart.md` — Deploy and first campaign
+- [Quickstart](quickstart.md) — Deploy and first campaign
 - `@$AIWG_ROOT/agentic/code/frameworks/media-marketing-kit/plan-act-mmk.md` — Lifecycle phases and milestones
 - `@$AIWG_ROOT/agentic/code/frameworks/media-marketing-kit/agents/` — Agent catalog
 - `@$AIWG_ROOT/agentic/code/frameworks/media-marketing-kit/templates/` — Template library

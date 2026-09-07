@@ -1,16 +1,16 @@
 # Research Framework Quickstart
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and
+Verify](../../getting-started/install-connect-verify.md). This guide assumes AIWG is already installed and connected
+to the target project.
 
-Run a literature search and produce AI-grounded paper summaries in about 20 minutes.
+Use the research framework when you want an AI assistant to keep sources,
+summaries, claims, and gaps tied to reviewable research artifacts.
 
 ## Installation
 
 ```bash
-# Install AIWG CLI if not already installed
-npm install -g aiwg
-
-# Deploy the Research Framework
+# Deploy the research framework
 aiwg use research
 
 # Verify
@@ -18,9 +18,23 @@ aiwg list
 # research-complete    installed
 ```
 
-After installation, eight agents are deployed to your project and the `.aiwg/research/` directory structure is created.
+`aiwg use` refreshes shared project context and prints any provider reload step
+needed before the assistant sees the framework. After installation, research
+artifacts are written under `.aiwg/research/`.
 
-## Your First Literature Review
+## First Literature Review
+
+Start with a prompt that asks for a concrete research artifact:
+
+```text
+Use AIWG's research framework to scope a literature review on LLM agent safety.
+Produce a search strategy, inclusion criteria, a first result set, and the
+gaps or risks I should review before acquisition.
+```
+
+Success means the agent returns or saves a search strategy with source
+selection criteria, cites the result files it created, and identifies the next
+review decision.
 
 ### Step 1: Discover Papers
 
@@ -52,7 +66,9 @@ Download papers from the acquisition queue:
 aiwg research acquire --from-queue
 ```
 
-This downloads PDFs, assigns REF-XXX identifiers, validates FAIR compliance, and records SHA-256 checksums. Expect a 90%+ success rate; paywalled papers are flagged rather than skipped silently.
+This downloads available PDFs, assigns REF-XXX identifiers, records metadata,
+and stores SHA-256 checksums. Paywalled or unavailable papers should be flagged
+for review rather than skipped silently.
 
 For a paywalled paper you have locally:
 
@@ -82,7 +98,7 @@ For each acquired PDF, the documentation agent:
 1. Extracts text (with OCR for scanned papers if needed)
 2. Produces a 1-sentence, 1-paragraph, and 1-page summary
 3. Extracts structured data: claims, methods, datasets, key findings
-4. Validates all claims against the source text
+4. Flags claims that need source review
 5. Creates a Zettelkasten-style literature note
 
 Output for each paper:
@@ -113,7 +129,8 @@ aiwg research summarize --from-acquired
 cat .aiwg/research/discovery/gap-report-latest.md
 ```
 
-Typical results for 50 papers: ~45 acquired (90%), ~3-4 hours of reading replaced by 5-minute summaries per paper.
+Use the resulting files as a review queue. Acquisition coverage and summary
+quality depend on source access, paper format, and configured review gates.
 
 ## Citation Management
 
@@ -125,7 +142,8 @@ aiwg research cite REF-025 --format apa
 aiwg research cite REF-025 --format chicago
 ```
 
-The citation agent supports 9000+ styles. For systematic reviews, it can also build citation networks showing which papers cite each other.
+The citation agent supports common citation styles. For systematic reviews, it
+can also build citation networks showing which papers cite each other.
 
 ## Quality Assessment
 

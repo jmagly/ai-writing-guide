@@ -9,6 +9,22 @@ const cliCommandPattern = /\b(?:npx\s+)?aiwg\s+(?:--?)?[a-z][a-z0-9-]*\b/;
 const legacyProviderCommandPattern = /(?<![a-z0-9~.])\/aiwg-[a-z][a-z0-9-]*\b|\$aiwg-[a-z][a-z0-9-]*\b|\baiwg-regenerate\b/;
 
 describe('documentation audience boundary', () => {
+  it('keeps the actual homepage source on the canonical first-result journey', () => {
+    const manifest = JSON.parse(readFileSync(path.join(docs, '_manifest.json'), 'utf8'));
+    const home = manifest.sections.find((entry: { id?: string }) => entry.id === manifest.default);
+    expect(home?.file).toBeTruthy();
+    // Homepage metadata is not necessarily the page body: the manifest can
+    // select a separate HTML source that bypasses Markdown command rewriting.
+    const content = readFileSync(path.join(docs, home.file), 'utf8');
+    expect(content).toMatch(/project context and specialist workflows/i);
+    expect(content).toContain('href="#getting-started/install-connect-verify"');
+    expect(content).toContain('href="#providers/provider-inventory"');
+    expect(content).toContain('.aiwg/marketing/brand/audit/readme-review.md');
+    expect(content).not.toMatch(cliCommandPattern);
+    expect(content).not.toMatch(legacyProviderCommandPattern);
+    expect(content).not.toMatch(/\bnpm\s+(?:install|i)\b[^\n<]*\baiwg\b/i);
+  });
+
   it('keeps agent and CLI references indexed with stable metadata', () => {
     const agentRoot = path.join(docs, 'agents');
     const markdownFiles = (directory: string): string[] =>

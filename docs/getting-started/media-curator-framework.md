@@ -1,21 +1,26 @@
 # Media Curator Framework
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](install-connect-verify.md). This guide assumes
+AIWG is connected to the target project and your provider session can read the deployed context.
 
 You're building a media archive — music, film, video, or any other collection. You want complete coverage of an artist or catalog, consistent metadata, proper file organization, and the ability to export to whatever platform you're using (Plex, Jellyfin, Navidrome, etc.).
 
-The media curator framework handles the research, discovery, acquisition, quality filtering, tagging, and export pipeline. It knows what you have, what you're missing, and where to get it.
+The media curator framework handles catalog research, source discovery,
+acquisition planning, quality review, tagging, completeness checks, and export
+preparation. Use it to make collection decisions traceable before moving or
+renaming files.
 
 ---
 
-## Deploy it
+## Before You Start
 
-```bash
-npm install -g aiwg
-cd /path/to/your/collection
-aiwg use media-curator
-claude .
-```
+Complete [Install, Connect, and Verify](install-connect-verify.md) first. If
+you intentionally run a targeted deployment instead of the complete system,
+`aiwg use media-curator` remains the manual command for this framework.
+
+The first useful result should be a catalog reference, source plan,
+completeness report, or export plan you can review before changing the
+collection.
 
 ---
 
@@ -45,7 +50,10 @@ The `discography-analyst` agent researches the artist's complete discography —
 /find-sources "Radiohead" --scope "complete"
 ```
 
-The `source-discoverer` agent searches YouTube, Internet Archive, Bandcamp, and other platforms for available content. It ranks sources by audio/video quality, legitimacy, and completeness. You get a prioritized source list with format information before downloading anything.
+The `source-discoverer` agent searches configured sources for available
+content. It ranks candidates by the evidence available for quality,
+legitimacy, and completeness so you can review a source list before acquiring
+anything.
 
 Filter by format or quality threshold:
 
@@ -61,7 +69,9 @@ Filter by format or quality threshold:
 /acquire --plan sources.yaml
 ```
 
-The `acquisition-manager` orchestrates parallel downloads with format selection — picks the best available quality for each item. Progress is tracked, errors are recovered automatically, and the download plan is logged for reproducibility.
+The `acquisition-manager` orchestrates parallel downloads with format
+selection, tracks progress, records errors for review, and logs the download
+plan for reproducibility.
 
 Acquire a specific item:
 
@@ -139,7 +149,9 @@ Run the entire pipeline from scratch:
 /curate "Radiohead" --output /path/to/collection --quality lossless
 ```
 
-This runs analyze → discover → acquire → assess → tag → verify in sequence, pausing for confirmation at key decision points. At the end you have a complete, properly tagged, integrity-verified collection.
+This runs analyze → discover → acquire → assess → tag → verify in sequence,
+pausing for confirmation at key decision points. Success is a reviewed
+collection plan plus verification records for the files AIWG actually handled.
 
 ---
 

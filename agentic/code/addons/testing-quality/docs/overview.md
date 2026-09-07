@@ -1,10 +1,20 @@
 # Testing Quality Overview
 
-The testing-quality addon provides skills for enforcing test-driven development, validating test quality beyond coverage, and maintaining healthy test suites. It addresses the gap between passing a coverage gate and actually having meaningful tests — a codebase can have 80% coverage and still have tests that would pass with any implementation.
+The testing-quality addon helps teams check whether tests protect behavior, not only whether they execute lines. Use
+it when you need coverage gates, mutation testing, flaky-test investigation, factory generation, or test-suite
+synchronization inside an AIWG workflow.
+
+## Common Use Cases
+
+- Add a TDD or coverage gate to an existing repository.
+- Run mutation testing to find tests that execute code but do not catch broken behavior.
+- Investigate intermittent CI failures and record the likely flaky-test cause.
+- Generate test-data factories from models or schemas.
+- Detect missing or orphaned tests after refactors.
 
 ## What It Provides
 
-Six skills organized in two phases:
+Skills are organized in two phases:
 
 ### Phase 1: Enforcement and Quality
 
@@ -36,14 +46,16 @@ mutmut is collecting stats never contributes to the mutation score.
 
 ## Quality Targets
 
-| Metric | Target | How It's Measured |
+These are starter targets for project policy, not universal product guarantees:
+
+| Metric | Example Target | How It's Measured |
 |--------|--------|-------------------|
 | Line coverage | ≥ 80% | CI gate configured by `tdd-enforce` |
 | Mutation score | ≥ 80% | Stryker/PITest/mutmut report |
 | Flaky test rate | < 2% | CI history analysis |
-| Test data setup time | −60% vs manual | Factory adoption rate |
+| Test data setup friction | Declines after factory adoption | Factory usage and reviewer feedback |
 
-The 80% coverage target comes from Google's testing research (2010). Mutation score at 80% is based on ICST workshop standards.
+Teams should adjust these thresholds to the codebase, test runtime, risk level, and language tooling.
 
 ## Test Data Factories
 
@@ -87,7 +99,7 @@ Related SDLC agents: `test-engineer`, `test-architect`, `mutation-analyst`.
 
 ## References
 
-- `@$AIWG_ROOT/agentic/code/addons/testing-quality/docs/quickstart.md` — Set up testing quality in a project
+- [Quickstart](quickstart.md) — Set up testing quality in a project
 - `@$AIWG_ROOT/agentic/code/addons/testing-quality/skills/tdd-enforce/SKILL.md` — TDD enforcement details
 - `@$AIWG_ROOT/agentic/code/addons/testing-quality/skills/mutation-test/SKILL.md` — Mutation testing details
 - `@$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/agents/test-engineer.md` — Test engineer agent

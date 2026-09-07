@@ -1,21 +1,25 @@
 # Research Framework
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](install-connect-verify.md). This guide assumes
+AIWG is connected to the target project and your provider session can read the deployed context.
 
 You're doing academic or technical research. Finding papers manually is slow. Tracking what you've read and what it says is a spreadsheet nightmare. When you cite something, you're never sure you're representing the source correctly.
 
-The research framework automates the mechanical parts — discovery, acquisition, summarization, citation management, quality assessment — while keeping you in control of interpretation and synthesis. It prevents hallucinated citations by grounding everything against actual source content.
+The research framework handles the mechanical parts: discovery, acquisition,
+source-grounded notes, citation management, quality assessment, and archive
+organization. You remain responsible for interpretation and final synthesis.
 
 ---
 
-## Deploy it
+## Before You Start
 
-```bash
-npm install -g aiwg
-cd /path/to/your/research-project
-aiwg use research
-claude .
-```
+Complete [Install, Connect, and Verify](install-connect-verify.md) first. If
+you intentionally run a targeted deployment instead of the complete system,
+`aiwg use research` remains the manual command for this framework.
+
+The first useful result should be a traceable literature note, source list, or
+corpus health report. Verify that claims cite stored source content before you
+use them.
 
 ---
 
@@ -35,7 +39,9 @@ Each stage has dedicated commands. Run them in sequence or jump to wherever you 
 /research-discover "transformer attention mechanisms" --limit 20
 ```
 
-Searches academic databases using semantic search, ranks results by relevance and quality, and returns a prioritized list. The `discovery-agent` detects gaps in your existing corpus and surfaces papers you likely haven't seen.
+Searches configured academic sources, ranks results by relevance and available
+metadata, and returns a prioritized list. The `discovery-agent` can compare the
+query with your existing corpus and surface likely gaps.
 
 Filter by recency, citation count, or open access:
 
@@ -51,7 +57,9 @@ Filter by recency, citation count, or open access:
 /research-acquire --from-results last --output papers/
 ```
 
-Downloads PDFs with Unpaywall integration for open-access versions. Extracts metadata, validates against FAIR principles, and assigns persistent `REF-XXX` identifiers to every paper. You always know how to refer back to a source.
+Downloads PDFs with Unpaywall integration for open-access versions, extracts
+metadata, validates against FAIR principles, and assigns persistent `REF-XXX`
+identifiers so later notes can refer back to stored sources.
 
 ---
 
@@ -69,7 +77,8 @@ Uses RAG-based summarization against the actual PDF content — not from trainin
 - Connections to other papers in your corpus
 - GRADE quality assessment
 
-This is the core anti-hallucination mechanism. Every claim in the note is grounded against the source text.
+This is the core citation-safety mechanism. The note should tie its claims to
+source text stored in the corpus.
 
 ---
 
@@ -87,7 +96,9 @@ Check all citations in a document for accuracy:
 /verify-citations path/to/paper.md
 ```
 
-Flags any citation that doesn't match the actual source content in your corpus. Catches misquotes, misattributions, and fabricated page numbers.
+Flags citations that do not match stored source metadata or source content in
+your corpus. Treat the result as a review queue for misquotes,
+misattributions, and unsupported page references.
 
 ---
 

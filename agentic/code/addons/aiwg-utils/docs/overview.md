@@ -1,14 +1,24 @@
 # aiwg-utils Overview
 
-aiwg-utils is the core utility addon bundled with every AIWG installation. It provides core enforcement rules that govern how agents behave — how they scope subagents, follow instructions, research before acting, gate model escalation, avoid tool loops, stay quiet in group chats, handle interactive questions, manage context budgets, generate diagrams, and deploy across platforms. These rules are not optional; they are the behavioral foundation on which all other AIWG components operate.
+aiwg-utils is the core utility addon bundled with AIWG installations. It gives agents shared rules and helper
+workflows for instruction handling, discovery, provider routing, context budgets, diagrams, hooks, mentions, and
+workspace maintenance.
+
+## Common Use Cases
+
+- Find the right AIWG capability before editing files or answering from memory.
+- Regenerate provider context files after framework or workspace changes.
+- Validate `@` mentions, hooks, and project-local AIWG wiring.
+- Apply shared behavior rules for research, scoping, escalation, and tool-loop control.
 
 ## What's Included
 
 Beyond the rules, aiwg-utils also provides:
 
-- **5 agents**: `context-regenerator`, `aiwg-developer`, `consortium-coordinator`, `self-debug`, `aiwg-steward`
-- **9 skills**: `project-awareness`, `schedule`, `soul-create`, `soul-validate`, `soul-enhance`, `soul-apply`, `soul-blend`, `aiwg-sync`, `aiwg-guide`
-- **Provider regeneration commands**: provider-native `aiwg-regenerate` prompts or skills across all 13 named integrations, adapted to each provider's command surface
+- **Core agents**: context regeneration, AIWG development, coordination, self-debugging, and stewardship
+- **Utility skills**: project awareness, schedule support, SOUL profile management, synchronization, and guidance
+- **Provider regeneration commands**: provider-native `aiwg-regenerate` prompts or skills adapted to each provider's
+  command surface
 - **Workspace commands**: `workspace-realign`, `workspace-prune-working`, `workspace-reset`
 - **@-mention tooling**: `mention-wire`, `mention-validate`, `mention-report`, `mention-lint`
 - **Hook management**: `hook-enable`, `hook-disable`, `hook-status`, `hook-regenerate`
@@ -59,7 +69,7 @@ Apply when: Telegram/group-chat bots, multi-bot rooms, direct-message business b
 
 #### native-ux-tools
 
-Use provider-native interaction tools (e.g., Claude Code's AskUserQuestion) for interactive questions rather than plain text. One question per interaction turn. The capability matrix covers all 13 named provider integrations and falls back to formatted markdown if native tools are unavailable.
+Use provider-native interaction tools (e.g., Claude Code's AskUserQuestion) for interactive questions rather than plain text. One question per interaction turn. The capability matrix covers all 15 named provider integrations and falls back to formatted markdown if native tools are unavailable.
 
 Apply when: interactive commands (`--interactive` flag), decision gates, intake wizards.
 
@@ -107,6 +117,6 @@ Full rule files:
 
 ## References
 
-- `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/docs/rules-reference.md` — Per-rule details and examples
+- [Rules reference](rules-reference.md) — Per-rule details and examples
 - `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/docs/security/supply-chain/external-npm/README.md` — External npm dependency audit index and report templates
 - `@$AIWG_ROOT/agentic/code/addons/aiwg-utils/manifest.json` — Full component listing

@@ -1,6 +1,7 @@
 # Share AIWG
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is installed and `aiwg use all` has completed for your provider.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](install-connect-verify.md). This guide assumes
+AIWG is connected to the target project and your provider session can read the deployed context.
 
 Use this page when you need repo-owned source copy for pointing someone to the beginner path.
 

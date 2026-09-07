@@ -1,8 +1,10 @@
 # Agent Loop Quickstart
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and
+Verify](../../getting-started/install-connect-verify.md). This guide assumes AIWG is connected to the target project
+and your provider session can read the deployed context.
 
-Get started with iterative AI task execution in 5 minutes.
+Use an iterative loop for one bounded task with a measurable completion check.
 
 ## Before You Start: Is Al Right for This Task?
 
@@ -11,11 +13,12 @@ Get started with iterative AI task execution in 5 minutes.
 | Question | If NO |
 |----------|-------|
 | Is my task well-defined with clear requirements? | Document requirements first |
-| Can I write a command that verifies success? | Al can't help with subjective goals |
+| Can I write a command or evidence check that verifies success? | Define a reviewable result first |
 | Do I have tests/linting to validate correctness? | Add verification first |
 | Is this implementation work, not exploration? | Use Discovery Track for research |
 
-**The token-burning trap**: Al excels at HOW to implement but thrashes on WHAT to build. If you don't have clear requirements, Al will hallucinate features, contradict itself, and burn tokens producing junk.
+Al works best when the "what" is already clear. If requirements are still open,
+start with intake, discovery, or a short planning pass before launching a loop.
 
 **Safe to proceed?** Read on. **Unsure?** See [When to Use Al](when-to-use-ralph.md) first.
 
@@ -32,16 +35,14 @@ Al (from the "iterative agent loop methodology") executes AI tasks in a loop unt
 
 **Philosophy**: "Iteration beats perfection" - errors become learning data within the loop rather than session-ending failures.
 
-## Installation
+## Enable If Needed
 
 ```bash
-# Install Al addon
 aiwg use ralph
-
-# Or install alongside SDLC framework
-aiwg use sdlc
-aiwg install-plugin ralph
 ```
+
+Skip this when the complete setup path already made the addon available in
+your provider session.
 
 ## Your First Agent Loop
 
@@ -55,7 +56,7 @@ Al will:
 1. Run your tests to see what's failing
 2. Analyze and fix the issues
 3. Run tests again
-4. Repeat until all tests pass (or max iterations reached)
+4. Repeat until all tests pass, a configured limit is reached, or it needs your input
 
 ### Example 2: Fix TypeScript Errors
 
@@ -179,8 +180,9 @@ Continues from the last checkpoint.
 - Migrations: 15-20 iterations
 - Complex tasks: 20-30 iterations
 
-### 4. Let Git Track Progress
-Al auto-commits each iteration by default, creating a clear history:
+### 4. Decide How Git Should Track Progress
+
+If auto-commit is enabled for your loop, each iteration creates a clear history:
 ```
 ralph: iteration 1 - initial attempt
 ralph: iteration 2 - fixed auth test
@@ -206,6 +208,9 @@ Al stores state and reports in `.aiwg/ralph/`:
 - Read [Best Practices](best-practices.md) for effective prompt engineering
 - See [Examples](examples/) for common patterns
 - Check [Troubleshooting](troubleshooting.md) if you get stuck
+
+Success is a completion report in `.aiwg/ralph/`, the verification evidence
+named in `--completion`, and a clear statement of any remaining blocker.
 
 ## Quick Reference
 

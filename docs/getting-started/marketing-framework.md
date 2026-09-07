@@ -1,21 +1,25 @@
 # Marketing Framework
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](install-connect-verify.md). This guide assumes
+AIWG is connected to the target project and your provider session can read the deployed context.
 
 You're running marketing campaigns — content, social, email, paid, events. You have a strategy but execution is fragmented. Different people working in different tools, inconsistent brand voice, no structured review before things go out.
 
-The marketing framework gives you a full campaign lifecycle: intake, strategy, content creation across channels, brand and legal review, publication, and performance analysis. Every role that exists in a marketing team has a corresponding agent.
+The marketing framework gives you a campaign lifecycle: intake, strategy,
+content creation across channels, brand and legal review, publication planning,
+and performance analysis. Use it when campaign work needs a brief, reviewable
+assets, and a record of what changed.
 
 ---
 
-## Deploy it
+## Before You Start
 
-```bash
-npm install -g aiwg
-cd /path/to/your/project
-aiwg use marketing
-claude .
-```
+Complete [Install, Connect, and Verify](install-connect-verify.md) first. If
+you intentionally run a targeted deployment instead of the complete system,
+`aiwg use marketing` remains the manual command for this framework.
+
+The first useful result should be a campaign brief, content calendar, review
+packet, or performance note saved under `.aiwg/marketing/`.
 
 ---
 
@@ -111,7 +115,8 @@ Generate 10 ad headline variants for this product feature targeting CTOs at mid-
 
 ## Brand and voice consistency
 
-The marketing framework integrates with the voice framework. Apply a brand voice profile to everything generated:
+The marketing framework can work with the voice framework. Apply a brand voice
+profile when the campaign has one:
 
 ```
 Use the technical-authority voice for all content in this campaign
@@ -147,7 +152,9 @@ After a campaign runs:
 /campaign-analytics --campaign "Q2 launch" --period "last-30-days"
 ```
 
-Analyzes engagement, conversion, and attribution data. The `attribution-specialist` agent models which channels drove actual results vs. coincidental traffic.
+Analyzes the campaign data you provide or connect. The
+`attribution-specialist` agent separates observed channel evidence from
+assumptions that still need validation.
 
 ---
 

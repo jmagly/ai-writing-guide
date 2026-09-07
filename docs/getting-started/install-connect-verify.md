@@ -1,8 +1,8 @@
 # Install, Connect, and Verify AIWG
 
-This is the preferred first-run path for every supported provider. You work in
-the agent conversation: state the outcome, review the proposed changes, approve
-what matters, and ask the agent to prove the result.
+AIWG gives your AI assistant reusable project context and specialist workflows.
+This is the canonical first-time setup path. Connect the intended project,
+verify readiness, then complete a small task with a saved result.
 
 Your **project root** is the main folder for the project—the folder that usually
 contains files such as `README.md`, `package.json`, or `.git`. Your **provider**
@@ -36,7 +36,7 @@ The agent should:
 1. confirm the project root and provider;
 2. inspect the installed AIWG version and ownership;
 3. preview installation, deployment, and context changes;
-4. ask before material or scope-changing writes;
+4. request approval where project policy requires it or a choice needs your input;
 5. connect the complete supported AIWG surface to the selected provider;
 6. preserve project-authored instructions and unrelated work; and
 7. run the engagement check and explain the result.
@@ -89,6 +89,13 @@ Success means:
 - the provider context is connected to `WORKSPACE.md` and `AIWG.md`; and
 - the agent gives one sensible next action with verification evidence.
 
+## Get your first useful result
+
+Once the connection is ready, [review your README](just-try-it.md). The task
+saves a report with source references and three prioritized fixes. Check the
+findings, then use the report in a later session to implement an agreed change.
+Readiness confirms the connection; this task lets you assess the workflow.
+
 ## Recovery prompts
 
 Wrong project:
@@ -115,12 +122,12 @@ which source owns each section and propose a preservation-safe resolution. Do
 not overwrite project-authored content without my approval.
 ```
 
-## If no agent can run
+## Manual installation alternative
 
-Exact terminal installation, deployment, status, and repair syntax is kept in
-the [CLI reference](../cli/reference.md). Use that section only when no working
-agent can complete the prompt-first path or when you intentionally need
-automation-level control.
+If you prefer a terminal or cannot run an agent, use the
+[manual installation reference](../cli/install-and-repair.md). The complete
+[CLI reference](../cli/reference.md) covers deployment and recovery syntax.
+Return to the verification check and first task above after manual setup.
 
 For secure long-running agents, an operator can instead use the
 [AIWG Cockpit + Agentic Sandbox installer](https://aiwg.io/agentic-sandbox/setup.aiwg.yaml),

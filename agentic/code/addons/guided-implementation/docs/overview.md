@@ -1,10 +1,21 @@
 # guided-implementation Overview
 
-The guided-implementation addon provides bounded iteration control for autonomous issue-to-code workflows. It supplies a single skill (`iteration-control`) that manages retry logic and escalation, complementing the `/flow-guided-implementation` command.
+The guided-implementation addon keeps issue-to-code work inside a bounded retry loop. Use it when an assistant should
+attempt an implementation, run validation, retry with feedback, and escalate with useful context if the retry budget
+is exhausted.
+
+## Common Use Cases
+
+- Address a small issue or bug with a fixed number of implementation attempts.
+- Keep test-debug cycles from drifting away from the original task.
+- Produce a structured escalation when the remaining decision requires human input.
+- Pair SDLC planning artifacts with a concrete implementation loop.
 
 ## The Problem It Solves
 
-Most implementation capabilities already exist in Claude Code: file search (Grep, Glob), task decomposition (TodoWrite), code generation (Edit), code review (code-reviewer agent), and test debugging (debugger agent). What was missing is a component that manages the loop itself — knowing when to retry a failed implementation attempt versus when to escalate to the user.
+Many AI coding environments already provide file search, task decomposition, code edits, review, and debugging.
+guided-implementation focuses on the loop policy: when to retry a failed implementation attempt, when to stop, and
+what evidence to carry into escalation.
 
 Without iteration control, an agent facing a failing test either gives up after one attempt (too conservative) or retries indefinitely in ways that produce increasingly divergent code (too aggressive). Iteration control establishes a bounded retry budget with structured escalation when the budget runs out.
 
@@ -77,9 +88,17 @@ With a custom retry limit:
 
 The default retry limit is 3 attempts per task. For complex tasks requiring more exploration, increase it. For simple bugs, 3 is usually sufficient.
 
+## Next Step
+
+Start from the SDLC implementation flow:
+`@$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/commands/flow-guided-implementation.md`. In an installed project,
+ask your assistant to use guided implementation for one issue and report each validation attempt before escalating.
+
 ## Research Foundation
 
-The iteration control design is based on MAGIS (Multi-Agent GitHub Issue Resolution) research, which found that bounded developer-QA iteration loops improve code quality while preventing infinite loops. The key insight is that bounded retries with human escalation outperform both single-attempt implementations and unbounded retry loops.
+The iteration control design is informed by MAGIS (Multi-Agent GitHub Issue Resolution) research on bounded
+developer-QA iteration loops. AIWG applies the pattern as a workflow control: finite retries, validation after each
+attempt, and human escalation when the loop cannot resolve the issue.
 
 Reference: `@$AIWG_ROOT/agentic/code/frameworks/sdlc-complete/commands/flow-guided-implementation.md`
 

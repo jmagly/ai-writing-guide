@@ -1,10 +1,19 @@
 # ops-complete Overview
 
-ops-complete is the operational infrastructure layer for AIWG — a framework for AI agents working inside ops repositories (sysops, itops, devops, streamops, and repository maintenance). It formalizes patterns for executable runbooks, fleet inventory, and structured operational workflows, then extends them through domain-specific extensions.
+ops-complete helps teams turn operational work into executable, reviewable runbooks and inventories. Use it for
+sysops, itops, devops, streamops, and repository maintenance where commands must be scoped, verified, and recorded.
+
+## Common Use Cases
+
+- Convert a manual deployment checklist into an idempotent runbook with verification.
+- Capture fleet inventory and the variables needed for repeatable operations.
+- Prepare incident, troubleshooting, or disaster-recovery artifacts with evidence boundaries.
+- Extend the base workflow for host, IT, CI/CD, or streaming infrastructure operations.
 
 ## What It Is
 
-Most AI coding assistants struggle in ops repositories because operational work differs fundamentally from application development: procedures must be idempotent and verifiable, commands may be destructive, and context spans multiple hosts or systems. ops-complete addresses this by providing:
+Operational work differs from application development: procedures must be idempotent and verifiable, commands may be
+destructive, and context spans multiple hosts or systems. ops-complete addresses this by providing:
 
 - A Kubernetes-inspired YAML artifact format for all operational documents
 - Enforcement rules that catch dangerous patterns (interactive commands, missing verification steps)
@@ -56,7 +65,7 @@ Variables resolve in a 3-level hierarchy (later levels override earlier):
 
 There is no deeper nesting. This keeps resolution predictable during AI-assisted execution.
 
-## The Four Extensions
+## Core Extensions
 
 Extensions require ops-complete and cannot run standalone. They add domain-specific agents, templates, and rules on top of the base framework.
 
@@ -142,8 +151,9 @@ contract, validator command, and structured reference rules.
 
 ## References
 
-- `@$AIWG_ROOT/agentic/code/frameworks/ops-complete/docs/quickstart.md` — Deploy and first steps
-- `@$AIWG_ROOT/agentic/code/frameworks/ops-complete/docs/extensions-guide.md` — Extension details
-- `@$AIWG_ROOT/docs/yaml-metalanguage.md` — Full YAML metalanguage specification
+- [Quickstart](quickstart.md) — Deploy and first steps
+- [Extensions guide](extensions-guide.md) — Extension details
+- [YAML metalanguage](https://github.com/jmagly/aiwg/blob/main/docs/yaml-metalanguage.md) — Full YAML metalanguage specification
 - `@$AIWG_ROOT/agentic/code/frameworks/ops-complete/rules/RULES-INDEX.md` — All ops rules
-- `@$AIWG_ROOT/docs/ops-evidence-governance.md` — Redaction, publication, retention, and disposal contract
+- [Ops evidence governance](https://github.com/jmagly/aiwg/blob/main/docs/ops-evidence-governance.md) — Redaction,
+  publication, retention, and disposal contract

@@ -1,6 +1,8 @@
 # Daemon Addon Status
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This status page assumes AIWG is already installed and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and
+Verify](../../getting-started/install-connect-verify.md). This status page assumes AIWG is connected to the target
+project and your provider session can read the deployed context.
 
 The daemon addon contains design artifacts and configuration scaffolding, but
 the production AIWG CLI does not currently register a resident `daemon`

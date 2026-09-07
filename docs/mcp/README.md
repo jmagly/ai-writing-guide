@@ -1,6 +1,9 @@
 # MCP Server (Model Context Protocol)
 
-AIWG includes an MCP server for programmatic integration with AI tools.
+The AIWG MCP server gives compatible AI tools a programmatic way to discover
+AIWG capabilities, read selected artifacts, and run allow-listed AIWG commands.
+Use it when an external tool needs structured access to AIWG rather than only
+the files deployed into a provider-specific directory.
 
 [![Listed on mcpservers.org](https://mcpservers.org/badge.svg)](https://mcpservers.org/servers/docs-aiwg-io)
 
@@ -23,7 +26,7 @@ aiwg mcp install cursor
 aiwg mcp info
 ```
 
-## Available Tools
+## Tool Surface
 
 | Tool | Description |
 |------|-------------|

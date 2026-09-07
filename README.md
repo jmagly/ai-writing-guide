@@ -1,12 +1,19 @@
 <div align="center">
 
-<a href="https://aiwg.io"><img src="https://aiwg.io/assets/badges/aiwg-hero-dark.png" alt="AIWG — multi-agent AI framework · one source of truth · 15 provider integrations including Google Antigravity CLI" width="680"></a>
+<a href="https://aiwg.io"><img src="docs/.public/aiwg-readme-hero-v2.png" alt="AIWG — multi-agent AI framework, one
+source of truth; network connecting AI tools" width="1000"></a>
 
 # AIWG
 
-**Multi-agent AI framework for 15 provider integrations, including Antigravity, Claude Code, Codex, Copilot, Cursor, DeepSeek Harness, Pi, and Warp**
+**Reusable project context and specialist workflows for the AI tools you already use.**
 
-200+ agents, 109+ CLI commands, 400+ deployable agent/skill/command/rule artifacts, 8 core frameworks, 33 addons, and a 40-plugin Claude Code marketplace. SDLC workflows, digital forensics, research management, marketing operations, media curation, ops infrastructure, knowledge base, and fine-tuning dataset curation — all deployable with one command.
+Plan software, coordinate specialist reviews, prepare campaigns, investigate incidents, organize research, curate
+media, and maintain operational knowledge. AIWG combines agents, skills, rules, templates, and workflow utilities
+around these tasks, adapting them to your existing AI provider.
+
+Project artifacts carry decisions from one session to the next. Domain frameworks supply the procedures; addons extend
+them with writing profiles, task loops, memory, testing tools, and other capabilities. The sections below show what
+you can do, how the pieces work together, and how to use them.
 
 The simplest setup is to paste this into a supported AI provider:
 
@@ -23,7 +30,7 @@ system with one self-verifying `aiwg use all` command. That command refreshes
 the indices, regenerates project context, verifies the resulting deployment,
 and reports whether a provider reload is actually required.
 
-For secure long-running agents, install AIWG Cockpit with a self-hosted Agentic
+For long-running agents that need an isolated executor, optionally install AIWG Cockpit with a self-hosted Agentic
 Sandbox executor you control and audit:
 
 ```text
@@ -69,7 +76,7 @@ See [Web-Backed AIWG Resources](docs/install/web-backed-resources.md) for source
 selection, exact-version overrides, cache verification, offline use, and the
 current framework-graph constraints.
 
-Then ask your AI assistant to set up the project for AIWG. The agent-led setup
+For a larger project, ask your AI assistant to establish project policy as well. The agent-led setup
 conversation should establish remotes, issue storage, delivery behavior,
 signing policy, and provider choices; the assistant may call `aiwg setup project`
 as the underlying CLI helper.
@@ -85,7 +92,7 @@ Agents and stewards setting up AIWG end-to-end should use the
 [![GitHub Stars](https://img.shields.io/github/stars/jmagly/aiwg?style=flat-square)](https://github.com/jmagly/aiwg/stargazers)
 [![Node Version](https://img.shields.io/badge/node-%E2%89%A520.0.0-brightgreen?style=flat-square&logo=node.js)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
-[![15 Providers](https://img.shields.io/badge/Providers-15-purple?style=flat-square)](#-platform-support)
+[![15 Providers](https://img.shields.io/badge/Providers-15-purple?style=flat-square)](#platform-support)
 [![Listed on mcpservers.org](https://mcpservers.org/badge.svg)](https://mcpservers.org/servers/docs-aiwg-io)
 
 [![Built With AIWG](https://aiwg.io/assets/badges/built-with-aiwg-dark.png)](https://aiwg.io/badges)
@@ -125,15 +132,16 @@ same scoped rebuild command.
 
 If `npm install -g aiwg` fails with `EACCES` while writing to
 `/usr/local/lib/node_modules/aiwg`, npm is using a system-owned global install
-directory. The recommended Mac path is Node 24 through `nvm`, then:
+directory. The [Node.js setup guide](docs/getting-started/install-node.md) covers the supported runtime and
+version-manager choices. After setting up Node, run:
 
 ```bash
 npm install -g aiwg
 aiwg --version
 ```
 
-If Node is already installed and you need a quick recovery, use npm's current
-user-owned prefix guidance:
+If Node is already installed and you need a quick recovery, one manual alternative is a user-owned npm prefix. Choose
+this only after checking your existing Node version-manager configuration:
 
 ```bash
 npm config set prefix ~/.local
@@ -158,22 +166,33 @@ echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> ~/.zshrc   # or ~/.ba
 source ~/.zshrc                         # or restart your shell
 ```
 
-You can also invoke AIWG without adjusting `PATH` by using `npx aiwg <command>`. For a broader health check — version, deployed providers, missing dependencies, kernel-skill probes — run `aiwg doctor`, which surfaces the same PATH guidance on every invocation if the binary isn't reachable.
+You can also invoke AIWG without adjusting `PATH` by using `npx aiwg <command>`. For a broader health check — version,
+deployed providers, missing dependencies, kernel-skill probes — run `aiwg doctor`. See the [troubleshooting
+guide](docs/troubleshooting/index.md) for the full recovery paths.
 
 ---
 
 ## What AIWG Is
 
-AIWG is a deployment tool and support utility for AI context. At its core, `aiwg use` copies markdown and YAML source files into the paths each provider reads, so one source of truth works across 15 named provider integrations. A sixteenth `generic` adapter emits portable files for unrecognized or custom harnesses and is not counted as a named integration.
+AIWG gives your AI assistant reusable project context and specialist workflows. Its deployment layer connects those
+instructions to your provider: `aiwg use` copies markdown and YAML source files into the paths each provider reads, so
+one source of truth works across 15 named provider integrations. A sixteenth `generic` adapter emits portable files
+for unrecognized or custom harnesses and is not counted as a named integration.
 
-Around that core, AIWG ships agent-facing utilities for things the base platforms do not handle on their own: persistent artifact memory (`.aiwg/`), background orchestration, autonomous loops, artifact indexing, cost telemetry, health diagnostics, and more. These are tools the agent calls when you ask for something AIWG-shaped — you stay in chat. Most are opt-in. The deployment layer works standalone as plain text files the platform reads natively.
+Around that core, AIWG ships agent-facing utilities for work that benefits from additional structure: persistent
+artifact memory (`.aiwg/`), background orchestration, autonomous loops, artifact indexing, cost telemetry, health
+diagnostics, and more. These are tools the agent calls when the task calls for them — you stay in chat. Most are
+opt-in. The deployment layer works standalone as plain text files the platform reads natively.
 
 ### Project scope (recommended) vs user scope (global)
 
 `aiwg use` supports project deployments, additive user mirrors, and a
 user-global bootstrap:
 
-- **Project scope** — default. Run `aiwg use all --provider <provider>` from a project root and the artifacts land in that provider's project paths. One project's agent set never bleeds into another's session. **This is the recommended default for new users.**
+- **Project scope** — default. Run `aiwg use all --provider <provider>` from a project root and the artifacts land in
+  that provider's project paths. This keeps project-specific instructions associated with the intended repository.
+  Some providers also use user-level surfaces; check the reported deployment scope. **This is the recommended default
+  for new users.**
 - **User scope (additive mirror)** — `aiwg use all --provider <provider> --scope user` keeps the
   project deployment and mirrors it to `~/.claude/agents/`,
   `~/.claude/skills/`, etc.
@@ -183,42 +202,59 @@ user-global bootstrap:
   Use `aiwg regenerate --provider <name>` to wire additional projects without
   deploying their own skill copies.
 
-The trade-off is real: when the same agent set loads into every session, context from one project can bleed into reasoning about another. Research (REF-720, *Lost in Multi-Turn Conversation*, MSR/Salesforce 2025) measured a 39% capability drop when this happens. The non-blocking project-isolation warning surfaces the trade-off at deploy time so the scope choice is informed. Neither scope is wrong; pick the one that fits the workflow.
+Shared user-level instructions can be useful for personal conventions, while project-local instructions keep a team's
+requirements and decisions with its repository. Review both scopes when a provider uses them together. The installer
+and provider inventory describe where files will go, so you can distinguish instructions that follow you across
+projects from instructions intended for this workspace.
 
 See the [Agentic Install Runbook](docs/agentic-install-runbook.md) for the
-zero-to-running setup path, and `https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md` (under `aiwg use` →
+zero-to-running setup path, and the [CLI reference](docs/cli/reference.md) (under `aiwg use` →
 "Scope models") for the per-provider details and the global-install rough-edge
 inventory.
 
 ## Simple Building Blocks
 
-AIWG ships five primitive artifact types. All are plain text:
+AIWG's workflow source is readable and editable. The main building blocks are:
 
-- **Agents** — specialized personas (Security Auditor, Test Architect) with a scoped toolset
-- **Skills** — natural-language workflows the platform auto-invokes on trigger phrases
-- **Commands** — explicit slash invocations (`/flow-security-review-cycle`)
-- **Rules** — enforcement directives the platform loads into every session
-- **Behaviors** — lifecycle hooks that fire on events (pre-write, post-session)
+- **Agents** — specialist role instructions, such as Security Auditor or Test Architect, with defined responsibilities
+  and supported tool access.
+- **Skills** — reusable procedures an agent can find from a goal and follow during a task.
+- **Commands** — explicit ways to request a workflow through the provider or CLI.
+- **Rules** — constraints for the assistant to follow, with tool-based checks where configured.
+- **Behaviors** — lifecycle actions and hooks on providers that support them.
+- **Templates** — structures for requirements, briefs, review reports, runbooks, and other outputs.
 
-Each is a single `.md` file with YAML frontmatter. Nothing executes until an AI platform reads it.
+Many assets use Markdown with YAML metadata; hooks and utilities may also include executable scripts or structured
+configuration. The provider determines how each asset is loaded or invoked. A role definition is not a separate model,
+and a written rule is not proof that its constraint was enforced.
 
 ## Why It Compounds
 
-Because the primitives are text, they compose without runtime coordination:
+The building blocks become more useful when workflows share their outputs:
 
-- One agent file becomes one member of a **180-agent SDLC team** that reviews architecture, tests, security, and compliance in parallel.
-- One skill becomes a **natural-language entry point** — "run security review" routes to the right multi-agent flow on every platform that supports skills.
-- One **framework** (SDLC, forensics, marketing) bundles dozens of agents + skills + rules + templates that cross-reference each other. Deploying a framework deploys a working multi-agent ecosystem.
-- The `.aiwg/` directory gives those agents a **shared memory** — artifacts from Monday's requirements session are read by Thursday's test design.
-- Flows orchestrate **Primary Author → Parallel Reviewers → Synthesizer → Archive** patterns that no single-prompt workflow can match.
+- A requirements analyst records acceptance criteria that the test engineer can later use to review coverage.
+- A security reviewer reads the same design decision as the implementation agent and records concerns against that decision.
+- A campaign brief gives content writers a shared audience, message, and review criteria.
+- A research note connects a source to the claim it supports, so a later synthesis can revisit the original evidence.
+- A runbook carries verification and recovery steps from planning into an operational change.
 
-The leverage is not in any one file. It is that hundreds of small files — each independently readable and editable — snap together into workflows that would otherwise take a bespoke agent platform to build.
+Frameworks package these relationships: agents, skills, rules, and templates reference one another, while `.aiwg/`
+holds the project-specific work they produce. A review can follow **Primary Author → Reviewers → Synthesizer →
+Approval → Archive**, using parallel execution where the provider and task support it.
 
-This is also where the research background lives. AIWG implements patterns from cognitive science (Miller 1956, Sweller 1988), multi-agent systems (Jacobs et al. 1991, MetaGPT, AutoGen), and software engineering (Cooper's stage-gate, FAIR Principles, W3C PROV) — applied as file conventions and deployment rules, not as a runtime you depend on.
+For example, Monday's architecture review can become Thursday's implementation checklist. The second session needs to
+read the saved artifact and check that it is still applicable, but the team has a concrete record to work from rather
+than reconstructing the decision from conversation fragments.
+
+Research on structured artifacts, multi-agent review, and recovery informs this design. The [research
+foundations](#research-foundations) section preserves that background separately from claims about AIWG's own
+performance.
 
 ## How You Actually Use AIWG
 
-The user surface is the conversation with your AI tool. You install AIWG, deploy a framework, and then talk to the agent normally — "help me start a project", "run a security review", "find me a deploy workflow." The agent does the AIWG-specific work for you.
+The user surface is the conversation with your AI tool. You install AIWG, deploy a framework, and then talk to the
+agent normally — "help me start a project", "run a security review", "find me a deploy workflow." The agent can
+discover the appropriate procedure, perform the task, and report what it verified.
 
 The CLI exists mostly for the agent to call under the hood. The commands a user typically runs by hand are a short list:
 
@@ -230,53 +266,86 @@ The CLI exists mostly for the agent to call under the hood. The commands a user 
 - `aiwg doctor` — health check
 - `aiwg refresh` — keep the install current
 
-Everything else is agent territory. Discovery (`aiwg discover`), artifact lookup (`aiwg show`), the index, agent loops, mission control, MCP — those are tools the agent invokes during a chat when you ask for something AIWG-shaped. You stay in the conversation; the agent handles the lookups, runs the loops, and reports back.
+Advanced operators can also use the CLI directly; most everyday work can stay in chat. Discovery (`aiwg discover`),
+artifact lookup (`aiwg show`), the index, agent loops, mission control, MCP — those are tools the agent invokes during
+a chat when the task calls for them. The agent handles the lookups, executes the selected workflow, and reports its
+result and limitations.
 
-Turn the agent-side tooling on (it's on by default once you `aiwg use`) when you want persistence, parallelism, or automation. Turn it off and the deployed agents, skills, and rules still work — they are still text files the platform reads natively.
+Deployment connects the supported workflow surface. Optional servers, storage services, and automation paths have
+their own prerequisites; installing assets does not mean all those services are running. You can start with one review
+or document task, then enable additional utilities as the work requires.
 
 ## What AIWG Is Not
 
-- **Not a prompt library.** Prompts are the artifacts, not the product. The product is placing the right prompts where the platform finds them.
-- **Not an LLM runtime.** AIWG never calls a model. The AI platform you already use does that; AIWG configures what it sees.
-- **Not a framework you import into your app.** Nothing is imported at build time. Your project gets a `.aiwg/` directory (artifacts) and a few provider-specific context dirs (deployed copies). Delete them and your app is unchanged.
+AIWG adds context, procedures, and support utilities around the AI tools you use. The deployment core writes
+provider-readable assets; optional orchestration and integration components can invoke provider runtimes or other
+configured services. The [architecture overview](docs/architecture-overview.md) distinguishes those components.
+
+It does not replace your provider subscription, your application's runtime, or the review needed before using
+generated work. Most workflows operate on project artifacts and source files rather than requiring your application to
+import an AIWG library. Keep generated configuration and project artifacts under the same review discipline as other
+repository changes.
 
 ## Who It's For
 
-If you have used AI coding assistants and thought "this is amazing for small tasks but falls apart on anything complex," AIWG is the missing infrastructure layer that scales AI assistance to multi-week projects.
+AIWG is useful to individual developers, engineering teams, technical leaders, researchers, marketers, and operators
+whose work spans several tasks or sessions. It helps when you need reusable instructions, a shared record of
+decisions, or reviews from more than one perspective.
+
+You can start at several levels: a small documentation review, a focused code audit, a campaign brief, an
+investigation plan, or a complete development lifecycle. The [capability guide](docs/overview/capabilities.md) offers
+task-based routes, while this README keeps the broader feature and workflow detail available below.
 
 ---
 
 ## What Problems Does AIWG Solve?
 
-Base AI assistants (Claude, GPT-4, Copilot without frameworks) have three fundamental limitations:
+AI-assisted projects often need a deliberate way to carry context forward, recover from failed attempts, and make
+review criteria explicit. AIWG provides workflows and artifacts for each of those needs.
 
-### 1. No Memory Across Sessions
+### 1. Maintaining Context Across Sessions
 
-Each conversation starts fresh. The assistant has no idea what happened yesterday, what requirements you documented, or what decisions you made last week. You re-explain context every morning.
+Useful decisions can become scattered between conversations, issues, and source files. AIWG workflows save project
+outputs in `.aiwg/`, including requirements, architecture decisions, risk notes, test strategies, and campaign
+material.
 
-**Without AIWG**: Projects stall as context rebuilding eats time. A three-month project requires continuity, not fresh starts every session.
+A later task can consult the relevant artifact and link its own work back to it. The requirements analyst writes a use
+case; the test engineer reads it to identify missing coverage; the implementation review checks whether the behavior
+matches the acceptance criteria. A changed decision can be recorded and propagated through those relationships.
 
-**With AIWG**: The `.aiwg/` directory maintains 50-100+ interconnected artifacts across days, weeks, and months. Later phases build on earlier ones automatically because memory persists. Agents read prior work via `@-mentions` instead of regenerating from scratch.
+The structure also helps an agent select context for a large project. Instead of treating every file as equally
+relevant, a task can begin with a requirement, design record, or source note and follow its supporting references.
+Artifact lookup and indexing utilities help locate those records as the collection grows.
 
-The segmented structure also makes large projects tractable. As code files grow, the project doesn't become harder to reason about — agents load only the slice of memory relevant to the current task (`@requirements/UC-001.md`, `@architecture/sad.md`, `@testing/test-plan.md`) rather than the entire codebase. Each subdirectory is a focused knowledge domain that fits comfortably in context, while cross-references keep everything connected.
+The benefit depends on keeping artifacts current and actually consulting them. A saved file is a reusable source of
+context, not a guarantee that every later response will use it correctly.
 
-The artifact index (`aiwg index`) takes this further. Without any tooling, agents often need to browse 3-6 documents before finding what they need. AIWG's structured artifacts reduce this to 2-3. With the index enabled, agents resolve artifact lookups in one query more often than not — a direct hit on the right requirement, architecture decision, or test case without browsing.
+### 2. Recovering from Failed Attempts
 
-### 2. No Recovery Patterns
+A failing test or incomplete task needs a diagnosis, not just another attempt with the same assumptions. Agent loops
+support an execute-and-verify cycle that records failure information, adapts the next attempt, and stops at configured
+limits or escalation conditions.
 
-When AI generates broken code or flawed designs, you manually intervene, explain the problem, and hope the next attempt works. There is no systematic learning from failures, no structured retry, no checkpoint-and-resume.
+Use a loop for a bounded change with an observable completion criterion: fixing a regression, bringing a module under
+test, or carrying out a migration plan. External loop tooling adds process and session recovery where supported. Its
+usefulness depends on the provider, environment, task boundaries, and verification command; unattended execution is
+not a guarantee of completion.
 
-**Without AIWG**: Research shows 47% of AI workflows produce inconsistent outputs without reproducibility constraints (R-LAM, Sureshkumar et al. 2026). Debugging is trial-and-error.
+The record of attempts can help a later session understand what was tried and why it failed. That makes the recovery
+process reviewable even when the agent needs human input or cannot complete the task.
 
-**With AIWG**: The agent loop implements closed-loop self-correction — execute, verify, learn from failure, adapt strategy, retry. External Ralph survives crashes and runs for 6-8+ hours autonomously. Debug memory accumulates failure patterns so the agent doesn't repeat mistakes.
+### 3. Making Quality Criteria Explicit
 
-### 3. No Quality Gates
+Different reviews ask different questions. A security review examines exposure and trust boundaries; a performance
+review examines expected load and bottlenecks; a test review checks whether acceptance criteria are exercised; a
+writing review checks audience, clarity, and support for claims.
 
-Base assistants optimize for "sounds plausible" not "actually works." A general assistant critiques security, performance, and maintainability simultaneously — poorly. No domain specialization, no multi-perspective review, no human approval checkpoints.
+AIWG supplies specialist roles and workflows that separate these concerns, combine their findings, and record open
+decisions. Phase gates can check whether the required artifacts and reviews are ready before the work advances.
+Project policy determines who must approve a decision and which checks are required.
 
-**Without AIWG**: Production code ships without architectural review, security validation, or operational feasibility assessment.
-
-**With AIWG**: 162 specialized agents provide domain expertise — Security Auditor reviews security, Test Architect reviews testability, Performance Engineer reviews scalability. Multi-agent review panels with synthesis. Human-in-the-loop gates at every phase transition. Research shows 84% cost reduction keeping humans on high-stakes decisions versus fully autonomous systems (Agent Laboratory, Schmidgall et al. 2025).
+Multiple reviewers can still share an error. The practical benefit is a clearer review procedure and a saved account
+of the findings, with tests or other independent checks where available.
 
 ---
 
@@ -284,13 +353,17 @@ Base assistants optimize for "sounds plausible" not "actually works." A general 
 
 ### 1. Memory — Structured Semantic Memory
 
-The `.aiwg/` directory is a persistent artifact repository storing requirements, architecture decisions, test strategies, risk registers, and deployment plans across sessions. This implements Retrieval-Augmented Generation patterns (Lewis et al., 2020) — agents retrieve from an evolving knowledge base rather than regenerating from scratch.
+The `.aiwg/` directory is a persistent artifact repository storing requirements, architecture decisions, test
+strategies, risk registers, and deployment plans across sessions. Artifacts provide retrievable project knowledge that
+can ground later work in recorded decisions and sources.
 
-Each artifact is discoverable via `@-mentions` (e.g., `@.aiwg/requirements/UC-001-login.md`). Context sharing between agents happens through artifacts: the requirements analyst writes use cases, the architecture designer reads them.
+Artifacts can be referenced with `@-mentions` (e.g., `@.aiwg/requirements/UC-001-login.md`). Context sharing between
+agents happens through artifacts: the requirements analyst writes use cases, the architecture designer reads them.
 
 ### 2. Reasoning — Multi-Agent Deliberation with Synthesis
 
-Instead of a single general-purpose assistant, AIWG provides 162 specialized agents organized by domain. Complex artifacts go through multi-agent review panels:
+AIWG provides specialist role definitions organized by domain. A workflow can route a complex artifact through the
+reviewers the task requires:
 
 ```
 Architecture Document Creation:
@@ -304,11 +377,14 @@ Architecture Document Creation:
   4. Human approval gate → accept, iterate, or escalate
 ```
 
-Research shows 17.9% accuracy improvement with multi-path review on complex tasks (Wang et al., GSM8K benchmarks, 2023). Agent specialization means security review is done by a security specialist, not a generalist.
+Each reviewer receives a defined responsibility and relevant context. The synthesis should resolve duplicate or
+conflicting findings, preserve uncertainty, and identify which conclusions were checked against sources or tests.
+Parallel reviews require the corresponding provider capability and available task budget.
 
 ### 3. Learning — Closed-Loop Self-Correction (Ralph)
 
-Ralph executes tasks iteratively, learns from failures, and adapts strategy based on error patterns. Research from Roig (2025) shows recovery capability — not initial correctness — predicts agentic task success.
+Ralph executes tasks iteratively and uses verification results to guide the next attempt. Its task record can preserve
+failure analysis and revised strategies for subsequent iterations.
 
 ```
 Ralph Iteration:
@@ -316,14 +392,16 @@ Ralph Iteration:
   2. Verify results (tests pass, lint clean, types check)
   3. If failure: analyze root cause → extract structured learning → adapt strategy
   4. Log iteration state (checkpoint for resume)
-  5. Repeat until success or escalate to human after 3 failed attempts
+  5. Repeat within configured limits; stop or escalate when required
 ```
 
-External Ralph adds crash resilience: PID file tracking, automatic restart, cross-session persistence. Tasks run for 6-8+ hours surviving terminal disconnects and system reboots.
+External Ralph adds process tracking, session persistence, and recovery controls. For long-running work, define a time
+or iteration budget and inspect the provider-specific recovery behavior; surviving a particular failure depends on how
+the runner and host are configured.
 
 ### 4. Verification — Bidirectional Traceability
 
-AIWG maintains links between documentation and code to ensure artifacts stay synchronized:
+AIWG supports links between documentation and code so reviewers can inspect relationships and find drift:
 
 ```typescript
 // src/auth/login.ts
@@ -335,7 +413,9 @@ AIWG maintains links between documentation and code to ensure artifacts stay syn
 export function authenticateUser(credentials: Credentials): Promise<AuthResult> {
 ```
 
-Verification types: Doc → Code, Code → Doc, Code → Tests, Citations → Sources. The retrieval-first citation architecture reduces citation hallucination from 56% to 0% (LitLLM benchmarks, ServiceNow 2025).
+Verification can follow Doc → Code, Code → Doc, Code → Tests, and Citations → Sources. These relationships make claims
+easier to inspect; they do not prove that implementation or citations are correct. Ask the workflow to report missing
+targets, inconsistent behavior, and unsupported source claims.
 
 ### 5. Planning — Phase Gates with Cognitive Load Management
 
@@ -346,16 +426,16 @@ Inception → Elaboration → Construction → Transition → Production
    LOM          ABM            IOC            PR
 ```
 
-Cognitive load optimization follows Miller's 7±2 limits (1956) and Sweller's worked examples approach (1988):
-
-- 4 phases (not 12)
-- 3-5 artifacts per phase (not 20)
-- 5-7 section headings per template (not 15)
-- 3-5 reviewers per panel (not 10)
+Phase structure gives a team bounded decisions and review points: establish goals during Inception, evaluate design
+and risks during Elaboration, implement and verify during Construction, and prepare operational handoff during
+Transition. Templates help make the expected outputs visible. The project determines which artifacts, reviewers, and
+approval gates are appropriate; a small task need not use the full lifecycle.
 
 ### 6. Style — Controllable Voice Generation
 
-Voice profiles provide continuous control over AI writing style using 12 parameters (formality, technical depth, sentence variety, jargon density, personal tone, humor, directness, examples ratio, uncertainty acknowledgment, opinion strength, transition style, authenticity markers).
+Voice profiles describe writing preferences such as formality, technical depth, directness, examples, uncertainty, and
+sentence variation. They give the assistant a reusable style specification that can be reviewed against the audience
+and document purpose.
 
 Built-in voices: `technical-authority` (docs, RFCs), `friendly-explainer` (tutorials), `executive-brief` (summaries), `casual-conversational` (blogs, social). Create custom voices from your existing content with `/voice-create`.
 
@@ -363,7 +443,13 @@ Built-in voices: `technical-authority` (docs, RFCs), `friendly-explainer` (tutor
 
 ## A Real Project Walkthrough
 
-Here is how the six components work together across a project lifecycle. How long each phase takes depends entirely on the project — AIWG is a force multiplier, not a clock. Most projects arrive at a complete, reviewed document set in hours to a day. What takes time is the human work that matters: reviewing, editing, and making decisions. The more input your team provides, the better the output. AIWG memory lets operators participate through the tools they already use — industry-standard documents and templates, issues, and knowledge bases.
+The following illustrative customer-portal project shows how the components connect across a lifecycle. The commands
+are provider-facing workflow examples, not a report of a measured project outcome. Natural-language requests can
+select the same procedures when the provider does not expose the shown slash syntax.
+
+Start with a bounded goal, agree on acceptance criteria, and inspect the artifacts at each step. The time and review
+effort depend on the project, source quality, tools, and decisions involved. Smaller changes can enter at the phase
+that fits their current state rather than repeating the entire lifecycle.
 
 ### Inception
 
@@ -409,25 +495,31 @@ Here is how the six components work together across a project lifecycle. How lon
 ```
 
 **Planning**: Deployment checklist — monitoring, rollback plan, incident response
-**Learning**: Ralph retries deployment steps if validation fails
+**Learning**: Failed validation produces a diagnosis and a revised plan; retries follow the operation's recovery and
+approval requirements
 **Verification**: Deployment scripts reference architecture (which services, what order)
 **Human Gate**: Operations team reviews deployment plan → approves production release
 
 ---
 
-## Quantified Claims and Evidence
+## Claims, Evaluation, and Evidence
 
-AIWG makes specific, falsifiable claims backed by peer-reviewed research:
+Evaluate a workflow against the task it is meant to support. AIWG provides structures for review, traceability, and
+recovery; it does not promise a fixed cost saving, perfect citations, or error-free execution.
 
-| Claim | Evidence | Source |
-|-------|----------|--------|
-| 84% cost reduction with human-in-the-loop vs fully autonomous | Agent Laboratory study | Schmidgall et al. (2025) |
-| 47% workflow failure rate without reproducibility constraints | R-LAM evaluation | Sureshkumar et al. (2026) |
-| 0% citation hallucination with retrieval-first vs 56% generation-only | LitLLM benchmarks | ServiceNow (2025) |
-| 17.9% accuracy improvement with multi-path review | GSM8K benchmarks | Wang et al. (2023) |
-| 18.5x improvement with tree search on planning tasks | Game of 24 results | Yao et al. (2023) |
+| Capability to evaluate | Evidence to collect | Useful comparison |
+|------------------------|---------------------|-------------------|
+| Persistent project context | Whether a later session reads and applies a prior decision | The same kind of task with the team's usual handoff |
+| Specialist review | Correct findings, missed issues, and reviewer effort | A comparable review using the existing process |
+| Task recovery | Failure diagnosis, attempts, limits, and final verification | Similar failures handled without the loop |
+| Citation checking | Source existence and support for each material claim | Manual source inspection |
+| Structured planning | Completeness and usefulness of the resulting plan | The team's existing planning artifact |
+| Cost and throughput | Model calls, elapsed time, and human review effort | Comparable tasks with the same acceptance criteria |
 
-Full references: [docs/research/](docs/research/)
+Research results from Agent Laboratory, self-consistency, tree search, and other systems inform the design. Their
+percentages and benchmark scores are not measurements of AIWG. The [research foundations](#research-foundations) and
+[reading list](docs/overview/reading-list.md) retain the underlying sources. The [executive
+brief](docs/overview/executive-brief.md) describes a practical pilot.
 
 ---
 
@@ -441,13 +533,17 @@ Multi-week or multi-month projects where requirements evolve, multiple stakehold
 
 ### Not the Best Fit
 
-Single-session tasks where no memory is needed, quality gates are overkill, and overhead exceeds value.
+A full lifecycle is usually unnecessary for a one-off question that needs no shared context, saved artifact, or
+follow-up. A focused writing, lookup, or review capability can still be useful without introducing every phase and
+gate.
 
 **Examples**: "Write a Python script to parse this CSV," "Fix this typo," "Explain how this code works."
 
 ### The Trade-off
 
-AIWG adds structure (templates, phases, gates) that slows trivial tasks but scales to complex multi-week workflows. If your project fits in a single conversation, use a base assistant. If it spans days, weeks, or months, AIWG provides the infrastructure to maintain quality and context.
+Match the workflow to the task. Use a bounded skill for a small result, a saved artifact when work needs to carry
+forward, and a phase-based process when coordination and review warrant it. Additional context, reviewers, or
+verification steps can add model calls and human effort; judge their value against the outcome you need.
 
 ```
 User intent → AIWG CLI → Deploy agents + rules + templates → AI platform
@@ -457,11 +553,11 @@ User intent → AIWG CLI → Deploy agents + rules + templates → AI platform
                 │                                     Cursor / Warp / Factory /
                 ▼                                  OpenCode / Codex / Devin Desktop
          ┌──────────────┐
-         │ 188 Agents   │  Specialized AI personas with domain expertise
-         │ 50 Commands  │  CLI + slash commands for workflow automation
-         │ 128 Skills   │  Natural language workflow triggers
-         │ 35 Rules     │  Enforcement patterns (security, quality, anti-laziness)
-         │ 334 Templates│  SDLC artifact templates with progressive disclosure
+         │ Agents       │  Specialized AI personas with domain expertise
+         │ Commands     │  CLI + slash commands for workflow automation
+         │ Skills       │  Natural language workflow triggers
+         │ Rules        │  Enforcement patterns (security, quality, anti-laziness)
+         │ Templates    │  SDLC artifact templates with progressive disclosure
          └──────────────┘
                 │
                 ▼
@@ -474,17 +570,19 @@ User intent → AIWG CLI → Deploy agents + rules + templates → AI platform
 
 > For visual diagrams of AIWG's architecture, deploy flow, and discovery model, see [`docs/architecture-overview.md`](docs/architecture-overview.md). The prose walkthrough lives in [`docs/how-it-works.md`](docs/how-it-works.md).
 
-**At a glance** — AIWG is a deploy-time tool. `aiwg use` copies plain-text files into your AI platform's native directories and exits. Nothing runs in the background; the AI platform's own loader handles everything from there.
+**At a glance** — the deployment layer copies instructions into provider-readable locations, connects project context,
+and reports verification. The provider loads those instructions. Optional runtime components, such as artifact
+services or orchestration tools, perform additional work when configured and invoked.
 
 ```mermaid
 flowchart LR
   subgraph Source["AIWG framework source"]
     direction TB
-    KERN[25 kernel skills<br/>within provider listing budgets]
-    STD[~455 standard skills<br/>read from $AIWG_ROOT]
-    AGENT[200+ agents]
-    RULES[60+ rules]
-    TPL[100+ templates]
+    KERN[Kernel skills<br/>within provider listing budgets]
+    STD[Standard skills<br/>read from $AIWG_ROOT]
+    AGENT[Specialist agents]
+    RULES[Workflow rules]
+    TPL[Artifact templates]
   end
 
   CLI([aiwg use all<br/>--provider X]) --> DEPLOY
@@ -538,22 +636,39 @@ The orchestration pattern: **Primary Author → Parallel Reviewers → Synthesiz
 
 ## Features
 
-- **188 specialized agents** — domain experts across testing, security, architecture, DevOps, cloud, frontend, backend, data engineering, documentation, and more
-- **50 CLI commands** — framework deployment, project scaffolding, iterative execution, metrics, reproducibility validation
-- **128 workflow skills** — natural language triggers for regression testing, forensics, voice profiles, quality gates, and CI/CD integration
-- **35 enforcement rules** — anti-laziness detection, token security, citation integrity, executable feedback, failure mitigation across 6 LLM archetypes
-- **334 artifact templates** — progressive disclosure templates for requirements, architecture, testing, security, deployment, and more
-- **Multi-provider support** — deploy to Google Antigravity CLI, Claude Code, OpenAI Codex, GitHub Copilot, Cursor, DeepSeek Harness, Factory AI, Hermes, OpenCode, OpenClaw, OpenHuman, [Pi Coding Agent](https://pi.dev/), Oh My Pi, Warp Terminal, and Devin Desktop
-- **8 core frameworks + training marketplace package** — SDLC, Digital Forensics, Marketing Operations, Research Management, Media Curation, Ops Infrastructure, Knowledge Base, Security Engineering, plus [`aiwg-training`](https://github.com/jmagly/aiwg-training) for fine-tuning dataset curation (corpus-to-dataset pipeline with DPO/KTO/ORPO/SimPO export)
-- **32 addons** — compound memory, line memory, llm-wiki (Obsidian-native knowledge base), RLM recursive decomposition, fleet operations, browser control, testing quality, and more
-- **40 Claude Code plugins** — the complete framework and addon catalog is installable independently from the AIWG marketplace
-- **Agent Loop** — iterative task execution with automatic error recovery and crash resilience (6-8 hour sessions)
-- **RLM addon** — recursive context decomposition for processing 10M+ tokens via sub-agent delegation
-- **YAML metalanguage** — declarative schema-validated workflow definitions (JSON Schema 2020-12)
-- **MCP server** — Model Context Protocol integration for tool-based AI workflows
-- **Bidirectional traceability** — @-mention system linking requirements → architecture → code → tests
-- **FAIR-aligned artifacts** — W3C PROV provenance, GRADE quality assessment, persistent REF-XXX identifiers
-- **Reproducibility validation** — deterministic execution modes, checkpoints, configuration snapshots
+- **Specialist agents** — roles for architecture, implementation, testing, security, cloud, data engineering,
+  research, content, and operations.
+- **Workflow skills and commands** — discoverable procedures for reviews, intake, research, curation, planning, and delivery.
+- **Rules and review criteria** — instructions for preserving work, handling sensitive configuration, checking claims,
+  and reporting verification.
+- **Artifact templates** — structured requirements, design decisions, campaign briefs, source notes, runbooks, and
+  review reports.
+- **Multi-provider deployment** — Google Antigravity CLI, Claude Code, OpenAI Codex, GitHub Copilot, Cursor, DeepSeek
+  Harness, Factory AI, Hermes, OpenCode, OpenClaw, OpenHuman, Pi Coding Agent, Oh My Pi, Warp Terminal, and Devin
+  Desktop.
+- **Domain frameworks** — software development, forensics, marketing, research, media curation, operations, knowledge
+  base, and security engineering.
+- **Dataset workflows** — assessment, indexing, lineage, synchronization, and retirement through dataset intelligence;
+  the separate [`aiwg-training`](https://github.com/jmagly/aiwg-training) project covers training-data curation and
+  exports.
+- **Memory addons** — compound memory, line memory, wiki-oriented knowledge, and artifact lookup for different
+  persistence needs.
+- **Writing and voice tools** — reusable voice profiles, context-sensitive diagnostics, revision workflows, and
+  alternatives for content generation.
+- **Testing quality** — test strategy, mutation testing, flaky-test review, and verification procedures.
+- **Agent loops** — bounded execution, failure analysis, checkpoints, and supported process recovery.
+- **RLM** — recursive context decomposition for tasks whose source material needs to be divided into smaller working sets.
+- **YAML metalanguage** — structured workflow and artifact definitions with schema-oriented validation.
+- **MCP integration** — tools and resources exposed through configured servers and provider connections.
+- **Traceability and provenance** — relationships between requirements, code, tests, sources, and generated artifacts.
+- **Session history and diagnostics** — import and inspect prior AI work, check deployment health, and diagnose
+  provider wiring.
+- **Project-local extensions and marketplace delivery** — keep custom instructions with the project and package
+  reusable capabilities through the appropriate distribution path.
+
+The [framework and addon catalog](#what-you-get) below describes these capabilities in more detail. Compatibility and
+execution requirements are explicit in the [provider inventory](docs/providers/provider-inventory.md) and [CLI
+reference](docs/cli/reference.md).
 
 ---
 
@@ -561,52 +676,68 @@ The orchestration pattern: **Primary Author → Parallel Reviewers → Synthesiz
 
 > **Prerequisites:** Node.js >=20.0.0 and an AI platform (Claude Code, GitHub Copilot, Cursor, Warp Terminal, or others). New installs should prefer Node 24. See [Prerequisites Guide](docs/getting-started/prerequisites.md) for details.
 
-> **Verifying releases (v2026.5.3+):** Every AIWG release ships with Sigstore-anchored npm provenance, a signed git tag, a cosign keyless tarball signature, and a signed CycloneDX SBOM. Verification is optional but recommended:
->
-> ```bash
-> npm view aiwg@2026.5.3 --json | jq .dist.attestations
-> ```
->
-> Full walkthrough at [`docs/releases/verifying.md`](docs/releases/verifying.md). Adopt the same pattern for your own packages: [`docs/security/supply-chain-hardening.md`](docs/security/supply-chain-hardening.md).
+> **Release verification:** Inspect the provenance and signature material for the release you install. The
+[verification guide](docs/releases/verifying.md) describes the available artifacts and commands.
 
 ### Install & Deploy
 
+The prompt-led installer at the top of this README is the canonical beginner path. For manual setup:
+
 ```bash
-# Install globally
-npm install -g aiwg
+npm i -g aiwg
+cd /path/to/your/project
+aiwg use all --provider claude   # replace claude with your provider selector
+```
 
-# Deploy to your project
-cd your-project
-aiwg use sdlc              # Full SDLC framework (98 agents, 38 rules, 200+ templates)
-aiwg use forensics         # Digital forensics & incident response (13 agents, 10 skills)
-aiwg use marketing         # Marketing operations (37 agents, 87+ templates)
-aiwg use media-curator     # Media archive management (6 agents, 9 commands)
-aiwg use research          # Research workflow automation (8 agents, 8-stage pipeline)
-aiwg use civic-action      # Cited civic review and publication-preparation kit
-aiwg use rlm               # RLM addon (recursive context decomposition)
-aiwg use all               # Everything
+Deployment refreshes the shared context and reports verification and any required reload. Follow that result, then ask
+the agent to check the intended project and its AIWG connection. The [manual installation
+reference](docs/cli/install-and-repair.md) covers the terminal path in detail.
 
-# Existing projects: preview, then transactionally extract the canonical graph
-aiwg regenerate --existing-project --dry-run
-aiwg regenerate --existing-project --apply
-aiwg workspace-context doctor
+For a deliberately narrower deployment, choose the relevant framework or addon instead of `all`. These are
+alternatives, not a sequence of required setup steps:
 
-# Recommended default: inspect project state and select the safe branch
+```bash
+aiwg use sdlc --provider claude          # Software development
+aiwg use forensics --provider claude     # Investigation workflows
+aiwg use marketing --provider claude     # Campaign and content work
+aiwg use media-curator --provider claude # Media collections
+aiwg use research --provider claude      # Research artifacts
+aiwg use civic-action --provider claude  # Civic review and preparation
+aiwg use rlm --provider claude           # Context decomposition
+```
+
+For maintenance or an existing workspace that needs context migration, preview the relevant regeneration branch rather
+than treating every branch as installation:
+
+```bash
 aiwg regenerate --dry-run
 aiwg regenerate
 
-# Fresh or already-migrated projects: ordinary canonical refresh
-aiwg regenerate --workspace
-
-# Legacy compatibility only: inline AIWG context in provider startup files
-aiwg regenerate --full-inject
-
-# Or scaffold a new project
-aiwg new my-project
-
-# Check installation health
-aiwg doctor
+# Existing-project extraction, when that is the intended operation:
+aiwg regenerate --existing-project --dry-run
+aiwg regenerate --existing-project --apply
+aiwg workspace-context doctor
 ```
+
+The [regeneration guide](docs/regenerate-guide.md) also covers canonical refresh and legacy compatibility. Use the
+branch that matches the workspace state. To scaffold a new project rather than connect the current one, see the
+[new-project guide](docs/getting-started/new-project.md).
+
+### Get a First Useful Result
+
+After setup, ask your agent:
+
+```text
+Use AIWG to review this project's README for unclear positioning and missing
+onboarding steps. Save a report at
+.aiwg/marketing/brand/audit/readme-review.md with file references and the
+three highest-priority fixes. Leave the README unchanged.
+```
+
+Open the report and check the source references, reader impact, and proposed fixes. In a later session, ask the agent
+to read that report and implement the first agreed change. The [first-result
+walkthrough](docs/getting-started/just-try-it.md) includes an illustrative finding and alternative tasks. Setup
+readiness is the prerequisite; a useful artifact is what lets you assess the workflow.
 
 ### Customize Without Forking
 
@@ -637,7 +768,7 @@ The bundle is **byte-identical** in shape to its upstream form, so
 /plugin install compound-memory@aiwg
 ```
 
-The marketplace contains 40 independently packaged framework and addon
+The marketplace contains independently packaged framework and addon
 plugins, so you can install only the capabilities a Claude Code workspace
 needs. Source-distributed opt-in addons such as Civic Action deploy with
 `aiwg use civic-action` and do not imply a marketplace wrapper.
@@ -657,6 +788,8 @@ aiwg use all --provider devin          # Devin Desktop
 aiwg use all --provider openclaw       # OpenClaw
 aiwg use all --provider hermes         # Hermes
 aiwg use all --provider openhuman      # OpenHuman
+aiwg use all --provider pi             # Pi Coding Agent
+aiwg use all --provider omp            # Oh My Pi
 ```
 
 `all` means the complete deployable end-user surface. It intentionally omits
@@ -665,11 +798,13 @@ directly.
 
 ### First-Party Integrators
 
-Some partners ship AIWG bundled in their runtime — no `aiwg use` step required. Install the partner tool and AIWG is already wired up.
+AIWG can also be distributed through another runtime. Check the integrator's version and included assets before
+assuming that its bundled surface matches a standalone AIWG install. Follow that runtime's setup instructions, then
+verify the project connection.
 
 | Partner | Install | What you get |
 |---------|---------|--------------|
-| **[Omnius](https://www.npmjs.com/package/omnius)** | `npm i -g omnius` | AIWG framework set, skills, agents, and rules embedded in the Omnius autonomous coding agent. Discoverable through `aiwg discover` from inside Omnius sessions, surfaceable through Omnius's MCP and REST bridges. |
+| **[Omnius](https://www.npmjs.com/package/omnius)** | `npm i -g omnius` | An integration path for AIWG assets in an autonomous coding runtime. Consult the package documentation for the bundled version, supported asset surface, and setup requirements. |
 
 If you ship a product that bundles AIWG and want to be listed here, open an issue at https://github.com/jmagly/aiwg/issues.
 
@@ -677,164 +812,200 @@ If you ship a product that bundles AIWG and want to be listed here, open an issu
 
 ## What You Get
 
-### Frameworks (8)
+AIWG installs reusable context, specialist agents, workflow skills, rules, and
+artifact templates into the AI tools your team already uses. This fragment keeps
+the older README's broad inventory shape while updating claims against the
+current repository. Counts shown in framework rows are source-file counts from
+this working tree; addon rows omit totals because several addons expose
+capabilities through manifests, docs, scripts, or nested skill packages.
 
-| Framework | Agents | Templates | What It Does |
-|-----------|--------|-----------|--------------|
-| **[SDLC Complete](agentic/code/frameworks/sdlc-complete/)** | 98 | 200+ | Full software development lifecycle — Inception through Production with multi-agent orchestration, quality gates, and DORA metrics |
-| **[Forensics Complete](agentic/code/frameworks/forensics-complete/)** | 13 | 8 | Digital forensics and incident response — evidence acquisition, timeline reconstruction, IOC extraction, Sigma rule hunting. NIST SP 800-86, MITRE ATT&CK, STIX 2.1 |
-| **[Media/Marketing Kit](agentic/code/frameworks/media-marketing-kit/)** | 37 | 87+ | End-to-end marketing operations — strategy, content creation, campaign management, brand compliance, analytics, and reporting |
-| **[Media Curator](agentic/code/frameworks/media-curator/)** | 6 | — | Intelligent media archive management — discography analysis, source discovery, quality filtering, transcript sidecars, research handoff preparation, multi-platform export (Plex, Jellyfin, MPD) |
-| **[Research Complete](agentic/code/frameworks/research-complete/)** | 8 | 6 | Academic research automation — paper discovery, citation management, RAG-based summarization, GRADE quality scoring, FAIR compliance, W3C PROV provenance |
-| **[Knowledge Base](agentic/code/frameworks/knowledge-base/)** | — | 5 | General-purpose LLM-assisted wiki — source ingest, entity/concept pages, source summaries, comparisons, syntheses, health checks, and emergent taxonomy |
-| **[Ops Complete](agentic/code/frameworks/ops-complete/)** | 12 | 3 | Operational infrastructure — incident management, runbooks, troubleshooting workflows |
-| **[Security Engineering](agentic/code/frameworks/security-engineering/)** | 2 | 5 | Applied security beyond STRIDE/OWASP — cryptographic primitive selection, chain-of-trust integrity, authentication-factor architecture, degraded-mode design, runtime secret hygiene, supply-chain trust, physical-access threats. Pattern-based, product-agnostic |
+### Frameworks
 
-### Addons (33)
+| Framework | Source Snapshot | What It Helps You Do |
+|-----------|-----------------|----------------------|
+| **[SDLC Complete](agentic/code/frameworks/sdlc-complete/)** | 100 agents, 116 skills, 217 templates, 39 rules, 12 commands, 8 flows | Run a full software delivery lifecycle from intake through transition with phase gates, planning artifacts, implementation support, test strategy, deployment handoff, and maintenance workflows |
+| **[Forensics Complete](agentic/code/frameworks/forensics-complete/)** | 13 agents, 20 skills, 12 templates, 4 rules | Preserve and analyze incident evidence through scoping, triage, acquisition, log review, persistence hunting, timeline building, IOC extraction, and reporting |
+| **[Media/Marketing Kit](agentic/code/frameworks/media-marketing-kit/)** | 38 agents, 34 skills, 97 templates, 2 flows | Plan, produce, review, publish, and analyze marketing campaigns with reusable briefs, brand/legal gates, channel assets, and performance artifacts |
+| **[Media Curator](agentic/code/frameworks/media-curator/)** | 6 agents, 21 skills | Assess mixed media collections, research sources, acquire approved material, tag metadata, verify integrity, create transcript sidecars, and prepare exports or research handoffs |
+| **[Research Complete](agentic/code/frameworks/research-complete/)** | 8 agents, 41 skills, 16 templates | Turn literature searches and PDFs into reviewable research artifacts: source records, grounded summaries, citation work, GRADE/FAIR-style quality checks, gap notes, and provenance |
+| **[Knowledge Base](agentic/code/frameworks/knowledge-base/)** | 3 skills, 5 templates | Build a linked AI-assisted wiki from loose sources, notes, entities, concepts, comparisons, and synthesis pages without forcing formal literature-review overhead |
+| **[Ops Complete](agentic/code/frameworks/ops-complete/)** | 12 agents, 1 skill, 17 templates, 6 rules | Convert operational procedures into executable runbooks, inventories, incident reports, troubleshooting trees, and extension-backed ops workflows |
+| **[Security Engineering](agentic/code/frameworks/security-engineering/)** | 2 agents, 27 skills, 7 templates, 13 rules | Make applied security decisions for crypto primitives, chains of trust, auth factors, degraded modes, runtime secrets, supply-chain trust, physical threats, and DFIR readiness |
+| **[Validation Complete](agentic/code/frameworks/validation-complete/)** | 1 skill | Add focused validation workflow support where a project needs reviewable checks without adopting a full lifecycle framework |
 
-| Addon | What It Does |
-|-------|--------------|
-| **[Civic Action](agentic/code/addons/civic-action/)** | Cited, opt-in decision support for source review, records planning, meeting reconciliation, public-technology research, local-resource profiles, corrections, and publication preparation |
-| **[Network Analysis](agentic/code/addons/network-analysis/)** | Governed offline PCAP/PCAPNG analysis with bounded TShark recipes, reproducible packet evidence, and optional local Termshark review |
-| **[RLM](agentic/code/addons/rlm/)** | Recursive context decomposition — process 10M+ tokens via sub-agent delegation with parallel fan-out |
-| **[Writing Quality](agentic/code/addons/writing-quality/)** | Content validation, AI pattern detection, authentic voice enforcement |
-| **[Testing Quality](agentic/code/addons/testing-quality/)** | TDD enforcement, mutation testing, flaky test detection and repair |
-| **[Voice Framework](agentic/code/addons/voice-framework/)** | 4 built-in voice profiles (technical-authority, friendly-explainer, executive-brief, casual-conversational) with create/blend/apply skills |
-| **[UAT-MCP Toolkit](agentic/code/addons/uat-mcp/)** | User acceptance testing with MCP-powered test execution, coverage tracking, and regression detection |
-| **[AIWG Evals](agentic/code/addons/aiwg-evals/)** | Agent evaluation framework — archetype resistance testing (Roig 2025), performance benchmarks, quality scoring |
-| **[Agent Loop](agentic/code/addons/agent-loop/)** | Iterative task execution engine (`aiwg ralph` / `aiwg agent-loop-ext`) — automatic error recovery, crash resilience, completion tracking |
-| **[Agentic Installer](agentic/code/addons/agentic-installer/)** | `setup.aiwg.io/v1` SetupManifest installer — cross-platform install workflows with recovery |
-| **[AIWG Dev](agentic/code/addons/aiwg-dev/)** | AIWG development tooling — extension scaffolding, local-source dev mode |
-| **[Daemon](agentic/code/addons/daemon/)** | Persistent daemon mode — background sessions, task queue, health monitoring |
-| **[Compound Memory](agentic/code/addons/compound-memory/)** | Persistent context architecture combining immutable raw inputs, linked wiki knowledge, line-memory facts, generated outputs, and governed maintenance workflows |
-| **[Line Memory](agentic/code/addons/line-memory/)** | Durable append-only facts with retrieval, reinforcement, decay, pruning, and concurrent process safety |
-| **[LLM Wiki](agentic/code/addons/llm-wiki/)** | Obsidian-native knowledge base for LLM agents — semantic linking, vault integration |
-| **[NLP Prod](agentic/code/addons/nlp-prod/)** | Production NLP pipelines — entity extraction, classification, summarization |
-| **[Prose Integration](agentic/code/addons/prose-integration/)** | OpenProse contract grammar integration — declarative service contracts |
-| **[Semantic Memory](agentic/code/addons/semantic-memory/)** | Semantic memory kernel — query, capture, lifecycle management for agent memory |
-| **[Context Curator](agentic/code/addons/context-curator/)** | Context pre-filtering to remove distractors — production-grade agent reliability |
-| **[Verbalized Sampling](agentic/code/addons/verbalized-sampling/)** | Probability distribution prompting — 1.6-2.1x output diversity improvement |
-| **[Guided Implementation](agentic/code/addons/guided-implementation/)** | Bounded iteration control for issue-to-code automation |
-| **[Skill Factory](agentic/code/addons/skill-factory/)** | Dynamic skill generation and packaging at runtime |
-| **[Doc Intelligence](agentic/code/addons/doc-intelligence/)** | Document analysis, PDF extraction, documentation site scraping |
-| **[Color Palette](agentic/code/addons/color-palette/)** | WCAG-compliant color palette generation with trend research |
-| **[Auto Memory](agentic/code/addons/auto-memory/)** | Automatic memory seed templates for new project context initialization |
-| **[Agent Persistence](agentic/code/addons/agent-persistence/)** | Agent state management for session continuity |
-| **[AIWG Hooks](agentic/code/addons/aiwg-hooks/)** | Lifecycle event handlers — pre-session, post-write, workflow tracing |
-| **[AIWG Utils](agentic/code/addons/aiwg-utils/)** | Core meta-utilities (auto-installed with any framework) |
-| **[Droid Bridge](agentic/code/addons/droid-bridge/)** | Factory Droid orchestration — multi-platform agent bridge |
-| **[AIWG Fleet](agentic/code/addons/aiwg-fleet/)** | Governed multi-project maintenance with repository discovery, policy-aware planning, approval gates, and auditable execution |
-| **[Browser Control](agentic/code/addons/browser-control/)** | Permission-aware browser automation for user-controlled sessions through Playwright MCP |
-| **[Twelve-Factor](agentic/code/addons/twelve-factor/)** | Evidence-based application architecture review against Twelve-Factor and modern 12+ Factor criteria |
-| **[Star Prompt](agentic/code/addons/star-prompt/)** | Repository star prompt for success celebration |
+Start with [Install, Connect, and Verify](docs/getting-started/install-connect-verify.md),
+then deploy a framework with `aiwg use <framework>`. The [capability reference](docs/cli/reference.md)
+lists the current framework names accepted by the CLI.
+
+### Addons
+
+| Addon | What It Helps You Do |
+|-------|----------------------|
+| **[AIWG Utils](agentic/code/addons/aiwg-utils/)** | Shared rules, discovery helpers, regeneration support, mention tooling, workspace maintenance, and stewardship primitives used across AIWG |
+| **[Agent Loop](agentic/code/addons/agent-loop/)** | Run bounded iterative agent loops with recovery, reflection, completion tracking, and CLI surfaces such as `aiwg ralph` |
+| **[RLM](agentic/code/addons/rlm/)** | Decompose large codebases or document corpora into smaller reviewed slices through recursive planning and subtask execution |
+| **[Composition Engine](agentic/code/addons/composition-engine/)** | Define and validate provider-neutral Flow graph contracts for composed workflows |
+| **[Graph Pattern](agentic/code/addons/graph-pattern/)** | Add an optional graph-oriented profile over AIWG Flow for conditional routes, reducers, and graph validation |
+| **[Orchestration Topology Lab](agentic/code/addons/orchestration-topology-lab/)** | Compare single-agent, bounded-parallel, and planner-worker orchestration topologies using local fixtures and explicit evidence |
+| **[Guided Implementation](agentic/code/addons/guided-implementation/)** | Keep issue-to-code work inside a bounded retry loop with validation after each attempt and structured escalation when needed |
+| **[Daemon](agentic/code/addons/daemon/)** | Run opt-in persistent session support for background tasks, queues, health checks, and scheduler integration |
+| **[Agentic Installer](agentic/code/addons/agentic-installer/)** | Use `setup.aiwg.io/v1` SetupManifest files for reproducible, agent-driven install workflows with recovery paths |
+| **[AIWG Dev](agentic/code/addons/aiwg-dev/)** | Scaffold and validate AIWG source packages, skills, agents, commands, and rules; install explicitly for contributor work |
+| **[Skill Factory](agentic/code/addons/skill-factory/)** | Build, enhance, validate, and package skills through a dedicated skill-authoring workflow |
+| **[AIWG Evals](agentic/code/addons/aiwg-evals/)** | Run agent and workflow evaluation patterns with explicit benchmark inputs and quality scoring |
+| **[Monitorability Red Team](agentic/code/addons/monitorability-red-team/)** | Exercise synthetic local fixtures that expose multi-agent monitoring limits and evidence blind spots |
+| **[Long-Context Bench](agentic/code/addons/long-context-bench/)** | Benchmark compressed skim plus exact recovery against current context baselines |
+| **[Natural-Language Harness](agentic/code/addons/natural-language-harness/)** | Map inspectable natural-language policy documents to deterministic AIWG mechanisms and ablation reports |
+| **[Premortem v2](agentic/code/addons/premortem-v2/)** | Generate, select, and independently verify bounded risk sets before execution |
+| **[Century Readiness](agentic/code/addons/century-readiness/)** | Review long-horizon stewardship, degradation, replacement, evidence, and meaning-preservation risks |
+| **[Dataset Intelligence](agentic/code/addons/dataset-intelligence/)** | Route dataset intake, planning, materialization, traceability, verification, export, synchronization, and retirement through governed workflows |
+| **[Schema Governance](agentic/code/addons/schema-governance/)** | Discover, author, validate, evolve, and normalize schemas across datasets and SDLC artifacts |
+| **[Compound Memory](agentic/code/addons/compound-memory/)** | Govern promotion from raw evidence and session candidates into line memory or linked wiki knowledge with lineage |
+| **[Line Memory](agentic/code/addons/line-memory/)** | Keep a bounded plain-text set of durable project facts with recency retention and reviewed lifecycle operations |
+| **[LLM Wiki](agentic/code/addons/llm-wiki/)** | Maintain a Markdown wiki topology for entities, concepts, sources, comparisons, and syntheses |
+| **[Semantic Memory](agentic/code/addons/semantic-memory/)** | Provide topology-agnostic memory operations for ingest, lint, query/capture, and event logging |
+| **[Auto Memory](agentic/code/addons/auto-memory/)** | Seed Claude Code Automatic Memory files with AIWG-aware testing, debugging, and architecture sections |
+| **[Agent Persistence](agentic/code/addons/agent-persistence/)** | Supply reusable human-in-the-loop gate definitions for destructive actions, overrides, and recovery escalation |
+| **[AIWG Hooks](agentic/code/addons/aiwg-hooks/)** | Provide hook templates for workflow tracing, permissions, session management, context injection, and quality gates |
+| **[AIWG Fleet](agentic/code/addons/aiwg-fleet/)** | Apply quiet-bot, mention-only participation, and small-plan cost-discipline policies across multi-project fleets |
+| **[Browser Control](agentic/code/addons/browser-control/)** | Drive a user-authorized Chromium-derived browser through Playwright MCP with allow-list and audit boundaries |
+| **[Droid Bridge](agentic/code/addons/droid-bridge/)** | Bridge Claude Code to Factory Droid for batch operations and automated fixes through MCP |
+| **[MCP/UAT Toolkit](agentic/code/addons/uat-mcp/)** | Generate, execute, and report user-acceptance tests against MCP tool surfaces |
+| **[Civic Action](agentic/code/addons/civic-action/)** | Prepare evidence-bound civic research, public-records planning, meeting review, local-resource profiles, corrections, and publication review |
+| **[Network Analysis](agentic/code/addons/network-analysis/)** | Governed saved-PCAP/PCAPNG analysis with bounded TShark recipes, cited packet evidence, and optional local Termshark review |
+| **[Testing Quality](agentic/code/addons/testing-quality/)** | Add TDD gates, mutation testing, flaky-test detection/repair, test-data factories, and test-suite synchronization |
+| **[Writing Quality](agentic/code/addons/writing-quality/)** | Review editorial quality, author requirements, and voice consistency without treating heuristic scores as authorship proof |
+| **[Voice Framework](agentic/code/addons/voice-framework/)** | Define, analyze, blend, and apply reusable writing voice profiles and runtime-selectable output modes |
+| **[Color Palette](agentic/code/addons/color-palette/)** | Generate and review accessible color palettes using color theory, trend research, and WCAG checks |
+| **[Doc Intelligence](agentic/code/addons/doc-intelligence/)** | Scrape, extract, split, audit, and synchronize documentation sources |
+| **[Prose Integration](agentic/code/addons/prose-integration/)** | Detect, read, validate, wire, and run OpenProse contract programs in supported AIWG sessions |
+| **[NLP Prod](agentic/code/addons/nlp-prod/)** | Design and productionize LLM inference pipelines with eval-first, pattern-guided workflow support |
+| **[Context Curator](agentic/code/addons/context-curator/)** | Filter distractors and curate context packs for agent work where irrelevant material can derail results |
+| **[Twelve-Factor](agentic/code/addons/twelve-factor/)** | Review or design applications against Twelve-Factor and modern cloud-native criteria |
+| **[Verbalized Sampling](agentic/code/addons/verbalized-sampling/)** | Apply and evaluate verbalized probability-distribution prompting for output diversity experiments |
+| **[Star Prompt](agentic/code/addons/star-prompt/)** | Offer a tasteful repository-star prompt after successful command completion |
+
+Addon details live in each source directory and, where public docs exist, under
+`docs/addons/`. Use [Key Addons](docs/getting-started/key-addons.md) for a
+guided end-user selection path.
 
 ---
 
-### Agents (188)
+### Agents
 
-Specialized AI personas deployed to your platform with defined tools, responsibilities, and operating rhythms.
+Specialized AI personas deploy to your platform with defined responsibilities,
+tools, and operating rhythms. The exact inventory changes as frameworks evolve,
+so this README keeps durable groupings and examples instead of relying on one
+global total.
 
-#### SDLC Agents (90)
+#### SDLC Agents
 
-| Domain | Agents | Examples |
-|--------|--------|---------|
-| **Testing & Quality** | 11 | Test Engineer, Test Architect, Mutation Analyst, Regression Analyst, Laziness Detector, Reliability Engineer |
-| **Security & Compliance** | 9 | Security Auditor, Security Architect, Compliance Checker, Privacy Officer, Citation Verifier |
-| **Architecture & Design** | 12 | Architecture Designer, API Designer, Cloud Architect, System Analyst, Product Designer, Decision Matrix Expert |
-| **DevOps & Cloud** | 8 | AWS Specialist, Azure Specialist, GCP Specialist, Kubernetes Expert, DevOps Engineer, Multi-Cloud Strategist |
-| **Backend & Data** | 10 | Django Expert, Spring Boot Expert, Data Engineer, Database Optimizer, Software Implementer, Incident Responder |
-| **Frontend & Mobile** | 6 | React Expert, Frontend Specialist, Mobile Developer, Accessibility Specialist, UX Lead |
-| **AI/ML & Performance** | 5 | AI/ML Engineer, Performance Engineer, Cost Optimizer, Metrics Analyst |
-| **Code Quality** | 11 | Code Reviewer, Debugger, Dead Code Analyzer, Technical Debt Analyst, Legacy Modernizer |
-| **Documentation** | 7 | Technical Writer, Documentation Synthesizer, Documentation Archivist, Context Librarian |
-| **Requirements & Planning** | 7 | Requirements Analyst, Requirements Reviewer, Intake Coordinator, RACI Expert |
-| **Agent/Tool Smiths** | 9 | AgentSmith, CommandSmith, MCPSmith, SkillSmith, ToolSmith |
-| **Governance & Meta** | 3 | Executive Orchestrator, Recovery Orchestrator, Migration Planner |
+| Domain | Examples |
+|--------|----------|
+| **Testing & Quality** | Test Engineer, Test Architect, Mutation Analyst, Regression Analyst, Reliability Engineer |
+| **Security & Compliance** | Security Auditor, Security Architect, Compliance Checker, Privacy Officer, Citation Verifier |
+| **Architecture & Design** | Architecture Designer, API Designer, Cloud Architect, System Analyst, Product Designer, Decision Matrix Expert |
+| **DevOps & Cloud** | AWS Specialist, Azure Specialist, GCP Specialist, Kubernetes Expert, DevOps Engineer, Multi-Cloud Strategist |
+| **Backend & Data** | Django Expert, Spring Boot Expert, Data Engineer, Database Optimizer, Software Implementer, Incident Responder |
+| **Frontend & Mobile** | React Expert, Frontend Specialist, Mobile Developer, Accessibility Specialist, UX Lead |
+| **AI/ML & Performance** | AI/ML Engineer, Performance Engineer, Cost Optimizer, Metrics Analyst |
+| **Code Quality** | Code Reviewer, Debugger, Dead Code Analyzer, Technical Debt Analyst, Legacy Modernizer |
+| **Documentation** | Technical Writer, Documentation Synthesizer, Documentation Archivist, Context Librarian |
+| **Requirements & Planning** | Requirements Analyst, Requirements Reviewer, Intake Coordinator, RACI Expert |
+| **Agent/Tool Smiths** | AgentSmith, CommandSmith, MCPSmith, SkillSmith, ToolSmith |
+| **Governance & Meta** | Executive Orchestrator, Recovery Orchestrator, Migration Planner |
 
-#### Forensics Agents (13)
+#### Forensics Agents
 
 | Agent | What It Does |
 |-------|-------------|
-| Forensics Orchestrator | Coordinates full investigation lifecycle from scoping through reporting |
-| Triage Agent | Quick volatile data capture following RFC 3227 volatility order |
-| Acquisition Agent | Evidence collection with chain of custody and SHA-256 hash verification |
-| Log Analyst | Auth.log, syslog, journal, and application log analysis for brute force, privilege escalation, lateral movement |
-| Persistence Hunter | Sweeps cron, systemd, SSH keys, LD_PRELOAD, PAM modules, kernel modules — maps to MITRE ATT&CK |
-| Container Analyst | Docker, containerd, Kubernetes forensics — privilege escalation, container escapes, eBPF monitoring |
-| Network Analyst | Connection state, DNS, traffic patterns — beaconing, C2, data exfiltration detection |
-| Memory Analyst | Volatility 3 memory forensics — process analysis, rootkit detection, credential extraction |
-| Cloud Analyst | AWS/Azure/GCP audit logs, IAM review, network flows, API activity anomaly detection |
-| Timeline Builder | Multi-source event correlation — chronological incident timelines with attribution |
-| IOC Analyst | IOC extraction, enrichment, STIX 2.1 formatting — actionable IOC register |
-| Recon Agent | Target reconnaissance — system topology, services, users, network baselines |
-| Reporting Agent | Structured forensic reports — executive summary, technical findings, timeline, remediation |
+| Forensics Orchestrator | Coordinates investigation scope, evidence handling, analysis, and reporting |
+| Triage Agent | Captures volatile data following evidence-priority guidance |
+| Acquisition Agent | Collects evidence with chain-of-custody and hash verification |
+| Log Analyst | Reviews auth, syslog, journal, and application logs for suspicious activity |
+| Persistence Hunter | Checks cron, systemd, SSH keys, LD_PRELOAD, PAM modules, and kernel-module indicators |
+| Container Analyst | Reviews Docker, containerd, and Kubernetes evidence |
+| Network Analyst | Reviews connection state, DNS, beaconing, and exfiltration indicators |
+| Memory Analyst | Supports Volatility-style memory forensics workflows |
+| Cloud Analyst | Reviews AWS, Azure, and GCP audit trails and IAM posture |
+| Timeline Builder | Correlates events into chronological incident timelines |
+| IOC Analyst | Extracts and formats indicators for downstream response |
+| Recon Agent | Builds a target baseline for authorized investigation |
+| Reporting Agent | Produces structured executive and technical investigation reports |
 
-#### Marketing Agents (37)
+#### Marketing Agents
 
-| Domain | Agents |
-|--------|--------|
+| Domain | Examples |
+|--------|----------|
 | **Strategy** | Campaign Strategist, Brand Guardian, Positioning Specialist, Market Researcher, Content Strategist, Channel Strategist |
 | **Creation** | Copywriter, Content Writer, Email Marketer, Social Media Specialist, SEO Specialist, Graphic Designer, Art Director |
 | **Management** | Campaign Orchestrator, Production Coordinator, Traffic Manager, Asset Manager, Workflow Coordinator |
 | **Analytics** | Marketing Analyst, Data Analyst, Attribution Specialist, Reporting Specialist, Budget Planner |
 | **Communications** | PR Specialist, Crisis Communications, Corporate Communications, Internal Communications, Media Relations |
 
-#### Research Agents (8)
+#### Other Framework Agents
 
-Discovery Agent, Acquisition Agent, Documentation Agent, Citation Agent, Quality Agent, Archival Agent, Provenance Agent, Workflow Agent
-
-#### Media Curator Agents (6)
-
-Discography Analyst, Source Discoverer, Acquisition Manager, Quality Assessor, Metadata Curator, Completeness Tracker
+Research uses discovery, acquisition, documentation, citation, quality,
+archival, provenance, and workflow roles. Media Curator uses discography/source,
+acquisition, quality, metadata, and completeness roles. Ops Complete adds
+runbook execution and inventory roles. Security Engineering adds security
+specialists for applied security decisions and supply-chain review.
 
 ---
 
-### Rules (35)
+### Rules
 
-Enforcement patterns that prevent common AI failure modes. Rules deploy automatically with their framework.
+Rules are durable guardrails that deploy with the frameworks or addons that own
+them. They prevent common agent failure modes and define review boundaries.
 
-#### Core Rules (10) — Always Active
+#### Core Rules
 
 | Rule | Severity | What It Enforces |
 |------|----------|-----------------|
-| `no-attribution` | CRITICAL | AI tools are tools — never add attribution to commits, PRs, docs, or code |
-| `token-security` | CRITICAL | Never hard-code tokens; use heredoc pattern for scoped lifetime; file permissions 600 |
-| `versioning` | CRITICAL | CalVer YYYY.M.PATCH with NO leading zeros; npm rejects leading zeros |
-| `citation-policy` | CRITICAL | Never fabricate citations, DOIs, or URLs; only cite verified sources; GRADE-appropriate hedging |
-| `anti-laziness` | HIGH | Never delete tests to pass, skip tests, remove features, or weaken assertions; escalate after 3 failures |
-| `executable-feedback` | HIGH | Execute tests before returning code; track execution history; max 3 retries with root cause analysis |
-| `failure-mitigation` | HIGH | Detect and recover from 6 LLM failure archetypes: hallucination, context loss, instruction drift, safety, technical, consistency |
-| `research-before-decision` | HIGH | Research codebase before acting: IDENTIFY → SEARCH → EXTRACT → REASON → ACT → VERIFY |
-| `instruction-comprehension` | HIGH | Fully parse all instructions before acting; track multi-part requests to completion |
-| `subagent-scoping` | HIGH | One focused task per subagent; <20% context budget; no delegation chains deeper than 2 levels |
+| `no-attribution` | CRITICAL | AI tools are tools; do not add AI attribution to commits, PRs, docs, or code |
+| `token-security` | CRITICAL | Keep tokens and secrets out of source; use scoped lifetime and restricted file permissions |
+| `versioning` | CRITICAL | Use the repository's CalVer release format consistently |
+| `citation-policy` | CRITICAL | Do not fabricate citations, DOIs, URLs, or research claims |
+| `anti-laziness` | HIGH | Do not delete tests, skip required checks, remove features, or weaken assertions to pass |
+| `executable-feedback` | HIGH | Run appropriate validation before returning implementation work |
+| `failure-mitigation` | HIGH | Detect and recover from hallucination, context loss, instruction drift, safety, technical, and consistency failures |
+| `research-before-decision` | HIGH | Inspect the codebase and docs before making technical decisions |
+| `instruction-comprehension` | HIGH | Parse prohibitions, requirements, and preferences before acting |
+| `subagent-scoping` | HIGH | Keep delegated tasks focused and bounded when delegation is used |
 
-#### SDLC Rules (34) — Active with Framework
+#### Domain Rules
 
-Actionable feedback, mention wiring, HITL gates, agent fallback, provenance tracking, TAO loop, reproducibility validation, SDLC orchestration, agent-friendly code, agent generation guardrails, artifact discovery, HITL patterns, human gate display, thought protocol, reasoning sections, few-shot examples, best output selection, reproducibility, progressive disclosure, conversable agent interface, auto-reply chains, criticality panel sizing, qualified references.
-
-#### Research Rules (2) — Active with Research
-
-Research metadata (FAIR-compliant YAML frontmatter), index generation (auto-generated INDEX.md per FAIR F4).
+| Domain | Examples |
+|--------|----------|
+| **SDLC** | HITL gates, provenance tracking, artifact discovery, phase gates, reproducibility validation, agent-friendly code, fallback, review, and handoff rules |
+| **Forensics** | Evidence integrity, chain of custody, forensic reporting, and authorized investigation boundaries |
+| **Security Engineering** | Cryptographic decision boundaries, runtime secret hygiene, supply-chain trust, physical-access threat modeling, and DFIR readiness handoff |
+| **Ops** | Ops safety, executable runbook format, evidence governance, issue tracking, and cross-repo reference rules |
+| **Civic Action** | Human authority, citation, publication, public-source, privacy, and anti-targeting boundaries |
+| **Addon Rules** | Browser authorization, dataset boundaries, agentic installer safety, voice/output behavior, and hook discipline |
 
 ---
 
-### Skills (128)
+### Skills
 
-Natural language workflow triggers. Say "what's the project status?" and the `project-awareness` skill activates.
+Skills are natural-language workflows. A user describes an outcome, the agent
+discovers the relevant skill, loads its instructions, and applies its protocol.
+The current repo contains a large and changing skill surface, so this section
+keeps durable categories and examples.
 
-| Category | Skills | Examples |
-|----------|--------|---------|
-| **Regression Testing** | 12 | regression-check, regression-baseline, regression-bisect, regression-performance, regression-api-contract, regression-cicd-hooks, regression-learning |
-| **Voice & Writing** | 6 | voice-create, voice-analyze, voice-apply, voice-blend, ai-pattern-detection, brand-compliance |
-| **Testing & Quality** | 8 | auto-test-execution, test-coverage, test-sync, mutation-test, flaky-detect, flaky-fix, tdd-enforce, qa-protocol |
-| **Forensics & Security** | 8 | linux-forensics, memory-forensics, cloud-forensics, container-forensics, sigma-hunting, log-analysis, ioc-extraction, supply-chain-forensics |
-| **SDLC & Workflow** | 10 | sdlc-accelerate, sdlc-reports, gate-evaluation, approval-workflow, iteration-control, risk-cycle, parallel-dispatch, decision-support |
-| **Documentation** | 6 | doc-sync, doc-scraper, doc-splitter, llms-txt-support, pdf-extractor, source-unifier |
-| **Artifacts & Traceability** | 6 | artifact-orchestration, artifact-metadata, artifact-lookup, traceability-check, claims-validator, citation-guard |
-| **Research** | 2 | grade-on-ingest, auto-provenance |
-| **Infrastructure** | 5 | config-validator, template-engine, code-chunker, decompose-file, workspace-health |
-| **Iteration** | 4 | agent-loop, issue-driven-ralph, cross-task-learner, reflection-injection |
-| **Other** | 19 | performance-digest, competitive-intel, audience-synthesis, skill-builder, skill-enhancer, skill-packager, quality-checker, nl-router, tot-exploration, and more |
+| Category | Examples |
+|----------|---------|
+| **Capability discovery and setup** | `aiwg-utils-quickref`, `steward`, `aiwg-status`, `aiwg-doctor`, `use`, provider regeneration |
+| **SDLC and delivery** | `intake-wizard`, `sdlc-accelerate`, gate evaluation, delivery-track flows, deployment, guided implementation |
+| **Testing and quality** | `tdd-enforce`, `mutation-test`, `flaky-detect`, `flaky-fix`, `test-sync`, factory generation |
+| **Security and forensics** | supply-chain hardening, auth-factor design, degraded-mode review, DFIR readiness, log analysis, IOC extraction |
+| **Research and knowledge** | source acquisition, paper induction, GRADE checks, citation work, wiki ingest, synthesis, knowledge-base health |
+| **Marketing and content** | campaign intake, creative brief, brand compliance, social strategy, email campaigns, performance digests |
+| **Media curation** | source discovery, acquisition planning, transcript sidecars, metadata tagging, quality filtering, archive verification |
+| **Datasets and schemas** | dataset intake, source assessment, capability recommendation, plan review, ingest, trace, verify, export, retire |
+| **Memory and persistence** | line-memory operations, compound-memory review, semantic-memory capture/query, llm-wiki topology |
+| **Operations and automation** | runbook execution, ops verification, activity logs, hooks, daemon sessions, schedule support |
+| **Authoring and development** | skill creation, addon/framework scaffolding, validation, schema governance, doc synchronization |
 
 ---
 
@@ -842,9 +1013,11 @@ Natural language workflow triggers. Say "what's the project status?" and the `pr
 
 ### SDLC Complete — Full Software Development Lifecycle
 
-The SDLC framework implements a phase-gated development lifecycle with 90 specialized agents, 34 enforcement rules, and 170+ artifact templates. Natural language commands drive phase transitions with automated quality gates.
+The SDLC framework implements a phase-gated development lifecycle with
+specialized agents, enforcement rules, and artifact templates. Natural-language
+requests drive phase transitions with reviewable quality gates.
 
-```
+```text
  ┌──────────┐    ┌─────────────┐    ┌──────────────┐    ┌────────────┐    ┌────────────┐
  │ CONCEPT  │───▶│  INCEPTION  │───▶│ ELABORATION  │───▶│CONSTRUCTION│───▶│ TRANSITION │
  │          │    │             │    │              │    │            │    │            │
@@ -855,7 +1028,7 @@ The SDLC framework implements a phase-gated development lifecycle with 90 specia
  └──────────┘    └──────┬──────┘    └──────┬───────┘    └─────┬──────┘    └────────────┘
                         │                  │                   │
                      ┌──▼──┐            ┌──▼──┐            ┌──▼──┐
-                     │ LOM │            │ ABM │            │ IOC │    ← Quality Gates
+                     │ LOM │            │ ABM │            │ IOC │
                      │Gate │            │Gate │            │Gate │
                      └─────┘            └─────┘            └─────┘
 
@@ -863,36 +1036,36 @@ The SDLC framework implements a phase-gated development lifecycle with 90 specia
  IOC = Initial Operational Capability
 ```
 
-**SDLC Flow Commands (24):**
+**SDLC Flow Commands:**
 
 | Command | Phase | What It Does |
 |---------|-------|-------------|
-| `/intake-wizard` | Concept | Generate project intake form from natural language description |
-| `/intake-start` | Concept→Inception | Validate intake, kick off with agent assignments |
-| `/intake-from-codebase` | Concept | Scan existing codebase, generate intake from analysis |
-| `/flow-concept-to-inception` | Concept→Inception | Phase transition with intake validation and vision alignment |
-| `/flow-inception-to-elaboration` | Inception→Elaboration | Architecture baselining and risk retirement |
-| `/flow-elaboration-to-construction` | Elaboration→Construction | Iteration planning, team scaling, full-scale development |
-| `/flow-construction-to-transition` | Construction→Transition | IOC validation, production deployment, operational handover |
-| `/flow-discovery-track` | Any | Prepare validated requirements one iteration ahead of delivery |
-| `/flow-delivery-track` | Any | Test-driven development, quality gates, iteration assessment |
-| `/flow-iteration-dual-track` | Any | Synchronized Discovery + Delivery workflows |
-| `/flow-deploy-to-production` | Transition | Strategy selection, validation, automated rollback, regression gates |
-| `/flow-incident-response` | Operations | Triage, escalation, resolution, post-incident review (ITIL) |
-| `/flow-security-review-cycle` | Any | Continuous security validation, threat modeling, vulnerability management |
-| `/flow-performance-optimization` | Any | Baseline, bottleneck ID, optimization, load testing, SLO validation |
-| `/flow-retrospective-cycle` | Any | Structured feedback, improvement tracking, action items |
-| `/flow-change-control` | Any | Baseline management, impact assessment, CCB review, communication |
-| `/flow-risk-management-cycle` | Any | Continuous risk identification, assessment, tracking, retirement |
-| `/flow-compliance-validation` | Any | Requirements mapping, audit evidence, gap analysis, attestation |
-| `/flow-knowledge-transfer` | Transition | Assessment, documentation, shadowing, validation, handover |
-| `/flow-team-onboarding` | Any | Pre-boarding, training, buddy assignment, 30/60/90 day check-ins |
-| `/flow-hypercare-monitoring` | Transition | 24/7 support, SLO tracking, rapid issue response |
-| `/flow-gate-check` | Any | Multi-agent phase gate validation with comprehensive reporting |
-| `/flow-handoff-checklist` | Any | Handoff validation between phases and tracks |
-| `/flow-guided-implementation` | Construction | Bounded iteration with issue-to-code automation |
+| `/intake-wizard` | Concept | Generate project intake from a natural-language description |
+| `/intake-start` | Concept -> Inception | Validate intake and begin agent assignments |
+| `/intake-from-codebase` | Concept | Scan an existing codebase and generate intake from analysis |
+| `/flow-concept-to-inception` | Concept -> Inception | Transition with intake validation and vision alignment |
+| `/flow-inception-to-elaboration` | Inception -> Elaboration | Baseline architecture and retire major risks |
+| `/flow-elaboration-to-construction` | Elaboration -> Construction | Prepare iteration planning, scale delivery, and begin implementation |
+| `/flow-construction-to-transition` | Construction -> Transition | Validate IOC, deployment readiness, and operational handoff |
+| `/flow-discovery-track` | Any | Prepare validated requirements ahead of delivery |
+| `/flow-delivery-track` | Any | Run test-driven delivery with quality gates |
+| `/flow-iteration-dual-track` | Any | Coordinate discovery and delivery tracks |
+| `/flow-deploy-to-production` | Transition | Select deployment strategy, validate, and prepare rollback/regression checks |
+| `/flow-incident-response` | Operations | Triage, resolve, and review incidents |
+| `/flow-security-review-cycle` | Any | Run continuous security validation and threat review |
+| `/flow-performance-optimization` | Any | Baseline, identify bottlenecks, optimize, and validate SLOs |
+| `/flow-retrospective-cycle` | Any | Capture feedback and track improvement actions |
+| `/flow-change-control` | Any | Assess impact, coordinate review, and manage communication |
+| `/flow-risk-management-cycle` | Any | Identify, assess, track, and retire risks |
+| `/flow-compliance-validation` | Any | Map requirements, collect evidence, and identify gaps |
+| `/flow-knowledge-transfer` | Transition | Prepare documentation, shadowing, validation, and handover |
+| `/flow-team-onboarding` | Any | Structure onboarding, training, buddy support, and follow-up |
+| `/flow-hypercare-monitoring` | Transition | Track early-life support, SLOs, and rapid-response items |
+| `/flow-gate-check` | Any | Run multi-agent phase-gate validation |
+| `/flow-handoff-checklist` | Any | Validate handoff between phases and tracks |
+| `/flow-guided-implementation` | Construction | Run bounded issue-to-code iteration with validation and escalation |
 
-**SDLC Accelerate — Idea to Construction-Ready in One Command:**
+**SDLC Accelerate — from idea to reviewed planning artifacts:**
 
 ```bash
 # From a description
@@ -905,11 +1078,13 @@ aiwg sdlc-accelerate --from-codebase .
 aiwg sdlc-accelerate --resume
 ```
 
-Generates intake form, vision document, use cases, architecture baseline, risk register, test strategy, and deployment plan — all with human approval gates between phases.
+It can generate intake, vision, use cases, architecture baseline, risk register,
+test strategy, and deployment planning artifacts with human review between
+major phases.
 
 **Dual-Track Iteration Model:**
 
-```
+```text
         ┌─────────────────────────────────────────────────┐
         │                ITERATION N                       │
         │                                                  │
@@ -932,21 +1107,23 @@ Generates intake form, vision document, use cases, architecture baseline, risk r
         └─────────────────────────────────────────────────┘
 ```
 
-**Metrics & Quality Tracking:**
+**Metrics and Quality Tracking:**
 
 | Metric Category | Metrics Tracked |
 |-----------------|-----------------|
-| **DORA** (4) | Deployment Frequency, Lead Time, Change Failure Rate, MTTR |
-| **Velocity** (3) | Story Points, Cycle Time, Throughput |
-| **Flow** (3) | WIP Limits, Flow Efficiency, Blocked Items |
-| **Quality** (13) | Test Coverage (4), Defect Metrics (4), Code Quality (3), Technical Debt (2) |
-| **Operational** (16) | SLO/SLI (5), Infrastructure (4), Incidents (4), Cost (3) |
+| **DORA** | Deployment frequency, lead time, change failure rate, MTTR |
+| **Velocity** | Story points, cycle time, throughput |
+| **Flow** | WIP limits, flow efficiency, blocked items |
+| **Quality** | Test coverage, defect metrics, code quality, technical debt |
+| **Operational** | SLO/SLI, infrastructure, incidents, cost |
 
-### Forensics Complete — Digital Forensics & Incident Response
+### Forensics Complete — Digital Forensics and Incident Response
 
-Full DFIR investigation workflow following NIST SP 800-86, with MITRE ATT&CK mapping and Sigma rule hunting.
+Forensics Complete supports authorized DFIR work following NIST SP 800-86-style
+evidence handling, MITRE ATT&CK mapping, Sigma hunting, timeline construction,
+and structured reporting.
 
-```
+```text
  ┌──────────┐    ┌──────────┐    ┌────────────┐    ┌──────────┐    ┌──────────┐
  │  SCOPE   │───▶│  TRIAGE  │───▶│  ACQUIRE   │───▶│ ANALYZE  │───▶│  REPORT  │
  │          │    │          │    │            │    │          │    │          │
@@ -963,29 +1140,16 @@ Full DFIR investigation workflow following NIST SP 800-86, with MITRE ATT&CK map
 **Investigation Commands:**
 
 ```bash
-/forensics-profile          # Build target system profile via SSH
-/forensics-triage           # Quick triage following RFC 3227 volatility order
-/forensics-acquire          # Evidence acquisition with chain of custody
-/forensics-investigate      # Full multi-agent investigation workflow
-/forensics-timeline         # Build correlated event timeline
-/forensics-hunt             # Threat hunt using Sigma rules
-/forensics-ioc              # Extract and enrich IOCs
-/forensics-report           # Generate forensic investigation report
-/forensics-status           # Show investigation dashboard
+/forensics-profile
+/forensics-triage
+/forensics-acquire
+/forensics-investigate
+/forensics-timeline
+/forensics-hunt
+/forensics-ioc
+/forensics-report
+/forensics-status
 ```
-
-**Bundled Sigma Rules (8):**
-
-| Rule | What It Detects |
-|------|----------------|
-| SSH Brute Force | Repeated failed SSH authentication attempts |
-| Unauthorized SUID | Unexpected SUID/SGID binaries |
-| LD_PRELOAD Rootkit | Library injection via LD_PRELOAD |
-| Cron Persistence | Unauthorized crontab modifications |
-| Kernel Module Load | Suspicious kernel module insertion |
-| PAM Backdoor | PAM configuration tampering |
-| SSH Key Injection | Unauthorized authorized_keys modifications |
-| Systemd Persistence | Suspicious systemd unit creation |
 
 **Supported Evidence Sources:**
 
@@ -993,49 +1157,70 @@ Full DFIR investigation workflow following NIST SP 800-86, with MITRE ATT&CK map
 |--------|-------|----------|
 | Auth logs | Log Analyst | Brute force, privilege escalation, lateral movement |
 | Syslog / journal | Log Analyst | System events, service anomalies |
-| Network connections | Network Analyst | C2 beaconing, data exfiltration, DNS tunneling |
-| Docker/containerd | Container Analyst | Container escapes, image tampering, eBPF monitoring |
-| Memory dumps | Memory Analyst | Process injection, rootkits, credential extraction |
-| AWS/Azure/GCP | Cloud Analyst | API anomalies, IAM abuse, network flow analysis |
+| Network connections | Network Analyst | C2 beaconing, exfiltration, DNS tunneling |
+| Docker/containerd | Container Analyst | Container escape, image tampering, runtime evidence |
+| Memory dumps | Memory Analyst | Process analysis, rootkits, credential artifacts |
+| AWS/Azure/GCP | Cloud Analyst | API anomalies, IAM abuse, network-flow evidence |
 | File system | Persistence Hunter | Cron, systemd, SSH keys, PAM, kernel modules |
 
 ### Media/Marketing Kit — Campaign Lifecycle
 
-```
+Media/Marketing Kit treats campaign work as a lifecycle with artifacts and
+review gates, so strategy, content, legal/brand review, publication planning,
+and performance analysis remain inspectable.
+
+```text
  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
  │ STRATEGY │───▶│ CREATION │───▶│  REVIEW  │───▶│ PUBLISH  │───▶│ ANALYZE  │
  │          │    │          │    │          │    │          │    │          │
  │ Research │    │ Copy     │    │ Brand    │    │ Schedule │    │ KPIs     │
  │ Audience │    │ Design   │    │ Legal    │    │ Channels │    │ Reports  │
- │ Strategy │    │ Content  │    │ Quality  │    │ Launch   │    │ ROI      │
+ │ Strategy │    │ Content  │    │ Quality  │    │ Launch   │    │ Learnings│
  └──────────┘    └──────────┘    └──────────┘    └──────────┘    └──────────┘
 ```
 
-37 agents across strategy, creation, management, analytics, and communications. 87+ templates covering campaign intake, brand guidelines, content briefs, social playbooks, email sequences, PR kits, and analytics dashboards.
+| Discipline | Example Artifacts |
+|------------|-------------------|
+| Strategy | Campaign intake, positioning, messaging, audience profile, channel plan |
+| Creation | Blog drafts, social posts, email sequences, creative briefs, media kits |
+| Review | Brand compliance, legal clearance, accessibility review, claim substantiation |
+| Publication | Launch checklist, schedule, channel handoff, go-live readiness |
+| Analysis | KPI report, performance digest, retrospective, optimization plan |
 
-### Media Curator — Intelligent Archive Management
+### Media Curator — Archive Management
+
+Media Curator helps assess, acquire, organize, verify, transcribe, and export
+media collections. It starts with assessment and planning so unknown or mixed
+media is routed before downloads or metadata rewrites.
 
 ```bash
 # Full curation pipeline
 /curate "Pink Floyd"
 
 # Step by step
-/analyze-artist "Pink Floyd"           # Identify eras, catalog structure
-/find-sources "Pink Floyd" "DSOTM"     # Discover across YouTube, Archive.org, Bandcamp
-/acquire                               # Download with format selection
-/transcribe-media /path/to/media.wav     # Create timestamped transcript sidecars
-/tag-collection                        # Apply metadata, embed artwork, rename
-/check-completeness                    # Gap analysis against canonical discography
-/assemble "Pink Floyd live 1973"       # Build thematic compilations
-/export --format plex                  # Export to Plex, Jellyfin, MPD, or archival
-/verify-archive                        # SHA-256 integrity verification
+/analyze-artist "Pink Floyd"
+/find-sources "Pink Floyd" "DSOTM"
+/acquire
+/transcribe-media /path/to/media.wav
+/tag-collection
+/check-completeness
+/assemble "Pink Floyd live 1973"
+/export --format plex
+/verify-archive
 ```
 
-Quality tiers: Tier 1 (Official/Lossless) → Tier 2 (High Quality) → Tier 3 (Acceptable) → Tier 4 (Avoid). Transcript sidecars preserve source hashes, transcript hashes, timestamps, and optional speaker labels for review and future research handoff. Standards: ID3v2.4, Vorbis Comments, MusicBrainz, PREMIS 3.0, W3C PROV-O.
+Quality tiers help reviewers choose what to keep. Transcript sidecars preserve
+source hashes, transcript hashes, timestamps, and optional speaker labels for
+review and later research handoff. Common standards include ID3v2.4, Vorbis
+Comments, MusicBrainz, PREMIS 3.0, and W3C PROV-O.
 
 ### Research Complete — Academic Research Pipeline
 
-```
+Research Complete turns search results and PDFs into source-grounded,
+reviewable research artifacts with persistent identifiers, quality checks, and
+provenance.
+
+```text
  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
  │ DISCOVER │───▶│ ACQUIRE  │───▶│ DOCUMENT │───▶│ ARCHIVE  │
  │          │    │          │    │          │    │          │
@@ -1046,20 +1231,92 @@ Quality tiers: Tier 1 (Official/Lossless) → Tier 2 (High Quality) → Tier 3 (
  └──────────┘    └──────────┘    └──────────┘    └──────────┘
 ```
 
-8-stage pipeline: Discovery → Acquisition → Documentation → Citation → Quality Assessment → Synthesis → Gap Analysis → Archival. Persistent REF-XXX identifiers. GRADE scoring (HIGH/MODERATE/LOW/VERY LOW). Unpaywall integration for open access papers.
+Pipeline stages: Discovery -> Acquisition -> Documentation -> Citation ->
+Quality Assessment -> Synthesis -> Gap Analysis -> Archival. The framework uses
+`REF-XXX` identifiers, GRADE-style evidence quality labels, FAIR-style checks,
+and Unpaywall lookup for open-access discovery. It flags unsupported claims for
+review instead of promising error-free summaries.
+
+### Knowledge Base — Linked Project Wiki
+
+Knowledge Base is for open-ended knowledge accumulation where the taxonomy
+emerges over time. It uses entity, concept, source, comparison, and synthesis
+pages so future sessions can find what is known, what is missing, and how ideas
+connect.
+
+| Page Type | Purpose |
+|-----------|---------|
+| Entity | A person, company, tool, place, system, or other named thing |
+| Concept | A technique, pattern, framework, or idea |
+| Source | The evidence layer for claims and summaries |
+| Comparison | A decision aid for tools, approaches, vendors, or options |
+| Synthesis | A higher-level claim produced by combining multiple sources |
+
+### Ops Complete — Executable Operations
+
+Ops Complete gives operational procedures a structured envelope: inventory,
+capabilities, playbooks, gates, targets, schedules, pipelines, and extensions.
+It is useful when procedures must be idempotent, verifiable, and evidence-aware.
+
+```yaml
+apiVersion: ops.aiwg.io/v1
+kind: OpsPlaybook
+metadata:
+  name: deploy-auth-stack
+  namespace: production
+spec:
+  # Desired state
+status:
+  # Observed state written by the executor
+```
+
+Extensions add domain-specific ops support for systems, IT, development
+infrastructure, and streaming workflows. See [Ops Complete overview](docs/frameworks/ops-complete/overview.md)
+and [Ops evidence governance](https://github.com/jmagly/aiwg/blob/main/docs/ops-evidence-governance.md).
+
+### Security Engineering — Applied Security Decisions
+
+Security Engineering complements SDLC and forensics by focusing on security
+decisions that need explicit assumptions and reviewable tradeoffs.
+
+| Area | Example Use |
+|------|-------------|
+| Cryptographic primitives | Choose AEAD, KDF, hashing, randomness, and signing patterns for a concrete workload |
+| Chain of trust | Map trust anchors, update paths, verification points, and failure modes |
+| Authentication factors | Decide factor mix, enrollment, recovery, lockout, and degraded-mode behavior |
+| Runtime secret hygiene | Review secret storage, process boundaries, rotation, logging, and local development exposure |
+| Supply-chain trust | Review dependency sources, lifecycle scripts, release provenance, SBOMs, and signed artifacts |
+| Physical-access threats | Model device seizure, kiosk, lab, field, and hostile-local-user conditions |
+| DFIR readiness | Prepare evidence handoff points before an incident occurs |
+
+Install with:
+
+```bash
+aiwg use security-engineering
+```
+
+### Validation Complete — Focused Validation
+
+Validation Complete provides a small validation workflow surface for teams that
+need structured review without adopting a broader lifecycle. Use it where a
+project already has its own process but wants AIWG-style validation gates and
+reports.
 
 ---
 
 ## Voice Framework — Content Voice Consistency
 
-4 built-in voice profiles with create, analyze, blend, and apply skills:
+Voice Framework defines reusable writing profiles and output modes that can be
+applied across docs, release notes, campaigns, reports, and internal guidance.
+It describes the desired voice directly rather than relying only on banned word
+lists.
 
 | Profile | When to Use | Characteristics |
 |---------|-------------|----------------|
-| `technical-authority` | API docs, architecture guides | Precise terminology, confident assertions, specific metrics |
-| `friendly-explainer` | Tutorials, onboarding | Accessible language, analogies, encouragement |
-| `executive-brief` | Status reports, proposals | Bottom-line-first, quantified impact, action-oriented |
-| `casual-conversational` | Blog posts, social media | Natural rhythm, opinions, varied structure |
+| `technical-authority` | API docs, architecture guides | Precise terminology, direct claims, concrete examples |
+| `friendly-explainer` | Tutorials, onboarding | Accessible language, patient sequencing, light warmth |
+| `executive-brief` | Status reports, proposals | Decision-oriented summaries, concise evidence, clear next steps |
+| `casual-conversational` | Blog posts, social media | Natural rhythm, opinion-forward phrasing, varied structure |
 
 ```bash
 # Apply a voice to content
@@ -1073,627 +1330,806 @@ Quality tiers: Tier 1 (Official/Lossless) → Tier 2 (High Quality) → Tier 3 (
 
 # Blend two voices
 /voice-blend technical-authority casual-conversational --ratio 70:30
-
-# Detect AI patterns and suggest authentic alternatives
-/ai-pattern-detection docs/generated-content.md
 ```
 
----
+See [Voice Framework overview](docs/addons/voice-framework/overview.md) and
+[Voice Framework quickstart](docs/addons/voice-framework/quickstart.md).
 
 ## MCP Server — Model Context Protocol Integration
 
-AIWG includes a built-in MCP server for tool-based AI workflow integration:
+AIWG can expose its project context, discovery catalog, and governed workflows through a Model Context Protocol
+server. This lets MCP-capable tools call AIWG without learning the repository layout or memorizing provider-specific
+file locations.
+
+The MCP server is useful when you want an assistant to ask AIWG questions such as “what capabilities are available for
+release planning?”, “show the SDLC quickstart”, or “run this governed workflow and return the evidence artifact.” The
+base server keeps a small default tool surface; larger toolsets can be enabled explicitly for teams that want richer
+orchestration, mission, dataset, or framework operations.
 
 ```bash
-# Start MCP server
+# Run the local MCP server
 aiwg mcp serve
 
-# Install into Claude Desktop
-aiwg mcp install claude
+# Enable additional toolsets for a richer host integration
+aiwg mcp serve --toolsets=flows,missions,catalog
 
-# Show capabilities
+# Use an environment variable when the host launches the server command
+AIWG_MCP_TOOLSETS=flows,missions,catalog aiwg mcp serve
+
+# Inspect server metadata and supported install targets
 aiwg mcp info
 ```
 
-The MCP server exposes AIWG's artifact management, workflow execution, and project health capabilities as tools that any MCP-compatible AI platform can invoke programmatically.
+Provider installation depends on the host. AIWG can write MCP configuration for supported targets where the provider
+has a stable local MCP config format; other providers use the same server command in their own UI or settings.
 
----
+```bash
+# Install AIWG MCP config for a supported local target
+aiwg mcp install claude
+aiwg mcp install cursor
+aiwg mcp install codex
+```
+
+MCP integration does not make every AIWG operation model-backed. Catalog reads, status checks, link resolution, and
+local evidence inspection are ordinary local operations. Workflows that ask an assistant to reason, draft, call
+another provider, or continue a Ralph loop may use model calls depending on the connected host and selected provider.
+
+See also: [MCP server documentation](docs/mcp/README.md), [MCP capability
+audit](docs/integrations/mcp-capability-audit.md), and [cross-platform
+overview](docs/integrations/cross-platform-overview.md).
 
 ## Agent Evaluation Framework
 
-Test agent quality with archetype resistance testing based on Roig (2025) failure patterns:
+AIWG treats agents, skills, commands, and rules as reviewable project assets. The evaluation workflow is designed to
+answer concrete questions before you rely on a capability in a live project:
+
+- Does the capability declare the right trigger conditions and boundaries?
+- Does it cite the files, schemas, or rules it depends on?
+- Does it produce artifacts that another provider can inspect?
+- Does it fail safely when prerequisites are missing?
+- Does it preserve evidence for audit, handoff, or regression review?
+
+For direct CLI checks, use the catalog, metadata validation, skill linting, and evidence commands that are available
+in the current CLI surface.
 
 ```bash
-# Evaluate a specific agent
-/eval-agent security-auditor
+# Find relevant evaluation or review capabilities
+aiwg discover "agent evaluation" --limit 5
+aiwg discover "skill lint evidence" --limit 5
 
-# Test archetype resistance
-/eval-agent test-engineer --category archetype
+# Inspect a selected capability before applying it
+aiwg show skill aiwg-doctor
+aiwg show skill context-firewall
 
-# Run performance benchmarks
-/eval-agent code-reviewer --category performance
+# Validate local metadata and skill packaging
+aiwg validate-metadata
+aiwg skill-lint
+
+# Capture and verify evidence bundles when a workflow supports them
+aiwg evidence export --help
+aiwg evidence verify --help
 ```
 
-**Test Categories:**
+A practical evaluation usually starts with a small task and a pass/fail criterion. For example:
 
-| Category | Tests | What It Validates |
-|----------|-------|-------------------|
-| **Archetype** | 4 | Grounding (hallucination resistance), Substitution (scope adherence), Distractor (context noise), Recovery (failure handling) |
-| **Performance** | 3 | Latency, token efficiency, parallel execution capability |
-| **Quality** | 3 | Output format compliance, correct tool usage, scope adherence |
+> Evaluate the release-note drafting capability against this repository. Use only committed changelog entries and
+merged PR metadata. The result is acceptable if every claim links to a source artifact and uncited claims are listed
+separately.
 
-Target score: >=85% per agent. Results include passed/failed breakdown with evidence.
-
----
+That prompt-led path is intentional. AIWG can route the work through provider-native tools, but the acceptance
+criterion remains explicit and reviewable. Avoid treating any score, pass rate, or runtime as guaranteed across models
+or providers; those values depend on the selected model, available tools, project size, and the evidence the workflow
+can inspect.
 
 ## Bidirectional Traceability — @-Mention System
 
-Link requirements to architecture to code to tests with semantic @-mentions:
+AIWG uses lightweight `@` references to connect instructions, generated artifacts, source files, evidence, and
+follow-up work. The goal is traceability across providers: a model can move from a rule to the code it governs, from a
+generated report to the source data behind it, or from an issue to the artifact that closed it.
 
 ```markdown
-<!-- In a use case document -->
-This use case @implements(UC-001) the authentication flow
-described in @architecture(SAD-section-3.2).
-
-<!-- In a test file -->
-// @tests(UC-001) @depends(auth-service)
-describe('authentication flow', () => { ... });
+<!-- In an agent or skill file -->
+@src/auth/middleware.ts
+@docs/security/authentication.md
+@.aiwg/evidence/release-2026-09-07.json
 ```
 
-**Mention Commands:**
+Traceability matters most when a workflow crosses boundaries. An SDLC intake can reference the use case it created. A
+context-firewall review can reference the baseline it approved. A dataset query can reference the source, ingest plan,
+checkpoint, and verification record instead of relying on conversation memory.
+
+Provider-facing commands and skills may expose mention helpers such as mention wiring, validation, linting, or
+reporting. Because providers package commands differently, the portable entry point is discovery:
 
 ```bash
-/mention-wire         # Analyze codebase and inject @-mentions for traceability
-/mention-validate     # Validate all @-mentions resolve to existing files
-/mention-report       # Generate traceability report
-/mention-lint         # Lint @-mentions for style consistency
-/mention-conventions  # Display naming conventions and placement rules
+aiwg discover "mention validate" --limit 5
+aiwg discover "traceability report" --limit 5
+aiwg show skill context-firewall
 ```
 
-Relationship qualifiers: `@implements`, `@tests`, `@depends`, `@derives-from`, `@blocked-by`, `@supersedes`. Enables queries like "what implements UC-001?" and "what tests cover the auth module?"
+When deployed into a provider that supports slash commands, the same work is often available as a prompt command, for example:
 
----
+```text
+/mention-validate --target docs
+/mention-report --scope .aiwg/reports
+```
+
+Use root-relative references in public documentation so links work from the README. Use provider-specific absolute
+paths only inside generated provider files where that provider requires them.
 
 ## Configuration & Customization
 
-### Workspace Structure
+AIWG separates project context from provider packaging. The project keeps canonical context and generated artifacts
+under the workspace, then deploys provider-specific adapters for Claude, Codex, Cursor, Windsurf, Warp, OpenCode,
+OpenClaw, OpenHuman, Hermes, DeepSeek Harness, Copilot, Devin, Factory, Oh My Pi, Pi Coding Agent, Antigravity, and
+the generic fallback.
 
+The primary files are:
+
+```text
+WORKSPACE.md                 # Project/operator context read by providers
+AIWG.md                      # AIWG discovery and routing guide
+AGENTS.md                    # Provider bootstrap for Codex and other AGENTS.md readers
+.aiwg/                       # Canonical AIWG config, generated context, evidence, reports
+.aiwg/aiwg.config            # Workspace configuration and provider deployment state
+.aiwg/index/                 # Searchable artifact and capability indexes when generated
+.aiwg/reports/               # Audits, sync reports, doctor reports, workflow outputs
+.aiwg/sessions/              # Optional local session catalog data
+.aiwg/datasets/              # Optional dataset plans, manifests, lineage, and exports
 ```
-your-project/
-├── .aiwg/                    # SDLC artifacts (persistent project memory)
-│   ├── intake/               # Project intake forms
-│   ├── requirements/         # Use cases, user stories, NFRs
-│   ├── architecture/         # SAD, ADRs, system diagrams
-│   ├── planning/             # Phase plans, iteration plans
-│   ├── risks/                # Risk register, mitigations
-│   ├── testing/              # Test strategy, plans, results
-│   ├── security/             # Threat models, security gates
-│   ├── deployment/           # Deployment plans, runbooks
-│   ├── reports/              # Generated status reports
-│   ├── ralph/                # In-session agent loop state
-│   ├── ralph-external/       # External Ralph crash-resilient state
-│   ├── research/             # Research corpus and findings
-│   ├── forensics/            # Investigation artifacts
-│   ├── working/              # Temporary files (safe to delete)
-│   └── frameworks/           # Installed framework registry
-│       └── registry.json
-├── .claude/                  # Claude Code deployment
-│   ├── agents/               # 162 agent definitions
-│   ├── commands/             # Slash commands
-│   ├── skills/               # 86 skill definitions
-│   └── rules/                # RULES-INDEX.md + on-demand full rules
-├── .github/                  # GitHub Copilot deployment
-├── .cursor/                  # Cursor deployment
-├── .warp/                    # Warp Terminal deployment
-└── CLAUDE.md                 # Project instructions (auto-generated)
+
+Provider directories are generated from the same canonical context. Their exact shape depends on the provider:
+
+```text
+.claude/                     # Claude Code skills, commands, hooks, settings
+.codex/ or ~/.codex/         # Codex prompts and global configuration where applicable
+.agents/                     # Cross-provider agents and skills used by Codex/Antigravity/OMP
+.cursor/                     # Cursor rules and skills
+.github/                     # GitHub Copilot prompts, instructions, and agents
+.warp/                       # Warp skills and compatibility assets
+.omp/                        # Oh My Pi native agents, prompts, rules, and bootstrap
 ```
 
 ### Creating Custom Extensions
 
+Use the current scaffolding commands for new AIWG assets. The older scaffold commands remain available in some
+workspaces for compatibility, but the `new-*` and `add-*` commands are the clearer path for new work.
+
 ```bash
-# Add a custom agent
-aiwg add-agent my-domain-expert
+# Create a new bundle, extension, addon, framework, or provider adapter
+aiwg new-bundle my-bundle
+aiwg new-extension my-extension
+aiwg new-addon my-addon
+aiwg new-framework my-framework
+aiwg new-provider my-provider
 
-# Add a custom command
-aiwg add-command my-workflow
+# Add individual provider-facing assets
+aiwg add-agent release-reviewer --framework sdlc
+aiwg add-command release-checklist --framework sdlc
+aiwg add-skill release-notes --framework sdlc
 
-# Add a custom skill
-aiwg add-skill my-capability
-
-# Scaffold a complete addon
-aiwg scaffold-addon my-addon
-
-# Scaffold a complete framework
-aiwg scaffold-framework my-framework
-
-# Validate all extension metadata
+# Validate metadata before sharing or deploying
 aiwg validate-metadata
 ```
 
+A custom extension should define the smallest durable contract needed by the workflow: triggers, inputs, outputs,
+evidence, and provider packaging. Keep model-specific phrasing in provider assets. Keep project policy, schemas, and
+reusable workflow contracts in `.aiwg` or extension source so multiple providers can share them.
+
 ### Capability Discovery — `aiwg discover` + `aiwg show`
 
-The headline operator surface for finding and reading AIWG capabilities. Most AIWG skills (~455 of 480+) are **not loaded into your platform's flat skill listing** — they stay at `$AIWG_ROOT` and are reached on demand through `aiwg discover` (find) and `aiwg show` (fetch). The kernel set on disk is small on purpose: 9 framework quickrefs + 16 self-maintenance and discovery skills = 25 skills, within supported provider listing budgets.
+`aiwg discover` searches the installed AIWG capability catalog. It is the recommended entry point when you know the
+task but not the command, skill, agent, or framework name.
 
 ```bash
-# Find a skill by capability
-aiwg discover "deploy production"           # → flow-deploy-to-production
-aiwg discover "create intake"               # → intake-* family
-aiwg discover "audit security" --type skill --limit 5
-aiwg discover "<phrase>" --format json      # stable ids for sub-agents, no paths
-aiwg discover "<phrase>" --format json --compact
+# Find capabilities by plain-language intent
+aiwg discover "deploy production" --limit 5
+aiwg discover "dataset lineage" --type skill --limit 5
+aiwg discover "SDLC intake requirements" --limit 8
 
-# Fetch the full body of a specific artifact (companion to discover)
-aiwg show skill aiwg:skill:6f1477d99813ca8d
-aiwg show skill flow-deploy-to-production
-aiwg show agent aiwg-steward
-aiwg show command discover
-aiwg show rule no-attribution
-
-# Inspect Fortemi metadata and resolved paths when needed
-aiwg show metadata aiwg:skill:6f1477d99813ca8d --json
+# Inspect the selected capability before running or asking a provider to use it
+aiwg show skill aiwg-status
+aiwg show skill dataset-intelligence
+aiwg show skill rlm-prep
 ```
 
-The kernel quickrefs ship **curated, validated discovery phrases per capability domain** — phrases tested against the live scorer to surface the right top-3 candidates. The self-maintenance and discovery set (including `steward`, `aiwg-doctor`, `aiwg-refresh`, `aiwg-status`, `aiwg-help`, and `use`) stays loaded so the agent retains repair surfaces even when discovery itself is broken. See [`docs/discovery-and-kernel-skills.md`](docs/discovery-and-kernel-skills.md) for the full best-practices guide, ASCII flow diagrams, and verification steps.
+Discovery is also useful for documentation. Instead of hard-coding every command in a README, link to the relevant
+quickstart and show one or two representative commands. The catalog can change as frameworks and addons are installed,
+while the task language stays stable.
 
 ### Artifact Index — `aiwg index`
 
+The artifact index makes generated work easier to find, verify, and reuse. It indexes reports, generated context,
+evidence, and other AIWG-managed files into a searchable local catalog.
+
 ```bash
-# Build searchable artifact index
-aiwg index build
-aiwg index build --force --verbose
+# Build or refresh the local artifact index
+aiwg index
 
-# Search artifacts by keyword
-aiwg index query "authentication" --json
-
-# Show dependency graph for an artifact
-aiwg index deps .aiwg/requirements/UC-001.md --json
-
-# Index statistics
-aiwg index stats --json
+# Inspect status after deployment or refresh
+aiwg status --probe
+aiwg doctor
 ```
 
-The index supports multiple graphs: project graph (`.aiwg/` artifacts), codebase graph (`src/` / `test/` / `tools/`), and framework graph (`agentic/code/` + `docs/`).
+A provider can then answer questions such as “find the latest context-firewall report” or “show the SDLC artifact that
+introduced this acceptance criterion” without scanning the whole repository manually.
 
 ### Doc Sync — Bidirectional Documentation
 
+Doc sync is for keeping code and documentation aligned under review. It can audit mismatches, propose updates, and
+write reports before code or documentation changes are accepted.
+
 ```bash
-# Audit doc drift (dry run)
-aiwg doc-sync code-to-docs --dry-run
+# Audit both directions without writing changes
+aiwg doc-sync full --dry-run --scope docs
 
-# Sync docs to match code
-aiwg doc-sync code-to-docs
+# Propose documentation updates from code changes
+aiwg doc-sync code-to-docs --scope src --guidance "Update quickstarts only"
 
-# Bidirectional reconciliation
-aiwg doc-sync full --interactive
+# Propose code TODOs or implementation tasks from documentation requirements
+aiwg doc-sync docs-to-code --scope docs --interactive
 ```
+
+Doc sync writes reports under `.aiwg/working/` and `.aiwg/reports/` when configured. Treat those reports as review
+artifacts. Do not assume doc sync can prove semantic equivalence between code and prose; it identifies
+inconsistencies, stale examples, missing links, and candidate updates for human or provider review.
 
 ### Reproducibility Validation
 
+AIWG’s reproducibility features focus on explicit inputs, evidence records, deterministic modes where available, and
+reviewable outputs. They do not guarantee identical model text across providers or runs.
+
 ```bash
-# Show/set execution mode (strict = temperature 0, fixed seed)
-aiwg execution-mode
+# Put local execution in a stricter mode for workflows that honor it
+aiwg execution-mode strict --seed 12345
 
-# Create execution snapshot
-aiwg snapshot
+# Export and verify evidence when workflows emit evidence bundles
+aiwg evidence export --help
+aiwg evidence verify --help
 
-# Create workflow checkpoint
-aiwg checkpoint
-
-# Validate workflow reproducibility
-aiwg reproducibility-validate
+# Verify workspace health and generated provider context
+aiwg verify --help
+aiwg doctor
 ```
 
-Thresholds: compliance audit (100%), security scan (100%), test generation (95%).
+For workflows that expose checkpointing, snapshots, or replay through installed skills, start with discovery so the
+current workspace selects the correct implementation:
 
----
+```bash
+aiwg discover "create checkpoint" --limit 5
+aiwg discover "replay evidence" --limit 5
+```
+
+The practical standard is repeatability of inputs, citations, commands, and artifacts. Exact model wording should be
+treated as a generated output, not as the source of truth.
+
+### Session Catalog
+
+The session catalog is an optional local feature for importing, searching, and promoting useful provider conversation
+history. It is designed for controlled handoff and audit. It should be enabled intentionally because it can include
+sensitive prompts, local paths, and project context.
+
+```bash
+# Install the SQLite feature before using the session catalog
+aiwg features install sqlite
+
+# Discover importable sessions for this workspace without changing state
+aiwg sessions discover --workspace "$PWD" --dry-run
+
+# Import discovered sessions after review
+aiwg sessions import-discovered --workspace "$PWD" --confirm
+
+# Inspect, search, and audit imported sessions
+aiwg sessions list
+aiwg sessions timeline
+aiwg sessions search "release blocker"
+aiwg sessions doctor
+```
+
+Imported sessions can be tagged, extracted into reusable notes, reviewed for promotion, or audited for provenance.
+Keep private-provider roots and shared history locations explicit in configuration; do not assume another provider’s
+global history is safe to import by default.
+
+See [session history setup](docs/getting-started/session-history.md) and [sessions CLI](docs/sessions/cli.md).
+
+### Dataset Intelligence
+
+Dataset intelligence gives AIWG a governed path for local files, directories, CSV/JSONL sources, and approved HTTP
+sources. The dataset router carries stable source, plan, checkpoint, lineage, verification, and export references
+between phases.
+
+```bash
+# Register a source from a JSON descriptor
+aiwg dataset source --file dataset-source.json --json
+
+# Check and preview before ingestion
+aiwg dataset check source:docs --json
+aiwg dataset preview source:docs --count 5 --offline
+
+# Create and approve an ingest plan
+aiwg dataset plan --file dataset-plan.json --json
+aiwg dataset ingest plan:docs-index \
+  --digest sha256:<approved-plan-digest> \
+  --idempotency-key docs-index-2026-09-07
+
+# Inspect and use the resulting dataset
+aiwg dataset status dataset:docs-index
+aiwg dataset verify dataset:docs-index
+aiwg dataset query dataset:docs-index "Which quickstart explains Codex setup?"
+aiwg dataset lineage dataset:docs-index
+aiwg dataset export dataset:docs-index --json
+```
+
+Local adapters are constrained by configured roots. HTTP adapters are deny-by-default and require explicit hosts.
+Indexes are derived artifacts; the canonical record is the source descriptor, approved plan, ingest run, and evidence
+trail.
+
+See [dataset intelligence quickstart](docs/addons/dataset-intelligence/quickstart.md), [dataset
+overview](docs/addons/dataset-intelligence/overview.md), and [source adapters](docs/dataset/source-adapters.md).
 
 ## Issue-Driven Development
 
-AIWG integrates with issue trackers for 2-way human-AI collaboration:
+AIWG supports local issue planning and governed handoff to external issue trackers. The local issue CLI stores records
+under `.aiwg/issues/`, which makes issues reviewable even when a project does not have GitHub, Gitea, Jira, or another
+tracker connected.
 
 ```bash
-# Create issues from any backend (Gitea, GitHub, Jira, Linear, local files)
-/issue-create "Implement OAuth2 flow" --labels "feature,auth"
+# Initialize a local issue store for this workspace
+aiwg issue init --prefix APP
 
-# List and filter issues
-/issue-list --state open --labels "priority:high"
+# Draft a new local issue
+aiwg issue plan \
+  --title "Implement OAuth2 callback validation" \
+  --body "Add state validation, token exchange error handling, and tests."
 
-# Drive an issue with agent loop — posts status to issue thread
-/issue-driven-ralph 42
-
-# Auto-sync issues from commits and artifacts
-/issue-sync
-
-# Close with comprehensive summary and verification
-/issue-close 42
+# Review and update issues locally
+aiwg issue list --status open --label auth --limit 20
+aiwg issue show APP-0001 --comments last:10
+aiwg issue comment APP-0001 --body "Validated the callback edge cases."
+aiwg issue close APP-0001 --reason "Implemented and tested."
 ```
 
-The `/address-issues` command orchestrates issue-thread-driven agent loops with automatic progress posting and human feedback incorporation at each cycle.
+External tracker import/export is explicit. Use it when you need traceability between local AIWG records and a remote
+system, and keep snapshots or live connector settings under review.
 
----
+```bash
+# Import a tracker snapshot into the local issue store
+aiwg issue import --from github --snapshot-file issues-snapshot.json
+
+# Export a local issue payload for a tracker
+aiwg issue export APP-0001 --to gitea --out APP-0001.gitea.json
+
+# Inspect conflicts when reconciling local and external state
+aiwg issue sync conflicts APP-0001 --snapshot-file issue-APP-0001.json
+```
+
+For agent-assisted repair work, ask for the issue outcome directly and include the acceptance checks. In providers
+with deployed prompt commands, `/address-issues` can route the work through the configured workflow.
+
+```text
+/address-issues APP-0001 APP-0002 --checks "npm test && npm run lint"
+```
+
+External issue systems are not a default side effect of `aiwg issue`. They require configured connectors, snapshots,
+or explicit export/import commands. See [local issue integration](docs/local-issues.md) and [filing
+issues](docs/contributing/filing-issues.md).
 
 ## Daemon Mode & Messaging Integration
 
-### Daemon Mode
+AIWG’s automation layer is for long-running coordination, not for hiding work from review. The safe default is local,
+explicit execution with visible status and evidence. Daemon, messaging, and mission-control setups should declare
+their trigger source, operator identity, workspace, budget limits, and completion criteria.
+
+The base CLI exposes current orchestration commands through Ralph and mission control. Messaging bridges and chat bots
+are advanced deployments described in the daemon and messaging docs; they require external service configuration and
+should not be assumed to exist in a fresh checkout.
 
 ```bash
-# Background file watching, cron scheduling, IPC
-aiwg daemon start
+# Start a managed mission-control session
+aiwg mc start --name "release follow-up" --max-missions 3
+
+# Dispatch bounded work with an explicit completion criterion
+aiwg mc dispatch <session-id> \
+  "Fix the failing auth tests" \
+  --completion "npm test -- auth passes"
+
+# Inspect and control running work
+aiwg mc run <session-id>
+aiwg mc status <session-id>
+aiwg mc watch <session-id>
+aiwg mc pause <session-id>
+aiwg mc resume <session-id>
+aiwg mc stop <session-id>
 ```
 
-See [Daemon Guide](docs/daemon-guide.md) for background agent orchestration.
+For provider messaging, document the concrete external channel and approval boundary. A Slack, Discord, Telegram, or
+webhook bridge should make it clear who can enqueue work, where logs are stored, and which operations require human
+approval before writing to external systems.
 
-### Messaging Integration
-
-Bidirectional Slack, Discord, and Telegram bots for remote agent control:
-
-```bash
-# Connect to messaging platforms
-aiwg messaging connect slack
-aiwg messaging connect discord
-aiwg messaging connect telegram
-```
-
-See [Messaging Guide](docs/messaging-guide.md) for setup and configuration.
-
----
+See [daemon guide](docs/daemon-guide.md), [messaging guide](docs/messaging-guide.md), and [Mission Control](docs/addons/ralph/quickstart.md).
 
 ## See It In Action
 
+The fastest way to use AIWG is to ask for the first useful task, request a concrete deliverable, and name the success
+check. Commands help when you know the exact workflow; plain-language task prompts are better when AIWG should choose
+the relevant skill or provider surface.
+
+### SDLC workflow from idea to implementation
+
 ```bash
-# Generate project intake from natural language
-/intake-wizard "Build customer portal with real-time chat"
+# Discover the right SDLC entry point
+aiwg discover "SDLC intake requirements architecture" --limit 5
 
-# Accelerate from idea to construction-ready
-/sdlc-accelerate "AI-powered code review tool"
-
-# Phase transition with automated gate check
-/flow-inception-to-elaboration
-
-# Iterative task execution — "iteration beats perfection"
-/ralph "Fix all failing tests" --completion "npm test passes"
-
-# Long-running tasks with crash recovery (6-8 hours)
-/ralph-external "Migrate to TypeScript" --completion "npx tsc --noEmit exits 0"
-
-# Process massive codebases with recursive context decomposition
-/rlm-query "src/**/*.ts" "Extract all exported interfaces" --model haiku
-/rlm-batch "src/components/*.tsx" "Add TypeScript types" --max-parallel 4
-
-# Digital forensics investigation
-/forensics-investigate
-/forensics-triage
-/forensics-timeline
-
-# Scan codebase for agent-readiness
-/codebase-health --format text
-
-# Decompose large files into agent-friendly modules
-/decompose-file src/large-file.ts --execute
-
-# Deploy to production with rollback gates
-/flow-deploy-to-production
-
-# Security assessment
-/security-audit
-
-# Voice transformation
-"Apply technical-authority voice to docs/architecture.md"
-"Create a voice profile based on our existing blog posts"
+# Run the accelerator when you want AIWG to scaffold the SDLC work plan
+aiwg sdlc-accelerate "AI-powered code review tool" \
+  --success "requirements, architecture notes, and first implementation task are generated"
 ```
 
----
+Provider prompt:
+
+```text
+Use the SDLC framework to turn “AI-powered code review tool” into requirements, architecture decisions, a first implementation task, and acceptance checks. Stop with links to the generated artifacts.
+```
+
+### Long-running implementation loop
+
+```bash
+aiwg ralph "Fix all failing tests in the auth package" \
+  --completion "npm test -- auth passes" \
+  --max-iterations 5 \
+  --max-wall-clock-minutes 45
+
+aiwg ralph-status
+aiwg ralph-resume <loop-id>
+aiwg ralph-abort <loop-id>
+```
+
+Ralph is useful for bounded repair loops where the success condition is objective. It is not a guarantee that the
+model will solve the task. Set wall-clock, token, tool-call, or cost limits for expensive providers.
+
+### Recursive search over large code or docs
+
+```bash
+aiwg rlm-prep docs/ --strategy semantic-boundary --size 200
+aiwg rlm-search "Where do provider quickstarts mention reload requirements?" \
+  --source .aiwg/rlm-prep/<manifest-dir>/manifest.json \
+  --max-parallel 4 \
+  --budget 50000
+aiwg rlm-cache stats
+```
+
+Provider prompt:
+
+```text
+Find every user-facing quickstart that still tells users to manually reload after `aiwg use all`. Return file links, the quoted sentence, and the replacement language.
+```
+
+### Dataset-backed project knowledge
+
+```bash
+aiwg dataset check source:docs --json
+aiwg dataset preview source:docs --count 5 --offline
+aiwg dataset query dataset:docs-index "Which provider quickstart is best for Codex?"
+```
+
+Use dataset intelligence when the source and lineage need to be explicit. Use RLM when the immediate need is recursive
+search or fanout over files.
+
+### Session history reuse
+
+```bash
+aiwg sessions discover --workspace "$PWD" --dry-run
+aiwg sessions search "marketing audit"
+aiwg sessions extract <session-id> --format markdown
+```
+
+This is useful when prior provider conversations contain decisions that should become project artifacts. Keep import
+scope explicit and review the discovered sessions before promotion.
+
+### Security, forensics, and operations prompts
+
+```text
+Use the security-engineering framework to review the OAuth2 callback flow. Produce threat assumptions, concrete findings, and tests I can run.
+
+Use the forensics framework to analyze these logs. Preserve evidence references, build a timeline, and separate confirmed facts from hypotheses.
+
+Use the ops framework to turn this production incident into a runbook update, verification checklist, and follow-up issues.
+```
+
+These prompts preserve the original README’s hands-on style while keeping provider behavior accurate: AIWG selects
+framework capabilities through discovery and provider deployment, and the deliverable remains explicit.
 
 ## Platform Support
 
-AIWG supports 15 named provider integrations. Artifact support varies by provider and is adapted to each provider's native or compatibility surfaces.
+AIWG has registry-backed named provider integrations plus a generic fallback for tools that read Markdown context but
+do not have a dedicated adapter. The integrations share product framing: reusable project context and specialist
+workflows in the AI tools teams already use. Provider distinctions matter because each host has different native
+surfaces.
 
-| Platform | Status | Agents | Commands | Skills | Rules | Deploy Command |
-|----------|--------|--------|----------|--------|-------|---------------|
-| **[Google Antigravity CLI](docs/providers/antigravity.md)** | Experimental | degraded `.agents/agents/` | — | `.agents/skills/` | `AGENTS.md` | `--provider antigravity` (alias: `agy`) |
-| **Claude Code** | Tested | `.claude/agents/` | `.claude/commands/` | `.claude/skills/` | `.claude/rules/` | `aiwg use sdlc` |
-| **GitHub Copilot** | Tested | `.github/agents/` | `.github/agents/` | `.github/skills/` | `.github/copilot-rules/` | `--provider copilot` |
-| **Warp Terminal** | Tested | `.warp/agents/` + WARP.md | `.warp/commands/` | `.warp/skills/` | `.warp/rules/` | `--provider warp` |
-| **Factory AI** | Tested | `.factory/droids/` | `.factory/commands/` | `.factory/skills/` | `.factory/rules/` | `--provider factory` |
-| **Cursor** | Tested | `.cursor/agents/` | `.cursor/commands/` | `.cursor/skills/` | `.cursor/rules/` | `--provider cursor` |
-| **[DeepSeek Harness](docs/providers/deepseek-harness.md)** | Experimental | skills-as-agents | — | `.agents/skills/` | `AGENTS.md` | `--provider dsh` |
-| **OpenCode** | Tested | `.opencode/agent/` | `.opencode/commands/` | `.opencode/skill/` | `.opencode/rule/` | `--provider opencode` |
-| **OpenAI/Codex** | Tested | `.codex/agents/` | `~/.codex/prompts/` | `.agents/skills/` | `.codex/rules/` | `--provider codex` |
-| **Devin Desktop** | Tested compatibility adapter | AGENTS.md | `.windsurf/workflows/` | `.windsurf/skills/` | `.windsurf/rules/` | `--provider devin` |
-| **Hermes** | Stable | — | — | `~/.hermes/skills/.aiwg/` | — | `--provider hermes` |
-| **OpenClaw** | Tested | `~/.openclaw/agents/` | `~/.openclaw/commands/` | `~/.openclaw/.aiwg/skills/` | `~/.openclaw/rules/` | `--provider openclaw` |
-| **OpenHuman** | Experimental | — | — | `~/.openhuman/.aiwg/skills/` | `~/.openhuman/.aiwg/rules/` | `--provider openhuman` |
-| **[Pi Coding Agent](https://pi.dev/)** | Experimental | `.agents/skills/` | `.pi/prompts/` | `.agents/skills/` | `AGENTS.md` | `--provider pi` |
-| **[Oh My Pi](docs/providers/omp.md)** | Experimental | `.omp/agents/` | `.omp/prompts/` | `.agents/skills/` | `.omp/AGENTS.md` | `--provider omp` |
+See [cross-platform overview](docs/integrations/cross-platform-overview.md) for the maintained comparison and setup links.
 
-The legacy `--provider windsurf` selector remains supported and writes the
-same `.windsurf/` compatibility paths, but new commands should use `devin`.
-`devin-cli` is a distinct product surface and is not currently a deployable
-AIWG provider.
+| Provider | Setup | Primary context | Native or conventional surfaces | Notes |
+|---|---|---|---|---|
+| Claude Code | `aiwg use all --provider claude` | `CLAUDE.md` | Skills, commands, hooks, MCP config | Best fit for rich AIWG provider packaging. See [Claude quickstart](docs/integrations/claude-code-quickstart.md). |
+| Codex | `aiwg use all --provider codex` | `AGENTS.md` | Global prompts, project skills, MCP config | Uses AGENTS.md bootstrap plus `.agents/skills/`. See [Codex quickstart](docs/integrations/codex-quickstart.md). |
+| Cursor | `aiwg use all --provider cursor` | Rules and skills | `.cursor/rules/*.mdc`, `.cursor/skills/*/SKILL.md` | Cursor rules are native; some assets remain conventional. See [Cursor quickstart](docs/integrations/cursor-quickstart.md). |
+| Windsurf | `aiwg use all --provider windsurf` | Windsurf rules | Rules and workflows | Uses Windsurf’s local rule model where available. |
+| OpenCode | `aiwg use all --provider opencode` | Agent/rule context | Provider-local agents, commands, rules | Good for lightweight terminal workflows. |
+| Gemini CLI | `aiwg use all --provider gemini` | `GEMINI.md` | Commands and context files | Keeps AIWG guidance in Gemini-readable Markdown. |
+| Qwen Code | `aiwg use all --provider qwen` | `QWEN.md` | Commands and context files | Similar Markdown-first provider packaging. |
+| Firebase Studio | `aiwg use all --provider firebase` | Studio context | Rules and generated context | Focused on Firebase Studio workspace guidance. |
+| GitHub Copilot | `aiwg use all --provider copilot` | `.github` assets | Prompts, instructions, agents, MCP config | Uses `.github/prompts/*.prompt.md`, `.github/instructions/*.instructions.md`, and `.github/agents/*.agent.md`. |
+| Devin | `aiwg use all --provider devin` | Devin-compatible context | Compatibility packaging | Uses compatibility paths where Devin can read project instructions. |
+| Factory | `aiwg use all --provider factory` | Factory context | Agents and commands where supported | Provider behavior depends on the installed Factory environment. |
+| Oh My Pi | `aiwg use all --provider omp` | `.omp/AGENTS.md` | Agents, prompts, rules, skills | Dedicated OMP quickstart: [Oh My Pi quickstart](docs/providers/omp.md). |
+| Pi Coding Agent | `aiwg use all --provider pi` | Pi context | Markdown context and provider adapters | See [Pi quickstart](docs/integrations/pi-quickstart.md). |
+| Antigravity | `aiwg use all --provider antigravity` | `AGENTS.md` and `.agents/` | Agents, skills, indexed commands, MCP config when enabled | See [Antigravity provider docs](docs/providers/antigravity.md). |
+| Generic Markdown | `aiwg use all --provider generic` | `AIWG.md` / `WORKSPACE.md` | Markdown instructions | Use when a provider reads repo docs but has no dedicated integration. |
 
----
-
-## CLI Reference (50 Commands)
-
-| Category | Commands | Description |
-|----------|----------|-------------|
-| **Maintenance** | `help`, `version`, `doctor`, `context-firewall`, `update` | Installation health, context safety, updates, diagnostics |
-| **Framework** | `use`, `list`, `remove` | Deploy, inspect, and remove frameworks |
-| **Project** | `new` | Scaffold new project with AIWG structure |
-| **Workspace** | `status`, `migrate-workspace`, `rollback-workspace` | Workspace health and migration |
-| **MCP** | `mcp serve`, `mcp install`, `mcp info` | Model Context Protocol server |
-| **Catalog** | `catalog list`, `catalog info`, `catalog search` | Browse available extensions |
-| **Marketplace packaging** | `install-plugin`, `uninstall-plugin`, `plugin-status`, `package-plugin`, `package-all-plugins` | Install and package delivery wrappers |
-| **Scaffolding** | `add-agent`, `add-command`, `add-skill`, `add-template`, `scaffold-addon`, `scaffold-extension`, `scaffold-framework` | Create new extensions |
-| **Ralph** | `ralph`, `ralph-status`, `ralph-abort`, `ralph-resume`, `ralph-external`, `ralph-memory`, `ralph-config` | Iterative execution engine |
-| **Metrics & evidence** | `cost-report`, `cost-history`, `metrics-tokens`, `evidence` | Token usage, cost tracking, and portable evaluation evidence |
-| **Index** | `index build`, `index query`, `index deps`, `index stats` | Artifact discovery and dependency graphing |
-| **Documentation** | `doc-sync` | Bidirectional doc-code synchronization |
-| **SDLC** | `sdlc-accelerate` | Idea-to-construction-ready pipeline |
-| **Code Analysis** | `cleanup-audit` | Dead code and unused export detection |
-| **Reproducibility** | `execution-mode`, `snapshot`, `checkpoint`, `reproducibility-validate` | Deterministic workflow validation |
-| **Toolsmith** | `runtime-info` | Runtime environment detection |
-| **Utility** | `prefill-cards`, `contribute-start`, `validate-metadata` | Development utilities |
-
-### Quick Reference
+After any deployment, use status and doctor before relying on the provider context:
 
 ```bash
-# Deploy frameworks
-aiwg use sdlc                    # SDLC framework
-aiwg use forensics               # Forensics framework
-aiwg use all                     # Everything
-aiwg use sdlc --provider copilot # Deploy to GitHub Copilot
-
-# Project management
-aiwg new my-project              # Scaffold new project
-aiwg status                      # Workspace health
-aiwg doctor                      # Installation diagnostics
-aiwg context-firewall scan       # Provider context, trust, drift, and budget audit
-
-# Iterative execution (Agent Loop)
-aiwg ralph "Fix all tests" --completion "npm test passes"
-aiwg ralph-status                # Check loop progress
-aiwg ralph-abort                 # Cancel running loop
-aiwg ralph-resume                # Resume interrupted loop
-aiwg ralph-external "Migrate to TS" --completion "tsc --noEmit exits 0"
-
-# Artifact discovery
-aiwg index build                 # Build artifact index
-aiwg index query "authentication" --json
-aiwg index deps .aiwg/requirements/UC-001.md --json
-
-# Documentation sync
-aiwg doc-sync code-to-docs --dry-run
-aiwg doc-sync full --interactive
-
-# Metrics
-aiwg cost-report                 # Agent-native session cost breakdown
-aiwg cost-report --fleet         # OpenRouter per-bot MTD spend observation
-aiwg evidence export --output ./evidence  # Package evaluation evidence and provenance
-aiwg evidence verify ./evidence           # Verify hashes and the bundle checkpoint
-aiwg metrics-tokens              # Token usage
-
-# SDLC accelerate
-aiwg sdlc-accelerate "Project description"
-aiwg sdlc-accelerate --from-codebase .
+aiwg status --probe
+aiwg doctor
 ```
 
----
+Fresh deployments may report that the provider should be restarted or reloaded so the host notices new files. That is
+provider-specific readiness information, not a requirement to regenerate context after every command.
+
+## CLI Reference
+
+The CLI is organized around framework deployment, workspace health, discovery, governed artifacts, orchestration, and
+specialized addons. Use `aiwg help` for the current top-level surface and [CLI reference](docs/cli/reference.md) for
+the generated reference.
+
+| Area | Commands | Use when |
+|---|---|---|
+| Framework deployment | `aiwg use`, `aiwg list`, `aiwg remove` | Install or remove AIWG framework/provider assets in a workspace. |
+| Getting started | `aiwg init`, `aiwg setup project`, `aiwg new`, `aiwg quickref generate` | Bootstrap a workspace or generate quick reference docs. |
+| Workspace health | `aiwg status`, `aiwg doctor`, `aiwg refresh`, `aiwg installation`, `aiwg verify` | Check readiness, repair drift, and validate generated context. |
+| Catalog and discovery | `aiwg catalog`, `aiwg discover`, `aiwg show`, `aiwg index`, `aiwg artifacts` | Find capabilities and locate generated outputs. |
+| Provider and MCP | `aiwg mcp serve`, `aiwg mcp install`, `aiwg mcp info`, `aiwg runtime-info` | Connect AIWG to MCP hosts or inspect runtime details. |
+| Execution and dispatch | `aiwg run skill`, `aiwg run script`, `aiwg output-mode`, `aiwg execution-mode` | Invoke portable skills/scripts and control output or reproducibility mode. |
+| Ralph loop | `aiwg ralph`, `aiwg ralph-status`, `aiwg ralph-resume`, `aiwg ralph-abort`, `aiwg ralph-attach` | Run bounded iterative implementation loops. |
+| Mission control | `aiwg mc start`, `aiwg mc dispatch`, `aiwg mc status`, `aiwg mc watch`, `aiwg mc stop` | Coordinate multiple bounded missions from one workspace. |
+| Sessions | `aiwg sessions discover`, `aiwg sessions import-discovered`, `aiwg sessions list`, `aiwg sessions search`, `aiwg sessions doctor` | Import, inspect, and promote provider session history. |
+| Dataset intelligence | `aiwg dataset source`, `aiwg dataset check`, `aiwg dataset preview`, `aiwg dataset plan`, `aiwg dataset ingest`, `aiwg dataset verify`, `aiwg dataset query` | Govern source intake, indexing, lineage, and queries. |
+| Evidence and metrics | `aiwg evidence export`, `aiwg evidence verify`, `aiwg cost-report --fleet` | Preserve verification records and inspect spend or usage where configured. |
+| Scaffolding | `aiwg new-bundle`, `aiwg new-extension`, `aiwg new-addon`, `aiwg new-framework`, `aiwg new-provider`, `aiwg add-agent`, `aiwg add-command`, `aiwg add-skill` | Create new AIWG packages and provider-facing assets. |
+| Issues | `aiwg issue init`, `aiwg issue plan`, `aiwg issue list`, `aiwg issue show`, `aiwg issue import`, `aiwg issue export` | Maintain local issue records and exchange snapshots with external trackers. |
+
+Common setup and inspection flow:
+
+```bash
+# Install all AIWG assets for the current provider
+aiwg use all --provider codex
+
+# Verify generated context and provider readiness
+aiwg status --probe --json
+aiwg doctor
+
+# Find and inspect capabilities instead of guessing command names
+aiwg discover "release planning" --limit 5
+aiwg show skill aiwg-status
+```
 
 ## Architecture
 
+AIWG is a portable context and workflow layer. It keeps canonical project instructions in repo-visible files, packages
+provider-specific assets for the AI tools a team uses, and preserves artifacts so work can be reviewed outside the
+original chat.
+
+```mermaid
+flowchart TD
+    A[Project context<br/>WORKSPACE.md + AIWG.md] --> B[AIWG catalog]
+    B --> C[Provider packaging]
+    C --> D[Claude, Codex, Cursor, Copilot, Warp, OMP, Antigravity, others]
+    B --> E[Specialist workflows]
+    E --> F[SDLC, research, ops, security, marketing, datasets, RLM]
+    E --> G[Artifacts and evidence]
+    G --> H[Reports, issues, datasets, sessions, indexes]
+    H --> B
+```
+
 ### Extension System
 
-AIWG uses a unified extension system with 10 extension types, projected onto the supported artifact surfaces of 15 named provider integrations:
+An AIWG extension usually contains some combination of:
 
-| Type | Count | Description |
-|------|-------|-------------|
-| **Agents** | 188 | Specialized AI personas with defined tools, responsibilities, and operating rhythms |
-| **Commands** | 50 | CLI commands and slash commands for workflow automation |
-| **Skills** | 128 | Natural language workflow triggers activated by conversation patterns |
-| **Rules** | 35 | Enforcement patterns deployed as consolidated index with on-demand full-rule loading |
-| **Templates** | 334 | Progressive disclosure document templates for all SDLC phases |
-| **Frameworks** | 8 | Complete workflow systems (SDLC, Forensics, Marketing, Research, Media Curator, Ops, Knowledge Base, Security Engineering) |
-| **Addons** | 21 | Feature bundles extending frameworks (RLM, Voice, Testing Quality, UAT, Ring) |
-| **Hooks** | varies | Lifecycle event handlers (pre-session, post-write, workflow tracing) |
-| **Tools** | varies | External utility integrations (git, jq, npm) |
-| **MCP Servers** | varies | Model Context Protocol server integrations |
+| Asset | Role |
+|---|---|
+| Agents | Persistent role definitions, responsibilities, and routing constraints. |
+| Skills | Task-specific procedures with triggers, inputs, outputs, and evidence rules. |
+| Commands | Provider-facing shortcuts or prompt templates. |
+| Rules | Policies and reusable constraints. |
+| Schemas | Structured contracts for plans, artifacts, manifests, and reports. |
+| Templates | Repeatable starting points for generated files. |
+| Scripts | Local deterministic helpers used by workflows. |
+
+The registry and discovery index make those assets findable without requiring every provider to support every asset
+type natively. When a provider lacks a native concept, AIWG packages the asset as Markdown context or a conventional
+file the provider can read.
 
 ### Multi-Agent Orchestration
 
+AIWG’s orchestration model is explicit about roles and handoffs. A complex task can move through a steward, specialist
+skill, review step, evidence export, and follow-up issue without losing the artifact trail.
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant S as Steward / Discover
+    participant W as Specialist Workflow
+    participant P as Provider Tooling
+    participant E as Evidence Store
+
+    U->>S: Describe outcome and success check
+    S->>W: Select capability and inputs
+    W->>P: Execute provider-local or CLI steps
+    P-->>W: Results, files, diagnostics
+    W->>E: Write report/evidence/issue refs
+    W-->>U: Deliverable with checks and next step
 ```
-                    ┌─────────────────────┐
-                    │ Executive Orchestrator│
-                    └──────────┬──────────┘
-                               │
-              ┌────────────────┼────────────────┐
-              ▼                ▼                 ▼
-      ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-      │Primary Author│ │  Reviewer 1  │ │  Reviewer 2  │  ← Parallel
-      │(e.g. Req.   │ │(e.g. Security│ │(e.g. Test    │
-      │  Analyst)    │ │  Architect)  │ │  Architect)  │
-      └──────┬───────┘ └──────┬───────┘ └──────┬───────┘
-             └────────────────┼────────────────┘
-                              ▼
-                    ┌─────────────────────┐
-                    │  Documentation      │
-                    │  Synthesizer        │  ← Merge all reviews
-                    └──────────┬──────────┘
-                               ▼
-                    ┌─────────────────────┐
-                    │  Human Gate         │  ← GO / NO_GO decision
-                    └──────────┬──────────┘
-                               ▼
-                    ┌─────────────────────┐
-                    │  .aiwg/ Archive     │  ← Persistent artifacts
-                    └─────────────────────┘
-```
+
+This structure is why AIWG documentation emphasizes “first useful task, concrete deliverable, success check, and next
+step.” It gives a model enough direction to act while leaving a reviewer enough evidence to verify the result.
 
 ### YAML Metalanguage
 
-AIWG is pioneering a declarative YAML metalanguage for multi-agent workflow orchestration. Schema-validated YAML defines agent topology, workflow DAGs, gate conditions, and artifact contracts — while natural language handles behavioral logic.
+Many AIWG assets use YAML frontmatter or YAML schemas so capabilities can be discovered, validated, and converted
+between provider formats.
 
 ```yaml
-# Example: flow definition (schema-validated)
-flow:
-  id: inception-to-elaboration
-  model: opus
-  entry_criteria:
-    gate: LOM
-    artifacts:
-      - path: .aiwg/requirements/vision-document.md
-        required: true
-  steps:
-    - id: requirements-analysis
-      agent: requirements-analyst
-      parallel_group: reviews
-    - id: architecture-baseline
-      agent: architecture-designer
-      parallel_group: reviews
-    - id: synthesis
-      agent: documentation-synthesizer
-      depends_on: [requirements-analysis, architecture-baseline]
-  exit_criteria:
-    gate: ABM
-    decision: [GO, CONDITIONAL_GO, NO_GO]
-```
-
-JSON Schema definitions for `flow.yaml`, `agent.yaml`, `rule.yaml`, and `skill.yaml` at `agentic/code/frameworks/sdlc-complete/schemas/metalanguage/`.
-
-### Project Artifacts (.aiwg/)
-
-All SDLC artifacts persist in `.aiwg/` — structured project memory that survives across AI sessions:
-
-```
-.aiwg/
-├── intake/           # Project intake forms, solution profiles
-├── requirements/     # Use cases, user stories, NFRs
-├── architecture/     # SAD, ADRs, diagrams
-├── planning/         # Phase plans, iteration plans
-├── risks/            # Risk register, mitigations
-├── testing/          # Test strategy, test plans
-├── security/         # Threat models, security gates
-├── deployment/       # Deployment plans, runbooks
-├── reports/          # Generated status reports
-├── ralph/            # Agent loop state and history
-└── frameworks/       # Installed framework registry
-```
-
-This segmentation is what makes large projects manageable. Individual code files inevitably grow, but the project knowledge stays organized into focused domains. An agent working on a deployment problem loads `@.aiwg/deployment/` and `@.aiwg/architecture/` — not the entire codebase. An agent debugging a test failure loads the relevant requirement, the test plan, and the specific source file. Context stays sharp regardless of project size.
-
-`aiwg index` amplifies this further — it builds a searchable artifact index so agents resolve lookups in a single query instead of browsing. Without tooling: 3-6 documents to find what's needed. With AIWG structure: 2-3. With the index: usually 1.
-
 ---
+namespace: aiwg
+name: release-notes
+description: Draft release notes from approved issue and changelog artifacts
+platforms: [all]
+triggers:
+  - release notes
+  - changelog summary
+outputs:
+  - docs/releases/{version}.md
+evidence:
+  required:
+    - source_issue_refs
+    - changelog_refs
+---
+```
+
+The metadata is not decorative. It lets `aiwg discover` find the capability, lets validation detect missing fields,
+and gives provider adapters enough information to package the asset accurately.
+
+### Project Artifacts
+
+AIWG-generated artifacts are intentionally ordinary files: Markdown, JSON, YAML, SQLite-backed local stores when
+enabled, and provider-readable context. That makes them inspectable in a code review and portable across machines.
+
+Examples include:
+
+```text
+.aiwg/reports/context-firewall-*.md
+.aiwg/reports/doc-sync-audit-*.md
+.aiwg/evidence/*.json
+.aiwg/issues/*.json
+.aiwg/datasets/**/manifest.json
+.aiwg/rlm-prep/**/manifest.json
+.aiwg/sessions/**
+```
+
+Artifact indexes reduce manual browsing, but they do not replace source review. Treat indexed results as navigation
+aids with links back to the original files.
 
 ## Agent Loop — Autonomous Long-Running Agent Orchestration
 
-The Agent Loop is the core execution philosophy: **iteration beats perfection**. Instead of getting everything right on the first attempt, the agent executes in a retry loop where errors become learning data. Ralph supports both in-session loops and **crash-resilient external loops that run indefinitely** — surviving process crashes, terminal disconnects, and system reboots.
-
-### In-Session Ralph (Minutes to Hours)
-
-```bash
-# Iterative task execution with automatic error recovery
-/ralph "Fix all failing tests" --completion "npm test passes with 0 failures"
-/ralph "Reach 80% coverage" --completion "coverage report shows >80%" --max-iterations 20
-
-# Issue-driven Ralph — posts cycle status to issue threads, incorporates human feedback
-/issue-driven-ralph 42    # Drives issue #42 with 2-way human-AI collaboration
-```
-
-### External Ralph — Crash-Resilient Autonomous Agents (Hours to Days)
-
-External Ralph runs as a **persistent background process** with PID file tracking, crash recovery, and automatic restart. The agent continues working even if your terminal disconnects or the host reboots.
+Ralph is AIWG’s bounded iterative agent loop. It is intended for tasks where the objective and completion criterion
+can be checked: fixing tests, applying a migration, updating docs to match a report, or carrying a refactor through
+verification.
 
 ```bash
-# Long-running autonomous task (6-8+ hours, survives crashes)
-/ralph-external "Migrate entire codebase to TypeScript" \
-  --completion "npx tsc --noEmit exits 0" \
-  --timeout 480
-
-# Autonomous code review loop
-/ralph-external "Review and fix all security vulnerabilities" \
-  --completion "npm audit shows 0 vulnerabilities"
-
-# Continuous integration loop
-/ralph-external "Get all tests passing on Node 18 and 22" \
-  --completion "npm test passes on both versions"
+aiwg ralph "Update provider quickstarts from the marketing audit" \
+  --completion "changed files match the approved audit scope and markdown links pass" \
+  --max-iterations 6 \
+  --max-wall-clock-minutes 60 \
+  --max-tool-calls 120
 ```
 
-External Ralph features:
-
-- **Crash resilience** — PID file recovery, automatic restart on process death
-- **Checkpoint system** — saves progress at each iteration boundary, resumes from last checkpoint
-- **Cross-session persistence** — state stored in `.aiwg/ralph-external/`, survives terminal disconnects
-- **Debug memory** — learns from failure patterns across iterations, applies lessons to subsequent attempts
-- **Episodic memory** — `/ralph-reflect` shows accumulated learnings and strategy evolution
-- **Completion reports** — detailed iteration history saved to `.aiwg/ralph/`
-
-### Scheduled and Remote Agents
+Ralph records loop state so work can be inspected and resumed when supported by the selected provider and local environment.
 
 ```bash
-# Schedule recurring autonomous agent tasks
-/schedule create "Run security audit" --cron "0 9 * * 1"    # Every Monday 9am
-/schedule create "Check dependency updates" --cron "0 0 * *" # Monthly
-
-# Remote agent triggers — execute on schedule from anywhere
-/schedule list
-/schedule run <trigger-id>
+aiwg ralph-status
+aiwg ralph-attach <loop-id>
+aiwg ralph-resume <loop-id>
+aiwg ralph-abort <loop-id>
 ```
 
-### Ralph Control
+Use budgets for any loop that may call a remote model or external provider:
 
 ```bash
-/ralph-status     # Check current/previous loop status
-/ralph-resume     # Resume interrupted loop from last checkpoint
-/ralph-abort      # Cancel running loop (optionally revert changes)
-/ralph-memory     # View debug memory entries and failure patterns
-/ralph-reflect    # View episodic memory and strategy evolution
-/ralph-analytics  # Execution metrics and performance history
+aiwg ralph "Reduce flaky integration tests" \
+  --completion "the flaky-test reproduction passes 10 consecutive runs" \
+  --max-total-tokens 200000 \
+  --max-total-cost 10 \
+  --budget-stop-policy budget-wins
 ```
 
-### How It Works
+Long-running automation should still produce reviewable outputs: changed files, reports, evidence, status logs, and
+the exact checks run. Ralph can continue work within configured limits, but it cannot guarantee a solution, fixed
+runtime, or provider availability.
 
-Each iteration follows the TAO loop (Thought → Action → Observation):
+Mission Control builds on the same principle for multiple bounded work items:
 
+```bash
+aiwg mc start --name "docs audit follow-up" --max-missions 4
+aiwg mc dispatch <session-id> \
+  "Validate README command examples" \
+  --completion "all documented commands are current or labeled provider-specific"
+aiwg mc run <session-id>
+aiwg mc status <session-id>
+aiwg mc watch <session-id>
 ```
-Iteration N:
-  1. THINK  — Analyze current state + accumulated learnings from iterations 1..N-1
-  2. ACT    — Make changes based on task + debug memory + failure patterns
-  3. VERIFY — Run completion command (tests, build, lint, coverage, etc.)
-  4. LEARN  — If verification fails, extract root cause → store in debug memory
-  5. DECIDE — Pass? → Complete. Fail? → Iterate. Max retries? → Escalate to human.
-```
-
-The debug memory system implements executable feedback: the agent doesn't just retry — it learns *what went wrong* and *why*, then applies that knowledge to the next attempt. After 3 failed attempts at the same root cause, it escalates to a human rather than looping forever.
-
-Research foundation: Self-Refine (Madaan et al., NeurIPS 2023), ReAct (Yao et al., ICLR 2023), METR 2025 (recovery capability dominates agentic task success), Reflexion (Shinn et al., 2023).
-
----
 
 ## RLM — Recursive Context Decomposition
 
-Process codebases and documents far beyond any model's context window:
+For a bounded batch, specify the parallelism limit explicitly:
 
-```bash
-# Query: fan-out across files, gather results
-/rlm-query "src/**/*.ts" "Extract all exported interfaces" --model haiku
-
-# Batch: parallel processing with configurable concurrency
+```text
 /rlm-batch "src/components/*.tsx" "Add TypeScript types" --max-parallel 4
-
-# Status: monitor decomposition progress
-/rlm-status
 ```
 
-The RLM addon decomposes large inputs into chunks, delegates each to a sub-agent, and synthesizes results. Processes 10M+ tokens through recursive delegation.
+RLM helps with sources that are too large to fit comfortably in one model context. It prepares files into traceable
+chunks, fans a query out across those chunks, and merges results with links back to the source material.
 
-Research foundation: Recursive Language Models (Zhang, Kraska, Khattab — MIT CSAIL, 2026).
+```mermaid
+flowchart LR
+    A[Source files] --> B[rlm-prep]
+    B --> C[manifest.json]
+    C --> D[rlm-search / fanout]
+    D --> E[ranked findings]
+    E --> F[source-linked answer]
+    C --> G[rlm-cache]
+```
 
----
+Use `rlm-prep` when you want to prepare a file tree once and reuse it for several searches.
+
+```bash
+# Prepare source or docs for recursive search
+aiwg rlm-prep src/ --strategy semantic-boundary --size 200 --overlap 20
+aiwg rlm-prep docs/ --strategy fixed-count --size 150
+
+# Search the prepared source
+aiwg rlm-search "Where is provider reload status calculated?" \
+  --source .aiwg/rlm-prep/<source-hash>/manifest.json \
+  --depth 3 \
+  --max-parallel 4 \
+  --budget 50000
+
+# Run a direct fanout query over a manifest or chunks directory
+aiwg fanout "Summarize every stale quickstart command" \
+  --chunks .aiwg/rlm-prep/<source-hash>/manifest.json \
+  --parallel 4
+
+# Inspect cache state
+aiwg rlm-status
+aiwg rlm-cache stats
+```
+
+Use `chunk` for a single-file manual workflow:
+
+```bash
+aiwg chunk README.md --size 200 --overlap 20 --format json --output .aiwg/chunks/readme
+```
+
+RLM is a retrieval and decomposition workflow, not a magic context override. Quality depends on chunk boundaries,
+source coverage, prompt specificity, model capability, and budget. For high-stakes review, ask for quoted source
+links, inspect the cited chunks, and rerun targeted searches for disputed claims.
 
 ## Research Foundations
 
-AIWG's architecture is grounded in peer-reviewed research across cognitive science, multi-agent systems, software engineering, and AI safety. Reference summaries live in `docs/references/` (REF-NNN entries), ordered highest to lowest GRADE evidence quality within each category.
+AIWG draws design ideas from research across cognitive science, multi-agent
+systems, software engineering, retrieval, provenance, and AI safety. The
+results cited below belong to the referenced papers or systems; they are not
+AIWG performance guarantees. Reference summaries live in `docs/references/`
+(REF-NNN entries). The bibliography groups related design topics.
 
 ### Cognitive Foundations
 
@@ -1707,22 +2143,31 @@ AIWG's architecture is grounded in peer-reviewed research across cognitive scien
 ### Multi-Agent Systems & Orchestration
 
 - Jacobs, R.A. et al. (1991). [Adaptive Mixtures of Local Experts](https://doi.org/10.1162/neco.1991.3.1.79). *Neural Computation*, 3(1), 79–87. (Mixture-of-Experts foundation)
-- Hong, S. et al. (2024). [MetaGPT: Meta Programming for a Multi-Agent Collaborative Framework](https://arxiv.org/abs/2308.00352). *ICLR 2024*. (85.9% HumanEval, SOP-based orchestration)
+- Hong, S. et al. (2024). [MetaGPT: Meta Programming for a Multi-Agent Collaborative
+  Framework](https://arxiv.org/abs/2308.00352). *ICLR 2024*.
 - Qian, C. et al. (2024). [ChatDev: Communicative Agents for Software Development](https://arxiv.org/abs/2307.07924). *ACL 2024*.
 - Shen, Y. et al. (2023). [HuggingGPT: Solving AI Tasks with ChatGPT and its Friends in HuggingFace](https://arxiv.org/abs/2303.17580). *NeurIPS 2023*.
 - Tao, W. et al. (2024). [MAGIS: LLM-Based Multi-Agent Framework for GitHub Issue Resolution](https://arxiv.org/abs/2403.17927).
-- Zhang, J. et al. (2025). [AFlow: Automating Agentic Workflow Generation](https://arxiv.org/abs/2410.10762). *ICLR 2025 Oral*. (5.7% avg gain over best manual methods)
+- Zhang, J. et al. (2025). [AFlow: Automating Agentic Workflow Generation](https://arxiv.org/abs/2410.10762). *ICLR
+  2025 Oral*.
 - Wu, Q. et al. (2023). [AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation](https://arxiv.org/abs/2308.08155). (Conversational multi-agent framework)
 - Yu, C. et al. (2025). [A Survey on Agent Workflow — Status and Future](https://arxiv.org/abs/2508.01186). (24 systems, 11 metrics)
-- Lodha, D. et al. (2026). [MCP-Diag: A Deterministic, Protocol-Driven Architecture for AI-Native Network Diagnostics](https://arxiv.org/abs/2601.22633). *COMSNETS 2026*. (First production MCP system)
-- Yu, G. (2026). [AdaptOrch: Adaptive Orchestration for Multi-Agent LLM Systems Through Topology-Aware Task Planning](https://arxiv.org/abs/2502.09340). (12–23% improvement across 4 topologies)
+- Lodha, D. et al. (2026). [MCP-Diag: A Deterministic, Protocol-Driven Architecture for AI-Native Network
+  Diagnostics](https://arxiv.org/abs/2601.22633). *COMSNETS 2026*.
+- Yu, G. (2026). [AdaptOrch: Adaptive Orchestration for Multi-Agent LLM Systems Through Topology-Aware Task Planning](https://arxiv.org/abs/2502.09340).
 - Gerred (2025). [Multi-Agent Orchestration](https://gerred.github.io/building-an-agentic-system/second-edition/part-iv-advanced-patterns/chapter-10-multi-agent-orchestration.html). Tool isolation, resource boundaries, observable coordination.
 - Falconer, S. (2025). [Event-Driven Multi-Agent Systems](https://www.confluent.io/blog/event-driven-multi-agent-systems/). Confluent. 4 Kafka orchestration patterns.
 - Mario, M. (2025). [Multi-Agent System Patterns: A Unified Guide to Designing Agentic Architectures](https://medium.com/@mjgmario/multi-agent-system-patterns-a-unified-guide-to-designing-agentic-architectures-04bb31ab9c41). 4-dimensional framework.
-- Runkle, S. (2026). [Choosing the Right Multi-Agent Architecture](https://www.blog.langchain.com/choosing-the-right-multi-agent-architecture/). LangChain. Subagents, skills, handoffs, 90.2% improvement stat.
-- Towards Data Science (2025). [Why Your Multi-Agent System Is Failing: Escaping the 17x Error Trap](https://towardsdatascience.com/why-your-multi-agent-system-is-failing-escaping-the-17x-error-trap-of-the-bag-of-agents/). 17.2x error amplification, 4-agent coordination threshold.
+- Runkle, S. (2026). [Choosing the Right Multi-Agent
+  Architecture](https://www.blog.langchain.com/choosing-the-right-multi-agent-architecture/). LangChain. Subagents,
+  skills, and handoffs.
+- Towards Data Science (2025). [Why Your Multi-Agent System Is Failing: Escaping the 17x Error
+  Trap](https://towardsdatascience.com/why-your-multi-agent-system-is-failing-escaping-the-17x-error-trap-of-the-bag-of-agents/).
+  Coordination failure analysis.
 - NexAI Tech (2025). [Multi-AI Agent Architecture Patterns for Scale](https://nexaitech.com/multi-ai-agent-architecutre-patterns-for-scale/). Enterprise 5-layer architecture, 3 orchestration patterns.
-- Wexford, E. (2026). [How to Build Multi-Agent Systems: Complete 2026 Guide](https://dev.to/eira-wexford/how-to-build-multi-agent-systems-complete-2026-guide-1io6). DEV Community. 3–7 agents optimal sizing.
+- Wexford, E. (2026). [How to Build Multi-Agent Systems: Complete 2026
+  Guide](https://dev.to/eira-wexford/how-to-build-multi-agent-systems-complete-2026-guide-1io6). DEV Community.
+  Multi-agent design guidance.
 
 ### Reasoning & Planning
 
@@ -1732,11 +2177,13 @@ AIWG's architecture is grounded in peer-reviewed research across cognitive scien
 - Yao, S. et al. (2023). [Tree of Thoughts: Deliberate Problem Solving with Large Language Models](https://arxiv.org/abs/2305.10601). *NeurIPS 2023*.
 - Zhou, A. et al. (2024). [Language Agent Tree Search Unifies Reasoning, Acting, and Planning in Language Models](https://arxiv.org/abs/2310.04406). *ICML 2024*.
 - Kojima, T. et al. (2022). [Large Language Models are Zero-Shot Reasoners](https://arxiv.org/abs/2205.11916). *NeurIPS 2022*. ("Let's think step by step")
-- Liu, Z. et al. (2026). [Exploratory Memory-Augmented LLM Agent via Hybrid On- and Off-Policy Optimization (EMPO²)](https://arxiv.org/abs/2602.23008). *ICLR 2026*. (128.6% over GRPO on ScienceWorld)
+- Liu, Z. et al. (2026). [Exploratory Memory-Augmented LLM Agent via Hybrid On- and Off-Policy Optimization
+  (EMPO²)](https://arxiv.org/abs/2602.23008). *ICLR 2026*.
 
 ### Self-Correction & Iterative Refinement
 
-- Madaan, A. et al. (2023). [Self-Refine: Iterative Refinement with Self-Feedback](https://arxiv.org/abs/2303.17651). *NeurIPS 2023*. (+4.2% HumanEval, −63% revision cost)
+- Madaan, A. et al. (2023). [Self-Refine: Iterative Refinement with Self-Feedback](https://arxiv.org/abs/2303.17651).
+  *NeurIPS 2023*.
 - Shinn, N. et al. (2023). [Reflexion: Language Agents with Verbal Reinforcement Learning](https://arxiv.org/abs/2303.11366). *NeurIPS 2023*.
 
 ### Stage-Gate, SDLC & Traceability
@@ -1748,45 +2195,49 @@ AIWG's architecture is grounded in peer-reviewed research across cognitive scien
 ### Software Engineering & Agent-Computer Interface
 
 - Jimenez, C.E. et al. (2024). [SWE-bench: Can Language Models Resolve Real-world GitHub Issues?](https://www.swebench.com). *ICLR 2024*.
-- Wang, X. et al. (2024). [Executable Code Actions Elicit Better LLM Agents (CodeAct)](https://arxiv.org/abs/2402.01030). *ICML 2024*. (Up to 20% higher success rate)
-- Yang, J. et al. (2024). [SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering](https://arxiv.org/abs/2405.15793). *NeurIPS 2024*. (12.47% SWE-bench)
-- Laurent, A. (2025). [A Comparison of AI Code Assistants for Large Codebases](https://intuitionlabs.ai/articles/ai-code-assistants-large-codebases). IntuitionLabs. (62% AI code contains flaws)
-- Augment Code (2025). [AI Coding Assistants for Large Codebases: A Complete Guide](https://www.augmentcode.com/tools/ai-coding-assistants-for-large-codebases-a-complete-guide). (73% compile locally but violate patterns)
+- Wang, X. et al. (2024). [Executable Code Actions Elicit Better LLM Agents
+  (CodeAct)](https://arxiv.org/abs/2402.01030). *ICML 2024*.
+- Yang, J. et al. (2024). [SWE-agent: Agent-Computer Interfaces Enable Automated Software
+  Engineering](https://arxiv.org/abs/2405.15793). *NeurIPS 2024*.
+- Laurent, A. (2025). [A Comparison of AI Code Assistants for Large
+  Codebases](https://intuitionlabs.ai/articles/ai-code-assistants-large-codebases). IntuitionLabs.
+- Augment Code (2025). [AI Coding Assistants for Large Codebases: A Complete Guide](https://www.augmentcode.com/tools/ai-coding-assistants-for-large-codebases-a-complete-guide).
 - AlgoMaster (2025). [How to Use AI Effectively in Large Codebases](https://blog.algomaster.io/p/using-ai-effectively-in-large-codebases). Retrieval as bottleneck framing.
 
 ### Context Engineering & Memory
 
 - Liu, N.F. et al. (2024). [Lost in the Middle: How Language Models Use Long Contexts](https://arxiv.org/abs/2307.03172). *TACL* 12, 157–173. doi:10.1162/tacl_a_00638
 - Dai, Y. et al. (2025). [Pretraining Context Compressor for Large Language Models with Embedding-Based Memory](https://aclanthology.org/2025.acl-long.1394.pdf). *ACL 2025*.
-- Kang, M. et al. (2025). [ACON: Optimizing Context Compression for Long-Horizon LLM Agents](https://arxiv.org/abs/2510.00615). (26–54% peak token reduction, >95% accuracy preserved)
-- Liu, F. & Qiu, H. (2025). [Context Cascade Compression (C3): Exploring the Upper Limits of Text Compression](https://arxiv.org/abs/2511.15244). (98% precision at 20x compression)
+- Kang, M. et al. (2025). [ACON: Optimizing Context Compression for Long-Horizon LLM Agents](https://arxiv.org/abs/2510.00615).
+- Liu, F. & Qiu, H. (2025). [Context Cascade Compression (C3): Exploring the Upper Limits of Text Compression](https://arxiv.org/abs/2511.15244).
 - Vasilopoulos, A. (2026). [Codified Context: Infrastructure for AI Agents in a Complex Codebase](https://arxiv.org/abs/2602.20478). (Three-tier context infrastructure: constitution + 19 agents + 34-doc KB)
 - Ostby, D.L. (2025). [Stingy Context: Compressing Code Context for Cost-Effective AI Development Assistance](https://arxiv.org/abs/2512.15504). (TREEFRAG, 18:1 compression ratio)
 - Anthropic Applied AI Team (2026). [Effective Context Engineering for AI Agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents). Anthropic Engineering Blog.
-- Huang, J.Y. et al. (2026). [Do LLMs Benefit From Their Own Words?](https://arxiv.org/abs/2602.24287) (36.4% of multi-turn prompts self-contained; up to 10x context reduction)
+- Huang, J.Y. et al. (2026). [Do LLMs Benefit From Their Own Words?](https://arxiv.org/abs/2602.24287)
 - Böckeler, B. (2026). [Context Engineering for Coding Agents](https://martinfowler.com/articles/exploring-gen-ai/context-engineering-coding-agents.html). Martin Fowler's Blog. Two-category framework.
-- Haseeb, M. (2025). [Context Engineering for Multi-Agent LLM Code Assistants](https://arxiv.org/abs/2508.08322). (80% vs 40% single-shot success)
-- Verma, N. (2026). [Focus Agent: LLM Agent with Active Context Compression for SWE-Bench](https://arxiv.org/abs/2501.09067). (22.7% token reduction via consolidate/withdraw)
+- Haseeb, M. (2025). [Context Engineering for Multi-Agent LLM Code Assistants](https://arxiv.org/abs/2508.08322).
+- Verma, N. (2026). [Focus Agent: LLM Agent with Active Context Compression for SWE-Bench](https://arxiv.org/abs/2501.09067).
 - Zylos Research (2026). [Long-Running AI Agents and Task Decomposition](https://zylos.ai/research/2026-01-16-long-running-ai-agents). (35-min degradation threshold, Planner-Worker model)
-- Zylos Research (2026). [LLM Context Window Management and Long-Context Strategies](https://zylos.ai/research/2026-01-19-llm-context-management). (Lost-in-Middle persists, TTT-E2E 35× speedup)
+- Zylos Research (2026). [LLM Context Window Management and Long-Context Strategies](https://zylos.ai/research/2026-01-19-llm-context-management).
 
 ### Agent Memory & Knowledge Systems
 
 - Laird, J.E. et al. (1987). [SOAR: An Architecture for General Intelligence](https://doi.org/10.1016/0004-3702(87)90050-6). *Artificial Intelligence*, 33(1), 1–64.
 - Anderson, J.R. et al. (2004). [An Integrated Theory of the Mind (ACT-R)](https://doi.org/10.1037/0033-295X.111.4.1036). *Psychological Review*, 111(4), 1036–1060.
 - Park, J.S. et al. (2023). [Generative Agents: Interactive Simulacra of Human Behavior](https://arxiv.org/abs/2304.03442). *UIST 2023*. doi:10.1145/3586183.3606763
-- Xu, W. et al. (2025). [A-MEM: Agentic Memory for LLM Agents](https://arxiv.org/abs/2502.12110). (Zettelkasten-inspired, 85–93% token reduction)
+- Xu, W. et al. (2025). [A-MEM: Agentic Memory for LLM Agents](https://arxiv.org/abs/2502.12110).
 - Hu, Y. et al. (2025). [Memory in the Age of AI Agents: A Survey](https://arxiv.org/abs/2512.13564). (Surveys 100+ implementations, forms-functions-dynamics framework)
-- Rezazadeh, A. et al. (2025). [Collaborative Memory: Multi-User Memory Sharing in LLM Agents with Dynamic Access Control](https://arxiv.org/abs/2505.18279). (61% resource reduction)
+- Rezazadeh, A. et al. (2025). [Collaborative Memory: Multi-User Memory Sharing in LLM Agents with Dynamic Access Control](https://arxiv.org/abs/2505.18279).
 - Yuen, S. et al. (2025). [Intrinsic Memory Agents: Heterogeneous Multi-Agent LLM Systems through Structured Contextual Memory](https://arxiv.org/abs/2508.08997). Role-aligned heterogeneous memory.
 - Graves, A., Wayne, G. & Danihelka, I. (2014). [Neural Turing Machines](https://arxiv.org/abs/1410.5401). External memory architectures.
 - Packer, C. et al. (2023). [MemGPT: Towards LLMs as Operating Systems](https://arxiv.org/abs/2310.08560). OS-inspired virtual context paging.
 - Yu, Z. et al. (2026). [Multi-Agent Memory from a Computer Architecture Perspective](https://arxiv.org/abs/2603.10062). *Architecture 2.0 '26*. Three-layer I/O-cache-memory hierarchy.
-- Chhikara, P. et al. (2025). [Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory](https://arxiv.org/abs/2504.19413). (26% accuracy gain, 91% latency reduction)
+- Chhikara, P. et al. (2025). [Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory](https://arxiv.org/abs/2504.19413).
 
 ### Recursive Context Decomposition
 
-- Zhang, A.L., Kraska, T. & Khattab, O. (2026). [Recursive Language Models](https://arxiv.org/abs/2512.24601). *arXiv:2512.24601*. MIT CSAIL. (10M+ token processing, up to 3x cheaper than summarization)
+- Zhang, A.L., Kraska, T. & Khattab, O. (2026). [Recursive Language Models](https://arxiv.org/abs/2512.24601).
+  *arXiv:2512.24601*. MIT CSAIL.
 
 ### Provenance, Reproducibility & Research Management
 
@@ -1794,8 +2245,8 @@ AIWG's architecture is grounded in peer-reviewed research across cognitive scien
 - W3C (2013). [PROV-DM: The PROV Data Model](https://www.w3.org/TR/prov-dm/). W3C Recommendation.
 - CCSDS (2024). [Reference Model for an Open Archival Information System (OAIS)](https://public.ccsds.org/Pubs/650x0m2.pdf). ISO 14721. (Digital preservation lifecycle)
 - GRADE Working Group (2004–present). [GRADE Handbook](https://www.gradeworkinggroup.org/). Evidence quality assessment. Adopted by WHO, Cochrane, NICE, and 100+ organizations.
-- Schmidgall, S. et al. (2025). [Agent Laboratory: Using LLM Agents as Research Assistants](https://arxiv.org/abs/2501.04227). (84% cost reduction)
-- Sureshkumar, V. et al. (2026). [R-LAM: Towards Reproducibility in Large Action Model Workflows](https://arxiv.org/abs/2601.09749). (47% of workflows non-reproducible without constraints)
+- Schmidgall, S. et al. (2025). [Agent Laboratory: Using LLM Agents as Research Assistants](https://arxiv.org/abs/2501.04227).
+- Sureshkumar, V. et al. (2026). [R-LAM: Towards Reproducibility in Large Action Model Workflows](https://arxiv.org/abs/2601.09749).
 - ServiceNow Research (2025). LitLLM for Scientific Literature Reviews. RAG-based literature review, no hallucination approach.
 
 ### AI Safety & Failure Modes
@@ -1835,81 +2286,111 @@ AIWG's architecture is grounded in peer-reviewed research across cognitive scien
 
 ### Constrained Generation & Output Validation
 
-- Beurer-Kellner, L., Fischer, M. & Vechev, M. (2023). [Prompting Is Programming: A Query Language for Large Language Models (LMQL)](https://arxiv.org/abs/2212.06094). *PLDI 2023*. doi:10.1145/3591300 (26–85% token reduction)
-- Willard, B.T. & Louf, R. (2023). [Efficient Guided Generation for Large Language Models (Outlines)](https://arxiv.org/abs/2307.09702). (0% parse failures by construction)
-- Lhoest, Q. & Turuta, M. (2024). [Structured Generation with Outlines](https://huggingface.co/blog/outlines-structured-generation). Hugging Face Blog. (1.5–3x speedup)
+- Beurer-Kellner, L., Fischer, M. & Vechev, M. (2023). [Prompting Is Programming: A Query Language for Large Language
+  Models (LMQL)](https://arxiv.org/abs/2212.06094). *PLDI 2023*. doi:10.1145/3591300
+- Willard, B.T. & Louf, R. (2023). [Efficient Guided Generation for Large Language Models (Outlines)](https://arxiv.org/abs/2307.09702).
+- Lhoest, Q. & Turuta, M. (2024). [Structured Generation with
+  Outlines](https://huggingface.co/blog/outlines-structured-generation). Hugging Face Blog.
 - Gerganov, G. et al. (2024). [Grammar-Based Sampling (GBNF) — llama.cpp](https://github.com/ggerganov/llama.cpp/blob/master/grammars/README.md). Context-free grammar constrained sampling.
 
 ### LLM Serving & Local Deployment
 
-- Yu, G. et al. (2022). [Orca: A Distributed Serving System for Transformer-Based Generative Models](https://www.usenix.org/conference/osdi22/presentation/yu). *OSDI '22*. (36.9x throughput improvement)
-- Kwon, W. et al. (2023). [Efficient Memory Management for Large Language Model Serving with PagedAttention](https://arxiv.org/abs/2309.06180). *SOSP '23*. UC Berkeley. (2–4x throughput vs HuggingFace)
+- Yu, G. et al. (2022). [Orca: A Distributed Serving System for Transformer-Based Generative
+  Models](https://www.usenix.org/conference/osdi22/presentation/yu). *OSDI '22*.
+- Kwon, W. et al. (2023). [Efficient Memory Management for Large Language Model Serving with
+  PagedAttention](https://arxiv.org/abs/2309.06180). *SOSP '23*. UC Berkeley.
 - Ollama Team (2024). [Ollama Concurrent Requests and Performance FAQ](https://github.com/ollama/ollama/blob/main/docs/faq.md). `OLLAMA_NUM_PARALLEL` configuration guidance.
 
 ### MCP & Agentic Standards
 
 - Agentic AI Foundation / Linux Foundation (2025). [Model Context Protocol Specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25). (Tool integration protocol)
 
-Full research background, citations, and methodology: [docs/research/](docs/research/)
-
 ---
 
 ## Why AIWG
 
+AIWG is for people who already use AI assistants and want the work to survive
+past one conversation. It gives the assistant project-readable instructions,
+specialist roles, repeatable workflows, and a place to save plans, findings,
+and decisions.
+
 ### For Individual Developers
 
-**Turn your AI coding assistant from a stateless autocomplete into a project-aware development partner.** Without AIWG, every time your AI assistant restarts you lose all context. With AIWG, the `.aiwg/` directory maintains requirements, architecture decisions, test strategies, and project history across sessions. The agent loop means you can hand off complex multi-step tasks ("migrate this module to TypeScript") and walk away — the agent iterates until completion or escalates when stuck.
+Use AIWG when a coding task needs project context, not just a one-off answer.
+The `.aiwg/` directory can hold requirements, architecture notes, test plans,
+reviews, and task reports. Later sessions can read those artifacts before
+changing code. Agent-loop workflows can continue a bounded task until the
+named verification check passes, a limit is reached, or human input is needed.
 
 ### For Engineering Teams
 
-**Standardize how your team works with AI across 15 provider integrations.** Whether your team uses Antigravity, Claude Code, Codex, Copilot, Cursor, DeepSeek Harness, Pi, or Warp, everyone can receive the same source workflows adapted to the provider's supported surfaces. The 35 enforcement rules prevent common AI mistakes: deleting tests to make them pass, fabricating citations, hard-coding tokens, or silently dropping features. Human-in-the-loop gates at phase transitions ensure no AI output reaches production without human review.
+Use AIWG to keep shared instructions and review artifacts with the repository.
+Teams can deploy the same source workflows to the provider surfaces they use,
+then verify each provider handoff separately. Human gates and review steps help
+make important changes visible before they move forward; they do not replace
+human code review, testing, security review, or release approval.
 
 ### For Platform Engineers
 
-**Deploy consistent AI-augmented workflows across your organization.** AIWG's extension system lets you create custom agents, commands, and skills specific to your domain, then deploy them to any supported platform. The scaffolding commands (`aiwg add-agent`, `aiwg scaffold-addon`, `aiwg scaffold-framework`) make it easy to build and distribute organizational capabilities.
+Use AIWG when you need reusable AI workflows across projects or teams. The
+extension system supports project-local rules, skills, agents, addons, and
+frameworks. Scaffolding commands help create those components, and discovery
+helps agents find the resulting capabilities without requiring users to
+memorize the catalog.
 
 ### For Researchers
 
-**Standards-aligned implementation of multi-agent systems with full provenance.** AIWG operationalizes FAIR Principles (G20, EU, NIH endorsement), W3C PROV for provenance tracking, and GRADE methodology for evidence quality. The research framework manages paper discovery, citation integrity, and archival lifecycles. All 138+ research paper citations are grounded in verified sources — no hallucinated references.
+Use AIWG to organize source notes, citations, provenance records, and research
+artifacts. The research framework uses ideas from FAIR, W3C PROV, GRADE, and
+OAIS to make research work easier to inspect and maintain. Those alignments are
+documentation and workflow structures, not a certification that every generated
+note is correct.
 
 ### For Security Teams
 
-**Forensics-grade investigation workflows and security review automation.** The Forensics Complete framework provides 13 specialized agents for digital forensics and incident response, with NIST SP 800-86 evidence handling, MITRE ATT&CK mapping, Sigma rule hunting, and STIX 2.1 IOC formatting. Security review cycles integrate into the SDLC with automated threat modeling and vulnerability management.
+Use AIWG for structured security reviews, incident investigation notes, and
+forensics-oriented workflows. The forensics framework includes target
+profiling, triage, acquisition, timeline, IOC, and reporting workflows with
+references to NIST SP 800-86, MITRE ATT&CK, Sigma, and STIX. Investigations
+still require authorized access, evidence handling discipline, and human
+review.
 
 ---
 
 ## AIWG vs Manual AI Workflows
 
-| Capability | Without AIWG | With AIWG |
-|-----------|-------------|-----------|
-| **Context persistence** | Lost on every restart | `.aiwg/` survives across sessions |
-| **Multi-agent coordination** | Manual prompt switching | Orchestrated parallel reviews with synthesis |
-| **Quality enforcement** | Hope for the best | 35 rules auto-enforced (anti-laziness, token security, citation integrity) |
-| **Error recovery** | Start over | Agent loop iterates with learned debug memory |
-| **Long-running tasks** | Babysit the terminal | External agent loop runs 6-8+ hours crash-resilient |
-| **Traceability** | Grep and hope | @-mention system with bidirectional linking |
-| **Reproducibility** | Non-deterministic | Strict mode (temperature=0), checkpoints, validation |
-| **Platform switching** | Rewrite all prompts | `--provider copilot` deploys identical workflows |
-| **Citation integrity** | AI may hallucinate | Retrieval-first architecture, GRADE-assessed sources only |
-| **Phase management** | Ad-hoc | Stage-gate with human approval at transitions |
+| Task | Manual AI workflow | AIWG mechanism | Limit to keep in view |
+|------|--------------------|----------------|-----------------------|
+| Carry context into another session | Paste summaries, links, and decisions again | Save project artifacts under `.aiwg/` and route later work through them | The assistant still has to read and interpret the right artifacts |
+| Coordinate review perspectives | Ask separate prompts and merge notes by hand | Use specialist roles and review workflows that produce a combined artifact | Reviewers can share wrong assumptions if the input context is wrong |
+| Keep task scope visible | Track instructions in chat history | Use workflows, rules, and saved task outputs with explicit scope | Prompt-level rules are not hard technical enforcement by themselves |
+| Recover from a failed attempt | Restart from the last visible message | Use loop state, checkpoints, reports, and bounded retries where configured | Recovery can still stop on missing tools, unclear goals, or failing tests |
+| Work across AI tools | Rewrite prompts for each provider | Deploy provider-specific files from the same source workflows | Provider capabilities, permissions, and reload behavior differ |
+| Trace decisions to work products | Search notes manually | Use artifacts, mentions, indexes, and provenance records | Links can drift and need validation |
+| Review citations and research notes | Trust generated citations or manually inspect each one | Store source records, notes, citations, and quality assessments together | Source-grounding reduces risk; it does not prove every claim is correct |
+| Move through project phases | Keep phase criteria in a checklist | Use stage-gate workflows with human approval points | Gates reflect configured criteria and available evidence |
 
 ---
 
-## Standards & Compliance
+## Standards Alignment
 
-| Standard | How AIWG Uses It |
-|----------|-----------------|
-| **FAIR Principles** (G20, EU, NIH) | Findable, Accessible, Interoperable, Reusable artifact management |
-| **W3C PROV** | Provenance tracking for all generated artifacts |
-| **GRADE** (WHO, Cochrane, NICE) | Evidence quality assessment for research citations |
-| **OAIS** (ISO 14721) | Archival lifecycle management for research corpus |
-| **NIST SP 800-86** | Digital forensics evidence handling |
-| **MITRE ATT&CK** | Threat technique mapping in forensics framework |
-| **STIX 2.1** | Indicator of Compromise formatting |
-| **Sigma Rules** | Threat detection rule format |
-| **IEEE 830** | Requirements specification traceability |
-| **MCP** (Linux Foundation) | Model Context Protocol for tool integration |
-| **CalVer** | Calendar versioning (YYYY.M.PATCH) |
+AIWG uses standards and established methods as design references. This section
+describes the intended mapping; it is not a compliance guarantee, audit
+attestation, or substitute for domain-specific review.
+
+| Standard or method | How AIWG uses it |
+|--------------------|------------------|
+| **FAIR Principles** | Artifact and research-corpus structure that favors findable, accessible, interoperable, and reusable records |
+| **W3C PROV** | Provenance records for selected generated artifacts and derived outputs |
+| **GRADE** | Evidence-quality language and review patterns for research citations |
+| **OAIS** (ISO 14721) | Archival lifecycle concepts for research and media corpus handling |
+| **NIST SP 800-86** | Digital-forensics evidence-handling references in forensics workflows |
+| **MITRE ATT&CK** | Threat-technique mapping references for security and forensics analysis |
+| **STIX 2.1** | Indicator-of-compromise formatting references |
+| **Sigma Rules** | Threat-detection rule format references |
+| **IEEE 830** | Requirements-specification and traceability influence for SDLC artifacts |
+| **MCP** | Model Context Protocol integration for tool-based AI workflows |
+| **CalVer** | Calendar versioning format for AIWG releases |
 
 ---
 
@@ -1917,25 +2398,27 @@ Full research background, citations, and methodology: [docs/research/](docs/rese
 
 ### Getting Started
 
-- **[Quick Start Guide](docs/quickstart.md)** — Install and deploy in minutes
-- **[Prerequisites](docs/getting-started/prerequisites.md)** — Node.js, AI platforms, OS support
+- **[Quick Start Guide](docs/quickstart.md)** — Connect a project and get a saved first result
+- **[Install, Connect, and Verify](docs/getting-started/install-connect-verify.md)** — Canonical first-time setup and
+  repair path
+- **[Prerequisites](docs/getting-started/prerequisites.md)** — Node.js, AI platforms, and operating-system notes
 - **[Agent and Operator Reference](docs/agents/README.md)** — deterministic
   commands, flags, outputs, and recovery contracts for agents and advanced
   operators
 
 ### Customize
 
-- **[Make AIWG Yours](docs/customization/README.md)** — Personal rules, agents, and skills that go live immediately
-- **[Customization Examples](docs/customization/examples.md)** — 5 concrete examples of what people actually customize
+- **[Make AIWG Yours](docs/customization/README.md)** — Project-local rules, agents, and skills
+- **[Customization Examples](docs/customization/examples.md)** — Concrete examples of what teams customize
 - **[Fork Workflow](docs/customization/fork-workflow.md)** — Upstream sync, contributing back, the ownership model
 
 ### By Audience
 
 **Practitioners:**
 
-- [Quick Start Guide](docs/quickstart.md) — Hands-on workflows
-- [Agent Loop Guide](docs/ralph-guide.md) — Iterative execution with crash recovery
-- [Platform Guides](docs/integrations/) — 5-10 minute setup per platform
+- [Quick Start Guide](docs/quickstart.md) — Hands-on first workflow
+- [Agent Loop Guide](docs/ralph-guide.md) — Iterative execution with explicit completion checks
+- [Platform Guides](docs/integrations/) — Provider-specific setup and handoff details
 
 **Technical Leaders:**
 
@@ -1947,27 +2430,36 @@ Full research background, citations, and methodology: [docs/research/](docs/rese
 
 - [Research Background](docs/research/) — Literature review and citations
 - [Glossary](docs/research/glossary.md) — Professional terminology mapping
-- [Production-Grade Guide](docs/production-grade-guide.md) — Failure mode mitigation
+- [Production-Grade Guide](docs/frameworks/sdlc-complete/production-grade-guide.md) — Failure mode mitigation patterns
 
 ### Platform Guides
 
-- **[Claude Code](docs/integrations/claude-code-quickstart.md)** — 5-10 min setup
-- **[Warp Terminal](docs/integrations/warp-terminal-quickstart.md)** — 3-5 min setup
-- **[Factory AI](docs/integrations/factory-quickstart.md)** — 5-10 min setup
-- **[Cursor](docs/integrations/cursor-quickstart.md)** — 5-10 min setup
-- **[All Integrations](docs/integrations/)**
+- **[Claude Code](docs/integrations/claude-code-quickstart.md)** — Claude Code setup and handoff
+- **[OpenAI Codex](docs/integrations/codex-quickstart.md)** — Codex setup and handoff
+- **[GitHub Copilot](docs/integrations/copilot-quickstart.md)** — Copilot setup and handoff
+- **[Warp Terminal](docs/integrations/warp-terminal-quickstart.md)** — Warp setup and handoff
+- **[Factory AI](docs/integrations/factory-quickstart.md)** — Factory setup and handoff
+- **[Cursor](docs/integrations/cursor-quickstart.md)** — Cursor setup and handoff
+- **[All Integrations](docs/integrations/)** — Provider guide directory
 
 ### Framework Documentation
 
-- **[SDLC Framework](agentic/code/frameworks/sdlc-complete/README.md)** — 98 agents, phase workflows, quality gates
+- **[SDLC Framework](agentic/code/frameworks/sdlc-complete/README.md)** — Phase workflows, quality gates, and
+  development artifacts
 - **[Forensics Complete](agentic/code/frameworks/forensics-complete/README.md)** — DFIR investigation workflows
-- **[Marketing Kit](agentic/code/frameworks/media-marketing-kit/README.md)** — 37 agents, campaign lifecycle
+- **[Marketing Kit](agentic/code/frameworks/media-marketing-kit/README.md)** — Campaign lifecycle, content, brand, and
+  review workflows
 - **[Media Curator](agentic/code/frameworks/media-curator/README.md)** — Media archive management
-- **[Research Complete](agentic/code/frameworks/research-complete/README.md)** — 8-stage research pipeline
+- **[Research Complete](agentic/code/frameworks/research-complete/README.md)** — Research pipeline, source notes,
+  citation, and archive workflows
+- **[Knowledge Base](agentic/code/frameworks/knowledge-base/README.md)** — Source ingest, wiki pages, and corpus health
+- **[Ops Complete](agentic/code/frameworks/ops-complete/README.md)** — Runbooks, infrastructure reviews, and
+  operational workflows
 
 ### Extension System
 
-AIWG's unified extension system enables dynamic discovery, semantic search, and cross-platform deployment:
+AIWG's extension system supports discovery, semantic search, and
+cross-platform deployment for project-local and packaged capabilities:
 
 - **[Extension System Overview](docs/extensions/overview.md)** — Architecture and capabilities
 - **[Creating Extensions](docs/extensions/creating-extensions.md)** — Build custom agents, commands, skills
@@ -1976,26 +2468,28 @@ AIWG's unified extension system enables dynamic discovery, semantic search, and 
 ### Advanced Topics
 
 - **[Agent Loop](docs/ralph-guide.md)** — Iterative task execution with crash recovery
-- **[RLM Addon](agentic/code/addons/rlm/README.md)** — Recursive context decomposition for 10M+ token processing
-- **[Daemon Mode](docs/daemon-guide.md)** — Background file watching, cron scheduling, IPC
-- **[Messaging Integration](docs/messaging-guide.md)** — Bidirectional Slack, Discord, and Telegram bots
-- **[MCP Server](docs/mcp/)** — Model Context Protocol integration
-- **[Agent Design Bible](docs/AGENT-DESIGN.md)** — 10 Golden Rules for agent creation
+- **[RLM Addon](agentic/code/addons/rlm/README.md)** — Recursive context decomposition
+- **[External Automation](docs/getting-started/daemon-and-automation.md)** — Current automation boundaries and
+  external-job contracts
+- **[MCP Server](docs/mcp/README.md)** — Model Context Protocol integration
+- **[Agent Design](docs/frameworks/sdlc-complete/agent-design.md)** — Agent creation guidance
 - **[YAML Metalanguage](agentic/code/frameworks/sdlc-complete/schemas/metalanguage/)** — Declarative workflow schemas
+- **[Usage Notes](docs/usage-notes.md)** — Rate-limit and usage guidance
 
 ---
 
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the
+project guidelines.
 
 **Quick contributions:**
 
-- Found an AI pattern? [Open an issue](https://github.com/jmagly/aiwg/issues/new)
-- Have a better rewrite? Submit a PR to `examples/`
-- Want to add an agent? Use `aiwg add-agent` or see `docs/development/agent-template.md`
-- Want to add a skill? Use `aiwg add-skill`
-- Want to create an addon? Use `aiwg scaffold-addon`
+- Found a bug or confusing workflow? [Open an issue](https://github.com/jmagly/aiwg/issues/new).
+- Have a documentation improvement? Submit a PR with the source file and the behavior it clarifies.
+- Want to add an agent? Use `aiwg add-agent` or see `docs/development/agent-template.md`.
+- Want to add a skill? Use `aiwg add-skill`.
+- Want to create an addon? Use `aiwg scaffold-addon`.
 
 ---
 
@@ -2006,13 +2500,16 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 - **Telegram:** [Join Group](https://t.me/+oJg9w2lE6A5lOGFh)
 - **Issues:** [GitHub Issues](https://github.com/jmagly/aiwg/issues)
 - **Discussions:** [GitHub Discussions](https://github.com/jmagly/aiwg/discussions)
-- **Security:** Report vulnerabilities per [SECURITY.md](SECURITY.md) — do not file public issues.
+- **Security:** Report vulnerabilities per [SECURITY.md](SECURITY.md); do not file public issues for private
+  vulnerability reports.
 
 ---
 
 ## Badges
 
-Building on AIWG? Show it. Grab a **Built With AIWG** / **Powered By AIWG** badge — light and dark, hosted and free to hot-link (no need to copy the image into your repo):
+Building on AIWG? You can use a **Built With AIWG** or **Powered By AIWG**
+badge. Hosted image links are available, and projects can also copy the image
+if they prefer to avoid hot-linking:
 
 [![Built With AIWG](https://aiwg.io/assets/badges/built-with-aiwg-dark.png)](https://aiwg.io)
 
@@ -2020,24 +2517,30 @@ Building on AIWG? Show it. Grab a **Built With AIWG** / **Powered By AIWG** badg
 [![Built With AIWG](https://aiwg.io/assets/badges/built-with-aiwg-dark.png)](https://aiwg.io)
 ```
 
-Full set with copy-paste snippets at **[aiwg.io/badges](https://aiwg.io/badges)**.
+Full set with copy-paste snippets: **[aiwg.io/badges](https://aiwg.io/badges)**.
 
 ---
 
 ## Usage Notes
 
-AIWG is optimized for token efficiency. Rules deploy as a consolidated index (~200 lines) instead of 35 individual files (~9,321 lines). Most users on **Claude Pro** or similar plans will have no issues. See [Usage Notes](docs/usage-notes.md) for rate limit guidance.
+AIWG tries to keep always-loaded context small by using kernel quickrefs,
+provider-facing indexes, and on-demand discovery. Actual token use depends on
+the provider, selected workflows, project size, and how much context the agent
+loads. See [Usage Notes](docs/usage-notes.md) for rate-limit guidance.
 
 ---
 
 ## License
 
-AIWG-authored code is available under the **MIT License**. See [LICENSE](LICENSE).
+AIWG-authored code is available under the **MIT License**. See
+[LICENSE](LICENSE).
 Runtime dependencies retain their own licenses; see
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the reviewed Fortemi and
 Bytecask AGPL boundary, source links, and inspection instructions.
 
-**Important:** This framework does not provide legal, security, or financial advice. All generated content should be reviewed before use. See [Terms of Use](docs/terms.md) for full disclaimers.
+This framework does not provide legal, security, financial, medical, or other
+professional advice. Generated work should be reviewed before use. See
+[Terms of Use](docs/terms.md) for full terms.
 
 ---
 
@@ -2081,9 +2584,16 @@ Custom AI and blockchain solutions for the digital age.
 
 ## Acknowledgments
 
-**Research foundations:** Built on established principles from cognitive science (Miller 1956, Sweller 1988), multi-agent systems (Jacobs et al. 1991, MetaGPT, AutoGen), software engineering (Cooper 1990, RUP), and recent AI systems research (ReAct, Self-Refine, DSPy, SWE-Agent). Implements standards from FAIR Principles, OAIS (ISO 14721), W3C PROV, GRADE evidence assessment, and MCP protocol (Linux Foundation).
+**Research foundations:** AIWG draws from cognitive science (Miller 1956,
+Sweller 1988), multi-agent systems (Jacobs et al. 1991, MetaGPT, AutoGen),
+software engineering (Cooper 1990, RUP), and AI systems research including
+ReAct, Self-Refine, DSPy, and SWE-agent. Standards and methods such as FAIR,
+OAIS, W3C PROV, GRADE, and MCP inform the structure of selected workflows and
+artifacts.
 
-**Platforms:** Thanks to Anthropic (Claude Code), GitHub (Copilot), Warp, Factory AI, Cursor, and the OpenCode community for building the platforms that enable this work.
+**Platforms:** Thanks to Anthropic (Claude Code), GitHub (Copilot), Warp,
+Factory AI, Cursor, OpenCode, and other provider communities for building
+tools that make project-local AI workflows possible.
 
 ---
 

@@ -1,6 +1,7 @@
 # SDLC Quick Start
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed and connected to the target project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](getting-started/install-connect-verify.md).
+This guide assumes AIWG is already installed and connected to the target project.
 
 Tell the agent the product outcome and the current project state:
 
@@ -42,6 +43,6 @@ documents were generated; required feedback, tests, traceability, and gates
 must be addressed.
 
 If AIWG is not yet installed or engaged, begin with the
-[general quick start](quickstart.md). Agents and advanced operators can retrieve
+[Install, Connect, and Verify guide](getting-started/install-connect-verify.md). Agents and advanced operators can retrieve
 deterministic command and flag contracts from the
 [agent reference corpus](https://github.com/jmagly/aiwg/tree/main/docs/agents/).

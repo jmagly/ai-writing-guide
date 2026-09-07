@@ -1,14 +1,25 @@
 # auto-memory Overview
 
-The auto-memory addon provides seed templates for Claude Code's Automatic Memory feature. It bootstraps new projects with AIWG-aware memory files so the memory system starts with useful structure rather than empty files, then evolves as Claude Code learns project-specific patterns during development.
+The auto-memory addon gives Claude Code projects a useful starting structure for Automatic Memory. Use it when you
+want local memory files to begin with places for testing patterns, debugging notes, and architecture decisions instead
+of starting empty.
+
+## Common Use Cases
+
+- Start a new Claude Code project with memory sections aligned to AIWG workflows.
+- Keep recurring debugging lessons local to the developer machine while sharing stable instructions in `CLAUDE.md`.
+- Promote repeated loop failures or learned project patterns into a reviewed memory file.
+- Prune memory files when older observations become stale or superseded.
 
 ## What Automatic Memory Is
 
-Automatic Memory (Claude Code v2.1.32+) maintains persistent, evolving knowledge about your project in `~/.claude/projects/<project>/memory/`. Unlike `CLAUDE.md`, which you maintain manually and commit to git, automatic memory is maintained automatically by Claude Code — it adds patterns, debugging strategies, and architectural decisions as it learns them during development.
+Automatic Memory, when supported by Claude Code, maintains persistent, evolving knowledge about your project in
+`~/.claude/projects/<project>/memory/`. Unlike `CLAUDE.md`, which you maintain manually and commit to git, automatic
+memory is maintained by Claude Code as it learns project-specific patterns during development.
 
 The distinction between the two:
 
-| | Automatic Memory | CLAUDE.md |
+| Aspect | Automatic Memory | CLAUDE.md |
 |--|-----------------|-----------|
 | **Location** | `~/.claude/projects/<project>/memory/` | Repository root |
 | **Updated by** | Claude Code automatically | Developer manually |
@@ -88,7 +99,7 @@ When creating a new project:
 aiwg new my-project
 ```
 
-If Claude Code v2.1.32+ is detected, memory seeds are automatically copied to `~/.claude/projects/my-project/memory/`.
+If a supported Claude Code Automatic Memory installation is detected, memory seeds are copied to `~/.claude/projects/my-project/memory/`.
 
 ### Manual
 
@@ -175,6 +186,14 @@ Automatic memory is Claude Code-specific. Other platforms have their own persist
 - **Warp/OpenCode**: No equivalent
 
 If you switch platforms, the knowledge in automatic memory files is transferable — copy the content into the new platform's equivalent mechanism, or promote it to CLAUDE.md as static instructions.
+
+## Next Step
+
+For a new Claude Code project, use `aiwg new <project>` and verify that the
+memory files exist before relying on them. For an existing project, copy the
+seed files into the Claude Code project memory directory, then ask Claude Code
+to summarize the current testing and debugging patterns into the seeded
+sections.
 
 ## References
 

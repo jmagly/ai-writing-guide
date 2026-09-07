@@ -1,10 +1,10 @@
 {
   "title": "AIWG Documentation",
-  "description": "AI-powered workflow guide for SDLC, marketing, and content teams",
+  "description": "Reusable project context and specialist workflows for the AI tools you already use",
   "language": "en",
   "brandMark": "AIWG",
   "brandSub": "Docs",
-  "tagline": "Modular AI workflows for every team",
+  "tagline": "Carry project context into your next task",
   "copyright": "AIWG Project",
   "theme": {
     "colorScheme": "light",
@@ -23,33 +23,43 @@
   "codeCopy": true,
   "welcome": {
     "eyebrow": "AIWG",
-    "headline": "Deploy a Virtual Organization",
-    "lead": "Tell your agent what you want to accomplish. AIWG gives it a virtual organization of specialized roles and workflows; the agent explains choices, asks for approvals, runs the operations, and reports a verified outcome.",
+    "headline": "Give your AI assistant project context and specialist workflows",
+    "lead": "AIWG helps you carry decisions forward and review complex work in the AI tools you already use. Start with one task, save an inspectable result, and use it as context for the next session.",
     "pillars": [
-      "SDLC Complete — Full lifecycle from intake to production with 85+ agents, stage-gate workflows, and multi-agent orchestration",
-      "Forensics Complete — Digital forensics and incident response: evidence acquisition, timeline building, IOC analysis, Sigma hunting",
-      "Research Complete — Academic research workflows: discovery, acquisition, RAG-based documentation, FAIR-aligned citation management",
-      "Security Engineering — Applied security: cryptographic primitives, chain-of-trust, auth factors, supply-chain trust, and physical-threat modeling",
-      "Media/Marketing Kit — Campaign orchestration from strategy through analytics, creative production, and channel management",
-      "Media Curator — Intelligent media archive management: discography analysis, quality filtering, metadata curation, multi-platform export",
-      "Knowledge Base — Wiki and semantic-memory framework: document ingest, KB health checks, and llm-wiki profiles",
-      "Ops Complete — Operational infrastructure: incident response, runbooks, fleet inventory, and audit trails",
-      "32 addons — RLM recursive context decomposition, voice profiles, testing quality, writing validation, UAT-MCP toolkit, and more",
-      "15 provider integrations — Google Antigravity CLI, Claude Code, OpenAI Codex, GitHub Copilot, Cursor, DeepSeek Harness, Factory AI, Hermes, OpenCode, OpenClaw, OpenHuman, Oh My Pi, Pi Coding Agent (pi.dev), Warp Terminal, Devin Desktop"
+      "Software development — Plan a change, review its implementation, and connect decisions to tests",
+      "Marketing and content — Prepare a campaign, review messaging, and apply a consistent writing style",
+      "Research and knowledge — Organize sources, trace citations, and keep a reference collection",
+      "Security and forensics — Structure reviews and investigations with recorded findings",
+      "Media curation — Assess a collection, organize metadata, and plan acquisition work",
+      "Operations — Prepare runbooks, review infrastructure, and document recovery steps",
+      "Optional utilities — Add workflow recovery, artifact indexing, and project-specific skills as needed",
+      "15 provider integrations — Google Antigravity CLI, Claude Code, OpenAI Codex, GitHub Copilot, Cursor, DeepSeek Harness, Factory AI, Hermes, OpenCode, OpenClaw, OpenHuman, Oh My Pi, Pi Coding Agent, Warp Terminal, Devin Desktop"
     ],
     "checklist": [
-      "Tell your agent the outcome you want",
-      "Review the path and approve material changes",
-      "Let the agent run the appropriate AIWG workflow",
-      "Verify the reported result and evidence"
+      "Open your project in your AI tool",
+      "Follow Install, Connect, and Verify",
+      "Ask for a README review with three prioritized fixes",
+      "Inspect the saved report and choose the next change"
     ],
     "quickLinks": [
-      { "label": "Get Started", "href": "#/quickstart" },
-      { "label": "SDLC Framework", "href": "#/quickstart-sdlc" },
-      { "label": "How Agent Collaboration Works", "href": "#/getting-started/start-here" },
-      { "label": "View on GitHub", "href": "https://github.com/jmagly/aiwg" }
+      {
+        "label": "Get Started",
+        "href": "#/quickstart"
+      },
+      {
+        "label": "What Is AIWG?",
+        "href": "#/overview/what-is-aiwg"
+      },
+      {
+        "label": "Choose a Workflow",
+        "href": "#/overview/capabilities"
+      },
+      {
+        "label": "View on GitHub",
+        "href": "https://github.com/jmagly/aiwg"
+      }
     ],
-    "quote": "Stop writing prompts. Start shipping software."
+    "quote": "Make the next session start with what you learned today."
   },
   "seo": {
     "enabled": true,

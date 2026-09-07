@@ -6,6 +6,13 @@ resource indexes, corrections, and publication review. It is an opt-in addon,
 not a jurisdiction database, law practice, autonomous newsroom, recorder, CMS,
 or outreach system.
 
+## Common Use Cases
+
+- Review public sources while preserving source identity, retrieval details, and uncertainty.
+- Plan a records request or meeting workflow with human approval gates.
+- Build a local resource index without inventing citations or eligibility rules.
+- Prepare a correction or publication review package before any external action.
+
 ## Interaction model
 
 Users describe the civic outcome and evidence boundary in a prompt. The AIWG
@@ -25,7 +32,7 @@ or publication.
 The [prompt-based quickstart](quickstart.md) provides focused asks for source
 review, public records, meetings, procurement, local resources, corrections,
 and publication. Direct setup and gate syntax is isolated in the
-[Civic Action CLI reference](https://docs.aiwg.io/pages/cli--reference.html#civic-action)
+[Civic Action CLI reference](../../cli/reference.md#civic-action)
 for advanced operators and automation.
 
 ## Safety and evidence model

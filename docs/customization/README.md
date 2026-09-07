@@ -5,8 +5,8 @@ shared.
 
 | Path | When | Effort | Shareable? |
 |------|------|--------|------------|
-| **A — Project-local** | Per-project rules, agents, skills | 5 minutes — no fork | No (lives in your project) |
-| **B — Fork** | Cross-project customization, contributing back | 30 minutes — fork + dev mode | Yes (PR upstream) |
+| **A — Project-local** | Per-project rules, agents, skills | Lowest effort, no fork | No (lives in your project) |
+| **B — Fork** | Cross-project customization, contributing back | Fork + dev mode | Yes (PR upstream) |
 | **C — Corpus** | Cross-project sharing without going public | One-time setup per corpus | Within your team / org |
 
 If unsure, **start with Path A.** It's the lowest commitment and the
@@ -17,7 +17,7 @@ easiest to graduate later.
 ## Path A — Project-Local (recommended for most users)
 
 Author bundles directly inside your project under `.aiwg/{type}/{name}/`.
-No fork, no clone, no rebuild — just files in your repo. Discovered
+No fork, no clone, no rebuild: just files in your repo. Discovered
 automatically by `aiwg use`.
 
 ```bash
@@ -39,11 +39,12 @@ aiwg promote my-team-rules                          # → upstream
 aiwg promote my-team-rules --to corpus ~/my-corpus/ # → private corpus
 ```
 
-The graduate operation is a hash-verified copy — no rewrite, no migration
+The graduate operation is a hash-verified copy using the same bundle layout
 ([identical-form ADR](https://github.com/jmagly/aiwg/blob/main/.aiwg/architecture/adr-identical-form-portability.md)).
 
 **See:**
-- [Quickstart](project-local-quickstart.md) — first bundle in 5 minutes
+
+- [Quickstart](project-local-quickstart.md) — first project-local bundle
 - [Lifecycle reference](project-local-lifecycle.md) — full operator surface
 - [Type disambiguation](extensions-vs-addons-vs-frameworks-vs-plugins.md) — pick the right type
 - [Troubleshooting](project-local-troubleshooting.md) — common failures
@@ -132,8 +133,8 @@ The three paths compose:
   project pulls bundled, project-local, **and** corpus artifacts
   together.
 
-You don't have to commit to one path forever. Start where you are; move
-when you outgrow it.
+Start with the smallest path that fits the current project; promote or move the
+bundle later when sharing needs change.
 
 ---
 

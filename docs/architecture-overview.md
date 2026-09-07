@@ -2,31 +2,42 @@
 
 > **Version**: 2026.5.0+
 > **Audience**: Developers, technical leads, CISOs, anyone wanting a visual mental model of AIWG before reading the deeper guides
-> **Status**: Mermaid versions inline; polished Gemini-rendered images in `architecture-overview/images/` (placeholders below — see [#1248](https://git.integrolabs.net/roctinam/aiwg/issues/1248) for the prompt set)
 
-This document is the visual entry point for understanding what AIWG is, what it does at deploy time, what it does at runtime, and what's optional. Each section pairs a MermaidJS diagram (renders inline in markdown) with a placeholder for a polished Gemini-generated illustration (drop in `./architecture-overview/images/NN-name.png` and the markdown picks it up).
+AIWG gives an AI assistant reusable project context and specialist workflows in the tools a team already uses. This
+overview shows where AIWG writes files, what the assistant can see after deployment, and which runtime services are
+optional.
+
+Use it when you need to answer three practical questions:
+
+- What changes in my repository after `aiwg use`?
+- Which parts are plain deployed instructions, and which parts require optional services?
+- What has to be refreshed when I switch AI platforms or reload a session?
 
 Deeper guides:
 
 - [`docs/how-it-works.md`](how-it-works.md) — prose walkthrough of the same concepts
-- [`docs/discovery-and-kernel-skills.md`](discovery-and-kernel-skills.md) — kernel-vs-standard skill model in depth
+- [`docs/discovery-and-kernel-skills.md`](https://github.com/jmagly/aiwg/blob/main/docs/discovery-and-kernel-skills.md)
+  — kernel-vs-standard skill model in depth
 - [`docs/integrations/hermes-quickstart.md`](integrations/hermes-quickstart.md) — Hermes-specific integration
 
 ---
 
-## 1. AIWG is a deploy-time tool — runtime-invisible
+## 1. AIWG starts as a deploy-time tool
 
-`aiwg use` runs once, copies plain-text files into the directories your AI platform reads, builds an artifact index, and exits. Nothing AIWG produces is a daemon, a service, or a network listener. Once the files land, your platform's native loader handles everything — AIWG can step out of the way.
+`aiwg use` copies plain-text files into the directories your AI platform reads, builds an artifact index, and exits.
+The core deploy step does not require a daemon, service, or network listener. Optional utilities such as background
+loops, MCP integration, scheduled runs, or persistent services are separate components that run only when configured
+and invoked.
 
 ```mermaid
 flowchart LR
   subgraph Source["AIWG framework source"]
     direction TB
-    KERN[26 kernel skills<br/>always visible]
-    STD[~455 standard skills<br/>read from $AIWG_ROOT]
-    AGENT[200+ agents]
-    RULES[60+ rules]
-    TPL[100+ templates]
+    KERN[Kernel quickrefs<br/>always visible]
+    STD[Standard skills<br/>read from $AIWG_ROOT]
+    AGENT[Agents]
+    RULES[Rules]
+    TPL[Templates]
   end
 
   CLI([aiwg use sdlc<br/>--provider X]) --> DEPLOY
@@ -61,27 +72,24 @@ flowchart LR
   class INDEX optional
 ```
 
-<!-- Polished version: drop ./architecture-overview/images/01-deploy-tool.png to render below -->
-<!-- Gemini prompts (v4 illustrated, v3 monospace, v2 editorial): see https://git.integrolabs.net/roctinam/aiwg/issues/1248 -->
-
-![Polished version (placeholder — generate from #1248 prompts)](./architecture-overview/images/01-deploy-tool.png)
-
 ---
 
-## 2. The two-tier skill model — kernel vs standard
+## 2. The two-tier skill model
 
-AIWG ships **480+ skills**. Platform context windows can't fit them all. So AIWG splits them: **26 kernel skills** are always loaded into the platform's flat skill listing; the remaining **~455 standard skills** stay at `$AIWG_ROOT` and reach the agent only when queried via the artifact index.
+Platform context windows cannot fit every workflow instruction at once, so AIWG uses two tiers. Kernel skills are
+small, always-visible guides for routing and maintenance. Standard skills stay at `$AIWG_ROOT` and are loaded only
+after the agent searches the artifact index for the current goal.
 
 ```mermaid
 flowchart TB
-  subgraph KERNEL["Kernel tier — 25 skills, always loaded"]
+  subgraph KERNEL["Kernel tier — always loaded"]
     direction LR
-    K1[9 framework quickrefs<br/>sdlc / research / forensics /<br/>marketing / media-curator /<br/>security-eng / knowledge-base /<br/>ops / aiwg-utils-quickref]
-    K2[2 routing maps<br/>aiwg-language-map / steward-quickref]
-    K3[14 self-maintenance ops<br/>steward / doctor / refresh / status / help / use /<br/>regenerate router + 3 branches / issue / PR / mission / context firewall]
+    K1[Framework quickrefs<br/>sdlc / research / forensics /<br/>marketing / media-curator /<br/>security-eng / knowledge-base /<br/>ops / aiwg-utils-quickref]
+    K2[Routing maps<br/>aiwg-language-map / steward-quickref]
+    K3[Self-maintenance ops<br/>steward / doctor / refresh / status / help / use /<br/>regenerate / issue / PR / mission / context firewall]
   end
 
-  subgraph STANDARD["Standard tier — ~455 skills, read from $AIWG_ROOT"]
+  subgraph STANDARD["Standard tier — read from $AIWG_ROOT"]
     direction LR
     S1[SDLC workflows<br/>intake-wizard, sdlc-accelerate,<br/>flow-deploy-to-production,<br/>address-issues, ...]
     S2[Domain skills<br/>media-curator, research-,<br/>forensics-, marketing-, ...]
@@ -100,9 +108,9 @@ flowchart TB
   class STANDARD optional
 ```
 
-![Polished version (placeholder — generate from #1248 prompts)](./architecture-overview/images/02-two-tier.png)
-
-See [`docs/discovery-and-kernel-skills.md`](discovery-and-kernel-skills.md) for the full kernel inventory, why no-copy is the default for standard skills, and the per-provider deployment paths.
+See
+[`docs/discovery-and-kernel-skills.md`](https://github.com/jmagly/aiwg/blob/main/docs/discovery-and-kernel-skills.md)
+for the full kernel inventory, why no-copy is the default for standard skills, and the per-provider deployment paths.
 
 ---
 
@@ -137,55 +145,32 @@ sequenceDiagram
   Agent->>User: Apply the skill's protocol
 ```
 
-![Polished version (placeholder — generate from #1248 prompts)](./architecture-overview/images/03-discover-show.png)
-
-The **discover-first protocol** (Rule 1.5 in [`skill-discovery.md`](../agentic/code/addons/aiwg-utils/rules/skill-discovery.md)) makes this the mandatory first move for any query mentioning AIWG, a framework name, or a capability keyword — `Grep`/`Glob`/`Read` against provider artifact directories is forbidden until discover has been consulted in the session. See [issue #1249](https://git.integrolabs.net/roctinam/aiwg/issues/1249) for the rationale.
+The [discover-first
+protocol](https://github.com/jmagly/aiwg/blob/main/agentic/code/addons/aiwg-utils/rules/skill-discovery.md) makes this
+the expected first move for AIWG capability queries. Agents search the AIWG index before reading provider deployment
+directories, then load the selected asset by stable ID.
 
 ---
 
-## 4. What's optional — Minimal vs Standard vs Full
+## 4. Optional layers
 
-Most AIWG users live happily in one of the first two tiers. The Full tier exists; it doesn't punish you for ignoring it.
+The standard setup connects the supported workflow surface. You can then use a focused task without turning on every
+optional runtime service.
 
 ```mermaid
 flowchart TB
-  START{What do you want?}
-
-  START -->|"Just AI personas<br/>and basic prompts"| MIN
-  START -->|"Plus structured<br/>artifacts (SDLC, etc.)"| MID
-  START -->|"Plus self-maintaining<br/>discovery + orchestration"| FULL
-
-  subgraph MIN["Minimal — agents only"]
-    direction TB
-    M1["aiwg use sdlc"]
-    M2[Deploys agents/rules/templates<br/>to your provider dir]
-    M3[Use natural language<br/>in the platform as normal]
-    M4[Index built but ignorable]
-  end
-
-  subgraph MID["Standard — agents + artifacts"]
-    direction TB
-    D1["aiwg use sdlc + create .aiwg/"]
-    D2[Use SDLC slash commands<br/>or natural-language requests]
-    D3[Artifacts persist across sessions]
-    D4[Index queryable but optional]
-  end
-
-  subgraph FULL["Full — discovery + utilities"]
-    direction TB
-    F1["aiwg use all"]
-    F2[Agents search by goal<br/>for non-kernel skills]
-    F3[Optional utilities: ralph,<br/>mc, daemon, mcp, schedule]
-    F4[Cross-session memory,<br/>background orchestration]
-  end
-
-  MIN -.->|"upgrade anytime by<br/>adding usage"| MID
-  MID -.->|"upgrade anytime by<br/>using more commands"| FULL
+  SETUP[Connect AIWG to your provider] --> TASK[Choose a task]
+  TASK --> SOURCE[Read relevant workflow instructions]
+  SOURCE --> ART[Create and review a project artifact]
+  ART --> NEXT[Use that artifact in a later task]
+  TASK -.-> LOOKUP[Artifact lookup and storage utilities]
+  TASK -.-> LOOP[Bounded execution and recovery loops]
+  TASK -.-> SERVICE[Optional servers and external integrations]
 ```
 
-![Polished version (placeholder — generate from #1248 prompts)](./architecture-overview/images/04-optional.png)
-
-The upgrade arrows go both ways. Nothing is forced. The opt-in utilities (Ralph for agent loops, Mission Control for background orchestration, Daemon for cross-session persistence, MCP for tool-host integration, Schedule for cron-style automation) only run when you invoke them.
+The dotted paths require the corresponding configuration and provider capabilities. Installing workflow source does
+not start every service. Use [Install, Connect, and Verify](getting-started/install-connect-verify.md) for setup and
+the [capability guide](overview/capabilities.md) to choose a task or utility.
 
 ---
 
@@ -232,8 +217,6 @@ flowchart LR
   class ARCHIVE optional
 ```
 
-![Polished version (placeholder — generate from #1248 prompts)](./architecture-overview/images/05-aiwg-dir.png)
-
 `.aiwg/working/` is explicitly ephemeral — safe to delete, typically `.gitignore`'d. Whether to commit the rest of `.aiwg/` is a team decision; many teams commit everything except `working/` and the optional `archive/` directory.
 
 ---
@@ -269,13 +252,11 @@ flowchart TB
   class HLOAD,ALOAD,CLOAD,RLOAD winner
 ```
 
-![Polished version (placeholder — generate from #1248 prompts)](./architecture-overview/images/06-hermes-resolver.png)
-
 Source: `agent/prompt_builder.py:1410-1436` in the Hermes Agent repo. See [`docs/integrations/hermes-quickstart.md`](integrations/hermes-quickstart.md) for the full integration walkthrough.
 
 ---
 
-## 7. Multi-platform deploy — one source, ten targets
+## 7. Multi-platform deploy
 
 AIWG's parity model: write/configure once, deploy to whichever AI platforms your team uses. The source-of-truth tree (`agentic/code/`) translates to ten provider-native target conventions through `aiwg use <framework> --provider <X>`.
 
@@ -283,10 +264,10 @@ AIWG's parity model: write/configure once, deploy to whichever AI platforms your
 flowchart LR
   subgraph SOURCE["AIWG framework source ($AIWG_ROOT)"]
     direction TB
-    AG[agents/<br/>200+]
-    SK[skills/<br/>400+]
-    CM[commands/<br/>100+]
-    RL[rules/<br/>60+]
+    AG[agents]
+    SK[skills]
+    CM[commands]
+    RL[rules]
     BE[behaviors/<br/>OpenClaw native]
   end
 
@@ -312,15 +293,17 @@ flowchart LR
   class HE hermes
 ```
 
-![Polished version (placeholder — generate from #1248 prompts)](./architecture-overview/images/07-multi-target.png)
-
-Switching platforms doesn't require redoing your team's agent/skill/rule investment — same source, different output convention. Hermes deploys files like the others (AGENTS.md + `.hermes.md` + `~/.hermes/skills/`) and is reached through the discover-first CLI; MCP is an optional global hook, not a requirement (validated v2026.5.13, #1527; modernization tracked in #1533).
+Switching platforms reuses the same AIWG source and emits files in the selected provider's convention. Hermes deploys
+files like the others (`AGENTS.md`, `.hermes.md`, and user-level skills); MCP is an optional global hook.
 
 ---
 
 ## 8. Session reload after `aiwg use`
 
-Every AI platform caches its agent/skill registry at session start. After `aiwg use`, a running session retains its old registry until the right invalidation step runs — and the right step is different per platform. `aiwg use` prints the correct action in the compact `Next` section so operators do not have to guess; `--verbose` also explains why that provider needs the reload.
+Some AI platforms cache their agent or skill registry at session start. After `aiwg use`, a running session may need
+to refresh that registry; the required action depends on the provider. `aiwg use` prints the correct action in the
+compact `Next` section so operators do not have to guess; `--verbose` also explains why that provider needs the
+reload.
 
 ```mermaid
 flowchart TB
@@ -353,28 +336,19 @@ flowchart TB
   class DONE good
 ```
 
-![Polished version (placeholder — generate from #1248 prompts)](./architecture-overview/images/08-reload.png)
-
-Hermes is the friendliest case — `/reload-skills` and `/reload-mcp` slash commands invalidate without a chat restart. Every other platform requires a session/window/tab reload, which is normal cache-invalidation behavior — not an AIWG-specific friction.
-
----
-
-## Image generation status
-
-Each diagram above has a polished image placeholder. Generation prompts (three aesthetic options — illustrated computing iconography, illustrated editorial, monospace-terminal) live on [issue #1248](https://git.integrolabs.net/roctinam/aiwg/issues/1248):
-
-- [v4 (illustrated computing iconography — recommended)](https://git.integrolabs.net/roctinam/aiwg/issues/1248#issuecomment-41143)
-- [v3 (monospace-terminal — for technical docs preferring that aesthetic)](https://git.integrolabs.net/roctinam/aiwg/issues/1248#issuecomment-41131)
-- [v2 (illustrated editorial — for marketing/announcement copy)](https://git.integrolabs.net/roctinam/aiwg/issues/1248#issuecomment-41107)
-
-All three sets share the 1-8 numbering. Generated images drop at `docs/architecture-overview/images/NN-name.png` and the placeholders above pick them up automatically.
+Hermes supports `/reload-skills` and `/reload-mcp` for the Hermes-specific pieces. Other platforms generally require
+the provider's session, window, or tab reload behavior so their native registry sees the new files.
 
 ---
 
 ## Related guides
 
 - [`docs/how-it-works.md`](how-it-works.md) — the prose walkthrough of these same concepts
-- [`docs/discovery-and-kernel-skills.md`](discovery-and-kernel-skills.md) — kernel/standard model in depth, verification steps
+- [`docs/discovery-and-kernel-skills.md`](https://github.com/jmagly/aiwg/blob/main/docs/discovery-and-kernel-skills.md)
+  — kernel/standard model in depth, verification steps
 - [`docs/integrations/hermes-quickstart.md`](integrations/hermes-quickstart.md) — Hermes integration, capabilities catalog
-- [`https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md`](https://github.com/jmagly/aiwg/blob/main/docs/cli/reference.md) — complete CLI command reference
-- [`.claude/rules/skill-discovery.md`](../agentic/code/addons/aiwg-utils/rules/skill-discovery.md) — the discover-first protocol (Rule 1.5)
+- [`docs/cli/reference.md`](cli/reference.md) — complete CLI command reference
+- [`skill-discovery.md`](https://github.com/jmagly/aiwg/blob/main/agentic/code/addons/aiwg-utils/rules/skill-discovery.md)
+  — discover-first protocol source
+
+The canonical inventory contains 26 kernel skills for routing, quick references, and self-maintenance.

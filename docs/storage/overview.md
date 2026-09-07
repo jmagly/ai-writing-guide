@@ -1,5 +1,11 @@
 # Storage Backends — Overview
 
+Storage backends let teams decide where AIWG artifacts live without changing
+the workflows that produce them. Use this when memory, knowledge-base pages,
+research artifacts, provenance, or activity logs need a different storage
+location, integration, or retention posture than the default project `.aiwg/`
+directory.
+
 The versioned scalable-backend semantics and conservative capability matrix are
 defined in [`Scalable Storage Backend Contract v1`](backend-contract.md).
 
@@ -9,7 +15,7 @@ AIWG persists artifacts (memory pages, knowledge-base entries, activity log, ref
 - **Logseq** graph — pages flow into your daily journal workflow
 - **Fortemi** — legacy MCP semantic-memory storage adapter (Rust + Postgres + pgvector); deprecated for index/search routing
 - A different filesystem location — heavy artifacts on a secondary drive
-- Any future backend (S3, WebDAV, Notion, AnythingLLM — tracked, not yet shipped)
+- Tracked future backends such as S3, WebDAV, Notion, or AnythingLLM when their adapters are shipped
 
 Each subsystem is configured independently. You can keep the activity log on local disk for compliance while routing memory pages into Obsidian and the research corpus to a network share.
 
@@ -30,7 +36,7 @@ the static index contract or a Knowledge Shard.
 
 ## Quick start
 
-If you do nothing, AIWG works exactly like before — every subsystem persists under `.aiwg/`.
+If you do nothing, AIWG stores each project subsystem under `.aiwg/`.
 
 For private per-project memory that should not be committed, AIWG can resolve
 the `memory` subsystem from a user-level project registry under
@@ -64,7 +70,7 @@ aiwg storage test memory    # round-trip write/read/list/delete probe
 
 ## Subsystems
 
-AIWG defines eight subsystems. Each one can be configured independently in `storage.config`.
+AIWG defines storage subsystems that can be configured independently in `storage.config`.
 
 | Subsystem          | Default location                              | What lives here                                          |
 | ------------------ | --------------------------------------------- | -------------------------------------------------------- |
@@ -83,7 +89,7 @@ AIWG defines eight subsystems. Each one can be configured independently in `stor
 
 ```jsonc
 {
-  "version": "1",                         // required; v1 is the only currently-supported version
+  "version": "1",                         // required; supported schema version
   "roots": {                              // optional path overrides for fs-backed subsystems
     "research": "/mnt/archive/aiwg-research"
   },
@@ -100,7 +106,8 @@ AIWG defines eight subsystems. Each one can be configured independently in `stor
 - **`backends`** picks the adapter type per subsystem. Subsystems not listed default to `fs`.
 - **`fallback`** controls behavior when an external backend is unreachable. `cache_and_warn` (default) queues writes under `.aiwg/.storage-cache/` and continues; `block` refuses the write.
 
-Every backend's required fields are documented in `docs/storage/backends/<type>.md`.
+Every backend's required fields are documented in the files under
+[`docs/storage/backends/`](backends/).
 
 ## CLI surface
 
@@ -109,7 +116,7 @@ Every backend's required fields are documented in `docs/storage/backends/<type>.
 | `aiwg storage show`                                | Print the effective config and resolved physical paths per subsystem |
 | `aiwg storage list-backends`                       | Inventory of compiled-in adapters with READY/STUB status |
 | `aiwg storage test <subsystem>`                    | Round-trip write/read/list/delete probe — proves connectivity |
-| `aiwg storage migrate <subsystem> --from … --to …` | Copy entries from one backend to another. See `docs/storage/migration.md` |
+| `aiwg storage migrate <subsystem> --from … --to …` | Copy entries from one backend to another. See [migration](migration.md) |
 | `aiwg doctor`                                      | Validates `.aiwg/storage.config` (schema + credential walk + reachability probes) |
 
 Per-subsystem CLIs route through the configured adapter:
@@ -136,9 +143,10 @@ accessKey, accessKeyId, secretAccessKey
 
 Loading a `storage.config` containing any of these throws an error pointing at the offending path. **Tokens, passwords, and API keys must come from environment variables or your OS keychain**, never from `storage.config`.
 
-See `docs/storage/security.md` for the full security model — credential handling, path traversal rejection, atomic writes, doctor validation.
+See [storage security](security.md) for the full security model: credential handling, path traversal rejection, atomic
+writes, and doctor validation.
 
-## What's implemented vs deferred
+## Backend Status
 
 | Backend       | Status      | Notes |
 | ------------- | ----------- | ----- |
@@ -153,14 +161,11 @@ See `docs/storage/security.md` for the full security model — credential handli
 
 `aiwg storage list-backends` shows the live status. Declaring a STUB backend in `storage.config` produces a clear error citing the tracking issue.
 
-## Further reading
+## Next Steps
 
-- `docs/storage/security.md` — credential handling, path safety, doctor validation
-- `docs/storage/migration.md` — `aiwg storage migrate` walkthrough
-- `docs/storage/backend-contract.md` — scalable backend capabilities and maturity matrix
-- `docs/storage/migration-protocol.md` — scalable offline/online migration contract and safety boundaries
-- `docs/storage/backends/<type>.md` — per-backend setup, env vars, caveats
-- `docs/fortemi-core-prebuilt-indices.md` — Fortemi Core prebuilt framework index packaged with npm releases
-- `.aiwg/architecture/storage-design.md` — full design (adapter interface, subsystem registry, phasing)
-- `.aiwg/architecture/adr-configurable-storage-backends.md` — decision record
-- `.aiwg/architecture/schemas/storage.config.v1.json` — published JSON Schema
+- [Storage security](security.md) — credential handling, path safety, doctor validation
+- [Migration guide](migration.md) — `aiwg storage migrate` walkthrough
+- [Backend contract](backend-contract.md) — scalable backend capabilities and maturity matrix
+- [Migration protocol](migration-protocol.md) — scalable offline/online migration contract and safety boundaries
+- [Backend pages](backends/) — per-backend setup, env vars, caveats
+- [Fortemi Core prebuilt indices](../fortemi-core-prebuilt-indices.md) — Fortemi Core index/search packaging

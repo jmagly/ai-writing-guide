@@ -1,6 +1,8 @@
 # AIWG Development Kit Overview
 
-The AIWG Development Kit provides tools for creating, extending, and customizing the AIWG framework ecosystem.
+The AIWG Development Kit helps contributors create and validate AIWG source
+packages. Use it when you are building an addon, framework, extension, agent,
+skill, command, or template that should follow AIWG source conventions.
 
 ## Prerequisites: Install aiwg-dev
 
@@ -20,15 +22,16 @@ This deploys:
 
 AIWG uses a three-tier structure for extensibility:
 
-| Type | Scale | Standalone | Location | Example |
+| Type | Scope | Standalone | Location | Example |
 |------|-------|------------|----------|---------|
-| **Framework** | Large (50+ agents) | Yes | `agentic/code/frameworks/` | sdlc-complete, media-marketing-kit |
-| **Extension** | Medium (5-20 agents) | No (requires parent) | `frameworks/{id}/extensions/` | gdpr, hipaa, sox |
-| **Addon** | Small (1-10 agents) | Yes | `agentic/code/addons/` | aiwg-utils, voice-framework |
+| **Framework** | Complete lifecycle | Yes | `agentic/code/frameworks/` | sdlc-complete, media-marketing-kit |
+| **Extension** | Domain capability on a parent framework | No (requires parent) | `frameworks/{id}/extensions/` | gdpr, hipaa, sox |
+| **Addon** | Portable utility bundle | Yes | `agentic/code/addons/` | aiwg-utils, voice-framework |
 
 ### When to Use Each
 
-- **Create a Framework** when building a complete lifecycle solution with many interdependent agents, templates, and workflows (e.g., full software development lifecycle)
+- **Create a Framework** when building a complete lifecycle solution with interdependent agents, templates, and
+  workflows (e.g., full software development lifecycle)
 
 - **Create an Extension** when adding domain-specific capabilities to an existing framework (e.g., HIPAA compliance for SDLC, FTC guidelines for marketing)
 
@@ -209,13 +212,11 @@ With `--fix`:
 
 Detailed guides:
 
-- [Creating Addons](#dev-addons)
-- [Creating Extensions](#dev-extensions)
-- [Creating Frameworks](#dev-frameworks)
-- [Addon Walkthrough](#dev-walkthrough)
+- [aiwg-dev overview](../addons/aiwg-dev/overview.md)
+- [Extension system overview](../extensions/overview.md)
+- [Project-local customization quickstart](../customization/project-local-quickstart.md)
 
 ## Related
 
-- [SDLC Framework Quick Start](#quickstart-sdlc)
-- [Agent Design Rules](#ref-agent-design)
-- [CLI Reference](#ref-cli)
+- [aiwg-dev overview](../addons/aiwg-dev/overview.md)
+- [AIWG CLI reference](../cli/reference.md)

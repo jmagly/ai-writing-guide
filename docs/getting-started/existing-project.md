@@ -1,29 +1,22 @@
 # Bringing AIWG into an Existing Project
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is installed and the self-verifying `aiwg use all` flow has connected your provider to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](install-connect-verify.md). This guide assumes
+AIWG is connected to the target project and your provider session can read the deployed context.
 
 You already have a codebase. Maybe it's yours, maybe you inherited it. Either way, you want an AI assistant that actually understands what's in there — not one that has to be reminded every session what the project does and how it's structured.
 
-This guide gets AIWG loaded and oriented in under ten minutes.
+This guide gets AIWG oriented around the code you already have.
 
 ---
 
-## Step 1 — Install, repair, or update
-
-```text
-Install or repair AIWG for this project by following
-https://aiwg.io/setup.aiwg.yaml
-Explain the plan before changing anything, preserve my existing work, and ask
-me only for choices you cannot safely determine.
-```
-
----
-
-## Step 2 — Establish project setup
+## Step 1 — Open the project folder
 
 ```bash
 cd /path/to/your/project
 ```
+
+If AIWG is not connected yet, complete [Install, Connect, and Verify](install-connect-verify.md)
+from this folder before starting the codebase intake.
 
 Ask your AI assistant to set up AIWG for this repository:
 
@@ -42,28 +35,9 @@ the guided conversation. You should not have to map repo policy fields by hand.
 
 ---
 
-## Step 3 — Deploy to your project
+## Step 2 — Let the AI read the codebase
 
-```bash
-aiwg use all --provider <provider>
-```
-
-This installs the complete system, refreshes its capability indices, connects
-the provider to `WORKSPACE.md` and `AIWG.md`, and verifies the resulting disk
-state. Most providers can use it in the current session; restart only when the
-command reports `ready-restart-required`.
-
----
-
-## Step 4 — Let the AI read the codebase
-
-Open Claude Code:
-
-```bash
-claude .
-```
-
-Then run the codebase intake scan:
+In your provider session, run the codebase intake scan:
 
 ```
 /intake-from-codebase
@@ -80,7 +54,7 @@ You don't have to answer questions or fill out forms. It reads the code.
 
 ---
 
-## Step 5 — Review what it found
+## Step 3 — Review what it found
 
 The intake document lands at `.aiwg/intake/`. Read it and correct anything that's wrong:
 
@@ -92,7 +66,7 @@ Or open `.aiwg/intake/project-intake.md` directly and edit it. This document dri
 
 ---
 
-## Step 6 — Set up project context
+## Step 4 — Set up project context
 
 After the repo policy setup and intake scan, ask the assistant to wire the
 project context so future sessions load the right background:
@@ -131,7 +105,9 @@ What would break first if we changed the user model?
 Summarize the architecture for a new engineer joining the team
 ```
 
-The AI answers as a team member who has read all the code — not as a generic assistant starting from zero.
+The useful outcome is a corrected intake artifact plus answers that cite the
+project files and decisions they rely on. If the agent cannot cite the project
+or names the wrong folder, return to [Scope and Recovery](scope-and-recovery.md).
 
 ---
 

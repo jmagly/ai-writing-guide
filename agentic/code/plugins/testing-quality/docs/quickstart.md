@@ -1,20 +1,20 @@
 # Testing Quality Quickstart
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and
+Verify](../../getting-started/install-connect-verify.md). This guide assumes AIWG is connected to the target project
+and your provider session can read the deployed context.
 
-Set up TDD enforcement and validate test quality in your project.
+Set up a reviewable test-quality check and turn the findings into specific
+test work.
 
-## Installation
-
-```bash
-aiwg addon install testing-quality
-```
-
-Or manually:
+## Enable If Needed
 
 ```bash
-cp -r ${CLAUDE_PLUGIN_ROOT}/ .aiwg/addons/
+aiwg use testing-quality
 ```
+
+Skip this when the complete setup path already made the addon available in
+your provider session.
 
 ## Set Up TDD Enforcement
 
@@ -24,13 +24,14 @@ Run this once when starting a project or when adding testing gates to an existin
 Set up TDD enforcement for this project
 ```
 
-What gets installed:
+Expected result:
 - Pre-commit hook that runs `npm test` (or equivalent) before allowing commits
 - CI coverage gate at 80% minimum
 - `tdd_setup.py` script for non-npm projects
 - TDD workflow documentation in `.aiwg/testing/`
 
-After setup, commits that do not pass the test suite are blocked, and CI pipelines fail below 80% coverage.
+After setup, review the generated hook and CI changes before treating them as
+blocking policy.
 
 ## Check Test Quality with Mutation Testing
 
@@ -79,7 +80,7 @@ Preserve the preflight JSON with the mutation report. A stats-phase crash or
 re-import error is a harness/tool failure; it is not a project test failure and
 must not be counted as a killed, survived, timed-out, or no-tests mutant.
 
-Output is a mutation score report with:
+Output is a mutation report with:
 - Overall score (target: ≥80%)
 - Which specific functions/methods have weak test coverage
 - For each weak test, what condition or behavior it fails to validate
@@ -99,7 +100,9 @@ Weak tests identified:
   - Tests should verify userId is present in generated token
 ```
 
-Fix the identified weak tests and re-run until the score reaches ≥80%.
+Fix the identified weak tests and re-run the agreed target. Use the percentage
+threshold your project has approved; do not treat the example target as a
+universal policy.
 
 ## Find and Fix Flaky Tests
 
@@ -164,7 +167,8 @@ For a one-command TDD infrastructure setup:
 /setup-tdd
 ```
 
-This combines `tdd-enforce` installation with test suite configuration, creating a complete TDD environment in one step.
+This combines `tdd-enforce` setup with test suite configuration and returns a
+baseline to review.
 
 ## Integrate with SDLC Quality Gates
 
@@ -174,7 +178,11 @@ If using sdlc-complete, the testing-quality addon hooks into the Construction ph
 Run quality gate check before transitioning to Transition
 ```
 
-The quality gate runs `mutation-test` and `flaky-detect` as blocking checks. Both must pass (≥80% mutation score, <2% flaky rate) before the transition is approved.
+The quality gate can run `mutation-test` and `flaky-detect` as blocking checks
+when the project has adopted those thresholds.
+
+Success means you have a mutation, flaky-test, factory, or test-sync report
+with affected files, verification evidence, and the next test change to make.
 
 ## References
 

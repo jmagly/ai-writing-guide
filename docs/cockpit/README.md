@@ -1,6 +1,8 @@
 # AIWG Cockpit
 
-**Local control plane for AIWG and multi-stack agentic sessions.**
+Cockpit is a local operator console for watching and steering AIWG-backed agent
+sessions. Use it when you need a browser or desktop surface for live sessions,
+approvals, runtime targets, recovery, telemetry, and action dispatch.
 
 Cockpit is the operator console for agentic work: observe live agent sessions,
 attach to terminals, handle approvals, launch runtime targets (host, container,
@@ -35,7 +37,7 @@ nothing here ships in the base `aiwg` npm package.
 | [Connection Doctor](./doctor.md) | Topology-aware Bridge/executor, listener, runtime-tier, and persistence diagnostics |
 | [Guided Headless Deployment](./headless-deployment.md) | SetupManifest-driven same-host/cross-host planning, staged services, and scoped rollback |
 | [Architecture](./architecture.md) | Shells → Bridge → executor topology, control vs data plane, component map, ports, the serve↔cockpit relationship |
-| [Surfaces](./surfaces.md) | All 11 tabs — Home, Inventory, Running, Missions, Sessions, Approvals, Explore, Library, Telemetry, Memory, Actions — plus the launch/start modals |
+| [Surfaces](./surfaces.md) | UI tabs, launch/start modals, and operator workflows |
 | [Sessions](./sessions.md) | The observe-first attach model: take control, replay, per-session persistent terminals, backends, response detection |
 | [Bridge API](./bridge-api.md) | Every Bridge endpoint, request gating, environment variables, audit events |
 | [Trust & Security](./trust-and-security.md) | Token/CSRF/origin gating, OS keychain (strict mode), runtime/transport/daemon posture badges, the audit log, library invariants |

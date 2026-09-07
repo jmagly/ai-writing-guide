@@ -1,10 +1,21 @@
 # prose-integration Overview
 
-The prose-integration addon provides AIWG tools for working with OpenProse programs — Markdown files that use a contract model (`requires:`/`ensures:`) to define precise behavioral obligations. Five skills handle setup, reading, validation, execution, and wiring of Prose programs within AIWG sessions.
+The prose-integration addon helps AIWG sessions inspect, validate, and run OpenProse programs. Use it when a Markdown
+contract with `requires:` and `ensures:` needs to be detected, checked, wired, or executed through the OpenProse
+interpreter model.
+
+## Common Use Cases
+
+- Detect whether OpenProse is already available for a project.
+- Read a Prose contract before deciding whether it is safe to run.
+- Validate required sections and obligation wording before sharing a program.
+- Wire multi-component Prose services through a Forme manifest.
 
 ## What OpenProse Is
 
-OpenProse programs are Markdown files with contract semantics. They run on Claude Code + Opus via an interpreter spec pattern: loading the `prose.md` specification into context causes the LLM to simulate the Prose VM, which then executes the `.md` program.
+OpenProse programs are Markdown files with contract semantics. In supported AI sessions, loading the `prose.md`
+specification into context causes the model to follow the Prose VM interpreter pattern, which then executes the `.md`
+program.
 
 The key idea is the word `ensures`. In OpenProse contracts, `ensures:` is an **obligation**, not a description. The model treats it as a commitment that must be satisfied, not a statement of intent that can be approximated.
 
@@ -22,7 +33,7 @@ errors:
   - cannot proceed when input is empty
 ```
 
-## The Seven Skills
+## Core Skills
 
 ### prose-detect
 
@@ -64,7 +75,8 @@ Natural language trigger: "Validate this Prose program," "Check the Prose contra
 
 ### prose-run
 
-Execute a Prose program within the current AIWG session. Requires Opus (the model must be "Prose Complete" to simulate the Prose VM). Execution state is stored in `.aiwg/working/prose-runs/`.
+Execute a Prose program within the current AIWG session. This requires a model/profile that supports the Prose
+Complete interpreter behavior. Execution state is stored in `.aiwg/working/prose-runs/`.
 
 Single-component programs are the full program in one `.md` file. Multi-component programs use the Forme Container (see `forme-manifest` below) for wiring.
 

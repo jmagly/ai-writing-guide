@@ -1,7 +1,17 @@
 # Compound Memory
 
-Compound Memory composes AIWG's existing memory capabilities into a governed
-loop:
+Compound Memory turns evidence, session candidates, wiki notes, and concise
+facts into a governed memory workflow. Use it when project knowledge should be
+reviewed before promotion and when later retrieval needs source lineage.
+
+## Common Use Cases
+
+- Review session-derived memory candidates before promoting them.
+- Build a task-specific context pack from line-memory facts, wiki excerpts, and citations.
+- Register generated outputs with immutable digests before extracting knowledge.
+- Preserve raw intake as byte-identical evidence while leaving derivation to the owning workflow.
+
+Compound Memory composes AIWG's existing memory capabilities into this loop:
 
 ```text
 immutable evidence -> reviewed candidates -> llm-wiki / line-memory

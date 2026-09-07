@@ -1,16 +1,10 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 
 const publishedReadmes = [
-  {
-    packageName: 'aiwg',
-    path: 'README.md',
-    title: '# AIWG',
-    install: 'npm i -g aiwg',
-  },
   {
     packageName: '@aiwg/cli',
     path: 'packages/cli/README.md',
@@ -26,6 +20,56 @@ const publishedReadmes = [
 ] as const;
 
 describe('published package README quality contract', () => {
+  it('aiwg retains a substantive capability reference and a complete first-use path', () => {
+    const body = readFileSync(path.join(ROOT, 'README.md'), 'utf8');
+    const wordCount = body.trim().split(/\s+/).length;
+
+    // Preserve the package's broad README surface. Editorial revisions should
+    // improve capability coverage, not replace the reference with a short stub.
+    expect(Buffer.byteLength(body)).toBeGreaterThan(25_000);
+    expect(wordCount).toBeGreaterThan(2_500);
+    expect(body).toMatch(/^# AIWG$/m);
+    expect(body).toMatch(/^## Quick Start$/m);
+    expect(body).toMatch(/^## How It Works$/m);
+    expect(body).toMatch(/^## Documentation$/m);
+    expect(body).toMatch(/^## Installation Troubleshooting$/m);
+    for (const capability of [
+      'Simple Building Blocks',
+      'The Six Core Components',
+      'What You Get',
+      'Framework Deep Dives',
+      'Configuration & Customization',
+      'Issue-Driven Development',
+      'Platform Support',
+      'Architecture',
+      'Research Foundations',
+    ]) {
+      expect(body, `README must retain substantive ${capability} coverage`)
+        .toContain(`## ${capability}\n`);
+    }
+    expect(body).toMatch(/^## Voice Framework/m);
+    expect(body).toMatch(/^## MCP Server/m);
+    expect(body).toMatch(/^## Agent Loop/m);
+    expect(body).toMatch(/^## RLM/m);
+    expect(body).toContain('https://aiwg.io/setup.aiwg.yaml');
+    expect(body).toContain('.aiwg/marketing/brand/audit/readme-review.md');
+
+    for (const destination of [
+      'docs/getting-started/install-connect-verify.md',
+      'docs/getting-started/just-try-it.md',
+      'docs/overview/capabilities.md',
+      'docs/cli/install-and-repair.md',
+      'docs/cli/reference.md',
+      'docs/troubleshooting/index.md',
+      'docs/architecture-overview.md',
+      'docs/providers/provider-inventory.md',
+      'docs/overview/reading-list.md',
+    ]) {
+      expect(body, `README must preserve access to ${destination}`).toContain(`](${destination})`);
+      expect(existsSync(path.join(ROOT, destination)), destination).toBe(true);
+    }
+  });
+
   for (const published of publishedReadmes) {
     it(`${published.packageName} ships a full dedicated README`, () => {
       const body = readFileSync(path.join(ROOT, published.path), 'utf8');

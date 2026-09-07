@@ -48,9 +48,9 @@ restart or workspace reload. Until the current session demonstrates that it
 can use AIWG, describe the handoff as deployment-verified rather than fully
 active.
 
-All 13 named integrations have provider definitions and capability-matrix
-records. This structural and deployment-test coverage is distinct from field
-validation in a live provider session.
+Named integrations have provider definitions and capability-matrix records.
+That structural coverage is distinct from field validation in a live provider
+session.
 
 ## If verification is unclear
 

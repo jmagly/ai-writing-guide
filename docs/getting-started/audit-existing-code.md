@@ -1,6 +1,7 @@
 # Auditing Existing Code
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is installed and `aiwg use all` has completed for your provider.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](install-connect-verify.md). This guide assumes
+AIWG is connected to the target project and your provider session can read the deployed context.
 
 You have a codebase and you want to know what's wrong with it. Security issues, missing tests, dead code, dependency risks, quality problems — AIWG runs structured audits and produces findings you can act on.
 
@@ -8,36 +9,31 @@ You don't need to set up a full project workflow. Just point AIWG at the code an
 
 ---
 
-## Quick audit (no setup)
+## Quick audit
 
-```bash
-npm install -g aiwg
-cd /path/to/your/project
-aiwg use all --provider <provider>
-```
-
-Since this is an existing project, ask the agent to confirm the regenerated
-context before the audit:
+Open your AI tool in the project folder after completing
+[Install, Connect, and Verify](install-connect-verify.md). Ask the agent to
+confirm the current project and then run one audit:
 
 ```
-/aiwg-regenerate
-```
-
-Then:
-
-```
-Run a security audit on this codebase
+Run a security audit on this codebase. Save the findings with file references,
+risk priority, and one recommended next action for the top three issues.
 ```
 
 ```
-Find all the places where user input isn't validated
+Find all the places where user input is not validated. Report the affected
+files, the user path that reaches each spot, and the smallest verification
+check that would prove a fix.
 ```
 
 ```
-What tests are missing for the most critical paths?
+What tests are missing for the most critical paths? Save a gap report that
+names the path, current evidence, and the first test to add.
 ```
 
-That's it. No intake, no configuration, no phases. Just ask.
+Success means you get an inspectable report in the chat or `.aiwg/reports/`
+with source references, priorities, and one concrete follow-up. No intake,
+configuration, or phase workflow is required for this path.
 
 ---
 
@@ -141,7 +137,9 @@ Reports land in `.aiwg/reports/`.
 
 ## Ongoing security gates
 
-If you want audits to run automatically (before commits, on a schedule, or when files change), see [Daemon and Automation](daemon-and-automation.md). The `security-sentinel` behavior runs continuously.
+If you want recurring audits before commits, on a schedule, or when files
+change, see [Daemon and Automation](daemon-and-automation.md). Configure the
+behavior or external job explicitly and verify the evidence it reports.
 
 ---
 
@@ -162,3 +160,4 @@ Al will iterate — fix, re-audit, fix again — until the completion criterion 
 - Found too much to fix at once? Ask: `Prioritize these findings by risk and effort`
 - Want to prevent regressions? Ask: `Add tests that would catch these issues`
 - Need to explain findings to stakeholders? Ask: `Write an executive summary of what we found`
+- Ready to fix? Pick one finding and give the agent a measurable completion check before starting an iteration loop.

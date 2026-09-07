@@ -6,6 +6,13 @@ URI and a desired outcome. The Dataset Steward recommends a source assessment,
 schema posture, capabilities, privacy and network defaults, and an approval path
 without asking you to understand indexing terminology.
 
+## Common Use Cases
+
+- Decide whether a local file set, database export, or URI collection is ready for ingestion.
+- Preview privacy, locality, writes, and network effects before data processing starts.
+- Plan full-text, vector, hybrid, or graph-backed retrieval for a domain workflow.
+- Verify lineage, digests, and freshness before using a derived dataset result.
+
 ## One control plane, composable outcomes
 
 The workflow independently composes full-text, vector, hybrid, and reranked
@@ -54,6 +61,6 @@ Verification checks digests, checkpoints, evidence completeness, and freshness.
 Retirement is tombstone-first and requires complete enumeration, threshold
 review, and reconciliation evidence.
 
-Continue with the [task guide](task-guide.md), [worked
-examples](worked-examples.md), [migration guide](migration-guide.md), and
-[Fortemi boundary](fortemi-boundaries.md).
+Continue with the [quickstart](quickstart.md), [task guide](task-guide.md),
+[worked examples](worked-examples.md), [migration guide](migration-guide.md),
+and [Fortemi boundary](fortemi-boundaries.md).

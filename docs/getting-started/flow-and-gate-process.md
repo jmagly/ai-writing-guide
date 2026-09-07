@@ -1,6 +1,7 @@
 # Flow, Gate, and SDLC Accelerate
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
+> **First time using AIWG?** Begin with [Install, Connect, and Verify](install-connect-verify.md). This guide assumes
+AIWG is connected to the target project and your provider session can read the deployed context.
 
 AIWG has three layers for managing how a software project moves through its lifecycle. Understanding how they fit together changes how you work with the framework.
 
@@ -66,7 +67,8 @@ Once intake exists, the entire AIWG system has context. Agents know:
 - What compliance requirements apply
 - What constraints bound the solution
 
-Without intake, agents answer in the abstract. With intake, they answer for your specific project.
+Without intake, agents have less project context to work from. With intake,
+they can answer from the artifacts and decisions in your project.
 
 ---
 
@@ -123,7 +125,8 @@ For a document like the SAD:
 3. The `documentation-synthesizer` merges all feedback into the final document
 4. The result is saved to `.aiwg/architecture/`
 
-You don't manage this sequence — the flow command does. You just see progress indicators and the final output.
+You do not manage this sequence directly. The flow command coordinates it and
+returns progress plus the final output.
 
 ### Guidance and interactive mode
 
@@ -205,7 +208,8 @@ Gates return one of three results:
 **PASS — GO**: Proceed to the next phase. The orchestrator tells you what comes next.
 
 **CONDITIONAL — GO with conditions**: Most criteria met, but specific gaps remain. The gate tells you exactly what's missing and gives you three options:
-1. Address the gap now (often the gate can generate the missing artifact automatically)
+
+1. Address the gap now; the gate may be able to generate the missing artifact
 2. Proceed with a documented waiver
 3. Abort and fix first
 
@@ -271,7 +275,8 @@ Detects where the pipeline stopped (via `.aiwg/` artifacts) and picks up from th
 /sdlc-accelerate "description" --auto
 ```
 
-Auto-proceeds on CONDITIONAL gates without asking questions. Waiver is documented automatically. Use for quick experimentation or when you're comfortable with the defaults.
+Proceeds on CONDITIONAL gates without asking questions and records the waiver.
+Use for quick experimentation or when you are comfortable with the defaults.
 
 ### Preview without executing
 

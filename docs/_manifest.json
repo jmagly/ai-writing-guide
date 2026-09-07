@@ -23,8 +23,7 @@
     "sponsors",
     "task-management-integration",
     "usage-notes",
-    "yaml-metalanguage",
-    "how-it-works"
+    "yaml-metalanguage"
   ],
   "order": [
     "welcome",
@@ -39,7 +38,11 @@
     "getting-started/first-success-start-intake",
     "getting-started/verify-aiwg-is-working",
     "overview/what-is-aiwg",
+    "overview/capabilities",
     "overview/executive-brief",
+    "overview/reading-list",
+    "how-it-works",
+    "architecture-overview",
     "getting-started/prerequisites",
     "install",
     "cli",
@@ -539,7 +542,7 @@
     {
       "id": "getting-started/start-here",
       "title": "Start Here",
-      "summary": "Beginner path from plain-language goal to first useful AIWG result",
+      "summary": "Connect AIWG, save a README review, and carry it into the next task",
       "file": "getting-started/start-here.md",
       "parent": "getting-started"
     },
@@ -553,7 +556,7 @@
     {
       "id": "getting-started/install-connect-verify",
       "title": "Install, Connect, and Verify AIWG",
-      "summary": "Canonical install, use all, regenerate, and verification path",
+      "summary": "Canonical agent-led setup, provider handoff, and readiness verification",
       "file": "getting-started/install-connect-verify.md",
       "parent": "getting-started"
     },
@@ -595,21 +598,21 @@
     {
       "id": "getting-started/verify-aiwg-is-working",
       "title": "Verify AIWG Is Working",
-      "summary": "First-success recipe for verifying installation and discovery",
+      "summary": "Verify readiness before starting your first task",
       "file": "getting-started/verify-aiwg-is-working.md",
       "parent": "getting-started"
     },
     {
       "id": "overview/what-is-aiwg",
       "title": "What is AIWG?",
-      "summary": "Framework overview and key concepts",
+      "summary": "Reusable project context, specialist workflows, examples, and limits",
       "file": "overview/what-is-aiwg.md",
       "parent": "getting-started"
     },
     {
       "id": "overview/executive-brief",
       "title": "Executive Brief",
-      "summary": "High-level summary for decision makers",
+      "summary": "Adoption effort, limitations, and a measurable team pilot",
       "file": "overview/executive-brief.md",
       "parent": "getting-started"
     },
@@ -666,7 +669,7 @@
     {
       "id": "quickstart",
       "title": "Quick Start",
-      "summary": "Install and deploy in 5 minutes",
+      "summary": "Connect your project and produce a saved README review",
       "file": "quickstart.md",
       "parent": "getting-started"
     },
@@ -806,7 +809,7 @@
     {
       "id": "openclaw-guide",
       "title": "OpenClaw Guide",
-      "summary": "Deploy to OpenClaw — 10th platform, first with native behaviors support. ClawHub publication and ~/.openclaw/ structure.",
+      "summary": "Connect AIWG to OpenClaw, including user-level scope and behavior support",
       "file": "openclaw-guide.md",
       "parent": "integrations"
     },
@@ -2010,7 +2013,7 @@
     {
       "id": "addons/ralph/quickstart",
       "title": "Quick Start",
-      "summary": "Get started with iterative AI task execution in 5 minutes.",
+      "summary": "Run a bounded task loop and inspect its verification result",
       "file": "addons/ralph/quickstart.md",
       "parent": "addons/ralph"
     },
@@ -2115,7 +2118,7 @@
     {
       "id": "frameworks/media-marketing-kit/quickstart",
       "title": "Quick Start",
-      "summary": "Deploy the MMK framework and run your first campaign workflow in about 15 minutes.",
+      "summary": "Prepare a campaign brief and inspect its supporting decisions",
       "file": "frameworks/media-marketing-kit/quickstart.md",
       "parent": "frameworks/media-marketing-kit"
     },
@@ -2143,7 +2146,7 @@
     {
       "id": "frameworks/ops-complete/quickstart",
       "title": "Quick Start",
-      "summary": "Deploy the ops-complete framework and write your first validated runbook in about 10 minutes.",
+      "summary": "Prepare a runbook with verification and recovery steps",
       "file": "frameworks/ops-complete/quickstart.md",
       "parent": "frameworks/ops-complete"
     },
@@ -2164,7 +2167,7 @@
     {
       "id": "frameworks/research-complete/quickstart",
       "title": "Quick Start",
-      "summary": "Run a literature search and produce AI-grounded paper summaries in about 20 minutes.",
+      "summary": "Find sources and prepare summaries with traceable citations",
       "file": "frameworks/research-complete/quickstart.md",
       "parent": "frameworks/research-complete"
     },
@@ -2185,7 +2188,7 @@
     {
       "id": "addons/aiwg-dev/quickstart",
       "title": "Quick Start",
-      "summary": "Install the developer toolkit and validate your first component in 5 minutes.",
+      "summary": "Create and validate a project component",
       "file": "addons/aiwg-dev/quickstart.md",
       "parent": "addons/aiwg-dev"
     },
@@ -2199,14 +2202,14 @@
     {
       "id": "addons/aiwg-utils/overview",
       "title": "Overview",
-      "summary": "aiwg-utils is the core utility addon bundled with every AIWG installation. It provides seven enforce",
+      "summary": "Shared rules and helper workflows for discovery, routing, and maintenance",
       "file": "addons/aiwg-utils/overview.md",
       "parent": "addons/aiwg-utils"
     },
     {
       "id": "addons/aiwg-utils/rules-reference",
       "title": "Rules Reference",
-      "summary": "Seven enforcement rules deployed with every AIWG installation. These rules apply automatically based",
+      "summary": "Shared behavioral rules and the conditions for applying them",
       "file": "addons/aiwg-utils/rules-reference.md",
       "parent": "addons/aiwg-utils"
     },
@@ -2381,7 +2384,7 @@
     {
       "id": "addons/voice-framework/quickstart",
       "title": "Quick Start",
-      "summary": "Apply your first voice profile to content in about 2 minutes.",
+      "summary": "Apply a writing profile and review the resulting draft",
       "file": "addons/voice-framework/quickstart.md",
       "parent": "addons/voice-framework"
     },
@@ -2494,7 +2497,7 @@
     {
       "id": "customization/project-local-quickstart",
       "title": "Project-Local Quickstart",
-      "summary": "5-minute first bundle",
+      "summary": "Create and validate a project-local bundle",
       "file": "customization/project-local-quickstart.md",
       "parent": "customization"
     },
@@ -3207,7 +3210,7 @@
     {
       "id": "addons/agent-loop/quickstart",
       "title": "Quick Start",
-      "summary": "Get started with iterative AI task execution in 5 minutes.",
+      "summary": "Run a bounded task loop and inspect its verification result",
       "file": "addons/agent-loop/quickstart.md",
       "parent": "addons/agent-loop"
     },
@@ -3959,6 +3962,34 @@
       "summary": "Termshark is an optional local review surface for evidence already produced by",
       "file": "addons/network-analysis/termshark-handoff.md",
       "parent": "addons/network-analysis"
+    },
+    {
+      "id": "overview/capabilities",
+      "title": "Choose a Workflow",
+      "summary": "Find a workflow by the deliverable you need",
+      "file": "overview/capabilities.md",
+      "parent": "getting-started"
+    },
+    {
+      "id": "architecture-overview",
+      "title": "Architecture Overview",
+      "summary": "Deployment, discovery, project context, and optional runtime services",
+      "file": "architecture-overview.md",
+      "parent": "getting-started"
+    },
+    {
+      "id": "how-it-works",
+      "title": "How AIWG Works",
+      "summary": "How instructions and saved artifacts carry work between sessions",
+      "file": "how-it-works.md",
+      "parent": "getting-started"
+    },
+    {
+      "id": "overview/reading-list",
+      "title": "Research Reading List",
+      "summary": "Design background from external research, separate from AIWG performance claims",
+      "file": "overview/reading-list.md",
+      "parent": "getting-started"
     }
   ],
   "pages": [

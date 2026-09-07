@@ -1,27 +1,29 @@
 # Voice Framework Quickstart
 
-> **First time using AIWG?** Begin with [Install, Connect, and Verify](https://docs.aiwg.io/pages/getting-started--install-connect-verify.html). This guide assumes AIWG is already installed, `all` is deployed for your provider, and `aiwg-regenerate` has connected the agent to this project.
-
-Start with an explicit voice selection or a grounded local writing task.
-
 ## Grounded writing entry point
 
-See [author-controlled writing workflows](writing-workflows.md) for copyable
+See [author-controlled writing workflows](https://git.integrolabs.net/roctinam/aiwg/src/branch/main/agentic/code/addons/voice-framework/docs/writing-workflows.md) for copyable
 `writing plan` / `writing proofread` commands, invocation/session/project
 selection, MCP resources, channel and revision APIs, receipts and rollback.
 The examples below illustrate prompt-guided legacy voices; they are not recorded
 model runs or evidence that all provider responses are transformed. Personal
 voice and channel quality remain subject to the documented qualification gates.
 
-## Installation
+> **First time using AIWG?** Begin with [Install, Connect, and
+Verify](../../getting-started/install-connect-verify.md). This guide assumes AIWG is connected to the target project
+and your provider session can read the deployed context.
+
+Apply a voice profile to one piece of content and review the before/after.
+
+## Enable If Needed
 
 ```bash
-# Deploy with writing quality addon
 aiwg use writing
-
-# Or deploy standalone
-aiwg use voice-framework
 ```
+
+Skip this when the complete setup path already made writing and voice tools
+available in your provider session. Use `aiwg use voice-framework` only for a
+targeted standalone deployment.
 
 ## Apply a Built-in Voice
 
@@ -96,7 +98,8 @@ Write the API migration guide with 70% technical-authority and 30% friendly-expl
 Blend executive-brief and technical-authority voices with a 60/40 ratio
 ```
 
-The voice-blend skill creates a merged profile on-the-fly, applying both sets of characteristics with the specified weighting.
+The voice-blend skill creates a merged profile for the request and applies the
+requested weighting as guidance.
 
 ## Analyze Existing Content
 
@@ -152,7 +155,11 @@ I have a product announcement. Give me three versions:
 3. casual-conversational for the company Slack
 ```
 
-The voice-apply skill generates all three in a single response, applying the appropriate profile to each.
+The voice-apply skill drafts all three in a single response, applying the
+requested profile to each.
+
+Success means the rewritten content preserves the facts, names the profile or
+guidance used, and gives you a short review note for any factual or tone risk.
 
 ## References
 

@@ -1,125 +1,58 @@
 # Getting Started with AIWG
 
-Find the scenario that matches where you are right now.
+AIWG gives your AI assistant reusable project context and specialist workflows in the tools you already use. Start
+with one task, inspect the result, and carry it into the next session.
 
----
+**New to AIWG?** Follow [Install, Connect, and Verify](install-connect-verify.md), then [review your
+README](just-try-it.md). The result is a saved report with three prioritized fixes and source references.
 
 ## Pick your situation
 
 | I want to... | Guide |
 |---|---|
-| Get AIWG installed, repaired, connected, and verified with one pasted prompt | [Agentic Install Runbook](../agentic-install-runbook.md) |
-| Get one useful AIWG result before learning the whole system | [Start Here](start-here.md) |
-| Install AIWG and correctly connect it to my provider | [Install, Connect, and Verify](install-connect-verify.md) |
-| Install Node.js/npm without version or permission conflicts | [Install Node.js and npm Safely](install-node.md) |
-| Install AIWG on macOS or fix npm `EACCES` | [macOS Install Guide](macos-install.md) |
-| Walk through provider, project, deployment, and verification choices | [Start Here: guided recovery](start-here.md#guided-recovery-escape-hatch) |
-| Ask AIWG which path to use first | [Ask The Steward To Route You](first-success-ask-steward.md) |
-| Choose the right AI tool/provider handoff | [Provider Handoff](provider-handoff.md) |
-| Recover after running AIWG in the wrong folder | [Scope And Recovery](scope-and-recovery.md) |
-| Start a brand new project from scratch | [New Project](new-project.md) |
-| Bring AI up to speed on code I already have | [Existing Project](existing-project.md) |
-| Just try it and see what happens | [Quick Start — No Setup](just-try-it.md) |
-| Describe my goal in plain language and find the right AIWG path | [Beginner Language Map](language-map.md) |
-| Write better, more consistent documentation | [Content and Writing](writing-and-content.md) |
-| Run a security or code quality audit | [Audit Existing Code](audit-existing-code.md) |
-| Set up my whole team, not just myself | [Team Setup](team-setup.md) |
-| Work in the background while I do other things | [Daemon and Automation](daemon-and-automation.md) |
-| Import and review AI session history across providers | [Import AI Session History](session-history.md) |
-| Harden an npm project after a supply-chain incident | [npm Supply-Chain Hardening](../security/supply-chain-hardening.md) |
+| Follow the first task from setup through a saved result | [Start Here](start-here.md) |
+| Install or repair AIWG | [Install, Connect, and Verify](install-connect-verify.md) |
+| Set up Node.js/npm | [Install Node.js](install-node.md) |
+| Resolve macOS installation problems | [macOS Install Guide](macos-install.md) |
+| Choose the right AI tool handoff | [Provider Handoff](provider-handoff.md) |
+| Recover after using the wrong folder | [Scope and Recovery](scope-and-recovery.md) |
+| Plan a new project | [New Project](new-project.md) |
+| Work with an existing codebase | [Existing Project](existing-project.md) |
+| Write clearer, more consistent content | [Writing and Content](writing-and-content.md) |
+| Review security or code quality | [Audit Existing Code](audit-existing-code.md) |
+| Share project instructions across a team | [Team Setup](team-setup.md) |
+| Coordinate background work | [Automation](daemon-and-automation.md) |
+| Review earlier AI sessions | [Session History](session-history.md) |
+| Find a workflow without knowing its name | [Language Map](language-map.md), [Ask the Steward](first-success-ask-steward.md) |
 
----
+## Choose a domain
 
-## Frameworks
-
-| I'm working on... | Guide |
+| Your work | Guide |
 |---|---|
-| Software development (the full lifecycle) | [SDLC Framework](sdlc-framework.md) |
-| Marketing campaigns and content | [Marketing Framework](marketing-framework.md) |
-| Digital forensics and incident response | [Forensics Framework](forensics-framework.md) |
-| Academic or technical research | [Research Framework](research-framework.md) |
-| Building and managing a media archive | [Media Curator Framework](media-curator-framework.md) |
+| Software development | [SDLC](sdlc-framework.md) |
+| Marketing and campaigns | [Marketing](marketing-framework.md) |
+| Security investigations | [Forensics](forensics-framework.md) |
+| Research and source synthesis | [Research](research-framework.md) |
+| Media collections | [Media Curator](media-curator-framework.md) |
+| Shared notes and reference material | [Knowledge Base](../frameworks/knowledge-base/overview.md) |
+| Operational reviews and runbooks | [Operations](../frameworks/ops-complete/overview.md) |
 
----
+Each domain supplies workflows and templates. Choose a concrete deliverable before expanding to a larger process. The
+[capability guide](../overview/capabilities.md) connects these domains with optional utilities.
 
-## Going deeper
+Provider setup includes [Oh My Pi](../integrations/omp-quickstart.md),
+[Pi Coding Agent](../integrations/pi-quickstart.md), and
+[DeepSeek Harness](../integrations/deepseek-harness-quickstart.md). See the
+[provider inventory](../providers/provider-inventory.md) for all integrations.
 
-| Topic | Guide |
-|---|---|
-| How intake, flows, gates, and sdlc-accelerate work together | [Flow and Gate Process](flow-and-gate-process.md) |
-| Al, RLM, Voice, and other power features | [Key Addons](key-addons.md) |
-| Carrying project-specific agents and skills across platforms | [Project-Local Customization](../project-local/overview.md) |
-| Validating the beginner path | [Onboarding Validation](onboarding-validation.md) |
-| Checking the 2024-2026 onboarding evidence refresh | [Onboarding Research Refresh](onboarding-research-refresh.md) |
-| Sharing the beginner path with others | [Share AIWG](share-aiwg.md) |
+## Go deeper
 
----
+- [Project-local customization](../project-local/overview.md) for your own rules, agents, and skills.
+- [Key addons](key-addons.md) for task loops, large-context work, and writing tools.
+- [Flow and gate process](flow-and-gate-process.md) for the development lifecycle.
+- [Storage and personal knowledge](storage-and-pkm.md) for artifact handling.
+- [Agentic install runbook](../agentic-install-runbook.md) for the agent/operator setup procedure.
+- [CLI reference](../cli/reference.md) for exact manual commands and automation.
 
-## Not sure which one?
-
-Read the one-paragraph version of each below, then click the one that sounds right.
-
-**Start Here** — You are new to AIWG and want one useful result. Tell the agent
-what you are trying to do, review its proposed path, approve material changes,
-and ask it to verify that the workspace is engaged.
-
-**Agentic Install Runbook** — You want one canonical setup document an agent can
-follow from prerequisites through deployment, verification, provider handoff,
-and common repair paths.
-
-**Ask The Steward To Route You** — You want AIWG to choose a path for your goal. Ask the steward in chat for one recommendation; the agent verifies it against AIWG's capability index before answering.
-
-**Provider Handoff** — You know whether you are using Claude Code, OpenAI
-Codex, GitHub Copilot, Cursor, Factory AI, Hermes, OpenCode, OpenClaw,
-OpenHuman, Oh My Pi, Pi Coding Agent (pi.dev), Warp Terminal, or Devin Desktop, and need
-the short handoff from local deployment to that tool.
-
-**Scope And Recovery** — You may have run AIWG from the wrong folder, or you need to understand project-scoped setup versus global/user-scoped setup.
-
-**New Project** — You have an idea and want to kick off a real project with proper requirements, architecture, and a development plan. AIWG runs an intake conversation, generates the foundation docs, and assigns AI agents to each phase of the work.
-
-**Existing Project** — You already have a codebase. Maybe you wrote it yourself, maybe you inherited it. You want an AI assistant that actually understands what the code does, follows your conventions, and picks up where things left off.
-
-**Just Try It** — You want to skip setup and see something happen. Ask the
-agent a question about your code and request one useful, verified answer. No
-AIWG vocabulary is required.
-
-**Beginner Language Map** — You know what you want, but not the AIWG vocabulary. Describe the goal in ordinary language; the agent translates it into AIWG-native capabilities and recommends one focused next action.
-
-**Content and Writing** — You're writing docs, blog posts, proposals, or any other text. You want consistent voice and quality. AIWG's voice framework profiles train the AI to write the way you write.
-
-**Audit Existing Code** — You have code you want reviewed: security issues, test coverage gaps, dead code, dependency risks. AIWG runs structured audits and produces a report with prioritized findings.
-
-**Team Setup** — Multiple developers all using different AI tools. You want everyone to have the same agents, rules, and commands regardless of their platform — Claude Code, Cursor, Copilot, or others.
-
-**Daemon and Automation** — You want AIWG running in the background: scheduled tasks, event-driven scripts, a Telegram bot that reports what the AI is doing. Set it up once, let it run.
-
----
-
-**SDLC Framework** — Software development from idea to production: intake, architecture, requirements, tests, security, deployment. 90 specialized agents coordinated through phase flows and gate validation.
-
-**Marketing Framework** — Full campaign lifecycle: strategy, content creation across channels, brand and legal review, publication, and performance analysis.
-
-**Forensics Framework** — Digital forensics and incident response following NIST SP 800-86 and MITRE ATT&CK: target profiling, volatile data capture, evidence acquisition, timeline reconstruction, IOC extraction, forensic reporting.
-
-**Research Framework** — Academic and technical research automation: paper discovery, PDF acquisition, RAG-based summarization with hallucination prevention, citation management, GRADE quality assessment.
-
-**Media Curator Framework** — Media archive management: discography research, source discovery, parallel acquisition, quality scoring, metadata tagging, completeness tracking, platform export.
-
----
-
-**Flow and Gate Process** — The mechanics behind SDLC: how the intake commands, flow commands, gate commands, and the `sdlc-accelerate` meta-command connect and why that structure exists.
-
-**Key Addons** — Al (iterative loops), RLM (large codebase handling), Voice Framework (consistent writing style), and other capabilities that extend any framework.
-
-**Project-Local Customization** — How to ask the agent to add project-specific
-agents, skills, and scripts under `.aiwg/{extensions,addons,frameworks}/<name>/`
-so they deploy with the project and survive platform-directory resets. Use
-`.aiwg/plugins/<name>/` only for marketplace delivery wrappers. This keeps
-platform directories (`.claude/`, `.codex/`, and similar paths) expendable.
-
-**Onboarding Validation** — A lightweight checklist for maintainers to confirm that a new user can move from docs to install, wizard, verification, and one useful AIWG workflow.
-
-**Onboarding Research Refresh** — A short 2024-2026 source refresh tying current agentic mental-model and trust-calibration evidence to the beginner path.
-
-**Share AIWG** — Repo-owned demo, screenshot, and handoff copy for pointing users to one beginner path without moving social execution into this repo.
+For maintainers: [onboarding validation](onboarding-validation.md), [onboarding
+research](onboarding-research-refresh.md), and [sharing AIWG](share-aiwg.md).

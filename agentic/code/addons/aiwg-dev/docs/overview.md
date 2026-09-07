@@ -1,6 +1,15 @@
 # aiwg-dev Overview
 
-aiwg-dev is the developer toolkit for contributors building AIWG itself — adding new addons, frameworks, agents, skills, and commands to the framework. It is not installed by default and is not intended for end users. Install it explicitly when you are working on AIWG source code.
+aiwg-dev is the contributor toolkit for building AIWG itself. Use it when you are adding or validating addons,
+frameworks, agents, skills, commands, rules, or templates in the AIWG source tree. It is not installed by default and
+is not intended for end users of deployed frameworks.
+
+## Common Use Cases
+
+- Validate a new skill, agent, command, or addon before review.
+- Scaffold a framework or addon using the expected AIWG directory structure.
+- Check distributable `@file` references so source files do not point at provider deployment directories.
+- Run development health checks before opening an AIWG source change.
 
 ```bash
 aiwg use aiwg-dev
@@ -74,7 +83,7 @@ It is not for end users of deployed AIWG frameworks. End users should use `aiwg 
 
 ## References
 
-- `@$AIWG_ROOT/agentic/code/addons/aiwg-dev/docs/quickstart.md` — Install and validate your first component
+- [Quickstart](quickstart.md) — Install and validate your first component
 - `@$AIWG_ROOT/agentic/code/addons/aiwg-dev/rules/RULES-INDEX.md` — All enforcement rules
 - `@$AIWG_ROOT/agentic/code/addons/aiwg-dev/skills/validate-component/SKILL.md` — Full validation logic
 - `@$AIWG_ROOT/agentic/code/addons/aiwg-dev/skills/dev-doctor/SKILL.md` — Full health check logic

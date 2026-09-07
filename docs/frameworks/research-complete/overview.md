@@ -1,22 +1,32 @@
 # Research Framework Overview
 
-The Research Framework automates academic research management across an 8-stage workflow: discover papers via semantic search, acquire PDFs with integrity validation, summarize using retrieval-augmented generation, track citations, assess quality with GRADE methodology, archive for long-term preservation, and maintain provenance. It eliminates manual busywork while enforcing standards that prevent the most common research failure mode — hallucinated citations.
+The Research Framework helps teams turn source material into reviewable literature artifacts: search plans, acquired
+papers, grounded summaries, citations, quality assessments, gap notes, and provenance records. Use it when research
+needs to survive beyond a chat transcript and when citations or source boundaries matter.
+
+## Common Use Cases
+
+- Build a literature review for an architecture decision or policy brief.
+- Collect papers for a systematic scan and keep acquisition records tied to stable `REF-XXX` identifiers.
+- Summarize PDFs with source-grounded claims and reviewer-visible uncertainty.
+- Track citation networks, quality posture, and gaps before synthesis.
 
 ## Why It Exists
 
-Literature reviews are slow and error-prone when done manually. The framework addresses specific pain points:
+Literature work often fails because sources, claims, and quality judgments drift apart. The framework addresses that
+by keeping each research output tied to its source identity, retrieval metadata, and review state.
 
-| Problem | What the Framework Does | Time Savings |
-|---------|------------------------|--------------|
-| Manual paper search across databases | Semantic search with relevance ranking | 60% faster |
-| Tracking where papers came from | Persistent REF-XXX identifiers assigned on acquisition | Always organized |
-| Paywalled paper handling | Unpaywall integration + manual upload workflow | Streamlined |
-| Reading full papers | RAG-grounded summarization at 3 levels | ~75% faster (20min → 5min) |
-| Fabricated citations | All claims validated against source text | 0% vs 56% hallucination rate |
-| Inconsistent quality assessment | Automated GRADE scoring | Consistent standards |
-| Fragmented notes | Zettelkasten literature notes with atomic linking | Scalable knowledge base |
+| Problem | What the Framework Does |
+|---------|------------------------|
+| Manual paper search across databases | Captures semantic searches, relevance notes, and gap-detection output |
+| Tracking where papers came from | Assigns persistent `REF-XXX` identifiers during acquisition |
+| Paywalled paper handling | Supports Unpaywall lookup and manual upload workflows |
+| Reading full papers | Produces source-grounded summaries at multiple levels |
+| Fabricated citations | Flags unsupported claims for review instead of treating them as accepted |
+| Inconsistent quality assessment | Applies GRADE and FAIR-style checks with visible criteria |
+| Fragmented notes | Produces literature notes that can be linked into a broader knowledge base |
 
-## The 8-Stage Workflow
+## Workflow
 
 ```
 1. Discovery      Find papers via semantic search, gap detection
@@ -26,21 +36,19 @@ Literature reviews are slow and error-prone when done manually. The framework ad
 5. Quality        GRADE assessments, FAIR validation, quality scoring
 6. Synthesis      Create permanent notes, link related work
 7. Gap Analysis   Identify research gaps and contradictions
-8. Archival       OAIS-compliant archiving, integrity verification, provenance
+8. Archival       OAIS-inspired archival workflow, integrity verification, provenance
 ```
 
-All 8 stages are implemented in v1.0.0.
+## Agent Roles
 
-## Agent Catalog
-
-Eight agents, one per workflow stage:
+The framework includes role-specific agents for each workflow stage:
 
 | Agent | Purpose | Key Capability |
 |-------|---------|----------------|
-| `discovery-agent` | Semantic search, gap detection | 200M+ papers via Semantic Scholar; citation network traversal |
+| `discovery-agent` | Semantic search, gap detection | Source discovery and citation network traversal |
 | `research-acquisition-agent` | Download PDFs, assign IDs | FAIR validation, SHA-256 checksums, deduplication |
-| `documentation-agent` | RAG summarization | Zero-hallucination target; multi-level summaries; Zettelkasten notes |
-| `citation-agent` | Format citations | 9000+ citation styles; citation network analysis |
+| `documentation-agent` | RAG summarization | Source-grounded summaries and literature notes |
+| `citation-agent` | Format citations | Citation formatting and network analysis |
 | `quality-agent` | Assess paper quality | GRADE methodology (High/Moderate/Low/Very Low) |
 | `archival-agent` | Long-term preservation | OAIS compliance; SIP/AIP/DIP packages |
 | `provenance-agent` | Lineage tracking | W3C PROV logging; reproducibility packages |
@@ -52,17 +60,22 @@ Eight agents, one per workflow stage:
 
 Every paper gets a persistent `REF-XXX` identifier when acquired. This ID appears in summaries, citations, notes, and provenance records, providing a stable cross-reference that survives database reorganizations and file moves.
 
-### Zero-Hallucination Target for Summaries
+### Source-Grounded Summaries
 
-The documentation agent validates every claim in a summary against the source PDF before including it. Claims with confidence below the threshold are flagged for user review rather than included silently. This is the reason the framework requires actual PDFs rather than just metadata.
+The documentation agent checks summary claims against the source PDF before treating them as accepted. Claims below
+the configured confidence threshold are flagged for user review rather than included silently. This is the reason the
+framework requires actual PDFs rather than just metadata.
 
-### FAIR Compliance
+### FAIR-Oriented Review
 
-Acquired papers are scored on Findability, Accessibility, Interoperability, and Reusability (0-100). Papers below threshold are flagged rather than silently accepted. This matters for systematic reviews where you need to demonstrate that your corpus meets quality standards.
+Acquired papers are scored on Findability, Accessibility, Interoperability, and Reusability (0-100). Papers below
+threshold are flagged rather than silently accepted. The score records a workflow assessment; it is not a
+certification of compliance or source quality.
 
 ### GRADE Quality Assessment
 
-The quality agent applies the GRADE framework used in clinical and policy research to assess evidence quality. This is more useful than star ratings or citation counts because it evaluates the type and reliability of evidence, not just its popularity.
+The quality workflow asks the agent to assess evidence using explicit criteria and record uncertainty. Review the
+suitability of GRADE for the question and evidence type; a generated assessment still requires domain review.
 
 ## Storage Structure
 
@@ -96,6 +109,6 @@ aiwg research search "OAuth2 security vulnerabilities" --venue conference
 
 ## References
 
-- `@$AIWG_ROOT/agentic/code/frameworks/research-complete/docs/quickstart.md` — Deploy and first literature review
+- [Quickstart](quickstart.md) — Deploy and first literature review
 - `@$AIWG_ROOT/agentic/code/frameworks/research-complete/agents/` — Agent definitions
 - `@$AIWG_ROOT/agentic/code/frameworks/research-complete/inception/vision-document.md` — Framework vision
