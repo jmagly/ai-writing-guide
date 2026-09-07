@@ -14,7 +14,7 @@ export interface OutputModeRuntimeOptions {
   onMandatoryValidationFailure?: 'unaltered' | 'fail';
   validationTimeoutMs?: number;
   fidelity?: { brief: WritingBrief };
-  validateFinal?: (original: string, candidate: string) => Promise<{ outcome: 'pass' | 'fail' | 'uncertain'; message?: string }> | { outcome: 'pass' | 'fail' | 'uncertain'; message?: string };
+  validateFinal?: (original: string, candidate: string, assessment?: FidelityAssessment) => Promise<{ outcome: 'pass' | 'fail' | 'uncertain'; message?: string }> | { outcome: 'pass' | 'fail' | 'uncertain'; message?: string };
   requireFinalValidator?: boolean;
 }
 
@@ -163,7 +163,7 @@ export async function applyOutputModes(input: string, modes: ResolvedOutputMode[
     }
     if (options.requireFinalValidator && !options.validateFinal) throw new Error('Required final validator is missing.');
     if (options.validateFinal) {
-      const final = await bounded(() => options.validateFinal!(input, content), timeout);
+      const final = await bounded(() => options.validateFinal!(input, content, fidelity ? structuredClone(fidelity) : undefined), timeout);
       if (final?.outcome !== 'pass') throw new Error('Final semantic validation failed or requires review.');
     } else if (fidelity?.outcome === 'uncertain') throw new Error('Changed prose requires semantic review.');
     return { content, diagnostics, applied, attempted, retained: [...applied], fallback: 'none', ...(fidelity ? { fidelity } : {}) };

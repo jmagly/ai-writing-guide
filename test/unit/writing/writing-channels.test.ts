@@ -32,6 +32,38 @@ describe('five channel opt-in adapter', () => {
     }
     expect(digests.size).toBe(1);
   });
+  it('routes semantic paraphrases to review while keeping the original on rejection or missing review', async () => {
+    const request = await setup();
+    const original = 'Historical observation as of 2026-09-04. Oh My Pi is experimental. Local checks do not qualify every configuration.';
+    const candidate = "As of 2026-09-04, Oh My Pi is experimental. Local checks won't qualify every configuration.";
+    const shared = brief(original);
+    shared.propositions[0].qualifiers = ['Historical observation as of 2026-09-04.'];
+    const validateFinal = vi.fn((_original, _candidate, assessment) => {
+      expect(assessment.outcome).toBe('uncertain');
+      expect(assessment.changes.map(change => change.kind)).toEqual(expect.arrayContaining(['negation', 'qualification', 'first-person']));
+      assessment.changes.length = 0;
+      return { outcome: 'pass' as const };
+    });
+    const applied = await applyWritingChannel(original, { ...request, invocationModes: [], channel: 'conversation', brief: shared, transform: () => candidate, runtime: { validateFinal } });
+    expect(validateFinal).toHaveBeenCalledOnce();
+    expect(applied.content).toBe(candidate); expect(applied.state.fallback).toBe('none');
+    expect(applied.runtime?.fidelity?.changes.length).toBeGreaterThan(0);
+    for (const outcome of ['fail', 'uncertain', undefined] as const) {
+      const result = await applyWritingChannel(original, { ...request, invocationModes: [], channel: 'conversation', brief: shared, transform: () => candidate,
+        runtime: outcome ? { validateFinal: () => ({ outcome }) } : {} });
+      expect(result.content).toBe(original); expect(result.state.applied).toEqual([]);
+    }
+    const falseClaim = original.replace('do not qualify', 'qualify');
+    const reject = vi.fn(() => ({ outcome: 'fail' as const }));
+    const rejected = await applyWritingChannel(original, { ...request, invocationModes: [], channel: 'conversation', brief: shared, transform: () => falseClaim, runtime: { validateFinal: reject } });
+    expect(reject).toHaveBeenCalledOnce(); expect(rejected.content).toBe(original);
+  });
+  it('does not let a favorable semantic reviewer override changed quantities', async () => {
+    const request = await setup(); const original = 'The preview covers 2 configurations.';
+    const judge = vi.fn(() => ({ outcome: 'pass' as const }));
+    const result = await applyWritingChannel(original, { ...request, invocationModes: [], channel: 'engineering', brief: brief(original), transform: () => original.replace('2', '3'), runtime: { validateFinal: judge } });
+    expect(judge).not.toHaveBeenCalled(); expect(result.content).toBe(original); expect(result.state.applied).toEqual([]);
+  });
   it('applies channel-scoped author preferences without leaking them to later calls', async () => {
     const request = await setup();
     const store = new WriterProfileStore({ cwd: request.cwd });

@@ -23,7 +23,7 @@ function matches(text: string, pattern: RegExp) {
   return [...text.matchAll(pattern)].map(m => ({ text: m[0], start: m.index!, end: m.index! + m[0].length }));
 }
 
-/** Literal guards flag concrete drift; all other rewrites require semantic review. */
+/** Literal invariants fail closed; lexical signals locate changes requiring semantic review. */
 export function assessWritingFidelity(original: string, candidate: string, value?: WritingBrief): FidelityAssessment {
   const brief = value ? parseWritingBrief(value) : undefined;
   const changes: FidelityChange[] = [];
@@ -42,7 +42,7 @@ export function assessWritingFidelity(original: string, candidate: string, value
     const count = (list: typeof before, text: string) => list.filter(v => v.text === text).length;
     for (const [side, list, other] of [['original', before, after], ['candidate', after, before]] as const) {
       for (const item of list) if (count(list, item.text) !== count(other, item.text)) {
-        changes.push({ kind, side, start: item.start, end: item.end, reason: 'Protected lexical quantity or wording changed; review the located source and candidate.' });
+        changes.push({ kind, side, start: item.start, end: item.end, reason: 'Lexical quantity or wording changed; review the located source and candidate.' });
       }
     }
   }
@@ -50,7 +50,7 @@ export function assessWritingFidelity(original: string, candidate: string, value
     for (const claim of [...brief.propositions, ...brief.limitations]) {
       for (const qualifier of claim.qualifiers) {
         const offset = original.indexOf(qualifier);
-        if (offset >= 0 && !candidate.includes(qualifier)) changes.push({ kind: 'qualification', side: 'original', start: offset, end: offset + qualifier.length, referenceId: claim.id, reason: 'A brief qualifier was removed.' });
+        if (offset >= 0 && !candidate.includes(qualifier)) changes.push({ kind: 'qualification', side: 'original', start: offset, end: offset + qualifier.length, referenceId: claim.id, reason: 'The exact brief qualifier wording is absent; semantic preservation requires review.' });
       }
     }
     if (brief.operation === 'continue-author-text' && !candidate.startsWith(original)) changes.push({ kind: 'protected', side: 'original', start: 0, end: original.length, reason: 'Continuation changed the existing author text.' });
@@ -67,7 +67,7 @@ export function assessWritingFidelity(original: string, candidate: string, value
   if (unchanged) changes.length = 0;
   if (!unchanged && changes.length === 0) changes.push({ kind: 'wording', side: candidate.length ? 'candidate' : 'original', start: 0, end: candidate.length || original.length, reason: 'Literal guards cannot establish semantic preservation of changed prose.' });
   return {
-    outcome: unchanged ? 'pass' : changes.some(c => c.kind !== 'wording') ? 'fail' : 'uncertain',
+    outcome: unchanged ? 'pass' : changes.some(c => ['protected', 'quantity', 'command', 'citation'].includes(c.kind)) ? 'fail' : 'uncertain',
     changes, originalHash: writingBriefHash(original), candidateHash: writingBriefHash(candidate),
     ...(brief ? { briefHash: writingBriefHash(JSON.stringify(brief)) } : {}),
     method: 'conservative-literal-review-v1', formalProof: false,

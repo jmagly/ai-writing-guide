@@ -8,6 +8,10 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 ## [Unreleased]
 
 ### Fixed
+- Route negation, qualification and first-person lexical changes to explicit semantic review instead of treating wording differences as conclusive fidelity failures. Quantity, command, citation and protected-content invariants still fail closed; final reviewers can inspect a cloned assessment.
+
+
+### Fixed
 
 - Pass channel/task context into writer-profile compilation so scoped author
   preferences apply to the intended output without leaking across calls (#2301).

@@ -12,8 +12,7 @@ const mode = (id: string, mandatory = false): ResolvedOutputMode => ({
 describe('conservative fidelity assessment', () => {
   const original = 'Support is experimental. Run --scope project with 2 files. It does not publish. See https://example.test/source.';
   it.each([
-    ['--scope', '--global'], ['2 files', '3 files'], ['does not', 'does'],
-    ['experimental', 'stable'], ['https://example.test/source', 'https://other.test/source'],
+    ['--scope', '--global'], ['2 files', '3 files'], ['https://example.test/source', 'https://other.test/source'],
   ])('locates a material mutation of %s', (before, after) => {
     const candidate = original.replace(before, after);
     const result = assessWritingFidelity(original, candidate);
@@ -22,8 +21,13 @@ describe('conservative fidelity assessment', () => {
     expect(result.formalProof).toBe(false);
     for (const change of result.changes) expect(change.end).toBeGreaterThan(change.start);
   });
+  it.each([['does not', 'does'], ['does not', "doesn't"], ['experimental', 'stable']])('requires semantic adjudication for lexical change %s to %s', (before, after) => {
+    const result = assessWritingFidelity(original, original.replace(before, after));
+    expect(result.outcome).toBe('uncertain');
+    expect(result.changes.length).toBeGreaterThan(0);
+  });
   it('requires review for invented first-person statements and arbitrary rewrites', () => {
-    expect(assessWritingFidelity(original, original + ' I designed this last year.').outcome).toBe('fail');
+    expect(assessWritingFidelity(original, original + ' I designed this last year.').outcome).toBe('uncertain');
     expect(assessWritingFidelity('Readers can deploy resources.', 'Resources can be deployed by readers.').outcome).toBe('uncertain');
     expect(assessWritingFidelity(original, original).outcome).toBe('pass');
   });

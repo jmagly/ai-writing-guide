@@ -47,11 +47,24 @@ describe('bounded voice revision artifacts', () => {
     const judged = await runVoiceRevision(original, { ...defaults, revise: c => proposer(c.current, 'useful'), reviewCandidate: () => ({ value: { fidelity: 'pass', preference: 'same', rationale: 'No useful improvement.' } }) });
     expect(judged.best).toBe(original); expect(judged.receipt.stopReason).toBe('no-improvement');
   });
-  it('prioritizes lexical fidelity failure over a favorable automatic judge', async () => {
+  it('prioritizes literal quantity failure over a favorable automatic judge', async () => {
     let judged = false;
-    const source = 'Support is experimental.';
-    const result = await runVoiceRevision(source, { ...defaults, revise: () => ({ value: { candidate: 'Support is stable.', edits: [replace(source, 'experimental', 'stable')] } }), reviewCandidate: () => { judged = true; return better(); } });
+    const source = 'Support covers 2 files.';
+    const result = await runVoiceRevision(source, { ...defaults, revise: () => ({ value: { candidate: 'Support covers 3 files.', edits: [replace(source, '2', '3')] } }), reviewCandidate: () => { judged = true; return better(); } });
     expect(judged).toBe(false); expect(result.best).toBe(source); expect(result.receipt.stopReason).toBe('fidelity-failure');
+  });
+  it('allows an explicit reviewer to assess a bounded repair that removes an unsupported negation', async () => {
+    const source = 'The paths do not fit a standard adapter. Preview checks are limited.';
+    const corrected = 'The paths require a distinct adapter. Preview checks are limited.';
+    const edit = replace(source, 'The paths do not fit a standard adapter.', 'The paths require a distinct adapter.');
+    for (const outcome of ['pass', 'fail', 'uncertain'] as const) {
+      let reviewed = false;
+      const result = await runVoiceRevision(source, { ...defaults, strength: 'light', maxPasses: 1,
+        critique: () => ({ value: [{ start: edit.start, end: edit.end, reason: 'The supplied evidence establishes a distinct adapter, not a comparison.' }] }),
+        revise: () => ({ value: { candidate: corrected, edits: [edit] } }),
+        reviewCandidate: () => { reviewed = true; return { value: { fidelity: outcome, preference: 'better', rationale: 'Fixture reviewer decision bound to the repair.' } }; } });
+      expect(reviewed).toBe(true); expect(result.best).toBe(outcome === 'pass' ? corrected : source);
+    }
   });
   it('requires explicit independent fidelity pass before retaining changed prose', async () => {
     const result = await runVoiceRevision(original, { ...defaults, revise: c => proposer(c.current, 'useful'), reviewCandidate: () => ({ value: { fidelity: 'uncertain', preference: 'better', rationale: 'Meaning still needs review.' } }) });
