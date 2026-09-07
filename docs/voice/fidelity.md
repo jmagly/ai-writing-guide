@@ -17,3 +17,7 @@ Fenced code (backticks or tildes), inline code, quotations and Markdown citation
 ## Development evidence
 
 The [exact-span repair study](evidence/span-repair-development-2026-09-07.md) records six assisted cases and the frozen-output replay that motivated semantic-review routing. One of four repaired failures passed the joint development criteria; this does not qualify a model or channel for broad rollout.
+
+## Explicit literal protection
+
+`protectedLiterals` accepts nonempty, well-formed strings whose existing occurrences are masked before each transformation stage. Matching is exact string matching, including regex metacharacters. Overlapping spans are merged with Markdown/code protection, and repeated occurrences each retain their source bytes. The list is snapshotted before callbacks. Missing text is never inserted. Deleting or duplicating protected tokens follows the existing failure policy; task-specific checks remain necessary to detect an added unmasked copy.

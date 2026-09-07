@@ -1,0 +1,30 @@
+{
+  "cases": 20,
+  "normal": 20,
+  "restored": 20,
+  "fidelity": 17,
+  "joint": 0,
+  "runtime_retained": 0,
+  "destination_replays": 24,
+  "raw_social_cta_duplicates": 4,
+  "tokens": 43052,
+  "service_cycle_seconds": 126.78001022338867,
+  "model": "gpt-oss:20b",
+  "digest": "17052f91a42e97930aa6e28a6c6c06a983e6a58dbb00434885a0cf5313e376f7",
+  "baseline": {
+    "run": "channel-family-02",
+    "cases": 20,
+    "restored": 18,
+    "fidelity": 5,
+    "joint": 0
+  },
+  "fortemi_restored": true,
+  "model_unloaded": true,
+  "frozen_inputs_verified": true,
+  "code_hashes": {
+    "src/output-modes/runtime.ts": "045b6f3d5e07c3603b85e0620eccce49a71d2b4207d94f85823b04dcfc726caf",
+    "src/writing/writing-channels.ts": "4f49f20a8fcf1a98d4205da2e814fcb7fcaa85b99184a1d8a7e4cb62d062471c",
+    "src/writing/fidelity.ts": "67805c284a75fecd49188ec598190a341e5ada035cfa4766a86f736c16e858ee"
+  },
+  "independent_human_evaluation": false
+}

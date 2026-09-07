@@ -7,6 +7,10 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Fixed
+- Protect explicit channel CTAs and required literals before generation, merging overlaps with existing code/Markdown protection while retaining final constraint checks.
+
+
 ### Documentation
 - Publish paired Qwen/GPT-OSS channel development results, including failed slices, reused baseline provenance and the remaining qualification limits.
 

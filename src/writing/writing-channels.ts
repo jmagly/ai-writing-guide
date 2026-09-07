@@ -52,8 +52,10 @@ export async function applyWritingChannel(input: string, request: WritingChannel
   }
   if (['telegram', 'discord'].includes(constraints.destination ?? '') && (pack.channel !== 'social' || !constraints.cta)) throw new Error('Chat announcements require the social pack and one explicit CTA');
   const { transform, runtime, ...consumer } = request;
+  if (runtime?.protectedLiterals !== undefined && !Array.isArray(runtime.protectedLiterals)) throw new Error('Protected literals must be an array.');
   const consumerResult = await applyWritingConsumer(input, { ...consumer, task: pack.channel, invocationModes: [...(consumer.invocationModes ?? []), `channel-${pack.channel}`], ...(transform ? { runtime: {
     ...runtime, fidelity: { brief }, requireFinalValidator: true,
+    protectedLiterals: [...(runtime?.protectedLiterals ?? []), ...(constraints.requiredLiterals ?? []), ...(constraints.cta ? [constraints.cta] : [])],
     transform: (text: string, mode: ResolvedOutputMode) => transform(text, mode, { pack: structuredClone(pack), brief: structuredClone(brief) }),
   } } : {}) });
   let channelCheck = check(consumerResult.content, constraints);

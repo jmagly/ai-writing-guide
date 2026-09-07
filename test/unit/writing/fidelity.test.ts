@@ -73,3 +73,43 @@ describe('final output validation and accurate fallback', () => {
     }
   });
 });
+
+
+describe('explicit literal protection', () => {
+  it('merges overlapping text/code ranges and preserves repeats, Unicode and regex metacharacters through every stage', async () => {
+    const literals = ['Which `npm test` workflow?', 'operator-owned', 'a+b($1)', '🦉 note', 'aba', 'bab'];
+    const input = '\uE000AIWG_OUTPUT_MODE_0\uE001 Intro. Which `npm test` workflow? operator-owned; operator-owned. a+b($1). 🦉 note. ababa.';
+    let calls = 0;
+    const result = await applyOutputModes(input, [mode('voice'), { ...mode('presentation'), protectedContent: [] }], {
+      protectedLiterals: literals, requireFinalValidator: true, validateFinal: () => ({ outcome: 'pass' }),
+      transform: text => {
+        calls++;
+        for (const literal of literals) expect(text).not.toContain(literal);
+        expect(text).not.toContain('npm test');
+        return text.replace('Intro', 'Opening');
+      },
+    });
+    expect(calls).toBe(2); expect(result.content).toBe(input.replace('Intro', 'Opening'));
+    expect(result.fallback).toBe('none'); expect(result.retained).toEqual(['voice', 'presentation']);
+  });
+  it('does not insert absent text and snapshots the caller list before callbacks', async () => {
+    const literals = ['keep', 'absent'];
+    const result = await applyOutputModes('keep editable', [mode('first'), mode('second')], { protectedLiterals: literals,
+      transform: text => { literals.push('editable'); expect(text).toContain('editable'); return text; } });
+    expect(result.content).toBe('keep editable');
+  });
+  it('rejects deletion and duplication even with a favorable final reviewer', async () => {
+    for (const duplicate of [false, true]) {
+      let reviewed = false;
+      const result = await applyOutputModes('Which workflow?', [mode('voice')], { protectedLiterals: ['Which workflow?'],
+        transform: text => duplicate ? text + text : '', onMandatoryValidationFailure: 'unaltered',
+        validateFinal: () => { reviewed = true; return { outcome: 'pass' }; } });
+      expect(reviewed).toBe(false); expect(result.content).toBe('Which workflow?'); expect(result.applied).toEqual([]);
+    }
+  });
+  it.each([[''], ['  '], ['\uD83E'], ['\uDD89'], [42], 'text', null])('rejects invalid explicit literal lists before transformation: %j', async protectedLiterals => {
+    let called = false;
+    await expect(applyOutputModes('input', [mode('voice')], { protectedLiterals: protectedLiterals as string[], transform: text => { called = true; return text; } })).rejects.toThrow('Protected literals');
+    expect(called).toBe(false);
+  });
+});

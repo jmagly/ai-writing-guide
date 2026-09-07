@@ -64,6 +64,26 @@ describe('five channel opt-in adapter', () => {
     const result = await applyWritingChannel(original, { ...request, invocationModes: [], channel: 'engineering', brief: brief(original), transform: () => original.replace('2', '3'), runtime: { validateFinal: judge } });
     expect(judge).not.toHaveBeenCalled(); expect(result.content).toBe(original); expect(result.state.applied).toEqual([]);
   });
+  it('masks the complete caller CTA and required literals across all five channel packs', async () => {
+    const request = await setup();
+    const original = 'Intro. Experimental adapter. operator-owned. Which `npm test` workflow?';
+    const cta = 'Which `npm test` workflow?';
+    for (const channel of ['article', 'social', 'email', 'engineering', 'conversation'] as WritingChannel[]) {
+      let calls = 0;
+      const result = await applyWritingChannel(original, { ...request, channel, brief: brief(original),
+        constraints: { cta, requiredLiterals: ['operator-owned', 'Experimental'], destination: channel === 'social' ? 'telegram' : 'other' },
+        runtime: { protectedLiterals: ['adapter'], validateFinal: () => ({ outcome: 'pass' }) },
+        transform: text => { calls++; for (const literal of [cta, 'npm test', 'operator-owned', 'Experimental', 'adapter']) expect(text).not.toContain(literal); return text.replace('Intro', 'Opening'); } });
+      expect(calls).toBe(2); expect(result.content).toBe(original.replace('Intro', 'Opening')); expect(result.channelCheck.valid).toBe(true);
+      expect(result.state.fallback).toBe('none'); expect(result.posts).toEqual([result.content]);
+    }
+  });
+  it('keeps final CTA checks even when a transform adds an extra unmasked copy', async () => {
+    const request = await setup(); const original = 'Intro. Which workflow?';
+    const result = await applyWritingChannel(original, { ...request, invocationModes: [], channel: 'social', brief: brief(original),
+      constraints: { cta: 'Which workflow?', destination: 'discord' }, transform: text => text + ' Which workflow?', runtime: { validateFinal: () => ({ outcome: 'pass' }) } });
+    expect(result.content).toBe(original); expect(result.state.fallback).toBe('unaltered'); expect(result.state.applied).toEqual([]);
+  });
   it('applies channel-scoped author preferences without leaking them to later calls', async () => {
     const request = await setup();
     const store = new WriterProfileStore({ cwd: request.cwd });
@@ -133,7 +153,7 @@ describe('five channel opt-in adapter', () => {
   });
   it('cannot retain a callback removing an explicit caveat even when its reviewer claims pass', async () => {
     const request = await setup();
-    const result = await applyWritingChannel(source, { ...request, channel: 'engineering', brief: brief(), constraints: { requiredLiterals: ['Technical guidance is advisory.'] }, transform: text => text.replace('Technical guidance is advisory. ', ''), runtime: { validateFinal: () => ({ outcome: 'pass' }) } });
+    const result = await applyWritingChannel(source, { ...request, channel: 'engineering', brief: brief(), constraints: { requiredLiterals: ['Technical guidance is advisory.'] }, transform: text => { expect(text).not.toContain('Technical guidance is advisory.'); return text.replace(/\uE000AIWG_OUTPUT_MODE_+\d+\uE001/g, ''); }, runtime: { onMandatoryValidationFailure: 'unaltered', validateFinal: () => ({ outcome: 'pass' }) } });
     expect(result.content).toBe(source); expect(result.state.applied).toEqual([]);
   });
   it('rejects invalid configuration and does not force conclusions or fragments', () => {

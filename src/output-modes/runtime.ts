@@ -9,6 +9,8 @@ export interface OutputModeValidationDiagnostic {
 }
 
 export interface OutputModeRuntimeOptions {
+  /** Exact caller-owned text to mask in each stage; absent literals are never inserted. */
+  protectedLiterals?: string[];
   transform: (content: string, mode: ResolvedOutputMode) => Promise<string> | string;
   validate?: (content: string, mode: ResolvedOutputMode) => Promise<{ valid: boolean; message?: string }> | { valid: boolean; message?: string };
   onMandatoryValidationFailure?: 'unaltered' | 'fail';
@@ -69,11 +71,16 @@ function markdownLinkRanges(content: string): Array<{ start: number; end: number
   return ranges;
 }
 
-function protect(content: string, classes: string[]): { content: string; literals: ProtectedLiteral[] } {
+function protect(content: string, classes: string[], explicitLiterals: string[]): { content: string; literals: ProtectedLiteral[] } {
   const literals: ProtectedLiteral[] = [];
   const pattern = protectedPattern(classes);
   const ranges = pattern ? [...content.matchAll(pattern)].map(m => ({ start: m.index!, end: m.index! + m[0].length })) : [];
   if (classes.includes('citations')) ranges.push(...markdownLinkRanges(content));
+  for (const literal of explicitLiterals) {
+    for (let start = content.indexOf(literal); start !== -1; start = content.indexOf(literal, start + 1)) {
+      ranges.push({ start, end: start + literal.length });
+    }
+  }
   ranges.sort((a, b) => a.start - b.start || b.end - a.end);
   const merged: typeof ranges = [];
   for (const range of ranges) {
@@ -114,6 +121,8 @@ async function bounded<T>(action: () => Promise<T> | T, milliseconds: number): P
 }
 
 export async function applyOutputModes(input: string, modes: ResolvedOutputMode[], options: OutputModeRuntimeOptions): Promise<OutputModeRuntimeResult> {
+  if (options.protectedLiterals !== undefined && (!Array.isArray(options.protectedLiterals) || options.protectedLiterals.some(value => typeof value !== 'string' || !value.trim() || /[\uD800-\uDFFF]/u.test(value)))) throw new Error('Protected literals must be nonempty well-formed strings.');
+  const protectedLiterals = [...new Set(options.protectedLiterals ?? [])];
   options = { ...options, ...(options.fidelity ? { fidelity: { brief: parseWritingBrief(options.fidelity.brief) } } : {}) };
   if (modes.length === 0 && !options.requireFinalValidator && !options.fidelity && !options.validateFinal) return { content: input, diagnostics: [], applied: [], fallback: 'none' };
   const activeModes = structuredClone(modes).filter(mode => mode.id !== 'unaltered');
@@ -133,7 +142,7 @@ export async function applyOutputModes(input: string, modes: ResolvedOutputMode[
     for (const mode of activeModes) {
       currentMode = mode.id; level = mode.validation.level;
       attempted.push(mode.id);
-      const masked = protect(content, protectedClasses);
+      const masked = protect(content, protectedClasses, protectedLiterals);
       const transformed = await options.transform(masked.content, structuredClone(mode));
       if (typeof transformed !== 'string') throw new Error('Output transform returned a non-string result.');
       content = restore(transformed, masked.literals, mode.id);
