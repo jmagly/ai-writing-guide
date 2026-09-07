@@ -32,3 +32,7 @@ Inventory at the implementation baseline found no voice resource registered in t
 ## Coverage boundary
 
 The API callback is a participating transformation path. The CLI selects/inspects/exports configuration and delivers instruction data to scripts. The new MCP resources inspect/export profiles. Neither configuration delivery path proves downstream application or validation. Channel adapters and revision workflows report their own retained transformation evidence; unsupported downstream consumers keep an explicit instruction-export fallback.
+
+## Task-scoped author preferences
+
+`applyWritingConsumer` accepts an optional `task` string (nonempty, at most 120 characters). It passes that exact task to writer-profile compilation. Omission preserves global-only behavior; no provider or prose-based task inference is performed. `applyWritingChannel` supplies its channel as the task. Scoped preferences and overrides apply per invocation without changing the stored profile. Direct callers may pass `{ task }` as the third argument to `loadOutputModeRegistry` or the fifth argument to `resolveOutputModes`, after the existing scope overrides.

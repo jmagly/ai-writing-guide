@@ -23,6 +23,26 @@ async function setup() {
 }
 
 describe('participating consumer and scoped writer modes', () => {
+  it('passes an explicit task through registry resolution and preserves unscoped behavior', async () => {
+    const { cwd, request } = await setup();
+    const store = new WriterProfileStore({ cwd });
+    const profile = await store.read('author');
+    profile.preferences.push({ id: 'task-neutral', key: 'warmth', value: 'neutral', task: 'article', origin: 'explicit', confidence: 'high', status: 'accepted', evidence: [] });
+    await store.save(profile, profile.revision);
+    for (const task of ['article', undefined, 'email', 'article']) {
+      const expected = task === 'article' ? 'neutral' : 'warm';
+      const result = await applyWritingConsumer('Unchanged prose.', { ...request, invocationModes: ['writer-author'], task });
+      expect(result.modes[0].instructions).toContain(`"warmth":"${expected}"`);
+      expect(result.content).toBe('Unchanged prose.');
+      expect(result.state.applied).toEqual([]);
+    }
+    const scoped = await resolveOutputModes(cwd, cwd, [], { project: ['writer-author'], session: [] }, { task: 'article' });
+    expect(scoped.modes[0].scope).toBe('project');
+    expect(scoped.modes[0].instructions).toContain('"warmth":"neutral"');
+    for (const task of ['', ' ', 'x'.repeat(121), 42 as unknown as string]) {
+      await expect(applyWritingConsumer('text', { ...request, task })).rejects.toThrow('Invalid writer task context');
+    }
+  });
   it('imports no selection and retains byte identity for empty stacks and structured outputs', async () => {
     const { cwd, request } = await setup();
     const input = '{"content":"unaltered\\n🧵"}';

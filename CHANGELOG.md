@@ -7,6 +7,11 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Fixed
+
+- Pass channel/task context into writer-profile compilation so scoped author
+  preferences apply to the intended output without leaking across calls (#2301).
+
 ### Added
 
 - Published four-policy, two-count exemplar development results and exact-token

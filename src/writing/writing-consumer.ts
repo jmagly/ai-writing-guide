@@ -6,6 +6,8 @@ export interface WritingConsumerRequest {
   cwd: string;
   frameworkRoot: string;
   invocationModes?: string[];
+  /** Exact author-preference task scope; omitted retains global preferences only. */
+  task?: string;
   /** Caller-supplied labels, never inferred provider execution evidence. */
   provider: string;
   consumer: string;
@@ -30,7 +32,7 @@ export interface WritingConsumerResult {
 /** Shared opt-in boundary: only a participating prose callback can transform output. */
 export async function applyWritingConsumer(input: string, request: WritingConsumerRequest): Promise<WritingConsumerResult> {
   if (!['prose', 'json', 'tool', 'protocol'].includes(request.format)) throw new Error('Unknown writing consumer format');
-  const resolved = await resolveOutputModes(request.cwd, request.frameworkRoot, request.invocationModes ?? []);
+  const resolved = await resolveOutputModes(request.cwd, request.frameworkRoot, request.invocationModes ?? [], {}, { task: request.task });
   const modes = resolved.modes;
   const instructionExport = modes.length ? JSON.stringify({ schemaVersion: 1, usage: 'Selected expression instructions; apply only to prose within consumer permissions.', modes: modes.map(({ id, instructions, validation, protectedContent }) => ({ id, instructions, validation, protectedContent })) }, null, 2) : '';
   const state: WritingConsumerResult['state'] = {

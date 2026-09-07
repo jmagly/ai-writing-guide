@@ -32,6 +32,28 @@ describe('five channel opt-in adapter', () => {
     }
     expect(digests.size).toBe(1);
   });
+  it('applies channel-scoped author preferences without leaking them to later calls', async () => {
+    const request = await setup();
+    const store = new WriterProfileStore({ cwd: request.cwd });
+    const profile = await store.read('warm');
+    profile.preferences.push({ id: 'article-neutral', key: 'warmth', value: 'neutral', task: 'article', origin: 'explicit', confidence: 'high', status: 'accepted', evidence: [] });
+    await store.save(profile, profile.revision);
+    const stored = await store.read('warm');
+    for (const channel of ['article', 'email', 'social', 'engineering', 'conversation', 'article'] as WritingChannel[]) {
+      const expected = channel === 'article' ? 'neutral' : 'warm';
+      const exported = await applyWritingChannel(source, { ...request, task: 'ignored-caller-task', channel, brief: brief() });
+      expect(exported.modes.find(mode => mode.id === 'writer-warm')?.instructions).toContain(`"warmth":"${expected}"`);
+      const seen: string[] = [];
+      const applied = await applyWritingChannel(source, { ...request, channel, brief: brief(), transform: (text, mode) => {
+        if (mode.id === 'writer-warm') seen.push(mode.instructions);
+        return text;
+      }, runtime: { validateFinal: () => ({ outcome: 'pass' }) } });
+      expect(seen).toHaveLength(1);
+      expect(seen[0]).toContain(`"warmth":"${expected}"`);
+      expect(applied.state.fallback).toBe('none');
+    }
+    expect(await store.read('warm')).toEqual(stored);
+  });
   it('selects a standalone channel and carries the shared brief through article, social and email', async () => {
     const request = await setup(); let text = source; const outputs: string[] = [];
     for (const channel of ['article', 'social', 'email'] as WritingChannel[]) {

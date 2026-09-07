@@ -135,24 +135,28 @@ async function loadVoiceAdapters(frameworkRoot: string): Promise<ResolvedOutputM
   return result;
 }
 
-async function loadWriterAdapters(cwd: string, scope: 'project' | 'user'): Promise<ResolvedOutputMode[]> {
+async function loadWriterAdapters(cwd: string, scope: 'project' | 'user', context: WriterProfileContext): Promise<ResolvedOutputMode[]> {
   const store = new WriterProfileStore({ cwd, scope });
   const result: ResolvedOutputMode[] = [];
   for (const id of await store.list()) {
-    const compiled = compileWriterProfile(await store.read(id));
+    const compiled = compileWriterProfile(await store.read(id), context);
     result.push({ ...validateOutputModeProfile(compiled.profile), source: scope, sourcePath: join(store.directory, `${id}.json`) });
   }
   return result;
 }
 
-export async function loadOutputModeRegistry(cwd: string, frameworkRoot: string): Promise<Map<string, ResolvedOutputMode>> {
+/** Explicit caller task; not inferred from provider identity or prose. */
+export interface WriterProfileContext { task?: string }
+
+export async function loadOutputModeRegistry(cwd: string, frameworkRoot: string, context: WriterProfileContext = {}): Promise<Map<string, ResolvedOutputMode>> {
+  if (context.task !== undefined && (typeof context.task !== 'string' || !context.task.trim() || context.task.length > 120)) throw new Error('Invalid writer task context');
   const registry = new Map<string, ResolvedOutputMode>();
   for (const profile of BUILTINS) registry.set(profile.id, { ...profile, source: 'builtin' });
   for (const profile of await loadVoiceAdapters(frameworkRoot)) if (!registry.has(profile.id)) registry.set(profile.id, profile);
   // User overrides built-ins; project overrides user.
   for (const entry of [...profileDirs(cwd)].reverse()) {
     const profiles = await loadDirectory(entry.dir, entry.source);
-    const writers = await loadWriterAdapters(cwd, entry.source as 'project' | 'user');
+    const writers = await loadWriterAdapters(cwd, entry.source as 'project' | 'user', context);
     const ids = new Set(profiles.map(profile => profile.id));
     for (const writer of writers) if (ids.has(writer.id)) throw new Error(`Duplicate output mode '${writer.id}' from a writer sidecar and a mode file in the same scope.`);
     for (const profile of [...profiles, ...writers]) registry.set(profile.id, profile);
@@ -194,8 +198,9 @@ export async function resolveOutputModes(
   frameworkRoot: string,
   invocation: string[] = [],
   overrides: OutputModeStateOverrides = {},
+  context: WriterProfileContext = {},
 ): Promise<{ modes: ResolvedOutputMode[]; diagnostics: string[] }> {
-  const registry = await loadOutputModeRegistry(cwd, frameworkRoot);
+  const registry = await loadOutputModeRegistry(cwd, frameworkRoot, context);
   const project = overrides.project ?? (await readOutputModeState(cwd, 'project')).modes;
   const session = overrides.session ?? (await readOutputModeState(cwd, 'session')).modes;
   for (const [scope, modes] of [['project', project], ['session', session], ['invocation', invocation]] as const) {
