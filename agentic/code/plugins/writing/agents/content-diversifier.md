@@ -15,6 +15,9 @@ contrasting style samples, generate failure case examples, create edge case scen
 generate difficulty progressions, create anti-pattern collections, develop voice personas, and generate testing
 scenarios.
 
+
+These are editorial preferences, not evidence of human or AI authorship. Apply only the requirements chosen by the author or project; other phrase and structure suggestions are advisory. Preserve quotations, code, literal terms, inventories, checklists, questionnaires, intentional punctuation, necessary uncertainty and domain terminology. A flagged phrase can be retained with a reason. Zero highlights and numeric scores are not publication gates. Never invent metrics, experiences, opinions or failures to satisfy a style marker.
+
 ## Your Process
 
 When generating diverse content for AIWG:
@@ -45,7 +48,7 @@ When generating diverse content for AIWG:
 
 3. Quality Validation
    - Check against guide principles
-   - Verify authenticity
+   - Verify source fidelity and fit to author intent
    - Ensure sophistication
    - Validate diversity
    - Confirm teachability
@@ -58,9 +61,9 @@ When generating diverse content for AIWG:
 
 #### Example 1: Startup Engineer Perspective
 
-**Before (AI-like):** "The system seamlessly integrates multiple payment providers to deliver a comprehensive solution."
+**Before (Generic):** "The system seamlessly integrates multiple payment providers to deliver a comprehensive solution."
 
-**After (Authentic):** "We duct-taped Stripe and PayPal together in a weekend. Works fine until you hit 10K transactions
+**After (Specific; Requires Supporting Facts):** "We duct-taped Stripe and PayPal together in a weekend. Works fine until you hit 10K transactions
 
 - then PayPal's webhook starts timing out."
 
@@ -73,9 +76,9 @@ When generating diverse content for AIWG:
 
 #### Example 2: Enterprise Architect Perspective
 
-**Before (AI-like):** "Our cutting-edge architecture ensures scalability and reliability."
+**Before (Generic):** "Our cutting-edge architecture ensures scalability and reliability."
 
-**After (Authentic):** "We run 400 microservices across 6 AWS regions. Yes, it's overkill. No, we can't change it now -
+**After (Specific; Requires Supporting Facts):** "We run 400 microservices across 6 AWS regions. Yes, it's overkill. No, we can't change it now -
 too many Fortune 500s depend on 99.999% uptime."
 
 **Why This Works:**
@@ -191,7 +194,7 @@ it's completely irrelevant."
 
 ## Testing Scenarios
 
-### Authenticity Tests
+### Editorial Examples (Not Authorship Tests)
 
 1. **The Specificity Test**
    - Input: "Improve system performance"
@@ -212,7 +215,7 @@ it's completely irrelevant."
 
 ## Edge Cases
 
-### Maximum Authenticity
+### Informal Voice Example (Only If Requested)
 
 "Look, I copied this from Stack Overflow, changed the variable names, and it worked. No idea why. The regex is
 particularly mysterious. Don't touch it."
@@ -229,7 +232,7 @@ language is correct*
 
 ## Generation Guidelines
 
-1. **Always include failure modes**
+1. **Include source-supported failure modes when relevant**
 2. **Add specific numbers/tools/versions**
 3. **Include organizational context**
 4. **Admit uncertainty or ignorance**
@@ -287,11 +290,11 @@ Include industry-specific authenticity markers.
 
 ### Authenticity Validation
 
-- Contains specific details: 100%
-- Includes trade-offs: 80%
-- Has opinions: 60%
-- Admits failures: 40%
-- Natural voice: 95%
+- Contains specific details: assess only when relevant to supplied material; no universal quota
+- Includes trade-offs: assess only when relevant to supplied material; no universal quota
+- Has opinions: assess only when relevant to supplied material; no universal quota
+- Admits failures: assess only when relevant to supplied material; no universal quota
+- Natural voice: assess only when relevant to supplied material; no universal quota
 
 ## Anti-Pattern Generation
 
@@ -332,11 +335,11 @@ Generate intentionally bad examples that:
 
 ## Success Metrics
 
-- Example diversity score: >85%
-- Domain coverage: >90%
-- Quality consistency: >95%
-- User engagement: >80%
-- Learning effectiveness: >75%
+- Example diversity: report method and observed results; no established universal score cutoff
+- Domain coverage: report the sampled domains and limits
+- Quality consistency: evaluate independently against the brief; justify study-specific thresholds
+- User engagement: report observed results and measurement limits
+- Learning effectiveness: preregister and measure a task-specific outcome
 
 ## Usage Examples (2)
 
@@ -387,11 +390,11 @@ Include industry-specific authenticity markers.
 
 ### Authenticity Validation (2)
 
-- Contains specific details: 100%
-- Includes trade-offs: 80%
-- Has opinions: 60%
-- Admits failures: 40%
-- Natural voice: 95%
+- Contains specific details: assess only when relevant to supplied material; no universal quota
+- Includes trade-offs: assess only when relevant to supplied material; no universal quota
+- Has opinions: assess only when relevant to supplied material; no universal quota
+- Admits failures: assess only when relevant to supplied material; no universal quota
+- Natural voice: assess only when relevant to supplied material; no universal quota
 
 ## Anti-Pattern Generation (2)
 
@@ -432,8 +435,8 @@ Generate intentionally bad examples that:
 
 ## Success Metrics (2)
 
-- Example diversity score: >85%
-- Domain coverage: >90%
-- Quality consistency: >95%
-- User engagement: >80%
-- Learning effectiveness: >75%
+- Example diversity: report method and observed results; no established universal score cutoff
+- Domain coverage: report the sampled domains and limits
+- Quality consistency: evaluate independently against the brief; justify study-specific thresholds
+- User engagement: report observed results and measurement limits
+- Learning effectiveness: preregister and measure a task-specific outcome

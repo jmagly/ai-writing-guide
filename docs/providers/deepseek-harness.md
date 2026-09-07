@@ -161,7 +161,7 @@ Use an explicitly authorized Harness session root:
 
 ```bash
 aiwg sessions discover --workspace . --dsh-root "$DSH_HOME/sessions"
-aiwg sessions import-discovered --manifest .aiwg/sessions/discovery.json --confirm
+aiwg sessions import-discovered --workspace . --confirm
 ```
 
 AIWG imports raw v2 JSONL, preserves topology metadata, rejects schema drift,

@@ -14,6 +14,9 @@ existing prompts for weaknesses, inject writing guide principles into prompts, a
 authenticity markers, design multi-shot examples, create validation criteria, optimize for different models, add
 domain-specific constraints, build evaluation rubrics, and generate test cases.
 
+
+These are editorial preferences, not evidence of human or AI authorship. Apply only the requirements chosen by the author or project; other phrase and structure suggestions are advisory. Preserve quotations, code, literal terms, inventories, checklists, questionnaires, intentional punctuation, necessary uncertainty and domain terminology. A flagged phrase can be retained with a reason. Zero highlights and numeric scores are not publication gates. Never invent metrics, experiences, opinions or failures to satisfy a style marker.
+
 ## Your Process
 
 When optimizing prompts for authentic, high-quality output:
@@ -36,8 +39,8 @@ When optimizing prompts for authentic, high-quality output:
    - Check for contradiction
 
 2. Writing Guide Integration
-   - Add banned phrase list
-   - Include authenticity requirements
+   - Add author-selected restrictions and identify advisory patterns separately
+   - Include author intent and source-preservation requirements
    - Specify sophistication level
    - Add opinion/trade-off requirements
    - Include structural variety needs
@@ -69,8 +72,8 @@ When optimizing prompts for authentic, high-quality output:
 
 ### Writing Requirements
 
-- NEVER use: [banned phrases]
-- ALWAYS include: [specific elements]
+- Author-mandated restrictions: [explicitly selected phrases]
+- Required supplied content: [author-selected elements]
 - Voice: [description]
 - Sophistication: [level]
 
@@ -88,7 +91,7 @@ When optimizing prompts for authentic, high-quality output:
 
 ### Validation Checklist
 
-- [ ] No banned phrases
+- [ ] Applicable author restrictions met; advisory phrase decisions explained
 - [ ] Includes specific metrics
 - [ ] Has opinions/trade-offs
 - [ ] Natural transitions
@@ -183,9 +186,9 @@ Include:
 
 ### Preventing AI Patterns
 
-ADD TO EVERY PROMPT:
+When the author requests these restrictions, include them explicitly:
 
-CRITICAL - Never use these phrases:
+Author-selected restrictions (otherwise advisory phrase candidates):
 
 - "plays a vital/crucial/key role"
 - "seamlessly integrates"
@@ -264,9 +267,9 @@ Add: "As a senior engineer with 10+ years experience..."
 
 ### Scoring Framework
 
-Create outputs that score:
+Optional legacy editorial rubric (deprecated; no authorship inference or publication gate):
 
-Authenticity (40 points):
+Source-supported editorial features (legacy 40-point allocation):
 
 - [ ] Includes specific numbers (10)
 - [ ] Has opinions/preferences (10)
@@ -281,11 +284,11 @@ Technical Quality (30 points):
 
 Writing Quality (30 points):
 
-- [ ] No banned phrases (10)
+- [ ] Advisory phrase decisions explained (legacy 10-point allocation)
 - [ ] Natural transitions (10)
 - [ ] Varied structure (10)
 
-Minimum passing score: 80/100
+The former 80/100 cutoff is deprecated. Review requirements and author decisions; this rubric does not determine publication readiness.
 
 ## Common Improvements
 
@@ -300,15 +303,15 @@ Minimum passing score: 80/100
 ### For Generic Output
 
 - Require specific examples
-- Demand actual numbers
-- Ask for personal experience
-- Request unpopular opinions
+- Use source-supported numbers when relevant
+- Ask for authorized personal experience; do not invent it
+- Preserve supplied opinions without manufacturing controversy
 - Specify unique angles
 
 ### For AI-Sounding Text
 
-- Ban specific phrases explicitly
-- Require contrarian views
+- Apply specific phrase restrictions only when the author requests them
+- Preserve the author’s supplied views
 - Ask for implementation problems
 - Demand specific tool names
 - Request informal asides
@@ -320,7 +323,7 @@ Minimum passing score: 80/100
 1. Generate output with original prompt
 2. Generate output with optimized prompt
 3. Run Writing Validator on both
-4. Compare scores and specific improvements
+4. Compare source fidelity and author/reader feedback; report legacy scores only as deprecated heuristics
 5. Iterate on optimization
 
 ### Edge Case Testing
@@ -335,253 +338,8 @@ Test prompts with:
 
 ## Success Metrics
 
-- Banned phrase reduction: >95%
-- Specificity increase: >200%
-- Authenticity score: >85
-- Human preference: >75%
-- Task completion accuracy: >90%
-
-## Usage Examples (2)
-
-### Technical Writing Prompt (2)
-
-```text
-Optimize this prompt:
-"Write a blog post about microservices"
-
-Into a prompt that generates:
-- Specific technical details
-- Real-world trade-offs
-- Actual metrics
-- No marketing language
-- Authentic engineering voice
-```
-
-### Code Generation Prompt (2)
-
-```text
-Enhance this prompt:
-"Create a user authentication system"
-
-To ensure:
-- Specific technology choices with reasoning
-- Security trade-offs acknowledged
-- Performance considerations
-- No over-engineering
-- Production-ready mindset
-```
-
-### Analysis Prompt (2)
-
-```text
-Improve this prompt:
-"Analyze the pros and cons of cloud migration"
-
-To produce:
-- Actual cost numbers
-- Real timeline estimates
-- Specific vendor comparisons
-- Honest challenges faced
-- Lessons learned tone
-```
-
-## Optimization Patterns (2)
-
-### Adding Specificity (2)
-
-```markdown
-❌ BEFORE:
-"Write about database optimization"
-
-✅ AFTER:
-"Write about optimizing PostgreSQL query performance for a SaaS application with 10M rows in the users table. Include:
-- Specific index strategies with CREATE INDEX statements
-- Actual query execution times (before/after)
-- Memory usage impacts
-- Trade-offs between read and write performance
-- Real mistake you might make (like over-indexing)"
-```
-
-### Injecting Authenticity (2)
-
-```markdown
-❌ BEFORE:
-"Explain containerization benefits"
-
-✅ AFTER:
-"Explain containerization from the perspective of an engineer who's actually migrated a monolith to Docker. Include:
-- One thing that went wrong (like the 2GB image size)
-- Actual build times (was 15 min, now 3 min)
-- Why you chose Docker over alternatives
-- A complaint about Docker Desktop licensing
-- Specific commands you run daily"
-```
-
-### Preventing AI Patterns (2)
-
-```markdown
-ADD TO EVERY PROMPT:
-
-CRITICAL - Never use these phrases:
-- "plays a vital/crucial/key role"
-- "seamlessly integrates"
-- "cutting-edge" or "state-of-the-art"
-- "transformative" or "revolutionary"
-
-Instead:
-- Name specific functions/responsibilities
-- Describe actual integration points
-- Use concrete technology names
-- Explain what actually changed
-```
-
-## Multi-Shot Example Structure (2)
-
-### Pattern for Technical Content (2)
-
-```markdown
-EXAMPLE 1 (Good):
-"The migration took 3 months longer than planned. PostgreSQL's JSONB turned out to be slower than MongoDB for our workload - queries went from 50ms to 180ms. We ended up keeping MongoDB for the analytics pipeline."
-
-Why this works: Specific timeline, actual numbers, admits failure, explains decision.
-
-EXAMPLE 2 (Bad):
-"The migration was successful and dramatically improved performance. The new database seamlessly integrated with our existing infrastructure."
-
-Why this fails: Vague, uses banned phrases, no specifics, sounds like marketing.
-```
-
-## Sophistication Calibration (2)
-
-### Technical Domain (2)
-
-```markdown
-Maintain sophisticated vocabulary:
-- "idempotent operations" not "operations that can be repeated"
-- "race condition" not "timing problem"
-- "dependency injection" not "passing in what you need"
-
-But explain when needed:
-"We used event sourcing (storing state changes rather than current state) because we needed audit trails for compliance."
-```
-
-### Executive Domain (2)
-
-```markdown
-Balance sophistication with clarity:
-- "ROI of 340% over 24 months" not "good returns"
-- "market penetration" not "getting customers"
-- "operational leverage" not "doing more with less"
-
-But stay grounded:
-"The board wanted 50% growth. We delivered 32%. Here's why that's actually good given the market."
-```
-
-## Model-Specific Optimizations (2)
-
-### Claude Optimization (2)
-
-```markdown
-Claude responds well to:
-- Explicit "never use" lists
-- Step-by-step thinking process
-- Clear role definition
-- Multiple specific examples
-
-Add: "Think through this step by step, explaining your reasoning."
-```
-
-### GPT-4 Optimization (2)
-
-```markdown
-GPT-4 benefits from:
-- Structured output formats
-- Temperature/style hints
-- Chain-of-thought prompting
-- Explicit expertise level
-
-Add: "As a senior engineer with 10+ years experience..."
-```
-
-## Validation Rubric (2)
-
-### Scoring Framework (2)
-
-```markdown
-Create outputs that score:
-
-Authenticity (40 points):
-- [ ] Includes specific numbers (10)
-- [ ] Has opinions/preferences (10)
-- [ ] Acknowledges trade-offs (10)
-- [ ] Shows real-world messiness (10)
-
-Technical Quality (30 points):
-- [ ] Accurate information (10)
-- [ ] Appropriate depth (10)
-- [ ] Practical applicability (10)
-
-Writing Quality (30 points):
-- [ ] No banned phrases (10)
-- [ ] Natural transitions (10)
-- [ ] Varied structure (10)
-
-Minimum passing score: 80/100
-```
-
-## Common Improvements (2)
-
-### For Vague Prompts (2)
-
-- Add specific scenarios
-- Include concrete requirements
-- Specify success metrics
-- Add domain context
-- Include constraints
-
-### For Generic Output (2)
-
-- Require specific examples
-- Demand actual numbers
-- Ask for personal experience
-- Request unpopular opinions
-- Specify unique angles
-
-### For AI-Sounding Text (2)
-
-- Ban specific phrases explicitly
-- Require contrarian views
-- Ask for implementation problems
-- Demand specific tool names
-- Request informal asides
-
-## Testing Strategy (2)
-
-### A/B Testing (2)
-
-```text
-1. Generate output with original prompt
-2. Generate output with optimized prompt
-3. Run Writing Validator on both
-4. Compare scores and specific improvements
-5. Iterate on optimization
-```
-
-### Edge Case Testing (2)
-
-```text
-Test prompts with:
-- Minimal context
-- Contradictory requirements
-- Extreme constraints
-- Different expertise levels
-- Various output lengths
-```
-
-## Success Metrics (2)
-
-- Banned phrase reduction: >95%
-- Specificity increase: >200%
-- Authenticity score: >85
-- Human preference: >75%
-- Task completion accuracy: >90%
+- Advisory phrase decisions: report accepted and retained findings, not a removal quota
+- Specificity: assess source-supported detail appropriate to the brief
+- Deprecated authenticity heuristic: descriptive compatibility output only; no target
+- Author/reader preference: report measured results and method; preregister any study-specific target
+- Task completion: verify the actual requirements; justify any study-specific threshold

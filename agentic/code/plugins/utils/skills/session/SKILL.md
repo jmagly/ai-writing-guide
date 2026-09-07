@@ -9,6 +9,9 @@ description: Start an agentic session with pre-flight health checks, auto-repair
 
 Start a fully-prepared agentic session. Pre-flight checks run automatically: version currency, health diagnostics, and deployment verification. Issues are auto-repaired before launch. Pass `mcp` to inject configured MCP servers into the provider config first.
 
+For past conversations, cross-provider timelines, or catalog queries, use
+`aiwg show skill session-explore`. The plural `aiwg sessions` namespace manages
+history; this skill launches a new provider session.
 ## Triggers
 
 Alternate expressions and non-obvious activations (primary phrases are matched automatically from the skill description):

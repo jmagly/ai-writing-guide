@@ -14,9 +14,49 @@ triggers:
 
 # Voice Apply Skill
 
+## Local writing and participating consumer recipes
+
+Use [author-controlled writing workflows](../../docs/writing-workflows.md) for the
+actual `aiwg writing plan` and `aiwg writing proofread` commands, channel APIs,
+bounded revision, explicit learning, scoped MCP resources and separate receipts.
+Planning creates a structured artifact; proofreading applies exact listed
+author-authorized corrections without a model or voice rewrite. A selected mode
+is not an applied transformation. Unsupported consumers use explicit instruction
+exports; never claim every provider response is intercepted. Keep original text
+and unresolved review decisions recoverable. Publication controls remain with
+the user's existing workflow.
+
+## Reviewed voice application
+
+For model-driven voice transformation, use the packaged [criticism/correction flow](../../flows/voice-critique-correction.flow.yaml) and [output impact guide](../../docs/voice-output-impact.md). The selected development lane uses one Astra draw and at most one correction with the primary session as reviewer. Neutral analytical packets are required; private author provenance stays outside generator and corrector context. Preserve the original unless a hash-bound review accepts both fidelity and cadence. This does not change deterministic proofread-only behavior or qualify all channels.
+
+## Brief and fidelity contract
+
+For author-controlled writing, prepare a structured
+[writing brief](../../../../../../docs/voice/writing-briefs.md) before generating prose.
+Record reader task, supported propositions, limitations, intended action and
+approved author notes. Missing first-person experiences or design rationale are
+editorial gaps; do not invent them. Keep evidence strength independent of voice.
+Proofread-only applies selected authorized correction IDs to the original source;
+other operations expose explicit permissions and lineage for downstream execution.
+
+Run [fidelity checks](../../../../../../docs/voice/fidelity.md) after every final
+structure/presentation pass. Uncertain paraphrases require review. Preserve the
+original on configured fallback and report attempted versus retained changes
+outside product prose. Automated literal guards are not semantic proof.
+
 ## Purpose
 
 Transform content to match a specified voice profile. This skill loads voice profiles and applies their characteristics (tone, vocabulary, structure, perspective) to new or existing content.
+
+Evidence constraints are recorded in [the natural voice ownership ADR](../../docs/natural-voice/ADR-001-evidence-and-ownership.md)
+and [versioned ledger](../../docs/natural-voice/evidence-ledger.v1.json).
+Treat phrase highlights as contextual editorial suggestions, never authorship
+probabilities. Preserve supplied facts, uncertainty and author intent; an assertive
+tone does not strengthen evidence. Author notes were already part of the cited
+post-editing study. Neither topic-matched examples nor a fixed example count is
+established as a universally best choice. The ledger is an evidence contract,
+not a claim that the planned natural voice pipeline has been qualified.
 
 ## When This Skill Applies
 
@@ -73,28 +113,28 @@ profile = load_voice_profile("technical-authority")
 
 **Tone Calibration**:
 - Adjust formality level (word choice, contractions)
-- Calibrate confidence (hedging vs assertion)
+- Preserve evidence strength and all required hedging; adjust expression only
 - Set warmth (clinical vs personable)
 - Tune energy (measured vs enthusiastic)
 
 **Vocabulary Transformation**:
 - Replace words per `prefer`/`avoid` guidance
 - Introduce domain terminology naturally
-- Weave in signature phrases where appropriate
+- Use characteristic phrasing only where natural and supported; never insert signatures mechanically
 
 **Structure Adjustment**:
 - Modify sentence length distribution
 - Adjust paragraph breaks
-- Add/remove lists, examples, analogies as specified
+- Reorganize supported material within edit permissions; do not invent examples or analogies that add claims
 
 **Perspective Shift**:
 - Adjust narrative person (I, we, you, they)
-- Calibrate opinion expression
+- Preserve supported opinions and attribution; do not invent a viewpoint
 - Set reader relationship tone
 
 ### 4. Verify Authenticity Markers
 
-Ensure output includes profile's authenticity characteristics:
+Check these properties only when supported by the source; never invent them to satisfy a profile:
 - Acknowledges uncertainty (if specified)
 - Shows tradeoffs (if specified)
 - Uses specific numbers (if specified)
@@ -189,9 +229,9 @@ Voice Applied: technical-authority
 
 Transformations:
 - Formality: 0.4 → 0.7 (increased)
-- Confidence: 0.5 → 0.9 (increased)
+- Evidence strength: unchanged; original qualifications retained
 - Vocabulary: 12 replacements
-- Structure: Added 2 examples, removed 1 rhetorical question
+- Structure: reordered supported clauses within approved edit scope
 
 Authenticity Check:
 ✓ Acknowledges tradeoffs

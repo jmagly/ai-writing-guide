@@ -33,6 +33,7 @@ installer command when the package is absent or unusable.
 aiwg sessions sources [--json]
 aiwg sessions discover --workspace <path>
                        [--codex-root <authorized-path>]
+                       [--omp-root <authorized-path>] [--dsh-root <authorized-path>]
                        [--manifest <path>] [--dry-run] [--json]
 aiwg sessions import-discovered --workspace <path>
                                 [--manifest <path>] [--confirm|--yes]
@@ -92,7 +93,10 @@ Discovery scans only provider roots associated with the explicitly authorized
 workspace. Claude, Cursor, and Factory have workspace-keyed local roots. Codex
 rollouts use a shared root, so AIWG does not inspect `CODEX_HOME` implicitly:
 pass `--codex-root` to authorize that root, or leave Codex reported as
-`SHARED_ROOT_AUTHORIZATION_REQUIRED`. Providers that require an API or manual
+`SHARED_ROOT_AUTHORIZATION_REQUIRED`. OMP and DeepSeek Harness also require an
+explicit authorized root through `--omp-root` or `--dsh-root`. Harness imports
+raw v2 JSONL; compressed histories require a reviewed raw export. Providers that
+require an API or manual
 export remain visible as `export-required`.
 
 ```sh

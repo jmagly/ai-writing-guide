@@ -1,7 +1,7 @@
 ---
 namespace: aiwg
 name: ai-pattern-detection
-description: Detect AI-generated writing patterns and suggest authentic alternatives. Use when reviewing or editing content, or when the user mentions authenticity or natural voice.
+description: Review editorial phrase patterns and suggest contextual alternatives; legacy name does not imply authorship detection. Use when reviewing or editing content, or when the user mentions authenticity or natural voice.
 version: 1.0.0
 platforms: [all]
 
@@ -11,7 +11,9 @@ platforms: [all]
 
 ## Purpose
 
-Automatically scan content for AI-generated writing patterns and provide authentic alternatives. This skill activates when Claude generates or reviews text content, ensuring outputs maintain human-like authenticity.
+Review phrase patterns and suggest edits that fit the author’s intent and audience. This skill does not detect authorship or certify naturalness.
+
+These are editorial preferences, not evidence of human or AI authorship. Apply only the requirements chosen by the author or project; other phrase and structure suggestions are advisory. Preserve quotations, code, literal terms, inventories, checklists, questionnaires, intentional punctuation, necessary uncertainty and domain terminology. A flagged phrase can be retained with a reason. Zero highlights and numeric scores are not publication gates. Never invent metrics, experiences, opinions or failures to satisfy a style marker.
 
 ## When This Skill Applies
 
@@ -23,9 +25,9 @@ Automatically scan content for AI-generated writing patterns and provide authent
 
 ## Detection Categories
 
-### Critical Patterns (Always Flag)
+### Legacy High-Priority Patterns (Review in Context)
 
-These immediately identify content as AI-generated:
+These phrases can be uninformative in some contexts; none identifies content as AI-generated:
 
 1. **Corporate Buzzwords**: "seamlessly integrates", "cutting-edge", "revolutionary", "next-generation", "comprehensive solution"
 2. **Vague Intensifiers**: "dramatically improves", "significantly enhances", "vastly superior"
@@ -42,7 +44,7 @@ These immediately identify content as AI-generated:
 
 ### Contextual Patterns (Check Frequency)
 
-Words acceptable at 1:1000 ratio but problematic at 1:100:
+Review frequency in the document and language; there is no universal acceptable ratio for these words:
 - manifest, revolutionary, next-generation
 - robust, scalable, comprehensive
 - synergy, leverage, utilize
@@ -59,9 +61,9 @@ Words acceptable at 1:1000 ratio but problematic at 1:100:
 | "dramatically improves" | [specific metric: "reduces latency by 40%"] |
 | "robust" | "handles X requests/second" / "99.9% uptime" |
 
-## Authenticity Markers to Include
+## Editorial Features to Consider
 
-Strong authentic content includes:
+Use these only when relevant and supported by the supplied material:
 
 1. **Specific opinions**: "I prefer X because..." not "X is preferred"
 2. **Acknowledged trade-offs**: "This approach sacrifices Y for Z"
@@ -74,34 +76,36 @@ Strong authentic content includes:
 
 When generating or reviewing content:
 
-1. **Scan** for critical banned patterns
+1. **Scan** for phrase patterns and explicitly mandated style rules
 2. **Count** contextual pattern frequency
 3. **Check** structural variety
-4. **Suggest** specific replacements
-5. **Verify** authenticity markers present
+4. **Suggest** edits grounded in the source; retain intentional phrasing with a reason
+5. **Verify** facts, author intent, uncertainty and protected content survive the edit
 
 ## Examples
 
-### Before (AI-Detected)
+### Before (Generic Wording)
 > The platform seamlessly integrates cutting-edge technology to dramatically improve workflow efficiency. Moreover, it plays a crucial role in enabling next-generation solutions. In conclusion, this comprehensive approach transforms how teams collaborate.
 
-### After (Authentic)
+### After (Specific Wording; Requires Supporting Facts)
 > The platform connects to existing tools through standard APIs. Initial tests show 40% faster task completion. Teams report fewer context switches between applications.
 
 ## Script Reference
 
-For automated scanning, use `scripts/pattern_scanner.py` which:
+The Python `scripts/pattern_scanner.py` is a **legacy regex scanner**, not the contextual diagnostic implementation. It:
 - Counts pattern frequencies
-- Flags critical violations
+- Labels matches using legacy severity categories; these are advisory absent a user rule
 - Generates replacement suggestions
-- Produces authenticity score (0-100)
+- Preserves the deprecated numeric `authenticity_score` (0–100) and `grade` for compatibility, with a deprecation notice; neither measures authorship or publication readiness
+
+For contextual programmatic review, use `WritingValidationEngine.diagnose(content, options)` or the exported `diagnoseWriting` API. Results include UTF-16 spans, context, explanations and reasoned exceptions. They carry `publicationGate: false`. The Python scanner does not implement these context or exception fields.
 
 ## Integration
 
 This skill works with:
 - `/writing-validator` command for explicit validation
 - `writing-validator` agent for deep analysis
-- Any content generation task automatically
+- Content tasks when this skill is invoked; invocation is not proof of runtime integration
 
 ## References
 

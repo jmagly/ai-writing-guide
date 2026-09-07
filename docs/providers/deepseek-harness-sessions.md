@@ -5,7 +5,7 @@ Discovery is opt-in and bounded to an explicitly authorized root:
 
 ```bash
 aiwg sessions discover --workspace . --dsh-root "$DSH_HOME/sessions"
-aiwg sessions import-discovered --manifest .aiwg/sessions/discovery.json --confirm
+aiwg sessions import-discovered --workspace . --confirm
 ```
 
 Harness stores sessions below a normalized-working-directory directory and a

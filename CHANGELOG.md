@@ -7,6 +7,18 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.9.5] - 2026-09-07 - "Shared bundles, guided workflows, and controlled writing"
+
+### Fixed
+
+- Index validated external project-local bundles in nested members so deployment, discovery, show, and managed quickrefs agree without copying source bundles. Exclude unrelated external files and escaping payload links (#2308).
+- Route artifact writes through the configured external corpus and independently verify Fortemi execution receipts.
+- Drain DeepSeek Harness output before reporting successful completion.
+
+### Added
+
+- Session exploration workflows, recipe references, and discoverable catalog help.
+
 ### Changed
 
 - Clarify first-use onboarding, workflow examples, provider setup, and public documentation navigation while retaining

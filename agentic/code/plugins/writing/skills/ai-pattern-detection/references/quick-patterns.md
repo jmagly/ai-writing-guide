@@ -1,6 +1,8 @@
 # Quick Pattern Reference
 
-## Instant Flags (Never Use)
+These are advisory editorial prompts, not authorship evidence or publication gates. Preserve quotes, code, literal terms, real lists and deliberate punctuation. Record a reason for retained wording; add numbers only when supported.
+
+## Phrase Candidates (Review in Context)
 
 | Pattern | Fix |
 |---------|-----|
@@ -15,13 +17,13 @@
 
 ## Structural Checks
 
-- [ ] Avoid 3-item lists ("X, Y, and Z")
-- [ ] Max 1 em-dash per paragraph
+- [ ] Retain real lists; review formulaic repetition in context
+- [ ] Preserve intentional author punctuation
 - [ ] Vary paragraph lengths
 - [ ] Mix sentence structures
 - [ ] Include specific numbers/metrics
 
-## Authenticity Markers
+## Optional Editorial Features
 
 - [ ] States opinion with "I/we prefer"
 - [ ] Acknowledges trade-offs

@@ -1,5 +1,7 @@
 # Agent Loop
 
+Classify work with the [autonomy and human operating roles framework](../../../../docs/autonomy-and-human-roles.md). A loop cannot override human-owned actions, checkpoints, or failed verification.
+
 Iterative AI task execution with automatic recovery - **iteration beats perfection**.
 
 ## Overview

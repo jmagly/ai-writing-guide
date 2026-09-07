@@ -20,6 +20,15 @@ summary, entity, contradiction, topology, or cross-reference behavior. See the
 
 Ingest an external source into a consumer framework's semantic memory. Reads the consumer's `memory.topology` contract to know where pages live, then extracts, summarizes, integrates, and cross-references — all topology-agnostic.
 
+## Session catalog sources
+
+For normalized session events or catalog candidates, first use
+`aiwg show skill session-harvest`. Session knowledge uses the catalog's exact
+candidate-version review and `sessions promote` gateway, retaining the
+source-event → candidate → destination receipt. Do not flatten session output
+into an external-source file to bypass that review path. General semantic
+synthesis may consume an authorized promoted page while retaining its lineage;
+ordinary external documents continue through the workflow below.
 ## When to Use
 
 When new knowledge (a document, paper, URL, config file, or directory of files) needs to enter a consumer's semantic memory. This is the primary write path for external information.

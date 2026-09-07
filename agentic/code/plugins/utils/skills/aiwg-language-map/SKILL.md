@@ -95,6 +95,16 @@ Example: `aiwg discover "ralph loop"`. Phrases below pass straight to `aiwg disc
 | Inner generator/critic eval loop in a pipeline | `eval loop` | nlp-prod |
 | KAMI-based agent quality eval framework | `agent quality eval` | aiwg-evals |
 
+### Session history and exploration
+
+Use `aiwg discover "spelunk session data"` to find catalog exploration. Useful
+phrases include `search past conversations`, `trace session tool calls`,
+`compare provider sessions`, and `harvest session decisions`. `session-explore`
+handles search, timelines, analytics, citations and coverage; `session-harvest`
+handles candidate review and promotion. `session-analyst` and the
+`session-investigation` flow compose bounded evidence collection and synthesis.
+The singular `session` launcher and cost-history telemetry serve different needs.
+
 ### Memory & state
 
 When the user needs persistent agent memory, semantic ingestion, or context curation.

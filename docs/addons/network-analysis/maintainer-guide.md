@@ -9,7 +9,7 @@ silently weakening another.
 | Surface | Canonical location |
 | --- | --- |
 | Runtime API | `src/network-analysis/` and `src/network-analysis/index.ts` |
-| Public exports | `src/index.ts` and generated `dist/src/network-analysis/` declarations |
+| Public exports | `src/api/index.ts` and generated `dist/src/network-analysis/` declarations |
 | Contracts | `schemas/network-analysis/*.schema.json` |
 | Schema catalog | `schemas/catalog/domains/network-analysis.json` |
 | Addon workflow | `agentic/code/addons/network-analysis/` |
