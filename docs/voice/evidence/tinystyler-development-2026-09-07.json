@@ -1,0 +1,65 @@
+{
+  "status": "complete-reviewed",
+  "candidates": 64,
+  "normal_eos": 64,
+  "fidelity": 0,
+  "joint": 0,
+  "exact_literal_passes": 0,
+  "conditions": [
+    {
+      "checkpoint": "tinystyler",
+      "alpha": 0.5,
+      "candidates": 16,
+      "eos": 16,
+      "decoder_tokens": 1136,
+      "generation_seconds": 20.540243408177048,
+      "max_cuda_allocated_bytes": 3368491008,
+      "fidelity": 0,
+      "joint": 0
+    },
+    {
+      "checkpoint": "tinystyler",
+      "alpha": 1.0,
+      "candidates": 16,
+      "eos": 16,
+      "decoder_tokens": 1095,
+      "generation_seconds": 10.808916352805682,
+      "max_cuda_allocated_bytes": 3368884224,
+      "fidelity": 0,
+      "joint": 0
+    },
+    {
+      "checkpoint": "tinystyler_sim",
+      "alpha": 0.5,
+      "candidates": 16,
+      "eos": 16,
+      "decoder_tokens": 1216,
+      "generation_seconds": 12.219507060945034,
+      "max_cuda_allocated_bytes": 3368687616,
+      "fidelity": 0,
+      "joint": 0
+    },
+    {
+      "checkpoint": "tinystyler_sim",
+      "alpha": 1.0,
+      "candidates": 16,
+      "eos": 16,
+      "decoder_tokens": 1189,
+      "generation_seconds": 22.776594656636007,
+      "max_cuda_allocated_bytes": 3368884224,
+      "fidelity": 0,
+      "joint": 0
+    }
+  ],
+  "judge": "primary session model; not independent",
+  "limits": [
+    "Two topics coupled with passage length",
+    "Six JDS versus sixteen historical examples",
+    "Twain outer-whitespace preprocessing discrepancy",
+    "Explicit top_k=0 differs from upstream default50",
+    "Raw text rather than production protected-marker transport",
+    "Not a full-document or channel qualification"
+  ],
+  "fortemi_restored": true,
+  "service_cycle_seconds": 243.18
+}

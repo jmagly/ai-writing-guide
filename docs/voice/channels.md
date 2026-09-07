@@ -51,3 +51,5 @@ The callback context still contains the original brief for the consumer to use. 
 The [explicit-literal development pilot](evidence/channel-literals-development-2026-09-07.md) records the combined masking intervention and the remaining duplicate raw CTA representation. It improved factual retention in that paired pilot without yielding any joint voice pass.
 
 A [paired core-guidance handoff study](evidence/core-guidance-development-2026-09-07.md) supplied the existing JDS/Darwin companion guidance that the coarse JSON controls cannot encode. It did not establish a voice-quality gain and reduced factual passes in that development slice. Supplying more descriptive guidance is not a qualified remedy by itself.
+
+The [TinyStyler mechanism trial](evidence/tinystyler-development-2026-09-07.md) and [bounded expression-edit comparison](evidence/expression-edits-development-2026-09-07.md) did not establish joint voice passes. Paragraph-range addressing improved proposal applicability on four follow-up cases; factual and cadence review remain separate obligations.

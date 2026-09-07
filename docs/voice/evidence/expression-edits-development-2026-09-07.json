@@ -1,0 +1,52 @@
+{
+  "initial": {
+    "state": "complete-reviewed",
+    "methods": [
+      {
+        "method": "whole-rewrite",
+        "calls": 8,
+        "normal": 8,
+        "valid": 8,
+        "exact_literals": 6,
+        "fidelity": 3,
+        "joint": 0,
+        "tokens": 22887
+      },
+      {
+        "method": "bounded-edits",
+        "calls": 8,
+        "normal": 6,
+        "valid": 4,
+        "exact_literals": 4,
+        "fidelity": 3,
+        "joint": 0,
+        "tokens": 28869
+      }
+    ],
+    "generation_context_length": 32768,
+    "warmup_context_length": 8192,
+    "independent": false,
+    "fortemi_restored": true
+  },
+  "paragraph_followup": {
+    "state": "complete-reviewed",
+    "calls": 4,
+    "normal": 4,
+    "valid_proposals": 4,
+    "exact_literal_passes": 3,
+    "fidelity": 3,
+    "joint": 0,
+    "tokens": 16913,
+    "baseline_same_four_cells": {
+      "normal": 2,
+      "valid_proposals": 0,
+      "fidelity": 0,
+      "joint": 0
+    },
+    "intervention": "paragraph addressing plus whole-paragraph granularity",
+    "independent": false,
+    "fortemi_restored": true
+  },
+  "joint_gated_originals_preserved": 4,
+  "no_review_originals_preserved": 4
+}
