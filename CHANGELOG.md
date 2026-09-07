@@ -9,6 +9,9 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ### Added
 
+- Published four-policy, two-count exemplar development results and exact-token
+  envelope audit with text-free receipts; no retrieval default promoted (#2295).
+
 - Five opt-in channel structure packs with bounded local consumer adapters,
   one-post chat constraints and explicit unsupported-consumer coverage (#2301).
 - Canonical writing receipts, opt-in legacy migration/rollback and a local

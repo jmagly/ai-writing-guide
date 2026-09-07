@@ -85,3 +85,7 @@ Measured artifact SHA-256 anchors:
 - `test/fixtures/writing/exemplar-ablation.v1.json`: `56325c6600aa62d3bb0237fd4d02e24e10276d6a2db30b94a21574f6c943afac`
 - `src/writing/exemplar-selection.ts`: `ee5387735653b76e5e4e1fcf4875ed24894018b902bd304defcb842ae17605b3`
 - `test/unit/writing/exemplar-selection.test.ts`: `6831e6dcde57525ec06d52b399b6318a659163eb49cddc9d8cfce2883e402aed`
+
+## Model-backed development comparison
+
+The [2026-09-07 comparison](evidence/selector-development-2026-09-07.md) covers all four policies and one/three examples, with a supplementary exact-token envelope audit. All 96 cells fit the common 1500-token cap and retained the original prompts; 6/78 distinct outputs passed the primary-session joint gate. This is development evidence, not independent qualification or a winning default.
