@@ -22,3 +22,5 @@ Gemma's base artifact is 31.3B Q4_K_M, digest 6316f0629137b426c9d9b853ffc4c82095
 [Aggregate receipts](current-model-expression-2026-09-07.json). Private source material, raw outputs, frozen inputs, primary notes and replays remain in `.aiwg/working/voice-2292/expression-modern-qwen-01/` and `expression-modern-gemma-01/`. No generated text is enrolled as authentic author writing. These results do not qualify every channel or satisfy independent evaluation.
 
 Runtime settings were checked against the [Gemma4 release](https://ollama.com/library/gemma4:31b) and [Ollama compatibility documentation](https://docs.ollama.com/api/openai-compatibility).
+
+The [native-schema follow-up](gemma-native-schema-2026-09-07.md) completed twelve new Gemma edit calls: six applicable proposals, two fidelity passes and no joint voice passes. It preserves the original outcomes above.

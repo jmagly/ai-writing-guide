@@ -1,0 +1,19 @@
+{
+  "calls": 12,
+  "normal": 12,
+  "valid": 6,
+  "source_word_budget_failures": 6,
+  "fidelity": 2,
+  "joint": 0,
+  "frozen_inputs_verified": true,
+  "judge": "primary session model",
+  "independent": false,
+  "tokens": 21262,
+  "runtime_reviewed": 6,
+  "runtime_retained": 0,
+  "no_review_originals": 6,
+  "fortemi_restored": true,
+  "model_unloaded": true,
+  "model": "gemma4:31b",
+  "runtime_alias": "aiwg-voice-gemma4-31b-8k:latest"
+}
