@@ -32,7 +32,9 @@
     "skills": "skills/",
     "templates": "templates/",
     "prompts": "prompts/",
-    "workflow": "workflow/"
+    "workflow": "workflow/",
+    "commands": "commands/",
+    "flows": "flows/"
   },
   "workflow": {
     "description": "Core AIWG workflow metalanguage (apiVersion: workflow.aiwg.io/v1) — declarative spec for capabilities, playbooks, inventories, targets, gates, roles, and extensions. Lifted from ops-complete to a core primitive so any framework can author workflows.",
@@ -62,7 +64,9 @@
     "deployIndexOnly": false,
     "_note": "deployIndexOnly was true (#1343); changed to false 2026-05-14 so individual rule files (including skill-discovery.md) deploy to every provider's rules directory alongside the index. RULES-INDEX.md remains the canonical entry point; its links now resolve to local files on every provider, not just Claude/Cursor."
   },
-  "commands": [],
+  "commands": [
+    "sessions"
+  ],
   "agents": [
     "context-regenerator",
     "aiwg-developer",
@@ -72,7 +76,8 @@
     "aiwg-finder",
     "aiwg-model-reasoning-worker",
     "aiwg-model-coding-worker",
-    "aiwg-model-efficiency-worker"
+    "aiwg-model-efficiency-worker",
+    "session-analyst"
   ],
   "skills": [
     "project-awareness",
@@ -132,7 +137,9 @@
     "customize-status",
     "customize-upstream-sync",
     "customize-contribute-back",
-    "context-firewall"
+    "context-firewall",
+    "session-explore",
+    "session-harvest"
   ],
   "rules": [
     "no-time-estimates",
@@ -176,5 +183,10 @@
     "reliability/decomposition",
     "reliability/parallel-hints",
     "reliability/resilience"
+  ],
+  "flows": [
+    "session-investigation",
+    "capabilities/session-evidence-collect",
+    "capabilities/session-evidence-synthesize"
   ]
 }

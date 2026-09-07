@@ -1,0 +1,13 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: session-evidence-synthesize
+  namespace: aiwg-utils
+  labels: {domain: sessions, phase: synthesize}
+spec:
+  description: Use session-analyst in synthesize mode to answer from a supplied evidence bundle, preserving citations, contradictions and coverage limits without expanding scope or promoting memory.
+  version: 1.0.0
+  inputs: [{name: evidence_bundle, type: object, required: true}]
+  outputs: [{name: investigation_report, type: object}]
+  agent: session-analyst
+  idempotent: true

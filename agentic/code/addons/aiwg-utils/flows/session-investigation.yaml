@@ -1,0 +1,17 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: session-investigation
+  labels: {domain: sessions, mode: read-only}
+spec:
+  steps:
+    - id: collect
+      capability: session-evidence-collect
+      description: Collect bounded session history evidence for the caller-bound request object.
+      inputs: [{name: request}]
+      outputs: [{name: evidence_bundle}]
+    - id: synthesize
+      capability: session-evidence-synthesize
+      depends_on: [collect]
+      inputs: [{name: evidence_bundle, from: collect.evidence_bundle}]
+      outputs: [{name: investigation_report}]

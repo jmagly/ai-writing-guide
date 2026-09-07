@@ -112,6 +112,38 @@ describe.skipIf(missingBuild)('CLI integration: basic lifecycle', () => {
   });
 });
 
+describe.skipIf(missingBuild)('CLI namespace help routing (#2306, #2307)', () => {
+  it('lists sessions in the fast root help', () => {
+    const result = runCli(['help']);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toMatch(/sessions <command>\s+Manage the normalized session catalog/);
+  });
+
+  it.each(['sessions', 'catalog'])('%s shares usage across bare, flag, and help-prefix forms', (command) => {
+    const bare = runCli([command]);
+    expect(bare.status).toBe(command === 'catalog' ? 1 : 2);
+    for (const args of [[command, '--help'], [command, '-h'], ['help', command]]) {
+      const result = runCli(args);
+      expect(result.status, args.join(' ')).toBe(0);
+      expect(result.stdout).toBe(bare.stdout);
+      expect(result.stderr).toBe('');
+      expect(result.stdout).toContain(`Usage: aiwg ${command}`);
+      expect(result.stdout).toContain('Commands:');
+      expect(result.stdout).toContain('Options');
+      expect(result.stdout).not.toContain('No detailed help');
+    }
+  });
+
+  it('renders the sessions JSON help contract without opening storage', () => {
+    const result = runCli(['sessions', '--help', '--json', '--db', '/not-a-database/catalog.sqlite']);
+    expect(result.status).toBe(0);
+    const payload = JSON.parse(result.stdout);
+    expect(payload.command).toBe('sessions.help');
+    expect(payload.status).toBe('ok');
+    expect(payload.data.usage).toContain('aiwg sessions <command>');
+  });
+});
+
 describe.skipIf(missingBuild)('CLI integration: hang regression gates', () => {
   /**
    * Tonight's bug: `aiwg use all` finished visible work and then sat for

@@ -88,7 +88,11 @@ export async function run(
 ): Promise<void> {
   const started = process.hrtime.bigint();
   const registry = await initRouter();
-  const [rawCommand, ...commandArgs] = args;
+  // Normalize `help <command>` into the same non-executing help path.
+  const routedArgs = args[0] === 'help' && args[1] && !args[1].startsWith('-')
+    ? [args[1], ...args.slice(2), '--help']
+    : args;
+  const [rawCommand, ...commandArgs] = routedArgs;
 
   // No command - show help
   if (!rawCommand) {

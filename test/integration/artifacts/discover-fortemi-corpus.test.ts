@@ -15,6 +15,7 @@ import path from 'path';
 import os from 'os';
 import { buildIndex } from '../../../src/artifacts/index-builder.js';
 import { discoverCapability, showArtifact } from '../../../src/artifacts/query-engine.js';
+import { sessionsCommand } from '../../../src/extensions/commands/definitions.js';
 import { syncFortemiCoreIndex } from '../../../src/artifacts/fortemi-core-sync.js';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '../../..');
@@ -375,6 +376,53 @@ describe('Fortemi Core capability discovery over the real framework/addon corpus
       .toContain('Promote or graduate');
   }, 60_000);
 
+  it('ranks every sessions registry trigger first with and without a project graph (#2305)', async () => {
+    const phrases = (sessionsCommand.metadata as { triggerPhrases: string[] }).triggerPhrases;
+    expect(phrases).toEqual(['list sessions', 'import sessions', 'session catalog', 'sessions doctor']);
+    const emptyProject = path.join(tmpRoot, 'empty-project');
+    fs.mkdirSync(emptyProject, { recursive: true });
+    for (const cwd of [corpusRoot, emptyProject]) {
+      for (const backend of ['local', 'fortemi-core'] as const) {
+        for (const phrase of phrases) {
+          const captured = viSpyConsole('log');
+          const errors = viSpyConsole('error');
+          let output: DiscoverResult;
+          try {
+            await discoverCapability(cwd, { phrase, json: true, limit: 5, backend });
+            output = JSON.parse(captured.output.join(''));
+          } finally {
+            captured.restore();
+            errors.restore();
+          }
+          expect(output.results[0]?.name, `${backend}: ${cwd}: ${phrase}`).toBe('sessions');
+          expect(output.results[0]?.type).toBe('command');
+          expect(output.results[0]?.capability).toContain('aiwg sessions');
+        }
+      }
+    }
+    const shown = await captureShow('sessions', ['command']);
+    expect(shown.content).toContain('aiwg sessions <command> [options]');
+  }, 60_000);
+
+  it('discovers session exploration skills, analyst, and investigation flow', async () => {
+    const cases: Array<[string, string, string]> = [
+      ['session history', 'skill', 'session-explore'],
+      ['search past conversations', 'skill', 'session-explore'],
+      ['spelunk session data', 'skill', 'session-explore'],
+      ['trace session tool calls', 'skill', 'session-explore'],
+      ['compare provider sessions', 'skill', 'session-explore'],
+      ['harvest session decisions', 'skill', 'session-harvest'],
+      ['session-analyst', 'agent', 'session-analyst'],
+      ['session-investigation', 'flow', 'session-investigation'],
+    ];
+    for (const [phrase, type, name] of cases) {
+      const result = await captureDiscover(phrase, 'fortemi-core', true, [type]);
+      expect(result.results[0]?.name, phrase).toBe(name);
+      const shown = await captureShow(name, [type]);
+      expect(shown.content.length).toBeGreaterThan(100);
+    }
+  }, 90_000);
+
   it('discovers the standalone plugin repository workflow (#1865)', async () => {
     for (const phrase of ['standalone plugin repository', 'publish project-local plugin']) {
       const result = await captureDiscover(phrase, 'fortemi-core', true);
@@ -428,10 +476,12 @@ describe('Fortemi Core capability discovery over the real framework/addon corpus
   }, 120_000);
 });
 
-function viSpyConsole(method: 'log' | 'error'): { restore: () => void } {
+function viSpyConsole(method: 'log' | 'error'): { output: string[]; restore: () => void } {
   const original = console[method];
-  console[method] = () => undefined;
+  const output: string[] = [];
+  console[method] = (...args: unknown[]) => { output.push(args.map(String).join(' ')); };
   return {
+    output,
     restore: () => {
       console[method] = original;
     },

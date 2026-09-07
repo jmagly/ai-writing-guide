@@ -1,0 +1,13 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: session-evidence-collect
+  namespace: aiwg-utils
+  labels: {domain: sessions, phase: collect}
+spec:
+  description: Use session-explore in collect mode to read authorized catalog evidence with query filters, citations, coverage, and explicit bounds; no acquisition or mutations.
+  version: 1.0.0
+  inputs: [{name: request, type: object, required: true}]
+  outputs: [{name: evidence_bundle, type: object}]
+  agent: session-analyst
+  idempotent: true

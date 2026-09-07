@@ -69,6 +69,7 @@ function displayHelp(): void {
 
   helpGroup('WORKSPACE', [
     ['status', 'Show workspace health and installed frameworks'],
+    ['sessions <command>', 'Manage the normalized session catalog, imports, and analytics'],
     ['migrate-workspace', 'Migrate legacy .aiwg/ to framework-scoped structure'],
     ['rollback-workspace', 'Rollback workspace migration from backup'],
   ]);

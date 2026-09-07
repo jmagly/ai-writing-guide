@@ -69,3 +69,16 @@ If inference reports multiple workspace candidates, rerun with the exact
 The catalog contains normalized AIWG copies. Discovery and import never modify
 provider histories, and source paths are redacted from public command output.
 Use `aiwg sessions --help` for the complete command and JSON contracts.
+
+## Ask questions about collected history
+
+Use `aiwg discover "spelunk session data"` and `aiwg show skill session-explore`
+for questions such as “where did we decide this?”, “which tool kept failing?”,
+or “what changed between provider sessions?”. The skill covers scoped FTS5
+queries, pagination, timelines, tool/HITL analytics, citations and coverage gaps.
+
+`session-analyst` and the `session-investigation` flow collect and synthesize
+bounded evidence. `session-harvest` previews extraction and carries reviewed
+candidate versions through memory promotion. See the
+[exploration recipes](../../agentic/code/addons/aiwg-utils/skills/session-explore/references/recipes.md)
+for acquisition, comparison, investigation, maintenance and handoff examples.

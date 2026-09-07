@@ -20,3 +20,9 @@ authorization references, and independently requested capabilities (`search`,
 `traceability`, `provenance`, `graph`, `export`). Do not infer credential
 values. Then propose `aiwg dataset preview <source> --json` and hand the intake
 reference to `dataset-source-assess`.
+
+For a question about existing normalized AI session history, route inspection to
+`session-explore` before proposing a new dataset. A separately requested export
+or derived index can enter this intake using its approved source/evidence
+references, privacy constraints and intended outcome. Do not scan provider homes
+or treat catalog inspection as approval to copy transcripts into another store.

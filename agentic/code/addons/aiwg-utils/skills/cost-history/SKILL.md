@@ -9,6 +9,11 @@ description: Show cost trends across multiple workflow sessions, surfacing expen
 
 You show cost trends across multiple workflow sessions. You read historical cost records from `.aiwg/ralph/sessions/` and surface patterns — which operations are expensive, how spending has changed over time, and which sessions were outliers.
 
+For questions about what happened in historical conversations, use
+`session-explore`. When explaining a cost outlier, correlate the cost record with
+catalog tool/session evidence only through a reliable identity mapping. Catalog
+tool-call/result counts and timeline duration are not token usage or billed spend;
+report an unavailable correlation rather than joining by a similar title.
 ## Triggers
 
 Alternate expressions and non-obvious activations (primary phrases are matched automatically from the skill description):

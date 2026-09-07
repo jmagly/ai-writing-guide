@@ -161,7 +161,29 @@ Options:
   --consumer <id> Select a named memory consumer for promotion
   --workspace <id>, --tag <tag>, --limit <n>, --cursor <n>
   --page-size <n>  Extraction scan page size (default 250, maximum 500)
-  --max-documents <n>  Explicit extraction safety limit; returns a partial receipt`;
+  --max-documents <n>  Explicit extraction safety limit; returns a partial receipt
+
+Search filters:
+  --date-from <rfc3339>, --date-to <rfc3339>
+  --participant <actor>, --model <id>, --role <role>, --tool <name>
+  --entity <entity>, --sensitivity <class>, --extraction-state <state>
+  --control-events exclude|include|only (default: exclude)
+  Query syntax: FTS5 terms, quoted phrases, prefixes, AND/OR/NOT
+  Follow the opaque nextCursor with the same query and filters
+
+Analytics / forensics:
+  --session <id>, --date-from <rfc3339>, --date-to <rfc3339>
+  --actor <id>, --participant <id>, --tool <name>, --status <status>
+  --provider <id>, --tag <tag>, --sensitivity <class>, --extraction-state <state>
+  --group-by tool|session|provider, --limit <1..5000>
+  --authorize-forensics  Required for each authorized forensic invocation
+  --markdown      Render a sanitized forensic timeline table`;
+
+function printHelp(ctx: HandlerContext, exitCode: number = EXIT.ok): HandlerResult {
+  if (ctx.args.includes('--json')) emit(envelope('sessions.help', 'ok', { usage: HELP }, null));
+  else console.log(HELP);
+  return { exitCode };
+}
 
 export const sessionsHandler: CommandHandler = {
   id: 'sessions',
@@ -169,6 +191,10 @@ export const sessionsHandler: CommandHandler = {
   description: 'Manage the normalized session catalog (the singular `session` command remains the launcher)',
   category: 'project',
   aliases: [],
+
+  async help(ctx) {
+    return printHelp(ctx);
+  },
 
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
     const json = ctx.args.includes('--json');
@@ -183,9 +209,8 @@ export const sessionsHandler: CommandHandler = {
       return { exitCode: normalized.exitCode, message: normalized.error.message };
     }
     if (!parsed.command || parsed.flags.has('--help') || parsed.flags.has('-h')) {
-      if (json) emit(envelope('sessions.help', 'ok', { usage: HELP }, null));
-      else console.log(HELP);
-      return { exitCode: parsed.command ? EXIT.ok : EXIT.usage };
+      const explicitHelp = parsed.flags.has('--help') || parsed.flags.has('-h');
+      return printHelp(ctx, explicitHelp ? EXIT.ok : EXIT.usage);
     }
     try {
       const result = await executeCommand(ctx, parsed);

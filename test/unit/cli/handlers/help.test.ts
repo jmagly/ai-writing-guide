@@ -100,6 +100,7 @@ describe('helpHandler.execute', () => {
     expect(combined).toMatch(/doctor/);
     expect(combined).toMatch(/version/);
     expect(combined).toMatch(/ralph/);
+    expect(combined).toMatch(/sessions <command>.*normalized session catalog/);
   });
 
   it('includes provider list', async () => {

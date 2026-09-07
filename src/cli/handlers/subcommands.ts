@@ -207,6 +207,12 @@ export const catalogHandler: CommandHandler = {
   category: "catalog",
   aliases: [],
 
+  async help(): Promise<HandlerResult> {
+    const { printCatalogHelp } = await import("../../catalog/cli.mjs");
+    printCatalogHelp();
+    return { exitCode: 0 };
+  },
+
   async execute(ctx: HandlerContext): Promise<HandlerResult> {
     try {
       // Dynamic import to avoid loading catalog dependencies unless needed

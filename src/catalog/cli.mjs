@@ -249,6 +249,27 @@ export async function handleCatalogSearch(args) {
   displayModelsTable(models);
 }
 
+export function printCatalogHelp() {
+  console.log(`Usage: aiwg catalog <command> [options]
+
+Commands:
+  list             List models with optional filters
+  info <id>        Show detailed model information
+  search <query>   Search models by query
+
+Options (list):
+  --provider <id>     Filter by provider
+  --status <status>   Filter by model status
+  --tag <tag>         Filter by tag
+  --min-context <n>   Minimum context window in tokens
+
+Examples:
+  aiwg catalog list
+  aiwg catalog list --provider anthropic
+  aiwg catalog info claude-opus-4-6
+  aiwg catalog search opus`);
+}
+
 /**
  * Main catalog command router
  */
@@ -271,13 +292,7 @@ export async function main(args) {
 
     case undefined:
       console.error('Error: Catalog subcommand required');
-      console.log('Available: list, info, search');
-      console.log('');
-      console.log('Examples:');
-      console.log('  aiwg catalog list');
-      console.log('  aiwg catalog list --provider anthropic');
-      console.log('  aiwg catalog info claude-opus-4-6');
-      console.log('  aiwg catalog search opus');
+      printCatalogHelp();
       process.exit(1);
       break;
 
