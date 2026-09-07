@@ -7,7 +7,7 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
-## [2026.9.5] - 2026-09-07 - "Shared bundles, guided workflows, and controlled writing"
+## [2026.9.5] - 2026-09-07 - "DeepSeek Harness, shared bundles, and controlled writing"
 
 ### Fixed
 
