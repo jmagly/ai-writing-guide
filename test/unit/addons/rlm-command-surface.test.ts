@@ -68,8 +68,20 @@ describe('rlm addon command surface', () => {
       }
     }
 
-    expect(readme).toContain('/rlm-batch "src/components/*.tsx" "Add TypeScript types" --max-parallel 4');
     expect(releaseNotes).toContain('/rlm-batch "src/components/*.tsx" "Add TypeScript types" --max-parallel 4');
+  });
+
+  it('keeps the README batch prompt bounded and verifiable without requiring slash syntax', () => {
+    const section = readme.split(/^## RLM — Recursive Context Decomposition\s*$/m)[1]?.split(/^## /m)[0] ?? '';
+    const prompts = [...section.matchAll(/(?:^> .*\n?)+/gm)].map(match =>
+      match[0].replace(/^> /gm, '').replace(/\s+/g, ' ').trim(),
+    );
+    const batchPrompt = prompts.find(prompt => prompt.includes('`src/components/*.tsx`'));
+    expect(batchPrompt, 'RLM section must include a provider prompt for the bounded component batch').toBeDefined();
+    expect(batchPrompt).toContain('Add TypeScript types');
+    expect(batchPrompt).toMatch(/at most (?:four|4) parallel workers/i);
+    expect(batchPrompt).toMatch(/verify each batch/i);
+    expect(batchPrompt).not.toContain('/rlm-batch');
   });
 
   it('finds no slash-command invocation of /rlm-summarize anywhere in scoped docs', async () => {
