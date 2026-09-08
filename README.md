@@ -655,7 +655,7 @@ The orchestration pattern: **Primary Author → Parallel Reviewers → Synthesiz
   persistence needs.
 - **Writing and voice tools** — reusable voice profiles, context-sensitive diagnostics, revision workflows, and
   alternatives for content generation.
-- **Testing quality** — test strategy, mutation testing, flaky-test review, and verification procedures.
+- **Testing quality** — test conformance, reversible normalization, mutation testing, and flaky-test review.
 - **Agent loops** — bounded execution, failure analysis, checkpoints, and supported process recovery.
 - **RLM** — recursive context decomposition for tasks whose source material needs to be divided into smaller working sets.
 - **YAML metalanguage** — structured workflow and artifact definitions with schema-oriented validation.
@@ -873,7 +873,7 @@ lists the current framework names accepted by the CLI.
 | **[MCP/UAT Toolkit](agentic/code/addons/uat-mcp/)** | Generate, execute, and report user-acceptance tests against MCP tool surfaces |
 | **[Civic Action](agentic/code/addons/civic-action/)** | Prepare evidence-bound civic research, public-records planning, meeting review, local-resource profiles, corrections, and publication review |
 | **[Network Analysis](agentic/code/addons/network-analysis/)** | Governed saved-PCAP/PCAPNG analysis with bounded TShark recipes, cited packet evidence, and optional local Termshark review |
-| **[Testing Quality](agentic/code/addons/testing-quality/)** | Add TDD gates, mutation testing, flaky-test detection/repair, test-data factories, and test-suite synchronization |
+| **[Testing Quality](agentic/code/addons/testing-quality/)** | Assess test conformance, normalize suites with reversible plans, and add TDD, mutation, flaky-test, and factory workflows |
 | **[Writing Quality](agentic/code/addons/writing-quality/)** | Review editorial quality, author requirements, and voice consistency without treating heuristic scores as authorship proof |
 | **[Voice Framework](agentic/code/addons/voice-framework/)** | Define, analyze, blend, and apply reusable writing voice profiles and runtime-selectable output modes |
 | **[Color Palette](agentic/code/addons/color-palette/)** | Generate and review accessible color palettes using color theory, trend research, and WCAG checks |
@@ -997,7 +997,7 @@ keeps durable categories and examples.
 |----------|---------|
 | **Capability discovery and setup** | `aiwg-utils-quickref`, `steward`, `aiwg-status`, `aiwg-doctor`, `use`, provider regeneration |
 | **SDLC and delivery** | `intake-wizard`, `sdlc-accelerate`, gate evaluation, delivery-track flows, deployment, guided implementation |
-| **Testing and quality** | `tdd-enforce`, `mutation-test`, `flaky-detect`, `flaky-fix`, `test-sync`, factory generation |
+| **Testing and quality** | `test-conformance`, `test-normalize`, `test-platform-research`, TDD, mutation, flaky-test review, factory generation |
 | **Security and forensics** | supply-chain hardening, auth-factor design, degraded-mode review, DFIR readiness, log analysis, IOC extraction |
 | **Research and knowledge** | source acquisition, paper induction, GRADE checks, citation work, wiki ingest, synthesis, knowledge-base health |
 | **Marketing and content** | campaign intake, creative brief, brand compliance, social strategy, email campaigns, performance digests |

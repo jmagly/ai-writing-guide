@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+## [2026.9.6] - 2026-09-08 – "Verifiable test conformance"
+
 ### Added
 
 - Expand testing-quality with source-bound conformance assessment, runner discovery and execution receipts,
