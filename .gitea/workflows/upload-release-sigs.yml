@@ -61,7 +61,6 @@ concurrency:
 jobs:
   mirror-signed-assets:
     name: Mirror release assets to Gitea release
-    if: ${{ secrets.VAULT_CI_ROLE_ID != '' && secrets.VAULT_CI_SECRET_ID != '' }}
     runs-on: ubuntu-latest
     # Same pinned container as the Gitea publish leg (see ci/digests.txt).
     container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # node 20.20.2
@@ -71,6 +70,20 @@ jobs:
         shell: bash
 
     steps:
+      - name: Require release bootstrap credentials
+        # Check the materialized step environment. A missing credential must
+        # fail release recovery visibly rather than skip the entire job.
+        env:
+          VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
+          VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
+        run: |
+          set -euo pipefail
+          set +x
+          if [ -z "${VAULT_CI_ROLE_ID:-}" ] || [ -z "${VAULT_CI_SECRET_ID:-}" ]; then
+            echo "Required release credentials unavailable: configure both VAULT_CI_ROLE_ID and VAULT_CI_SECRET_ID." >&2
+            exit 1
+          fi
+
       - name: Checkout (for repo context only)
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1 (ci/digests.txt)
         with:
