@@ -1,8 +1,8 @@
 {
   "id": "testing-quality",
   "name": "testing-quality",
-  "version": "1.0.0",
-  "description": "Testing enforcement, quality metrics, and automation skills",
+  "version": "2.0.0",
+  "description": "Evidence-bound test conformance, platform protocols, normalization transactions and research-guided testing workflows",
   "category": "sdlc",
   "skills": [
     "tdd-enforce",
@@ -10,7 +10,10 @@
     "flaky-detect",
     "flaky-fix",
     "generate-factory",
-    "test-sync"
+    "test-sync",
+    "test-conformance",
+    "test-normalize",
+    "test-platform-research"
   ],
   "dependencies": [],
   "research_basis": {
@@ -33,6 +36,93 @@
     "factories": {
       "source": "ThoughtBot FactoryBot + Faker.js",
       "reference": "https://fakerjs.dev/"
+    }
+  },
+  "type": "addon",
+  "core": false,
+  "autoInstall": false,
+  "agents": [
+    "conformance-steward",
+    "test-oracle-reviewer",
+    "test-normalization-engineer"
+  ],
+  "rules": [
+    "test-conformance-evidence"
+  ],
+  "templates": [
+    "protocol-review",
+    "test-review",
+    "conformance-report",
+    "normalization-plan",
+    "tool-recommendation",
+    "adapter-qualification"
+  ],
+  "flows": [
+    "test-conformance-audit",
+    "test-conformance-normalize",
+    "test-platform-qualification"
+  ],
+  "entry": {
+    "agents": "agents/",
+    "skills": "skills/",
+    "rules": "rules/",
+    "templates": "templates/",
+    "flows": "flows/",
+    "schemas": "schemas/"
+  },
+  "cli_commands": {
+    "namespace": "test-conformance",
+    "description": "Evidence-bound testing conformance and reversible normalization",
+    "entry": "commands/",
+    "subcommands": {
+      "init": {
+        "file": "test-conformance.mjs",
+        "description": "Create a platform protocol for review"
+      },
+      "inventory": {
+        "file": "test-conformance.mjs",
+        "description": "Hash source, configuration and candidate tests"
+      },
+      "sample": {
+        "file": "test-conformance.mjs",
+        "description": "Draw a reproducible stratified review sample"
+      },
+      "collect": {
+        "file": "test-conformance.mjs",
+        "description": "Collect runner evidence"
+      },
+      "assess": {
+        "file": "test-conformance.mjs",
+        "description": "Assess current evidence and complete reviews"
+      },
+      "plan": {
+        "file": "test-conformance.mjs",
+        "description": "Create a guarded normalization plan"
+      },
+      "apply": {
+        "file": "test-conformance.mjs",
+        "description": "Apply a plan with a recovery journal"
+      },
+      "rollback": {
+        "file": "test-conformance.mjs",
+        "description": "Restore an applied plan without overwriting drift"
+      },
+      "templates": {
+        "file": "test-conformance.mjs",
+        "description": "List, develop or plan deployment of templates"
+      },
+      "research": {
+        "file": "test-conformance.mjs",
+        "description": "Find corpus evidence and platform tools"
+      },
+      "validate": {
+        "file": "test-conformance.mjs",
+        "description": "Validate an artifact against a strict schema"
+      },
+      "report": {
+        "file": "test-conformance.mjs",
+        "description": "Render a conformance assessment"
+      }
     }
   }
 }

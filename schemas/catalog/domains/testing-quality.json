@@ -1,0 +1,613 @@
+{
+  "$schema": "../domain-manifest.v1.schema.json",
+  "schemaVersion": "1",
+  "domain": "testing-quality",
+  "owner": {
+    "id": "testing-quality"
+  },
+  "policy": {
+    "strict": true,
+    "compatibility": "backward",
+    "requireFixtures": true
+  },
+  "artifacts": [
+    {
+      "logicalName": "testing-quality.test-inventory",
+      "id": "https://aiwg.io/schemas/testing/test-inventory.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "experimental",
+      "owner": {
+        "id": "testing-quality"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/testing-quality/schemas/test-inventory.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "backward"
+      },
+      "consumers": [
+        {
+          "id": "test-conformance-toolkit",
+          "boundary": "Protocol and reproducible test conformance output validation",
+          "path": "agentic/code/addons/testing-quality/lib/contracts.mjs"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/testing-quality/contracts/test-inventory.valid.json"
+        ],
+        "invalid": [
+          "test/fixtures/testing-quality/contracts/test-inventory.type.invalid.json",
+          "test/fixtures/testing-quality/contracts/test-inventory.unknown.invalid.json"
+        ]
+      },
+      "publication": {
+        "public": true
+      },
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/testing-quality/schemas/test-inventory.v1.schema.json",
+          "digest": "sha256:e195a04ff9b4fcdac7a023568906c4834c7ce0de67417d45b995a865b0ee11af",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "testing-quality.test-sample",
+      "id": "https://aiwg.io/schemas/testing/test-sample.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "experimental",
+      "owner": {
+        "id": "testing-quality"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/testing-quality/schemas/test-sample.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "backward"
+      },
+      "consumers": [
+        {
+          "id": "test-conformance-toolkit",
+          "boundary": "Protocol and reproducible test conformance output validation",
+          "path": "agentic/code/addons/testing-quality/lib/contracts.mjs"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/testing-quality/contracts/test-sample.valid.json"
+        ],
+        "invalid": [
+          "test/fixtures/testing-quality/contracts/test-sample.type.invalid.json",
+          "test/fixtures/testing-quality/contracts/test-sample.unknown.invalid.json"
+        ]
+      },
+      "publication": {
+        "public": true
+      },
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/testing-quality/schemas/test-sample.v1.schema.json",
+          "digest": "sha256:29de16c542edaddef12170743e8a2560bcc7ed7f1fade5b3b8a2e47df8f55428",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "testing-quality.normalized-results",
+      "id": "https://aiwg.io/schemas/testing/normalized-results.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "experimental",
+      "owner": {
+        "id": "testing-quality"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/testing-quality/schemas/normalized-results.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "backward"
+      },
+      "consumers": [
+        {
+          "id": "test-conformance-toolkit",
+          "boundary": "Protocol and reproducible test conformance output validation",
+          "path": "agentic/code/addons/testing-quality/lib/contracts.mjs"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/testing-quality/contracts/normalized-results.valid.json"
+        ],
+        "invalid": [
+          "test/fixtures/testing-quality/contracts/normalized-results.type.invalid.json",
+          "test/fixtures/testing-quality/contracts/normalized-results.unknown.invalid.json"
+        ]
+      },
+      "publication": {
+        "public": true
+      },
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/testing-quality/schemas/normalized-results.v1.schema.json",
+          "digest": "sha256:fb9b760c1bafb451977e0704f59f9054c49c1d9d3d1941a5bb1361e6c0d970bf",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "testing-quality.conformance-protocol",
+      "id": "https://aiwg.io/schemas/testing/conformance-protocol.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "experimental",
+      "owner": {
+        "id": "testing-quality"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/testing-quality/schemas/conformance-protocol.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "backward"
+      },
+      "consumers": [
+        {
+          "id": "test-conformance-toolkit",
+          "boundary": "Protocol and reproducible test conformance output validation",
+          "path": "agentic/code/addons/testing-quality/lib/contracts.mjs"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/testing-quality/contracts/conformance-protocol.valid.json"
+        ],
+        "invalid": [
+          "test/fixtures/testing-quality/contracts/conformance-protocol.type.invalid.json",
+          "test/fixtures/testing-quality/contracts/conformance-protocol.unknown.invalid.json"
+        ]
+      },
+      "publication": {
+        "public": true
+      },
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/testing-quality/schemas/conformance-protocol.v1.schema.json",
+          "digest": "sha256:4b3c24462f97da5faf46216f0a905538e3fbfc8468aeb3da4e3b713c90ff9593",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "testing-quality.test-review",
+      "id": "https://aiwg.io/schemas/testing/test-review.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "experimental",
+      "owner": {
+        "id": "testing-quality"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/testing-quality/schemas/test-review.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "backward"
+      },
+      "consumers": [
+        {
+          "id": "test-conformance-assessment",
+          "boundary": "Source-bound whole-scope semantic review and conformance gates",
+          "path": "agentic/code/addons/testing-quality/lib/assessment.mjs"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/testing-quality/contracts/test-review.valid.json"
+        ],
+        "invalid": [
+          "test/fixtures/testing-quality/contracts/test-review.type.invalid.json",
+          "test/fixtures/testing-quality/contracts/test-review.unknown.invalid.json"
+        ]
+      },
+      "publication": {
+        "public": true
+      },
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/testing-quality/schemas/test-review.v1.schema.json",
+          "digest": "sha256:c730e091ebbc39a275b4156ac1aeb710419b626b53fc058d861ef8524c1bca7a",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "testing-quality.test-conformance-assessment",
+      "id": "https://aiwg.io/schemas/testing/test-conformance-assessment.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "experimental",
+      "owner": {
+        "id": "testing-quality"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/testing-quality/schemas/test-conformance-assessment.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "backward"
+      },
+      "consumers": [
+        {
+          "id": "test-conformance-assessment",
+          "boundary": "Source-bound whole-scope semantic review and conformance gates",
+          "path": "agentic/code/addons/testing-quality/lib/assessment.mjs"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/testing-quality/contracts/test-conformance-assessment.valid.json"
+        ],
+        "invalid": [
+          "test/fixtures/testing-quality/contracts/test-conformance-assessment.type.invalid.json",
+          "test/fixtures/testing-quality/contracts/test-conformance-assessment.unknown.invalid.json"
+        ]
+      },
+      "publication": {
+        "public": true
+      },
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/testing-quality/schemas/test-conformance-assessment.v1.schema.json",
+          "digest": "sha256:37d9fa7b0428bff45ac221d92882544a36bb44f0e185896cf9d0248059473d56",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "testing-quality.custom-template",
+      "id": "https://aiwg.io/schemas/testing/custom-template.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "experimental",
+      "owner": {
+        "id": "testing-quality"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/testing-quality/schemas/custom-template.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "backward"
+      },
+      "consumers": [
+        {
+          "id": "test-conformance-toolkit",
+          "boundary": "Protocol and reproducible test conformance output validation",
+          "path": "agentic/code/addons/testing-quality/lib/contracts.mjs"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/testing-quality/contracts/custom-template.valid.json"
+        ],
+        "invalid": [
+          "test/fixtures/testing-quality/contracts/custom-template.type.invalid.json",
+          "test/fixtures/testing-quality/contracts/custom-template.unknown.invalid.json"
+        ]
+      },
+      "publication": {
+        "public": true
+      },
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/testing-quality/schemas/custom-template.v1.schema.json",
+          "digest": "sha256:8c8378ef024d1f4db480efd50b97da6992ec6e9082b495552be68ef2f1a686c2",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "testing-quality.test-coverage",
+      "id": "https://aiwg.io/schemas/testing/test-coverage.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "experimental",
+      "owner": {
+        "id": "testing-quality"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/testing-quality/schemas/test-coverage.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "backward"
+      },
+      "consumers": [
+        {
+          "id": "test-conformance-toolkit",
+          "boundary": "Protocol and reproducible test conformance output validation",
+          "path": "agentic/code/addons/testing-quality/lib/contracts.mjs"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/testing-quality/contracts/test-coverage.valid.json"
+        ],
+        "invalid": [
+          "test/fixtures/testing-quality/contracts/test-coverage.type.invalid.json",
+          "test/fixtures/testing-quality/contracts/test-coverage.unknown.invalid.json"
+        ]
+      },
+      "publication": {
+        "public": true
+      },
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/testing-quality/schemas/test-coverage.v1.schema.json",
+          "digest": "sha256:00ebbabc6789c01488789395593ca95b2f6136ff5f09e0d8cc5a2adfefc98292",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "testing-quality.test-run-receipt",
+      "id": "https://aiwg.io/schemas/testing/test-run-receipt.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "experimental",
+      "owner": {
+        "id": "testing-quality"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/testing-quality/schemas/test-run-receipt.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "backward"
+      },
+      "consumers": [
+        {
+          "id": "test-conformance-toolkit",
+          "boundary": "Protocol and reproducible test conformance output validation",
+          "path": "agentic/code/addons/testing-quality/lib/contracts.mjs"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/testing-quality/contracts/test-run-receipt.valid.json"
+        ],
+        "invalid": [
+          "test/fixtures/testing-quality/contracts/test-run-receipt.type.invalid.json",
+          "test/fixtures/testing-quality/contracts/test-run-receipt.unknown.invalid.json"
+        ]
+      },
+      "publication": {
+        "public": true
+      },
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/testing-quality/schemas/test-run-receipt.v1.schema.json",
+          "digest": "sha256:407745f26bbe05f59c0c5ab7909968d145f5b291e33e01935dc8a8b420bec62f",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "testing-quality.test-conformance-research",
+      "id": "https://aiwg.io/schemas/testing/test-conformance-research.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "experimental",
+      "owner": {
+        "id": "testing-quality"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/testing-quality/schemas/test-conformance-research.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "backward"
+      },
+      "consumers": [
+        {
+          "id": "test-conformance-toolkit",
+          "boundary": "Protocol and reproducible test conformance output validation",
+          "path": "agentic/code/addons/testing-quality/lib/contracts.mjs"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/testing-quality/contracts/test-conformance-research.valid.json"
+        ],
+        "invalid": [
+          "test/fixtures/testing-quality/contracts/test-conformance-research.type.invalid.json",
+          "test/fixtures/testing-quality/contracts/test-conformance-research.unknown.invalid.json"
+        ]
+      },
+      "publication": {
+        "public": true
+      },
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/testing-quality/schemas/test-conformance-research.v1.schema.json",
+          "digest": "sha256:4ae64407e22f43a45eec29226068ab9a747f65ccf0852130d4346c8af64037c1",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "testing-quality.negative-control-receipt",
+      "id": "https://aiwg.io/schemas/testing/negative-control-receipt.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "experimental",
+      "owner": {
+        "id": "testing-quality"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/testing-quality/schemas/negative-control-receipt.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "backward"
+      },
+      "consumers": [
+        {
+          "id": "test-conformance-toolkit",
+          "boundary": "Protocol and reproducible test conformance output validation",
+          "path": "agentic/code/addons/testing-quality/lib/contracts.mjs"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/testing-quality/contracts/negative-control-receipt.valid.json"
+        ],
+        "invalid": [
+          "test/fixtures/testing-quality/contracts/negative-control-receipt.type.invalid.json",
+          "test/fixtures/testing-quality/contracts/negative-control-receipt.unknown.invalid.json"
+        ]
+      },
+      "publication": {
+        "public": true
+      },
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/testing-quality/schemas/negative-control-receipt.v1.schema.json",
+          "digest": "sha256:a9c7d84db7202b5b6beae03483f1f8ff9fcda70f00ce3dfd6d1170688e67b8a3",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "testing-quality.normalization-plan",
+      "id": "https://aiwg.io/schemas/testing/normalization-plan.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "experimental",
+      "owner": {
+        "id": "testing-quality"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/testing-quality/schemas/normalization-plan.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "backward"
+      },
+      "consumers": [
+        {
+          "id": "test-conformance-toolkit",
+          "boundary": "Protocol and reproducible test conformance output validation",
+          "path": "agentic/code/addons/testing-quality/lib/contracts.mjs"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/testing-quality/contracts/normalization-plan.valid.json"
+        ],
+        "invalid": [
+          "test/fixtures/testing-quality/contracts/normalization-plan.type.invalid.json",
+          "test/fixtures/testing-quality/contracts/normalization-plan.unknown.invalid.json"
+        ]
+      },
+      "publication": {
+        "public": true
+      },
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/testing-quality/schemas/normalization-plan.v1.schema.json",
+          "digest": "sha256:f20b7ef9ed089229d785827f09419438a441eb071bc397c6ed4e4a04e9a3ff05",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "logicalName": "testing-quality.normalization-receipt",
+      "id": "https://aiwg.io/schemas/testing/normalization-receipt.v1.schema.json",
+      "version": "1.0.0",
+      "format": "json-schema",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "lifecycle": "active",
+      "stability": "experimental",
+      "owner": {
+        "id": "testing-quality"
+      },
+      "authority": {
+        "kind": "canonical",
+        "path": "agentic/code/addons/testing-quality/schemas/normalization-receipt.v1.schema.json"
+      },
+      "compatibility": {
+        "mode": "backward"
+      },
+      "consumers": [
+        {
+          "id": "test-conformance-toolkit",
+          "boundary": "Protocol and reproducible test conformance output validation",
+          "path": "agentic/code/addons/testing-quality/lib/contracts.mjs"
+        }
+      ],
+      "fixtures": {
+        "valid": [
+          "test/fixtures/testing-quality/contracts/normalization-receipt.valid.json"
+        ],
+        "invalid": [
+          "test/fixtures/testing-quality/contracts/normalization-receipt.type.invalid.json",
+          "test/fixtures/testing-quality/contracts/normalization-receipt.unknown.invalid.json"
+        ]
+      },
+      "publication": {
+        "public": true
+      },
+      "projections": [
+        {
+          "kind": "mirror",
+          "path": "agentic/code/plugins/testing-quality/schemas/normalization-receipt.v1.schema.json",
+          "digest": "sha256:b6061f794e7579e31c73cc814e92beabc29e90a65cbfd318bd9c2e7ac2d7ae67",
+          "generated": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: conformance-review
+  namespace: testing-quality
+  labels:
+    domain: testing
+    category: conformance
+spec:
+  description: Read sampled source bodies, helpers and SUT, and produce current source-bound machine
+    review evidence using the documented review contract plus test-review.md working forms. Explain
+    actual oracle, wrong behavior that can pass, prerequisites and cleanup. Lexical candidates
+    require control-flow review. Do not mark a whole file reviewed from one case; if requireReview
+    covers the whole population, expand review or explicitly retain incomplete coverage. Return
+    actual reviews artifact path.
+  version: 1.0.0
+  inputs:
+    - name: protocol
+      type: string
+      required: true
+    - name: inventory
+      type: string
+      required: true
+    - name: sample
+      type: string
+      required: true
+    - name: discovery
+      type: string
+      required: true
+    - name: execution
+      type: string
+      required: true
+  outputs:
+    - name: reviews
+      type: string
+  agent: test-oracle-reviewer
+  requires_addon: testing-quality
+  idempotent: false

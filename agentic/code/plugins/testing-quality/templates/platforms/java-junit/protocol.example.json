@@ -1,0 +1,118 @@
+{
+  "apiVersion": "testing.aiwg.io/v1",
+  "kind": "TestConformanceProtocol",
+  "metadata": {
+    "name": "java-junit-example",
+    "description": "TODO assumptions: TODO: select each module Surefire/Failsafe report or canonical aggregator. XML stdout is not assumed; inspect engines/POM and report paths."
+  },
+  "spec": {
+    "platform": "java-junit",
+    "system": "TODO: identify actual system and source or installed-artifact boundary",
+    "source": {
+      "include": [
+        "src/main/java/**/*.java"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**",
+        "src/test/java/**/*.java"
+      ]
+    },
+    "tests": {
+      "include": [
+        "src/test/java/**/*.java"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**"
+      ]
+    },
+    "areas": [
+      {
+        "id": "tests",
+        "include": [
+          "src/test/java/**/*.java"
+        ]
+      }
+    ],
+    "lanes": [
+      {
+        "id": "default",
+        "runner": "junit",
+        "include": [
+          "src/test/java/**/*.java"
+        ],
+        "exclude": [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/.aiwg/**",
+          "**/dist/**",
+          "**/build/**",
+          "**/coverage/**",
+          "**/.venv/**",
+          "**/venv/**",
+          "**/target/**",
+          "**/bin/**",
+          "**/obj/**",
+          "**/__pycache__/**"
+        ],
+        "command": {
+          "argv": [
+            "mvn",
+            "--offline",
+            "verify",
+            "-DfailIfNoTests=true"
+          ],
+          "timeoutMs": 300000
+        },
+        "result": {
+          "format": "junit"
+        },
+        "required": true,
+        "negativeControls": [],
+        "versionCommand": [
+          "mvn",
+          "--version"
+        ]
+      }
+    ],
+    "policy": {
+      "requireDiscovery": true,
+      "requireReview": true,
+      "requireNegativeControls": true,
+      "allowSkipped": false,
+      "coverageThresholds": {},
+      "maxFiles": 100000,
+      "maxFileBytes": 1048576,
+      "maxOutputBytes": 10485760
+    },
+    "research": {
+      "paths": [
+        ".aiwg/research/findings",
+        ".aiwg/research/synthesis",
+        ".aiwg/research/knowledge"
+      ],
+      "allowWeb": false
+    }
+  }
+}

@@ -1,0 +1,18 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: test-platform-qualification
+  labels:
+    domain: testing
+    version: 1.0.0
+spec:
+  steps:
+    - id: protocol
+      capability: conformance-protocol
+    - id: research
+      capability: conformance-platform-research
+      depends_on:
+        - protocol
+      inputs:
+        - name: protocol
+          from: protocol.protocol

@@ -1,0 +1,208 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/testing/test-review.v1.schema.json",
+  "title": "TestConformanceReview v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "const": "testing.aiwg.io/v1"
+    },
+    "kind": {
+      "const": "TestConformanceReview"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+        },
+        "toolVersion": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "name",
+        "createdAt",
+        "toolVersion"
+      ]
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "root": {
+          "type": "string",
+          "minLength": 1
+        },
+        "protocolHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "minLength": 64,
+          "maxLength": 64
+        },
+        "snapshotHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "minLength": 64,
+          "maxLength": 64
+        },
+        "reviewer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\u0000]+$"
+              },
+              "hash": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$",
+                "minLength": 64,
+                "maxLength": 64
+              },
+              "sut": {
+                "type": "string",
+                "minLength": 20
+              },
+              "claim": {
+                "type": "string",
+                "minLength": 20
+              },
+              "oracle": {
+                "type": "string",
+                "minLength": 20
+              },
+              "validity": {
+                "type": "string",
+                "minLength": 20
+              },
+              "isolation": {
+                "type": "string",
+                "minLength": 20
+              },
+              "determinism": {
+                "type": "string",
+                "minLength": 20
+              },
+              "normalization": {
+                "type": "string",
+                "minLength": 20
+              },
+              "maintainability": {
+                "type": "string",
+                "minLength": 20
+              },
+              "scope": {
+                "type": "string",
+                "minLength": 20
+              },
+              "verdict": {
+                "enum": [
+                  "passed",
+                  "failed",
+                  "unknown"
+                ]
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "message": {
+                      "type": "string",
+                      "minLength": 12
+                    },
+                    "severity": {
+                      "enum": [
+                        "high",
+                        "medium",
+                        "low"
+                      ]
+                    },
+                    "status": {
+                      "enum": [
+                        "open",
+                        "resolved"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "severity",
+                    "status"
+                  ]
+                }
+              },
+              "obligationIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              },
+              "assertions": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "required": [
+              "path",
+              "hash",
+              "sut",
+              "claim",
+              "oracle",
+              "validity",
+              "isolation",
+              "determinism",
+              "normalization",
+              "maintainability",
+              "scope",
+              "verdict",
+              "findings"
+            ]
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "root",
+        "protocolHash",
+        "snapshotHash",
+        "reviewer",
+        "files"
+      ]
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ]
+}

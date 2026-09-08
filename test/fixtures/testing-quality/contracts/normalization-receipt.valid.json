@@ -1,0 +1,34 @@
+{
+  "apiVersion": "testing.aiwg.io/v1",
+  "kind": "TestNormalizationReceipt",
+  "metadata": {
+    "name": "TestNormalizationReceipt",
+    "createdAt": "2026-09-08T00:00:00Z",
+    "toolVersion": "2.0.0"
+  },
+  "spec": {
+    "root": "/fixture/testing",
+    "purpose": "Prove wrong source value is rejected",
+    "changes": [
+      {
+        "path": "src/value.txt",
+        "before": {
+          "content": "valid",
+          "hash": "ec654fac9599f62e79e2706abef23dfb7c07c08185aa86db4d8695f0b718d1b3",
+          "mode": 420
+        },
+        "after": {
+          "content": "invalid",
+          "hash": "f1234d75178d892a133a410355a5a990cf75d2f33eba25d575943d4df632f3a4",
+          "mode": 420
+        }
+      }
+    ],
+    "planHash": "8450e245bfebe976f89b6b1dd5d1926ee6f6ffb27f1de34f7861988c176397da",
+    "status": "applied",
+    "completed": [
+      "src/value.txt"
+    ],
+    "receiptPath": ".aiwg/testing/apply.json"
+  }
+}

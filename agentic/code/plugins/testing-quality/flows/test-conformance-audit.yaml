@@ -1,0 +1,69 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: test-conformance-audit
+  labels:
+    domain: testing
+    version: 1.0.0
+spec:
+  vars:
+    scope: target testing protocol
+    sample_size: 20
+  steps:
+    - id: protocol
+      capability: conformance-protocol
+    - id: inventory
+      capability: conformance-inventory
+      depends_on:
+        - protocol
+      inputs:
+        - name: protocol
+          from: protocol.protocol
+    - id: collect
+      capability: conformance-collect
+      depends_on:
+        - inventory
+      inputs:
+        - name: protocol
+          from: protocol.protocol
+        - name: inventory
+          from: inventory.inventory
+    - id: review
+      capability: conformance-review
+      depends_on:
+        - collect
+      inputs:
+        - name: protocol
+          from: protocol.protocol
+        - name: inventory
+          from: inventory.inventory
+        - name: sample
+          from: inventory.sample
+        - name: discovery
+          from: collect.discovery
+        - name: execution
+          from: collect.execution
+    - id: assess
+      capability: conformance-assess
+      depends_on:
+        - review
+      inputs:
+        - name: protocol
+          from: protocol.protocol
+        - name: inventory
+          from: inventory.inventory
+        - name: discovery
+          from: collect.discovery
+        - name: execution
+          from: collect.execution
+        - name: reviews
+          from: review.reviews
+        - name: controls
+          from: collect.controls
+    - id: report
+      capability: conformance-report
+      depends_on:
+        - assess
+      inputs:
+        - name: assessment
+          from: assess.assessment

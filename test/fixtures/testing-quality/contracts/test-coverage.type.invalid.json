@@ -1,0 +1,38 @@
+{
+  "provider": "fixture",
+  "version": "1",
+  "format": "canonical",
+  "scope": {
+    "root": "/tmp/conformance-schema-example-L6QENZ",
+    "sourceFiles": [
+      "src/add.py"
+    ],
+    "missingFiles": [],
+    "extraFiles": []
+  },
+  "files": [
+    {
+      "path": "src/add.py",
+      "metrics": {
+        "lines": {
+          "covered": 1,
+          "total": 1
+        },
+        "statements": null,
+        "functions": null,
+        "branches": null
+      }
+    }
+  ],
+  "totals": {
+    "lines": {
+      "covered": 1,
+      "total": 1
+    },
+    "statements": null,
+    "functions": null,
+    "branches": null
+  },
+  "complete": "yes",
+  "errors": []
+}

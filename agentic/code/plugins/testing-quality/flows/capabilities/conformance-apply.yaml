@@ -1,0 +1,29 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: conformance-apply
+  namespace: testing-quality
+  labels:
+    domain: testing
+    category: conformance
+spec:
+  description: Verify that the concrete plan matches its review and existing task authorization, then
+    run aiwg test-conformance apply --plan with a new --receipt path. No blanket reapproval is
+    required for already authorized reversible cleanup. A source conflict requires replanning. On
+    partial failure inspect the durable receipt and observed states, preserve incomplete status, and
+    stop dependent verification until recovery is resolved. Return the actual completed receipt
+    path.
+  version: 1.0.0
+  inputs:
+    - name: plan
+      type: string
+      required: true
+    - name: plan_review
+      type: string
+      required: true
+  outputs:
+    - name: receipt
+      type: string
+  agent: test-normalization-engineer
+  requires_addon: testing-quality
+  idempotent: false

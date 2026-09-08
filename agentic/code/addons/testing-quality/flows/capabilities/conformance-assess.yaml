@@ -1,0 +1,43 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: conformance-assess
+  namespace: testing-quality
+  labels:
+    domain: testing
+    category: conformance
+spec:
+  description: Run aiwg test-conformance assess with --protocol, --inventory, both
+    --evidence receipt paths and --reviews. Persist a new --output assessment.
+    Inspect its gate findings and validate against the current assessment
+    contract using aiwg test-conformance validate. Invalid contracts and absent
+    evidence cannot pass; whole-scope required review cannot be satisfied by a
+    20-case sample. Return assessment path and keep nonconformant/incomplete
+    status intact. Include a nonempty controls receipt as another --evidence
+    argument; omitted controls remain unknown when required.
+  version: 1.0.0
+  inputs:
+    - name: protocol
+      type: string
+      required: true
+    - name: inventory
+      type: string
+      required: true
+    - name: discovery
+      type: string
+      required: true
+    - name: execution
+      type: string
+      required: true
+    - name: reviews
+      type: string
+      required: true
+    - name: controls
+      type: string
+      required: false
+  outputs:
+    - name: assessment
+      type: string
+  agent: conformance-steward
+  requires_addon: testing-quality
+  idempotent: false

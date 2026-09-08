@@ -1,0 +1,125 @@
+{
+  "apiVersion": "testing.aiwg.io/v1",
+  "kind": "TestConformanceProtocol",
+  "metadata": {
+    "name": "javascript-jest-example",
+    "description": "TODO assumptions: File list is not execution; newer collectTests records may have wouldRun:true. Review project/config selection."
+  },
+  "spec": {
+    "platform": "javascript-jest",
+    "system": "TODO: identify actual system and source or installed-artifact boundary",
+    "source": {
+      "include": [
+        "src/**/*.{ts,tsx,js,mjs,cjs,jsx}"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**",
+        "**/*.test.{js,mjs,cjs,ts,tsx,jsx}",
+        "**/*.spec.{js,mjs,cjs,ts,tsx,jsx}"
+      ]
+    },
+    "tests": {
+      "include": [
+        "**/*.test.{js,mjs,cjs,ts,tsx,jsx}",
+        "**/*.spec.{js,mjs,cjs,ts,tsx,jsx}"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**"
+      ]
+    },
+    "areas": [
+      {
+        "id": "tests",
+        "include": [
+          "**/*.test.{js,mjs,cjs,ts,tsx,jsx}",
+          "**/*.spec.{js,mjs,cjs,ts,tsx,jsx}"
+        ]
+      }
+    ],
+    "lanes": [
+      {
+        "id": "default",
+        "runner": "jest",
+        "include": [
+          "**/*.test.{js,mjs,cjs,ts,tsx,jsx}",
+          "**/*.spec.{js,mjs,cjs,ts,tsx,jsx}"
+        ],
+        "exclude": [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/.aiwg/**",
+          "**/dist/**",
+          "**/build/**",
+          "**/coverage/**",
+          "**/.venv/**",
+          "**/venv/**",
+          "**/target/**",
+          "**/bin/**",
+          "**/obj/**",
+          "**/__pycache__/**"
+        ],
+        "command": {
+          "argv": [
+            "node",
+            "node_modules/jest/bin/jest.js",
+            "--ci",
+            "--json",
+            "--outputFile=.aiwg/testing/conformance/raw/{runId}/jest.json"
+          ],
+          "timeoutMs": 300000
+        },
+        "result": {
+          "format": "jest",
+          "path": ".aiwg/testing/conformance/raw/{runId}/jest.json"
+        },
+        "required": true,
+        "negativeControls": [],
+        "versionCommand": [
+          "node",
+          "node_modules/jest/bin/jest.js",
+          "--version"
+        ]
+      }
+    ],
+    "policy": {
+      "requireDiscovery": true,
+      "requireReview": true,
+      "requireNegativeControls": true,
+      "allowSkipped": false,
+      "coverageThresholds": {},
+      "maxFiles": 100000,
+      "maxFileBytes": 1048576,
+      "maxOutputBytes": 10485760
+    },
+    "research": {
+      "paths": [
+        ".aiwg/research/findings",
+        ".aiwg/research/synthesis",
+        ".aiwg/research/knowledge"
+      ],
+      "allowWeb": false
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "apiVersion": "testing.aiwg.io/v1",
+  "kind": "TestConformanceProtocol",
+  "metadata": {
+    "name": "python-fixture"
+  },
+  "spec": {
+    "platform": "python",
+    "system": "adder",
+    "source": {
+      "include": [
+        "src/**/*.py"
+      ],
+      "exclude": []
+    },
+    "tests": {
+      "include": [
+        "tests/**/*.py"
+      ],
+      "exclude": []
+    },
+    "areas": [
+      {
+        "id": "unit",
+        "include": [
+          "tests/**/*.py"
+        ]
+      }
+    ],
+    "lanes": [
+      {
+        "id": "unit",
+        "runner": "pytest",
+        "include": [
+          "tests/**/*.py"
+        ],
+        "exclude": [],
+        "command": {
+          "argv": [
+            "python",
+            "-m",
+            "pytest",
+            "--json-report"
+          ],
+          "timeoutMs": "forever"
+        },
+        "result": {
+          "format": "pytest-json",
+          "path": ".report.json"
+        },
+        "required": true
+      }
+    ],
+    "policy": {
+      "requireDiscovery": true,
+      "requireReview": true,
+      "requireNegativeControls": true,
+      "allowSkipped": false,
+      "coverageThresholds": {
+        "lines": 80,
+        "branches": 75
+      },
+      "maxFiles": 1000,
+      "maxFileBytes": 1000000,
+      "maxOutputBytes": 1000000
+    },
+    "research": {
+      "paths": [],
+      "allowWeb": true
+    }
+  }
+}

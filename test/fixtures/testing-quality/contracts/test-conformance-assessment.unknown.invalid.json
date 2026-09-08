@@ -1,0 +1,33 @@
+{
+  "apiVersion": "testing.aiwg.io/v1",
+  "kind": "TestConformanceAssessment",
+  "metadata": {
+    "name": "fixture",
+    "createdAt": "2026-09-08T12:00:00.000Z",
+    "toolVersion": "2.0.0"
+  },
+  "spec": {
+    "root": "/target",
+    "protocolHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "snapshotHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "status": "unknown",
+    "gates": [
+      {
+        "id": "execution",
+        "status": "unknown",
+        "message": "No verified current receipt supplies this lane.",
+        "references": []
+      }
+    ],
+    "summary": {
+      "total": 1,
+      "passed": 0,
+      "failed": 0,
+      "unknown": 1
+    },
+    "limitations": [
+      "No runtime conformance conclusion without verified execution evidence."
+    ],
+    "guaranteedCorrect": true
+  }
+}

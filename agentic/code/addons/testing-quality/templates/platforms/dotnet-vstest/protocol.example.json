@@ -1,0 +1,126 @@
+{
+  "apiVersion": "testing.aiwg.io/v1",
+  "kind": "TestConformanceProtocol",
+  "metadata": {
+    "name": "dotnet-vstest-example",
+    "description": "TODO assumptions: Requires restored project and VSTest-compatible adapters; MTP needs a separately qualified profile. Multi-target reports must use distinct paths."
+  },
+  "spec": {
+    "platform": "dotnet-vstest",
+    "system": "TODO: identify actual system and source or installed-artifact boundary",
+    "source": {
+      "include": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**",
+        "**/*Tests.cs",
+        "**/*Test.cs"
+      ]
+    },
+    "tests": {
+      "include": [
+        "**/*Tests.cs",
+        "**/*Test.cs"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**"
+      ]
+    },
+    "areas": [
+      {
+        "id": "tests",
+        "include": [
+          "**/*Tests.cs",
+          "**/*Test.cs"
+        ]
+      }
+    ],
+    "lanes": [
+      {
+        "id": "default",
+        "runner": "dotnet",
+        "include": [
+          "**/*Tests.cs",
+          "**/*Test.cs"
+        ],
+        "exclude": [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/.aiwg/**",
+          "**/dist/**",
+          "**/build/**",
+          "**/coverage/**",
+          "**/.venv/**",
+          "**/venv/**",
+          "**/target/**",
+          "**/bin/**",
+          "**/obj/**",
+          "**/__pycache__/**"
+        ],
+        "command": {
+          "argv": [
+            "dotnet",
+            "test",
+            "--no-restore",
+            "--logger",
+            "trx;LogFileName=tests.trx",
+            "--results-directory",
+            ".aiwg/testing/conformance/raw/{runId}"
+          ],
+          "timeoutMs": 300000
+        },
+        "result": {
+          "format": "trx",
+          "path": ".aiwg/testing/conformance/raw/{runId}/tests.trx"
+        },
+        "required": true,
+        "negativeControls": [],
+        "versionCommand": [
+          "dotnet",
+          "--version"
+        ]
+      }
+    ],
+    "policy": {
+      "requireDiscovery": true,
+      "requireReview": true,
+      "requireNegativeControls": true,
+      "allowSkipped": false,
+      "coverageThresholds": {},
+      "maxFiles": 100000,
+      "maxFileBytes": 1048576,
+      "maxOutputBytes": 10485760
+    },
+    "research": {
+      "paths": [
+        ".aiwg/research/findings",
+        ".aiwg/research/synthesis",
+        ".aiwg/research/knowledge"
+      ],
+      "allowWeb": false
+    }
+  }
+}

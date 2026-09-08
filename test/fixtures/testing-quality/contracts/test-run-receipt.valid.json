@@ -1,0 +1,92 @@
+{
+  "apiVersion": "testing.aiwg.io/v1",
+  "kind": "TestRunReceipt",
+  "metadata": {
+    "name": "python-fixture",
+    "createdAt": "2026-09-08T17:28:32.657Z",
+    "toolVersion": "2.0.0"
+  },
+  "spec": {
+    "root": "/tmp/conformance-schema-example-L6QENZ",
+    "protocolHash": "c0e3694bb54ecf1f56ee05fb9dbed3de1b9a5261b06188cf567f5cb3d054bea8",
+    "snapshotHash": "fa30dbbc4a51b805d76944dd9e08ed535f4456b3f8fc30a577ac1f3ebd26b87e",
+    "afterSnapshotHash": "fa30dbbc4a51b805d76944dd9e08ed535f4456b3f8fc30a577ac1f3ebd26b87e",
+    "inventoryPath": ".aiwg/testing/conformance/runs/1c7298d7-aff5-475e-b111-4c5d302fafb8/inventory.json",
+    "runId": "1c7298d7-aff5-475e-b111-4c5d302fafb8",
+    "mode": "execution",
+    "sourceStable": true,
+    "lanes": [
+      {
+        "id": "unit",
+        "runner": "pytest",
+        "required": true,
+        "mode": "execution",
+        "process": {
+          "argv": [
+            "/home/roctinam/.nvm/versions/node/v24.12.0/bin/node",
+            "-e",
+            "console.log(JSON.stringify({complete:true,cases:[{file:'tests/test_add.py',name:'test_add',status:'passed'}],files:[{path:'tests/test_add.py',status:'passed'}]}))"
+          ],
+          "cwd": "/tmp/conformance-schema-example-L6QENZ",
+          "environment": {
+            "explicitKeys": [],
+            "explicitValuesHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "platform": "linux",
+            "arch": "x64",
+            "node": "v24.12.0"
+          },
+          "startedAt": "2026-09-08T17:28:32.607Z",
+          "endedAt": "2026-09-08T17:28:32.643Z",
+          "durationMs": 35.89788999999999,
+          "exitCode": 0,
+          "signal": null,
+          "reason": "exit",
+          "observedOutputBytes": 150
+        },
+        "version": null,
+        "stdout": {
+          "path": ".aiwg/testing/conformance/runs/1c7298d7-aff5-475e-b111-4c5d302fafb8/unit-execution.stdout.log",
+          "hash": "835f52dd4d490898636e5dd2ffbdd7d0043bbaef0add549b408a6982eb5c9b28"
+        },
+        "stderr": {
+          "path": ".aiwg/testing/conformance/runs/1c7298d7-aff5-475e-b111-4c5d302fafb8/unit-execution.stderr.log",
+          "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "normalized": {
+          "cases": [
+            {
+              "id": "[\"unit\",\"tests/test_add.py\",\"test_add\"]",
+              "file": "tests/test_add.py",
+              "name": "test_add",
+              "status": "passed"
+            }
+          ],
+          "files": [
+            {
+              "path": "tests/test_add.py",
+              "status": "passed"
+            }
+          ],
+          "summary": {
+            "total": 1,
+            "passed": 1,
+            "failed": 0,
+            "skipped": 0
+          },
+          "errors": [],
+          "complete": true
+        },
+        "diagnostics": [],
+        "report": {
+          "path": ".aiwg/testing/conformance/runs/1c7298d7-aff5-475e-b111-4c5d302fafb8/unit-execution.stdout.log",
+          "hash": "835f52dd4d490898636e5dd2ffbdd7d0043bbaef0add549b408a6982eb5c9b28",
+          "size": 150,
+          "format": "canonical",
+          "origin": "stdout"
+        }
+      }
+    ],
+    "diagnostics": [],
+    "receiptHash": "39ad665edda78a7ddaff9ace1c0fcb4073c58ee4b070a92544266cfe05a5360b"
+  }
+}

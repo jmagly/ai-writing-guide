@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "id": "go",
+  "name": "Go testing",
+  "status": "researched-not-qualified",
+  "compatibility": "not-verified",
+  "assumptions": [
+    "List discovery omits dynamic subtests; approve package/build-tag/GOOS scope and statement coverage units.",
+    "TODO: review candidate scope, thresholds, skips, report adapter and minimum test obligations before execution."
+  ],
+  "protocolSpec": {
+    "platform": "go",
+    "system": "TODO: identify actual system and source or installed-artifact boundary",
+    "source": {
+      "include": [
+        "**/*.go"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**",
+        "**/*_test.go"
+      ]
+    },
+    "tests": {
+      "include": [
+        "**/*_test.go"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**"
+      ]
+    },
+    "areas": [
+      {
+        "id": "tests",
+        "include": [
+          "**/*_test.go"
+        ]
+      }
+    ],
+    "lanes": [
+      {
+        "id": "default",
+        "runner": "go",
+        "include": [
+          "**/*_test.go"
+        ],
+        "exclude": [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/.aiwg/**",
+          "**/dist/**",
+          "**/build/**",
+          "**/coverage/**",
+          "**/.venv/**",
+          "**/venv/**",
+          "**/target/**",
+          "**/bin/**",
+          "**/obj/**",
+          "**/__pycache__/**"
+        ],
+        "command": {
+          "argv": [
+            "go",
+            "test",
+            "-json",
+            "-count=1",
+            "./..."
+          ],
+          "timeoutMs": 300000
+        },
+        "result": {
+          "format": "go-json"
+        },
+        "required": true,
+        "negativeControls": [],
+        "versionCommand": [
+          "go",
+          "version"
+        ]
+      }
+    ],
+    "policy": {
+      "requireDiscovery": true,
+      "requireReview": true,
+      "requireNegativeControls": true,
+      "allowSkipped": false,
+      "coverageThresholds": {},
+      "maxFiles": 100000,
+      "maxFileBytes": 1048576,
+      "maxOutputBytes": 10485760
+    },
+    "research": {
+      "paths": [
+        ".aiwg/research/findings",
+        ".aiwg/research/synthesis",
+        ".aiwg/research/knowledge"
+      ],
+      "allowWeb": false
+    }
+  },
+  "templates": [
+    {
+      "source": "templates/platforms/go/RESEARCH.md",
+      "destination": ".aiwg/testing/conformance/examples/go/RESEARCH.md",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/go/oracle_example_test.go",
+      "destination": ".aiwg/testing/conformance/examples/go/oracle_example_test.go",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/go/protocol.example.json",
+      "destination": ".aiwg/testing/conformance/examples/go/protocol.example.json",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/go/test-review.example.md",
+      "destination": ".aiwg/testing/conformance/examples/go/test-review.example.md",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    }
+  ]
+}

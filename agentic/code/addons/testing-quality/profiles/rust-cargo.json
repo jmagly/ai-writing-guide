@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "id": "rust-cargo",
+  "name": "Rust Cargo",
+  "status": "researched-not-qualified",
+  "compatibility": "not-verified",
+  "assumptions": [
+    "Default deliberately fails until a stable Cargo/nextest result adapter is configured; preserve doc-test and feature obligations.",
+    "TODO: review candidate scope, thresholds, skips, report adapter and minimum test obligations before execution."
+  ],
+  "protocolSpec": {
+    "platform": "rust-cargo",
+    "system": "TODO: identify actual system and source or installed-artifact boundary",
+    "source": {
+      "include": [
+        "src/**/*.rs"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**"
+      ]
+    },
+    "tests": {
+      "include": [
+        "tests/**/*.rs",
+        "src/**/*.rs"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**"
+      ]
+    },
+    "areas": [
+      {
+        "id": "tests",
+        "include": [
+          "tests/**/*.rs",
+          "src/**/*.rs"
+        ]
+      }
+    ],
+    "lanes": [
+      {
+        "id": "default",
+        "runner": "cargo",
+        "include": [
+          "tests/**/*.rs",
+          "src/**/*.rs"
+        ],
+        "exclude": [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/.aiwg/**",
+          "**/dist/**",
+          "**/build/**",
+          "**/coverage/**",
+          "**/.venv/**",
+          "**/venv/**",
+          "**/target/**",
+          "**/bin/**",
+          "**/obj/**",
+          "**/__pycache__/**"
+        ],
+        "command": {
+          "argv": [
+            "node",
+            "--input-type=module",
+            "--eval",
+            "console.error(\"TODO: configure a qualified Rust test-results adapter. cargo --message-format=json is build output, not stable libtest case JSON.\"); process.exitCode = 2;"
+          ],
+          "timeoutMs": 300000
+        },
+        "result": {
+          "format": "canonical"
+        },
+        "required": true,
+        "negativeControls": [],
+        "versionCommand": [
+          "cargo",
+          "--version"
+        ]
+      }
+    ],
+    "policy": {
+      "requireDiscovery": true,
+      "requireReview": true,
+      "requireNegativeControls": true,
+      "allowSkipped": false,
+      "coverageThresholds": {},
+      "maxFiles": 100000,
+      "maxFileBytes": 1048576,
+      "maxOutputBytes": 10485760
+    },
+    "research": {
+      "paths": [
+        ".aiwg/research/findings",
+        ".aiwg/research/synthesis",
+        ".aiwg/research/knowledge"
+      ],
+      "allowWeb": false
+    }
+  },
+  "templates": [
+    {
+      "source": "templates/platforms/rust-cargo/RESEARCH.md",
+      "destination": ".aiwg/testing/conformance/examples/rust-cargo/RESEARCH.md",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/rust-cargo/oracle_example.rs",
+      "destination": ".aiwg/testing/conformance/examples/rust-cargo/oracle_example.rs",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/rust-cargo/protocol.example.json",
+      "destination": ".aiwg/testing/conformance/examples/rust-cargo/protocol.example.json",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/rust-cargo/test-review.example.md",
+      "destination": ".aiwg/testing/conformance/examples/rust-cargo/test-review.example.md",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    }
+  ]
+}

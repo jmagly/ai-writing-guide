@@ -1,0 +1,33 @@
+{
+  "apiVersion": "testing.aiwg.io/v1",
+  "kind": "TestSample",
+  "metadata": {
+    "name": "fixture",
+    "createdAt": "2026-09-08T12:00:00.000Z",
+    "toolVersion": "2.0.0"
+  },
+  "spec": {
+    "seed": "fixture-seed",
+    "size": 20,
+    "unit": "test-file",
+    "populationHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "method": "sha256(seed NUL id), ascending, without replacement per area",
+    "areas": [
+      {
+        "area": "unit",
+        "population": 1,
+        "sampled": 1,
+        "census": true,
+        "records": [
+          {
+            "id": "tests/test_add.py",
+            "area": "unit",
+            "path": "tests/test_add.py",
+            "hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "rank": "unverified"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: conformance-collect
+  namespace: testing-quality
+  labels:
+    domain: testing
+    category: conformance
+spec:
+  description: Inspect configured lane prerequisites and run aiwg test-conformance
+    collect separately with --mode discovery and --mode execution --lane all in
+    the authorized target. Pass --protocol and distinct --output receipt paths.
+    Preserve nonzero exits, setup failures, empty suites, optional missing
+    discovery and raw report hashes. Registration is not execution, and source
+    inventory is neither. Return receipt paths even when assessment will be
+    incomplete. When negative controls are required and baseline execution
+    passed, run collect --mode controls --evidence with the execution receipt
+    and return its new controls receipt path. Only execute reviewed configured
+    source plans within task authorization. If controls cannot run, leave
+    controls empty and preserve an unknown obligation; never substitute an
+    ordinary failed run.
+  version: 1.0.0
+  inputs:
+    - name: protocol
+      type: string
+      required: true
+    - name: inventory
+      type: string
+      required: true
+  outputs:
+    - name: discovery
+      type: string
+    - name: execution
+      type: string
+    - name: controls
+      type: string
+  agent: conformance-steward
+  requires_addon: testing-quality
+  idempotent: false

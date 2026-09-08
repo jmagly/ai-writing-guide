@@ -7,6 +7,12 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Added
+
+- Expand testing-quality with source-bound conformance assessment, runner discovery and execution receipts,
+  negative controls, reversible normalization, platform templates, research guidance, and SDLC agents and flows.
+  Qualify real Vitest and pytest lifecycles and retain explicit limits for other platform profiles.
+
 ## [2026.9.5] - 2026-09-07 - "DeepSeek Harness, shared bundles, and controlled writing"
 
 ### Fixed

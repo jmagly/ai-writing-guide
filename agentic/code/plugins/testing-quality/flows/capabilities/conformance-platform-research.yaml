@@ -1,0 +1,29 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: conformance-platform-research
+  namespace: testing-quality
+  labels:
+    domain: testing
+    category: conformance
+spec:
+  description: Use the test-platform-research skill. Run aiwg test-conformance research for configured
+    local roots/platform, examine authorized current official sources, and evaluate a tool against a
+    concrete testing gap. Use templates --action list/develop to produce a reviewable custom
+    template artifact when required. Follow adapter-qualification.md; distinguish researched
+    recipes, fixture-tested parsers and target-verified execution. Do not install suggested
+    dependencies merely because research lists them. Return research and template artifact paths; if
+    no template is needed document that disposition explicitly.
+  version: 1.0.0
+  inputs:
+    - name: protocol
+      type: string
+      required: true
+  outputs:
+    - name: research
+      type: string
+    - name: template
+      type: string
+  agent: conformance-steward
+  requires_addon: testing-quality
+  idempotent: false

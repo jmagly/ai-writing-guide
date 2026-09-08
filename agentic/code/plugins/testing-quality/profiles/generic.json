@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "id": "generic",
+  "name": "Custom executable tests",
+  "status": "researched-not-qualified",
+  "compatibility": "not-verified",
+  "assumptions": [
+    "No platform was inferred. Configure real command, source/test scope and authoritative discovery explicitly.",
+    "TODO: review candidate scope, thresholds, skips, report adapter and minimum test obligations before execution."
+  ],
+  "protocolSpec": {
+    "platform": "generic",
+    "system": "TODO: identify actual system and source or installed-artifact boundary",
+    "source": {
+      "include": [
+        "src/**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**"
+      ]
+    },
+    "tests": {
+      "include": [
+        "test/**/*",
+        "tests/**/*"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**"
+      ]
+    },
+    "areas": [
+      {
+        "id": "tests",
+        "include": [
+          "test/**/*",
+          "tests/**/*"
+        ]
+      }
+    ],
+    "lanes": [
+      {
+        "id": "default",
+        "runner": "custom",
+        "include": [
+          "test/**/*",
+          "tests/**/*"
+        ],
+        "exclude": [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/.aiwg/**",
+          "**/dist/**",
+          "**/build/**",
+          "**/coverage/**",
+          "**/.venv/**",
+          "**/venv/**",
+          "**/target/**",
+          "**/bin/**",
+          "**/obj/**",
+          "**/__pycache__/**"
+        ],
+        "command": {
+          "argv": [
+            "node",
+            "--input-type=module",
+            "--eval",
+            "console.error(\"TODO: select a project test command and canonical reporter/discovery adapter before claiming conformance.\"); process.exitCode = 2;"
+          ],
+          "timeoutMs": 300000
+        },
+        "result": {
+          "format": "canonical"
+        },
+        "required": true,
+        "negativeControls": []
+      }
+    ],
+    "policy": {
+      "requireDiscovery": true,
+      "requireReview": true,
+      "requireNegativeControls": true,
+      "allowSkipped": false,
+      "coverageThresholds": {},
+      "maxFiles": 100000,
+      "maxFileBytes": 1048576,
+      "maxOutputBytes": 10485760
+    },
+    "research": {
+      "paths": [
+        ".aiwg/research/findings",
+        ".aiwg/research/synthesis",
+        ".aiwg/research/knowledge"
+      ],
+      "allowWeb": false
+    }
+  },
+  "templates": [
+    {
+      "source": "templates/platforms/generic/RESEARCH.md",
+      "destination": ".aiwg/testing/conformance/examples/generic/RESEARCH.md",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/generic/oracle.example.test.mjs",
+      "destination": ".aiwg/testing/conformance/examples/generic/oracle.example.test.mjs",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/generic/protocol.example.json",
+      "destination": ".aiwg/testing/conformance/examples/generic/protocol.example.json",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/generic/test-review.example.md",
+      "destination": ".aiwg/testing/conformance/examples/generic/test-review.example.md",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    }
+  ]
+}

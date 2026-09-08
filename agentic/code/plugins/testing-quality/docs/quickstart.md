@@ -1,5 +1,8 @@
 # Testing Quality Quickstart
 
+For source-bound conformance assessment, reversible normalization templates, and platform research, see the
+[test conformance workflow](conformance-workflow.md). The toolkit retains the six original testing-quality skills.
+
 > **First time using AIWG?** Begin with [Install, Connect, and
 Verify](../../getting-started/install-connect-verify.md). This guide assumes AIWG is connected to the target project
 and your provider session can read the deployed context.
@@ -20,11 +23,12 @@ your provider session.
 
 Run this once when starting a project or when adding testing gates to an existing one:
 
-```
+```text
 Set up TDD enforcement for this project
 ```
 
 Expected result:
+
 - Pre-commit hook that runs `npm test` (or equivalent) before allowing commits
 - CI coverage gate at 80% minimum
 - `tdd_setup.py` script for non-npm projects
@@ -37,19 +41,20 @@ blocking policy.
 
 To find out whether your tests would actually catch bugs:
 
-```
+```text
 Run mutation testing on src/auth/
 ```
 
-```
+```text
 Validate test quality for the payment module
 ```
 
-```
+```text
 What's our mutation score?
 ```
 
 The skill detects your test framework and runs the appropriate mutation tool:
+
 - JavaScript/TypeScript: Stryker
 - Java: PITest
 - Python: mutmut
@@ -81,13 +86,14 @@ re-import error is a harness/tool failure; it is not a project test failure and
 must not be counted as a killed, survived, timed-out, or no-tests mutant.
 
 Output is a mutation report with:
+
 - Overall score (target: ≥80%)
 - Which specific functions/methods have weak test coverage
 - For each weak test, what condition or behavior it fails to validate
 
 Example output:
 
-```
+```text
 Mutation Score: 73% (target: 80%)
 
 Weak tests identified:
@@ -108,53 +114,57 @@ universal policy.
 
 When CI is reporting intermittent failures:
 
-```
+```text
 Find flaky tests
 ```
 
-```
+```text
 CI is unstable — find the flaky tests
 ```
 
-The `flaky-detect` skill analyzes CI history to identify tests that fail intermittently and categorizes the root cause. To fix them:
+The `flaky-detect` skill analyzes CI history to identify tests that fail intermittently and categorizes the root cause.
+To fix them:
 
-```
+```text
 Fix the flaky tests
 ```
 
-```
+```text
 Make the auth tests reliable
 ```
 
-The `flaky-fix` skill applies deterministic replacements: proper async/await patterns for timing issues, state isolation for order-dependency issues, mocking for external dependencies.
+The `flaky-fix` skill applies deterministic replacements: proper async/await patterns for timing issues, state isolation
+for order-dependency issues, mocking for external dependencies.
 
 ## Generate Test Data Factories
 
 When writing tests that require complex model instances:
 
-```
+```text
 Generate factory for User model
 ```
 
-```
+```text
 Create test data factory for Order with traits for pending, completed, and cancelled orders
 ```
 
-Output is a factory file with sensible defaults, Faker.js integration for realistic data, and traits for common test variants. The factory is placed in the project's existing test/factories/ directory (or created if absent).
+Output is a factory file with sensible defaults, Faker.js integration for realistic data, and traits for common test
+variants. The factory is placed in the project's existing test/factories/ directory (or created if absent).
 
 ## Detect Orphaned Tests
 
 When tests accumulate and fall out of sync with the codebase:
 
-```
+```text
 Find orphaned tests
 ```
 
-```
+```text
 Sync tests with the current codebase
 ```
 
 `test-sync` identifies:
+
 - Test files that reference source files which no longer exist
 - Source files that have no corresponding test file
 - Test functions that test code paths no longer present in the source
@@ -163,7 +173,7 @@ Sync tests with the current codebase
 
 For a one-command TDD infrastructure setup:
 
-```
+```text
 /setup-tdd
 ```
 
@@ -174,7 +184,7 @@ baseline to review.
 
 If using sdlc-complete, the testing-quality addon hooks into the Construction phase:
 
-```
+```text
 Run quality gate check before transitioning to Transition
 ```
 

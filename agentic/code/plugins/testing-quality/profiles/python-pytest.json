@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "id": "python-pytest",
+  "name": "Python pytest",
+  "status": "researched-not-qualified",
+  "compatibility": "not-verified",
+  "assumptions": [
+    "TODO: select the project Python interpreter; deploy the shipped pytest hook adapter through a reviewed normalization plan. Serial pytest only; xdist aggregation is unqualified.",
+    "TODO: review candidate scope, thresholds, skips, report adapter and minimum test obligations before execution."
+  ],
+  "protocolSpec": {
+    "platform": "python-pytest",
+    "system": "TODO: identify actual system and source or installed-artifact boundary",
+    "source": {
+      "include": [
+        "src/**/*.py"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**",
+        "**/test_*.py",
+        "**/*_test.py"
+      ]
+    },
+    "tests": {
+      "include": [
+        "**/test_*.py",
+        "**/*_test.py"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**"
+      ]
+    },
+    "areas": [
+      {
+        "id": "tests",
+        "include": [
+          "**/test_*.py",
+          "**/*_test.py"
+        ]
+      }
+    ],
+    "lanes": [
+      {
+        "id": "default",
+        "runner": "pytest",
+        "include": [
+          "**/test_*.py",
+          "**/*_test.py"
+        ],
+        "exclude": [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/.aiwg/**",
+          "**/dist/**",
+          "**/build/**",
+          "**/coverage/**",
+          "**/.venv/**",
+          "**/venv/**",
+          "**/target/**",
+          "**/bin/**",
+          "**/obj/**",
+          "**/__pycache__/**"
+        ],
+        "command": {
+          "argv": [
+            "python3",
+            ".aiwg/testing/conformance/adapters/pytest_reporter.py",
+            "--mode",
+            "execution",
+            "--output",
+            ".aiwg/testing/conformance/raw/{runId}/pytest-execution.json"
+          ],
+          "timeoutMs": 300000
+        },
+        "result": {
+          "format": "canonical",
+          "path": ".aiwg/testing/conformance/raw/{runId}/pytest-execution.json"
+        },
+        "required": true,
+        "negativeControls": [],
+        "versionCommand": [
+          "python3",
+          "-m",
+          "pytest",
+          "--version"
+        ],
+        "discovery": {
+          "command": {
+            "argv": [
+              "python3",
+              ".aiwg/testing/conformance/adapters/pytest_reporter.py",
+              "--mode",
+              "discovery",
+              "--output",
+              ".aiwg/testing/conformance/raw/{runId}/pytest-discovery.json"
+            ],
+            "timeoutMs": 300000
+          },
+          "result": {
+            "format": "canonical",
+            "path": ".aiwg/testing/conformance/raw/{runId}/pytest-discovery.json"
+          }
+        }
+      }
+    ],
+    "policy": {
+      "requireDiscovery": true,
+      "requireReview": true,
+      "requireNegativeControls": true,
+      "allowSkipped": false,
+      "coverageThresholds": {},
+      "maxFiles": 100000,
+      "maxFileBytes": 1048576,
+      "maxOutputBytes": 10485760
+    },
+    "research": {
+      "paths": [
+        ".aiwg/research/findings",
+        ".aiwg/research/synthesis",
+        ".aiwg/research/knowledge"
+      ],
+      "allowWeb": false
+    },
+    "configFiles": [
+      ".aiwg/testing/conformance/adapters/pytest_reporter.py"
+    ]
+  },
+  "templates": [
+    {
+      "source": "templates/platforms/python-pytest/RESEARCH.md",
+      "destination": ".aiwg/testing/conformance/examples/python-pytest/RESEARCH.md",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/python-pytest/protocol.example.json",
+      "destination": ".aiwg/testing/conformance/examples/python-pytest/protocol.example.json",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/python-pytest/pytest.example.ini",
+      "destination": ".aiwg/testing/conformance/examples/python-pytest/pytest.example.ini",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/python-pytest/test-review.example.md",
+      "destination": ".aiwg/testing/conformance/examples/python-pytest/test-review.example.md",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "adapters/pytest_reporter.py",
+      "destination": ".aiwg/testing/conformance/adapters/pytest_reporter.py",
+      "purpose": "Reviewed adapter deployment; requires existing pytest in selected interpreter, never installs it"
+    }
+  ]
+}

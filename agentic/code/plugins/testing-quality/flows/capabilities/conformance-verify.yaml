@@ -1,0 +1,42 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: conformance-verify
+  namespace: testing-quality
+  labels:
+    domain: testing
+    category: conformance
+spec:
+  description: Perform the verification gate for exactly one applied batch. Confirm receipt is
+    completed; run fresh aiwg test-conformance inventory and collect in discovery/execution modes,
+    refresh changed source-bound reviews, execute the declared relevant negative controls and wider
+    lane, then assess with the new evidence. Use new paths and preserve baseline assessment. Verify
+    repairs through actual outcomes, not changed source strings. If rollback is needed and safe,
+    aiwg test-conformance rollback --receipt writes its own output; drift/partial receipts require
+    recovery planning. Return new assessment and concrete verification ledger paths, retaining any
+    failed/incomplete gate.
+  version: 1.0.0
+  inputs:
+    - name: protocol
+      type: string
+      required: true
+    - name: inventory
+      type: string
+      required: true
+    - name: assessment
+      type: string
+      required: true
+    - name: plan
+      type: string
+      required: true
+    - name: receipt
+      type: string
+      required: true
+  outputs:
+    - name: assessment
+      type: string
+    - name: verification
+      type: string
+  agent: conformance-steward
+  requires_addon: testing-quality
+  idempotent: false

@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "id": "dotnet-vstest",
+  "name": ".NET VSTest",
+  "status": "researched-not-qualified",
+  "compatibility": "not-verified",
+  "assumptions": [
+    "Requires restored project and VSTest-compatible adapters; MTP needs a separately qualified profile. Multi-target reports must use distinct paths.",
+    "TODO: review candidate scope, thresholds, skips, report adapter and minimum test obligations before execution."
+  ],
+  "protocolSpec": {
+    "platform": "dotnet-vstest",
+    "system": "TODO: identify actual system and source or installed-artifact boundary",
+    "source": {
+      "include": [
+        "**/*.cs"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**",
+        "**/*Tests.cs",
+        "**/*Test.cs"
+      ]
+    },
+    "tests": {
+      "include": [
+        "**/*Tests.cs",
+        "**/*Test.cs"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**"
+      ]
+    },
+    "areas": [
+      {
+        "id": "tests",
+        "include": [
+          "**/*Tests.cs",
+          "**/*Test.cs"
+        ]
+      }
+    ],
+    "lanes": [
+      {
+        "id": "default",
+        "runner": "dotnet",
+        "include": [
+          "**/*Tests.cs",
+          "**/*Test.cs"
+        ],
+        "exclude": [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/.aiwg/**",
+          "**/dist/**",
+          "**/build/**",
+          "**/coverage/**",
+          "**/.venv/**",
+          "**/venv/**",
+          "**/target/**",
+          "**/bin/**",
+          "**/obj/**",
+          "**/__pycache__/**"
+        ],
+        "command": {
+          "argv": [
+            "dotnet",
+            "test",
+            "--no-restore",
+            "--logger",
+            "trx;LogFileName=tests.trx",
+            "--results-directory",
+            ".aiwg/testing/conformance/raw/{runId}"
+          ],
+          "timeoutMs": 300000
+        },
+        "result": {
+          "format": "trx",
+          "path": ".aiwg/testing/conformance/raw/{runId}/tests.trx"
+        },
+        "required": true,
+        "negativeControls": [],
+        "versionCommand": [
+          "dotnet",
+          "--version"
+        ]
+      }
+    ],
+    "policy": {
+      "requireDiscovery": true,
+      "requireReview": true,
+      "requireNegativeControls": true,
+      "allowSkipped": false,
+      "coverageThresholds": {},
+      "maxFiles": 100000,
+      "maxFileBytes": 1048576,
+      "maxOutputBytes": 10485760
+    },
+    "research": {
+      "paths": [
+        ".aiwg/research/findings",
+        ".aiwg/research/synthesis",
+        ".aiwg/research/knowledge"
+      ],
+      "allowWeb": false
+    }
+  },
+  "templates": [
+    {
+      "source": "templates/platforms/dotnet-vstest/BoundaryExampleTests.cs",
+      "destination": ".aiwg/testing/conformance/examples/dotnet-vstest/BoundaryExampleTests.cs",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/dotnet-vstest/RESEARCH.md",
+      "destination": ".aiwg/testing/conformance/examples/dotnet-vstest/RESEARCH.md",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/dotnet-vstest/protocol.example.json",
+      "destination": ".aiwg/testing/conformance/examples/dotnet-vstest/protocol.example.json",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/dotnet-vstest/test-review.example.md",
+      "destination": ".aiwg/testing/conformance/examples/dotnet-vstest/test-review.example.md",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    }
+  ]
+}

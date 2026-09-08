@@ -13,6 +13,7 @@
     "domains/dataset.json",
     "domains/storage.json",
     "domains/repository-json-schemas.json",
-    "domains/network-analysis.json"
+    "domains/network-analysis.json",
+    "domains/testing-quality.json"
   ]
 }

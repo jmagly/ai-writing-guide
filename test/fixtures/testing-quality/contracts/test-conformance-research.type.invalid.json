@@ -1,0 +1,173 @@
+{
+  "apiVersion": "testing.aiwg.io/v1",
+  "kind": "TestConformanceResearch",
+  "metadata": {
+    "name": "aiwg-test-conformance-research",
+    "createdAt": "2026-09-08T17:29:56.634Z",
+    "toolVersion": "2.0.0"
+  },
+  "spec": {
+    "platform": "generic",
+    "query": "test discovery coverage mutation oracle isolation",
+    "terms": [
+      "test",
+      "discovery",
+      "coverage",
+      "mutation",
+      "oracle",
+      "isolation"
+    ],
+    "searches": [
+      {
+        "configuredPath": ".aiwg/research/findings",
+        "resolvedPath": "/home/roctinam/dev/aiwg/.aiwg/research/findings",
+        "status": "unavailable",
+        "matched": 0,
+        "reason": "ENOENT: no such file or directory, lstat '/home/roctinam/dev/aiwg/.aiwg/research/findings'"
+      },
+      {
+        "configuredPath": ".aiwg/research/synthesis",
+        "resolvedPath": "/home/roctinam/dev/aiwg/.aiwg/research/synthesis",
+        "status": "unavailable",
+        "matched": 0,
+        "reason": "ENOENT: no such file or directory, lstat '/home/roctinam/dev/aiwg/.aiwg/research/synthesis'"
+      },
+      {
+        "configuredPath": ".aiwg/research/knowledge",
+        "resolvedPath": "/home/roctinam/dev/aiwg/.aiwg/research/knowledge",
+        "status": "unavailable",
+        "matched": 0,
+        "reason": "ENOENT: no such file or directory, lstat '/home/roctinam/dev/aiwg/.aiwg/research/knowledge'"
+      }
+    ],
+    "matches": [],
+    "limits": {
+      "roots": 16,
+      "entries": 4000,
+      "files": 1000,
+      "fileBytes": 131072,
+      "totalBytes": 2097152,
+      "matches": 20,
+      "snippetChars": 360,
+      "depth": 10
+    },
+    "counts": {
+      "entries": 0,
+      "files": 0,
+      "bytes": 0
+    },
+    "bounded": false,
+    "diagnostics": [
+      {
+        "code": "CORPUS_MISSING",
+        "path": "/home/roctinam/dev/aiwg/.aiwg/research/findings",
+        "message": "ENOENT: no such file or directory, lstat '/home/roctinam/dev/aiwg/.aiwg/research/findings'"
+      },
+      {
+        "code": "CORPUS_MISSING",
+        "path": "/home/roctinam/dev/aiwg/.aiwg/research/synthesis",
+        "message": "ENOENT: no such file or directory, lstat '/home/roctinam/dev/aiwg/.aiwg/research/synthesis'"
+      },
+      {
+        "code": "CORPUS_MISSING",
+        "path": "/home/roctinam/dev/aiwg/.aiwg/research/knowledge",
+        "message": "ENOENT: no such file or directory, lstat '/home/roctinam/dev/aiwg/.aiwg/research/knowledge'"
+      }
+    ],
+    "recommendations": [
+      {
+        "id": "project-reporter",
+        "platform": "generic",
+        "name": "Project-specific canonical reporter",
+        "capability": "execution",
+        "role": "existing-runner-recommendation",
+        "requiredCapability": "execution-evidence",
+        "installedManifest": null,
+        "packageName": null,
+        "sources": [
+          {
+            "url": "https://testing.googleblog.com/2020/08/code-coverage-best-practices.html",
+            "retrievedAt": "2026-09-08",
+            "versionApplicability": "inspect-target-installed-version"
+          }
+        ],
+        "limitations": [
+          "Choose actual runner and independently qualify report/discovery contracts."
+        ],
+        "cost": {
+          "hostedServiceRequired": false,
+          "licenseVerified": false,
+          "runtimeEstimate": "measure-project-baseline",
+          "diskEstimate": "measure-project-baseline",
+          "mutationMultiplier": null
+        },
+        "autoInstall": false,
+        "autoExecute": false,
+        "autoUpload": false,
+        "compatibility": "not-verified",
+        "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+        "prerequisites": [
+          "Confirm the target toolchain and supported runner/provider versions.",
+          "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+        ],
+        "integrationSteps": [
+          "Review the linked primary documentation against the installed version.",
+          "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+          "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+        ],
+        "capabilityGap": "execution-evidence must be supplied when required by target policy.",
+        "observation": {
+          "installedVersion": null,
+          "status": "not-verified",
+          "basis": "No nonexecuting installed-manifest probe defined for this tool."
+        }
+      }
+    ],
+    "principles": [
+      {
+        "refId": "REF-2478",
+        "corpusRelativeNote": "documentation/references/REF-2478-google-code-coverage-best-practices.md",
+        "principle": "Coverage is incomplete evidence; thresholds are project risk policy.",
+        "source": "https://testing.googleblog.com/2020/08/code-coverage-best-practices.html",
+        "evidence": "practitioner-or-maintainer-guidance",
+        "empiricalConfidence": "low",
+        "configuredCorpusRequired": false
+      },
+      {
+        "refId": "REF-2479",
+        "corpusRelativeNote": "documentation/references/REF-2479-pytest-flaky-tests.md",
+        "principle": "Preserve first attempts; rerun success does not prove repair.",
+        "source": "https://docs.pytest.org/en/stable/explanation/flaky.html",
+        "evidence": "practitioner-or-maintainer-guidance",
+        "empiricalConfidence": "low",
+        "configuredCorpusRequired": false
+      },
+      {
+        "refId": "REF-2480",
+        "corpusRelativeNote": "documentation/references/REF-2480-pytest-good-integration-practices.md",
+        "principle": "Record installed artifact versus source checkout import.",
+        "source": "https://docs.pytest.org/en/stable/explanation/goodpractices.html",
+        "evidence": "practitioner-or-maintainer-guidance",
+        "empiricalConfidence": "low",
+        "configuredCorpusRequired": false
+      },
+      {
+        "refId": "REF-2481",
+        "corpusRelativeNote": "documentation/references/REF-2481-vocke-practical-test-pyramid.md",
+        "principle": "Classify actual boundary; avoid fixed universal layer ratios.",
+        "source": "https://martinfowler.com/articles/practical-test-pyramid.html",
+        "evidence": "practitioner-or-maintainer-guidance",
+        "empiricalConfidence": "low",
+        "configuredCorpusRequired": false
+      }
+    ],
+    "web": {
+      "allowedByProtocol": false,
+      "performed": true,
+      "status": "suggested-primary-links-only"
+    },
+    "executedCommands": [],
+    "installedDependencies": [],
+    "status": "recommendations-not-conformance-proof"
+  }
+}

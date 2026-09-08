@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 1,
+  "researchDate": "2026-09-08",
+  "sources": [
+    {
+      "url": "https://coverage.readthedocs.io/en/7.10.7/commands/cmd_json.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://doc.rust-lang.org/cargo/commands/cargo-test.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://doc.rust-lang.org/rustc/tests/index.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://docs.junit.org/6.1.3/overview.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://docs.junit.org/6.1.3/running-tests/console-launcher.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://docs.junit.org/6.1.3/writing-tests/dynamic-tests.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://docs.pytest.org/en/stable/explanation/flaky.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://docs.pytest.org/en/stable/explanation/goodpractices.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://docs.pytest.org/en/stable/how-to/output.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://docs.pytest.org/en/stable/how-to/usage.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://docs.pytest.org/en/stable/reference/exit-codes.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://github.com/avito-tech/go-mutesting",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://github.com/taiki-e/cargo-llvm-cov",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://go.dev/doc/build-cover",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://jestjs.io/docs/cli",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://jestjs.io/docs/configuration",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-code-coverage",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-test",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-test-mtp",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-test-vstest",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://martinfowler.com/articles/practical-test-pyramid.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://maven.apache.org/surefire/maven-failsafe-plugin/",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://maven.apache.org/surefire/maven-surefire-plugin/examples/junit-platform.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://maven.apache.org/surefire/maven-surefire-plugin/test-mojo.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://mutants.rs/baseline.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://mutants.rs/print.html#mutant-outcomes",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://mutants.rs/timeouts.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://mutmut.readthedocs.io/en/latest/",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://nexte.st/docs/listing/",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://nexte.st/docs/machine-readable/junit/",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://nodejs.org/api/test.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://pitest.org/quickstart/maven/",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://pkg.go.dev/cmd/go",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://pytest-cov.readthedocs.io/en/latest/reporting.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://pytest-cov.readthedocs.io/en/stable/config.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://stryker-mutator.io/docs/stryker-js/getting-started/",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://stryker-mutator.io/docs/stryker-js/vitest-runner/",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://stryker-mutator.io/docs/stryker-net/getting-started/",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://testing.googleblog.com/2020/08/code-coverage-best-practices.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://vitest.dev/config/coverage",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://vitest.dev/guide/cli.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://vitest.dev/guide/reporters.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    },
+    {
+      "url": "https://www.jacoco.org/jacoco/trunk/doc/maven.html",
+      "retrievedAt": "2026-09-08",
+      "sourceType": "primary-maintainer-or-author",
+      "versionApplicability": "see report; mutable docs are not installed-version proof"
+    }
+  ]
+}

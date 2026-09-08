@@ -1,0 +1,34 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: conformance-plan
+  namespace: testing-quality
+  labels:
+    domain: testing
+    category: conformance
+spec:
+  description: Select one bounded batch of confirmed findings from the assessment. Inspect actual
+    source and prepare changes JSON with purpose and edits [{path,content}], then run aiwg
+    test-conformance plan --changes --output. Review complete before/after contents, hashes, modes
+    and acceptance using normalization-plan.md. Preserve semantics except explicit oracle
+    corrections; no disabling tests, weakened assertions/thresholds or blind snapshot updates to
+    obtain green. Return plan and review paths; do not apply yet.
+  version: 1.0.0
+  inputs:
+    - name: protocol
+      type: string
+      required: true
+    - name: inventory
+      type: string
+      required: true
+    - name: assessment
+      type: string
+      required: true
+  outputs:
+    - name: plan
+      type: string
+    - name: plan_review
+      type: string
+  agent: test-normalization-engineer
+  requires_addon: testing-quality
+  idempotent: false

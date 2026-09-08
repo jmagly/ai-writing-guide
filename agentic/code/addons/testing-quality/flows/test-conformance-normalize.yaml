@@ -1,0 +1,55 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowPlaybook
+metadata:
+  name: test-conformance-normalize
+  labels:
+    domain: testing
+    version: 1.0.0
+  annotations:
+    testing.aiwg.io/iteration-contract: One finite repair batch per invocation. Repeat only with a
+      declared remaining batch budget and fresh artifact paths; budget exhaustion preserves
+      incomplete status.
+spec:
+  vars:
+    max_batches: 1
+  steps:
+    - id: plan
+      capability: conformance-plan
+      inputs:
+        - name: protocol
+          value: .aiwg/testing/conformance.yaml
+        - name: inventory
+          value: .aiwg/testing/inventory-01.json
+        - name: assessment
+          value: .aiwg/testing/assessment-01.json
+    - id: apply
+      capability: conformance-apply
+      depends_on:
+        - plan
+      inputs:
+        - name: plan
+          from: plan.plan
+        - name: plan_review
+          from: plan.plan_review
+    - id: verify
+      capability: conformance-verify
+      depends_on:
+        - apply
+      inputs:
+        - name: protocol
+          value: .aiwg/testing/conformance.yaml
+        - name: inventory
+          value: .aiwg/testing/inventory-01.json
+        - name: assessment
+          value: .aiwg/testing/assessment-01.json
+        - name: plan
+          from: plan.plan
+        - name: receipt
+          from: apply.receipt
+    - id: report
+      capability: conformance-report
+      depends_on:
+        - verify
+      inputs:
+        - name: assessment
+          from: verify.assessment

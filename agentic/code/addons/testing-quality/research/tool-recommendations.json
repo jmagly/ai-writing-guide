@@ -1,0 +1,1085 @@
+{
+  "schemaVersion": 1,
+  "recommendations": [
+    {
+      "id": "vitest",
+      "platform": "javascript-vitest",
+      "name": "Native runner discovery and JSON results",
+      "capability": "execution",
+      "role": "existing-runner-recommendation",
+      "requiredCapability": "execution-evidence",
+      "installedManifest": "node_modules/vitest/package.json",
+      "packageName": "vitest",
+      "sources": [
+        {
+          "url": "https://vitest.dev/guide/cli.html",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        },
+        {
+          "url": "https://vitest.dev/guide/reporters.html",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Match installed help to docs; list output is discovery, not execution."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "execution-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "@vitest/coverage-v8",
+      "platform": "javascript-vitest",
+      "name": "V8 source coverage",
+      "capability": "coverage",
+      "role": "optional-recommendation",
+      "requiredCapability": "coverage-evidence",
+      "installedManifest": "node_modules/@vitest/coverage-v8/package.json",
+      "packageName": "@vitest/coverage-v8",
+      "sources": [
+        {
+          "url": "https://vitest.dev/config/coverage",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Match runner/provider versions; inspect remapped denominator."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "coverage-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "@stryker-mutator/core",
+      "platform": "javascript-vitest",
+      "name": "Optional mutation testing",
+      "capability": "mutation",
+      "role": "optional-recommendation",
+      "requiredCapability": "mutation-evidence",
+      "installedManifest": "node_modules/@stryker-mutator/core/package.json",
+      "packageName": "@stryker-mutator/core",
+      "sources": [
+        {
+          "url": "https://stryker-mutator.io/docs/stryker-js/vitest-runner/",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Requires compatible runner plugin and reliable baseline; multiplies executions."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "mutation-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "jest",
+      "platform": "javascript-jest",
+      "name": "Native test runner and JSON",
+      "capability": "execution",
+      "role": "existing-runner-recommendation",
+      "requiredCapability": "execution-evidence",
+      "installedManifest": "node_modules/jest/package.json",
+      "packageName": "jest",
+      "sources": [
+        {
+          "url": "https://jestjs.io/docs/cli",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        },
+        {
+          "url": "https://jestjs.io/docs/configuration",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "CollectTests wouldRun items must not satisfy execution."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "execution-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "@stryker-mutator/core",
+      "platform": "javascript-jest",
+      "name": "Optional mutation testing",
+      "capability": "mutation",
+      "role": "optional-recommendation",
+      "requiredCapability": "mutation-evidence",
+      "installedManifest": "node_modules/@stryker-mutator/core/package.json",
+      "packageName": "@stryker-mutator/core",
+      "sources": [
+        {
+          "url": "https://stryker-mutator.io/docs/stryker-js/getting-started/",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Pin compatible Jest plugin and budget mutants."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "mutation-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "node",
+      "platform": "javascript-node",
+      "name": "Native Node test and TAP",
+      "capability": "execution",
+      "role": "existing-runner-recommendation",
+      "requiredCapability": "execution-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://nodejs.org/api/test.html",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Custom test wrappers can report at file granularity; no collect-only adapter qualified."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "execution-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "pytest",
+      "platform": "python-pytest",
+      "name": "Native collection and JUnit",
+      "capability": "execution",
+      "role": "existing-runner-recommendation",
+      "requiredCapability": "execution-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://docs.pytest.org/en/stable/how-to/usage.html",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        },
+        {
+          "url": "https://docs.pytest.org/en/stable/how-to/output.html",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Collection imports project code; choose explicit environment; exit5 is no tests."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "execution-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "coverage",
+      "platform": "python-pytest",
+      "name": "Coverage.py source and branch coverage",
+      "capability": "coverage",
+      "role": "optional-recommendation",
+      "requiredCapability": "coverage-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://coverage.readthedocs.io/en/7.10.7/commands/cmd_json.html",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Measure selected source package; report separately from test outcome."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "coverage-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "pytest-cov",
+      "platform": "python-pytest",
+      "name": "Optional coverage integration",
+      "capability": "coverage",
+      "role": "optional-recommendation",
+      "requiredCapability": "coverage-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://pytest-cov.readthedocs.io/en/latest/reporting.html",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "--cov=source overrides coverage configuration source."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "coverage-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "mutmut",
+      "platform": "python-pytest",
+      "name": "Optional mutation testing",
+      "capability": "mutation",
+      "role": "optional-recommendation",
+      "requiredCapability": "mutation-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://mutmut.readthedocs.io/en/latest/",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Requires fork support; Windows needs WSL; establish baseline and time budget."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "mutation-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "go",
+      "platform": "go",
+      "name": "Native Go test JSON",
+      "capability": "execution",
+      "role": "existing-runner-recommendation",
+      "requiredCapability": "execution-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://pkg.go.dev/cmd/go",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Top-level listing misses dynamic subtests; package/build tags affect discovery."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "execution-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "go-cover",
+      "platform": "go",
+      "name": "Native integration coverage",
+      "capability": "coverage",
+      "role": "optional-recommendation",
+      "requiredCapability": "coverage-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://go.dev/doc/build-cover",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Coverage is statement/basic-block based; preserve package denominator."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "coverage-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "go-mutesting",
+      "platform": "go",
+      "name": "Optional candidate mutation tool",
+      "capability": "mutation",
+      "role": "optional-recommendation",
+      "requiredCapability": "mutation-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://github.com/avito-tech/go-mutesting",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Fork/version/report compatibility not qualified; do not imply preferred universal engine."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "mutation-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "cargo",
+      "platform": "rust-cargo",
+      "name": "Native Cargo/libtest",
+      "capability": "execution",
+      "role": "existing-runner-recommendation",
+      "requiredCapability": "execution-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://doc.rust-lang.org/cargo/commands/cargo-test.html",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        },
+        {
+          "url": "https://doc.rust-lang.org/rustc/tests/index.html",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Cargo JSON is build output; stable libtest runtime JSON not qualified."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "execution-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "cargo-nextest",
+      "platform": "rust-cargo",
+      "name": "Optional structured test listing and JUnit",
+      "capability": "execution",
+      "role": "optional-recommendation",
+      "requiredCapability": "execution-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://nexte.st/docs/listing/",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        },
+        {
+          "url": "https://nexte.st/docs/machine-readable/junit/",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Additional tool; preserve doc-test lane and feature/target scope."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "execution-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "cargo-llvm-cov",
+      "platform": "rust-cargo",
+      "name": "LLVM coverage exporter",
+      "capability": "coverage",
+      "role": "optional-recommendation",
+      "requiredCapability": "coverage-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://github.com/taiki-e/cargo-llvm-cov",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Needs compatible LLVM tooling; retain region/branch/line units."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "coverage-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "cargo-mutants",
+      "platform": "rust-cargo",
+      "name": "Optional mutation testing",
+      "capability": "mutation",
+      "role": "optional-recommendation",
+      "requiredCapability": "mutation-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://mutants.rs/print.html",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Reliable baseline, copied tree, host build and outcome categories required."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "mutation-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "junit-platform",
+      "platform": "java-junit",
+      "name": "JUnit Platform discovery",
+      "capability": "execution",
+      "role": "existing-runner-recommendation",
+      "requiredCapability": "execution-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://docs.junit.org/6.1.3/running-tests/console-launcher.html",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Documented6.1.3 is not installed version; discover actual engines."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "execution-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "maven-surefire-failsafe",
+      "platform": "java-junit",
+      "name": "Maven test report lifecycle",
+      "capability": "execution",
+      "role": "existing-runner-recommendation",
+      "requiredCapability": "execution-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://maven.apache.org/surefire/maven-surefire-plugin/test-mojo.html",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        },
+        {
+          "url": "https://maven.apache.org/surefire/maven-failsafe-plugin/",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Require explicit no-tests policy and reach verify; report each module."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "execution-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "jacoco",
+      "platform": "java-junit",
+      "name": "JVM coverage",
+      "capability": "coverage",
+      "role": "optional-recommendation",
+      "requiredCapability": "coverage-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://www.jacoco.org/jacoco/trunk/doc/maven.html",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Agent, report and check goals differ; bind classes/source to run."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "coverage-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "pitest",
+      "platform": "java-junit",
+      "name": "Optional mutation testing",
+      "capability": "mutation",
+      "role": "optional-recommendation",
+      "requiredCapability": "mutation-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://pitest.org/quickstart/maven/",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Pin actual plugin/JUnit combination; never copy LATEST as a governed pin."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "mutation-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "dotnet-test",
+      "platform": "dotnet-vstest",
+      "name": "VSTest driver",
+      "capability": "execution",
+      "role": "existing-runner-recommendation",
+      "requiredCapability": "execution-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-test-vstest",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "MTP is a different runner; separate target-framework result files."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "execution-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "coverlet",
+      "platform": "dotnet-vstest",
+      "name": "Optional compatible coverage collector",
+      "capability": "coverage",
+      "role": "optional-recommendation",
+      "requiredCapability": "coverage-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-code-coverage",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Verify installed collector/runner compatibility."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "coverage-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "dotnet-stryker",
+      "platform": "dotnet-vstest",
+      "name": "Optional mutation testing",
+      "capability": "mutation",
+      "role": "optional-recommendation",
+      "requiredCapability": "mutation-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://stryker-mutator.io/docs/stryker-net/getting-started/",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Current docs require .NET10 tool runtime; application may target older frameworks."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "mutation-evidence must be supplied when required by target policy."
+    },
+    {
+      "id": "project-reporter",
+      "platform": "generic",
+      "name": "Project-specific canonical reporter",
+      "capability": "execution",
+      "role": "existing-runner-recommendation",
+      "requiredCapability": "execution-evidence",
+      "installedManifest": null,
+      "packageName": null,
+      "sources": [
+        {
+          "url": "https://testing.googleblog.com/2020/08/code-coverage-best-practices.html",
+          "retrievedAt": "2026-09-08",
+          "versionApplicability": "inspect-target-installed-version"
+        }
+      ],
+      "limitations": [
+        "Choose actual runner and independently qualify report/discovery contracts."
+      ],
+      "cost": {
+        "hostedServiceRequired": false,
+        "licenseVerified": false,
+        "runtimeEstimate": "measure-project-baseline",
+        "diskEstimate": "measure-project-baseline",
+        "mutationMultiplier": null
+      },
+      "autoInstall": false,
+      "autoExecute": false,
+      "autoUpload": false,
+      "compatibility": "not-verified",
+      "evidenceQuality": "primary-maintainer-documentation; target compatibility unverified",
+      "prerequisites": [
+        "Confirm the target toolchain and supported runner/provider versions.",
+        "Obtain a reliable baseline before adding gates or interpreting quality metrics."
+      ],
+      "integrationSteps": [
+        "Review the linked primary documentation against the installed version.",
+        "Create a target-specific adapter/protocol change plan and a small failing fixture.",
+        "Collect discovery and execution evidence, verify report identity and scope, then enable the capability gate."
+      ],
+      "capabilityGap": "execution-evidence must be supplied when required by target policy."
+    }
+  ]
+}

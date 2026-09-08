@@ -1,0 +1,27 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: conformance-inventory
+  namespace: testing-quality
+  labels:
+    domain: testing
+    category: conformance
+spec:
+  description: Run aiwg test-conformance inventory with the provided --protocol, then sample
+    --inventory with an explicit saved --seed and --size 20 (or user quota). Record --unit
+    test-file; if using registered-case require a discovery receipt. Output concrete new artifact
+    paths. Preserve source file/declaration distinctions, unmatched areas and unsupported syntax;
+    smaller populations are a census.
+  version: 1.0.0
+  inputs:
+    - name: protocol
+      type: string
+      required: true
+  outputs:
+    - name: inventory
+      type: string
+    - name: sample
+      type: string
+  agent: conformance-steward
+  requires_addon: testing-quality
+  idempotent: false

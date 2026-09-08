@@ -1,0 +1,24 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: conformance-protocol
+  namespace: testing-quality
+  labels:
+    domain: testing
+    category: conformance
+spec:
+  description: Read target instructions, runner and CI configuration. Run aiwg test-conformance init
+    and validate for conformance-protocol.v1, then review globs, source denominator, areas, lane
+    argv/result/discovery and evidence policy. Output actual target-relative protocol and
+    protocol-review paths. Existing target commands may import/build code; inspect their effects
+    before collection. Do not claim an auto-detected profile is qualified.
+  version: 1.0.0
+  inputs: []
+  outputs:
+    - name: protocol
+      type: string
+    - name: protocol_review
+      type: string
+  agent: conformance-steward
+  requires_addon: testing-quality
+  idempotent: false

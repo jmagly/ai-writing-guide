@@ -147,6 +147,9 @@ describe('plugin repository layout', () => {
         'flaky-fix',
         'generate-factory',
         'test-sync',
+        'test-conformance',
+        'test-normalize',
+        'test-platform-research',
       ]);
       for (const skill of manifest.skills) {
         await readFile(join(root, 'skills', skill, 'SKILL.md'), 'utf8');

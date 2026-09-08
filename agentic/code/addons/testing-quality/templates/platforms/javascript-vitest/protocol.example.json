@@ -1,0 +1,140 @@
+{
+  "apiVersion": "testing.aiwg.io/v1",
+  "kind": "TestConformanceProtocol",
+  "metadata": {
+    "name": "javascript-vitest-example",
+    "description": "TODO assumptions: Native list output requires a qualified discovery adapter; review existing runner config and source-map scope."
+  },
+  "spec": {
+    "platform": "javascript-vitest",
+    "system": "TODO: identify actual system and source or installed-artifact boundary",
+    "source": {
+      "include": [
+        "src/**/*.{ts,tsx,js,mjs,cjs,jsx}"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**",
+        "**/*.test.{js,mjs,cjs,ts,tsx,jsx}",
+        "**/*.spec.{js,mjs,cjs,ts,tsx,jsx}"
+      ]
+    },
+    "tests": {
+      "include": [
+        "**/*.test.{js,mjs,cjs,ts,tsx,jsx}",
+        "**/*.spec.{js,mjs,cjs,ts,tsx,jsx}"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**"
+      ]
+    },
+    "areas": [
+      {
+        "id": "tests",
+        "include": [
+          "**/*.test.{js,mjs,cjs,ts,tsx,jsx}",
+          "**/*.spec.{js,mjs,cjs,ts,tsx,jsx}"
+        ]
+      }
+    ],
+    "lanes": [
+      {
+        "id": "default",
+        "runner": "vitest",
+        "include": [
+          "**/*.test.{js,mjs,cjs,ts,tsx,jsx}",
+          "**/*.spec.{js,mjs,cjs,ts,tsx,jsx}"
+        ],
+        "exclude": [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/.aiwg/**",
+          "**/dist/**",
+          "**/build/**",
+          "**/coverage/**",
+          "**/.venv/**",
+          "**/venv/**",
+          "**/target/**",
+          "**/bin/**",
+          "**/obj/**",
+          "**/__pycache__/**"
+        ],
+        "command": {
+          "argv": [
+            "node",
+            "node_modules/vitest/vitest.mjs",
+            "run",
+            "--reporter=json",
+            "--outputFile=.aiwg/testing/conformance/raw/{runId}/vitest.json"
+          ],
+          "timeoutMs": 300000
+        },
+        "result": {
+          "format": "vitest",
+          "path": ".aiwg/testing/conformance/raw/{runId}/vitest.json"
+        },
+        "required": true,
+        "negativeControls": [],
+        "versionCommand": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "--version"
+        ],
+        "discovery": {
+          "command": {
+            "argv": [
+              "node",
+              "node_modules/vitest/vitest.mjs",
+              "list",
+              "--json=.aiwg/testing/conformance/raw/{runId}/vitest-discovery.json"
+            ],
+            "timeoutMs": 300000
+          },
+          "result": {
+            "format": "vitest",
+            "path": ".aiwg/testing/conformance/raw/{runId}/vitest-discovery.json"
+          }
+        }
+      }
+    ],
+    "policy": {
+      "requireDiscovery": true,
+      "requireReview": true,
+      "requireNegativeControls": true,
+      "allowSkipped": false,
+      "coverageThresholds": {},
+      "maxFiles": 100000,
+      "maxFileBytes": 1048576,
+      "maxOutputBytes": 10485760
+    },
+    "research": {
+      "paths": [
+        ".aiwg/research/findings",
+        ".aiwg/research/synthesis",
+        ".aiwg/research/knowledge"
+      ],
+      "allowWeb": false
+    }
+  }
+}

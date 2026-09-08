@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "id": "javascript-node",
+  "name": "Node native test",
+  "status": "researched-not-qualified",
+  "compatibility": "not-verified",
+  "assumptions": [
+    "No authoritative collect-only adapter is bundled; native default selection can differ from candidate globs.",
+    "TODO: review candidate scope, thresholds, skips, report adapter and minimum test obligations before execution."
+  ],
+  "protocolSpec": {
+    "platform": "javascript-node",
+    "system": "TODO: identify actual system and source or installed-artifact boundary",
+    "source": {
+      "include": [
+        "src/**/*.{js,mjs,cjs,ts}"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**",
+        "**/*.test.{js,mjs,cjs,ts,tsx,jsx}",
+        "**/*.spec.{js,mjs,cjs,ts,tsx,jsx}"
+      ]
+    },
+    "tests": {
+      "include": [
+        "**/*.test.{js,mjs,cjs,ts,tsx,jsx}",
+        "**/*.spec.{js,mjs,cjs,ts,tsx,jsx}"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**"
+      ]
+    },
+    "areas": [
+      {
+        "id": "tests",
+        "include": [
+          "**/*.test.{js,mjs,cjs,ts,tsx,jsx}",
+          "**/*.spec.{js,mjs,cjs,ts,tsx,jsx}"
+        ]
+      }
+    ],
+    "lanes": [
+      {
+        "id": "default",
+        "runner": "node",
+        "include": [
+          "**/*.test.{js,mjs,cjs,ts,tsx,jsx}",
+          "**/*.spec.{js,mjs,cjs,ts,tsx,jsx}"
+        ],
+        "exclude": [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/.aiwg/**",
+          "**/dist/**",
+          "**/build/**",
+          "**/coverage/**",
+          "**/.venv/**",
+          "**/venv/**",
+          "**/target/**",
+          "**/bin/**",
+          "**/obj/**",
+          "**/__pycache__/**"
+        ],
+        "command": {
+          "argv": [
+            "node",
+            "--test",
+            "--test-reporter=tap"
+          ],
+          "timeoutMs": 300000
+        },
+        "result": {
+          "format": "node-tap"
+        },
+        "required": true,
+        "negativeControls": [],
+        "versionCommand": [
+          "node",
+          "--version"
+        ]
+      }
+    ],
+    "policy": {
+      "requireDiscovery": true,
+      "requireReview": true,
+      "requireNegativeControls": true,
+      "allowSkipped": false,
+      "coverageThresholds": {},
+      "maxFiles": 100000,
+      "maxFileBytes": 1048576,
+      "maxOutputBytes": 10485760
+    },
+    "research": {
+      "paths": [
+        ".aiwg/research/findings",
+        ".aiwg/research/synthesis",
+        ".aiwg/research/knowledge"
+      ],
+      "allowWeb": false
+    }
+  },
+  "templates": [
+    {
+      "source": "templates/platforms/javascript-node/RESEARCH.md",
+      "destination": ".aiwg/testing/conformance/examples/javascript-node/RESEARCH.md",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/javascript-node/oracle.example.test.mjs",
+      "destination": ".aiwg/testing/conformance/examples/javascript-node/oracle.example.test.mjs",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/javascript-node/protocol.example.json",
+      "destination": ".aiwg/testing/conformance/examples/javascript-node/protocol.example.json",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    },
+    {
+      "source": "templates/platforms/javascript-node/test-review.example.md",
+      "destination": ".aiwg/testing/conformance/examples/javascript-node/test-review.example.md",
+      "purpose": "review-only example; TODO assumptions require target-specific normalization"
+    }
+  ]
+}

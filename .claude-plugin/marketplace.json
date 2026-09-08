@@ -599,7 +599,7 @@
     {
       "name": "testing-quality",
       "source": "./agentic/code/plugins/testing-quality",
-      "description": "Testing enforcement, quality metrics, and automation skills",
+      "description": "Evidence-bound test conformance, platform protocols, normalization transactions and research-guided testing workflows",
       "version": "2026.9.5",
       "author": {
         "name": "AIWG Contributors"

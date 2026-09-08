@@ -1,0 +1,24 @@
+apiVersion: flow.aiwg.io/v1
+kind: FlowCapability
+metadata:
+  name: conformance-report
+  namespace: testing-quality
+  labels:
+    domain: testing
+    category: conformance
+spec:
+  description: "Run aiwg test-conformance report --assessment with --format markdown and a new
+    --output path. Add conformance-report.md narrative only from actual evidence: units/types/SUT,
+    coverage denominator, sample scope, confirmed defects versus candidates, research and remaining
+    work. Report the assessment status without broadening its assurance. Return report path."
+  version: 1.0.0
+  inputs:
+    - name: assessment
+      type: string
+      required: true
+  outputs:
+    - name: report
+      type: string
+  agent: conformance-steward
+  requires_addon: testing-quality
+  idempotent: false

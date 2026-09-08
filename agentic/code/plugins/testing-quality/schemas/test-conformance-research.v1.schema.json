@@ -1,0 +1,527 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "const": "testing.aiwg.io/v1"
+    },
+    "kind": {
+      "const": "TestConformanceResearch"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+        },
+        "toolVersion": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "name",
+        "createdAt",
+        "toolVersion"
+      ]
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "platform": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "searches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "configuredPath": {
+                "type": "string"
+              },
+              "resolvedPath": {
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "complete",
+                  "bounded",
+                  "unavailable"
+                ]
+              },
+              "matched": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "configuredPath",
+              "resolvedPath",
+              "status",
+              "matched"
+            ]
+          }
+        },
+        "matches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "hash": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "matchedTerms": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "score": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "snippet": {
+                "type": "string"
+              },
+              "authority": {
+                "const": "retrieved-content-unreviewed"
+              }
+            },
+            "required": [
+              "path",
+              "hash",
+              "matchedTerms",
+              "score",
+              "line",
+              "snippet",
+              "authority"
+            ]
+          }
+        },
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "roots": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "entries": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "files": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "fileBytes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "totalBytes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "matches": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "snippetChars": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "depth": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "roots",
+            "entries",
+            "files",
+            "fileBytes",
+            "totalBytes",
+            "matches",
+            "snippetChars",
+            "depth"
+          ]
+        },
+        "counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "entries": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "files": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "entries",
+            "files",
+            "bytes"
+          ]
+        },
+        "bounded": {
+          "type": "boolean"
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "code"
+            ]
+          }
+        },
+        "recommendations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "platform": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "capability": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "requiredCapability": {
+                "type": "string"
+              },
+              "installedManifest": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "packageName": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    },
+                    "retrievedAt": {
+                      "type": "string"
+                    },
+                    "versionApplicability": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "url",
+                    "retrievedAt",
+                    "versionApplicability"
+                  ]
+                }
+              },
+              "limitations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "cost": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "hostedServiceRequired": {
+                    "type": "boolean"
+                  },
+                  "licenseVerified": {
+                    "type": "boolean"
+                  },
+                  "runtimeEstimate": {
+                    "type": "string"
+                  },
+                  "diskEstimate": {
+                    "type": "string"
+                  },
+                  "mutationMultiplier": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "hostedServiceRequired",
+                  "licenseVerified",
+                  "runtimeEstimate",
+                  "diskEstimate",
+                  "mutationMultiplier"
+                ]
+              },
+              "autoInstall": {
+                "const": false
+              },
+              "autoExecute": {
+                "const": false
+              },
+              "autoUpload": {
+                "const": false
+              },
+              "compatibility": {
+                "type": "string"
+              },
+              "observation": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "installedVersion": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "basis": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "hash": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "installedVersion",
+                  "status"
+                ]
+              },
+              "evidenceQuality": {
+                "type": "string"
+              },
+              "prerequisites": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "integrationSteps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "capabilityGap": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "platform",
+              "name",
+              "capability",
+              "role",
+              "requiredCapability",
+              "installedManifest",
+              "packageName",
+              "sources",
+              "limitations",
+              "cost",
+              "autoInstall",
+              "autoExecute",
+              "autoUpload",
+              "compatibility",
+              "observation",
+              "evidenceQuality",
+              "prerequisites",
+              "integrationSteps",
+              "capabilityGap"
+            ]
+          }
+        },
+        "principles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "refId": {
+                "type": "string"
+              },
+              "corpusRelativeNote": {
+                "type": "string"
+              },
+              "principle": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "evidence": {
+                "type": "string"
+              },
+              "empiricalConfidence": {
+                "type": "string"
+              },
+              "configuredCorpusRequired": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "refId",
+              "corpusRelativeNote",
+              "principle",
+              "source",
+              "evidence",
+              "empiricalConfidence",
+              "configuredCorpusRequired"
+            ]
+          }
+        },
+        "web": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "allowedByProtocol": {
+              "type": "boolean"
+            },
+            "performed": {
+              "const": false
+            },
+            "status": {
+              "const": "suggested-primary-links-only"
+            }
+          },
+          "required": [
+            "allowedByProtocol",
+            "performed",
+            "status"
+          ]
+        },
+        "executedCommands": {
+          "type": "array",
+          "maxItems": 0
+        },
+        "installedDependencies": {
+          "type": "array",
+          "maxItems": 0
+        },
+        "status": {
+          "const": "recommendations-not-conformance-proof"
+        }
+      },
+      "required": [
+        "platform",
+        "query",
+        "terms",
+        "searches",
+        "matches",
+        "limits",
+        "counts",
+        "bounded",
+        "diagnostics",
+        "recommendations",
+        "principles",
+        "web",
+        "executedCommands",
+        "installedDependencies",
+        "status"
+      ]
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/testing/test-conformance-research.v1.schema.json",
+  "title": "test-conformance-research v1"
+}

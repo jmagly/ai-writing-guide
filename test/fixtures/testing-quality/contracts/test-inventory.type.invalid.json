@@ -1,0 +1,61 @@
+{
+  "apiVersion": "testing.aiwg.io/v1",
+  "kind": "TestInventory",
+  "metadata": {
+    "name": "fixture",
+    "createdAt": "2026-09-08T12:00:00.000Z",
+    "toolVersion": "2.0.0"
+  },
+  "spec": {
+    "root": "/target",
+    "protocolHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "snapshotHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "complete": true,
+    "authority": "source-file-candidates",
+    "counts": {
+      "sourceFiles": 1,
+      "testFiles": 1,
+      "testCases": 12,
+      "configurationFiles": 1
+    },
+    "files": [
+      {
+        "path": "src/add.py",
+        "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "size": 32,
+        "role": "source",
+        "isSource": true
+      },
+      {
+        "path": "tests/test_add.py",
+        "hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "size": 76,
+        "role": "test",
+        "isSource": false,
+        "areas": [
+          "unit"
+        ],
+        "lanes": [
+          "unit"
+        ],
+        "runnerHint": "pytest",
+        "signals": [
+          {
+            "code": "weak-oracle",
+            "message": "Review claimed outcome",
+            "authority": "lexical-candidate",
+            "verdict": "unreviewed"
+          }
+        ]
+      },
+      {
+        "path": "pyproject.toml",
+        "hash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "size": 20,
+        "role": "configuration",
+        "isSource": false
+      }
+    ],
+    "diagnostics": []
+  }
+}

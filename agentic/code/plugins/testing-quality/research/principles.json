@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "principles": [
+    {
+      "refId": "REF-2478",
+      "corpusRelativeNote": "documentation/references/REF-2478-google-code-coverage-best-practices.md",
+      "principle": "Coverage is incomplete evidence; thresholds are project risk policy.",
+      "source": "https://testing.googleblog.com/2020/08/code-coverage-best-practices.html",
+      "evidence": "practitioner-or-maintainer-guidance",
+      "empiricalConfidence": "low",
+      "configuredCorpusRequired": false
+    },
+    {
+      "refId": "REF-2479",
+      "corpusRelativeNote": "documentation/references/REF-2479-pytest-flaky-tests.md",
+      "principle": "Preserve first attempts; rerun success does not prove repair.",
+      "source": "https://docs.pytest.org/en/stable/explanation/flaky.html",
+      "evidence": "practitioner-or-maintainer-guidance",
+      "empiricalConfidence": "low",
+      "configuredCorpusRequired": false
+    },
+    {
+      "refId": "REF-2480",
+      "corpusRelativeNote": "documentation/references/REF-2480-pytest-good-integration-practices.md",
+      "principle": "Record installed artifact versus source checkout import.",
+      "source": "https://docs.pytest.org/en/stable/explanation/goodpractices.html",
+      "evidence": "practitioner-or-maintainer-guidance",
+      "empiricalConfidence": "low",
+      "configuredCorpusRequired": false
+    },
+    {
+      "refId": "REF-2481",
+      "corpusRelativeNote": "documentation/references/REF-2481-vocke-practical-test-pyramid.md",
+      "principle": "Classify actual boundary; avoid fixed universal layer ratios.",
+      "source": "https://martinfowler.com/articles/practical-test-pyramid.html",
+      "evidence": "practitioner-or-maintainer-guidance",
+      "empiricalConfidence": "low",
+      "configuredCorpusRequired": false
+    }
+  ]
+}

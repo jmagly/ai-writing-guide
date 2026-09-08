@@ -1,0 +1,201 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "const": "testing.aiwg.io/v1"
+    },
+    "kind": {
+      "const": "TestNegativeControlReceipt"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+        },
+        "toolVersion": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "name",
+        "createdAt",
+        "toolVersion"
+      ]
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "root": {
+          "type": "string",
+          "minLength": 1
+        },
+        "protocolHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "snapshotHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "runId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "baseline": {
+          "$ref": "https://aiwg.io/schemas/testing/test-run-receipt.v1.schema.json"
+        },
+        "controls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "laneId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "controlId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "testIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "status": {
+                "enum": [
+                  "killed",
+                  "survived",
+                  "unknown"
+                ]
+              },
+              "diagnostics": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              },
+              "plan": {
+                "$ref": "https://aiwg.io/schemas/testing/normalization-plan.v1.schema.json"
+              },
+              "applyReceipt": {
+                "$ref": "https://aiwg.io/schemas/testing/normalization-receipt.v1.schema.json"
+              },
+              "rollbackReceipt": {
+                "$ref": "https://aiwg.io/schemas/testing/normalization-receipt.v1.schema.json"
+              },
+              "partialReceipt": {
+                "$ref": "https://aiwg.io/schemas/testing/normalization-receipt.v1.schema.json"
+              },
+              "partialRollbackReceipt": {
+                "$ref": "https://aiwg.io/schemas/testing/normalization-receipt.v1.schema.json"
+              },
+              "mutationReceipt": {
+                "$ref": "https://aiwg.io/schemas/testing/test-run-receipt.v1.schema.json"
+              },
+              "restoredReceipt": {
+                "$ref": "https://aiwg.io/schemas/testing/test-run-receipt.v1.schema.json"
+              }
+            },
+            "required": [
+              "laneId",
+              "controlId",
+              "testIds",
+              "status",
+              "diagnostics"
+            ]
+          }
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "minLength": 1
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "sourceRestored": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "unknown"
+          ]
+        },
+        "receiptHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "root",
+        "protocolHash",
+        "snapshotHash",
+        "runId",
+        "baseline",
+        "controls",
+        "diagnostics",
+        "sourceRestored",
+        "status",
+        "receiptHash"
+      ]
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aiwg.io/schemas/testing/negative-control-receipt.v1.schema.json",
+  "title": "TestNegativeControlReceipt"
+}

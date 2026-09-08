@@ -1,0 +1,26 @@
+{
+  "cases": [
+    {
+      "id": "[\"unit\",\"tests/test_add.py\",\"test_add\"]",
+      "file": "tests/test_add.py",
+      "name": "test_add",
+      "status": "passed",
+      "durationMs": 3,
+      "assumedReal": true
+    }
+  ],
+  "files": [
+    {
+      "path": "tests/test_add.py",
+      "status": "passed"
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0
+  },
+  "errors": [],
+  "complete": true
+}

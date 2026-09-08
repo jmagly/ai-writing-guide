@@ -1,0 +1,32 @@
+{
+  "apiVersion": "testing.aiwg.io/v1",
+  "kind": "TestConformanceReview",
+  "metadata": {
+    "name": "fixture",
+    "createdAt": "2026-09-08T12:00:00.000Z",
+    "toolVersion": "2.0.0"
+  },
+  "spec": {
+    "root": "/target",
+    "protocolHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "snapshotHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "reviewer": "test-architect",
+    "files": [
+      {
+        "path": "tests/check.mjs",
+        "hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "sut": "Reviewed sut against the actual add function and assertion behavior.",
+        "claim": "Reviewed claim against the actual add function and assertion behavior.",
+        "oracle": "Reviewed oracle against the actual add function and assertion behavior.",
+        "validity": "Reviewed validity against the actual add function and assertion behavior.",
+        "isolation": "Reviewed isolation against the actual add function and assertion behavior.",
+        "determinism": "Reviewed determinism against the actual add function and assertion behavior.",
+        "normalization": "Reviewed normalization against the actual add function and assertion behavior.",
+        "maintainability": "Reviewed maintainability against the actual add function and assertion behavior.",
+        "scope": "Reviewed scope against the actual add function and assertion behavior.",
+        "verdict": "passed",
+        "findings": []
+      }
+    ]
+  }
+}
