@@ -63,14 +63,13 @@ for advanced maintenance and troubleshooting; they are not extra install steps.
 For the complete beginner path and provider-name table, see
 [Install, Connect, and Verify](docs/getting-started/install-connect-verify.md).
 
-For a smaller CLI install that resolves signed, versioned resources from the
-release host:
+For a lightweight install that resolves signed, versioned resources from the release host, install the executable:
 
 ```bash
 npm i -g @aiwg/cli
-aiwg discover "architecture evolution"
-aiwg show skill architecture-evolution
 ```
+
+> Find the architecture-evolution workflow, read its requirements, and help me apply it to this project.
 
 See [Web-Backed AIWG Resources](docs/install/web-backed-resources.md) for source
 selection, exact-version overrides, cache verification, offline use, and the
@@ -78,8 +77,7 @@ current framework-graph constraints.
 
 For a larger project, ask your AI assistant to establish project policy as well. The agent-led setup
 conversation should establish remotes, issue storage, delivery behavior,
-signing policy, and provider choices; the assistant may call `aiwg setup project`
-as the underlying CLI helper.
+signing policy, and provider choices; the assistant discovers the project-setup workflow and handles its tools.
 
 macOS users: if npm fails with `EACCES` under `/usr/local/lib/node_modules`,
 use the [macOS Install Guide](docs/getting-started/macos-install.md).
@@ -114,13 +112,8 @@ The base global install intentionally excludes native packages whose lifecycle
 scripts require explicit trust. Core deployment, discovery, and provider tooling
 work without them. Enable only the capability you need:
 
-```bash
-aiwg features install pty         # builds node-pty for local interactive terminals
-aiwg features install embeddings  # builds hnswlib-node for dense semantic search
-aiwg features install graph       # enables the Graphology artifact backend
-aiwg features install terminal    # enables auditable headless PTY screen parsing
-aiwg doctor                       # verifies the native entry points actually load
-```
+> Enable the native features needed for interactive terminals, semantic search, or graph-backed artifacts in this
+> workspace. Explain which dependencies are required, install only the selected features, and verify they load.
 
 The feature installer writes a private manifest and lockfile under the AIWG user
 data directory and approves scripts only for that feature. Do not set a broad
@@ -137,7 +130,7 @@ version-manager choices. After setting up Node, run:
 
 ```bash
 npm install -g aiwg
-aiwg --version
+aiwg doctor
 ```
 
 If Node is already installed and you need a quick recovery, one manual alternative is a user-owned npm prefix. Choose
@@ -159,14 +152,9 @@ root-owned npm files that break later upgrades.
 
 If `aiwg` is not found after `npm i -g aiwg`, the npm global `bin` directory is not on your `PATH`. Confirm and fix:
 
-```bash
-which aiwg                              # empty? PATH is the issue
-npm config get prefix                   # find npm's global prefix (bin lives under here)
-echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> ~/.zshrc   # or ~/.bashrc
-source ~/.zshrc                         # or restart your shell
-```
+> Diagnose why this shell cannot find AIWG. Check the npm installation and PATH, and apply the appropriate local fix.
 
-You can also invoke AIWG without adjusting `PATH` by using `npx aiwg <command>`. For a broader health check — version,
+You can also invoke AIWG without adjusting `PATH` by using `npx aiwg doctor`. For a broader health check — version,
 deployed providers, missing dependencies, kernel-skill probes — run `aiwg doctor`. See the [troubleshooting
 guide](docs/troubleshooting/index.md) for the full recovery paths.
 
@@ -199,7 +187,7 @@ user-global bootstrap:
 - **Global bootstrap** — `aiwg use all --provider claude --global` installs
   framework and kernel assets in native user-level paths while leaving only
   lightweight context and provider bootstrap files in the current project.
-  Use `aiwg regenerate --provider <name>` to wire additional projects without
+  Ask the assistant to connect additional projects without
   deploying their own skill copies.
 
 Shared user-level instructions can be useful for personal conventions, while project-local instructions keep a team's
@@ -273,8 +261,8 @@ The assistant handles discovery, artifact lookup, and the selected workflow's to
 verification. Matching a capability is a starting point: the assistant still checks scope, prerequisites, and project
 policy before acting.
 
-Direct CLI commands remain available for manual setup, scripting, and troubleshooting. See the
-[CLI reference](docs/cli/reference.md); the terminal examples below are optional operator interfaces.
+For manual setup and maintenance, the usual commands are `aiwg use`, `aiwg init`, `aiwg refresh`, and `aiwg doctor`.
+The assistant handles other tooling. Advanced command syntax lives in the [CLI reference](docs/cli/reference.md).
 
 Deployment connects the supported workflow surface. Optional servers, storage services, and automation paths have
 their own prerequisites; installing assets does not mean all those services are running. You can start with one review
@@ -608,7 +596,7 @@ flowchart LR
   subgraph SESS["AI session (Claude / Codex / Hermes / etc.)"]
     direction TB
     NATIVE[Platform-native loader<br/>reads provider dir]
-    DISC([Optional: aiwg discover<br/>+ aiwg show])
+    DISC([Assistant capability discovery<br/>+ asset lookup])
   end
 
   classDef optional stroke-dasharray: 5 5,fill:#fef9e7
@@ -710,15 +698,8 @@ aiwg use rlm --provider claude           # Context decomposition
 For maintenance or an existing workspace that needs context migration, preview the relevant regeneration branch rather
 than treating every branch as installation:
 
-```bash
-aiwg regenerate --dry-run
-aiwg regenerate
-
-# Existing-project extraction, when that is the intended operation:
-aiwg regenerate --existing-project --dry-run
-aiwg regenerate --existing-project --apply
-aiwg workspace-context doctor
-```
+> Preview how to refresh this workspace’s provider context. If it needs existing-project extraction or migration,
+> explain the proposed changes, preserve project-specific instructions, and verify the result.
 
 The [regeneration guide](docs/regenerate-guide.md) also covers canonical refresh and legacy compatibility. Use the
 branch that matches the workspace state. To scaffold a new project rather than connect the current one, see the
@@ -747,16 +728,11 @@ directly under `.aiwg/{extensions,addons,frameworks}/<name>/`. Use
 `.aiwg/plugins/<name>/` only when you are wrapping a bundle for marketplace
 delivery. No fork, no rebuild. Discovered automatically by `aiwg use`.
 
-```bash
-aiwg new-bundle my-team-rules --type extension --starter rule
-# edit the rule, then:
-aiwg use my-team-rules
-aiwg doctor --project-local      # health check (counts, validation, drift)
-aiwg promote my-team-rules        # graduate to upstream when proven
-```
+> Create a project-local extension named my-team-rules with a starter rule. Deploy it here, check its health, and
+> help me prepare it for upstream promotion once it is proven.
 
 The bundle is **byte-identical** in shape to its upstream form, so
-`aiwg promote` is a hash-verified copy with zero rewrite. See the
+promotion uses a hash-verified copy with zero rewrite. See the
 [customization guide](docs/customization/README.md) for the three paths
 (project-local, fork, corpus).
 
@@ -838,7 +814,7 @@ lists the current framework names accepted by the CLI.
 | Addon | What It Helps You Do |
 |-------|----------------------|
 | **[AIWG Utils](agentic/code/addons/aiwg-utils/)** | Shared rules, discovery helpers, regeneration support, mention tooling, workspace maintenance, and stewardship primitives used across AIWG |
-| **[Agent Loop](agentic/code/addons/agent-loop/)** | Run bounded iterative agent loops with recovery, reflection, completion tracking, and CLI surfaces such as `aiwg ralph` |
+| **[Agent Loop](agentic/code/addons/agent-loop/)** | Run bounded iterative agent loops with recovery, reflection, completion tracking, and resumable progress tracking |
 | **[RLM](agentic/code/addons/rlm/)** | Decompose large codebases or document corpora into smaller reviewed slices through recursive planning and subtask execution |
 | **[Composition Engine](agentic/code/addons/composition-engine/)** | Define and validate provider-neutral Flow graph contracts for composed workflows |
 | **[Graph Pattern](agentic/code/addons/graph-pattern/)** | Add an optional graph-oriented profile over AIWG Flow for conditional routes, reducers, and graph validation |
@@ -1063,16 +1039,8 @@ requests drive phase transitions with reviewable quality gates.
 
 **SDLC Accelerate — from idea to reviewed planning artifacts:**
 
-```bash
-# From a description
-aiwg sdlc-accelerate "AI-powered code review tool with GitHub integration"
-
-# From existing codebase
-aiwg sdlc-accelerate --from-codebase .
-
-# Resume interrupted pipeline
-aiwg sdlc-accelerate --resume
-```
+> Turn an AI-powered code review tool with GitHub integration into reviewed intake, architecture, risks, and a
+> delivery plan. Use the existing codebase if present, and resume saved planning work instead of starting over.
 
 It can generate intake, vision, use cases, architecture baseline, risk register,
 test strategy, and deployment planning artifacts with human review between
@@ -1319,29 +1287,14 @@ release planning?”, “show the SDLC quickstart”, or “run this governed wo
 base server keeps a small default tool surface; larger toolsets can be enabled explicitly for teams that want richer
 orchestration, mission, dataset, or framework operations.
 
-```bash
-# Run the local MCP server
-aiwg mcp serve
-
-# Enable additional toolsets for a richer host integration
-aiwg mcp serve --toolsets=flows,missions,catalog
-
-# Use an environment variable when the host launches the server command
-AIWG_MCP_TOOLSETS=flows,missions,catalog aiwg mcp serve
-
-# Inspect server metadata and supported install targets
-aiwg mcp info
-```
+> Connect this AI tool to AIWG’s MCP server. Start with the default tool surface; enable flow, mission, and catalog
+> operations when this workspace needs them, and verify the connection.
 
 Provider installation depends on the host. AIWG can write MCP configuration for supported targets where the provider
 has a stable local MCP config format; other providers use the same server command in their own UI or settings.
 
-```bash
-# Install AIWG MCP config for a supported local target
-aiwg mcp install claude
-aiwg mcp install cursor
-aiwg mcp install codex
-```
+> Configure the AIWG MCP connection for the provider I use in this workspace. Check its supported settings and
+> tell me whether the host needs any further setup.
 
 MCP integration does not make every AIWG operation model-backed. Catalog reads, status checks, link resolution, and
 local evidence inspection are ordinary local operations. Workflows that ask an assistant to reason, draft, call
@@ -1362,26 +1315,10 @@ answer concrete questions before you rely on a capability in a live project:
 - Does it fail safely when prerequisites are missing?
 - Does it preserve evidence for audit, handoff, or regression review?
 
-For direct CLI checks, use the catalog, metadata validation, skill linting, and evidence commands that are available
-in the current CLI surface.
+Ask for an evaluation outcome; the assistant handles capability lookup, metadata validation, and evidence tools.
 
-```bash
-# Find relevant evaluation or review capabilities
-aiwg discover "agent evaluation" --limit 5
-aiwg discover "skill lint evidence" --limit 5
-
-# Inspect a selected capability before applying it
-aiwg show skill aiwg-doctor
-aiwg show skill context-firewall
-
-# Validate local metadata and skill packaging
-aiwg validate-metadata
-aiwg skill-lint
-
-# Capture and verify evidence bundles when a workflow supports them
-aiwg evidence export --help
-aiwg evidence verify --help
-```
+> Find the relevant agent-evaluation workflow. Review this capability’s metadata, triggers, dependencies, and
+> evidence contract, then record the checks and any gaps.
 
 A practical evaluation usually starts with a small task and a pass/fail criterion. For example:
 
@@ -1456,64 +1393,34 @@ Provider directories are generated from the same canonical context. Their exact 
 
 ### Creating Custom Extensions
 
-Use the current scaffolding commands for new AIWG assets. The older scaffold commands remain available in some
-workspaces for compatibility, but the `new-*` and `add-*` commands are the clearer path for new work.
+Describe the reusable capability you want. The assistant selects a scaffold for the appropriate asset type and
+validates its metadata and references.
 
-```bash
-# Create a new bundle, extension, addon, framework, or provider adapter
-aiwg new-bundle my-bundle
-aiwg new-extension my-extension
-aiwg new-addon my-addon
-aiwg new-framework my-framework
-aiwg new-provider my-provider
-
-# Add individual provider-facing assets
-aiwg add-agent release-reviewer --framework sdlc
-aiwg add-command release-checklist --framework sdlc
-aiwg add-skill release-notes --framework sdlc
-
-# Validate metadata before sharing or deploying
-aiwg validate-metadata
-```
+> Create a custom release-review extension with a reviewer agent, checklist, and release-note skill. Choose the
+> appropriate bundle structure, define inputs and outputs, and validate it before deployment.
 
 A custom extension should define the smallest durable contract needed by the workflow: triggers, inputs, outputs,
 evidence, and provider packaging. Keep model-specific phrasing in provider assets. Keep project policy, schemas, and
 reusable workflow contracts in `.aiwg` or extension source so multiple providers can share them.
 
-### Capability Discovery — `aiwg discover` + `aiwg show`
+### Capability Discovery — Describe the Task
 
-`aiwg discover` searches the installed AIWG capability catalog. It is the recommended entry point when you know the
-task but not the command, skill, agent, or framework name.
+The assistant searches AIWG’s capability graphs from your intent, then reads the matching assets. You can name the
+outcome without knowing the command, skill, agent, or framework that implements it.
 
-```bash
-# Find capabilities by plain-language intent
-aiwg discover "deploy production" --limit 5
-aiwg discover "dataset lineage" --type skill --limit 5
-aiwg discover "SDLC intake requirements" --limit 8
-
-# Inspect the selected capability before running or asking a provider to use it
-aiwg show skill aiwg-status
-aiwg show skill dataset-intelligence
-aiwg show skill rlm-prep
-```
+> Find the appropriate workflow for production deployment, dataset lineage, or project intake. Show why it fits
+> this task, read the selected instructions, and use our indexed custom assets where relevant.
 
 Discovery is also useful for documentation. Instead of hard-coding every command in a README, link to the relevant
-quickstart and show one or two representative commands. The catalog can change as frameworks and addons are installed,
+quickstart and show one or two representative prompts. The catalog can change as frameworks and addons are installed,
 while the task language stays stable.
 
-### Artifact Index — `aiwg index`
+### Artifact Index — Find and Reuse Project Work
 
 The artifact index makes generated work easier to find, verify, and reuse. It indexes reports, generated context,
 evidence, and other AIWG-managed files into a searchable local catalog.
 
-```bash
-# Build or refresh the local artifact index
-aiwg index
-
-# Inspect status after deployment or refresh
-aiwg status --probe
-aiwg doctor
-```
+> Refresh the artifact index, verify that this workspace is connected, and find the latest review evidence.
 
 A provider can then answer questions such as “find the latest context-firewall report” or “show the SDLC artifact that
 introduced this acceptance criterion” without scanning the whole repository manually.
@@ -1523,16 +1430,8 @@ introduced this acceptance criterion” without scanning the whole repository ma
 Doc sync is for keeping code and documentation aligned under review. It can audit mismatches, propose updates, and
 write reports before code or documentation changes are accepted.
 
-```bash
-# Audit both directions without writing changes
-aiwg doc-sync full --dry-run --scope docs
-
-# Propose documentation updates from code changes
-aiwg doc-sync code-to-docs --scope src --guidance "Update quickstarts only"
-
-# Propose code TODOs or implementation tasks from documentation requirements
-aiwg doc-sync docs-to-code --scope docs --interactive
-```
+> Audit the documentation against the code without changing either. Identify stale quickstarts and missing
+> implementation requirements, then propose scoped updates with source references.
 
 Doc sync writes reports under `.aiwg/working/` and `.aiwg/reports/` when configured. Treat those reports as review
 artifacts. Do not assume doc sync can prove semantic equivalence between code and prose; it identifies
@@ -1543,26 +1442,14 @@ inconsistencies, stale examples, missing links, and candidate updates for human 
 AIWG’s reproducibility features focus on explicit inputs, evidence records, deterministic modes where available, and
 reviewable outputs. They do not guarantee identical model text across providers or runs.
 
-```bash
-# Put local execution in a stricter mode for workflows that honor it
-aiwg execution-mode strict --seed 12345
-
-# Export and verify evidence when workflows emit evidence bundles
-aiwg evidence export --help
-aiwg evidence verify --help
-
-# Verify workspace health and generated provider context
-aiwg verify --help
-aiwg doctor
-```
+> Run this workflow with explicit inputs and a reproducible seed where supported. Export its evidence, verify
+> the bundle, and report anything that cannot be reproduced.
 
 For workflows that expose checkpointing, snapshots, or replay through installed skills, start with discovery so the
 current workspace selects the correct implementation:
 
-```bash
-aiwg discover "create checkpoint" --limit 5
-aiwg discover "replay evidence" --limit 5
-```
+> Find the supported checkpoint and replay workflow for this workspace, preserve the current state, and explain
+> what a later run can verify or resume.
 
 The practical standard is repeatability of inputs, citations, commands, and artifacts. Exact model wording should be
 treated as a generated output, not as the source of truth.
@@ -1573,22 +1460,8 @@ The session catalog is an optional local feature for importing, searching, and p
 history. It is designed for controlled handoff and audit. It should be enabled intentionally because it can include
 sensitive prompts, local paths, and project context.
 
-```bash
-# Install the SQLite feature before using the session catalog
-aiwg features install sqlite
-
-# Discover importable sessions for this workspace without changing state
-aiwg sessions discover --workspace "$PWD" --dry-run
-
-# Import discovered sessions after review
-aiwg sessions import-discovered --workspace "$PWD" --confirm
-
-# Inspect, search, and audit imported sessions
-aiwg sessions list
-aiwg sessions timeline
-aiwg sessions search "release blocker"
-aiwg sessions doctor
-```
+> Set up a local session catalog for this workspace. Preview the provider sessions available for import, import
+> the reviewed selection, and find conversations about release blockers with their provenance.
 
 Imported sessions can be tagged, extracted into reusable notes, reviewed for promotion, or audited for provenance.
 Keep private-provider roots and shared history locations explicit in configuration; do not assume another provider’s
@@ -1602,27 +1475,8 @@ Dataset intelligence gives AIWG a governed path for local files, directories, CS
 sources. The dataset router carries stable source, plan, checkpoint, lineage, verification, and export references
 between phases.
 
-```bash
-# Register a source from a JSON descriptor
-aiwg dataset source --file dataset-source.json --json
-
-# Check and preview before ingestion
-aiwg dataset check source:docs --json
-aiwg dataset preview source:docs --count 5 --offline
-
-# Create and approve an ingest plan
-aiwg dataset plan --file dataset-plan.json --json
-aiwg dataset ingest plan:docs-index \
-  --digest sha256:<approved-plan-digest> \
-  --idempotency-key docs-index-2026-09-07
-
-# Inspect and use the resulting dataset
-aiwg dataset status dataset:docs-index
-aiwg dataset verify dataset:docs-index
-aiwg dataset query dataset:docs-index "Which quickstart explains Codex setup?"
-aiwg dataset lineage dataset:docs-index
-aiwg dataset export dataset:docs-index --json
-```
+> Build a governed index of these documentation sources. Validate and preview the inputs, prepare an ingestion
+> plan, and retain its approval, lineage, and verification records. Then find which quickstart explains Codex setup.
 
 Local adapters are constrained by configured roots. HTTP adapters are deny-by-default and require explicit hosts.
 Indexes are derived artifacts; the canonical record is the source descriptor, approved plan, ingest run, and evidence
@@ -1637,43 +1491,22 @@ AIWG supports local issue planning and governed handoff to external issue tracke
 under `.aiwg/issues/`, which makes issues reviewable even when a project does not have GitHub, Gitea, Jira, or another
 tracker connected.
 
-```bash
-# Initialize a local issue store for this workspace
-aiwg issue init --prefix APP
-
-# Draft a new local issue
-aiwg issue plan \
-  --title "Implement OAuth2 callback validation" \
-  --body "Add state validation, token exchange error handling, and tests."
-
-# Review and update issues locally
-aiwg issue list --status open --label auth --limit 20
-aiwg issue show APP-0001 --comments last:10
-aiwg issue comment APP-0001 --body "Validated the callback edge cases."
-aiwg issue close APP-0001 --reason "Implemented and tested."
-```
+> Set up local issues with the APP prefix. Draft an issue for OAuth2 callback validation, including state checks,
+> token-exchange errors, and tests. Show the open authentication issues and record verified progress.
 
 External tracker import/export is explicit. Use it when you need traceability between local AIWG records and a remote
 system, and keep snapshots or live connector settings under review.
 
-```bash
-# Import a tracker snapshot into the local issue store
-aiwg issue import --from github --snapshot-file issues-snapshot.json
-
-# Export a local issue payload for a tracker
-aiwg issue export APP-0001 --to gitea --out APP-0001.gitea.json
-
-# Inspect conflicts when reconciling local and external state
-aiwg issue sync conflicts APP-0001 --snapshot-file issue-APP-0001.json
-```
+> Import this GitHub issue snapshot into our local store. Prepare APP-0001 for the Gitea tracker and show any
+> conflicts between local and external state before reconciling them.
 
 For agent-assisted repair work, name the issues and acceptance checks:
 
-> Resolve APP-0001 and APP-0002 using this project's issue workflow. Run `npm test` and `npm run lint`, and report
-> the changes and any unresolved checks.
+> Resolve APP-0001 and APP-0002 using this project's issue workflow. Run the project's test and lint checks, and
+> report the changes and anything unresolved.
 
-External issue systems are not a default side effect of `aiwg issue`. They require configured connectors, snapshots,
-or explicit export/import commands. See [local issue integration](docs/local-issues.md) and [filing
+External issue systems are not a default side effect of local issue work. They require configured connectors, snapshots,
+or explicit export/import requests. See [local issue integration](docs/local-issues.md) and [filing
 issues](docs/contributing/filing-issues.md).
 
 ## Daemon Mode & Messaging Integration
@@ -1686,23 +1519,8 @@ The base CLI exposes current orchestration commands through Ralph and mission co
 are advanced deployments described in the daemon and messaging docs; they require external service configuration and
 should not be assumed to exist in a fresh checkout.
 
-```bash
-# Start a managed mission-control session
-aiwg mc start --name "release follow-up" --max-missions 3
-
-# Dispatch bounded work with an explicit completion criterion
-aiwg mc dispatch <session-id> \
-  "Fix the failing auth tests" \
-  --completion "npm test -- auth passes"
-
-# Inspect and control running work
-aiwg mc run <session-id>
-aiwg mc status <session-id>
-aiwg mc watch <session-id>
-aiwg mc pause <session-id>
-aiwg mc resume <session-id>
-aiwg mc stop <session-id>
-```
+> Coordinate the release follow-up with at most three concurrent missions. Fix the authentication test failures,
+> retain verification evidence, and show progress. Make it possible to pause, resume, or stop the work.
 
 For provider messaging, document the concrete external channel and approval boundary. A Slack, Discord, Telegram, or
 webhook bridge should make it clear who can enqueue work, where logs are stored, and which operations require human
@@ -1713,77 +1531,37 @@ See [daemon guide](docs/daemon-guide.md), [messaging guide](docs/messaging-guide
 ## See It In Action
 
 The fastest way to use AIWG is to ask for the first useful task, request a concrete deliverable, and name the success
-check. Commands help when you know the exact workflow; plain-language task prompts are better when AIWG should choose
-the relevant skill or provider surface.
+check. The assistant discovers the relevant skill or provider surface and handles the underlying tools.
 
 ### SDLC workflow from idea to implementation
 
-```bash
-# Discover the right SDLC entry point
-aiwg discover "SDLC intake requirements architecture" --limit 5
-
-# Run the accelerator when you want AIWG to scaffold the SDLC work plan
-aiwg sdlc-accelerate "AI-powered code review tool" \
-  --success "requirements, architecture notes, and first implementation task are generated"
-```
-
-Provider prompt:
-
-```text
-Use the SDLC framework to turn “AI-powered code review tool” into requirements, architecture decisions, a first implementation task, and acceptance checks. Stop with links to the generated artifacts.
-```
+> Use the SDLC framework to turn an AI-powered code review tool into requirements, architecture decisions, a
+> first implementation task, and acceptance checks. Return links to the generated artifacts.
 
 ### Long-running implementation loop
 
-```bash
-aiwg ralph "Fix all failing tests in the auth package" \
-  --completion "npm test -- auth passes" \
-  --max-iterations 5 \
-  --max-wall-clock-minutes 45
-
-aiwg ralph-status
-aiwg ralph-resume <loop-id>
-aiwg ralph-abort <loop-id>
-```
+> Fix the failing authentication tests in a bounded loop. Stop after five iterations or forty-five minutes, and
+> report whether the relevant tests pass and what remains unresolved.
 
 Ralph is useful for bounded repair loops where the success condition is objective. It is not a guarantee that the
 model will solve the task. Set wall-clock, token, tool-call, or cost limits for expensive providers.
 
 ### Recursive search over large code or docs
 
-```bash
-aiwg rlm-prep docs/ --strategy semantic-boundary --size 200
-aiwg rlm-search "Where do provider quickstarts mention reload requirements?" \
-  --source .aiwg/rlm-prep/<manifest-dir>/manifest.json \
-  --max-parallel 4 \
-  --budget 50000
-aiwg rlm-cache stats
-```
-
-Provider prompt:
-
-```text
-Find every user-facing quickstart that still tells users to manually reload after `aiwg use all`. Return file links, the quoted sentence, and the replacement language.
-```
+> Search the provider quickstarts for outdated reload instructions. Use at most four parallel workers and a
+> 50,000-token budget; return source links, the quoted statements, and proposed corrections.
 
 ### Dataset-backed project knowledge
 
-```bash
-aiwg dataset check source:docs --json
-aiwg dataset preview source:docs --count 5 --offline
-aiwg dataset query dataset:docs-index "Which provider quickstart is best for Codex?"
-```
+> Check and preview our documentation dataset, then find the best Codex quickstart with source and lineage links.
 
 Use dataset intelligence when the source and lineage need to be explicit. Use RLM when the immediate need is recursive
 search or fanout over files.
 
 ### Session history reuse
 
-```bash
-aiwg sessions discover --workspace "$PWD" --dry-run
-aiwg sessions search "marketing audit"
-aiwg sessions extract <session-id> --format markdown
-```
+> Find this workspace’s prior marketing-audit conversations. Review their scope before import and extract the
+> relevant decisions into a Markdown artifact with provenance.
 
 This is useful when prior provider conversations contain decisions that should become project artifacts. Keep import
 scope explicit and review the discovered sessions before promotion.
@@ -1828,52 +1606,32 @@ See [cross-platform overview](docs/integrations/cross-platform-overview.md) for 
 | Antigravity | `aiwg use all --provider antigravity` | `AGENTS.md` and `.agents/` | Agents, skills, indexed commands, MCP config when enabled | See [Antigravity provider docs](docs/providers/antigravity.md). |
 | Generic Markdown | `aiwg use all --provider generic` | `AIWG.md` / `WORKSPACE.md` | Markdown instructions | Use when a provider reads repo docs but has no dedicated integration. |
 
-After any deployment, use status and doctor before relying on the provider context:
+After deployment, check readiness with the assistant or run the health check:
 
 ```bash
-aiwg status --probe
 aiwg doctor
 ```
+
+> Confirm that the deployed provider context is active and explain any remaining setup steps.
 
 Fresh deployments may report that the provider should be restarted or reloaded so the host notices new files. That is
 provider-specific readiness information, not a requirement to regenerate context after every command.
 
 ## CLI Reference
 
-The CLI is organized around framework deployment, workspace health, discovery, governed artifacts, orchestration, and
-specialized addons. Use `aiwg help` for the current top-level surface and [CLI reference](docs/cli/reference.md) for
-the generated reference.
+Everyday work stays in the conversation. The small manual command set is for setup and maintenance:
 
-| Area | Commands | Use when |
-|---|---|---|
-| Framework deployment | `aiwg use`, `aiwg list`, `aiwg remove` | Install or remove AIWG framework/provider assets in a workspace. |
-| Getting started | `aiwg init`, `aiwg setup project`, `aiwg new`, `aiwg quickref generate` | Bootstrap a workspace or generate quick reference docs. |
-| Workspace health | `aiwg status`, `aiwg doctor`, `aiwg refresh`, `aiwg installation`, `aiwg verify` | Check readiness, repair drift, and validate generated context. |
-| Catalog and discovery | `aiwg catalog`, `aiwg discover`, `aiwg show`, `aiwg index`, `aiwg artifacts` | Find capabilities and locate generated outputs. |
-| Provider and MCP | `aiwg mcp serve`, `aiwg mcp install`, `aiwg mcp info`, `aiwg runtime-info` | Connect AIWG to MCP hosts or inspect runtime details. |
-| Execution and dispatch | `aiwg run skill`, `aiwg run script`, `aiwg output-mode`, `aiwg execution-mode` | Invoke portable skills/scripts and control output or reproducibility mode. |
-| Ralph loop | `aiwg ralph`, `aiwg ralph-status`, `aiwg ralph-resume`, `aiwg ralph-abort`, `aiwg ralph-attach` | Run bounded iterative implementation loops. |
-| Mission control | `aiwg mc start`, `aiwg mc dispatch`, `aiwg mc status`, `aiwg mc watch`, `aiwg mc stop` | Coordinate multiple bounded missions from one workspace. |
-| Sessions | `aiwg sessions discover`, `aiwg sessions import-discovered`, `aiwg sessions list`, `aiwg sessions search`, `aiwg sessions doctor` | Import, inspect, and promote provider session history. |
-| Dataset intelligence | `aiwg dataset source`, `aiwg dataset check`, `aiwg dataset preview`, `aiwg dataset plan`, `aiwg dataset ingest`, `aiwg dataset verify`, `aiwg dataset query` | Govern source intake, indexing, lineage, and queries. |
-| Evidence and metrics | `aiwg evidence export`, `aiwg evidence verify`, `aiwg cost-report --fleet` | Preserve verification records and inspect spend or usage where configured. |
-| Scaffolding | `aiwg new-bundle`, `aiwg new-extension`, `aiwg new-addon`, `aiwg new-framework`, `aiwg new-provider`, `aiwg add-agent`, `aiwg add-command`, `aiwg add-skill` | Create new AIWG packages and provider-facing assets. |
-| Issues | `aiwg issue init`, `aiwg issue plan`, `aiwg issue list`, `aiwg issue show`, `aiwg issue import`, `aiwg issue export` | Maintain local issue records and exchange snapshots with external trackers. |
+| Command | Purpose |
+| --- | --- |
+| `aiwg use <framework> --provider <provider>` | Deploy and connect AIWG assets to the project. |
+| `aiwg init` | Create the baseline project configuration; deployment can initialize it when needed. |
+| `aiwg refresh` | Update AIWG and refresh deployed project assets. |
+| `aiwg doctor` | Diagnose installation and workspace readiness. |
 
-Common setup and inspection flow:
-
-```bash
-# Install all AIWG assets for the current provider
-aiwg use all --provider codex
-
-# Verify generated context and provider readiness
-aiwg status --probe --json
-aiwg doctor
-
-# Find and inspect capabilities instead of guessing command names
-aiwg discover "release planning" --limit 5
-aiwg show skill aiwg-status
-```
+Installing the executable still requires a package manager, as shown in [Quick Start](#quick-start); an assistant with
+terminal access can perform that step too. Advanced scripting, server configuration, registry operations, indexing,
+issue synchronization, and automation options belong in the [CLI reference](docs/cli/reference.md) and linked guides.
+You do not need to learn those interfaces to request their outcomes.
 
 ## Architecture
 
@@ -1958,7 +1716,7 @@ evidence:
 ---
 ```
 
-The metadata is not decorative. It lets `aiwg discover` find the capability, lets validation detect missing fields,
+The metadata is not decorative. It lets discovery find the capability, lets validation detect missing fields,
 and gives provider adapters enough information to package the asset accurately.
 
 ### Project Artifacts
@@ -1987,32 +1745,17 @@ Ralph is AIWG’s bounded iterative agent loop. It is intended for tasks where t
 can be checked: fixing tests, applying a migration, updating docs to match a report, or carrying a refactor through
 verification.
 
-```bash
-aiwg ralph "Update provider quickstarts from the marketing audit" \
-  --completion "changed files match the approved audit scope and markdown links pass" \
-  --max-iterations 6 \
-  --max-wall-clock-minutes 60 \
-  --max-tool-calls 120
-```
+> Update the provider quickstarts from the approved marketing audit. Verify Markdown links and keep changes
+> within scope. Stop after six iterations, sixty minutes, or 120 tool calls.
 
 Ralph records loop state so work can be inspected and resumed when supported by the selected provider and local environment.
 
-```bash
-aiwg ralph-status
-aiwg ralph-attach <loop-id>
-aiwg ralph-resume <loop-id>
-aiwg ralph-abort <loop-id>
-```
+> Show the current loop’s progress and evidence. Resume its saved work if interrupted, or stop it when I ask.
 
 Use budgets for any loop that may call a remote model or external provider:
 
-```bash
-aiwg ralph "Reduce flaky integration tests" \
-  --completion "the flaky-test reproduction passes 10 consecutive runs" \
-  --max-total-tokens 200000 \
-  --max-total-cost 10 \
-  --budget-stop-policy budget-wins
-```
+> Reduce flaky integration tests and retain first-attempt failures. Verify the reproduction over ten consecutive
+> runs, with a limit of 200,000 tokens and $10. Stop when either budget is exhausted.
 
 Long-running automation should still produce reviewable outputs: changed files, reports, evidence, status logs, and
 the exact checks run. Ralph can continue work within configured limits, but it cannot guarantee a solution, fixed
@@ -2020,15 +1763,8 @@ runtime, or provider availability.
 
 Mission Control builds on the same principle for multiple bounded work items:
 
-```bash
-aiwg mc start --name "docs audit follow-up" --max-missions 4
-aiwg mc dispatch <session-id> \
-  "Validate README command examples" \
-  --completion "all documented commands are current or labeled provider-specific"
-aiwg mc run <session-id>
-aiwg mc status <session-id>
-aiwg mc watch <session-id>
-```
+> Coordinate the documentation-audit follow-up with at most four concurrent missions. Check that the README’s
+> examples are current, preserve evidence, and report progress and unresolved findings.
 
 ## RLM — Recursive Context Decomposition
 
@@ -2050,35 +1786,14 @@ flowchart LR
     C --> G[rlm-cache]
 ```
 
-Use `rlm-prep` when you want to prepare a file tree once and reuse it for several searches.
+Ask to prepare a file tree once when you want to reuse it for several searches.
 
-```bash
-# Prepare source or docs for recursive search
-aiwg rlm-prep src/ --strategy semantic-boundary --size 200 --overlap 20
-aiwg rlm-prep docs/ --strategy fixed-count --size 150
+> Prepare the source and documentation for repeated searches. Find where provider reload status is calculated
+> and summarize stale quickstart instructions, using at most four parallel workers and source-linked findings.
 
-# Search the prepared source
-aiwg rlm-search "Where is provider reload status calculated?" \
-  --source .aiwg/rlm-prep/<source-hash>/manifest.json \
-  --depth 3 \
-  --max-parallel 4 \
-  --budget 50000
+For a single-file review:
 
-# Run a direct fanout query over a manifest or chunks directory
-aiwg fanout "Summarize every stale quickstart command" \
-  --chunks .aiwg/rlm-prep/<source-hash>/manifest.json \
-  --parallel 4
-
-# Inspect cache state
-aiwg rlm-status
-aiwg rlm-cache stats
-```
-
-Use `chunk` for a single-file manual workflow:
-
-```bash
-aiwg chunk README.md --size 200 --overlap 20 --format json --output .aiwg/chunks/readme
-```
+> Divide this README into reviewable chunks with source locations and enough overlap to preserve context.
 
 RLM is a retrieval and decomposition workflow, not a magic context override. Quality depends on chunk boundaries,
 source coverage, prompt specificity, model capability, and budget. For high-stakes review, ask for quoted source
@@ -2448,9 +2163,9 @@ project guidelines.
 
 - Found a bug or confusing workflow? [Open an issue](https://github.com/jmagly/aiwg/issues/new).
 - Have a documentation improvement? Submit a PR with the source file and the behavior it clarifies.
-- Want to add an agent? Use `aiwg add-agent` or see `docs/development/agent-template.md`.
-- Want to add a skill? Use `aiwg add-skill`.
-- Want to create an addon? Use `aiwg scaffold-addon`.
+- Want to add an agent? Ask for a role with clear responsibilities; see [the agent template](docs/development/agent-template.md).
+- Want to add a skill? Describe its trigger, expected inputs, and verifiable outcome.
+- Want to create an addon? Ask to package related agents, skills, templates, and rules for reuse.
 
 ---
 
