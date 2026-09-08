@@ -1,7 +1,7 @@
-import { access, chmod, mkdtemp, readFile, stat, writeFile } from 'node:fs/promises';
+import { access, chmod, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
   DshJsonRpcClient,
   DSH_MAX_FRAME_BYTES,
@@ -16,9 +16,36 @@ import {
 } from '../../../tools/providers/deepseek-harness-transport.mjs';
 
 const fakeDsh = resolve('test/fixtures/providers/deepseek-harness/fake-dsh.mjs');
+const fixtureRoots: string[] = [];
+const clients: DshJsonRpcClient[] = [];
+const routeCleanups: Array<() => Promise<void>> = [];
+
+function trackedClient(options: ConstructorParameters<typeof DshJsonRpcClient>[0]) {
+  const client = new DshJsonRpcClient(options);
+  clients.push(client);
+  return client;
+}
+
+afterEach(async () => {
+  // Assertions can fail before shutdown. Reap every real child before deleting
+  // its working directory, and preserve cleanup for cancelled/timed-out runs.
+  try {
+    for (const client of clients.splice(0)) {
+      const child = client.child;
+      if (!child || child.exitCode !== null || child.signalCode !== null) continue;
+      const exited = new Promise<void>(resolveExit => child.once('exit', () => resolveExit()));
+      client.abort();
+      await exited;
+    }
+  } finally {
+    await Promise.all(routeCleanups.splice(0).map(cleanup => cleanup()));
+    await Promise.all(fixtureRoots.splice(0).map(root => rm(root, { recursive: true, force: true })));
+  }
+});
 
 async function fixtureFiles() {
   const root = await mkdtemp(join(tmpdir(), 'aiwg-dsh-transport-'));
+  fixtureRoots.push(root);
   const projectPatch = join(root, 'project.patch.yml');
   const routePatch = join(root, 'route.patch.yml');
   await Promise.all([
@@ -44,6 +71,7 @@ describe('DeepSeek Harness transport safety', () => {
       model: 'deepseek/deepseek-chat-v3.1',
       credentialEnv: 'OPENROUTER_API_KEY',
     });
+    routeCleanups.push(ephemeral.cleanup);
     expect((await stat(ephemeral.path)).mode & 0o777).toBe(0o600);
     expect(await readFile(ephemeral.path, 'utf8')).not.toContain('sk-test-value');
     await ephemeral.cleanup();
@@ -81,7 +109,7 @@ describe('DeepSeek Harness transport safety', () => {
     });
     expect(headless.provenance.profileHash).not.toBe(headless.provenance.projectPatchHash);
 
-    const client = new DshJsonRpcClient({
+    const client = trackedClient({
       binary: fakeDsh,
       cwd: fixture.root,
       dshHome: join(fixture.root, 'home'),
@@ -106,9 +134,9 @@ describe('DeepSeek Harness transport safety', () => {
     await expect(client.shutdown()).resolves.toEqual({});
   });
 
-  it('fails closed on cancellation and malformed or oversized frames', async () => {
+  it('rejects malformed, oversized and unknown frames while preserving Unicode', async () => {
     const fixture = await fixtureFiles();
-    const client = new DshJsonRpcClient({
+    const client = trackedClient({
       binary: fakeDsh,
       cwd: fixture.root,
       dshHome: join(fixture.root, 'home'),
@@ -127,7 +155,7 @@ describe('DeepSeek Harness transport safety', () => {
     ]);
 
     const aggregateFailures = [];
-    const aggregate = new DshJsonRpcClient({
+    const aggregate = trackedClient({
       binary: fakeDsh, cwd: fixture.root, dshHome: join(fixture.root, 'home'),
       projectPatch: fixture.projectPatch, routePatch: fixture.routePatch,
       version: '0.1.3-alpha.1',
@@ -137,7 +165,7 @@ describe('DeepSeek Harness transport safety', () => {
     aggregate.onData(Buffer.from('x'));
     expect(aggregateFailures[0]?.message).toMatch(/aggregate output limit/);
 
-    const unicode = new DshJsonRpcClient({
+    const unicode = trackedClient({
       binary: fakeDsh, cwd: fixture.root, dshHome: join(fixture.root, 'home'),
       projectPatch: fixture.projectPatch, routePatch: fixture.routePatch,
       version: '0.1.3-alpha.1',
@@ -150,7 +178,7 @@ describe('DeepSeek Harness transport safety', () => {
     expect(unicode.notifications).toHaveLength(1);
 
     const unknownFailures = [];
-    const unknown = new DshJsonRpcClient({
+    const unknown = trackedClient({
       binary: fakeDsh, cwd: fixture.root, dshHome: join(fixture.root, 'home'),
       projectPatch: fixture.projectPatch, routePatch: fixture.routePatch,
       version: '0.1.3-alpha.1',
@@ -159,9 +187,13 @@ describe('DeepSeek Harness transport safety', () => {
     unknown.onData(Buffer.from('{"jsonrpc":"2.0","method":"future.event","params":{}}\n'));
     expect(unknownFailures[0]?.message).toMatch(/Unsupported.*notification/);
 
+  });
+
+  it('cancels the real SDK request without leaving a pending operation', async () => {
+    const fixture = await fixtureFiles();
     const aborted = new AbortController();
     aborted.abort();
-    const live = new DshJsonRpcClient({
+    const live = trackedClient({
       binary: fakeDsh,
       cwd: fixture.root,
       dshHome: join(fixture.root, 'home'),
@@ -171,20 +203,31 @@ describe('DeepSeek Harness transport safety', () => {
       version: '0.1.3-alpha.1',
     });
     await expect(live.request('initialize', {}, { signal: aborted.signal }))
-      .rejects.toThrow(/cancelled/);
+      .rejects.toThrow('DeepSeek Harness JSON-RPC initialize cancelled');
+    expect(live.pending.size).toBe(0);
+    expect(live.child.killed).toBe(true);
+  });
 
-    const timed = new DshJsonRpcClient({
+  it('times out an unacknowledged prompt after a verified real initialization', async () => {
+    const fixture = await fixtureFiles();
+    const timed = trackedClient({
       binary: fakeDsh,
       cwd: fixture.root,
       dshHome: join(fixture.root, 'home'),
       projectPatch: fixture.projectPatch,
       routePatch: fixture.routePatch,
-      timeoutMs: 100,
+      // Process startup has its normal lifecycle budget; only the prompt
+      // under test receives the deliberately short deadline below.
+      timeoutMs: 10_000,
       version: '0.1.3-alpha.1',
     });
-    await timed.initialize({ provider: 'openrouter', model: 'deepseek/deepseek-chat-v3.1' });
-    await expect(timed.promptAndWait('root', [{ type: 'text', text: 'hang' }]))
-      .rejects.toThrow(/timed out/);
+    await expect(timed.initialize({ provider: 'openrouter', model: 'deepseek/deepseek-chat-v3.1' }))
+      .resolves.toMatchObject({ serverInfo: { name: 'deepseek-harness-sdk-runtime' } });
+    expect(timed.child.pid).toBeGreaterThan(0);
+    await expect(timed.promptAndWait('root', [{ type: 'text', text: 'hang' }], { timeoutMs: 100 }))
+      .rejects.toThrow('DeepSeek Harness JSON-RPC session/prompt timed out');
+    expect(timed.pending.size).toBe(0);
+    expect(timed.child.killed).toBe(true);
   });
 
   it('waits for forced teardown when a headless child ignores SIGTERM', async () => {

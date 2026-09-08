@@ -100,7 +100,29 @@ export function normalizeResults(raw, { format = 'canonical', laneId = 'default'
         if (suite.status === 'passed' && suite.assertionResults.some(c => ['failed', 'fail'].includes(c.status))) error('CONTRADICTORY_SUITE', `Passing suite contains failing case: ${suite.name}`);
       }
       if (mode === 'execution') {
-        countCheck(data.numTotalTestSuites, data.testResults.length, 'numTotalTestSuites');
+        if (format === 'jest') countCheck(data.numTotalTestSuites, data.testResults.length, 'numTotalTestSuites');
+        else {
+          // Vitest counts file suites AND nested describe suites. Its flattened
+          // testResults array contains only files, so these are different units.
+          // Empty/duplicate-named describe groups cannot be reconstructed from
+          // assertion ancestorTitles; validate retained aggregates without guessing.
+          const suiteKeys = ['numTotalTestSuites', 'numPassedTestSuites', 'numFailedTestSuites', 'numPendingTestSuites'];
+          for (const key of suiteKeys) if (data[key] != null && (!Number.isInteger(data[key]) || data[key] < 0)) error('COUNT_MISMATCH', `${key}: expected a nonnegative integer`);
+          const total = data.numTotalTestSuites;
+          const visibleSuites = data.testResults.reduce((count, suite) => {
+            const ancestors = new Set();
+            for (const assertion of suite.assertionResults ?? []) if (Array.isArray(assertion.ancestorTitles)) {
+              for (let depth = 1; depth <= assertion.ancestorTitles.length; depth++) ancestors.add(JSON.stringify(assertion.ancestorTitles.slice(0, depth)));
+            }
+            return count + 1 + ancestors.size;
+          }, 0);
+          if (Number.isInteger(total) && total < visibleSuites) error('COUNT_MISMATCH', 'numTotalTestSuites is smaller than the visible file and describe population');
+          if (suiteKeys.every(key => Number.isInteger(data[key]))) countCheck(total, data.numPassedTestSuites + data.numFailedTestSuites + data.numPendingTestSuites, 'suite status totals');
+          for (const key of suiteKeys.slice(1)) if (Number.isInteger(total) && Number.isInteger(data[key]) && data[key] > total) error('COUNT_MISMATCH', `${key} exceeds numTotalTestSuites`);
+          const failedFiles = data.testResults.filter(suite => suite.status === 'failed' || suite.message || suite.assertionResults?.some(c => ['failed', 'fail'].includes(c.status))).length;
+          if (Number.isInteger(data.numFailedTestSuites) && data.numFailedTestSuites < failedFiles) error('COUNT_MISMATCH', 'numFailedTestSuites omits reported file failures');
+          if (data.success === true && data.numFailedTestSuites > 0) error('CONTRADICTORY_SUCCESS', 'success:true contradicts failed suite count');
+        }
         countCheck(data.numTotalTests, out.cases.length, 'numTotalTests');
         countCheck(data.numPassedTests, out.cases.filter(c => c.status === 'passed').length, 'numPassedTests');
         countCheck(data.numFailedTests, out.cases.filter(c => c.status === 'failed').length, 'numFailedTests');

@@ -656,6 +656,8 @@ The orchestration pattern: **Primary Author → Parallel Reviewers → Synthesiz
 - **Writing and voice tools** — reusable voice profiles, context-sensitive diagnostics, revision workflows, and
   alternatives for content generation.
 - **Testing quality** — test conformance, reversible normalization, mutation testing, and flaky-test review.
+  See the [AIWG test conformance example](docs/conformance-aiwg-example.md) for reviewed source controls
+  and runner evidence.
 - **Agent loops** — bounded execution, failure analysis, checkpoints, and supported process recovery.
 - **RLM** — recursive context decomposition for tasks whose source material needs to be divided into smaller working sets.
 - **YAML metalanguage** — structured workflow and artifact definitions with schema-oriented validation.

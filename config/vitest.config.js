@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import path from 'path';
+import { packagingFiles, discoveryFiles } from './test-lanes.mjs';
 
 // Watch-service tests use polling so host-wide inotify quotas cannot make the
 // suite nondeterministic on shared development and CI machines.
@@ -13,11 +14,13 @@ export default defineConfig({
       'test/**/*.test.ts',
       'test/**/*.spec.ts',
       'test/**/*.test.js',
+      'test/unit/**/*.test.mjs',
       'agentic/code/frameworks/*/test/**/*.test.ts',
       'agentic/code/frameworks/*/test/**/*.spec.ts'
     ],
 
-    // Exclude .mjs test files (use node:test runner) and all UAT tests.
+    // Runner ownership follows imported APIs, not the .mjs extension.
+    // Node unit tests and all UAT tests have their own required lanes.
     // UAT tests run in their own vitest config to avoid thread-pool conflicts
     // caused by ESM dynamic imports in the stub UAT fixtures.
     // CI runs stub UAT separately via: npm run uat
@@ -31,7 +34,8 @@ export default defineConfig({
     // and depends on the `vscode` module which only resolves inside the
     // VS Code Extension Test Runner — never let vitest discover it (#1210).
     exclude: [
-      'test/**/*.test.mjs',
+      // Required serial packaging and corpus lanes run separately in CI.
+      ...packagingFiles, ...discoveryFiles,
       'test/uat/**',
       'tools/ralph-external/**',
       'test/unit/ralph/**',
@@ -54,19 +58,13 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       reportsDirectory: './coverage',
 
-      // Coverage targets — globals (apply to anything not matched by
-      // per-directory overrides below).
-      lines: 80,
-      functions: 80,
-      branches: 70,
-      statements: 80,
-
       // Per-directory thresholds (#1176 cycle 3). The serve seam is the most
       // load-bearing surface in the integration story — stricter thresholds
       // here catch regressions before they reach the live UAT. tools/daemon/
       // sits below the seam and gets slightly looser thresholds because it
       // includes legacy adapter shims still being modernized.
       thresholds: {
+        lines: 80, functions: 80, branches: 70, statements: 80,
         'src/serve/**': {
           lines: 85,
           branches: 80,
@@ -82,7 +80,7 @@ export default defineConfig({
       },
 
       // Include/exclude patterns
-      include: ['src/**/*.ts'],
+      include: ['src/**/*.ts', 'tools/daemon/**/*.mjs'],
       exclude: [
         'src/**/*.test.ts',
         'src/**/*.spec.ts',
@@ -97,9 +95,7 @@ export default defineConfig({
       ],
 
       // Fail build if coverage thresholds not met
-      thresholdAutoUpdate: false,
-      skipFull: false,
-      all: true
+      skipFull: false
     },
 
     // Test execution configuration

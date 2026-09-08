@@ -15,6 +15,14 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
   negative controls, reversible normalization, platform templates, research guidance, and SDLC agents and flows.
   Qualify real Vitest and pytest lifecycles and retain explicit limits for other platform profiles.
 
+### Fixed
+
+- Exercise AIWG's own test conformance workflow: restore omitted Vitest tests, split mixed contract runners,
+  fail closed on validator setup errors, strengthen schema/fixture oracles, and prove multi-target control attribution.
+- Reconcile real Vitest nested-suite counters independently from result-file counts.
+- Share genuine package preparation in a required serial lane, correct coverage threshold placement, and enforce
+  a measured Testing Quality library denominator with a deliberate failure control.
+
 ## [2026.9.5] - 2026-09-07 - "DeepSeek Harness, shared bundles, and controlled writing"
 
 ### Fixed

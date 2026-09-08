@@ -8,7 +8,7 @@
  * @implements #423
  */
 
-import { beforeAll, describe, it, expect } from 'vitest';
+import { beforeAll, describe, it, expect, inject } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import { execFileSync, execSync } from 'child_process';
@@ -16,18 +16,6 @@ import { resolveProjectAiwgDir } from '../../../src/config/project-artifacts.js'
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '../../..');
 const AIWG_DIR = resolveProjectAiwgDir(REPO_ROOT);
-
-function parseNpmPackJson(stdout: string) {
-  try {
-    return JSON.parse(stdout);
-  } catch {
-    const start = stdout.lastIndexOf('\n[');
-    if (start >= 0) return JSON.parse(stdout.slice(start + 1));
-    const first = stdout.indexOf('[');
-    if (first >= 0) return JSON.parse(stdout.slice(first));
-    throw new Error('no JSON array found in npm pack output');
-  }
-}
 
 describe('AIWG artifact root tracking and distribution (integration)', () => {
 
@@ -79,13 +67,7 @@ describe('AIWG artifact root tracking and distribution (integration)', () => {
     let packedFiles: Set<string>;
 
     beforeAll(() => {
-      const output = execFileSync('npm', ['pack', '--dry-run', '--json'], {
-        cwd: REPO_ROOT,
-        encoding: 'utf-8',
-        maxBuffer: 64 * 1024 * 1024,
-        timeout: 120_000,
-      });
-      const pack = parseNpmPackJson(output);
+      const pack = [inject('basePackageManifest')];
       packedFiles = new Set(
         (pack?.[0]?.files ?? []).map((file: { path?: string }) => file.path ?? ''),
       );

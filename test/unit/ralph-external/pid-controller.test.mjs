@@ -184,28 +184,20 @@ describe('MetricsCollector', () => {
       expect(d).toBe(0);
     });
 
-    it('should calculate positive derivative for regression', () => {
-      // First iteration - low error
-      const iter1 = { analysis: { completionPercentage: 80 } };
-      collector.collect(iter1);
-
-      // Second iteration - higher error (regression)
-      const iter2 = { analysis: { completionPercentage: 60 } };
-      const result = collector.collect(iter2);
-
-      expect(result.derivative).toBeGreaterThan(0); // Positive = regression
+    it('reports regression only after the smoothing window has two prior observations', () => {
+      const first = collector.collect({ analysis: { completionPercentage: 80 } });
+      const second = collector.collect({ analysis: { completionPercentage: 80 } });
+      const result = collector.collect({ analysis: { completionPercentage: 60 } });
+      expect(first.derivative).toBe(0);
+      expect(second.derivative).toBe(0);
+      expect(result.derivative).toBeLessThan(0); // Error increasing is negative damping.
     });
 
-    it('should calculate negative derivative for improvement', () => {
-      // First iteration - high error
-      const iter1 = { analysis: { completionPercentage: 30 } };
-      collector.collect(iter1);
-
-      // Second iteration - lower error (improvement)
-      const iter2 = { analysis: { completionPercentage: 60 } };
-      const result = collector.collect(iter2);
-
-      expect(result.derivative).toBeLessThan(0); // Negative = improvement
+    it('reports improvement after two prior observations', () => {
+      collector.collect({ analysis: { completionPercentage: 30 } });
+      collector.collect({ analysis: { completionPercentage: 30 } });
+      const result = collector.collect({ analysis: { completionPercentage: 60 } });
+      expect(result.derivative).toBeGreaterThan(0); // Error decreasing is positive damping.
     });
   });
 

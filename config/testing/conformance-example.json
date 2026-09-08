@@ -1,0 +1,120 @@
+{
+  "apiVersion": "testing.aiwg.io/v1",
+  "kind": "TestConformanceProtocol",
+  "metadata": {
+    "name": "aiwg-controls-example",
+    "description": "Whole-file oracle review and attributable source mutation; no whole-repository or coverage claim."
+  },
+  "spec": {
+    "platform": "javascript-vitest",
+    "system": "AIWG negative-control attribution; one completely reviewed production test file",
+    "source": {
+      "include": [
+        "agentic/code/addons/testing-quality/lib/*.mjs",
+        "agentic/code/addons/testing-quality/schemas/*.schema.json"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.aiwg/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/target/**",
+        "**/bin/**",
+        "**/obj/**",
+        "**/__pycache__/**",
+        "**/*.test.{js,mjs,cjs,ts,tsx,jsx}",
+        "**/*.spec.{js,mjs,cjs,ts,tsx,jsx}",
+        "test-results/**"
+      ]
+    },
+    "tests": {
+      "include": [
+        "test/unit/addons/test-conformance-controls.test.ts"
+      ],
+      "exclude": [
+        "test-results/**"
+      ]
+    },
+    "areas": [
+      {
+        "id": "control-attribution",
+        "include": [
+          "test/unit/addons/test-conformance-controls.test.ts"
+        ]
+      }
+    ],
+    "lanes": [
+      {
+        "id": "controls",
+        "runner": "vitest",
+        "include": [
+          "test/unit/addons/test-conformance-controls.test.ts"
+        ],
+        "exclude": [],
+        "command": {
+          "argv": [
+            "node",
+            "node_modules/vitest/vitest.mjs",
+            "run",
+            "--config",
+            "config/testing/vitest.conformance-example.mjs",
+            "--reporter=json",
+            "--outputFile={evidenceDir}/raw/{runId}/execution.json"
+          ],
+          "timeoutMs": 120000
+        },
+        "result": {
+          "format": "vitest",
+          "path": "{evidenceDir}/raw/{runId}/execution.json"
+        },
+        "required": true,
+        "negativeControls": [],
+        "versionCommand": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "--version"
+        ],
+        "discovery": {
+          "command": {
+            "argv": [
+              "node",
+              "node_modules/vitest/vitest.mjs",
+              "list",
+              "--config",
+              "config/testing/vitest.conformance-example.mjs",
+              "--json={evidenceDir}/raw/{runId}/discovery.json"
+            ],
+            "timeoutMs": 120000
+          },
+          "result": {
+            "format": "vitest",
+            "path": "{evidenceDir}/raw/{runId}/discovery.json"
+          }
+        }
+      }
+    ],
+    "policy": {
+      "requireDiscovery": true,
+      "requireReview": true,
+      "requireNegativeControls": true,
+      "allowSkipped": false,
+      "coverageThresholds": {},
+      "maxFiles": 100000,
+      "maxFileBytes": 1048576,
+      "maxOutputBytes": 10485760
+    },
+    "research": {
+      "paths": [],
+      "allowWeb": false
+    },
+    "configFiles": [
+      "config/testing/vitest.conformance-example.mjs",
+      "config/testing/conformance-example.json",
+      "node_modules/vitest/package.json"
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "reviewer": "testing-quality semantic reviewer",
+  "reviewedAt": "2026-09-08T20:44:47.246062+00:00",
+  "bindings": {
+    "agentic/code/addons/testing-quality/lib/assessment.mjs": "655c480860c69b26123f1dc8d23457f1622b8edca9677a0540a10b510fdb7558",
+    "agentic/code/addons/testing-quality/lib/collector.mjs": "20f52ad3b05d3b2da92adf6c9f612fbb819103a42218ce0c82dedb42edd325e8",
+    "agentic/code/addons/testing-quality/lib/contracts.mjs": "ec96e012638281b90b7d8cd384b8abb85c9a0c58d876f31519c357a88a40ac4e",
+    "agentic/code/addons/testing-quality/lib/controls.mjs": "9b6d443f331051423ad0078107ce3006be23bea3ccdb3e3fb71188ddf264239d",
+    "agentic/code/addons/testing-quality/lib/coverage.mjs": "5108aff3506c79172169dd868dbcb705380fc40fd36b6146fa353e0f789832ba",
+    "agentic/code/addons/testing-quality/lib/inventory.mjs": "9be80e477b33623160ee261ec16c6d1ce3f3d8043ea82a089ed19decf47faf6b",
+    "agentic/code/addons/testing-quality/lib/normalization.mjs": "9a35d4702a1a15558a85354f9ef56efe2f0e7b76974a49742f0f3dfe9fbbc132",
+    "agentic/code/addons/testing-quality/lib/profiles.mjs": "5203172e56015e5c5e54bf40e2d3f8224f07ff1cc144831721b175c592b2b100",
+    "agentic/code/addons/testing-quality/lib/research.mjs": "85e28ea486d519526643c073b3bf24cd15275d8b8c2af57fc58aa8735c4b20f6",
+    "agentic/code/addons/testing-quality/lib/results.mjs": "fb416521b6d7a5539156985aa7c009ec3330b551318fdbea9175ed2b9cb0b2e1",
+    "agentic/code/addons/testing-quality/lib/templates.mjs": "b18af2b27a42f4c9cfed508df573c5b96876705316b3e36ab7c19870b116ef7a",
+    "agentic/code/addons/testing-quality/lib/workspace.mjs": "a783b756fe87a4ded765eb3e0259e586f3aba002adb5156746d4f7e81c632b0c",
+    "agentic/code/addons/testing-quality/lib/xml-results.mjs": "92abccb6e9319563b5d7c11dff648e6e97e0adbcf15e1855a46e985855d6e6af",
+    "test/unit/addons/test-conformance-controls.test.ts": "24cd081d1b78c32bb9983fc544a3c6e7bdea378af9bb7c3729e52b3b883e778f",
+    "agentic/code/addons/testing-quality/schemas/test-coverage.v1.schema.json": "00ebbabc6789c01488789395593ca95b2f6136ff5f09e0d8cc5a2adfefc98292",
+    "agentic/code/addons/testing-quality/schemas/custom-template.v1.schema.json": "8c8378ef024d1f4db480efd50b97da6992ec6e9082b495552be68ef2f1a686c2",
+    "agentic/code/addons/testing-quality/schemas/normalization-plan.v1.schema.json": "f20b7ef9ed089229d785827f09419438a441eb071bc397c6ed4e4a04e9a3ff05",
+    "agentic/code/addons/testing-quality/schemas/test-conformance-research.v1.schema.json": "4ae64407e22f43a45eec29226068ab9a747f65ccf0852130d4346c8af64037c1",
+    "agentic/code/addons/testing-quality/schemas/test-review.v1.schema.json": "c730e091ebbc39a275b4156ac1aeb710419b626b53fc058d861ef8524c1bca7a",
+    "agentic/code/addons/testing-quality/schemas/test-inventory.v1.schema.json": "e195a04ff9b4fcdac7a023568906c4834c7ce0de67417d45b995a865b0ee11af",
+    "agentic/code/addons/testing-quality/schemas/normalization-receipt.v1.schema.json": "b6061f794e7579e31c73cc814e92beabc29e90a65cbfd318bd9c2e7ac2d7ae67",
+    "agentic/code/addons/testing-quality/schemas/conformance-protocol.v1.schema.json": "4b3c24462f97da5faf46216f0a905538e3fbfc8468aeb3da4e3b713c90ff9593",
+    "agentic/code/addons/testing-quality/schemas/test-conformance-assessment.v1.schema.json": "37d9fa7b0428bff45ac221d92882544a36bb44f0e185896cf9d0248059473d56",
+    "agentic/code/addons/testing-quality/schemas/test-sample.v1.schema.json": "29de16c542edaddef12170743e8a2560bcc7ed7f1fade5b3b8a2e47df8f55428",
+    "agentic/code/addons/testing-quality/schemas/test-run-receipt.v1.schema.json": "407745f26bbe05f59c0c5ab7909968d145f5b291e33e01935dc8a8b420bec62f",
+    "agentic/code/addons/testing-quality/schemas/normalized-results.v1.schema.json": "fb9b760c1bafb451977e0704f59f9054c49c1d9d3d1941a5bb1361e6c0d970bf",
+    "agentic/code/addons/testing-quality/schemas/negative-control-receipt.v1.schema.json": "a9c7d84db7202b5b6beae03483f1f8ff9fcda70f00ce3dfd6d1170688e67b8a3",
+    "config/testing/vitest.conformance-example.mjs": "025b7ec7bd4f1675d2c5a4b723860dc2297c6dc2e4553beb0e3ab1a016ef5559",
+    "config/testing/conformance-example.json": "84977ad7f527173e8a01b0b5c5058f10f333bd62e21bdf33763abbd090fe3e00"
+  },
+  "files": [
+    {
+      "path": "test/unit/addons/test-conformance-controls.test.ts",
+      "sut": "collectControls and verifyControls in the shipped controls.mjs, with actual collector subprocesses, normalization transactions, strict contracts, inventoried files, canonical result normalization and report re-verification.",
+      "claim": "The complete controls test file checks targeted mutation attribution, every-selected-case sensitivity, surviving oracles, unrelated failure rejection, setup errors, restored source, tampered evidence, recipe and entrypoint restrictions, stale baseline refusal, and stopping after incomplete permission restoration.",
+      "oracle": "Temporary runners compare actual source data to independently fixed expected values. Three-case fixtures require exact stable ID/status maps: only one selected failure remains unknown, non-target failure remains unknown, and both selected failures kill the control. Other cases assert precise outcomes/diagnostics, actual restored bytes, absence of application on rejected plans, immutable raw-report tamper detection and durable partial rollback status.",
+      "validity": "All eleven runner-expanded cases passed in targeted Vitest execution. The every-versus-some semantic gap now has a mixed two-selected-case counterexample. Setup failures lack valid case evidence and must remain unknown. Fixtures intentionally include a vacuous runner only to prove surviving weak-oracle rejection; it is not claimed as an adequate production test.",
+      "isolation": "Each case gets an OS-created unique temporary root removed in afterEach. Target commands execute that root. The single chmod spy delegates ordinary behavior to the original implementation and is restored in finally; its partial-restoration test verifies later controls stop. No network/service mocks or shared persistent target data are used.",
+      "determinism": "Expected values, case IDs and status arrays are fixed. UUID artifact names are observed rather than asserted. Tests use explicit bounded subprocess timeouts and exact filesystem bytes; no randomized inputs or timing-based success oracle. Filesystem permission behavior assumes the tested POSIX environment.",
+      "normalization": "Tracked changes were made through a complete-content normalization plan and apply receipt. Tests reject test/harness and runner entrypoint edits as negative controls and preserve baseline source after supported mutations. The planned source-only every-to-some sensitivity experiment is separate from these edits and remains unexecuted by this worker.",
+      "maintainability": "A shared fixture constructs single-case targets and a dedicated multi-target helper constructs independent expected-value checks. Parameterized cases name distinct attribution outcomes; full ID/status maps expose which case failed. Existing library and actual-runner qualification boundaries remain separate rather than deleting meaningful overlap.",
+      "scope": "Full semantic source review of all eleven cases in test-conformance-controls.test.ts, including eight existing tests and three new parameterized attribution cases; no sampled case is substituted for another file review. Targeted execution also covers four platform lifecycle and two external-cwd CLI platform cases, seventeen total. Whole repository and other platform controls are outside this review.",
+      "verdict": "passed",
+      "findings": []
+    }
+  ],
+  "control": {
+    "path": "agentic/code/addons/testing-quality/lib/controls.mjs",
+    "from": "return ids.length > 0 && ids.every(id => lane.normalized.cases.some(c => c.id === id && c.status === state));",
+    "to": "return ids.length > 0 && ids.some(id => lane.normalized.cases.some(c => c.id === id && c.status === state));",
+    "description": "Replacing universal selected-case matching with existential matching falsely classifies one failed plus one passing selected case as a killed control; the test independently expects unknown.",
+    "cases": [
+      "attributable negative test controls > attributes multiple targets when 'one selected case survives'"
+    ]
+  }
+}

@@ -27,7 +27,47 @@ async function fixture({weak=false,crash=false,editTest=false,wrongCommand=false
   const evidence=await collectEvidence(root,protocol);
   return {protocol,evidence};
 }
+async function multipleTargets(mutated: number[], selected: string[]) {
+  const { protocol } = await fixture();
+  const names = ['first selected result', 'second selected result', 'unselected decoy'];
+  await fs.writeFile(path.join(root, 'src/value.txt'), JSON.stringify([2, 4, 6]));
+  await fs.writeFile(path.join(root, 'test/runner.test.mjs'), `import fs from 'node:fs';
+const actual = JSON.parse(fs.readFileSync('src/value.txt','utf8'));
+const expected = [2,4,6];
+const names = ${JSON.stringify(names)};
+const cases = names.map((name,index)=>({file:'test/runner.test.mjs',name,status:actual[index]===expected[index]?'passed':'failed'}));
+const failed = cases.some(c=>c.status==='failed');
+console.log(JSON.stringify({complete:true,mode:'execution',cases,files:[{path:'test/runner.test.mjs',status:failed?'failed':'passed'}]}));
+process.exitCode=failed?1:0;
+`);
+  const plan = await createPlan(root, [{ path: 'src/value.txt', content: JSON.stringify(mutated) }]);
+  await fs.writeFile(path.join(root, '.aiwg/testing/control-plan.json'), JSON.stringify(plan));
+  protocol.spec.lanes[0].negativeControls[0].testIds = selected.map(name => JSON.stringify(['default','test/runner.test.mjs',name]));
+  return { protocol, evidence: await collectEvidence(root, protocol), names };
+}
+const caseStates = (receipt: any) => receipt.spec.lanes[0].normalized.cases.map((c: any) => ({ id: c.id, status: c.status }));
 describe('attributable negative test controls',()=>{
+  it.each([
+    { label: 'one selected case survives', mutated: [0,4,6], states: ['failed','passed','passed'], status: 'unknown' },
+    { label: 'only the non-target decoy fails', mutated: [2,4,0], states: ['passed','passed','failed'], status: 'unknown' },
+    { label: 'every selected case fails', mutated: [0,0,6], states: ['failed','failed','passed'], status: 'killed' },
+  ])('attributes multiple targets when $label', async ({ mutated, states, status }) => {
+    const selected = ['first selected result', 'second selected result'];
+    const { protocol, evidence, names } = await multipleTargets(mutated, selected);
+    const expected = (statuses: string[]) => names.map((name, index) => ({ id: JSON.stringify(['default','test/runner.test.mjs',name]), status: statuses[index] }));
+    expect(caseStates(evidence)).toEqual(expected(['passed','passed','passed']));
+    const receipt = await collectControls(root, protocol, { evidence });
+    const control = receipt.spec.controls[0];
+    expect(control.status).toBe(status);
+    expect(receipt.spec.status).toBe(status === 'killed' ? 'passed' : 'unknown');
+    expect(caseStates(control.mutationReceipt)).toEqual(expected(states));
+    expect(caseStates(control.restoredReceipt)).toEqual(expected(['passed','passed','passed']));
+    expect(control.rollbackReceipt.spec.status).toBe('rolled-back');
+    expect(receipt.spec.sourceRestored).toBe(true);
+    expect(await fs.readFile(path.join(root,'src/value.txt'),'utf8')).toBe('[2,4,6]');
+    if (status === 'killed') expect(await verifyControls(root, protocol, receipt)).toEqual([]);
+    else expect(control.diagnostics.map((d: any) => d.message)).toContain('Control failure was not attributable to every selected test case');
+  });
   it('executes a real source mutation, proves selected case failure, restores and reruns baseline',async()=>{
     const {protocol,evidence}=await fixture();
     const receipt=await collectControls(root,protocol,{evidence});

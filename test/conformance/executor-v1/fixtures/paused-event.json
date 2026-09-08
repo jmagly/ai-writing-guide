@@ -1,0 +1,16 @@
+{
+  "_fixture": "paused-event",
+  "_description": "Canonical optional pause envelope; schema evidence only, not proof of live pause support.",
+  "event_sequence": [
+    {
+      "event": "mission.paused",
+      "executor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "mission_id": "m-paused001",
+      "ts": "2026-05-08T20:20:00.000Z",
+      "data": {
+        "state": "paused",
+        "reason": "Operator requested pause"
+      }
+    }
+  ]
+}

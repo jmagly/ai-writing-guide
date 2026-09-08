@@ -10,6 +10,11 @@ import { collectEvidence, verifyReceipt } from '../../../agentic/code/addons/tes
 // @ts-expect-error Native addon module.
 import { addonRoot } from '../../../agentic/code/addons/testing-quality/lib/contracts.mjs';
 
+// @ts-expect-error Shipped addon MJS.
+import { collectControls, verifyControls } from '../../../agentic/code/addons/testing-quality/lib/controls.mjs';
+// @ts-expect-error Shipped addon MJS.
+import { createPlan } from '../../../agentic/code/addons/testing-quality/lib/normalization.mjs';
+
 const python = process.env.TEST_CONFORMANCE_PYTHON || 'python3';
 const pythonReady = spawnSync(python, ['-c', 'import pytest'], { encoding: 'utf8' }).status === 0;
 let root: string;
@@ -32,7 +37,10 @@ async function lifecycle(protocol: any, source: string, broken: string, marker: 
   expect((await verifyReceipt(root, protocol, execution)).some((e: any) => e.code === 'STALE_RECEIPT')).toBe(true);
   const failed = await collectEvidence(root, protocol);
   expect(failed.spec.lanes[0].process.exitCode).toBe(1);
-  expect(failed.spec.lanes[0].normalized.summary.failed).toBeGreaterThan(0);
+  const pythonCase = source.endsWith('.py');
+  const file = pythonCase ? 'tests/test_positive.py' : 'test/positive.test.js';
+  const names = pythonCase ? ['tests/test_positive.py::test_boundary[0-False]', 'tests/test_positive.py::test_boundary[1-True]'] : ['positive > boundary 0', 'positive > boundary 1'];
+  expect(failed.spec.lanes[0].normalized.cases.map((c: any) => ({id:c.id,status:c.status}))).toEqual(names.map((name,index)=>({id:JSON.stringify(['default',file,name]),status:index===0?'failed':'passed'})));
 }
 
 describe('real registered-versus-executed platform qualification', () => {
@@ -63,6 +71,41 @@ describe('positive',()=>{ for (const [n,want] of [[0,false],[1,true]]) test('bou
     lane.versionCommand[0] = python;
     await lifecycle(protocol, 'src/positive.py', 'def positive(n):\n    return n >= 0\n', 'body-ran');
   }, 30000);
+  it('qualifies real Vitest negative controls with exact case attribution and restored evidence', async () => {
+    await fs.symlink(path.resolve('node_modules'), path.join(root,'node_modules'),'dir');
+    await write('package.json','{"type":"module"}');
+    await write('vitest.config.mjs','export default {test:{include:["test/**/*.test.js"]}};');
+    const original = 'export const positive = n => n > 0;';
+    await write('src/positive.js',original);
+    await write('test/positive.test.js',`import {test,expect} from 'vitest';
+import {positive} from '../src/positive.js';
+for (const [value,want] of [[0,false],[1,true]]) test('boundary '+value,()=>expect(positive(value)).toBe(want));`);
+    const protocol = await createProtocol(root,{platform:'javascript-vitest'});
+    const lane = protocol.spec.lanes[0];
+    const plan = await createPlan(root,[{path:'src/positive.js',content:'export const positive = n => n >= 0;'}]);
+    await write('.aiwg/testing/control-plan.json',JSON.stringify(plan));
+    const ids = [0,1].map(value=>JSON.stringify(['default','test/positive.test.js','boundary '+value]));
+    lane.negativeControls = [{id:'zero-boundary',description:'Zero is not positive; preserve the positive case',command:lane.command,result:lane.result,testIds:[ids[0]],changePlan:'.aiwg/testing/control-plan.json'}];
+    const discovery = await collectEvidence(root,protocol,{mode:'discovery'});
+    expect(discovery.spec.lanes[0].normalized.cases.map((c: any)=>c.id)).toEqual(ids);
+    const baseline = await collectEvidence(root,protocol);
+    const states = (receipt: any) => receipt.spec.lanes[0].normalized.cases.map((c: any)=>({id:c.id,status:c.status}));
+    const expected = (zero: string) => [{id:ids[0],status:zero},{id:ids[1],status:'passed'}];
+    expect(states(baseline)).toEqual(expected('passed'));
+    const receipt = await collectControls(root,protocol,{evidence:baseline});
+    expect(receipt.spec.status).toBe('passed');
+    const control = receipt.spec.controls[0];
+    expect(control.status).toBe('killed');
+    expect(states(control.mutationReceipt)).toEqual(expected('failed'));
+    expect(states(control.restoredReceipt)).toEqual(expected('passed'));
+    expect(control.mutationReceipt.spec.lanes[0].process.exitCode).toBe(1);
+    expect(control.restoredReceipt.spec.lanes[0].process.exitCode).toBe(0);
+    expect(control.rollbackReceipt.spec.status).toBe('rolled-back');
+    expect(receipt.spec.sourceRestored).toBe(true);
+    expect(await fs.readFile(path.join(root,'src/positive.js'),'utf8')).toBe(original);
+    expect(await verifyControls(root,protocol,receipt)).toEqual([]);
+  }, 60000);
+
   it.skipIf(!pythonReady)('retains pytest skip, setup/teardown failures and collection errors', async () => {
     await write('pytest.ini', '[pytest]\ntestpaths = tests\n');
     await write('tests/test_phases.py', `import pytest
@@ -94,6 +137,11 @@ def test_skip():
     const execution = await collectEvidence(root, protocol);
     expect(execution.spec.lanes[0].normalized.complete).toBe(true);
     expect(execution.spec.lanes[0].normalized.summary).toMatchObject({ total: 3, failed: 2, skipped: 1, passed: 0 });
+    expect(execution.spec.lanes[0].normalized.cases.map((c: any)=>({id:c.id,status:c.status}))).toEqual([
+      {id:JSON.stringify(['default','tests/test_phases.py','tests/test_phases.py::test_setup']),status:'failed'},
+      {id:JSON.stringify(['default','tests/test_phases.py','tests/test_phases.py::test_teardown']),status:'failed'},
+      {id:JSON.stringify(['default','tests/test_phases.py','tests/test_phases.py::test_skip']),status:'skipped'},
+    ]);
     await write('tests/test_broken_import.py', 'raise RuntimeError("collection broke")\n');
     const collection = await collectEvidence(root, protocol, { mode: 'discovery' });
     expect(collection.spec.lanes[0].normalized.complete).toBe(false);

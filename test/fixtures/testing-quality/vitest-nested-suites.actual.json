@@ -1,0 +1,66 @@
+{
+  "numTotalTestSuites": 3,
+  "numPassedTestSuites": 3,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 2,
+  "numPassedTests": 2,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1788900119288,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "outer",
+            "inner"
+          ],
+          "fullName": "outer inner adds independent inputs",
+          "status": "passed",
+          "title": "adds independent inputs",
+          "duration": 4.3289120000000025,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "outer",
+            "inner"
+          ],
+          "fullName": "outer inner rejects zero as positive",
+          "status": "passed",
+          "title": "rejects zero as positive",
+          "duration": 0.5634279999999876,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1788900119690,
+      "endTime": 1788900119694.5635,
+      "status": "passed",
+      "message": "",
+      "name": "/target/tests/nested.test.mjs"
+    }
+  ]
+}

@@ -24,6 +24,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import {
   loadFixture,
   hashFixture,
+  reviewedFixtureHashes,
   validateSchema,
   stripAnnotations,
   createRegistryForTest,
@@ -31,7 +32,7 @@ import {
 
 // ── Fixture integrity ────────────────────────────────────────────────────────
 
-const FIXTURE_HASH = hashFixture('auth-token-rotation');
+const FIXTURE_HASH = reviewedFixtureHashes['auth-token-rotation'];
 
 describe('[Core] Auth — fixture integrity', () => {
   it('auth-token-rotation fixture hash is stable (drift guard)', () => {

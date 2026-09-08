@@ -1197,6 +1197,16 @@
       "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
     },
     {
+      "path": "test/conformance/executor-v1/client.test.mjs",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "executor.aiwg.io/v1",
+      "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
+    },
+    {
       "path": "test/conformance/executor-v1/dispatch/dispatch.test.mjs",
       "owner": "test/conformance",
       "role": "fixture-or-test",
@@ -1211,7 +1221,9 @@
       "owner": "test/conformance",
       "role": "fixture-or-test",
       "currentVersion": "executor.aiwg.io/v1",
-      "statusVocabulary": [],
+      "statusVocabulary": [
+        "running"
+      ],
       "serialization": "typescript/javascript",
       "migrationAction": "retain",
       "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
@@ -1264,6 +1276,16 @@
         "done",
         "running"
       ],
+      "serialization": "json",
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
+    },
+    {
+      "path": "test/conformance/executor-v1/fixtures/paused-event.json",
+      "owner": "test/conformance",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [],
       "serialization": "json",
       "migrationAction": "retain",
       "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."

@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
 // @ts-expect-error addon source is distributed JavaScript
 import { normalizeResults } from '../../../agentic/code/addons/testing-quality/lib/results.mjs';
+
+const nestedVitest = JSON.parse(fs.readFileSync(new URL('../../fixtures/testing-quality/vitest-nested-suites.actual.json', import.meta.url), 'utf8'));
 
 const options = { root: '/target', laneId: 'unit' };
 const normalize = (raw: unknown, format = 'canonical', extra = {}) => normalizeResults(raw, { ...options, format, ...extra });
@@ -35,6 +38,44 @@ describe('test conformance result normalization', () => {
     expect(out.files).toEqual([{ path: 'test/setup.ts', status: 'failed' }]);
     expect(out.summary).toEqual({ total: 0, passed: 0, failed: 0, skipped: 0 });
     expect(out.complete).toBe(true);
+  });
+  it('reconciles actual Vitest nested describe suite counts separately from files', () => {
+    // Captured from installed Vitest 4.1.11: outer > inner, two real assertions.
+    // Only the machine-specific file path was normalized to /target/tests/.
+    expect(nestedVitest.numTotalTestSuites).toBe(3);
+    expect(nestedVitest.testResults).toHaveLength(1);
+    const out = normalize(nestedVitest, 'vitest');
+    expect(out.errors).toEqual([]);
+    expect(out.complete).toBe(true);
+    expect(out.files).toEqual([{ path: 'tests/nested.test.mjs', status: 'passed' }]);
+    expect(out.cases.map((c: any) => ({ id: c.id, status: c.status }))).toEqual([
+      { id: JSON.stringify(['unit','tests/nested.test.mjs','outer > inner > adds independent inputs']), status: 'passed' },
+      { id: JSON.stringify(['unit','tests/nested.test.mjs','outer > inner > rejects zero as positive']), status: 'passed' },
+    ]);
+    expect(out.summary).toEqual({total:2,passed:2,failed:0,skipped:0});
+    expect(normalize(nestedVitest, 'jest').errors).toContainEqual(expect.objectContaining({code:'COUNT_MISMATCH'}));
+  });
+  it.each([
+    {numTotalTestSuites:0}, {numTotalTestSuites:-1}, {numTotalTestSuites:1.5},
+    {numTotalTestSuites:1,numPassedTestSuites:1}, {numTotalTestSuites:'3'}, {numPassedTestSuites:-1}, {numPassedTestSuites:4},
+    {numFailedTestSuites:1.5}, {numPendingTestSuites:4}, {numPassedTestSuites:2},
+  ])('rejects malformed Vitest suite accounting %j', change => {
+    const out = normalize({...nestedVitest,...change},'vitest');
+    expect(out.complete).toBe(false);
+    expect(out.errors).toContainEqual(expect.objectContaining({code:'COUNT_MISMATCH'}));
+  });
+  it('preserves nested Vitest setup failures without fabricating failed cases', () => {
+    const report = {...nestedVitest, success:false, numTotalTests:0, numPassedTests:0,
+      numPassedTestSuites:0, numFailedTestSuites:3,
+      testResults:[{name:'/target/tests/nested.test.mjs',status:'failed',message:'beforeAll failed',assertionResults:[]}]};
+    const out = normalize(report,'vitest');
+    expect(out.complete).toBe(true);
+    expect(out.errors).toEqual([]);
+    expect(out.files).toEqual([{path:'tests/nested.test.mjs',status:'failed'}]);
+    expect(out.summary).toEqual({total:0,passed:0,failed:0,skipped:0});
+    expect(normalize({...report,numFailedTestSuites:0,numPassedTestSuites:3},'vitest').errors).toContainEqual(expect.objectContaining({code:'COUNT_MISMATCH'}));
+    expect(normalize({...report,success:true},'vitest').errors).toContainEqual(expect.objectContaining({code:'CONTRADICTORY_SUCCESS'}));
+    expect(normalize({...nestedVitest,numTotalTests:3},'vitest').errors).toContainEqual(expect.objectContaining({code:'COUNT_MISMATCH'}));
   });
   it('rejects contradictory aggregate and case counts', () => {
     expect(normalize(jest({ numTotalTests: 2 }), 'jest').errors).toContainEqual(expect.objectContaining({ code: 'COUNT_MISMATCH' }));

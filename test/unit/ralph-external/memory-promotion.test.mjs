@@ -6,17 +6,20 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { existsSync, rmSync, mkdirSync } from 'fs';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'path';
 import { MemoryPromotion } from '../../../tools/ralph-external/lib/memory-promotion.mjs';
 import { SemanticMemory } from '../../../tools/ralph-external/lib/semantic-memory.mjs';
 
-const TEST_DIR = join(process.cwd(), '.test-promotion');
+let TEST_DIR;
 
 describe('MemoryPromotion', () => {
   let promotion;
   let semanticMemory;
 
   beforeEach(() => {
+    TEST_DIR = mkdtempSync(join(tmpdir(), 'aiwg-memory-promotion-'));
     // Clean test directory
     if (existsSync(TEST_DIR)) {
       rmSync(TEST_DIR, { recursive: true });

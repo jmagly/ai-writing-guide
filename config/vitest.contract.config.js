@@ -5,7 +5,9 @@ export default defineConfig({
   root: path.resolve(import.meta.dirname, '..'),
   test: {
     include: [
-      'test/contract/**/*.test.mjs',
+      'test/contract/docsite-cdn-purge.test.mjs',
+      'test/contract/docsite-theme.test.mjs',
+      'test/contract/sandbox-transport.test.mjs',
     ],
     exclude: [
       'node_modules/**',

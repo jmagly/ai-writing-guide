@@ -6,15 +6,18 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { existsSync, rmSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'path';
 import { SemanticMemory } from '../../../tools/ralph-external/lib/semantic-memory.mjs';
 
-const TEST_DIR = join(process.cwd(), '.test-knowledge');
+let TEST_DIR;
 
 describe('SemanticMemory', () => {
   let memory;
 
   beforeEach(() => {
+    TEST_DIR = mkdtempSync(join(tmpdir(), 'aiwg-semantic-memory-'));
     // Clean test directory
     if (existsSync(TEST_DIR)) {
       rmSync(TEST_DIR, { recursive: true });

@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { parse as parseYaml } from 'yaml';
 import {
   ClaudeSessionAdapter,
   CodexSessionAdapter,
@@ -164,12 +165,14 @@ describe('fifteen-provider session release conformance', () => {
   });
 
   it('keeps the provider matrix and session gates in required CI', () => {
-    const workflow = readFileSync(resolve(root, '.gitea/workflows/ci.yml'), 'utf8');
-    expect(workflow).toContain('npm run test:ci');
-    expect(workflow).toContain('npm run test:sessions:sqlite');
-    expect(workflow).toMatch(/name:\s+Test/);
-    expect(workflow).toMatch(/name:\s+Build/);
-    expect(workflow).toMatch(/needs:\s+\[test\]/);
+    const workflow = parseYaml(readFileSync(resolve(root, '.gitea/workflows/ci.yml'), 'utf8'));
+    const testJob = workflow.jobs.test;
+    expect(testJob.name).toBe('Test');
+    const commands = testJob.steps.map((step: { run?: string }) => step.run ?? '');
+    expect(commands).toContain('npm run test:ci');
+    expect(commands).toContain('npm run test:sessions:sqlite');
+    expect(workflow.jobs.build.name).toBe('Build');
+    expect(workflow.jobs.build.needs).toContain('test');
   });
 });
 

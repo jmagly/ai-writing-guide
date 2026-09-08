@@ -87,12 +87,26 @@ jobs:
       - name: Build CLI (required by integration tests that spawn bin/aiwg.mjs)
         run: npm run build:cli
 
-      - name: Run Fortemi Core index release gate (#1696/#1697)
-        # Builds the real framework corpus index, validates the checked-in
-        # component-to-driver coverage report and discovery query matrix
-        # against local + Fortemi Core backends, and proves npm packaging
-        # includes the generated prebuilt index contract.
-        run: npm run ci:fortemi-index
+      - name: Verify test runner ownership
+        run: npm run lint:test-registration
+
+      - name: Enforce measured testing-quality library coverage
+        run: npm run test:coverage:testing-quality && npm run test:coverage:enforcement
+
+      - name: Run source-bound testing conformance example
+        run: npm run test:conformance:example
+
+      - name: Preserve testing conformance evidence
+        if: always()
+        uses: actions/upload-artifact@c24449f33cd45d4826c6702db7e49f7cdb9b551d  # v3.2.1-node20
+        with:
+          name: testing-conformance-${{ gitea.sha }}
+          path: |
+            test-results/conformance-example
+            test-results/test-registration.json
+            test-results/testing-quality-coverage
+            test-results/coverage-enforcement
+          if-no-files-found: error
 
       - name: Lint schemas
         # Validates schemas/executor-v1.json (draft-2020-12) and all
@@ -121,6 +135,9 @@ jobs:
         # specs, the AppRole policy, and migration docs without reading live
         # secret values. Live metadata is checked separately after induction.
         run: npm run lint:vault-migration
+
+      - name: Run contracts in their owning Vitest and Node lanes
+        run: npm run test:contract
 
       - name: Run conformance suite (fixture mode)
         # Exercises the executor-contract v1 dispatch path via fixture replay.
@@ -207,12 +224,45 @@ jobs:
           AIWG_SERVE_HTTP_TIMEOUT_MS: "30000"
         run: npm run test:integration:serve
 
+  # Real package installation/build and full-corpus discovery are isolated
+  # gates. Local measured baselines are ~228s packaging and ~442s discovery
+  # before its packed-install smoke; neither competes with general test workers.
+  packaging:
+    name: Package lifecycle
+    runs-on: ubuntu-latest
+    container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build CLI prerequisites
+        run: npm run build:cli
+      - name: Run isolated packaging lifecycle tests
+        run: npm run test:packaging
+
+  release-discovery:
+    name: Release discovery and installed package
+    runs-on: ubuntu-latest
+    container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build CLI prerequisites
+        run: npm run build:cli
+      - name: Verify real corpus, tarball and installed discovery
+        run: npm run ci:fortemi-index
+
   build:
     name: Build
     runs-on: ubuntu-latest
     container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb  # node 24.15.0 / npm 11.12.1 (see ci/digests.txt)
     timeout-minutes: 10
-    needs: [test]
+    needs: [test, packaging, release-discovery]
 
     steps:
       - name: Checkout code

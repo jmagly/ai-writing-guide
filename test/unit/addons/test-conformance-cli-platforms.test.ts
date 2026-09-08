@@ -46,8 +46,13 @@ async function qualify(platform: string) {
   const sample = run('sample', ['--inventory', '.aiwg/testing/initial-inventory.json', '--evidence', '.aiwg/testing/discovery.json', '--unit', 'registered-case', '--seed', 'repair-qualification', '--size', '2']);
   expect(sample.spec.areas[0].sampled).toBe(2);
   expect(discovery.spec.lanes[0].normalized.cases).toHaveLength(2);
+  const file = isPython ? 'tests/test_boundary.py' : 'tests/boundary.test.js';
+  const names = isPython ? ['tests/test_boundary.py::test_boundary[0-False]','tests/test_boundary.py::test_boundary[1-True]'] : ['boundary 0','boundary 1'];
+  const expected = (zero: string) => names.map((name,index)=>({id:JSON.stringify(['default',file,name]),status:index===0?zero:'passed'}));
+  const states = (receipt: any) => receipt.spec.lanes[0].normalized.cases.map((c: any)=>({id:c.id,status:c.status}));
+  expect(discovery.spec.lanes[0].normalized.cases.map((c: any)=>c.id)).toEqual(expected('unknown').map(c=>c.id));
   const failure = run('collect', ['--output', '.aiwg/testing/before-repair.json'], 2);
-  expect(failure.spec.lanes[0].normalized.summary.failed).toBe(1);
+  expect(states(failure)).toEqual(expected('failed'));
   await write('.aiwg/testing/changes.json', JSON.stringify({ purpose: 'Repair boundary behavior; preserve the existing oracle', edits: [{ path: source, content: fixed }] }));
   const plan = run('plan', ['--changes', '.aiwg/testing/changes.json', '--output', '.aiwg/testing/repair-plan.json']);
   expect(await fs.readFile(path.join(root, source), 'utf8')).toBe(broken);
@@ -55,10 +60,10 @@ async function qualify(platform: string) {
   const applied = run('apply', ['--plan', '.aiwg/testing/repair-plan.json', '--receipt', '.aiwg/testing/repair-receipt.json']);
   expect(await fs.readFile(path.join(root, source), 'utf8')).toBe(fixed);
   const repaired = run('collect', ['--output', '.aiwg/testing/after-repair.json']);
-  expect(repaired.spec.lanes[0].normalized.summary.passed).toBe(2);
+  expect(states(repaired)).toEqual(expected('passed'));
   run('rollback', ['--receipt', applied.spec.receiptPath]);
   expect(await fs.readFile(path.join(root, source), 'utf8')).toBe(broken);
-  expect(run('collect', [], 2).spec.lanes[0].normalized.summary.failed).toBe(1);
+  expect(states(run('collect', [], 2))).toEqual(expected('failed'));
   expect(await fs.readdir(external)).toEqual([]);
 }
 

@@ -21,6 +21,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import {
   loadFixture,
   hashFixture,
+  reviewedFixtureHashes,
   validateSchema,
   createRegistryForTest,
   FakeWsConn,
@@ -28,7 +29,7 @@ import {
 
 // ── Fixture integrity ────────────────────────────────────────────────────────
 
-const FIXTURE_HASH = hashFixture('resumable-suspend-resume');
+const FIXTURE_HASH = reviewedFixtureHashes['resumable-suspend-resume'];
 
 describe('[Resumable] Resumable — fixture integrity', () => {
   it('resumable-suspend-resume fixture hash is stable (drift guard)', () => {

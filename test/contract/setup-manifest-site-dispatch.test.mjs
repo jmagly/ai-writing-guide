@@ -52,7 +52,11 @@ test('beginner surfaces keep the three-step self-verifying install contract', as
     'docs/getting-started/macos-install.md',
   ]) {
     const body = await readFile(file, 'utf8');
-    assert.match(body, /aiwg use all --provider <provider>/, file);
+    // Beginner guides route to one canonical setup path instead of copying CLI steps.
+    const target = file === 'docs/getting-started/install-connect-verify.md'
+      ? /\[manual installation reference\]\(\.\.\/cli\/install-and-repair\.md\)/
+      : /\]\(install-connect-verify\.md\)/;
+    assert.match(body, target, file);
     assert.doesNotMatch(body, /aiwg index build --all/, file);
   }
 });

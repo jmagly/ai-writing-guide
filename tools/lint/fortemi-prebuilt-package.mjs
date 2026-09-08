@@ -46,7 +46,9 @@ function parseNpmPackJson(stdout) {
   }
 }
 
-const pack = spawnSync('npm', ['pack', '--dry-run', '--json'], {
+const tmp = mkdtempSync(path.join(os.tmpdir(), 'aiwg-fortemi-prebuilt-gate-'));
+process.once('exit', () => rmSync(tmp, { recursive: true, force: true }));
+const pack = spawnSync('npm', ['pack', '--json', '--pack-destination', tmp], {
   cwd: repoRoot,
   encoding: 'utf8',
   maxBuffer: 64 * 1024 * 1024,
@@ -54,7 +56,7 @@ const pack = spawnSync('npm', ['pack', '--dry-run', '--json'], {
 if (pack.status !== 0) {
   console.error(pack.stdout);
   console.error(pack.stderr);
-  fail(`npm pack --dry-run --json exited with status ${pack.status}`);
+  fail(`npm pack --json exited with status ${pack.status}`);
 }
 
 let packJson;
@@ -131,7 +133,6 @@ if (missingExecutableMetadata.length > 0) {
   fail(`prebuilt export strips executable metadata from ${missingExecutableMetadata.length} source skill(s): ${missingExecutableMetadata.slice(0, 5).map((item) => item.name ?? item.id).join(', ')}`);
 }
 
-const tmp = mkdtempSync(path.join(os.tmpdir(), 'aiwg-fortemi-prebuilt-gate-'));
 try {
   const discover = spawnSync(
     process.execPath,
@@ -199,17 +200,7 @@ try {
     fail('Fortemi Core prebuilt fallback discovery did not return intake-start-campaign for "campaign intake"');
   }
 
-  const packOut = spawnSync('npm', ['pack', '--json', '--pack-destination', tmp], {
-    cwd: repoRoot,
-    encoding: 'utf8',
-    maxBuffer: 64 * 1024 * 1024,
-  });
-  if (packOut.status !== 0) {
-    console.error(packOut.stdout);
-    console.error(packOut.stderr);
-    fail(`npm pack --pack-destination exited with status ${packOut.status}`);
-  }
-  const packed = parseNpmPackJson(packOut.stdout)?.[0];
+  const packed = packJson?.[0];
   const tarball = packed?.filename ? path.join(tmp, packed.filename) : undefined;
   if (!tarball || !existsSync(tarball)) fail('npm pack did not produce a tarball for packed-install smoke');
 

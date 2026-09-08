@@ -1,9 +1,8 @@
 import { access, mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
-import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, inject } from 'vitest';
 
 import { UseHandler } from '../../src/cli/handlers/use.js';
 
@@ -68,13 +67,7 @@ describe('network-analysis addon deployment (#2272)', () => {
   });
 
   it('ships runtime, contracts, documentation, and conformance evidence in the npm archive', () => {
-    const output = execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], {
-      cwd: root,
-      encoding: 'utf8',
-      maxBuffer: 64 * 1024 * 1024,
-      timeout: 120_000,
-    });
-    const files = new Set((JSON.parse(output)[0]?.files ?? []).map((entry: { path: string }) => entry.path));
+    const files = new Set(inject('basePackageManifest').files.map(entry => entry.path));
     for (const required of [
       'dist/src/network-analysis/index.js',
       'dist/src/network-analysis/index.d.ts',

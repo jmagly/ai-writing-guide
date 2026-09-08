@@ -16,7 +16,8 @@
  * @see schemas/executor-v1.json
  */
 
-import { createRequire } from 'module';
+import Ajv2020 from 'ajv/dist/2020.js';
+import addFormats from 'ajv-formats';
 import { fileURLToPath } from 'url';
 import { dirname, join, resolve as resolvePath } from 'path';
 import { readFileSync } from 'fs';
@@ -27,44 +28,30 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname  = dirname(__filename);
 const PROJECT_ROOT = resolvePath(__dirname, '..', '..', '..');
 
-// ── Ajv bootstrap (transitive dep — already used by executor-registry.ts) ──
-
-let _ajv       = null;
-let _schema    = null;
-let _schemaLoaded = false;
-
-function loadAjv() {
-  if (_schemaLoaded) return;
-  _schemaLoaded = true;
-
-  const req = createRequire(import.meta.url);
-  try {
-    const ajvPaths = [
-      join(PROJECT_ROOT, 'node_modules', 'ajv', 'dist', '2020.js'),
-      join(PROJECT_ROOT, 'node_modules', 'ajv', 'dist', 'ajv.js'),
-    ];
-    const formatsPath = join(PROJECT_ROOT, 'node_modules', 'ajv-formats', 'dist', 'index.js');
-
-    let Ajv = null;
-    for (const p of ajvPaths) {
-      try { Ajv = req(p); break; } catch { /* try next */ }
-    }
-    if (!Ajv) return;
-
-    const AjvClass = Ajv?.default ?? Ajv;
-    _ajv = new AjvClass({ strict: false, allErrors: true, validateSchema: false });
-
-    try {
-      const fmtMod = req(formatsPath);
-      const addFormats = fmtMod?.default ?? fmtMod;
-      if (typeof addFormats === 'function') addFormats(_ajv);
-    } catch { /* formats optional */ }
-
-    const schemaPath = join(PROJECT_ROOT, 'schemas', 'executor-v1.json');
-    _schema = JSON.parse(readFileSync(schemaPath, 'utf-8'));
-    _ajv.addSchema(_schema, 'executor.aiwg.io/v1');
-  } catch { /* degraded — validators will skip */ }
+// Schema tooling is required evidence: initialization or compilation failure
+// aborts the test instead of turning unavailable validation into acceptance.
+export function createSchemaValidator(schema) {
+  const ajv = new Ajv2020({ strict: false, allErrors: true });
+  addFormats(ajv);
+  // The pinned executor contract uses this legacy dialect URI without /schema.
+  // Resolve it to the bundled 2020-12 meta-schema; schema validation stays enabled.
+  ajv.addMetaSchema(ajv.getSchema('https://json-schema.org/draft/2020-12/schema').schema,
+    'https://json-schema.org/draft/2020-12');
+  ajv.addSchema(schema, 'executor.aiwg.io/v1');
+  return (schemaRef, data) => {
+    const validate = ajv.compile({ $ref: schemaRef });
+    const valid = validate(data);
+    return { valid, errors: valid ? '' : JSON.stringify(validate.errors ?? []) };
+  };
 }
+
+const executorSchema = JSON.parse(readFileSync(join(PROJECT_ROOT, 'schemas', 'executor-v1.json'), 'utf8'));
+export const validateSchema = createSchemaValidator(executorSchema);
+
+// Reviewed values are committed independently of the bytes being checked.
+export const reviewedFixtureHashes = Object.freeze(JSON.parse(
+  readFileSync(join(__dirname, 'fixtures', 'reviewed-sha256.json'), 'utf8')
+));
 
 /**
  * Strip fixture annotation keys (those prefixed with `_`) from an object,
@@ -82,28 +69,11 @@ export function stripAnnotations(obj) {
   return out;
 }
 
-/**
- * Validate an object against a named $ref in the executor-v1 schema.
- * Returns { valid: boolean, errors: string }.
- */
-export function validateSchema(schemaRef, data) {
-  loadAjv();
-  if (!_ajv) return { valid: true, errors: '' };
-  try {
-    const validate = _ajv.compile({ $ref: schemaRef });
-    const valid = validate(data);
-    const errors = valid ? '' : JSON.stringify(validate.errors ?? []);
-    return { valid, errors };
-  } catch (e) {
-    return { valid: true, errors: `schema-compile-error: ${e.message}` };
-  }
-}
-
 // ── Fixture integrity hashing ──
 
 /**
  * Compute a SHA-256 hash of the fixture files for drift detection.
- * Any mutation of a fixture file must cause at least one failing test.
+ * Compare with reviewedFixtureHashes to detect changes made before the run.
  */
 export function hashFixture(fixtureName) {
   const fixturePath = join(__dirname, 'fixtures', `${fixtureName}.json`);

@@ -20,6 +20,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import {
   loadFixture,
   hashFixture,
+  reviewedFixtureHashes,
   validateSchema,
   stripAnnotations,
   createRegistryForTest,
@@ -28,7 +29,7 @@ import {
 
 // ── Fixture integrity ────────────────────────────────────────────────────────
 
-const FIXTURE_HASH = hashFixture('hitl-roundtrip');
+const FIXTURE_HASH = reviewedFixtureHashes['hitl-roundtrip'];
 
 describe('[HITL] HITL — fixture integrity', () => {
   it('hitl-roundtrip fixture hash is stable (drift guard)', () => {

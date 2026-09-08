@@ -19,6 +19,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import {
   loadFixture,
   hashFixture,
+  reviewedFixtureHashes,
   validateSchema,
   stripAnnotations,
   createRegistryForTest,
@@ -28,9 +29,9 @@ import {
 // ── Fixture integrity ────────────────────────────────────────────────────────
 
 const FIXTURE_HASHES = {
-  'dispatch-happy':   hashFixture('dispatch-happy'),
-  'dispatch-failed':  hashFixture('dispatch-failed'),
-  'dispatch-aborted': hashFixture('dispatch-aborted'),
+  'dispatch-happy':   reviewedFixtureHashes['dispatch-happy'],
+  'dispatch-failed':  reviewedFixtureHashes['dispatch-failed'],
+  'dispatch-aborted': reviewedFixtureHashes['dispatch-aborted'],
 };
 
 describe('[Core] Dispatch — fixture integrity', () => {

@@ -18,6 +18,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import {
   loadFixture,
   hashFixture,
+  reviewedFixtureHashes,
   validateSchema,
   stripAnnotations,
   createRegistryForTest,
@@ -27,7 +28,7 @@ import {
 // ── Fixture integrity (drift detection) ─────────────────────────────────────
 
 const KNOWN_HASHES = {
-  'register-happy': hashFixture('register-happy'),
+  'register-happy': reviewedFixtureHashes['register-happy'],
 };
 
 describe('[Core] Register — fixture integrity', () => {

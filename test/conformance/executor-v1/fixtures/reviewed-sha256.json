@@ -1,0 +1,10 @@
+{
+  "auth-token-rotation": "f6b7bc0dc871be3eb102e371ff23fdedd4d607bc0c7d79e2b0abf9057a710f09",
+  "dispatch-aborted": "a71890488a20503b74b8278846e35efb79259b52f233b3351d426afdd639fa8d",
+  "dispatch-failed": "9c0c0dfd74265f5457857195576179daf94fffaf812ac9971135d16ed5be1f73",
+  "dispatch-happy": "dc968d42d9f1b7b882eade887ac2856fcb936f0e0b6f4f2ddd622233cb117f07",
+  "hitl-roundtrip": "66c3a77a4bbb2117b29af07665044eba8d4d9b7e84608cd77111bbec58fc5bb6",
+  "register-happy": "cd9e15bc285ef7de47eeda8041373b1d557aeb78f9201c44aaf3924860583f68",
+  "resumable-suspend-resume": "7c633f80a63e37239fd5b0d57ff3ac29d2fd31ae810acd89a40774aa67ceca7e",
+  "paused-event": "e6d55350adfc6bb2dccfa991c3135b2e257804533e1d235d0fb860acd50b2593"
+}

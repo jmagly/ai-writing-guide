@@ -7,13 +7,16 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { Overseer } from '../../../tools/ralph-external/lib/overseer.mjs';
 import { mkdirSync, rmSync, existsSync, readFileSync } from 'fs';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
-const TEST_STORAGE = '/tmp/overseer-test';
+let TEST_STORAGE;
 
 describe('Overseer', () => {
   let overseer;
 
   beforeEach(() => {
+    TEST_STORAGE = mkdtempSync(`${tmpdir()}/aiwg-overseer-test-`);
     // Clean up test storage
     if (existsSync(TEST_STORAGE)) {
       rmSync(TEST_STORAGE, { recursive: true });

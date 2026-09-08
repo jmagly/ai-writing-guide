@@ -14,10 +14,14 @@
  * @issue #1183
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
+import { readFileSync } from 'node:fs';
+
+const schema = JSON.parse(readFileSync(new URL('../../../../schemas/executor-v1.json', import.meta.url), 'utf8'));
 import {
   loadFixture,
   hashFixture,
+  reviewedFixtureHashes,
   validateSchema,
   createRegistryForTest,
   FakeWsConn,
@@ -72,15 +76,16 @@ const ALL_ENVELOPES = [
   ...extractEnvelopes('dispatch-aborted'),
   ...extractEnvelopes('hitl-roundtrip'),
   ...extractEnvelopes('resumable-suspend-resume'),
+  ...extractEnvelopes('paused-event'),
 ];
 
 // ── Fixture integrity ────────────────────────────────────────────────────────
 
 const FIXTURE_NAMES = [
   'dispatch-happy', 'dispatch-failed', 'dispatch-aborted',
-  'hitl-roundtrip', 'resumable-suspend-resume',
+  'hitl-roundtrip', 'resumable-suspend-resume', 'paused-event',
 ];
-const FIXTURE_HASHES = Object.fromEntries(FIXTURE_NAMES.map(n => [n, hashFixture(n)]));
+const FIXTURE_HASHES = Object.fromEntries(FIXTURE_NAMES.map(n => [n, reviewedFixtureHashes[n]]));
 
 describe('[Core] Events — fixture integrity', () => {
   for (const [name, hash] of Object.entries(FIXTURE_HASHES)) {
@@ -114,6 +119,8 @@ describe('[Core] Events — envelope shape', () => {
 
   it('all envelope.ts values are RFC 3339 timestamps', () => {
     for (const { source, envelope } of ALL_ENVELOPES) {
+      expect(validateSchema('executor.aiwg.io/v1#/$defs/ts', envelope.ts).valid,
+        `[${source}][${envelope.event}] timestamp must satisfy the contract format`).toBe(true);
       const ts = new Date(envelope.ts);
       expect(ts.toString(), `[${source}][${envelope.event}] ts is invalid date: ${envelope.ts}`).not.toBe('Invalid Date');
       // Must contain 'T' separator
@@ -145,8 +152,7 @@ describe('[Core] Events — event_type enum', () => {
   ];
 
   it('event_envelope schema defines all 15 event types', () => {
-    // If the schema changes the enum we'll catch it here
-    expect(DEFINED_EVENT_TYPES).toHaveLength(15);
+    expect(schema.$defs.event_type.enum).toEqual(DEFINED_EVENT_TYPES);
   });
 
   it('all fixture events match the defined event_type enum', () => {
@@ -210,16 +216,46 @@ describe('[Core] Events — per-event data payload schema validation', () => {
   for (const [eventType, schemaRef] of Object.entries(DATA_SCHEMA_MAP)) {
     it(`${eventType} data validates against ${schemaRef.split('#')[1]}`, () => {
       const matching = ALL_ENVELOPES.filter(e => e.envelope.event === eventType);
-      // Skip if no fixture has this event type (not an error, just not covered by fixtures)
-      if (matching.length === 0) return;
+      expect(matching.length, `${eventType} must have a reviewed fixture`).toBeGreaterThan(0);
 
       for (const { source, envelope } of matching) {
-        if (envelope.data === undefined) continue;
+        expect(envelope, `[${source}][${eventType}] missing payload`).toHaveProperty('data');
         const { valid, errors } = validateSchema(schemaRef, envelope.data);
         expect(valid, `[${source}][${eventType}] data schema errors: ${errors}`).toBe(true);
       }
     });
   }
+});
+
+describe('[Core] Events — semantic rejection controls', () => {
+  it('validates every complete fixture envelope against the actual contract', () => {
+    expect(ALL_ENVELOPES.length).toBeGreaterThan(0);
+    for (const { source, envelope } of ALL_ENVELOPES) {
+      const result = validateSchema('executor.aiwg.io/v1#/$defs/event_envelope', envelope);
+      expect(result.valid, `[${source}][${envelope.event}] ${result.errors}`).toBe(true);
+    }
+  });
+
+  it('rejects impossible calendar dates despite Date normalization', () => {
+    const ref = 'executor.aiwg.io/v1#/$defs/ts';
+    expect(validateSchema(ref, '2026-02-28T12:00:00Z').valid).toBe(true);
+    expect(validateSchema(ref, '2026-02-30T12:00:00Z').valid).toBe(false);
+  });
+
+  it('rejects unknown event types and extra envelope fields', () => {
+    const { envelope } = ALL_ENVELOPES[0];
+    const ref = 'executor.aiwg.io/v1#/$defs/event_envelope';
+    expect(validateSchema(ref, envelope).valid).toBe(true);
+    expect(validateSchema(ref, { ...envelope, event: 'mission.unknown' }).valid).toBe(false);
+    expect(validateSchema(ref, { ...envelope, unexpected: true }).valid).toBe(false);
+  });
+
+  it('rejects paused payloads with missing or incorrect state', () => {
+    const ref = 'executor.aiwg.io/v1#/$defs/data_mission_paused';
+    expect(validateSchema(ref, { state: 'paused' }).valid).toBe(true);
+    expect(validateSchema(ref, {}).valid).toBe(false);
+    expect(validateSchema(ref, { state: 'running' }).valid).toBe(false);
+  });
 });
 
 // ── Unknown event graceful handling ─────────────────────────────────────────
