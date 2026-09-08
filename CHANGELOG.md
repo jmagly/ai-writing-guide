@@ -20,6 +20,8 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 - Exercise AIWG's own test conformance workflow: restore omitted Vitest tests, split mixed contract runners,
   fail closed on validator setup errors, strengthen schema/fixture oracles, and prove multi-target control attribution.
 - Reconcile real Vitest nested-suite counters independently from result-file counts.
+- Execute artifact query integration on a deterministic corpus, replacing absent-corpus early returns with exact
+  ranking, filtering, limit, and populated-index assertions.
 - Share genuine package preparation in a required serial lane, correct coverage threshold placement, and enforce
   a measured Testing Quality library denominator with a deliberate failure control.
 

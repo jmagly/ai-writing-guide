@@ -71,6 +71,7 @@ evidence when reverifying them. A failed restoration preserves the lock and rece
 | Contract files mixed native Node and Vitest APIs | Split the runner lanes and make both mandatory in CI. |
 | Validators could pass after missing dependencies or compilation errors | Fail closed and test the setup failures explicitly. |
 | Enum and payload checks could verify local constants or skip absent fixtures | Validate actual schema constraints and complete, nonempty fixture envelopes. |
+| Query integration returned before assertions when the external corpus was absent | Build a deterministic four-document index and assert exact results through the real query engine. |
 | Fixture hashes were derived from the same current bytes | Pin reviewed fixture digests and prove an edited fixture fails its named guard. |
 | Every negative-control target set contained one case | Add multiple targets, one surviving target, and unrelated failing decoys with exact status maps. |
 | Vitest nested suites were mistaken for report files | Qualify the adapter against a captured real nested-suite report and malformed counters. |
