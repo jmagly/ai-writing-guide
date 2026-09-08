@@ -252,24 +252,29 @@ performance.
 
 ## How You Actually Use AIWG
 
-The user surface is the conversation with your AI tool. You install AIWG, deploy a framework, and then talk to the
-agent normally — "help me start a project", "run a security review", "find me a deploy workflow." The agent can
-discover the appropriate procedure, perform the task, and report what it verified.
+Describe the outcome you want in your AI tool. You do not need to learn a new command language or memorize skill
+names: “Help me start a project,” “Review this design for security risks,” or “Prepare a deployment plan with rollback.”
 
-The CLI exists mostly for the agent to call under the hood. The commands a user typically runs by hand are a short list:
+The assistant interprets your intent, searches AIWG's capability graphs, reads the matching assets, and follows their
+procedures. Discovery brings together packaged AIWG capabilities and indexed project-local custom skills, agents,
+rules, and workflows; user-level assets participate when project policy allows them. Your team's indexed assets can
+therefore be found through the same conversation as AIWG's built-in capabilities. Newly authored assets need to be
+deployed or indexed before discovery can find them.
 
-- `aiwg use <framework>` — deploy AIWG to your project (one-time per framework, per project)
-- Project setup agent/skill — recommended guided setup conversation for repo, tracker, delivery, signing, and provider policy
-- `aiwg wizard` — guided first-run goal routing
-- `aiwg new <project>` — scaffold a new project
-- `aiwg status` — what's deployed and engaged in this workspace
-- `aiwg doctor` — health check
-- `aiwg refresh` — keep the install current
+For everyday setup and maintenance, ask:
 
-Advanced operators can also use the CLI directly; most everyday work can stay in chat. Discovery (`aiwg discover`),
-artifact lookup (`aiwg show`), the index, agent loops, mission control, MCP — those are tools the agent invokes during
-a chat when the task calls for them. The agent handles the lookups, executes the selected workflow, and reports its
-result and limitations.
+- “Set up the SDLC framework for this project and my AI tool.”
+- “Help me configure this project's tracker, delivery, signing, and provider preferences.”
+- “Create a new project for this idea.”
+- “Check which AIWG capabilities are active here and fix any setup problems.”
+- “Update AIWG and refresh this project's deployed assets.”
+
+The assistant handles discovery, artifact lookup, and the selected workflow's tools, then reports the result and its
+verification. Matching a capability is a starting point: the assistant still checks scope, prerequisites, and project
+policy before acting.
+
+Direct CLI commands remain available for manual setup, scripting, and troubleshooting. See the
+[CLI reference](docs/cli/reference.md); the terminal examples below are optional operator interfaces.
 
 Deployment connects the supported workflow surface. Optional servers, storage services, and automation paths have
 their own prerequisites; installing assets does not mean all those services are running. You can start with one review
@@ -437,15 +442,17 @@ Voice profiles describe writing preferences such as formality, technical depth, 
 sentence variation. They give the assistant a reusable style specification that can be reviewed against the audience
 and document purpose.
 
-Built-in voices: `technical-authority` (docs, RFCs), `friendly-explainer` (tutorials), `executive-brief` (summaries), `casual-conversational` (blogs, social). Create custom voices from your existing content with `/voice-create`.
+Built-in voices: `technical-authority` (docs, RFCs), `friendly-explainer` (tutorials), `executive-brief` (summaries),
+and `casual-conversational` (blogs, social). Ask “Create a reusable voice profile from these writing samples” to
+define your own.
 
 ---
 
 ## A Real Project Walkthrough
 
-The following illustrative customer-portal project shows how the components connect across a lifecycle. The commands
-are provider-facing workflow examples, not a report of a measured project outcome. Natural-language requests can
-select the same procedures when the provider does not expose the shown slash syntax.
+The following illustrative customer-portal project shows how ordinary prompts connect the components across a
+lifecycle. These examples describe requests you can make, not a measured project outcome. The assistant discovers
+the relevant procedures and reads their instructions before carrying out each request.
 
 Start with a bounded goal, agree on acceptance criteria, and inspect the artifacts at each step. The time and review
 effort depend on the project, source quality, tools, and decisions involved. Smaller changes can enter at the phase
@@ -453,9 +460,7 @@ that fits their current state rather than repeating the entire lifecycle.
 
 ### Inception
 
-```bash
-/intake-wizard "Build customer portal with real-time chat" --interactive
-```
+> Help me define a customer portal with real-time chat. Walk me through the goals, users, constraints, and acceptance criteria.
 
 **Memory**: Intake forms capture goals, constraints, stakeholders in `.aiwg/intake/`
 **Planning**: Executive Orchestrator guides through structured questionnaire
@@ -465,9 +470,7 @@ that fits their current state rather than repeating the entire lifecycle.
 
 ### Elaboration
 
-```bash
-/flow-inception-to-elaboration
-```
+> Review the approved intake, develop the architecture and test strategy, and identify the risks we need to resolve.
 
 **Memory**: Architecture doc, ADRs, threat model, test strategy accumulate in `.aiwg/`
 **Reasoning**: Multi-agent review panel — Architecture Designer drafts, Security Auditor + Performance Engineer + Test Architect critique in parallel, Documentation Synthesizer merges
@@ -477,10 +480,8 @@ that fits their current state rather than repeating the entire lifecycle.
 
 ### Construction
 
-```bash
-/flow-elaboration-to-construction
-/ralph "Implement authentication module" --completion "npm test passes"
-```
+> Turn the reviewed design into an implementation plan. Implement authentication, verify its acceptance criteria,
+> and run the relevant tests.
 
 **Learning**: Ralph handles implementation iterations — execute, verify (run tests), learn ("async race condition in token refresh"), adapt (add synchronization), retry
 **Verification**: Code references requirements (`@implements UC-001`), tests reference code
@@ -489,10 +490,8 @@ that fits their current state rather than repeating the entire lifecycle.
 
 ### Transition
 
-```bash
-/flow-deploy-to-production
-/flow-hypercare-monitoring 14
-```
+> Prepare the production rollout with monitoring and rollback. After the required release approval, deploy it and
+> organize fourteen days of early-life support.
 
 **Planning**: Deployment checklist — monitoring, rollback plan, incident response
 **Learning**: Failed validation produces a diagnosis and a revised plan; retries follow the operation's recovery and
@@ -763,12 +762,7 @@ The bundle is **byte-identical** in shape to its upstream form, so
 
 ### Claude Code Marketplace (Alternative)
 
-```bash
-/plugin marketplace add jmagly/ai-writing-guide
-/plugin install sdlc@aiwg
-/plugin install agent-loop@aiwg
-/plugin install compound-memory@aiwg
-```
+> Add the AIWG marketplace to Claude Code and install the SDLC, Agent Loop, and Compound Memory plugins.
 
 The marketplace contains independently packaged framework and addon
 plugins, so you can install only the capabilities a Claude Code workspace
@@ -1038,34 +1032,34 @@ requests drive phase transitions with reviewable quality gates.
  IOC = Initial Operational Capability
 ```
 
-**SDLC Flow Commands:**
+**Example SDLC prompts:**
 
-| Command | Phase | What It Does |
+| Ask your assistant | Phase | What It Does |
 |---------|-------|-------------|
-| `/intake-wizard` | Concept | Generate project intake from a natural-language description |
-| `/intake-start` | Concept -> Inception | Validate intake and begin agent assignments |
-| `/intake-from-codebase` | Concept | Scan an existing codebase and generate intake from analysis |
-| `/flow-concept-to-inception` | Concept -> Inception | Transition with intake validation and vision alignment |
-| `/flow-inception-to-elaboration` | Inception -> Elaboration | Baseline architecture and retire major risks |
-| `/flow-elaboration-to-construction` | Elaboration -> Construction | Prepare iteration planning, scale delivery, and begin implementation |
-| `/flow-construction-to-transition` | Construction -> Transition | Validate IOC, deployment readiness, and operational handoff |
-| `/flow-discovery-track` | Any | Prepare validated requirements ahead of delivery |
-| `/flow-delivery-track` | Any | Run test-driven delivery with quality gates |
-| `/flow-iteration-dual-track` | Any | Coordinate discovery and delivery tracks |
-| `/flow-deploy-to-production` | Transition | Select deployment strategy, validate, and prepare rollback/regression checks |
-| `/flow-incident-response` | Operations | Triage, resolve, and review incidents |
-| `/flow-security-review-cycle` | Any | Run continuous security validation and threat review |
-| `/flow-performance-optimization` | Any | Baseline, identify bottlenecks, optimize, and validate SLOs |
-| `/flow-retrospective-cycle` | Any | Capture feedback and track improvement actions |
-| `/flow-change-control` | Any | Assess impact, coordinate review, and manage communication |
-| `/flow-risk-management-cycle` | Any | Identify, assess, track, and retire risks |
-| `/flow-compliance-validation` | Any | Map requirements, collect evidence, and identify gaps |
-| `/flow-knowledge-transfer` | Transition | Prepare documentation, shadowing, validation, and handover |
-| `/flow-team-onboarding` | Any | Structure onboarding, training, buddy support, and follow-up |
-| `/flow-hypercare-monitoring` | Transition | Track early-life support, SLOs, and rapid-response items |
-| `/flow-gate-check` | Any | Run multi-agent phase-gate validation |
-| `/flow-handoff-checklist` | Any | Validate handoff between phases and tracks |
-| `/flow-guided-implementation` | Construction | Run bounded issue-to-code iteration with validation and escalation |
+| “Help me define the goals and constraints for this project.” | Concept | Generate project intake from a natural-language description |
+| “Validate our intake and assign the initial work.” | Concept -> Inception | Validate intake and begin agent assignments |
+| “Understand this codebase and draft its project intake.” | Concept | Scan an existing codebase and generate intake from analysis |
+| “Turn this concept into an agreed project vision.” | Concept -> Inception | Transition with intake validation and vision alignment |
+| “Review our architecture and resolve the major risks.” | Inception -> Elaboration | Baseline architecture and retire major risks |
+| “Plan the implementation from our reviewed design.” | Elaboration -> Construction | Prepare iteration planning, scale delivery, and begin implementation |
+| “Check whether this implementation is ready for release.” | Construction -> Transition | Validate IOC, deployment readiness, and operational handoff |
+| “Validate the requirements for the next delivery batch.” | Any | Prepare validated requirements ahead of delivery |
+| “Implement this batch with tests and quality checks.” | Any | Run test-driven delivery with quality gates |
+| “Coordinate requirements discovery with the next delivery iteration.” | Any | Coordinate discovery and delivery tracks |
+| “Prepare this release for production, including rollback.” | Transition | Select deployment strategy, validate, and prepare rollback/regression checks |
+| “Help us triage this incident and plan recovery.” | Operations | Triage, resolve, and review incidents |
+| “Review security risks and track the required fixes.” | Any | Run continuous security validation and threat review |
+| “Find the performance bottlenecks and verify improvements.” | Any | Baseline, identify bottlenecks, optimize, and validate SLOs |
+| “Review what we learned and track improvements.” | Any | Capture feedback and track improvement actions |
+| “Assess this change and coordinate its review.” | Any | Assess impact, coordinate review, and manage communication |
+| “Identify and track the risks to this project.” | Any | Identify, assess, track, and retire risks |
+| “Map our requirements to evidence and identify gaps.” | Any | Map requirements, collect evidence, and identify gaps |
+| “Prepare the documentation and operational handover.” | Transition | Prepare documentation, shadowing, validation, and handover |
+| “Create an onboarding plan for our new teammate.” | Any | Structure onboarding, training, buddy support, and follow-up |
+| “Organize early-life support for this release.” | Transition | Track early-life support, SLOs, and rapid-response items |
+| “Review the evidence for our next phase gate.” | Any | Run multi-agent phase-gate validation |
+| “Check that the next team has a complete handoff.” | Any | Validate handoff between phases and tracks |
+| “Work through these issues with bounded retries and verification.” | Construction | Run bounded issue-to-code iteration with validation and escalation |
 
 **SDLC Accelerate — from idea to reviewed planning artifacts:**
 
@@ -1139,19 +1133,13 @@ and structured reporting.
                                   verification
 ```
 
-**Investigation Commands:**
-
-```bash
-/forensics-profile
-/forensics-triage
-/forensics-acquire
-/forensics-investigate
-/forensics-timeline
-/forensics-hunt
-/forensics-ioc
-/forensics-report
-/forensics-status
-```
+**Example investigation prompts:**
+>
+> Profile the affected system, triage the incident, and plan evidence acquisition with chain-of-custody records.
+>
+> Investigate the collected evidence, build a timeline, and look for related indicators of compromise.
+>
+> Summarize the findings, unresolved questions, and current investigation status.
 
 **Supported Evidence Sources:**
 
@@ -1195,21 +1183,12 @@ Media Curator helps assess, acquire, organize, verify, transcribe, and export
 media collections. It starts with assessment and planning so unknown or mixed
 media is routed before downloads or metadata rewrites.
 
-```bash
-# Full curation pipeline
-/curate "Pink Floyd"
-
-# Step by step
-/analyze-artist "Pink Floyd"
-/find-sources "Pink Floyd" "DSOTM"
-/acquire
-/transcribe-media /path/to/media.wav
-/tag-collection
-/check-completeness
-/assemble "Pink Floyd live 1973"
-/export --format plex
-/verify-archive
-```
+> Assess my Pink Floyd collection, identify gaps, and suggest sources for the missing material.
+>
+> Transcribe `/path/to/media.wav` and retain timestamps and source provenance.
+>
+> Review the collection's tags and completeness, assemble the 1973 live recordings, and prepare a Plex export.
+> Verify the archive and report anything unresolved.
 
 Quality tiers help reviewers choose what to keep. Transcript sidecars preserve
 source hashes, transcript hashes, timestamps, and optional speaker labels for
@@ -1320,19 +1299,11 @@ lists.
 | `executive-brief` | Status reports, proposals | Decision-oriented summaries, concise evidence, clear next steps |
 | `casual-conversational` | Blog posts, social media | Natural rhythm, opinion-forward phrasing, varied structure |
 
-```bash
-# Apply a voice to content
-"Apply technical-authority voice to docs/architecture.md"
-
-# Create a custom voice from existing content
-/voice-create --source "blog-posts/*.md" --name "company-voice"
-
-# Analyze writing patterns in a voice sample
-/voice-analyze docs/existing-content.md
-
-# Blend two voices
-/voice-blend technical-authority casual-conversational --ratio 70:30
-```
+> Apply the technical-authority voice to `docs/architecture.md`.
+>
+> Create a reusable company voice from `blog-posts/*.md`, and analyze how `docs/existing-content.md` compares.
+>
+> Blend technical-authority and casual-conversational voices at a 70:30 ratio for this draft.
 
 See [Voice Framework overview](docs/addons/voice-framework/overview.md) and
 [Voice Framework quickstart](docs/addons/voice-framework/quickstart.md).
@@ -1440,21 +1411,12 @@ Traceability matters most when a workflow crosses boundaries. An SDLC intake can
 context-firewall review can reference the baseline it approved. A dataset query can reference the source, ingest plan,
 checkpoint, and verification record instead of relying on conversation memory.
 
-Provider-facing commands and skills may expose mention helpers such as mention wiring, validation, linting, or
-reporting. Because providers package commands differently, the portable entry point is discovery:
+Ask for the traceability result you need; the assistant discovers the relevant validation or reporting tools:
 
-```bash
-aiwg discover "mention validate" --limit 5
-aiwg discover "traceability report" --limit 5
-aiwg show skill context-firewall
-```
+> Check the references in `docs/` for missing targets and inconsistent links. Save a traceability report with
+> evidence under `.aiwg/reports/`.
 
-When deployed into a provider that supports slash commands, the same work is often available as a prompt command, for example:
-
-```text
-/mention-validate --target docs
-/mention-report --scope .aiwg/reports
-```
+For scripted checks, the [CLI reference](docs/cli/reference.md) documents discovery and artifact lookup.
 
 Use root-relative references in public documentation so links work from the README. Use provider-specific absolute
 paths only inside generated provider files where that provider requires them.
@@ -1705,12 +1667,10 @@ aiwg issue export APP-0001 --to gitea --out APP-0001.gitea.json
 aiwg issue sync conflicts APP-0001 --snapshot-file issue-APP-0001.json
 ```
 
-For agent-assisted repair work, ask for the issue outcome directly and include the acceptance checks. In providers
-with deployed prompt commands, `/address-issues` can route the work through the configured workflow.
+For agent-assisted repair work, name the issues and acceptance checks:
 
-```text
-/address-issues APP-0001 APP-0002 --checks "npm test && npm run lint"
-```
+> Resolve APP-0001 and APP-0002 using this project's issue workflow. Run `npm test` and `npm run lint`, and report
+> the changes and any unresolved checks.
 
 External issue systems are not a default side effect of `aiwg issue`. They require configured connectors, snapshots,
 or explicit export/import commands. See [local issue integration](docs/local-issues.md) and [filing
@@ -2074,9 +2034,8 @@ aiwg mc watch <session-id>
 
 For a bounded batch, specify the parallelism limit explicitly:
 
-```text
-/rlm-batch "src/components/*.tsx" "Add TypeScript types" --max-parallel 4
-```
+> Add TypeScript types to the components in `src/components/*.tsx`. Work in bounded batches with at most four
+> parallel workers, and verify each batch.
 
 RLM helps with sources that are too large to fit comfortably in one model context. It prepares files into traceable
 chunks, fans a query out across those chunks, and merges results with links back to the source material.
