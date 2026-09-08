@@ -1,4 +1,7 @@
 ---
+namespace: aiwg
+platforms: [all]
+version: 2.0.0
 name: test-normalize
 description: Repair and standardize a testing regime through concrete file plans, guarded deployment receipts and repeatable verification of runner and oracle behavior.
 ---

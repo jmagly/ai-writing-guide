@@ -1,4 +1,7 @@
 ---
+namespace: aiwg
+platforms: [all]
+version: 2.0.0
 name: test-conformance
 description: Audit a codebase's testing regime using a reusable protocol, source/runner reconciliation, sampled oracle review and evidence-backed conformance reports.
 ---

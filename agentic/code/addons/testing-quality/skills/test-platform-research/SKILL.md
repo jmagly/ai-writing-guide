@@ -1,4 +1,7 @@
 ---
+namespace: aiwg
+platforms: [all]
+version: 2.0.0
 name: test-platform-research
 description: Locate testing research and platform tools, qualify evidence adapters, and develop target-specific testing normalization templates.
 ---
