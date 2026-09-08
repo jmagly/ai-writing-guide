@@ -22,6 +22,8 @@ import {
 import { routeTask, type AgentFilter } from '../../serve/agent-router.js';
 import { routeDispatch, type V1DispatchPayload } from '../../serve/dispatch-router.js';
 import { observeA2ATerminalState } from '../../serve/a2a-terminal-observer.js';
+import { respondToA2AMission } from '../../serve/mission-hitl.js';
+import { A2A_HITL_PROMPT_V1 } from '../../a2a/client.js';
 import {
   executorRegistry,
   validateRegisterPayload,
@@ -833,6 +835,7 @@ export async function startServer(opts: {
     const a2aProtocolPolicy = configuredA2AProtocolPolicy;
     try {
       const result = await routeDispatch(executor, payload as V1DispatchPayload, {
+        optionalExtensions: [A2A_HITL_PROMPT_V1],
         a2aProtocolPolicy,
         allowA2AProtocolFallback: configuredA2AProtocolFallback,
         allowLegacyExecutorFallback: configuredLegacyExecutorFallback,
@@ -917,7 +920,14 @@ export async function startServer(opts: {
         ...(a2aFallbackReason ? { fallbackReason: a2aFallbackReason } : {}),
       });
     }
-    executorRegistry.assignMission(missionId, executor.executorId);
+    const existingMission = executorRegistry.getMission(missionId);
+    // An idempotent replay must not discard in-flight/accepted approvals.
+    if (!(dispatchPath === 'v2' && a2aTask && a2aInstanceId
+      && existingMission?.executorId === executor.executorId
+      && existingMission.a2a?.taskId === a2aTask.id
+      && existingMission.a2a.instanceId === a2aInstanceId)) {
+      executorRegistry.assignMission(missionId, executor.executorId);
+    }
     if (dispatchPath === 'v2' && a2aTask && a2aInstanceId) {
       void observeA2ATerminalState(
         executorRegistry,
@@ -982,7 +992,7 @@ export async function startServer(opts: {
     });
   });
 
-  // POST /api/v1/missions/:id/hitl_response → 200; forwards to owning executor over WS
+  // POST /api/v1/missions/:id/hitl_response → owning task's negotiated transport
   app.post('/api/v1/missions/:id/hitl_response', async (c: any) => {
     const missionId: string = c.req.param('id');
     const mission = executorRegistry.getMission(missionId);
@@ -994,8 +1004,17 @@ export async function startServer(opts: {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payload = body as any;
-    if (!payload.hitl_id || !payload.response) {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)
+      || typeof payload.hitl_id !== 'string' || !payload.hitl_id || !Object.hasOwn(payload, 'response')) {
       return c.json({ error: 'hitl_id and response are required' }, 400);
+    }
+
+    if (mission.a2a) {
+      const result = await respondToA2AMission(executorRegistry, missionId, payload.hitl_id, payload.response);
+      return c.json(result.body, result.status);
+    }
+    if (typeof payload.response !== 'string' || !payload.response) {
+      return c.json({ error: 'Legacy HITL response must be a non-empty string' }, 400);
     }
 
     // Push hitl_responded event to the executor over WS

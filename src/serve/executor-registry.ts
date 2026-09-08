@@ -23,6 +23,7 @@ import { dirname, isAbsolute, join, resolve as resolvePath } from 'path';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 import { projectAiwgPath } from '../config/project-artifacts.js';
+import type { MissionA2ABinding } from './mission-hitl.js';
 import type {
   A2AProtocolPolicy,
   A2AProtocolVersion,
@@ -141,6 +142,7 @@ export interface TransportEndpoints {
 
 /** One active mission tracked by aiwg serve. */
 export interface MissionRecord {
+  a2a?: MissionA2ABinding;
   missionId: string;
   executorId: string;
   state: MissionState;

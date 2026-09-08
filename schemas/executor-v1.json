@@ -405,14 +405,14 @@
     "hitl_response_payload": {
       "type": "object",
       "title": "HitlResponsePayload",
-      "description": "Body for POST /api/v1/missions/:id/hitl_response. Operator submits a human response to a pending mission.hitl_required event. aiwg serve forwards this as a mission.hitl_responded WS event to the executor.",
+      "description": "Body for POST /api/v1/missions/:id/hitl_response. Legacy missions receive a mission.hitl_responded WS event; A2A missions receive a task-correlated hitl_response_for Message.",
       "required": ["hitl_id", "response"],
       "additionalProperties": false,
       "properties": {
         "hitl_id": { "$ref": "#/$defs/hitl_id" },
         "response": {
-          "type": "string",
-          "description": "The operator's text response to the HITL prompt.",
+          "type": ["string", "object"],
+          "description": "Text for legacy missions, or an object validated against the pending A2A prompt's response_schema.",
           "minLength": 1
         }
       }

@@ -200,7 +200,27 @@ Submit a human response to a `mission.hitl_required` event.
 }
 ```
 
-`aiwg serve` forwards as a `mission.hitl_responded` event over the WS to the owning executor.
+For legacy executor-v1 missions, `aiwg serve` forwards a `mission.hitl_responded`
+event over the WS to the owning executor.
+
+For A2A-dispatched missions, the observer retains the instance, task, context and
+negotiated interface. Valid `hitl-prompt/v1` envelopes appear in the mission's
+recent `mission.hitl_required` event as `data.hitl_prompt`, with `data.hitl_id`
+matching the envelope's `prompt_id`. Submit that ID with a schema-valid object
+in `response`. Serve re-reads the owning task and sends an A2A Message with
+`metadata.hitl_response_for`, `taskId` and the task's `contextId` when present.
+
+The A2A path returns 200 on executor acceptance, 409 for stale, mismatched,
+duplicate or overlapping responses, 410 for expired prompts, and 422 for an
+invalid response or unsupported schema. A transport failure returns 502 and
+allows a retry with the same payload and message ID. Changed retry payloads
+are rejected. Audit events retain correlation IDs without the response body.
+
+The local mission API does not authenticate individual operators. Prompts with
+restricted `allowed_responders` return 403; an asserted username in a request
+does not grant authority. Mission bindings and response receipts are in memory.
+This route does not provide durable conductor restart or extend the observer's
+existing polling timeout. Executor registration still uses the control WS.
 
 ### `POST /api/v1/missions/:id/pause`, `/resume`, `/abort`
 
