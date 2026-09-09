@@ -1123,6 +1123,20 @@
       "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
     },
     {
+      "path": "src/serve/mission-hitl.ts",
+      "owner": "src/serve",
+      "role": "producer-consumer",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted",
+        "done",
+        "failed"
+      ],
+      "serialization": "typescript/javascript",
+      "migrationAction": "adapt",
+      "migrationReason": "Legacy or transport-specific shape remains behind the versioned Mission codec adapter during the compatibility window."
+    },
+    {
       "path": "src/serve/telemetry.ts",
       "owner": "src/serve",
       "role": "producer-consumer",
@@ -1621,6 +1635,8 @@
       "role": "fixture-or-test",
       "currentVersion": "unversioned",
       "statusVocabulary": [
+        "completed",
+        "input-required",
         "running"
       ],
       "serialization": "typescript/javascript",
@@ -1893,6 +1909,20 @@
       "role": "fixture-or-test",
       "currentVersion": "executor.aiwg.io/v1",
       "statusVocabulary": [],
+      "serialization": "typescript/javascript",
+      "migrationAction": "retain",
+      "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."
+    },
+    {
+      "path": "test/unit/serve/mission-hitl.test.ts",
+      "owner": "test/unit",
+      "role": "fixture-or-test",
+      "currentVersion": "unversioned",
+      "statusVocabulary": [
+        "aborted",
+        "completed",
+        "input-required"
+      ],
       "serialization": "typescript/javascript",
       "migrationAction": "retain",
       "migrationReason": "Compatibility fixture or test remains to prove legacy reads and mixed-version behavior."

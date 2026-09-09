@@ -377,3 +377,122 @@ describe('aiwg serve — HITL + telemetry + PTY WS (#1174 cycle 3)', () => {
     try { ws.close(); } catch { /* ignore */ }
   });
 });
+
+// Regression #2310: exercise the public route with A2A tasks and no legacy approval handler.
+// The executor is an HTTP fixture; this qualifies routing, not provider autonomy.
+describe('aiwg serve — A2A mission approval correlation', () => {
+  let serve: ServeHandle;
+  let server: import('node:http').Server;
+  let registrationWs: WebSocket;
+  const legacyMessages: string[] = [];
+  const tasks = new Map<string, any>();
+  const replies: any[] = [];
+  const dispatched = new Map<string, any>();
+  const taskInstances = new Map<string, string>();
+  const replyInstances: string[] = [];
+  const extension = 'https://agentic-sandbox.aiwg.io/extensions/hitl-prompt/v1';
+  const executorId = '74323987-bdb9-4891-81dc-042a7e409c67';
+  const promptIds = [
+    '74323987-bdb9-4891-81dc-042a7e409c61',
+    '74323987-bdb9-4891-81dc-042a7e409c62',
+    '74323987-bdb9-4891-81dc-042a7e409c63',
+    '74323987-bdb9-4891-81dc-042a7e409c64',
+  ];
+  const post = (path: string, body: unknown) => fetch(`${serve.url}${path}`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+  });
+
+  beforeAll(async () => {
+    const { createServer } = await import('node:http');
+    server = createServer(async (req, res) => {
+      let task: any;
+      const instance = req.url?.split('/')[2] ?? '';
+      if (req.method === 'POST' && req.url?.endsWith('/messages:send')) {
+        let raw = '';
+        for await (const chunk of req) raw += chunk;
+        const message = JSON.parse(raw).message;
+        if (message.metadata?.hitl_response_for) {
+          replies.push(message);
+          replyInstances.push(instance);
+          task = tasks.get(message.taskId);
+          if (!task || taskInstances.get(message.taskId) !== instance || message.contextId !== task.contextId
+            || message.metadata.hitl_response_for.prompt_id !== task.status.message.metadata[extension].prompt_id) {
+            res.writeHead(409); res.end('{}'); return;
+          }
+          task.status = { state: 'completed' };
+        } else if (dispatched.has(message.messageId)) {
+          task = dispatched.get(message.messageId);
+        } else {
+          const index = tasks.size;
+          task = { id: `task-${index}`, contextId: `context-${index}`, status: { state: 'input-required', message: {
+            messageId: `prompt-${index}`, role: 'agent', parts: [{ kind: 'text', text: 'Approve fixture?' }],
+            metadata: { [extension]: { prompt_id: promptIds[index], prompt: 'Approve fixture?',
+              response_schema: { type: 'object', properties: { approve: { type: 'boolean' } }, required: ['approve'], additionalProperties: false } } },
+          } } };
+          tasks.set(task.id, task);
+          taskInstances.set(task.id, instance);
+          dispatched.set(message.messageId, task);
+        }
+      } else if (req.method === 'GET') task = tasks.get(req.url?.split('/').at(-1) ?? '');
+      if (task && taskInstances.get(task.id) !== instance) task = undefined;
+      res.writeHead(task ? 200 : 404, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(task ?? {}));
+    });
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+    const address = server.address() as import('node:net').AddressInfo;
+    serve = await spawnAiwgServe({ env: { AIWG_A2A_PROTOCOL_POLICY: '0.3' } });
+    await waitForHttp(serve.url, 20_000, serve);
+    const registered = await post('/api/v1/executors/register', {
+      executor_id: executorId, name: 'a2a-approval-fixture', version: '1.0.0', spec_version: '1.0.0',
+      transport_endpoints: { rest: `http://127.0.0.1:${address.port}`, ws: `ws://127.0.0.1:${address.port}/unused` },
+      capabilities: ['hitl', 'isolation:container'],
+    });
+    expect(registered.status).toBe(201);
+    const registration = await registered.json();
+    registrationWs = new WebSocket(`${serve.url.replace('http:', 'ws:')}/ws/executors/${executorId}?token=${encodeURIComponent(registration.token)}`);
+    registrationWs.addEventListener('message', event => legacyMessages.push(String(event.data)));
+    await new Promise<void>((resolve, reject) => { registrationWs.onopen = () => resolve(); registrationWs.onerror = reject; });
+  });
+  afterAll(async () => {
+    registrationWs?.close();
+    if (serve) await serve.kill();
+    if (server) await new Promise<void>(resolve => server.close(() => resolve()));
+  });
+
+  it('answers one task, then three pending tasks in reverse order and rejects cross-task/duplicate replies', async () => {
+    const dispatch = async (index: number) => {
+      const response = await post('/api/v1/sessions/approval-fixture/dispatch', {
+        mission_id: `approval-mission-${index}`, a2a_instance_id: `instance-${index}`, objective: 'Provider-free approval routing fixture',
+        executor_filter: { executor_id: executorId },
+      });
+      expect(response.status).toBe(202);
+      expect((await response.json()).dispatch_path).toBe('v2');
+      const mission = await (await fetch(`${serve.url}/api/v1/missions/approval-mission-${index}`)).json();
+      expect(mission.state).toBe('hitl-required');
+      expect(mission.recent_events.at(-1).data.hitl_id).toBe(promptIds[index]);
+    };
+    const answer = (index: number, prompt: string) => post(`/api/v1/missions/approval-mission-${index}/hitl_response`, {
+      hitl_id: prompt, response: { approve: index % 2 === 0 },
+    });
+    await dispatch(0);
+    expect((await answer(0, promptIds[0])).status).toBe(200);
+    const replay = await post('/api/v1/sessions/approval-fixture/dispatch', {
+      mission_id: 'approval-mission-0', a2a_instance_id: 'instance-0', objective: 'Provider-free approval routing fixture',
+      executor_filter: { executor_id: executorId },
+    });
+    expect(replay.status).toBe(202);
+    expect((await answer(0, promptIds[0])).status).toBe(409);
+    const replayed = await (await fetch(`${serve.url}/api/v1/missions/approval-mission-0`)).json();
+    expect(replayed.recent_events.some((event: any) => event.data?.action === 'hitl_response_accepted')).toBe(true);
+    await dispatch(1); await dispatch(2); await dispatch(3);
+    expect((await answer(1, promptIds[2])).status).toBe(409);
+    expect((await answer(3, promptIds[3])).status).toBe(200);
+    expect((await answer(2, promptIds[2])).status).toBe(200);
+    expect((await answer(1, promptIds[1])).status).toBe(200);
+    expect((await answer(1, promptIds[1])).status).toBe(409);
+    expect(legacyMessages.some(message => message.includes('mission.hitl_responded'))).toBe(false);
+    expect(replyInstances).toEqual(['instance-0', 'instance-3', 'instance-2', 'instance-1']);
+    expect(replies.map(message => message.taskId)).toEqual(['task-0', 'task-3', 'task-2', 'task-1']);
+    expect((await post('/api/v1/missions/approval-mission-0/hitl_response', null)).status).toBe(400);
+  });
+});

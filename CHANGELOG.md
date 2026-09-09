@@ -7,6 +7,11 @@ and this project uses [Calendar Versioning (CalVer)](https://calver.org/) with n
 
 ## [Unreleased]
 
+### Fixed
+
+- Route public mission approvals over the task's negotiated A2A transport, retaining prompt correlation,
+  validating pending responses and rejecting duplicate submissions (#2310).
+
 ## [2026.9.6] - 2026-09-08 – "Verifiable test conformance"
 
 ### Added

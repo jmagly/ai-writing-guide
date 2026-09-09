@@ -9,7 +9,7 @@
  * @issue #1374
  */
 
-import { A2AClient } from '../a2a/client.js';
+import { A2AClient, A2A_HITL_PROMPT_V1 } from '../a2a/client.js';
 import {
   isTerminalTaskState,
   type A2AProtocolVersion,
@@ -23,6 +23,7 @@ import type {
   ExecutorRegistry,
 } from './executor-registry.js';
 import { extractGraphMetadata } from '../flow/graph-metadata.js';
+import { extractHitlEnvelope } from '../a2a/hitl.js';
 
 export interface A2ATerminalObserverOptions {
   fetch?: typeof fetch;
@@ -44,6 +45,17 @@ export async function observeA2ATerminalState(
   initialTask: Task,
   opts: A2ATerminalObserverOptions = {}
 ): Promise<void> {
+  const mission = registry.getMission(missionId);
+  if (mission && !(mission.a2a?.taskId === initialTask.id
+    && mission.a2a.instanceId === a2aInstanceId)) {
+    mission.a2a = {
+      instanceId: a2aInstanceId, taskId: initialTask.id,
+      ...(initialTask.contextId ? { contextId: initialTask.contextId } : {}),
+      protocolVersion: opts.protocolVersion ?? '0.3',
+      ...(opts.selectedInterface ? { selectedInterface: opts.selectedInterface } : {}),
+      acceptedPrompts: new Set(),
+    };
+  }
   try {
     const clientOpts: ConstructorParameters<typeof A2AClient>[0] = {
       baseUrl: executor.transportEndpoints.rest,
@@ -51,6 +63,7 @@ export async function observeA2ATerminalState(
       instanceId: a2aInstanceId,
       protocolVersion: opts.protocolVersion ?? '0.3',
       protocolPolicy: opts.protocolVersion ?? '0.3',
+      optionalExtensions: [A2A_HITL_PROMPT_V1],
     };
     if (opts.selectedInterface) clientOpts.selectedInterface = opts.selectedInterface;
     if (opts.fetch) clientOpts.fetch = opts.fetch;
@@ -68,6 +81,9 @@ export async function observeA2ATerminalState(
       if (attempt === (opts.maxPolls ?? DEFAULT_MAX_POLLS)) break;
       await sleep(opts.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS);
       task = await client.getTask(task.id);
+      if (task.id !== initialTask.id || task.contextId !== initialTask.contextId) {
+        throw new Error('A2A observer task binding changed');
+      }
       emitNonTerminalProgress(registry, executor.executorId, missionId, task);
     }
 
@@ -100,10 +116,12 @@ function emitNonTerminalProgress(
     return;
   }
   if (state === 'input-required') {
+    const prompt = extractHitlEnvelope(task);
     registry.handleEvent(makeEnvelope('mission.hitl_required', executorId, missionId, task, {
       state: 'hitl-required',
       a2a_task_id: task.id,
       summary: taskStatusSummary(task),
+      ...(prompt?.ok ? { hitl_id: prompt.envelope.prompt_id, hitl_prompt: prompt.envelope } : {}),
     }));
   }
 }
