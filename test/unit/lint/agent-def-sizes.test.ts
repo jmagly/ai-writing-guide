@@ -1,7 +1,8 @@
-import { mkdtemp, mkdir, readFile, writeFile } from 'fs/promises';
+import { existsSync } from 'fs';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { dirname, join, resolve } from 'path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   AGENT_DEF_CEILING_BYTES,
@@ -18,13 +19,30 @@ async function writeAgent(root: string, relDir: string, name: string, bytes: num
   await writeFile(join(dir, name), 'x'.repeat(bytes));
 }
 
+const temporaryRoots = new Set<string>();
+
+async function makeTemporaryRoot() {
+  const root = await mkdtemp(join(tmpdir(), 'aiwg-agent-size-'));
+  temporaryRoots.add(root);
+  return root;
+}
+
+afterEach(async () => {
+  const roots = [...temporaryRoots];
+  temporaryRoots.clear();
+  for (const root of roots) {
+    await rm(root, { recursive: true, force: true });
+    expect(existsSync(root), `temporary root still exists: ${root}`).toBe(false);
+  }
+});
+
 describe('lint:agent-sizes', () => {
   it('does not allow-list oversized deployed agents', () => {
     expect(AGENT_DEF_SIZE_ALLOWLIST).toEqual({});
   });
 
   it('fails security-auditor when any deployed filename variant exceeds the ceiling', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'aiwg-agent-size-'));
+    const root = await makeTemporaryRoot();
     await writeAgent(root, '.claude/agents', 'security-auditor.md', AGENT_DEF_CEILING_BYTES + 100);
     await writeAgent(root, '.github/agents', 'security-auditor.agent.md', AGENT_DEF_CEILING_BYTES + 100);
 
@@ -38,7 +56,7 @@ describe('lint:agent-sizes', () => {
   });
 
   it('fails a non-exempt deployed agent over the ceiling', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'aiwg-agent-size-'));
+    const root = await makeTemporaryRoot();
     await writeAgent(root, '.codex/agents', 'custom-large-agent.toml', AGENT_DEF_CEILING_BYTES + 1);
 
     const result = await scanDeployedAgentDefSizes({ rootDir: root });
@@ -56,7 +74,7 @@ describe('lint:agent-sizes', () => {
   });
 
   it('catches Codex serialization growth from a raw source below the ceiling', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'aiwg-agent-size-'));
+    const root = await makeTemporaryRoot();
     const relPath = 'agentic/code/frameworks/example/agents/escaped.md';
     const sourcePath = join(root, relPath);
     await mkdir(dirname(sourcePath), { recursive: true });

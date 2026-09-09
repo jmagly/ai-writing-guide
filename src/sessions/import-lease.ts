@@ -86,9 +86,12 @@ export async function acquireImportLease(
         heartbeatAt: observed,
       };
       await writeOwner(ownerPath, owner);
+      let heartbeatWrite = Promise.resolve();
       const timer = setInterval(() => {
         owner.heartbeatAt = now().toISOString();
-        void writeOwner(ownerPath, owner).catch(() => undefined);
+        heartbeatWrite = heartbeatWrite
+          .then(() => writeOwner(ownerPath, owner))
+          .catch(() => undefined);
       }, heartbeatMs);
       timer.unref();
       let released = false;
@@ -99,6 +102,7 @@ export async function acquireImportLease(
           if (released) return;
           released = true;
           clearInterval(timer);
+          await heartbeatWrite;
           const current = await readOwner(ownerPath);
           if (current?.runId === owner.runId) {
             await rm(lockPath, { recursive: true, force: true });

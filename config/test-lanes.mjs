@@ -5,6 +5,12 @@ export const packagingFiles = [
   'test/integration/network-analysis-addon.test.ts',
   'test/integration/cli-package-webmode.test.ts',
   'test/integration/global-install-native-policy.test.ts',
+  'test/integration/tarball-allowlist-packaging.test.ts',
+];
+export const artifactIndexFiles = [
+  'test/integration/artifacts/dependency-graph.test.ts',
+  'test/integration/artifacts/incremental-build.test.ts',
+  'test/integration/artifacts/multi-graph.test.ts',
 ];
 export const discoveryFiles = ['test/integration/artifacts/discover-fortemi-corpus.test.ts'];
 export const nodeFiles = [

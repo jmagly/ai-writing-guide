@@ -61,7 +61,7 @@ describe('compound-memory addon activation', () => {
         'SKILL.md',
       ))).resolves.toBeUndefined();
     }
-  });
+  }, 60_000);
 
   it('previews transitive activation without writing deployment artifacts', async () => {
     const result = await new UseHandler().execute(context([

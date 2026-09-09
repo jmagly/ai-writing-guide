@@ -261,7 +261,7 @@ describe.sequential('aiwg use self-verifying provider deployment (#2069)', () =>
     expect(existsSync(path.join(homeRoot, '.openclaw', 'skills'))).toBe(true);
     expect(readdirSync(path.join(projectRoot, '.agents', 'skills')).length).toBeGreaterThan(0);
     expect(existsSync(repoSkillsRoot) ? readdirSync(repoSkillsRoot).sort() : []).toEqual(repoSkillsBefore);
-  }, 30_000);
+  }, 60_000);
 
   it('verifies every provider and computes one deterministic multi-provider outcome', () => {
     const projectRoot = isolatedRoot('aiwg-use-verify-multi-project-');

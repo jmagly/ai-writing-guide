@@ -224,9 +224,22 @@ jobs:
           AIWG_SERVE_HTTP_TIMEOUT_MS: "30000"
         run: npm run test:integration:serve
 
-  # Real package installation/build and full-corpus discovery are isolated
-  # gates. Local measured baselines are ~228s packaging and ~442s discovery
-  # before its packed-install smoke; neither competes with general test workers.
+  # Full-corpus index performance, real package installation/build, and
+  # full-corpus discovery are isolated gates. They must not compete with the
+  # general test workers or each other while measuring repository-scale work.
+  artifact-index:
+    name: Artifact index integration
+    runs-on: ubuntu-latest
+    container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Run isolated full-corpus artifact index tests
+        run: npm run test:integration:artifact-index
+
   packaging:
     name: Package lifecycle
     runs-on: ubuntu-latest
