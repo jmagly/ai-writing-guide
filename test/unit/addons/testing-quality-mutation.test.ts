@@ -65,6 +65,24 @@ describe('testing-quality mutation native-extension preflight', () => {
     expect(report.fallback.mutation_targets).toEqual(['package/numerical_contracts.py']);
   });
 
+  it('rejects an explicitly bounded fallback when its estimated runtime exceeds budget', () => {
+    const result = runPreflight(
+      '--import-file', fixture,
+      '--mutation-target', 'package/numerical_contracts.py',
+      '--estimated-mutants', '1000000000',
+      '--max-children', '1',
+      '--runtime-budget-seconds', '0.001',
+    );
+
+    expect(result.status).toBe(2);
+    const report = JSON.parse(result.stdout);
+    expect(report.fallback.missing_bounds).toEqual([]);
+    expect(report.fallback.mutation_targets).toEqual(['package/numerical_contracts.py']);
+    expect(report.fallback.estimated_runtime_seconds).toBeGreaterThan(report.fallback.runtime_budget_seconds);
+    expect(report.fallback.within_budget).toBe(false);
+    expect(report.fallback.allowed).toBe(false);
+  });
+
   it('classifies stats-phase native reload crashes as harness failures', () => {
     const result = runPreflight('--classify-mutmut-log', crashLog);
 
