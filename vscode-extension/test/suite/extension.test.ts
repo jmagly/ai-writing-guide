@@ -16,18 +16,21 @@ import { AiwgCliRunner } from '../../src/cli/runner';
 suite('AIWG Extension', () => {
   test('Extension activates without error', async () => {
     const ext = vscode.extensions.getExtension('jmagly.aiwg');
-    if (ext && !ext.isActive) {
-      await ext.activate();
-    }
-    // If ext is undefined we're running unit-style; just assert nothing threw
-    assert.ok(true);
+    assert.ok(ext, 'Expected jmagly.aiwg to be installed in the extension test host');
+    await ext.activate();
+    assert.strictEqual(ext.isActive, true, 'Expected jmagly.aiwg activation to complete');
   });
 
   test('Commands are registered', async () => {
-    const commands = await vscode.commands.getCommands(true);
-    const aiwgCommands = commands.filter((c) => c.startsWith('aiwg.'));
-    // Phase 1 registers at least 7 commands
-    assert.ok(aiwgCommands.length >= 7, `Expected ≥7 aiwg commands, got ${aiwgCommands.length}`);
+    const ext = vscode.extensions.getExtension('jmagly.aiwg');
+    assert.ok(ext, 'Expected jmagly.aiwg to be installed in the extension test host');
+    await ext.activate();
+    const commands = new Set(await vscode.commands.getCommands(true));
+    const required = ['aiwg.init', 'aiwg.status', 'aiwg.deploy', 'aiwg.sync',
+      'aiwg.runScript', 'aiwg.configureMcp', 'aiwg.installCli', 'aiwg.refreshSidebar'];
+    const declared = ext.packageJSON.contributes.commands.map((command: { command: string }) => command.command);
+    assert.deepStrictEqual([...declared].sort(), [...required].sort(), 'Review expected commands when the manifest changes');
+    for (const command of required) assert.ok(commands.has(command), `Required command is not registered: ${command}`);
   });
 });
 
@@ -55,34 +58,46 @@ suite('MCP Auto-Config', () => {
     await configureMcp(tmpDir, '/usr/local/bin/aiwg');
     const mcpPath = path.join(tmpDir, '.vscode', 'mcp.json');
     const content = JSON.parse(await fs.readFile(mcpPath, 'utf-8'));
-    assert.strictEqual(content.servers.aiwg.command, '/usr/local/bin/aiwg');
-    assert.deepStrictEqual(content.servers.aiwg.args, ['mcp', 'serve']);
+    assert.deepStrictEqual(content, {
+      servers: { aiwg: { type: 'stdio', command: '/usr/local/bin/aiwg', args: ['mcp', 'serve'] } },
+    });
   });
 
   test('Is idempotent — does not overwrite existing aiwg entry', async () => {
     const vscodDir = path.join(tmpDir, '.vscode');
     await fs.mkdir(vscodDir, { recursive: true });
     const mcpPath = path.join(vscodDir, 'mcp.json');
-    const initial = { servers: { aiwg: { type: 'stdio', command: '/old/path', args: ['mcp', 'serve'] } } };
+    const initial = {
+      inputs: [{ id: 'kept', type: 'promptString', description: 'Keep this setting' }],
+      servers: { aiwg: { type: 'stdio', command: '/old/path', args: ['mcp', 'serve', '--keep'] } },
+    };
     await fs.writeFile(mcpPath, JSON.stringify(initial));
 
     await configureMcp(tmpDir, '/new/path/aiwg');
 
     const content = JSON.parse(await fs.readFile(mcpPath, 'utf-8'));
-    assert.strictEqual(content.servers.aiwg.command, '/old/path', 'Should not overwrite existing entry');
+    assert.deepStrictEqual(content, initial, 'Should not change any existing configuration');
   });
 
   test('Preserves existing MCP servers', async () => {
     const vscodDir = path.join(tmpDir, '.vscode');
     await fs.mkdir(vscodDir, { recursive: true });
     const mcpPath = path.join(vscodDir, 'mcp.json');
-    const existing = { servers: { other: { type: 'stdio', command: '/other/tool', args: [] } } };
+    const existing = {
+      inputs: [{ id: 'kept', type: 'promptString', description: 'Keep this setting' }],
+      servers: { other: { type: 'stdio', command: '/other/tool', args: ['--preserve-this'] } },
+    };
     await fs.writeFile(mcpPath, JSON.stringify(existing));
 
     await configureMcp(tmpDir, '/usr/local/bin/aiwg');
 
     const content = JSON.parse(await fs.readFile(mcpPath, 'utf-8'));
-    assert.ok(content.servers.other, 'Should preserve other server');
-    assert.ok(content.servers.aiwg, 'Should add aiwg server');
+    assert.deepStrictEqual(content, {
+      ...existing,
+      servers: {
+        ...existing.servers,
+        aiwg: { type: 'stdio', command: '/usr/local/bin/aiwg', args: ['mcp', 'serve'] },
+      },
+    }, 'Should preserve all existing values and add the exact AIWG entry');
   });
 });
