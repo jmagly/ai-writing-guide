@@ -9,6 +9,11 @@ function option(args, name, fallback) {
   return index >= 0 ? args[index + 1] : fallback;
 }
 
+function optionMissingValue(args, name) {
+  const index = args.indexOf(name);
+  return index >= 0 && (!args[index + 1] || args[index + 1].startsWith('-'));
+}
+
 function positional(args) {
   const result = [];
   for (let index = 0; index < args.length; index += 1) {
@@ -31,7 +36,7 @@ async function writeJson(file, value) {
 export default async function compositionBenchmark(args, context) {
   if (args.includes('--help') || args.includes('-h')) {
     return {
-      exitCode: report.summary.measurement_valid ? 0 : 1,
+      exitCode: 0,
       message: [
         'Usage: aiwg composition benchmark <benchmark.json> [options]',
         '',
@@ -43,6 +48,9 @@ export default async function compositionBenchmark(args, context) {
         'Synthetic-conformance fixtures validate the harness only; they cannot open the empirical claim gate.',
       ].join('\n'),
     };
+  }
+  for (const name of ['--raw-out', '--summary-out']) {
+    if (optionMissingValue(args, name)) return { exitCode: 2, message: `${name} requires a path.` };
   }
   const [manifestArg] = positional(args);
   if (!manifestArg) return { exitCode: 2, message: 'Missing benchmark manifest path. Run with --help for usage.' };
@@ -56,7 +64,7 @@ export default async function compositionBenchmark(args, context) {
     if (rawOut) await writeJson(path.resolve(context.cwd, rawOut), report.raw);
     if (summaryOut) await writeJson(path.resolve(context.cwd, summaryOut), report.summary);
     return {
-      exitCode: 0,
+      exitCode: report.summary.measurement_valid ? 0 : 1,
       message: format === 'markdown' ? formatBenchmarkMarkdown(report.summary) : JSON.stringify(report.summary, null, 2),
     };
   } catch (error) {

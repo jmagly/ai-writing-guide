@@ -11,6 +11,11 @@ function option(args, name, fallback) {
   return index >= 0 ? args[index + 1] : fallback;
 }
 
+function optionMissingValue(args, name) {
+  const index = args.indexOf(name);
+  return index >= 0 && (!args[index + 1] || args[index + 1].startsWith('-'));
+}
+
 function positional(args) {
   const valueOptions = new Set(['--format', '--catalog']);
   const values = [];
@@ -64,6 +69,8 @@ export default async function compositionValidate(args, context) {
       ].join('\n'),
     };
   }
+
+  if (optionMissingValue(args, '--catalog')) return { exitCode: 2, message: '--catalog requires a path.' };
 
   const [manifestArg] = positional(args);
   if (!manifestArg) return { exitCode: 2, message: 'Missing FlowGraph manifest path. Run with --help for usage.' };

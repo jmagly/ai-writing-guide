@@ -193,6 +193,17 @@ describe('composition-engine FlowGraph contract', () => {
     expect(JSON.parse(invalid.message).diagnostics[0].code).toBe('UNRESOLVED_INDEX_REFERENCE');
   });
 
+  it.each([
+    ['terminal', []],
+    ['before another option', ['--format', 'json']],
+  ])('rejects a missing catalog path %s before reading files', async (_scenario, suffix) => {
+    const result = await compositionValidate(
+      [resolve(ROOT, 'fixtures', 'linear-flow.json'), '--catalog', ...suffix],
+      { cwd: process.cwd() },
+    );
+    expect(result).toEqual({exitCode: 2, message: '--catalog requires a path.'});
+  });
+
   it('makes installed contracts and a valid starter discoverable from CLI help', async () => {
     const help = await compositionValidate(['--help'], { cwd: process.cwd() });
     expect(help.message).toContain('flow-graph.schema.json');

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -102,6 +102,23 @@ describe('composition policy evaluation harness (#2118)', () => {
     expect(report.summary.invalid_reasons[0]).toContain('wrong-side-effect-policy');
   });
 
+  it('returns non-zero from the benchmark command when a negative control invalidates measurement', async () => {
+    const temporary = await mkdtemp(path.join(os.tmpdir(), 'aiwg-composition-invalid-'));
+    try {
+      const manifest = await json(manifestPath);
+      manifest.negative_controls[0].policy_patch = {quality_delta: 0.5, constraint_delta: 0.5};
+      const invalid = path.join(temporary, 'invalid-control.json');
+      await writeFile(invalid, `${JSON.stringify(manifest)}\n`);
+      const result = await compositionBenchmark([invalid], {cwd: root});
+      const summary = JSON.parse(result.message);
+      expect(summary.measurement_valid).toBe(false);
+      expect(summary.invalid_reasons[0]).toContain('wrong-side-effect-policy');
+      expect(result.exitCode).toBe(1);
+    } finally {
+      await rm(temporary, {recursive: true, force: true});
+    }
+  });
+
   it('keeps the empirical claim gate blocked for synthetic conformance records', async () => {
     const report = runCompositionBenchmark(await json(manifestPath));
     expect(report.summary.claim_gate).toEqual(expect.objectContaining({
@@ -134,6 +151,29 @@ describe('composition policy evaluation harness (#2118)', () => {
       expect(result.message).toContain('Claim gate: **BLOCKED**');
       expect((await json(raw)).records).toHaveLength(43);
       expect((await json(summary)).strict_lcm_vs_adaptive).toBeTruthy();
+    } finally {
+      await rm(temporary, {recursive: true, force: true});
+    }
+  });
+
+  it('returns benchmark help without requiring a manifest or initialized report', async () => {
+    const result = await compositionBenchmark(['--help'], {cwd: root});
+    expect(result.exitCode).toBe(0);
+    expect(result.message).toContain('Usage: aiwg composition benchmark');
+    expect(result.message).toContain('cannot open the empirical claim gate');
+  });
+
+  it.each([
+    {option: '--raw-out', suffix: []},
+    {option: '--raw-out', suffix: ['--format', 'json']},
+    {option: '--summary-out', suffix: []},
+    {option: '--summary-out', suffix: ['--format', 'json']},
+  ])('rejects a missing $option value before benchmark execution ($suffix)', async ({option, suffix}) => {
+    const temporary = await mkdtemp(path.join(os.tmpdir(), 'aiwg-composition-option-'));
+    try {
+      const result = await compositionBenchmark([manifestPath, option, ...suffix], {cwd: temporary});
+      expect(result).toEqual({exitCode: 2, message: `${option} requires a path.`});
+      expect(await readFile(manifestPath, 'utf8')).toBeTruthy();
     } finally {
       await rm(temporary, {recursive: true, force: true});
     }
