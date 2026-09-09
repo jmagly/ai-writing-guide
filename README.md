@@ -565,20 +565,20 @@ services or orchestration tools, perform additional work when configured and inv
 flowchart LR
   subgraph Source["AIWG framework source"]
     direction TB
-    KERN[Kernel skills<br/>within provider listing budgets]
-    STD[Standard skills<br/>read from $AIWG_ROOT]
-    AGENT[Specialist agents]
-    RULES[Workflow rules]
-    TPL[Artifact templates]
+    KERN["Kernel skills<br/>within provider listing budgets"]
+    STD["Standard skills<br/>read from $AIWG_ROOT"]
+    AGENT["Specialist agents"]
+    RULES["Workflow rules"]
+    TPL["Artifact templates"]
   end
 
-  CLI([aiwg use all<br/>--provider X]) --> DEPLOY
+  CLI(["aiwg use all<br/>--provider X"]) --> DEPLOY
 
   subgraph DEPLOY["Deploy step (one-shot)"]
     direction TB
-    COPY[Copy kernel skills, agents,<br/>rules to provider-native dirs]
-    INDEX[Build artifact index<br/>~/.local/share/aiwg/index/]
-    CTX[Emit AIWG.md + AGENTS.md<br/>at project root]
+    COPY["Copy kernel skills, agents,<br/>rules to provider-native dirs"]
+    INDEX["Build artifact index<br/>~/.local/share/aiwg/index/"]
+    CTX["Emit AIWG.md + AGENTS.md<br/>at project root"]
   end
 
   Source --> CLI
@@ -586,17 +586,17 @@ flowchart LR
 
   subgraph Project["Your project (after deploy)"]
     direction TB
-    PLAT[.claude/skills/<br/>.codex/agents/<br/>.warp/agents/ ...]
-    AIWGMD[AIWG.md / .hermes.md /<br/>WARP.md / AGENTS.md]
-    ART[.aiwg/<br/>requirements/<br/>architecture/<br/>...]
+    PLAT[".claude/skills/<br/>.codex/agents/<br/>.warp/agents/ ..."]
+    AIWGMD["AIWG.md / .hermes.md /<br/>WARP.md / AGENTS.md"]
+    ART[".aiwg/<br/>requirements/<br/>architecture/<br/>..."]
   end
 
   Project --> SESS
 
   subgraph SESS["AI session (Claude / Codex / Hermes / etc.)"]
     direction TB
-    NATIVE[Platform-native loader<br/>reads provider dir]
-    DISC([Assistant capability discovery<br/>+ asset lookup])
+    NATIVE["Platform-native loader<br/>reads provider dir"]
+    DISC(["Assistant capability discovery<br/>+ asset lookup"])
   end
 
   classDef optional stroke-dasharray: 5 5,fill:#fef9e7
