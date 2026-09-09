@@ -165,7 +165,7 @@ describe('AgentOrchestrator', () => {
 
       // Check active orchestrations mid-execution
       const active = orchestrator.getActiveOrchestrations();
-      expect(active.size).toBeGreaterThanOrEqual(0); // May complete too fast in tests
+      expect(active.size).toBe(1);
 
       await executionPromise;
 
@@ -190,19 +190,25 @@ describe('AgentOrchestrator', () => {
 
     it('should handle orchestration cancellation', async () => {
       const plan = orchestrator.createSADPlan({ workingDir: '/test' });
+      const cancelled: string[] = [];
+      orchestrator.on('orchestration:cancelled', ({ orchestrationId }) => {
+        cancelled.push(orchestrationId);
+      });
 
       const executionPromise = orchestrator.executeOrchestration(plan);
 
-      // Try to cancel (may be too fast in tests)
       const active = orchestrator.getActiveOrchestrations();
       const orchestrationId = active.keys().next().value;
+      expect(orchestrationId).toBeDefined();
+      expect(orchestrator.cancelOrchestration(orchestrationId!)).toBe(true);
+      expect(cancelled).toEqual([orchestrationId]);
+      expect(orchestrator.getActiveOrchestrations().size).toBe(0);
 
-      if (orchestrationId) {
-        const cancelled = orchestrator.cancelOrchestration(orchestrationId);
-        expect(typeof cancelled).toBe('boolean');
-      }
-
-      await executionPromise;
+      const result = await executionPromise;
+      expect(result.success).toBe(false);
+      expect(result.phase).toBe('failed');
+      expect(result.error).toBe('Cancelled by user');
+      expect(orchestrator.cancelOrchestration(orchestrationId!)).toBe(false);
     });
   });
 
@@ -224,6 +230,7 @@ describe('AgentOrchestrator', () => {
 
     it('should generate mock comments based on reviewer type', async () => {
       const plan = orchestrator.createSADPlan({ workingDir: '/test' });
+      vi.spyOn(Math, 'random').mockReturnValue(0.4);
 
       const result = await orchestrator.executeOrchestration(plan);
 
@@ -231,25 +238,26 @@ describe('AgentOrchestrator', () => {
         r.agentType === 'security-architect'
       );
 
-      if (securityReview && securityReview.comments.length > 0) {
-        const hasSecurityComment = securityReview.comments.some(c =>
-          c.comment.toLowerCase().includes('security') ||
-          c.comment.toLowerCase().includes('authentication')
-        );
-        expect(hasSecurityComment).toBe(true);
-      }
+      expect(securityReview).toBeDefined();
+      expect(securityReview?.status).toBe('approved-with-changes');
+      expect(securityReview?.comments).toContainEqual(expect.objectContaining({
+        section: 'Security Architecture',
+        comment: 'Consider adding authentication details'
+      }));
     });
 
-    it('should respect requireAllApprovals option', async () => {
+    it('should allow approved-with-changes when all approvals are not required', async () => {
       const plan = orchestrator.createSADPlan({ workingDir: '/test' });
+      vi.spyOn(Math, 'random').mockReturnValue(0.4);
 
-      // This may pass or fail depending on random review outcomes
       const result = await orchestrator.executeOrchestration(plan, {
         workingDir: '/test',
-        requireAllApprovals: false // Should allow approved-with-changes
+        requireAllApprovals: false
       });
 
       expect(result.success).toBe(true);
+      expect(result.reviewResults).toHaveLength(4);
+      expect(result.reviewResults.every(review => review.status === 'approved-with-changes')).toBe(true);
     });
   });
 
@@ -284,23 +292,31 @@ describe('AgentOrchestrator', () => {
 
       const result = await orchestrator.executeOrchestration(plan);
 
-      // Should handle gracefully (simulation always succeeds, but test structure)
-      expect(result).toBeDefined();
+      expect(result.success).toBe(false);
+      expect(result.phase).toBe('failed');
+      expect(result.draftResult).toMatchObject({
+        success: false,
+        error: 'Task timeout must be positive: 0'
+      });
+      expect(result.error).toBe('Draft generation failed: Task timeout must be positive: 0');
     });
 
     it('should emit failure events on error', async () => {
       const plan = orchestrator.createSADPlan({ workingDir: '/test' });
+      plan.primaryAuthor.timeout = 0;
 
-      let failureEmitted = false;
-      orchestrator.on('orchestration:failed', () => {
-        failureEmitted = true;
+      const failures: Array<{ phase: string; error?: string }> = [];
+      orchestrator.on('orchestration:failed', ({ result }) => {
+        failures.push({ phase: result.phase, error: result.error });
       });
 
-      // This test may not trigger failure in simulation mode
-      await orchestrator.executeOrchestration(plan);
+      const result = await orchestrator.executeOrchestration(plan);
 
-      // failureEmitted may be false if execution succeeds
-      expect(typeof failureEmitted).toBe('boolean');
+      expect(result.success).toBe(false);
+      expect(failures).toEqual([{
+        phase: 'failed',
+        error: 'Draft generation failed: Task timeout must be positive: 0'
+      }]);
     });
   });
 });
@@ -335,7 +351,7 @@ describe('ReviewSynthesizer', () => {
 
       expect(synthesis.reviewCount).toBe(1);
       expect(synthesis.approvedCount).toBe(1);
-      expect(synthesis.overallStatus).toMatch(/approved|approved-with-changes/);
+      expect(synthesis.overallStatus).toBe('approved');
     });
 
     it('should handle empty review list', () => {
@@ -370,7 +386,7 @@ describe('ReviewSynthesizer', () => {
 
       const synthesis = synthesizer.synthesize(reviews);
 
-      expect(synthesis.overallStatus).toMatch(/approved|approved-with-changes/);
+      expect(synthesis.overallStatus).toBe('approved');
     });
 
     it('should set status to approved-with-changes when changes requested', () => {
@@ -503,6 +519,69 @@ describe('ReviewSynthesizer', () => {
       const firstComment = synthesis.consolidatedComments[0];
       expect(firstComment.severity).toBe('critical');
     });
+
+    it('should reject contradictory feedback by default', () => {
+      const reviews = [
+        {
+          taskId: 'task-1', agentType: 'security-architect' as const, success: true,
+          outputPath: '/test/review1.md', duration: 1000, status: 'approved-with-changes' as const,
+          comments: [{ severity: 'major' as const, section: 'Security', comment: 'Add authentication', suggestedFix: 'Add authentication' }], suggestions: []
+        },
+        {
+          taskId: 'task-2', agentType: 'technical-writer' as const, success: true,
+          outputPath: '/test/review2.md', duration: 1000, status: 'approved-with-changes' as const,
+          comments: [{ severity: 'major' as const, section: 'Security', comment: 'Remove authentication', suggestedFix: 'Remove authentication' }], suggestions: []
+        }
+      ];
+
+      expect(() => synthesizer.synthesize(reviews)).toThrow(
+        'Contradictory review conflicts detected: Contradictory feedback on security'
+      );
+    });
+
+    it('should return explicitly allowed conflicts using reviewer-role priority', () => {
+      const reviews = [
+        {
+          taskId: 'task-1', agentType: 'security-architect' as const, success: true,
+          outputPath: '/test/review1.md', duration: 1000, status: 'approved-with-changes' as const,
+          comments: [{ severity: 'major' as const, section: 'Security', comment: 'Add authentication', suggestedFix: 'Add authentication' }], suggestions: []
+        },
+        {
+          taskId: 'task-2', agentType: 'technical-writer' as const, success: true,
+          outputPath: '/test/review2.md', duration: 1000, status: 'approved-with-changes' as const,
+          comments: [{ severity: 'critical' as const, section: 'Security', comment: 'Remove authentication', suggestedFix: 'Remove authentication' }], suggestions: []
+        }
+      ];
+
+      const synthesis = synthesizer.synthesize(reviews, { allowConflicts: true });
+      expect(synthesis.conflicts).toHaveLength(1);
+      expect(synthesis.conflicts[0].resolution).toBe(
+        'Follow security-architect recommendation: Add authentication'
+      );
+    });
+
+    it('should resolve explicitly allowed conflicts by severity when role priority is disabled', () => {
+      const reviews = [
+        {
+          taskId: 'task-1', agentType: 'security-architect' as const, success: true,
+          outputPath: '/test/review1.md', duration: 1000, status: 'approved-with-changes' as const,
+          comments: [{ severity: 'minor' as const, section: 'Security', comment: 'Add authentication', suggestedFix: 'Add authentication' }], suggestions: []
+        },
+        {
+          taskId: 'task-2', agentType: 'technical-writer' as const, success: true,
+          outputPath: '/test/review2.md', duration: 1000, status: 'approved-with-changes' as const,
+          comments: [{ severity: 'critical' as const, section: 'Security', comment: 'Remove authentication', suggestedFix: 'Remove authentication' }], suggestions: []
+        }
+      ];
+
+      const synthesis = synthesizer.synthesize(reviews, {
+        allowConflicts: true,
+        prioritizeByRole: false
+      });
+      expect(synthesis.conflicts[0].resolution).toBe(
+        'Prioritize higher severity: Remove authentication'
+      );
+    });
   });
 
   describe('Action Plan Generation', () => {
@@ -565,10 +644,14 @@ describe('ReviewSynthesizer', () => {
 
       const synthesis = synthesizer.synthesize(reviews);
 
-      const actionPlanText = synthesis.actionPlan.join('\n');
-
-      // Check that action plan has severity groupings
-      expect(actionPlanText).toMatch(/CRITICAL|MAJOR|MINOR/);
+      expect(synthesis.actionPlan).toEqual([
+        'CRITICAL ITEMS (must fix):',
+        '  - [testing] Address: Critical test gap',
+        'MAJOR ITEMS (should fix):',
+        '  - [testing] Address: Major test improvement',
+        'MINOR ITEMS (optional):',
+        '  - [style] Address: Minor style fix'
+      ]);
     });
   });
 

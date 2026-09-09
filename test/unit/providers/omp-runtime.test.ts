@@ -1,6 +1,6 @@
 import { SessionLauncher } from '../../../tools/ralph-external/session-launcher.mjs';
 import { compileModelPolicy } from '../../../src/models/provider-policy.js';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -67,11 +67,11 @@ describe('OMP JSON and frames', () => {
 describe('OMP RPC lifecycle', () => {
   it.each([1, 2])('negotiates v%s with correlation, terminal events and process cleanup', async version => {
     const dir = await mkdtemp(join(tmpdir(), 'omp-rpc-')); const fixture = join(dir, 'fixture.cjs');
-    await writeFile(fixture, `process.stderr.write('fixture stderr noise');process.stdout.write(JSON.stringify({type:'ready',protocolVersion:1,supportedProtocolVersions:[1,${version}]})+'\\n'); require('readline').createInterface({input:process.stdin}).on('line',line=>{const m=JSON.parse(line);const send=x=>process.stdout.write(JSON.stringify(x)+'\\n');send({type:'response',id:m.id,command:m.type,success:true,data:m.type==='get_state'?{isStreaming:false}: {protocolVersion:2}});if(m.type==='prompt'){send({type:'agent_end',willContinue:true,messages:[]});send({type:'message_end',message:${JSON.stringify(message)}});send({type:'agent_end',messages:[]});}});`);
+    await writeFile(fixture, `process.stdout.write(JSON.stringify({type:'ready',protocolVersion:1,supportedProtocolVersions:[1,${version}]})+'\\n');setTimeout(()=>process.stderr.write('fixture stderr noise'),25);require('readline').createInterface({input:process.stdin}).on('line',line=>{const m=JSON.parse(line);const send=x=>process.stdout.write(JSON.stringify(x)+'\\n');send({type:'response',id:m.id,command:m.type,success:true,data:m.type==='get_state'?{isStreaming:false}: {protocolVersion:2}});if(m.type==='prompt'){send({type:'agent_end',willContinue:true,messages:[]});send({type:'message_end',message:${JSON.stringify(message)}});send({type:'agent_end',messages:[]});}});`);
     // Wrapper absorbs OMP args while retaining a real child process lifecycle.
     const executable = join(dir, 'omp'); await writeFile(executable, `#!/bin/sh\nexec '${process.execPath}' '${fixture}'\n`);
     const client = new OmpRpcClient({ ...rpcFixture(executable), timeoutMs: 2000 });
-    try { await client.connect(); expect(client.protocolVersion).toBe(version); expect(client.stderr).toContain('fixture stderr noise'); expect((await client.prompt('hello')).success).toBe(true); }
+    try { await client.connect(); expect(client.protocolVersion).toBe(version); await vi.waitFor(() => expect(client.stderr).toContain('fixture stderr noise'), { timeout: 500, interval: 5 }); expect((await client.prompt('hello')).success).toBe(true); }
     finally { await client.close(); await rm(dir, { recursive: true, force: true }); }
     expect(client.isClosed).toBe(true);
   });

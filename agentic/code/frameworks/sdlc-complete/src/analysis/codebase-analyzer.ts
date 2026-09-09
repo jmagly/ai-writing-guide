@@ -161,7 +161,12 @@ export class CodebaseAnalyzer {
 
     // Detect technical debt
     const technicalDebt = options.detectDebt !== false
-      ? await this.detectTechnicalDebt(options.path, metrics, dependencies)
+      ? await this.detectTechnicalDebt(
+          options.path,
+          metrics,
+          dependencies,
+          options.excludePaths || this.defaultExcludePaths
+        )
       : [];
 
     // Generate recommendations
@@ -620,9 +625,10 @@ export class CodebaseAnalyzer {
    * Detect technical debt
    */
   private async detectTechnicalDebt(
-    _basePath: string,
+    basePath: string,
     metrics: CodebaseMetrics,
-    dependencies: DependencyInfo[]
+    dependencies: DependencyInfo[],
+    excludePaths: string[]
   ): Promise<TechnicalDebt[]> {
     const debt: TechnicalDebt[] = [];
 
@@ -652,8 +658,50 @@ export class CodebaseAnalyzer {
       });
     }
 
-    // Check for low test coverage (heuristic: no test files)
-    if (!metrics.filesByLanguage['Test']) {
+    let hasTestFile = false;
+    let todoCount = 0;
+    const largeFiles: Array<{ location: string; lines: number }> = [];
+
+    await this.walkDirectory(basePath, async (filePath) => {
+      if (this.shouldExclude(filePath, excludePaths)) return;
+
+      const relative = path.relative(basePath, filePath).split(path.sep).join('/');
+      if (this.isTestFile(relative)) hasTestFile = true;
+
+      if (!this.languageExtensions[path.extname(filePath)]) return;
+      try {
+        const content = await fs.readFile(filePath, 'utf-8');
+        const lines = content.split('\n').length;
+        const matches = content.match(/\b(?:TODO|FIXME)\b/gi);
+        todoCount += matches?.length || 0;
+        if (lines > 500) largeFiles.push({ location: relative, lines });
+      } catch {
+        // Unreadable files are already excluded from gathered metrics.
+      }
+    });
+
+    if (todoCount > 0) {
+      debt.push({
+        category: 'complexity',
+        severity: 'medium',
+        description: `${todoCount} TODO/FIXME marker${todoCount === 1 ? '' : 's'} require review`,
+        location: 'Codebase-wide',
+        estimatedEffort: `${todoCount}h`
+      });
+    }
+
+    for (const file of largeFiles) {
+      debt.push({
+        category: 'complexity',
+        severity: file.lines > 1000 ? 'high' : 'medium',
+        description: `Large file (${file.lines} lines) may require decomposition`,
+        location: file.location,
+        estimatedEffort: file.lines > 1000 ? '8-16h' : '4-8h'
+      });
+    }
+
+    // Check for low test coverage (heuristic: no recognized test file paths)
+    if (!hasTestFile) {
       debt.push({
         category: 'complexity',
         severity: 'high',
@@ -664,6 +712,20 @@ export class CodebaseAnalyzer {
     }
 
     return debt;
+  }
+
+  /**
+   * Recognize common test file and directory conventions independently of language.
+   */
+  private isTestFile(relativePath: string): boolean {
+    const normalized = relativePath.replace(/\\/g, '/');
+    const basename = path.posix.basename(normalized);
+    return /(^|\/)(?:test|tests|__tests__)(\/|$)/i.test(normalized) ||
+      /(?:^|\.)test\.[^.]+$/i.test(basename) ||
+      /(?:^|\.)spec\.[^.]+$/i.test(basename) ||
+      /_test\.go$/i.test(basename) ||
+      /^test_.*\.py$/i.test(basename) ||
+      /_test\.py$/i.test(basename);
   }
 
   /**

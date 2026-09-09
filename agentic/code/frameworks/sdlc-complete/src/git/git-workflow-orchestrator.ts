@@ -16,10 +16,10 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 // ============================================================================
 // Types and Interfaces
@@ -154,7 +154,7 @@ export class GitWorkflowOrchestrator {
    * Get current branch name
    */
   private async getCurrentBranch(): Promise<string> {
-    const { stdout } = await this.execGit('branch --show-current');
+    const { stdout } = await this.execGit(['branch', '--show-current']);
     return stdout.trim();
   }
 
@@ -163,7 +163,7 @@ export class GitWorkflowOrchestrator {
    */
   private async getRemoteBranch(): Promise<string | undefined> {
     try {
-      const { stdout } = await this.execGit('rev-parse --abbrev-ref --symbolic-full-name @{u}');
+      const { stdout } = await this.execGit(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
       return stdout.trim() || undefined;
     } catch {
       return undefined;
@@ -175,7 +175,7 @@ export class GitWorkflowOrchestrator {
    */
   private async getAheadCount(): Promise<number> {
     try {
-      const { stdout } = await this.execGit('rev-list --count @{u}..HEAD');
+      const { stdout } = await this.execGit(['rev-list', '--count', '@{u}..HEAD']);
       return parseInt(stdout.trim()) || 0;
     } catch {
       return 0;
@@ -187,7 +187,7 @@ export class GitWorkflowOrchestrator {
    */
   private async getBehindCount(): Promise<number> {
     try {
-      const { stdout } = await this.execGit('rev-list --count HEAD..@{u}');
+      const { stdout } = await this.execGit(['rev-list', '--count', 'HEAD..@{u}']);
       return parseInt(stdout.trim()) || 0;
     } catch {
       return 0;
@@ -198,7 +198,7 @@ export class GitWorkflowOrchestrator {
    * Get staged files
    */
   private async getStagedFiles(): Promise<string[]> {
-    const { stdout } = await this.execGit('diff --cached --name-only');
+    const { stdout } = await this.execGit(['diff', '--cached', '--name-only']);
     return stdout.trim().split('\n').filter(Boolean);
   }
 
@@ -206,7 +206,7 @@ export class GitWorkflowOrchestrator {
    * Get unstaged files
    */
   private async getUnstagedFiles(): Promise<string[]> {
-    const { stdout } = await this.execGit('diff --name-only');
+    const { stdout } = await this.execGit(['diff', '--name-only']);
     return stdout.trim().split('\n').filter(Boolean);
   }
 
@@ -214,7 +214,7 @@ export class GitWorkflowOrchestrator {
    * Get untracked files
    */
   private async getUntrackedFiles(): Promise<string[]> {
-    const { stdout } = await this.execGit('ls-files --others --exclude-standard');
+    const { stdout } = await this.execGit(['ls-files', '--others', '--exclude-standard']);
     return stdout.trim().split('\n').filter(Boolean);
   }
 
@@ -222,7 +222,7 @@ export class GitWorkflowOrchestrator {
    * Get conflicted files
    */
   private async getConflicts(): Promise<string[]> {
-    const { stdout } = await this.execGit('diff --name-only --diff-filter=U');
+    const { stdout } = await this.execGit(['diff', '--name-only', '--diff-filter=U']);
     return stdout.trim().split('\n').filter(Boolean);
   }
 
@@ -244,13 +244,13 @@ export class GitWorkflowOrchestrator {
       const baseBranch = options.baseBranch || this.getDefaultBaseBranch(options.strategy || this.config.branchStrategy);
 
       // Checkout base branch
-      await this.execGit(`checkout ${baseBranch}`);
+      await this.execGit(['checkout', baseBranch]);
 
       // Pull latest changes
-      await this.execGit(`pull ${this.config.remote} ${baseBranch}`);
+      await this.execGit(['pull', this.config.remote, baseBranch]);
 
       // Create and checkout new branch
-      await this.execGit(`checkout -b ${branchName}`);
+      await this.execGit(['checkout', '-b', branchName]);
 
       return {
         success: true,
@@ -275,7 +275,7 @@ export class GitWorkflowOrchestrator {
     const startTime = Date.now();
 
     try {
-      await this.execGit(`checkout ${branchName}`);
+      await this.execGit(['checkout', branchName]);
 
       return {
         success: true,
@@ -301,11 +301,11 @@ export class GitWorkflowOrchestrator {
 
     try {
       // Delete local branch
-      await this.execGit(`branch -d ${branchName}`);
+      await this.execGit(['branch', '-d', branchName]);
 
       // Delete remote branch if requested
       if (deleteRemote) {
-        await this.execGit(`push ${this.config.remote} --delete ${branchName}`);
+        await this.execGit(['push', this.config.remote, '--delete', branchName]);
       }
 
       return {
@@ -328,8 +328,7 @@ export class GitWorkflowOrchestrator {
    * List all branches
    */
   public async listBranches(includeRemote = false): Promise<string[]> {
-    const flag = includeRemote ? '-a' : '';
-    const { stdout } = await this.execGit(`branch ${flag}`);
+    const { stdout } = await this.execGit(includeRemote ? ['branch', '-a'] : ['branch']);
 
     return stdout
       .split('\n')
@@ -357,6 +356,12 @@ export class GitWorkflowOrchestrator {
       let message = options.message;
       if (!message && (options.generateMessage || this.config.autoGenerateMessages)) {
         message = await this.generateCommitMessage(options);
+      } else if (message && this.config.conventionalCommits &&
+                 !/^(?:feat|fix|docs|style|refactor|perf|test|build|ci|chore)(?:\([^)]+\))?!?:\s/.test(message)) {
+        const type = options.type || this.detectCommitType(options.files || []);
+        const scope = options.scope ? `(${options.scope})` : '';
+        const breaking = options.breaking ? '!' : '';
+        message = `${type}${scope}${breaking}: ${message}`;
       }
 
       if (!message) {
@@ -364,7 +369,7 @@ export class GitWorkflowOrchestrator {
       }
 
       // Create commit
-      await this.execGit(`commit -m "${message}"`);
+      await this.execGit(['commit', '-m', message]);
 
       return {
         success: true,
@@ -388,8 +393,7 @@ export class GitWorkflowOrchestrator {
   public async stageFiles(files: string[]): Promise<void> {
     if (files.length === 0) return;
 
-    const fileList = files.join(' ');
-    await this.execGit(`add ${fileList}`);
+    await this.execGit(['add', ...files]);
   }
 
   /**
@@ -451,6 +455,10 @@ export class GitWorkflowOrchestrator {
       return `update ${files.length} files`;
     }
 
+    if (dirs.size > 1) {
+      return `update ${files.length} files`;
+    }
+
     const mainDir = Array.from(dirs)[0];
     return `update ${path.basename(mainDir)} components`;
   }
@@ -482,17 +490,17 @@ export class GitWorkflowOrchestrator {
 
       // Perform merge based on strategy
       const strategy = options.strategy || 'merge';
-      let command: string;
+      let command: string[];
 
       switch (strategy) {
         case 'squash':
-          command = `merge --squash ${options.sourceBranch}`;
+          command = ['merge', '--squash', options.sourceBranch];
           break;
         case 'rebase':
-          command = `rebase ${options.sourceBranch}`;
+          command = ['rebase', options.sourceBranch];
           break;
         default:
-          command = `merge ${options.sourceBranch}`;
+          command = ['merge', options.sourceBranch];
       }
 
       await this.execGit(command);
@@ -529,10 +537,10 @@ export class GitWorkflowOrchestrator {
       /* targetBranch check done inline in merge command */
 
       // Run merge with --no-commit --no-ff to detect conflicts without committing
-      await this.execGit(`merge --no-commit --no-ff ${sourceBranch}`);
+      await this.execGit(['merge', '--no-commit', '--no-ff', sourceBranch]);
 
       // If successful, abort the merge
-      await this.execGit('merge --abort');
+      await this.execGit(['merge', '--abort']);
 
       return []; // No conflicts
     } catch {
@@ -637,25 +645,25 @@ export class GitWorkflowOrchestrator {
 
       // Build gh CLI command
       const baseBranch = options.baseBranch || this.config.defaultBranch;
-      let command = `gh pr create --base ${baseBranch} --title "${title}"`;
+      const args = ['pr', 'create', '--base', baseBranch, '--title', title];
 
       if (body) {
-        command += ` --body "${body}"`;
+        args.push('--body', body);
       }
 
       if (options.assignees && options.assignees.length > 0) {
-        command += ` --assignee ${options.assignees.join(',')}`;
+        args.push('--assignee', options.assignees.join(','));
       }
 
       if (options.reviewers && options.reviewers.length > 0) {
-        command += ` --reviewer ${options.reviewers.join(',')}`;
+        args.push('--reviewer', options.reviewers.join(','));
       }
 
       if (options.labels && options.labels.length > 0) {
-        command += ` --label ${options.labels.join(',')}`;
+        args.push('--label', options.labels.join(','));
       }
 
-      const { stdout } = await execAsync(command, { cwd: this.config.repoPath });
+      const { stdout } = await execFileAsync('gh', args, { cwd: this.config.repoPath, encoding: 'utf8' });
 
       return {
         success: true,
@@ -678,7 +686,7 @@ export class GitWorkflowOrchestrator {
    */
   private async getCommitsSinceBase(baseBranch?: string): Promise<string[]> {
     const base = baseBranch || this.config.defaultBranch;
-    const { stdout } = await this.execGit(`log ${base}..HEAD --pretty=format:"%s"`);
+    const { stdout } = await this.execGit(['log', `${base}..HEAD`, '--pretty=format:%s']);
     return stdout.trim().split('\n').filter(Boolean);
   }
 
@@ -757,7 +765,7 @@ export class GitWorkflowOrchestrator {
   /**
    * Execute git command
    */
-  private async execGit(command: string): Promise<{ stdout: string; stderr: string }> {
-    return execAsync(`git ${command}`, { cwd: this.config.repoPath });
+  private async execGit(args: string[]): Promise<{ stdout: string; stderr: string }> {
+    return execFileAsync('git', args, { cwd: this.config.repoPath, encoding: 'utf8' });
   }
 }

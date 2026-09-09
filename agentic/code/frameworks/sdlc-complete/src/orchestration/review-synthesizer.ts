@@ -101,6 +101,9 @@ export class ReviewSynthesizer {
 
     // Detect conflicts
     const conflicts = this.detectConflicts(consolidatedComments, reviews, options);
+    if (conflicts.length > 0 && options.allowConflicts !== true) {
+      throw new Error(`Contradictory review conflicts detected: ${conflicts.map(conflict => conflict.description).join('; ')}`);
+    }
 
     // Generate action plan
     const actionPlan = this.generateActionPlan(consolidatedComments);
@@ -151,7 +154,7 @@ export class ReviewSynthesizer {
     const approvalRate = approvedCount / totalReviews;
     if (approvalRate >= consensusThreshold) {
       // If all approved without changes, status is approved
-      if (statusCounts.get('approved-with-changes') === 0) {
+      if ((statusCounts.get('approved-with-changes') || 0) === 0) {
         return 'approved';
       }
       return 'approved-with-changes';
@@ -396,8 +399,10 @@ export class ReviewSynthesizer {
     for (const actionA of actionsA) {
       for (const actionB of actionsB) {
         for (const [wordA, wordB] of contradictoryPairs) {
-          if (actionA.toLowerCase().includes(wordA) &&
-              actionB.toLowerCase().includes(wordB)) {
+          if ((actionA.toLowerCase().includes(wordA) &&
+               actionB.toLowerCase().includes(wordB)) ||
+              (actionA.toLowerCase().includes(wordB) &&
+               actionB.toLowerCase().includes(wordA))) {
             return true;
           }
         }

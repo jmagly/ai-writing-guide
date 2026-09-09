@@ -348,6 +348,7 @@ export class AgentOrchestrator extends EventEmitter {
 
       const draftResult = await this.executeAgentTask(plan.primaryAuthor);
       result.draftResult = draftResult;
+      this.throwIfCancelled(result);
 
       if (!draftResult.success) {
         throw new Error(`Draft generation failed: ${draftResult.error}`);
@@ -364,6 +365,7 @@ export class AgentOrchestrator extends EventEmitter {
         : await this.executeReviewsSequentially(plan.reviewers);
 
       result.reviewResults = reviewResults;
+      this.throwIfCancelled(result);
 
       // Check review approvals
       const rejectedReviews = reviewResults.filter(r => r.status === 'rejected');
@@ -379,6 +381,7 @@ export class AgentOrchestrator extends EventEmitter {
 
       const synthesisResult = await this.executeAgentTask(plan.synthesizer);
       result.synthesisResult = synthesisResult;
+      this.throwIfCancelled(result);
 
       if (!synthesisResult.success) {
         throw new Error(`Synthesis failed: ${synthesisResult.error}`);
@@ -394,6 +397,7 @@ export class AgentOrchestrator extends EventEmitter {
 
         const validationResult = await this.executeAgentTask(plan.validation);
         result.validationResult = validationResult;
+        this.throwIfCancelled(result);
 
         if (!validationResult.success) {
           throw new Error(`Validation failed: ${validationResult.error}`);
@@ -435,6 +439,10 @@ export class AgentOrchestrator extends EventEmitter {
     const taskId = `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     try {
+      if (task.timeout !== undefined && task.timeout <= 0) {
+        throw new Error(`Task timeout must be positive: ${task.timeout}`);
+      }
+
       // Simulate agent execution time
       await this.delay(Math.min(task.timeout || 60000, 1000)); // 1s for tests, would be longer in production
 
@@ -582,6 +590,15 @@ export class AgentOrchestrator extends EventEmitter {
    */
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Stop an execution whose shared result was marked by cancelOrchestration.
+   */
+  private throwIfCancelled(result: OrchestrationResult): void {
+    if (result.error === 'Cancelled by user') {
+      throw new Error(result.error);
+    }
   }
 
   /**

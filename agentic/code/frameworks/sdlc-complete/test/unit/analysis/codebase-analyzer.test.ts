@@ -37,8 +37,7 @@ describe('CodebaseAnalyzer', () => {
     analyzer = new Analyzer();
 
     // Create temp directory for test projects
-    testDir = path.join(os.tmpdir(), `codebase-analyzer-test-${Date.now()}`);
-    await fs.mkdir(testDir, { recursive: true });
+    testDir = await fs.mkdtemp(path.join(os.tmpdir(), 'codebase-analyzer-test-'));
   });
 
   afterEach(async () => {
@@ -154,8 +153,8 @@ describe('CodebaseAnalyzer', () => {
 
       const result = await analyzer.analyze({ path: testDir });
 
-      // Should only count src/index.ts
-      expect(result.metrics.totalFiles).toBeLessThan(5);
+      expect(result.metrics.totalFiles).toBe(1);
+      expect(result.metrics.filesByLanguage).toEqual({ TypeScript: 1 });
     });
   });
 
@@ -368,8 +367,7 @@ describe('CodebaseAnalyzer', () => {
 
       const result = await analyzer.analyze({ path: testDir });
 
-      // Should detect at least 4 out of 5 technologies (80%+)
-      // Databases excluded since they need config files
+      // All five declared signals are present, so the >85% contract requires 5/5.
       const detected = [
         hasFramework(result.technologies, 'React'),
         hasFramework(result.technologies, 'Express'),
@@ -378,8 +376,7 @@ describe('CodebaseAnalyzer', () => {
         result.technologies.cicd.some(c => c.toLowerCase().includes('github'))
       ].filter(Boolean).length;
 
-      // 4 out of 5 = 80% meets the general accuracy target
-      expect(detected / 5).toBeGreaterThanOrEqual(0.80);
+      expect(detected / 5).toBeGreaterThan(0.85);
     });
   });
 
@@ -409,7 +406,7 @@ describe('CodebaseAnalyzer', () => {
       expect(result.dependencies.some(d => d.name === 'axios')).toBe(true);
     }, 35000);
 
-    it('should detect outdated dependencies and track versions', async () => {
+    it('should preserve declared dependency versions and types', async () => {
       await createTestProject({
         'package.json': JSON.stringify({
           dependencies: {
@@ -420,14 +417,15 @@ describe('CodebaseAnalyzer', () => {
 
       const result = await analyzer.analyze({ path: testDir });
 
-      // Check if any dependency has lastUpdated info indicating it may be outdated
       const lodashDep = result.dependencies.find(d => d.name === 'lodash');
-      expect(lodashDep).toBeDefined();
-      // Version tracking is present
-      expect(lodashDep?.version).toBeDefined();
+      expect(lodashDep).toEqual({
+        name: 'lodash',
+        version: '^3.0.0',
+        type: 'production'
+      });
     });
 
-    it('should identify security vulnerabilities', async () => {
+    it('should preserve versions for downstream vulnerability analysis', async () => {
       await createTestProject({
         'package.json': JSON.stringify({
           dependencies: {
@@ -438,15 +436,16 @@ describe('CodebaseAnalyzer', () => {
 
       const result = await analyzer.analyze({ path: testDir });
 
-      // Should flag potential security issues via vulnerabilities field
       const lodashDep = result.dependencies.find(d => d.name === 'lodash');
-      expect(lodashDep).toBeDefined();
-      // Implementation stores basic dependency info (name, version, type)
-      // Vulnerabilities tracking is not yet implemented
-      expect(lodashDep?.version).toBe('^4.17.15');
+      expect(lodashDep).toEqual({
+        name: 'lodash',
+        version: '^4.17.15',
+        type: 'production'
+      });
+      expect(lodashDep).not.toHaveProperty('vulnerabilities');
     });
 
-    it('should scan Python dependencies', async () => {
+    it('should detect pytest while scanning npm dependencies', async () => {
       // Note: Implementation currently only scans package.json, not requirements.txt
       // for dependency scanning. Python test framework detection is separate.
       await createTestProject({
@@ -467,6 +466,7 @@ describe('CodebaseAnalyzer', () => {
 
       // Implementation scans package.json dependencies
       expect(result.dependencies.some(d => d.name === 'express')).toBe(true);
+      expect(result.dependencies.some(d => d.name === 'Django')).toBe(false);
       // Python test framework pytest should be detected separately
       expect(result.technologies.testFrameworks.includes('pytest')).toBe(true);
     });
@@ -558,6 +558,24 @@ describe('CodebaseAnalyzer', () => {
   });
 
   describe('Technical Debt Detection', () => {
+    it('should distinguish projects with and without recognized test files', async () => {
+      await createTestProject({
+        'src/index.ts': 'export const value = 1;',
+        'test/index.test.ts': 'export const covered = true;'
+      });
+
+      const covered = await analyzer.analyze({ path: testDir });
+      expect(covered.technicalDebt).not.toContainEqual(expect.objectContaining({
+        description: 'No test files detected - missing test coverage'
+      }));
+
+      await fs.rm(path.join(testDir, 'test'), { recursive: true, force: true });
+      const uncovered = await analyzer.analyze({ path: testDir });
+      expect(uncovered.technicalDebt).toContainEqual(expect.objectContaining({
+        description: 'No test files detected - missing test coverage'
+      }));
+    });
+
     it('should detect TODO comments, large files, and missing tests', async () => {
       const largeFile = 'const x = 1;\n'.repeat(600); // 600 lines
 
@@ -577,24 +595,30 @@ describe('CodebaseAnalyzer', () => {
 
       const result = await analyzer.analyze({ path: testDir });
 
-      // TODO comments
       const todoDebt = result.technicalDebt.find(d =>
-        d.category === 'complexity' || d.description.toLowerCase().includes('todo')
+        d.description.includes('TODO/FIXME')
       );
-      expect(todoDebt).toBeDefined();
+      expect(todoDebt).toMatchObject({
+        category: 'complexity',
+        severity: 'medium',
+        location: 'Codebase-wide'
+      });
 
-      // Large files
       const largeFilesDebt = result.technicalDebt.find(d =>
-        d.category === 'complexity' || d.description.toLowerCase().includes('large')
+        d.location === 'src/massive.ts'
       );
-      expect(largeFilesDebt).toBeDefined();
-      expect(['medium', 'high', 'critical']).toContain(largeFilesDebt!.severity);
+      expect(largeFilesDebt).toMatchObject({
+        category: 'complexity',
+        severity: 'medium'
+      });
+      expect(largeFilesDebt?.description).toContain('Large file (601 lines)');
 
-      // Missing tests
-      expect(result.technicalDebt.length).toBeGreaterThanOrEqual(0);
+      expect(result.technicalDebt).toContainEqual(expect.objectContaining({
+        description: 'No test files detected - missing test coverage'
+      }));
     });
 
-    it('should detect deprecated code and calculate technical debt score', async () => {
+    it('should detect pre-1.0 dependency debt and estimated effort', async () => {
       // Note: Implementation currently doesn't scan file contents for @deprecated
       // It detects technical debt based on structure (file count, pre-1.0 deps, etc.)
       // Create project with pre-1.0 dependencies to trigger outdated debt detection
@@ -614,12 +638,13 @@ describe('CodebaseAnalyzer', () => {
       const outdatedDebt = result.technicalDebt.find(d =>
         d.category === 'outdated' || d.description.toLowerCase().includes('pre-1.0')
       );
-      expect(outdatedDebt).toBeDefined();
-
-      // Technical debt has estimatedEffort as string (e.g., "2 hours")
-      if (result.technicalDebt.length > 0) {
-        expect(result.technicalDebt[0].estimatedEffort).toBeDefined();
-      }
+      expect(outdatedDebt).toEqual({
+        category: 'outdated',
+        severity: 'medium',
+        description: '2 dependencies on pre-1.0 versions',
+        location: 'package.json',
+        estimatedEffort: '4h'
+      });
     });
   });
 
@@ -684,7 +709,7 @@ describe('CodebaseAnalyzer', () => {
       }
     });
 
-    it('should provide complexity breakdown', async () => {
+    it('should return a concrete complexity classification', async () => {
       await createTestProject({
         'package.json': JSON.stringify({
           dependencies: {
@@ -696,9 +721,7 @@ describe('CodebaseAnalyzer', () => {
 
       const result = await analyzer.analyze({ path: testDir });
 
-      // estimatedComplexity is a simple string in the implementation
-      expect(result.estimatedComplexity).toBeDefined();
-      expect(typeof result.estimatedComplexity).toBe('string');
+      expect(result.estimatedComplexity).toBe('simple');
     });
   });
 
@@ -764,7 +787,7 @@ describe('CodebaseAnalyzer', () => {
       }
     });
 
-    it('should prioritize recommendations', async () => {
+    it('should return deterministic recommendations for detected conditions', async () => {
       await createTestProject({
         'package.json': JSON.stringify({
           dependencies: {
@@ -776,9 +799,10 @@ describe('CodebaseAnalyzer', () => {
 
       const result = await analyzer.analyze({ path: testDir });
 
-      // Recommendations is just string array in implementation
-      expect(Array.isArray(result.recommendations)).toBe(true);
-      expect(result.recommendations.length).toBeGreaterThanOrEqual(0);
+      expect(result.recommendations).toEqual([
+        'Add automated testing framework (Jest, Vitest, pytest, etc.)',
+        'Implement CI/CD pipeline for automated testing and deployment'
+      ]);
     });
   });
 
@@ -830,8 +854,10 @@ describe('CodebaseAnalyzer', () => {
       expect(hasFramework(result.technologies, 'React')).toBe(true);
       expect(result.technologies.buildTools.length).toBeGreaterThan(0);
       expect(result.dependencies.length).toBeGreaterThan(0);
-      expect(result.architecture.length).toBeGreaterThanOrEqual(0);
-      expect(result.recommendations.length).toBeGreaterThanOrEqual(0);
+      expect(result.architecture).toContainEqual(expect.objectContaining({
+        pattern: 'Layered Architecture'
+      }));
+      expect(result.recommendations).toEqual([]);
     });
 
     it('should analyze Python Django project', async () => {
