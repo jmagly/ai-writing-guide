@@ -6,6 +6,39 @@ import addFormats from 'ajv-formats';
 import {parse} from 'yaml';
 const addon=path.resolve('agentic/code/addons/testing-quality');
 const read=async(file:string)=>parse(await fs.readFile(file,'utf8'));
+function assertFlowBindings(playbook: any, capabilities: Map<string, any>) {
+ const steps = new Map<string, any>();
+ for (const step of playbook.spec.steps) {
+  if (steps.has(step.id)) throw new Error(`Duplicate step: ${step.id}`);
+  const capability = capabilities.get(step.capability);
+  if (!capability) throw new Error(`Unknown capability: ${step.capability}`);
+  for (const dependency of step.depends_on ?? []) if (!steps.has(dependency)) throw new Error(`Unknown or nonpreceding dependency: ${dependency}`);
+  const ancestors = new Set<string>();
+  const visit = (id: string) => { if (ancestors.has(id)) return; ancestors.add(id); for (const parent of steps.get(id).depends_on ?? []) visit(parent); };
+  for (const dependency of step.depends_on ?? []) visit(dependency);
+  for (const input of capability.spec.inputs.filter((item: any) => item.required)) if (!step.inputs?.some((item: any) => item.name === input.name)) throw new Error(`Missing required input: ${step.id}.${input.name}`);
+  const names = new Set<string>();
+  for (const input of step.inputs ?? []) {
+   if (names.has(input.name)) throw new Error(`Duplicate input: ${step.id}.${input.name}`);
+   names.add(input.name);
+   const definition = capability.spec.inputs.find((item: any) => item.name === input.name);
+   if (!definition) throw new Error(`Undeclared input: ${step.id}.${input.name}`);
+   const hasFrom = Object.hasOwn(input, 'from');
+   if (Number(hasFrom) + Number(Object.hasOwn(input, 'value')) !== 1) throw new Error(`Exactly one input binding required: ${step.id}.${input.name}`);
+   if (hasFrom) {
+    if (typeof input.from !== 'string' || !/^[^.]+\.[^.]+$/.test(input.from)) throw new Error(`Malformed artifact reference: ${input.from}`);
+    const [source, output] = input.from.split('.');
+    if (!steps.has(source)) throw new Error(`Unknown or nonpreceding artifact source: ${source}`);
+    const outputDefinition = capabilities.get(steps.get(source).capability).spec.outputs.find((item: any) => item.name === output);
+    if (!outputDefinition) throw new Error(`Unknown artifact output: ${input.from}`);
+    if (!ancestors.has(source)) throw new Error(`Artifact source is not a dependency ancestor: ${input.from}`);
+    if (outputDefinition.type !== definition.type) throw new Error(`Artifact type mismatch: ${input.from}`);
+   }
+  }
+  steps.set(step.id, step);
+ }
+}
+
 describe('deployable conformance assets',()=>{
  it('resolves all manifest components and preserves the original six skills',async()=>{
   const manifest=await read(path.join(addon,'manifest.json'));
@@ -34,19 +67,36 @@ describe('deployable conformance assets',()=>{
   expect(capabilities.size).toBe(10);
   for(const file of (await fs.readdir(path.join(addon,'flows'))).filter(f=>f.endsWith('.yaml'))){
    const p=await read(path.join(addon,'flows',file));expect(playbook(p),JSON.stringify(playbook.errors)).toBe(true);
-   const steps=new Map<string,any>();
-   for(const step of p.spec.steps){
-    expect(steps.has(step.id)).toBe(false);
-    const c=capabilities.get(step.capability);expect(c,step.capability).toBeDefined();
-    for(const dependency of step.depends_on??[])expect(steps.has(dependency),dependency).toBe(true);
-    for(const input of c.spec.inputs?.filter((i:any)=>i.required)??[])expect(step.inputs?.some((i:any)=>i.name===input.name),`${file}:${step.id}:${input.name}`).toBe(true);
-    for(const input of step.inputs??[]){
-     expect(c.spec.inputs.some((i:any)=>i.name===input.name)).toBe(true);
-     if(input.from){const [source,output]=input.from.split('.');expect(steps.has(source),input.from).toBe(true);expect(capabilities.get(steps.get(source).capability).spec.outputs.some((o:any)=>o.name===output),input.from).toBe(true);}
-    }
-    steps.set(step.id,step);
-   }
+   assertFlowBindings(p,capabilities);
    const invalid=structuredClone(p);invalid.spec.silentSuccessOnError=true;expect(playbook(invalid)).toBe(false);
   }
+ });
+ it('rejects disconnected, absent, ambiguous and malformed artifact bindings independently',async()=>{
+  const capabilities=new Map<string,any>();
+  for(const file of await fs.readdir(path.join(addon,'flows/capabilities'))){const c=await read(path.join(addon,'flows/capabilities',file));capabilities.set(c.metadata.name,c);}
+  const original=await read(path.join(addon,'flows/test-conformance-audit.yaml'));
+  expect(()=>assertFlowBindings(original,capabilities)).not.toThrow();
+  const firstBinding=(p:any)=>p.spec.steps.flatMap((step:any)=>step.inputs??[]).find((input:any)=>input.from);
+  const cases: Array<[string,(p:any)=>void,string]>=[
+   ['disconnected producers',p=>p.spec.steps.forEach((step:any)=>{delete step.depends_on;}),'Artifact source is not a dependency ancestor'],
+   ['absent required binding',p=>{delete firstBinding(p).from;},'Exactly one input binding required'],
+   ['ambiguous binding',p=>{firstBinding(p).value='conflicting literal';},'Exactly one input binding required'],
+   ['extra reference suffix',p=>{firstBinding(p).from+='.unexpected';},'Malformed artifact reference'],
+   ['missing output',p=>{firstBinding(p).from='protocol.nonexistent';},'Unknown artifact output'],
+   ['missing producer',p=>{firstBinding(p).from='nonexistent.protocol';},'Unknown or nonpreceding artifact source'],
+   ['invalid dependency',p=>{p.spec.steps[1].depends_on=['nonexistent'];},'Unknown or nonpreceding dependency'],
+   ['dependency cycle',p=>{p.spec.steps[0].depends_on=[p.spec.steps[1].id];},'Unknown or nonpreceding dependency'],
+   ['duplicate step',p=>{p.spec.steps[1].id=p.spec.steps[0].id;},'Duplicate step'],
+   ['unknown capability',p=>{p.spec.steps[0].capability='nonexistent';},'Unknown capability'],
+   ['missing required input',p=>{p.spec.steps[1].inputs=[];},'Missing required input'],
+   ['undeclared input',p=>{p.spec.steps[1].inputs.push({name:'nonexistent',value:'x'});},'Undeclared input'],
+   ['duplicate input',p=>{p.spec.steps[1].inputs.push({...p.spec.steps[1].inputs[0]});},'Duplicate input'],
+  ];
+  for(const [name,mutate,diagnostic] of cases){const changed=structuredClone(original);mutate(changed);expect(()=>assertFlowBindings(changed,capabilities),name).toThrow(diagnostic);}
+  const mismatched=structuredClone(capabilities);
+  const firstSource=firstBinding(original).from.split('.')[0];
+  mismatched.get(original.spec.steps.find((step:any)=>step.id===firstSource).capability).spec.outputs[0].type='number';
+  expect(()=>assertFlowBindings(original,mismatched)).toThrow('Artifact type mismatch');
+  for(const value of [false,0,'']){const literal=structuredClone(original);const input=firstBinding(literal);delete input.from;input.value=value;expect(()=>assertFlowBindings(literal,capabilities)).not.toThrow();}
  });
 });

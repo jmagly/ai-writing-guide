@@ -9,8 +9,20 @@ import { applyPlan, rollbackPlan } from '../../../agentic/code/addons/testing-qu
 // @ts-expect-error Native shipped addon MJS.
 import { validateContract } from '../../../agentic/code/addons/testing-quality/lib/contracts.mjs';
 let root: string;
-beforeEach(async () => { root = await fs.mkdtemp(path.join(os.tmpdir(), 'aiwg-template-')); });
+beforeEach(async () => { root = await fs.mkdtemp(path.join(os.tmpdir(), 'aiwg-template-')); await fs.writeFile(path.join(root, 'owned-sentinel.txt'), 'preserve existing target bytes'); });
 afterEach(async () => { await fs.rm(root, { recursive: true, force: true }); });
+async function targetSnapshot(directory = root, relative = ''): Promise<Array<{ path: string; mode: number; type: string; content?: string }>> {
+  const entries = await fs.readdir(directory, { withFileTypes: true });
+  const result: Array<{ path: string; mode: number; type: string; content?: string }> = relative ? [] : [{ path: '.', mode: (await fs.lstat(root)).mode & 0o777, type: 'directory' }];
+  for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+    const file = path.join(directory, entry.name); const name = relative ? relative + '/' + entry.name : entry.name;
+    const mode = (await fs.lstat(file)).mode & 0o777;
+    if (entry.isDirectory()) { result.push({ path: name, mode, type: 'directory' }); result.push(...await targetSnapshot(file, name)); }
+    else if (entry.isSymbolicLink()) result.push({ path: name, mode, type: 'symlink', content: await fs.readlink(file) });
+    else result.push({ path: name, mode, type: 'file', content: (await fs.readFile(file)).toString('hex') });
+  }
+  return result;
+}
 const definition = () => ({
   id: 'custom-runner-config', platform: 'custom-platform', description: 'Generate concrete test reporting config',
   variables: [
@@ -25,14 +37,17 @@ async function source(value = definition()) { await fs.writeFile(path.join(root,
 
 describe('testing platform template development and deployment', () => {
   it('lists packaged entries with stable IDs and creates only an example deployment plan', async () => {
+    const beforePlanning = await targetSnapshot();
     const templates = await listTemplates({ platform: 'javascript-vitest' });
     const entry = templates.find((item: any) => item.id === 'javascript-vitest:vitest.config.example');
     expect(entry).toMatchObject({ platform: 'javascript-vitest', destination: '.aiwg/testing/conformance/examples/javascript-vitest/vitest.config.example.mjs' });
     const plan = await deployTemplate(root, { platform: 'javascript-vitest', template: entry.id });
+    expect(plan.spec.changes.map((change: any) => change.path), 'complete requested bundled change list').toEqual([entry.destination]);
     expect(plan.spec.changes[0].path).toBe(entry.destination);
     expect(plan.spec.changes[0].after.content).toBe(await fs.readFile(path.join(process.cwd(), 'agentic/code/addons/testing-quality', entry.source), 'utf8'));
     await expect(fs.stat(path.join(root, entry.destination))).rejects.toMatchObject({ code: 'ENOENT' });
     await expect(listTemplates({ platform: 'nonexistent' })).rejects.toThrow('Unknown template platform');
+    expect(await targetSnapshot(), 'listing and planning preserve complete target tree').toEqual(beforePlanning);
   });
 
   it('authors a self-contained typed template and deploys real target configuration through guarded apply', async () => {
@@ -41,11 +56,14 @@ describe('testing platform template development and deployment', () => {
     expect(custom.kind).toBe('TestNormalizationTemplate');
     expect(await validateContract(custom, 'custom-template.v1')).toEqual(custom);
     await fs.rm(path.join(root, input)); // Developed artifact contains all content.
+    const beforePlanning = await targetSnapshot();
     const plan = await deployTemplate(root, { source: 'custom.json', platform: 'custom-platform', variables: { directory: 'config', system: 'line\n"quoted"' } });
+    expect(plan.spec.changes.map((change: any) => change.path)).toEqual(['config/testing.config.json']);
     expect(JSON.parse(plan.spec.changes[0].after.content)).toEqual({ system: 'line\n"quoted"', timeout: 1234, required: true });
+    expect(await targetSnapshot(), 'custom planning preserves complete target tree').toEqual(beforePlanning);
     await expect(fs.stat(path.join(root, 'config/testing.config.json'))).rejects.toMatchObject({ code: 'ENOENT' });
     const receipt = await applyPlan(root, plan);
-    expect(JSON.parse(await fs.readFile(path.join(root, 'config/testing.config.json'), 'utf8')).required).toBe(true);
+    expect(JSON.parse(await fs.readFile(path.join(root, 'config/testing.config.json'), 'utf8'))).toEqual({ system: 'line\n"quoted"', timeout: 1234, required: true });
     await rollbackPlan(root, receipt);
     await expect(fs.stat(path.join(root, 'config/testing.config.json'))).rejects.toMatchObject({ code: 'ENOENT' });
   });

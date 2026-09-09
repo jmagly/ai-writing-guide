@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
@@ -16,12 +16,44 @@ const read = (file: string) => JSON.parse(readFileSync(path.join(rootDir, file),
 const manifest = read('schemas/catalog/domains/testing-quality.json');
 const compiled = compileSchemaCatalog({ schemaVersion: '1', domains: [manifest] }, [manifest], { rootDir, inventoryRoots: [] });
 const validator = new SchemaValidator(new SchemaResolver(compiled.catalog!, { rootDir }), { rootDir });
-const foundational = manifest.artifacts.map((entry: any) => entry.logicalName.replace('testing-quality.', ''));
+// Independent governed identities: catalog omissions must fail, never unregister fixture cases.
+const foundational = ['test-inventory', 'test-sample', 'normalized-results', 'conformance-protocol', 'test-review', 'test-conformance-assessment', 'custom-template', 'test-coverage', 'test-run-receipt', 'test-conformance-research', 'negative-control-receipt', 'normalization-plan', 'normalization-receipt'];
+const schemaDirectory = 'agentic/code/addons/testing-quality/schemas';
+function assertCompleteCatalog(candidate: typeof manifest) {
+  expect(candidate.artifacts.map((entry: any) => entry.logicalName).sort(), 'complete governed contract identities').toEqual(foundational.map(name => `testing-quality.${name}`).sort());
+  expect(readdirSync(path.join(rootDir, schemaDirectory)).filter(file => file.endsWith('.schema.json')).sort(), 'complete shipped schema files').toEqual(foundational.map(name => `${name}.v1.schema.json`).sort());
+  for (const name of foundational) {
+    const entry = candidate.artifacts.find((item: any) => item.logicalName === `testing-quality.${name}`);
+    expect(entry.authority, `canonical contract authority: ${name}`).toEqual({ kind: 'canonical', path: `${schemaDirectory}/${name}.v1.schema.json` });
+  }
+}
+
+const additionalNegatives: Record<string, { path: string; keyword: string; change: (value: any) => void }> = {
+  'test-sample': { path: '/spec/areas/0/records/0/rank', keyword: 'type', change: value => { value.spec.areas[0].records[0].rank = 123; } },
+  'test-review': { path: '/spec/files/0/oracle', keyword: 'type', change: value => { value.spec.files[0].oracle = 123; } },
+  'test-conformance-research': { path: '/spec/platform', keyword: 'type', change: value => { value.spec.platform = 123; } },
+  'test-coverage': { path: '/scope', keyword: 'additionalProperties', change: value => { value.scope.unrecognized = true; } },
+};
 
 describe('governed testing-quality foundational output contracts', () => {
   it('registers all shipped contracts under one governed domain', () => {
     expect(compiled.valid, JSON.stringify(compiled.diagnostics)).toBe(true);
-    for (const name of foundational) expect(manifest.artifacts.some((a: any) => a.logicalName === `testing-quality.${name}`)).toBe(true);
+    assertCompleteCatalog(manifest);
+  });
+  it('rejects omitted, extra, duplicate and misrouted catalog contract identities', () => {
+    assertCompleteCatalog(manifest);
+    const omitted = structuredClone(manifest);
+    omitted.artifacts = omitted.artifacts.filter((entry: any) => entry.logicalName !== 'testing-quality.test-coverage');
+    expect(() => assertCompleteCatalog(omitted)).toThrow('complete governed contract identities');
+    const extra = structuredClone(manifest);
+    extra.artifacts.push({ ...extra.artifacts[0], logicalName: 'testing-quality.unexpected' });
+    expect(() => assertCompleteCatalog(extra)).toThrow('complete governed contract identities');
+    const duplicate = structuredClone(manifest);
+    duplicate.artifacts.push(duplicate.artifacts[0]);
+    expect(() => assertCompleteCatalog(duplicate)).toThrow('complete governed contract identities');
+    const misrouted = structuredClone(manifest);
+    misrouted.artifacts[0].authority.path = `${schemaDirectory}/test-coverage.v1.schema.json`;
+    expect(() => assertCompleteCatalog(misrouted)).toThrow('canonical contract authority');
   });
   for (const name of foundational) {
     it(`accepts ${name} positive fixture through the core and addon validators`, async () => {
@@ -40,6 +72,21 @@ describe('governed testing-quality foundational output contracts', () => {
         expect(result.valid, fixture).toBe(false);
         expect(result.diagnostics).toContainEqual(expect.objectContaining({ code: 'SCHEMA_INSTANCE_INVALID' }));
         await expect(validateContract(payload, `${name}.v1`)).rejects.toThrow('Invalid');
+      }
+      const negative = additionalNegatives[name];
+      if (negative) {
+        const valid = read(entry.fixtures.valid[0]);
+        expect(validator.validate(entry.logicalName, valid).valid).toBe(true);
+        await expect(validateContract(valid, `${name}.v1`)).resolves.toEqual(valid);
+        const changed = structuredClone(valid); negative.change(changed);
+        const result = validator.validate(entry.logicalName, changed);
+        expect(result.valid).toBe(false);
+        expect(result.diagnostics).toContainEqual(expect.objectContaining({ code: 'SCHEMA_INSTANCE_INVALID', path: negative.path, details: expect.objectContaining({ keyword: negative.keyword }) }));
+        const failure = await validateContract(changed, `${name}.v1`).then(() => { throw new Error('Expected invalid contract rejection'); }, (error: unknown) => error);
+        expect(failure).toBeInstanceOf(Error);
+        const prefix = `Invalid ${name}.v1: `;
+        expect((failure as Error).message.startsWith(prefix)).toBe(true);
+        expect(JSON.parse((failure as Error).message.slice(prefix.length))).toContainEqual(expect.objectContaining({ instancePath: negative.path, keyword: negative.keyword }));
       }
     });
   }

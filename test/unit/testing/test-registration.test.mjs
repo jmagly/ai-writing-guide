@@ -46,6 +46,15 @@ function run(root) {
   return { child, report };
 }
 
+function copyChecker(root) {
+  const destination = path.join(root, 'tools/testing/check-test-registration.mjs');
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  fs.copyFileSync(fileURLToPath(checker), destination);
+  expect(fs.readFileSync(destination)).toEqual(fs.readFileSync(fileURLToPath(checker)));
+  fs.symlinkSync(path.join(repo, 'node_modules'), path.join(root, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
+  return destination;
+}
+
 afterEach(() => {
   for (const root of roots.splice(0)) fs.rmSync(root, { recursive: true, force: true });
 });
@@ -158,5 +167,59 @@ describe('test runner registration gate', () => {
       { file: 'test/unit/ralph/native.test.mjs', runner: 'node', lanes: [{ id: 'node', live: false }] },
       { file: 'tools/ralph-external/legacy.test.mjs', runner: 'node-file-harness', lanes: [{ id: 'node', live: false }] },
     ]);
+  });
+
+  it.each([['passing', 'npm run test', 0], ['failing', 'node --version', 1]])('runs the %s direct CLI against its module root instead of cwd', (_kind, ci, status) => {
+    const root = project({ ci });
+    const other = project({ files: { 'test/unit/decoy.test.ts': vitestSource } });
+    const copy = copyChecker(root);
+    const child = spawnSync(process.execPath, [copy], { cwd: other, encoding: 'utf8', timeout: 15_000 });
+    expect(child.error).toBeUndefined();
+    expect(child.signal).toBeNull();
+    expect(child.status).toBe(status);
+    const output = path.join(root, 'test-results/test-registration.json');
+    expect(fs.existsSync(output), 'direct CLI must create its module-root report').toBe(true);
+    expect(fs.existsSync(path.join(other, 'test-results/test-registration.json')), 'cwd decoy must remain untouched').toBe(false);
+    const report = JSON.parse(fs.readFileSync(output, 'utf8'));
+    expect(report.totalFiles).toBe(1);
+    expect(report.files).toEqual([{ file: baseline, runner: 'vitest', lanes: [{ id: 'config/vitest.config.js', live: false }] }]);
+    expect(report.errors).toEqual(status === 0 ? [] : ['Offline lane is not reachable from canonical CI: config/vitest.config.js']);
+    if (status === 0) {
+      expect(child.stdout.trim()).toBe(`Runner ownership: 1 source files assigned; report ${path.join('test-results', 'test-registration.json')}`);
+      expect(child.stderr).toBe('');
+    } else {
+      expect(child.stdout).toBe('');
+      expect(child.stderr.trim()).toBe(report.errors[0]);
+    }
+  });
+
+  it('imports from an ordinary script without automatic writes and inspects the default module root', () => {
+    const root = project();
+    const other = project({ files: { 'test/unit/decoy.test.ts': vitestSource } });
+    const copy = copyChecker(root);
+    const driver = path.join(other, 'import-driver.mjs');
+    fs.writeFileSync(driver, `const { inspectTestRegistration } = await import(${JSON.stringify(pathToFileURL(copy).href)}); console.log(JSON.stringify(await inspectTestRegistration()));\n`);
+    const child = spawnSync(process.execPath, [driver], { cwd: other, encoding: 'utf8', timeout: 15_000 });
+    expect(child.error).toBeUndefined();
+    expect(child.signal).toBeNull();
+    expect(child.status).toBe(0);
+    expect(child.stderr).toBe('');
+    expect(child.stdout).not.toContain('Runner ownership:');
+    expect(fs.existsSync(path.join(root, 'test-results/test-registration.json')), 'ordinary import and inspect must not write a gate report').toBe(false);
+    expect(fs.existsSync(path.join(other, 'test-results/test-registration.json'))).toBe(false);
+    const report = JSON.parse(child.stdout);
+    expect(report.totalFiles).toBe(1);
+    expect(report.errors).toEqual([]);
+    expect(report.files).toEqual([{ file: baseline, runner: 'vitest', lanes: [{ id: 'config/vitest.config.js', live: false }] }]);
+  });
+
+  it.each([['jobs', {}], ['steps', { jobs: { test: {} } }]])('fails closed with a completed report when workflow %s are absent', (_kind, workflow) => {
+    const root = project({ files: { '.gitea/workflows/ci.yml': JSON.stringify(workflow) } });
+    const { child, report } = run(root);
+    expect(child.status).toBe(1);
+    expect(report.totalFiles).toBe(1);
+    expect(report.files).toEqual([{ file: baseline, runner: 'vitest', lanes: [{ id: 'config/vitest.config.js', live: false }] }]);
+    expect(report.errors).toEqual(['Offline lane is not reachable from canonical CI: config/vitest.config.js']);
+    expect(child.stderr.trim()).toBe(report.errors[0]);
   });
 });
