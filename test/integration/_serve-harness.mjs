@@ -12,11 +12,36 @@
 // for this suite is filed as #1277.
 
 import { spawn } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
 const REPO_ROOT = resolve(import.meta.dirname || new URL('.', import.meta.url).pathname, '../..');
 const AIWG_BIN = join(REPO_ROOT, 'bin', 'aiwg.mjs');
+
+/**
+ * Keep repository-local CLI tests independent from an operator's canonical
+ * installation identity. Caller-supplied configuration remains caller-owned.
+ */
+export function createServeIsolation(baseEnv = process.env, overrides = {}) {
+  const explicitConfig = typeof overrides.AIWG_CONFIG === 'string' && overrides.AIWG_CONFIG.length > 0
+    ? overrides.AIWG_CONFIG
+    : null;
+  const configDir = explicitConfig ?? mkdtempSync(join(tmpdir(), 'aiwg-serve-config-'));
+  const owned = explicitConfig === null;
+  return {
+    env: { ...baseEnv, ...overrides, AIWG_CONFIG: configDir },
+    configDir,
+    owned,
+    cleanup() {
+      if (!owned) return;
+      // force makes repeated cleanup safe, and a later child exit gets a
+      // second chance to remove state recreated during an earlier kill race.
+      rmSync(configDir, { recursive: true, force: true });
+    },
+  };
+}
 
 /**
  * @typedef {object} ServeHandle
@@ -25,6 +50,8 @@ const AIWG_BIN = join(REPO_ROOT, 'bin', 'aiwg.mjs');
  * @property {(signal?: NodeJS.Signals) => Promise<void>} kill
  * @property {string[]} stdout
  * @property {string[]} stderr
+ * @property {string} configDir
+ * @property {boolean} ownsConfigDir
  */
 
 /**
@@ -35,6 +62,8 @@ const AIWG_BIN = join(REPO_ROOT, 'bin', 'aiwg.mjs');
  * @param {string[]} [opts.extraArgs]  Extra CLI args appended to `serve ...`.
  * @param {number} [opts.timeoutMs=15000]
  * @param {NodeJS.ProcessEnv} [opts.env]
+ * @param {typeof spawn} [opts.spawnProcess]
+ * @param {ReturnType<typeof createServeIsolation>} [opts.isolation]
  * @returns {Promise<ServeHandle>}
  */
 export async function spawnAiwgServe(opts = {}) {
@@ -47,11 +76,21 @@ export async function spawnAiwgServe(opts = {}) {
     ...(opts.extraArgs || []),
   ];
 
-  const child = spawn(process.execPath, args, {
-    cwd: REPO_ROOT,
-    env: { ...process.env, ...(opts.env || {}) },
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  const isolation = opts.isolation ?? createServeIsolation(process.env, opts.env || {});
+  const spawnProcess = opts.spawnProcess ?? spawn;
+  let child;
+  try {
+    child = spawnProcess(process.execPath, args, {
+      cwd: REPO_ROOT,
+      env: isolation.env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } catch (error) {
+    isolation.cleanup();
+    throw error;
+  }
+  child.once('error', isolation.cleanup);
+  child.once('exit', isolation.cleanup);
 
   /** @type {string[]} */
   const stdout = [];
@@ -87,6 +126,7 @@ export async function spawnAiwgServe(opts = {}) {
 
   if (!dashboardLine) {
     try { child.kill('SIGKILL'); } catch {}
+    isolation.cleanup();
     throw new Error(
       `aiwg serve did not announce a Dashboard URL within ${timeoutMs}ms.\nstdout:\n${stdout.join('')}\nstderr:\n${stderr.join('')}`,
     );
@@ -97,6 +137,7 @@ export async function spawnAiwgServe(opts = {}) {
 
   if (port === 0) {
     try { child.kill('SIGKILL'); } catch {}
+    isolation.cleanup();
     throw new Error(
       `aiwg serve reported port 0 — port-resolution fix (#1275) may not be deployed.\nstdout:\n${stdout.join('')}`,
     );
@@ -105,9 +146,9 @@ export async function spawnAiwgServe(opts = {}) {
   /** @type {(signal?: NodeJS.Signals) => Promise<void>} */
   const kill = (signal = 'SIGINT') =>
     new Promise((resolveKill) => {
-      if (child.exitCode !== null || exited()) { resolveKill(); return; }
-      child.once('exit', () => resolveKill());
-      try { child.kill(signal); } catch { resolveKill(); }
+      if (child.exitCode !== null || exited()) { isolation.cleanup(); resolveKill(); return; }
+      child.once('exit', () => { isolation.cleanup(); resolveKill(); });
+      try { child.kill(signal); } catch { isolation.cleanup(); resolveKill(); }
       setTimeout(() => {
         if (child.exitCode === null) {
           try { child.kill('SIGKILL'); } catch {}
@@ -121,6 +162,8 @@ export async function spawnAiwgServe(opts = {}) {
     kill,
     stdout,
     stderr,
+    configDir: isolation.configDir,
+    ownsConfigDir: isolation.owned,
     get exited() { return handleState.exited; },
     get exitCode() { return handleState.exitCode; },
   };
