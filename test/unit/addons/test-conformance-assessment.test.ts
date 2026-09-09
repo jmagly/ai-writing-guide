@@ -85,7 +85,23 @@ describe('current-source test conformance assessment', () => {
   });
   it('requires current substantive review rather than a sampled or stale review', async () => {
     const { root, protocol } = await fixture(); const evidence = await evidenceFor(root, protocol);
-    const review = await reviewFor(root, protocol); review.spec.files[0].hash = '0'.repeat(64);
+    const review = await reviewFor(root, protocol);
+    expect((await assessConformance(root, protocol, { evidence, reviews: review })).spec.status).toBe('conformant');
+    for (const [field, value] of [
+      ['root', root + '/other-owned-scope'],
+      ['protocolHash', '0'.repeat(64)],
+      ['snapshotHash', '0'.repeat(64)],
+    ]) {
+      const changed = structuredClone(review);
+      changed.spec[field] = value;
+      await expect(validateContract(changed, 'test-review.v1')).resolves.toEqual(changed);
+      const rejected = await assessConformance(root, protocol, { evidence, reviews: changed });
+      expect(rejected.spec.status, 'mismatched review ' + field).toBe('unknown');
+      expect(gate(rejected, 'review-artifact-0')).toMatchObject({
+        status: 'unknown', message: 'Review is not bound to the current root, protocol and source snapshot',
+      });
+    }
+    review.spec.files[0].hash = '0'.repeat(64);
     const report = await assessConformance(root, protocol, { evidence, reviews: review });
     expect(gate(report, 'review:tests/check.mjs').status).toBe('unknown');
     review.spec.files = [];
@@ -153,6 +169,22 @@ describe('current-source test conformance assessment', () => {
     const pass = await assessConformance(root, protocol, { evidence, reviews: review });
     expect(gate(pass, 'obligation:adds').status).toBe('passed');
     expect(pass.spec.status).toBe('conformant');
+    for (const { dimension, value } of [
+      { dimension: 'assertions', value: ['unrelated comparison result'] },
+      { dimension: 'sut', value: 'Independently inspected subtraction routine.' },
+      { dimension: 'scope', value: 'Pure value call with no transport collaborators.' },
+    ]) {
+      const changed = structuredClone(review);
+      changed.spec.files[0][dimension] = value;
+      await expect(validateContract(changed, 'test-review.v1')).resolves.toEqual(changed);
+      const untraced = await assessConformance(root, protocol, { evidence, reviews: changed });
+      expect(gate(untraced, 'review:tests/check.mjs').status).toBe('passed');
+      expect(untraced.spec.status, 'untraced obligation ' + dimension).toBe('unknown');
+      expect(gate(untraced, 'obligation:adds')).toMatchObject({
+        status: 'unknown',
+        references: ['Current source review must trace adds, its assertions, SUT add and boundary function: tests/check.mjs'],
+      });
+    }
     delete review.spec.files[0].obligationIds;
     const missing = await assessConformance(root, protocol, { evidence, reviews: review });
     expect(gate(missing, 'obligation:adds').status).toBe('unknown');
@@ -232,7 +264,7 @@ describe('current-source test conformance assessment', () => {
     expect(await fs.readFile(testPath, 'utf8')).toBe(weak);
     expect(await fs.readFile(path.join(root, 'src/add.mjs'), 'utf8')).toBe('export const add = (a,b) => a+b;\n');
   });
-  it.each([[1, 2, 'failed'], [2, 2, 'passed'], [0, 0, 'unknown']])('uses verified coverage numerator/denominator %s/%s (%s)', async (covered, total, expected) => {
+  it.each([[1, 2, 'failed'], [2, 2, 'passed'], [0, 0, 'unknown'], [80, 100, 'passed'], [79, 100, 'failed']])('uses verified coverage numerator/denominator %s/%s (%s)', async (covered, total, expected) => {
     const { root, protocol } = await fixture({ policy: { coverageThresholds: { lines: 80 } } });
     const lane = protocol.spec.lanes[0];
     lane.command.argv.push('.aiwg/testing/coverage-{runId}.json');

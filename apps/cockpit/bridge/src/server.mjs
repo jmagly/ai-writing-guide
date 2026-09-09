@@ -14,7 +14,7 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { dirname, join, basename, extname, resolve, sep } from 'node:path';
+import { dirname, join, basename, extname, resolve, sep, isAbsolute, parse } from 'node:path';
 import { storeCockpitToken } from '../../shell-core/keychain.mjs';
 import { assertActivityEvent } from './activity-contract.mjs';
 
@@ -39,7 +39,7 @@ export function localLibvirtFallbackAllowed(platform = process.platform, envValu
   return platform === 'linux' || envValue === '1';
 }
 const RUNTIME_DIR = join(homedir(), '.aiwg', 'cockpit', 'runtime');
-const auditDir = () => process.env.AIWG_COCKPIT_AUDIT_DIR || join(homedir(), '.aiwg', 'cockpit', 'audit');
+const auditDir = () => executorRequestContext.getStore()?.auditDir ?? (process.env.AIWG_COCKPIT_AUDIT_DIR || join(homedir(), '.aiwg', 'cockpit', 'audit'));
 const auditLog = () => join(auditDir(), 'events.jsonl');
 // The built React app (apps/cockpit/web/dist). Served when present; falls back to the
 // legacy vanilla page so the Bridge works even before a web build.
@@ -54,6 +54,8 @@ const CAPABILITY_TYPES = new Set([
 ]);
 const mcSessionsDir = () => join(process.cwd(), '.aiwg', 'ralph-external', 'mc', 'sessions');
 const executorRequestContext = new AsyncLocalStorage();
+const localDockerFallbackEnabled = () => executorRequestContext.getStore()?.localDockerFallback ?? LOCAL_DOCKER_FALLBACK;
+const localLibvirtFallbackEnabled = () => executorRequestContext.getStore()?.localLibvirtFallback ?? localLibvirtFallbackAllowed();
 
 function executorAuthError(code, message, cause) {
   const err = new Error(message, cause ? { cause } : undefined);
@@ -196,6 +198,8 @@ function spawnCollect(cmd, args) {
   });
 }
 async function runAiwg(args) {
+  const command = executorRequestContext.getStore()?.aiwgCommand;
+  if (command) return command(Object.freeze([...args])); // errors never fall through to PATH
   try { return await spawnCollect('aiwg', args); }
   catch (e) { if (e && e.code === 'ENOENT') return spawnCollect(process.execPath, [REPO_BIN, ...args]); throw e; }
 }
@@ -272,20 +276,23 @@ async function dispatchMission(body, upstreamUrl) {
 // assets, on disk under ~/.aiwg/cockpit/library. AIWG install files are NEVER written
 // (clone reads the catalog read-only, writes only into the library). ---
 const LIBRARY_DIR = join(homedir(), '.aiwg', 'cockpit', 'library');
+const currentLibraryDir = () => executorRequestContext.getStore()?.libraryDir ?? LIBRARY_DIR;
 /** Resolve a name to a path INSIDE the library, or null if it would escape. */
 function inLibrary(name) {
-  const r = join(LIBRARY_DIR, String(name).replace(/^[/\\]+/, ''));
-  return r === LIBRARY_DIR || r.startsWith(LIBRARY_DIR + '/') ? r : null;
+  const libraryDir = currentLibraryDir();
+  const r = join(libraryDir, String(name).replace(/^[/\\]+/, ''));
+  return r === libraryDir || r.startsWith(libraryDir + sep) ? r : null;
 }
 async function listLibrary() {
+  const libraryDir = currentLibraryDir();
   let entries;
-  try { entries = await readdir(LIBRARY_DIR, { withFileTypes: true }); } catch { return []; }
+  try { entries = await readdir(libraryDir, { withFileTypes: true }); } catch { return []; }
   const out = [];
   for (const e of entries) {
     if (e.name.startsWith('.')) continue;
     let meta = { name: e.name, kind: e.isDirectory() ? 'dir' : 'file', type: 'unknown', origin: 'imported' };
     if (e.isDirectory()) {
-      try { meta = { ...meta, ...JSON.parse(await readFile(join(LIBRARY_DIR, e.name, '.cockpit-origin.json'), 'utf8')), name: e.name, kind: 'dir' }; } catch { /* no manifest */ }
+      try { meta = { ...meta, ...JSON.parse(await readFile(join(libraryDir, e.name, '.cockpit-origin.json'), 'utf8')), name: e.name, kind: 'dir' }; } catch { /* no manifest */ }
     }
     out.push(meta);
   }
@@ -293,9 +300,10 @@ async function listLibrary() {
 }
 /** Clone a catalog asset (skill dir or single file) into the library — never the reverse. */
 async function cloneToLibrary({ type, name, path }) {
+  const libraryDir = currentLibraryDir();
   if (!type || !name || !path) throw new Error('type, name, path required');
   if (!existsSync(path)) throw new Error('source not found');
-  await mkdir(LIBRARY_DIR, { recursive: true, mode: 0o755 });
+  await mkdir(libraryDir, { recursive: true, mode: 0o755 });
   const destName = String(name).replace(/[^a-z0-9._-]/gi, '-');
   const isDir = /SKILL\.(md|markdown)$/i.test(basename(path)) || (await stat(path)).isDirectory();
   const src = /SKILL\.(md|markdown)$/i.test(basename(path)) ? dirname(path) : path;
@@ -333,7 +341,7 @@ function resolveCorpusPath(p) {
   let abs;
   try { abs = resolve(String(p)); } catch { return null; }
   if (!SHOW_EXT_RE.test(abs)) return null;
-  if (!CORPUS_ROOTS.some((root) => abs === root || abs.startsWith(root + sep))) return null;
+  if (!(executorRequestContext.getStore()?.corpusRoots ?? CORPUS_ROOTS).some((root) => abs === root || abs.startsWith(root + sep))) return null;
   return abs;
 }
 
@@ -386,7 +394,7 @@ async function loadContributions() {
   const sources = [], actions = [], screens = [], hooks = [], workflows = [];
   const manifestIds = new Set();
   const itemIds = new Set();
-  for (const [dirIndex, dir] of CONTRIB_DIRS.entries()) {
+  for (const [dirIndex, dir] of (executorRequestContext.getStore()?.contributionDirs ?? CONTRIB_DIRS).entries()) {
     const trustTier = dirIndex === 0 ? 'first-party' : 'sandboxed-third-party';
     let entries = [];
     try { entries = (await readdir(dir)).filter((f) => f.endsWith('.json') && f !== 'contribution.schema.json'); } catch { continue; }
@@ -998,7 +1006,7 @@ async function destroyInstance(upstreamUrl, instanceId) {
   try {
     const result = await fetchJsonFirst(candidates);
     if (result.status < 400) {
-      if (LOCAL_DOCKER_FALLBACK && ['docker', 'container'].includes(runtime) && dockerName) {
+      if (localDockerFallbackEnabled() && ['docker', 'container'].includes(runtime) && dockerName) {
         try {
           await spawnCollect('docker', ['rm', '-f', dockerName]);
           return {
@@ -1050,7 +1058,7 @@ async function destroyInstance(upstreamUrl, instanceId) {
       body: { error: 'instance_not_destroyable', message: `No destroyable runtime record for ${instanceId}` },
     };
   }
-  if (!LOCAL_DOCKER_FALLBACK) {
+  if (!localDockerFallbackEnabled()) {
     return {
       target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(instanceId)}/destroy`,
       status: 409,
@@ -1144,7 +1152,7 @@ async function reconnectInstance(upstreamUrl, instanceId) {
   }
 
   if (['docker', 'container'].includes(runtime) && dockerName) {
-    if (!LOCAL_DOCKER_FALLBACK) {
+    if (!localDockerFallbackEnabled()) {
       return {
         target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(instanceId)}/reconnect`,
         status: 409,
@@ -1185,7 +1193,7 @@ async function reconnectInstance(upstreamUrl, instanceId) {
   }
 
   if (VM_RUNTIME_KINDS.includes(runtime)) {
-    if (!localLibvirtFallbackAllowed()) {
+    if (!localLibvirtFallbackEnabled()) {
       return {
         target: `${upstreamUrl}/api/v2/admin/instances/${encodeURIComponent(instanceId)}/reconnect`,
         status: 409,
@@ -2874,6 +2882,21 @@ async function proxyExecutorWebsocket({ req, socket, head, target, executorToken
   upstreamRequest.end();
 }
 
+function embeddingDirectory(value, label) {
+  if (typeof value !== 'string' || !value.trim() || !isAbsolute(value)) {
+    throw new TypeError(`${label} must be a non-empty absolute directory path`);
+  }
+  const normalized = resolve(value);
+  if (normalized === parse(normalized).root) throw new TypeError(`${label} must not be a filesystem root`);
+  return normalized;
+}
+
+function embeddingDirectories(value, defaults, label) {
+  if (value === undefined) return Object.freeze([...defaults]);
+  if (!Array.isArray(value) || value.length === 0) throw new TypeError(`${label} must be a non-empty array`);
+  return Object.freeze(value.map((entry) => embeddingDirectory(entry, label)));
+}
+
 export function createBridge({
   executorUrl = EXECUTOR_URL,
   allowMockExecutor = ALLOW_MOCK_EXECUTOR,
@@ -2884,7 +2907,31 @@ export function createBridge({
   sessionTtlMs = 12 * 60 * 60 * 1000,
   a2aProtocolPolicy = COCKPIT_A2A_PROTOCOL_POLICY,
   allowA2AProtocolFallback = COCKPIT_A2A_PROTOCOL_FALLBACK,
+  // Explicit embedding seams are per-instance; omitted options retain operator defaults.
+  libraryDir,
+  auditDir: requestedAuditDir,
+  mcpTokenFile = MCP_TOKEN_FILE,
+  localDockerFallback = LOCAL_DOCKER_FALLBACK,
+  localLibvirtFallback,
+  aiwgCommand,
+  corpusRoots,
+  contributionDirs,
 } = {}) {
+  if (typeof mcpTokenFile !== 'string') throw new TypeError('mcpTokenFile must be a string');
+  if (typeof localDockerFallback !== 'boolean' || (localLibvirtFallback !== undefined && typeof localLibvirtFallback !== 'boolean')) {
+    throw new TypeError('local fallback options must be booleans');
+  }
+  if (aiwgCommand !== undefined && typeof aiwgCommand !== 'function') {
+    throw new TypeError('aiwgCommand must be a function');
+  }
+  const instanceLibraryDir = libraryDir === undefined ? LIBRARY_DIR : embeddingDirectory(libraryDir, 'libraryDir');
+  // Undefined preserves the historical per-request environment default.
+  const instanceAuditDir = requestedAuditDir === undefined
+    ? undefined
+    : embeddingDirectory(requestedAuditDir, 'auditDir');
+  const instanceCorpusRoots = embeddingDirectories(corpusRoots, CORPUS_ROOTS, 'corpusRoots');
+  const instanceContributionDirs = embeddingDirectories(contributionDirs, CONTRIB_DIRS, 'contributionDirs');
+
   if (!['0.3', '1.0', 'auto'].includes(a2aProtocolPolicy)) {
     throw new Error(`AIWG_COCKPIT_A2A_PROTOCOL_POLICY must be 0.3, 1.0, or auto (received '${a2aProtocolPolicy}')`);
   }
@@ -2926,6 +2973,12 @@ export function createBridge({
     ? { kind: 'bearer', csrf: TOKEN }
     : sessionAuth(req);
   const executorOrigin = new URL(upstreamUrl).origin;
+  const requestContext = Object.freeze({
+    executorOrigin, executorTokenFile, a2aProtocolPolicy, allowA2AProtocolFallback,
+    libraryDir: instanceLibraryDir, auditDir: instanceAuditDir,
+    mcpTokenFile, localDockerFallback, localLibvirtFallback, aiwgCommand,
+    corpusRoots: instanceCorpusRoots, contributionDirs: instanceContributionDirs,
+  });
   const executorAddress = new URL(upstreamUrl);
   const attachTargets = new Map();
   const issueAttachUrl = (req, value) => {
@@ -3035,7 +3088,7 @@ export function createBridge({
         return json(res, 200, await getBootstrapTrustPosture(upstreamUrl, { requireSandboxMtls }));
       }
       if (url.pathname === '/api/mcp/discovery' && req.method === 'GET') return json(res, 200, await getMcpDiscovery(upstreamUrl));
-      if (url.pathname === '/api/mcp' && req.method === 'POST') return proxyMcpRequest(req, res, upstreamUrl, MCP_TOKEN_FILE);
+      if (url.pathname === '/api/mcp' && req.method === 'POST') return proxyMcpRequest(req, res, upstreamUrl, mcpTokenFile);
       if (url.pathname === '/api/running') return json(res, 200, await getRunning(upstreamUrl));
       if (url.pathname === '/api/missions' && req.method === 'GET') return json(res, 200, await getMissions(upstreamUrl));
       if (url.pathname === '/api/missions' && req.method === 'POST') {
@@ -3250,8 +3303,9 @@ export function createBridge({
       {
         const lm = url.pathname.match(/^\/api\/library\/(.+)$/);
         if (lm && req.method === 'DELETE') {
+          const libraryDir = currentLibraryDir();
           const target = inLibrary(decodeURIComponent(lm[1]));
-          if (!target || target === LIBRARY_DIR || !existsSync(target)) return json(res, 404, { error: 'not_in_library' });
+          if (!target || target === libraryDir || !existsSync(target)) return json(res, 404, { error: 'not_in_library' });
           await rm(target, { recursive: true, force: true });
           return json(res, 200, { removed: decodeURIComponent(lm[1]) });
         }
@@ -3501,11 +3555,11 @@ export function createBridge({
     }
   };
   const server = http.createServer((req, res) => executorRequestContext.run(
-    { executorOrigin, executorTokenFile, a2aProtocolPolicy, allowA2AProtocolFallback },
+    requestContext,
     () => handleRequest(req, res),
   ));
   server.on('upgrade', (req, socket, head) => executorRequestContext.run(
-    { executorOrigin, executorTokenFile, a2aProtocolPolicy, allowA2AProtocolFallback },
+    requestContext,
     async () => {
       try {
         const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
