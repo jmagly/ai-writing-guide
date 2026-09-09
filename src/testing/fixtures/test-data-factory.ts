@@ -402,19 +402,19 @@ export class TestDataFactory {
     switch (field.type) {
       case 'string':
         return this.generateString(
-          constraints.minLength || 1,
-          constraints.maxLength || 50,
+          constraints.minLength ?? 1,
+          constraints.maxLength ?? 50,
           constraints.pattern
         );
       case 'number':
         return this.generateNumber(
-          constraints.min || 0,
-          constraints.max || 1000
+          constraints.min ?? 0,
+          constraints.max ?? 1000
         );
       case 'integer':
         return this.generateInteger(
-          constraints.min || 0,
-          constraints.max || 1000
+          constraints.min ?? 0,
+          constraints.max ?? 1000
         );
       case 'boolean':
         return this.generateBoolean();

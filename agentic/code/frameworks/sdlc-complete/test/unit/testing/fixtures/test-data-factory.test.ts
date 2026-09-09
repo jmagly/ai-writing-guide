@@ -4,7 +4,7 @@
  * Target: 80%+ unit test coverage
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   TestDataFactory,
   type UseCase,
@@ -21,6 +21,25 @@ import {
   type ComponentDesign,
   type SupplementalSpec
 } from '../../../../src/testing/fixtures/test-data-factory.ts';
+
+function withFixedDate(date: Date, run: () => void): void {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  try {
+    vi.setSystemTime(date);
+    run();
+  } finally {
+    vi.useRealTimers();
+  }
+}
+
+function expectNonEmptyStrings(values: string[]): void {
+  expect(Array.isArray(values)).toBe(true);
+  expect(values.length).toBeGreaterThan(0);
+  for (const value of values) {
+    expect(typeof value).toBe('string');
+    expect(value.trim().length).toBeGreaterThan(0);
+  }
+}
 
 describe('TestDataFactory', () => {
   let factory: TestDataFactory;
@@ -425,13 +444,19 @@ describe('TestDataFactory', () => {
       expect(result.executionTime).toBeGreaterThan(0);
       expect(result.timestamp).toBeTruthy();
 
-      // Error message for failed tests
+      // Reseed after fixture creation to select each negative-result branch explicitly.
       factory.seed(12345);
       const failedResult = factory.generateTestResult(testCase, false);
-      if (failedResult.status === 'failed') {
-        expect(failedResult.message).toBeTruthy();
-        expect(failedResult.message).toContain('Assertion failed:');
-      }
+      expect(failedResult.status).toBe('failed');
+      expect(failedResult.testCaseId).toBe(testCase.id);
+      expect(failedResult.message).toBeTruthy();
+      expect(failedResult.message).toContain('Assertion failed:');
+
+      factory.seed(99999);
+      const skippedResult = factory.generateTestResult(testCase, false);
+      expect(skippedResult.status).toBe('skipped');
+      expect(skippedResult.testCaseId).toBe(testCase.id);
+      expect(skippedResult.message).toBeUndefined();
     });
   });
 
@@ -584,25 +609,32 @@ describe('TestDataFactory', () => {
 
   describe('Iteration Plan Generation', () => {
     it('should generate valid iteration plan with user story IDs and handle different weeks', () => {
-      const plan = factory.generateIterationPlan(2);
+      withFixedDate(new Date(2024, 11, 28, 12, 34, 56, 789), () => {
+        const plan = factory.generateIterationPlan(2);
 
-      expect(plan.id).toMatch(/^ITER-\d{3}$/);
-      expect(plan.iteration).toBeGreaterThan(0);
-      expect(plan.startDate).toBeTruthy();
-      expect(plan.endDate).toBeTruthy();
-      expect(plan.objectives.length).toBeGreaterThan(0);
-      expect(plan.stories.length).toBeGreaterThan(0);
+        expect(plan.id).toMatch(/^ITER-\d{3}$/);
+        expect(plan.iteration).toBeGreaterThan(0);
+        expect(plan.startDate).toBeTruthy();
+        expect(plan.endDate).toBeTruthy();
+        expect(plan.objectives.length).toBeGreaterThan(0);
+        expect(plan.stories.length).toBeGreaterThan(0);
 
-      // User story IDs
-      plan.stories.forEach(story => {
-        expect(story).toMatch(/^US-\d{3}$/);
+        // User story IDs
+        plan.stories.forEach(story => {
+          expect(story).toMatch(/^US-\d{3}$/);
+        });
+
+        // Independent calendar endpoints cross a year boundary without assuming fixed elapsed hours.
+        const expectedStart = new Date(2024, 11, 28, 12, 34, 56, 789).toISOString();
+        expect(plan.startDate).toBe(expectedStart);
+        expect(plan.endDate).toBe(new Date(2025, 0, 11, 12, 34, 56, 789).toISOString());
+        const plan1 = factory.generateIterationPlan(1);
+        const plan4 = factory.generateIterationPlan(4);
+        expect(plan1.startDate).toBe(expectedStart);
+        expect(plan1.endDate).toBe(new Date(2025, 0, 4, 12, 34, 56, 789).toISOString());
+        expect(plan4.startDate).toBe(expectedStart);
+        expect(plan4.endDate).toBe(new Date(2025, 0, 25, 12, 34, 56, 789).toISOString());
       });
-
-      // Different week counts
-      const plan1 = factory.generateIterationPlan(1);
-      const plan4 = factory.generateIterationPlan(4);
-      expect(plan1.startDate).toBeTruthy();
-      expect(plan4.startDate).toBeTruthy();
     });
   });
 
@@ -626,21 +658,16 @@ describe('TestDataFactory', () => {
     });
 
     it('should generate dates with proper formatting and handle day offsets', () => {
-      // Current date
-      const dateStr = factory.generateDate(0);
-      const date = new Date(dateStr);
-      const now = new Date();
-      expect(date.getDate()).toBe(now.getDate());
+      withFixedDate(new Date(2024, 2, 1, 12, 34, 56, 789), () => {
+        const dateStr = factory.generateDate(0);
+        expect(dateStr).toBe(new Date(2024, 2, 1, 12, 34, 56, 789).toISOString());
+        expect(dateStr).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+        expect(factory.generateDate(7)).toBe(new Date(2024, 1, 23, 12, 34, 56, 789).toISOString());
+        expect(factory.generateDate(-7)).toBe(new Date(2024, 2, 8, 12, 34, 56, 789).toISOString());
 
-      // Past date
-      const pastStr = factory.generateDate(7);
-      const past = new Date(pastStr);
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      expect(past.getDate()).toBe(weekAgo.getDate());
-
-      // ISO 8601 format
-      expect(dateStr).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+        vi.setSystemTime(new Date(2025, 0, 3, 12, 34, 56, 789));
+        expect(factory.generateDate(7)).toBe(new Date(2024, 11, 27, 12, 34, 56, 789).toISOString());
+      });
     });
 
     it('should generate IDs with specified prefix and proper formatting', () => {
@@ -724,8 +751,39 @@ describe('TestDataFactory', () => {
       expect(intake.projectName).toBeTruthy();
       expect(risks.risks.length).toBeGreaterThan(0);
       expect(useCases.length).toBe(3);
+      for (const useCase of useCases) {
+        expect(useCase.id).toMatch(/^UC-\d{3}$/);
+        expect(typeof useCase.title).toBe('string');
+        expect(useCase.title.trim().length).toBeGreaterThan(0);
+        expectNonEmptyStrings(useCase.actors);
+        expectNonEmptyStrings(useCase.preconditions);
+        expectNonEmptyStrings(useCase.mainScenario);
+        useCase.mainScenario.forEach((step, index) => {
+          expect(step).toMatch(new RegExp(`^${index + 1}\\. `));
+        });
+        expectNonEmptyStrings(useCase.acceptanceCriteria);
+        useCase.acceptanceCriteria.forEach((criterion, index) => {
+          expect(criterion).toMatch(new RegExp(`^AC${index + 1}: `));
+        });
+      }
       expect(spec.nfrs.length).toBe(5);
       expect(adrs.length).toBe(2);
+      for (const adr of adrs) {
+        expect(Number.isInteger(adr.number)).toBe(true);
+        expect(adr.number).toBeGreaterThan(0);
+        expect(typeof adr.title).toBe('string');
+        expect(adr.title.trim().length).toBeGreaterThan(0);
+        expect(['Proposed', 'Accepted', 'Deprecated', 'Superseded']).toContain(adr.status);
+        expect(typeof adr.context).toBe('string');
+        expect(adr.context.trim().length).toBeGreaterThan(0);
+        expect(typeof adr.decision).toBe('string');
+        expect(adr.decision.trim().length).toBeGreaterThan(0);
+        expectNonEmptyStrings(adr.consequences);
+        expectNonEmptyStrings(adr.alternatives);
+        expect(typeof adr.date).toBe('string');
+        expect(adr.date).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+        expect(Number.isFinite(Date.parse(adr.date))).toBe(true);
+      }
       expect(testPlan.testCases.length).toBe(10);
       expect(commits.length).toBe(20);
       expect(pr.commits.length).toBe(5);

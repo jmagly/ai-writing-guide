@@ -3,7 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { normalizeResults } from '../../../agentic/code/addons/testing-quality/lib/results.mjs';
 const normalize = (raw: string, format = 'junit', mode = 'execution') => normalizeResults(raw, { format, mode, root: '/project' });
 const trx = (results: string, counters: string, outcome = 'Completed') => `<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010"><Results>${results}</Results><ResultSummary outcome="${outcome}"><Counters ${counters}/></ResultSummary></TestRun>`;
-const result = (outcome = 'Passed', id = 'one') => `<UnitTestResult executionId="execution-${id}" testId="${id}" testName="boundary &amp; oracle" outcome="${outcome}" duration="00:00:00.1250000"/>`;
+const result = (outcome = 'Passed', id = 'one', executionId = id) => `<UnitTestResult executionId="execution-${executionId}" testId="${id}" testName="boundary &amp; oracle" outcome="${outcome}" duration="00:00:00.1250000"/>`;
+
+function expectDiagnostic(report: any, code: string, message?: string) {
+  expect(report.complete).toBe(false);
+  expect(report.errors).toContainEqual(expect.objectContaining({ code, ...(message ? { message: expect.stringContaining(message) } : {}) }));
+}
+const metadataDepth = (depth: number) => '<testsuite tests="1"><properties>' + '<metadata>'.repeat(depth) + '</metadata>'.repeat(depth) + '</properties><testcase name="one"/></testsuite>';
 
 describe('producer-specific XML evidence', () => {
   it('normalizes Maven/pytest suites, failure/error/skip states and explicit files without class inference', () => {
@@ -14,6 +20,12 @@ describe('producer-specific XML evidence', () => {
     expect(report.cases[1].file).toBe('tests/boundary.java');
   });
   it('retains setup-only failure, rejects zero suites, duplicates, truncation and wrong counts', () => {
+    expect(normalize('<testsuite tests="1"><testcase name="one"/></testsuite>').complete).toBe(true);
+    expectDiagnostic(normalize('<testsuite tests="0" errors="1"><error message="setup"/></testsuite>'), 'SUITE_FAILURE', 'setup/teardown');
+    const setupWithCase = normalize('<testsuite tests="1" errors="0"><error message="suite setup"/><testcase name="one"/></testsuite>');
+    expectDiagnostic(setupWithCase, 'SUITE_FAILURE', 'setup/teardown');
+    expect(setupWithCase.cases).toHaveLength(1);
+    expect(setupWithCase.cases[0].status).toBe('passed');
     for (const xml of [
       '<testsuite tests="0" errors="1"><error message="setup"/></testsuite>',
       '<testsuite tests="0"/>',
@@ -25,6 +37,12 @@ describe('producer-specific XML evidence', () => {
     ]) expect(normalize(xml).complete).toBe(false);
   });
   it('rejects XML entity expansion, external entities, malformed syntax and depth excess', () => {
+    // root + properties + 62 metadata elements exactly reach the supported depth64.
+    const atLimit = normalize(metadataDepth(62));
+    expect(atLimit.complete).toBe(true);
+    expect(atLimit.errors).toEqual([]);
+    expect(atLimit.summary).toEqual({ total: 1, passed: 1, failed: 0, skipped: 0 });
+    expectDiagnostic(normalize(metadataDepth(63)), 'MALFORMED_REPORT', 'XML structure exceeds node/depth limit');
     for (const xml of [
       '<!DOCTYPE testsuite [<!ENTITY file SYSTEM "file:///etc/passwd">]><testsuite tests="1"><testcase name="&file;"/></testsuite>',
       '<!DOCTYPE testsuite [<!ENTITY a "aaaa">]><testsuite tests="1"><testcase name="&a;"/></testsuite>',
@@ -41,6 +59,15 @@ describe('producer-specific XML evidence', () => {
     expect(report.cases[0]).toMatchObject({ file: null, name: 'one::boundary & oracle', durationMs: 125 });
   });
   it('fails closed for TRX run errors, incomplete/counter mismatch, duplicates and unknown outcomes', () => {
+    const valid = trx(result(), 'total="1" executed="1" passed="1" failed="0"');
+    expect(normalize(valid, 'trx').complete).toBe(true);
+    expect(normalize(trx(result() + result('Passed', 'two'), 'total="2" executed="2" passed="2" failed="0"'), 'trx').complete).toBe(true);
+    const duplicateExecution = normalize(trx(result() + result('Passed', 'two', 'one'), 'total="2" executed="2" passed="2" failed="0"'), 'trx');
+    expectDiagnostic(duplicateExecution, 'DUPLICATE_TERMINAL', 'Repeated TRX executionId execution-one');
+    expect(new Set(duplicateExecution.cases.map((entry: any) => entry.id)).size).toBe(2);
+    expectDiagnostic(normalize(trx(result('Inconclusive'), 'total="1" executed="1" passed="0" failed="0"'), 'trx'), 'MALFORMED_REPORT', 'Unsupported/nonterminal TRX outcome Inconclusive');
+    expectDiagnostic(normalize(valid.replace(' xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010"', ''), 'trx'), 'MALFORMED_REPORT', 'Expected VSTest 2010 TestRun namespace');
+    expectDiagnostic(normalize(valid.replace('http://microsoft.com/schemas/VisualStudio/TeamTest/2010', 'urn:unqualified-producer'), 'trx'), 'MALFORMED_REPORT', 'Expected VSTest 2010 TestRun namespace');
     for (const xml of [
       trx(result(), 'total="1" executed="1" passed="1" failed="0"', 'Failed'),
       trx(result(), 'total="2" executed="2" passed="1" failed="0"'),

@@ -119,6 +119,10 @@ describe('test conformance result normalization', () => {
     expect(out.summary).toEqual({ total: 2, passed: 1, failed: 0, skipped: 1 });
     expect(out.cases[0].durationMs).toBe(25);
     expect(out.cases[0].file).toBe('tests/test_math.py');
+    expect(out.cases).toEqual([
+      { id: '["unit","tests/test_math.py","tests/test_math.py::test_sum[positive]"]', file: 'tests/test_math.py', name: 'tests/test_math.py::test_sum[positive]', status: 'passed', durationMs: 25 },
+      { id: '["unit","tests/test_math.py","tests/test_math.py::test_sum[negative]"]', file: 'tests/test_math.py', name: 'tests/test_math.py::test_sum[negative]', status: 'skipped' },
+    ]);
   });
   it('accepts the protocol pytest-json format alias', () => {
     const payload = { exitcode: 0, summary: { total: 1, passed: 1 }, tests: [{ nodeid: 'tests/test_add.py::test_add', outcome: 'passed' }] };
@@ -128,6 +132,18 @@ describe('test conformance result normalization', () => {
     expect(result.summary.passed).toBe(1);
   });
   it('retains pytest collection errors and missing prerequisite exits', () => {
+    const valid = { exitcode: 0, summary: { total: 1, passed: 1 }, tests: [{ nodeid: 'tests/test_one.py::test_one', outcome: 'passed' }] };
+    const baseline = normalize(valid, 'pytest');
+    expect(baseline.complete).toBe(true);
+    expect(baseline.errors).toEqual([]);
+    const interrupted = normalize({ ...valid, exitcode: 2 }, 'pytest');
+    expect(interrupted.complete).toBe(false);
+    expect(interrupted.errors).toContainEqual(expect.objectContaining({ code: 'PYTEST_INCOMPLETE', message: expect.stringContaining('pytest exited 2') }));
+    expect(interrupted.cases).toEqual(baseline.cases);
+    const collection = normalize({ ...valid, collectors: [{ nodeid: 'tests/test_broken.py', outcome: 'failed', longrepr: 'ImportError' }] }, 'pytest');
+    expect(collection.complete).toBe(false);
+    expect(collection.errors).toContainEqual({ code: 'COLLECTION_FAILURE', message: 'ImportError' });
+    expect(collection.files).toEqual([{ path: 'tests/test_one.py', status: 'passed' }, { path: 'tests/test_broken.py', status: 'failed' }]);
     const out = normalize({ exitcode: 2, summary: { total: 0 }, tests: [], collectors: [{ nodeid: 'tests/test_broken.py', outcome: 'failed', longrepr: 'ImportError' }] }, 'pytest');
     expect(out.complete).toBe(false);
     expect(out.files).toEqual([{ path: 'tests/test_broken.py', status: 'failed' }]);
@@ -142,6 +158,15 @@ describe('test conformance result normalization', () => {
     expect(normalize(raw.slice(0, -1), 'go-json').complete).toBe(false);
   });
   it('rejects Go package failures, duplicate terminals and truncated lines', () => {
+    const valid = [{ Package: 'p', Action: 'start' }, { Package: 'p', Action: 'run', Test: 'TestOne' }, { Package: 'p', Action: 'pass', Test: 'TestOne' }, { Package: 'p', Action: 'pass' }];
+    const baseline = normalize(valid, 'go');
+    expect(baseline.complete).toBe(true);
+    expect(baseline.errors).toEqual([]);
+    // A repeated skip terminal isolates duplication without a second missing-start error.
+    const duplicate = normalize([...valid, { Package: 'p', Action: 'skip' }], 'go');
+    expect(duplicate.complete).toBe(false);
+    expect(duplicate.errors).toContainEqual(expect.objectContaining({ code: 'DUPLICATE_TERMINAL', message: expect.stringContaining('p::') }));
+    expect(duplicate.cases).toEqual(baseline.cases);
     expect(normalize([{ Package: 'p', Action: 'fail' }], 'go').errors).toContainEqual(expect.objectContaining({ code: 'PACKAGE_FAILURE' }));
     expect(normalize([{ Package: 'p', Action: 'pass' }, { Package: 'p', Action: 'pass' }], 'go').complete).toBe(false);
     expect(normalize('{"Package":"p","Action":"start"}\n{', 'go').complete).toBe(false);
@@ -164,7 +189,12 @@ describe('test conformance result normalization', () => {
     expect(out.complete).toBe(true);
     expect(out.summary.total).toBe(1);
   });
-  it.each(['ok 1 - missing plan\n', 'ok 2 - missing first\n1..2\n', 'Bail out! setup\n', '1..0\n'])('fails incomplete or empty TAP closed', raw => expect(normalize(raw, 'tap').complete).toBe(false));
+  it.each([
+    ['missing plan', 'ok 1 - missing plan\n'],
+    ['missing first terminal', 'ok 2 - missing first\n1..2\n'],
+    ['bailout', 'Bail out! setup\n'],
+    ['empty plan', '1..0\n'],
+  ])('fails incomplete or empty TAP closed (%s)', (_reason, raw) => expect(normalize(raw, 'tap').complete).toBe(false));
   it('rejects unknown statuses, invalid duration and unsupported adapters', () => {
     expect(normalize(canonical({ cases: [{ file: 'a.ts', name: 'x', status: 'green' }] })).complete).toBe(false);
     expect(normalize(canonical({ cases: [{ file: 'a.ts', name: 'x', status: 'passed', durationMs: -1 }] })).complete).toBe(false);

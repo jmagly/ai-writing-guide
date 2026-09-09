@@ -11,6 +11,16 @@ import {
   CommonSchemas
 } from '../../../../src/testing/fixtures/test-data-factory.js';
 
+// These predicates describe the selected test schemas, not arbitrary schema validation.
+function invalidFieldNames(
+  record: Record<string, unknown>,
+  validators: Record<string, (value: unknown) => boolean>
+): string[] {
+  return Object.entries(validators)
+    .filter(([name, isValid]) => !isValid(record[name]))
+    .map(([name]) => name);
+}
+
 describe('TestDataFactory', () => {
   let factory: TestDataFactory;
 
@@ -91,8 +101,18 @@ describe('TestDataFactory', () => {
         const result = factory.generateDatetime();
 
         expect(result instanceof Date).toBe(true);
+        expect(Number.isFinite(result.getTime())).toBe(true);
         expect(result.getHours()).toBeDefined();
         expect(result.getMinutes()).toBeDefined();
+        expect(Number.isInteger(result.getHours())).toBe(true);
+        expect(result.getHours()).toBeGreaterThanOrEqual(0);
+        expect(result.getHours()).toBeLessThanOrEqual(23);
+        expect(Number.isInteger(result.getMinutes())).toBe(true);
+        expect(result.getMinutes()).toBeGreaterThanOrEqual(0);
+        expect(result.getMinutes()).toBeLessThanOrEqual(59);
+        expect(Number.isInteger(result.getSeconds())).toBe(true);
+        expect(result.getSeconds()).toBeGreaterThanOrEqual(0);
+        expect(result.getSeconds()).toBeLessThanOrEqual(59);
       });
     });
 
@@ -150,6 +170,138 @@ describe('TestDataFactory', () => {
   });
 
   describe('Schema-based Generation', () => {
+    describe('Explicit schema bounds', () => {
+      it('should preserve zero number bounds in a valid record', () => {
+        const schema: DataSchema = {
+          name: 'ZeroNumber',
+          fields: [{ name: 'value', type: 'number', constraints: { min: 0, max: 0 } }]
+        };
+
+        expect(factory.generateValidRecord(schema)).toEqual({ value: 0 });
+      });
+
+      it('should preserve zero integer bounds in a valid record', () => {
+        const schema: DataSchema = {
+          name: 'ZeroInteger',
+          fields: [{ name: 'value', type: 'integer', constraints: { min: 0, max: 0 } }]
+        };
+
+        expect(factory.generateValidRecord(schema)).toEqual({ value: 0 });
+      });
+
+      it('should preserve zero string bounds in a valid record', () => {
+        const schema: DataSchema = {
+          name: 'ZeroString',
+          fields: [{ name: 'value', type: 'string', constraints: { minLength: 0, maxLength: 0 } }]
+        };
+
+        expect(factory.generateValidRecord(schema)).toEqual({ value: '' });
+      });
+
+      it('should preserve zero number bounds in the schema valid fixture', () => {
+        const schema: DataSchema = {
+          name: 'ZeroNumberFixture',
+          fields: [{ name: 'value', type: 'number', constraints: { min: 0, max: 0 } }]
+        };
+
+        expect(factory.generateFromSchema(schema).valid).toEqual({ value: 0 });
+      });
+
+      it('should preserve zero integer bounds in the schema valid fixture', () => {
+        const schema: DataSchema = {
+          name: 'ZeroIntegerFixture',
+          fields: [{ name: 'value', type: 'integer', constraints: { min: 0, max: 0 } }]
+        };
+
+        expect(factory.generateFromSchema(schema).valid).toEqual({ value: 0 });
+      });
+
+      it('should preserve zero string bounds in the schema valid fixture', () => {
+        const schema: DataSchema = {
+          name: 'ZeroStringFixture',
+          fields: [{ name: 'value', type: 'string', constraints: { minLength: 0, maxLength: 0 } }]
+        };
+
+        expect(factory.generateFromSchema(schema).valid).toEqual({ value: '' });
+      });
+
+      it('should preserve zero bounds in every generated valid record', () => {
+        const schema: DataSchema = {
+          name: 'ZeroBatch',
+          fields: [
+            { name: 'number', type: 'number', constraints: { min: 0, max: 0 } },
+            { name: 'integer', type: 'integer', constraints: { min: 0, max: 0 } },
+            { name: 'string', type: 'string', constraints: { minLength: 0, maxLength: 0 } }
+          ]
+        };
+
+        const records = factory.generateValidRecords(schema, 3);
+
+        expect(records).toHaveLength(3);
+        for (const record of records) {
+          expect(record).toEqual({ number: 0, integer: 0, string: '' });
+        }
+      });
+
+      it('should retain default bounds when schema constraints are omitted', () => {
+        const schema: DataSchema = {
+          name: 'DefaultBounds',
+          fields: [
+            { name: 'string', type: 'string' },
+            { name: 'number', type: 'number' },
+            { name: 'integer', type: 'integer', constraints: {} }
+          ]
+        };
+
+        const record = factory.generateValidRecord(schema);
+
+        expect(typeof record.string).toBe('string');
+        expect(record.string.length).toBeGreaterThanOrEqual(1);
+        expect(record.string.length).toBeLessThanOrEqual(50);
+        expect(Number.isFinite(record.number)).toBe(true);
+        expect(record.number).toBeGreaterThanOrEqual(0);
+        expect(record.number).toBeLessThanOrEqual(1000);
+        expect(Number.isInteger(record.integer)).toBe(true);
+        expect(record.integer).toBeGreaterThanOrEqual(0);
+        expect(record.integer).toBeLessThanOrEqual(1000);
+      });
+
+      it('should preserve ordinary bounds and negative ranges ending at zero', () => {
+        const schema: DataSchema = {
+          name: 'MixedBounds',
+          fields: [
+            { name: 'string', type: 'string', constraints: { minLength: 3, maxLength: 3 } },
+            { name: 'number', type: 'number', constraints: { min: 7, max: 7 } },
+            { name: 'integer', type: 'integer', constraints: { min: -3, max: -3 } },
+            { name: 'negativeNumber', type: 'number', constraints: { min: -10, max: 0 } },
+            { name: 'negativeInteger', type: 'integer', constraints: { min: -10, max: 0 } }
+          ]
+        };
+
+        const records = factory.generateValidRecords(schema, 3);
+
+        expect(records).toHaveLength(3);
+        for (const record of records) {
+          expect(typeof record.string).toBe('string');
+          expect(record.string).toHaveLength(3);
+          expect(record.number).toBe(7);
+          expect(record.integer).toBe(-3);
+          expect(Number.isFinite(record.negativeNumber)).toBe(true);
+          expect(record.negativeNumber).toBeGreaterThanOrEqual(-10);
+          expect(record.negativeNumber).toBeLessThanOrEqual(0);
+          expect(Number.isInteger(record.negativeInteger)).toBe(true);
+          expect(record.negativeInteger).toBeGreaterThanOrEqual(-10);
+          expect(record.negativeInteger).toBeLessThanOrEqual(0);
+        }
+      });
+
+      it('should retain zero bounds in the direct type generators', () => {
+        expect(factory.generateNumber(0, 0)).toBe(0);
+        expect(factory.generateInteger(0, 0)).toBe(0);
+        expect(factory.generateString(0, 0)).toBe('');
+      });
+    });
+
     describe('generateFromSchema', () => {
       it('should generate fixtures from simple schema', () => {
         const schema: DataSchema = {
@@ -165,6 +317,11 @@ describe('TestDataFactory', () => {
         expect(result.valid).toBeDefined();
         expect(typeof result.valid.name).toBe('string');
         expect(typeof result.valid.age).toBe('number');
+        expect(result.valid.name.length).toBeGreaterThanOrEqual(1);
+        expect(result.valid.name.length).toBeLessThanOrEqual(50);
+        expect(Number.isInteger(result.valid.age)).toBe(true);
+        expect(result.valid.age).toBeGreaterThanOrEqual(0);
+        expect(result.valid.age).toBeLessThanOrEqual(100);
       });
 
       it('should generate invalid fixtures', () => {
@@ -179,6 +336,15 @@ describe('TestDataFactory', () => {
         const result = factory.generateFromSchema(schema);
 
         expect(result.invalid.length).toBeGreaterThan(0);
+        expect(result.invalid).toHaveLength(2);
+        const violations = result.invalid.map(record => {
+          expect(Object.keys(record).sort()).toEqual(['count', 'email']);
+          return invalidFieldNames(record, {
+            email: value => typeof value === 'string' && /^[a-z0-9]+@[a-z]+\.[a-z]+$/i.test(value),
+            count: value => typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 100
+          });
+        });
+        expect(violations).toEqual(expect.arrayContaining([['email'], ['count']]));
       });
 
       it('should generate boundary fixtures', () => {
@@ -209,14 +375,19 @@ describe('TestDataFactory', () => {
 
         expect(result.nullCases.length).toBe(1);
         expect(result.nullCases[0].optionalField).toBeNull();
+        expect(Object.keys(result.nullCases[0]).sort()).toEqual(['optionalField', 'requiredField']);
+        expect(typeof result.nullCases[0].requiredField).toBe('string');
+        expect(result.nullCases[0].requiredField.length).toBeGreaterThanOrEqual(1);
+        expect(result.nullCases[0].requiredField.length).toBeLessThanOrEqual(50);
       });
 
       it('should respect options to disable fixture types', () => {
         const schema: DataSchema = {
           name: 'Test',
-          fields: [{ name: 'value', type: 'integer' }]
+          fields: [{ name: 'value', type: 'integer', nullable: true }]
         };
 
+        expect(factory.generateFromSchema(schema).nullCases).toEqual([{ value: null }]);
         const result = factory.generateFromSchema(schema, {
           includeInvalid: false,
           includeBoundary: false,
@@ -278,6 +449,15 @@ describe('TestDataFactory', () => {
 
         expect(results.length).toBeGreaterThan(0);
         expect(results.length).toBeLessThanOrEqual(5);
+        expect(results).toHaveLength(2);
+        const violations = results.map(record => {
+          expect(Object.keys(record).sort()).toEqual(['number', 'text']);
+          return invalidFieldNames(record, {
+            text: value => typeof value === 'string' && value.length >= 1 && value.length <= 10,
+            number: value => typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 50
+          });
+        });
+        expect(violations).toEqual(expect.arrayContaining([['text'], ['number']]));
       });
     });
 
@@ -434,12 +614,22 @@ describe('TestDataFactory', () => {
       expect(typeof result.number).toBe('number');
       expect(Number.isInteger(result.integer)).toBe(true);
       expect(typeof result.boolean).toBe('boolean');
+      expect(typeof result.date).toBe('string');
+      expect(result.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(Number.isFinite(Date.parse(result.date))).toBe(true);
+      expect(new Date(result.date).toISOString().slice(0, 10)).toBe(result.date);
+      expect(typeof result.datetime).toBe('string');
+      expect(result.datetime).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+      expect(Number.isFinite(Date.parse(result.datetime))).toBe(true);
+      expect(new Date(result.datetime).toISOString()).toBe(result.datetime);
       expect(result.email).toMatch(/@/);
       expect(result.url).toMatch(/^https?:\/\//);
       expect(result.uuid).toMatch(/^[0-9a-f-]{36}$/i);
       expect(['a', 'b']).toContain(result.enum);
       expect(Array.isArray(result.array)).toBe(true);
       expect(typeof result.object).toBe('object');
+      expect(result.object).not.toBeNull();
+      expect(Array.isArray(result.object)).toBe(false);
     });
   });
 });
