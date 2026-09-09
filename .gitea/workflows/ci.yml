@@ -250,8 +250,10 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
       - name: Install locked dependencies
         run: npm ci
-      - name: Build CLI prerequisites
-        run: npm run build:cli
+      - name: Build release prerequisites
+        # Match both publish workflows: the root package intentionally ships
+        # apps/web/dist, so a CLI-only build produces an incomplete dry-run.
+        run: npm run build
       - name: Run isolated packaging lifecycle tests
         run: npm run test:packaging
 
