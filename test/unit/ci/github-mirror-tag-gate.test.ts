@@ -1,14 +1,24 @@
-import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 
 const root = resolve(import.meta.dirname, '../../..')
 const gate = join(root, 'tools/ci/wait-for-github-tag.mjs')
+const temporaryDirectories = new Set<string>()
+
+afterEach(() => {
+  for (const directory of temporaryDirectories) {
+    rmSync(directory, { recursive: true, force: true })
+    expect(existsSync(directory)).toBe(false)
+  }
+  temporaryDirectories.clear()
+})
 
 function fakeGh(mode: 'retry' | 'lightweight' | 'mismatch' | 'missing') {
   const directory = mkdtempSync(join(tmpdir(), 'aiwg-gh-tag-'))
+  temporaryDirectories.add(directory)
   const executable = join(directory, 'gh')
   const counter = join(directory, 'count')
   writeFileSync(executable, `#!/bin/sh
@@ -16,6 +26,10 @@ count=0
 [ ! -f "$COUNT_FILE" ] || count=$(cat "$COUNT_FILE")
 count=$((count + 1))
 echo "$count" > "$COUNT_FILE"
+if [ "$1" != "api" ] || [ "$2" != "$EXPECTED_ENDPOINT" ]; then
+  echo "unexpected gh arguments: $*" >&2
+  exit 64
+fi
 case "$MODE" in
   retry) [ "$count" -lt 3 ] && exit 1; echo '{"object":{"type":"tag","sha":"abc123"}}' ;;
   lightweight) echo '{"object":{"type":"commit","sha":"def456"}}' ;;
@@ -31,7 +45,13 @@ function runGate(mode: 'retry' | 'lightweight' | 'mismatch' | 'missing', attempt
   const fixture = fakeGh(mode)
   const result = spawnSync(process.execPath, [gate, '--repo', 'owner/repo', '--tag', 'v1.2.3', '--expected-sha', 'abc123', '--attempts', String(attempts), '--delay-seconds', '0'], {
     encoding: 'utf8',
-    env: { ...process.env, GH_BIN: fixture.executable, COUNT_FILE: fixture.counter, MODE: fixture.mode },
+    env: {
+      ...process.env,
+      GH_BIN: fixture.executable,
+      COUNT_FILE: fixture.counter,
+      MODE: fixture.mode,
+      EXPECTED_ENDPOINT: 'repos/owner/repo/git/ref/tags/v1.2.3',
+    },
   })
   return { ...result, count: Number(readFileSync(fixture.counter, 'utf8')) }
 }

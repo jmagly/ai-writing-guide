@@ -1,12 +1,23 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const root = path.resolve(import.meta.dirname, '../../..');
 const docs = path.join(root, 'docs');
 const cliCommandPattern = /\b(?:npx\s+)?aiwg\s+(?:--?)?[a-z][a-z0-9-]*\b/;
 const legacyProviderCommandPattern = /(?<![a-z0-9~.])\/aiwg-[a-z][a-z0-9-]*\b|\$aiwg-[a-z][a-z0-9-]*\b|\baiwg-regenerate\b/;
+let outputRoot: string;
+
+beforeAll(() => {
+  outputRoot = mkdtempSync(path.join(tmpdir(), 'aiwg-audience-boundary-'));
+});
+
+afterAll(() => {
+  rmSync(outputRoot, { recursive: true, force: true });
+  expect(existsSync(outputRoot)).toBe(false);
+});
 
 describe('documentation audience boundary', () => {
   it('keeps the actual homepage source on the canonical first-result journey', () => {
@@ -63,7 +74,7 @@ describe('documentation audience boundary', () => {
   });
 
   it('publishes provider quickstarts as prompt-first journeys', () => {
-    const output = path.join(root, 'dist', 'test-prompt-first-provider-docs');
+    const output = path.join(outputRoot, 'prompt-first-provider-docs');
     execFileSync(process.execPath, ['tools/docs/build-public-source.mjs', output], {
       cwd: root,
       stdio: 'pipe',
@@ -82,7 +93,7 @@ describe('documentation audience boundary', () => {
   });
 
   it('publishes user CLI landing pages without exact agent references', () => {
-    const output = path.join(root, 'dist', 'test-public-docs-source');
+    const output = path.join(outputRoot, 'public-docs-source');
     execFileSync(process.execPath, ['tools/docs/build-public-source.mjs', output], {
       cwd: root,
       stdio: 'pipe',
@@ -112,7 +123,7 @@ describe('documentation audience boundary', () => {
   });
 
   it('keeps all onboarding surfaces classified and removes command-first public entry points', () => {
-    const output = path.join(root, 'dist', 'test-docs-audience-audit.json');
+    const output = path.join(outputRoot, 'docs-audience-audit.json');
     execFileSync(process.execPath, ['tools/docs/audit-audiences.mjs', output], {
       cwd: root,
       stdio: 'pipe',
@@ -136,12 +147,12 @@ describe('documentation audience boundary', () => {
   });
 
   it('labels every retained public operator-command page in staged output', () => {
-    const output = path.join(root, 'dist', 'test-public-command-guidance');
+    const output = path.join(outputRoot, 'public-command-guidance');
     execFileSync(process.execPath, ['tools/docs/build-public-source.mjs', output], {
       cwd: root,
       stdio: 'pipe',
     });
-    const auditOutput = path.join(root, 'dist', 'test-public-command-audit.json');
+    const auditOutput = path.join(outputRoot, 'public-command-audit.json');
     execFileSync(process.execPath, ['tools/docs/audit-audiences.mjs', auditOutput], {
       cwd: root,
       stdio: 'pipe',
