@@ -10,6 +10,8 @@ export interface APIPattern {
   description: string;
   regex: RegExp;
   method: 'fetch' | 'axios' | 'http' | 'https' | 'XMLHttpRequest';
+  /** Capture group containing the URL (defaults to group 1). */
+  urlGroup?: number;
 }
 
 /**
@@ -17,19 +19,19 @@ export interface APIPattern {
  */
 export const WHITELISTED_URLS: RegExp[] = [
   // Localhost
-  /^https?:\/\/localhost/,
-  /^https?:\/\/127\.0\.0\.1/,
-  /^https?:\/\/0\.0\.0\.0/,
+  /^https?:\/\/localhost(?::\d+)?(?:[/?#]|$)/i,
+  /^https?:\/\/127\.0\.0\.1(?::\d+)?(?:[/?#]|$)/,
+  /^https?:\/\/0\.0\.0\.0(?::\d+)?(?:[/?#]|$)/,
 
   // Local network
-  /^https?:\/\/192\.168\./,
-  /^https?:\/\/10\./,
-  /^https?:\/\/172\.(1[6-9]|2[0-9]|3[01])\./,
+  /^https?:\/\/192\.168\.\d{1,3}\.\d{1,3}(?::\d+)?(?:[/?#]|$)/,
+  /^https?:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d+)?(?:[/?#]|$)/,
+  /^https?:\/\/172\.(1[6-9]|2[0-9]|3[01])\.\d{1,3}\.\d{1,3}(?::\d+)?(?:[/?#]|$)/,
 
   // Documentation (read-only, acceptable for doc fetching)
-  /^https:\/\/docs\.claude\.com/,
-  /^https:\/\/github\.com.*\.md$/,
-  /^https:\/\/raw\.githubusercontent\.com.*\.md$/,
+  /^https:\/\/docs\.claude\.com(?:[/?#]|$)/i,
+  /^https:\/\/github\.com\/[^?#]*\.md(?:[?#].*)?$/i,
+  /^https:\/\/raw\.githubusercontent\.com\/[^?#]*\.md(?:[?#].*)?$/i,
 ];
 
 /**
@@ -61,7 +63,7 @@ export const FETCH_PATTERNS: APIPattern[] = [
   {
     name: 'Fetch Call',
     description: 'fetch() API call',
-    regex: /fetch\s*\(\s*["'`]([^"'`]+)["'`]/g,
+    regex: /fetch\s*\(\s*["']([^"']+)["']/g,
     method: 'fetch',
   },
   {
@@ -159,6 +161,7 @@ export const XHR_PATTERNS: APIPattern[] = [
     description: 'XMLHttpRequest.open() call',
     regex: /\.open\s*\(\s*["'](GET|POST|PUT|DELETE|PATCH)["']\s*,\s*["'`]([^"'`]+)["'`]/g,
     method: 'XMLHttpRequest',
+    urlGroup: 2,
   },
 ];
 

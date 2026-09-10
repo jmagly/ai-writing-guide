@@ -99,7 +99,7 @@ export class GitHubAPIStub {
    */
   setResponse(endpoint: string, method: string, response: any, statusCode: number = 200): void {
     const key = this.getResponseKey(endpoint, method);
-    this.responses.set(key, { data: response, statusCode });
+    this.responses.set(key, { data: this.clone(response), statusCode });
   }
 
   /**
@@ -122,17 +122,19 @@ export class GitHubAPIStub {
    * @returns GitHub API response
    */
   async request(endpoint: string, method: string, body?: any): Promise<GitHubResponse> {
+    const normalizedMethod = method.toUpperCase();
     // Record request
     this.requestHistory.push({
       endpoint,
-      method,
-      body,
+      method: normalizedMethod,
+      body: this.clone(body),
       timestamp: Date.now()
     });
 
     // Check for injected errors
-    const injectedError = this.injectedErrors.find(e => e.endpoint === endpoint);
-    if (injectedError) {
+    const injectedErrorIndex = this.injectedErrors.findIndex(e => e.endpoint === endpoint);
+    if (injectedErrorIndex >= 0) {
+      const [injectedError] = this.injectedErrors.splice(injectedErrorIndex, 1);
       throw injectedError.error;
     }
 
@@ -152,11 +154,11 @@ export class GitHubAPIStub {
     this.rateLimitRemaining--;
 
     // Check for custom response
-    const key = this.getResponseKey(endpoint, method);
+    const key = this.getResponseKey(endpoint, normalizedMethod);
     const mockResponse = this.responses.get(key);
     if (mockResponse) {
       return {
-        data: mockResponse.data,
+        data: this.clone(mockResponse.data),
         status: mockResponse.statusCode,
         headers: this.getRateLimitHeaders()
       };
@@ -187,7 +189,7 @@ export class GitHubAPIStub {
       title,
       body: body ?? '',
       state: 'open',
-      labels: (labels ?? []).map(name => ({ name, color: '0366d6' })),
+      labels: [...new Set(labels ?? [])].map(name => ({ name, color: '0366d6' })),
       createdAt: now,
       updatedAt: now
     };
@@ -198,11 +200,11 @@ export class GitHubAPIStub {
     this.requestHistory.push({
       endpoint: '/repos/owner/repo/issues',
       method: 'POST',
-      body: { title, body, labels },
+      body: this.clone({ title, body, labels }),
       timestamp: Date.now()
     });
 
-    return issue;
+    return this.clone(issue);
   }
 
   /**
@@ -225,7 +227,7 @@ export class GitHubAPIStub {
       throw new Error(`Issue #${number} not found`);
     }
 
-    return issue;
+    return this.clone(issue);
   }
 
   /**
@@ -239,7 +241,7 @@ export class GitHubAPIStub {
     this.requestHistory.push({
       endpoint: '/repos/owner/repo/issues',
       method: 'GET',
-      body: options,
+      body: this.clone(options),
       timestamp: Date.now()
     });
 
@@ -267,7 +269,7 @@ export class GitHubAPIStub {
     const startIndex = (page - 1) * perPage;
     const endIndex = startIndex + perPage;
 
-    return issueList.slice(startIndex, endIndex);
+    return this.clone(issueList.slice(startIndex, endIndex));
   }
 
   /**
@@ -297,11 +299,11 @@ export class GitHubAPIStub {
     this.requestHistory.push({
       endpoint: '/repos/owner/repo/pulls',
       method: 'POST',
-      body: { title, head, base },
+      body: this.clone({ title, head, base }),
       timestamp: Date.now()
     });
 
-    return pr;
+    return this.clone(pr);
   }
 
   /**
@@ -316,7 +318,7 @@ export class GitHubAPIStub {
     this.requestHistory.push({
       endpoint: `/repos/owner/repo/issues/${issueNumber}/labels`,
       method: 'POST',
-      body: { labels },
+      body: this.clone({ labels }),
       timestamp: Date.now()
     });
 
@@ -330,6 +332,7 @@ export class GitHubAPIStub {
     for (const labelName of labels) {
       if (!existingLabels.has(labelName)) {
         issue.labels.push({ name: labelName, color: '0366d6' });
+        existingLabels.add(labelName);
       }
     }
 
@@ -358,7 +361,7 @@ export class GitHubAPIStub {
    * @returns Array of requests in chronological order
    */
   getRequestHistory(): Request[] {
-    return [...this.requestHistory];
+    return this.clone(this.requestHistory);
   }
 
   /**
@@ -396,5 +399,13 @@ export class GitHubAPIStub {
       'x-ratelimit-remaining': this.rateLimitRemaining.toString(),
       'x-ratelimit-reset': Math.floor(this.rateLimitReset / 1000).toString()
     };
+  }
+
+  /** Clone API boundary values so callers cannot mutate configured or stored state. */
+  private clone<T>(value: T): T {
+    if (value === undefined || value === null) {
+      return value;
+    }
+    return structuredClone(value);
   }
 }

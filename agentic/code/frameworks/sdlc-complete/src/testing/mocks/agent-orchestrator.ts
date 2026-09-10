@@ -65,7 +65,16 @@ export class MockAgentOrchestrator {
    * @param mockBehavior - Configuration for agent behavior
    */
   registerAgent(agentType: string, mockBehavior: MockAgentBehavior): void {
-    this.registeredAgents.set(agentType, mockBehavior);
+    if (typeof mockBehavior?.responseGenerator !== 'function') {
+      throw new Error('Agent response generator must be a function');
+    }
+    if (mockBehavior.delay !== undefined && (!Number.isFinite(mockBehavior.delay) || mockBehavior.delay < 0)) {
+      throw new Error('Agent delay must be a finite non-negative number');
+    }
+    if (mockBehavior.errorRate !== undefined && (!Number.isFinite(mockBehavior.errorRate) || mockBehavior.errorRate < 0 || mockBehavior.errorRate > 1)) {
+      throw new Error('Agent error rate must be a finite number between 0 and 1');
+    }
+    this.registeredAgents.set(agentType, { ...mockBehavior });
   }
 
   /**
@@ -75,6 +84,9 @@ export class MockAgentOrchestrator {
   setGlobalDelay(ms: number): void {
     if (ms < 0) {
       throw new Error('Global delay must be non-negative');
+    }
+    if (!Number.isFinite(ms)) {
+      throw new Error('Global delay must be finite');
     }
     this.globalDelay = ms;
   }
@@ -106,7 +118,7 @@ export class MockAgentOrchestrator {
         executionTime: 0,
         error: injectedError
       };
-      this.executionHistory.push({ agentType, prompt, response, timestamp });
+      this.recordExecution({ agentType, prompt, response, timestamp });
       throw injectedError;
     }
 
@@ -119,7 +131,7 @@ export class MockAgentOrchestrator {
         executionTime: 0,
         error
       };
-      this.executionHistory.push({ agentType, prompt, response, timestamp });
+      this.recordExecution({ agentType, prompt, response, timestamp });
       throw error;
     }
 
@@ -139,7 +151,20 @@ export class MockAgentOrchestrator {
     }
 
     // Generate response
-    const output = behavior.responseGenerator(prompt);
+    let output: string;
+    try {
+      output = behavior.responseGenerator(prompt);
+    } catch (error) {
+      const executionError = error instanceof Error ? error : new Error(String(error));
+      const response: AgentResponse = {
+        agentType,
+        output: '',
+        executionTime: Date.now() - startTime,
+        error: executionError
+      };
+      this.recordExecution({ agentType, prompt, response, timestamp });
+      throw error;
+    }
     const executionTime = Date.now() - startTime;
 
     const response: AgentResponse = {
@@ -149,7 +174,7 @@ export class MockAgentOrchestrator {
     };
 
     // Record execution
-    this.executionHistory.push({ agentType, prompt, response, timestamp });
+    this.recordExecution({ agentType, prompt, response, timestamp });
 
     return response;
   }
@@ -194,7 +219,7 @@ export class MockAgentOrchestrator {
    * @returns Array of all agent executions (chronological order)
    */
   getExecutionHistory(): AgentExecution[] {
-    return [...this.executionHistory]; // Return copy to prevent mutation
+    return this.executionHistory.map(execution => this.cloneExecution(execution));
   }
 
   /**
@@ -214,6 +239,9 @@ export class MockAgentOrchestrator {
   injectDelay(agentType: string, ms: number): void {
     if (ms < 0) {
       throw new Error('Injected delay must be non-negative');
+    }
+    if (!Number.isFinite(ms)) {
+      throw new Error('Injected delay must be finite');
     }
     this.delayInjections.set(agentType, ms);
   }
@@ -257,5 +285,25 @@ export class MockAgentOrchestrator {
    */
   private sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private recordExecution(execution: AgentExecution): void {
+    this.executionHistory.push(this.cloneExecution(execution));
+  }
+
+  private cloneExecution(execution: AgentExecution): AgentExecution {
+    const error = execution.response.error;
+    const clonedError = error
+      ? Object.assign(new Error(error.message), { name: error.name, stack: error.stack })
+      : undefined;
+    return {
+      agentType: execution.agentType,
+      prompt: execution.prompt,
+      timestamp: execution.timestamp,
+      response: {
+        ...execution.response,
+        error: clonedError,
+      },
+    };
   }
 }

@@ -398,7 +398,7 @@ export class SecurityValidator {
 
       for (const match of matches) {
         const lineNumber = this.findLineNumber(content, match.index || 0);
-        const url = match[1] || match[2] || '';
+        const url = match[pattern.urlGroup ?? 1] || '';
 
         // Skip if whitelisted
         if (this.isWhitelistedAPI(url)) {
@@ -430,12 +430,19 @@ export class SecurityValidator {
    * Check if API URL is whitelisted
    */
   isWhitelistedAPI(url: string): boolean {
+    // Root- and path-relative destinations stay within the current origin.
+    if (/^(?:\/(?!\/)|\.\.?\/)/.test(url)) {
+      return true;
+    }
     if (isWhitelisted(url)) {
       return true;
     }
 
     // Check custom whitelist
-    return this.config.customWhitelist?.some(pattern => pattern.test(url)) || false;
+    return this.config.customWhitelist?.some(pattern => {
+      pattern.lastIndex = 0;
+      return pattern.test(url);
+    }) || false;
   }
 
   // ============================================================================
@@ -892,6 +899,17 @@ export class SecurityValidator {
    */
   private async getFilesToScan(basePath?: string): Promise<string[]> {
     const searchPath = basePath || this.projectPath;
+
+    try {
+      const stats = await fs.stat(searchPath);
+      if (stats.isFile()) {
+        return [path.resolve(searchPath)];
+      }
+    } catch (error: any) {
+      if (error?.code !== 'ENOENT') {
+        throw error;
+      }
+    }
 
     return glob('**/*.{ts,js,tsx,jsx,mjs,cjs,json,yaml,yml,env}', {
       cwd: searchPath,

@@ -87,6 +87,26 @@ const TIMING_TOLERANCE = 10;
 
       expect(orchestrator.getRegisteredAgents()).toHaveLength(0);
     });
+
+    it('should reject invalid behavior configuration at registration', () => {
+      for (const errorRate of [-0.01, 1.01, Number.NaN, Number.POSITIVE_INFINITY]) {
+        expect(() => orchestrator.registerAgent('invalid-rate', {
+          responseGenerator: () => 'never',
+          errorRate,
+        })).toThrow('Agent error rate must be a finite number between 0 and 1');
+      }
+
+      for (const delay of [-1, Number.NaN, Number.POSITIVE_INFINITY]) {
+        expect(() => orchestrator.registerAgent('invalid-delay', {
+          responseGenerator: () => 'never',
+          delay,
+        })).toThrow('Agent delay must be a finite non-negative number');
+      }
+
+      expect(() => orchestrator.registerAgent('invalid-generator', {
+        responseGenerator: undefined as unknown as (prompt: string) => string,
+      })).toThrow('Agent response generator must be a function');
+    });
   });
 
   describe('Single Agent Execution', () => {
@@ -238,6 +258,13 @@ const TIMING_TOLERANCE = 10;
         expect(() => orchestrator.injectDelay('agent', value)).toThrow(message);
       }
     });
+
+    it('should reject non-finite global and injected delays', () => {
+      expect(() => orchestrator.setGlobalDelay(Number.NaN)).toThrow('Global delay must be finite');
+      expect(() => orchestrator.setGlobalDelay(Number.POSITIVE_INFINITY)).toThrow('Global delay must be finite');
+      expect(() => orchestrator.injectDelay('agent', Number.NaN)).toThrow('Injected delay must be finite');
+      expect(() => orchestrator.injectDelay('agent', Number.POSITIVE_INFINITY)).toThrow('Injected delay must be finite');
+    });
   });
 
   describe('Error Injection', () => {
@@ -304,6 +331,29 @@ const TIMING_TOLERANCE = 10;
 
       const response = await orchestrator.executeAgent('reliable-agent', 'Test');
       expect(response.output).toBe('Success');
+    });
+
+    it('should record and rethrow response-generator failures', async () => {
+      const generatedError = new Error('Generator failed');
+      orchestrator.registerAgent('generator-failure', {
+        responseGenerator: () => {
+          throw generatedError;
+        },
+      });
+
+      await expect(orchestrator.executeAgent('generator-failure', 'Original prompt')).rejects.toBe(generatedError);
+      const history = orchestrator.getExecutionHistory();
+      expect(history).toHaveLength(1);
+      expect(history[0]).toMatchObject({
+        agentType: 'generator-failure',
+        prompt: 'Original prompt',
+        response: {
+          agentType: 'generator-failure',
+          output: '',
+          error: { message: 'Generator failed' },
+        },
+      });
+      expect(history[0].response.executionTime).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -429,13 +479,32 @@ const TIMING_TOLERANCE = 10;
     });
 
     it('should return copy of history to prevent mutation', async () => {
-      await orchestrator.executeAgent('test-agent', 'Test');
+      const response = await orchestrator.executeAgent('test-agent', 'Test');
 
       const history1 = orchestrator.getExecutionHistory();
       const history2 = orchestrator.getExecutionHistory();
 
       expect(history1).not.toBe(history2); // Different array instances
       expect(history1).toEqual(history2); // But equal content
+
+      response.output = 'mutated response';
+      history1[0].prompt = 'mutated prompt';
+      history1[0].response.output = 'mutated history';
+      const history3 = orchestrator.getExecutionHistory();
+      expect(history3[0].prompt).toBe('Test');
+      expect(history3[0].response.output).toBe('Result: Test');
+    });
+
+    it('should deep-isolate errors returned through execution history', async () => {
+      orchestrator.injectError('test-agent', new Error('Original failure'));
+      await expect(orchestrator.executeAgent('test-agent', 'Test')).rejects.toThrow('Original failure');
+
+      const first = orchestrator.getExecutionHistory();
+      first[0].response.error!.message = 'mutated failure';
+
+      const second = orchestrator.getExecutionHistory();
+      expect(second[0].response.error).not.toBe(first[0].response.error);
+      expect(second[0].response.error?.message).toBe('Original failure');
     });
 
     it('should track failed executions', async () => {

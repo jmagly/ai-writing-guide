@@ -53,6 +53,19 @@ describe('GitHubAPIStub', () => {
       const response = await github.request('/test', 'GET');
       expect(response.data).toEqual({ version: 2 });
     });
+
+    it('should isolate configured and returned custom response data', async () => {
+      const configured = { nested: { value: 'original' } };
+      github.setResponse('/isolated', 'GET', configured);
+      configured.nested.value = 'caller mutation';
+
+      const first = await github.request('/isolated', 'GET');
+      expect(first.data).toEqual({ nested: { value: 'original' } });
+      first.data.nested.value = 'response mutation';
+
+      const second = await github.request('/isolated', 'GET');
+      expect(second.data).toEqual({ nested: { value: 'original' } });
+    });
   });
 
   describe('setRateLimit', () => {
@@ -107,15 +120,20 @@ describe('GitHubAPIStub', () => {
     });
 
     it('should record request in history with correct metadata', async () => {
-      await github.request('/test', 'POST', { data: 'test' });
+      const body = { data: { value: 'test' } };
+      await github.request('/test', 'post', body);
+      body.data.value = 'caller mutation';
 
       const history = github.getRequestHistory();
 
       expect(history).toHaveLength(1);
       expect(history[0].endpoint).toBe('/test');
       expect(history[0].method).toBe('POST');
-      expect(history[0].body).toEqual({ data: 'test' });
+      expect(history[0].body).toEqual({ data: { value: 'test' } });
       expect(history[0].timestamp).toBeGreaterThan(0);
+
+      history[0].body.data.value = 'history mutation';
+      expect(github.getRequestHistory()[0].body).toEqual({ data: { value: 'test' } });
     });
 
     it('should handle requests with no body', async () => {
@@ -190,6 +208,24 @@ describe('GitHubAPIStub', () => {
       expect(retrieved).toEqual(created);
 
       await expect(github.getIssue(999)).rejects.toThrow('Issue #999 not found');
+    });
+
+    it('should isolate created and retrieved issue values from stored state', async () => {
+      const created = await github.createIssue('Original', 'Body', ['bug']);
+      created.title = 'Mutated create result';
+      created.labels[0].name = 'mutated-label';
+
+      const retrieved = await github.getIssue(created.number);
+      expect(retrieved.title).toBe('Original');
+      expect(retrieved.labels.map(label => label.name)).toEqual(['bug']);
+
+      retrieved.body = 'Mutated retrieval';
+      retrieved.labels.push({ name: 'injected', color: '000000' });
+      expect(await github.getIssue(created.number)).toMatchObject({
+        title: 'Original',
+        body: 'Body',
+        labels: [{ name: 'bug', color: '0366d6' }],
+      });
     });
 
     it('should record request in history', async () => {
@@ -328,6 +364,10 @@ describe('GitHubAPIStub', () => {
 
       expect(bugLabels).toHaveLength(1);
       expect(retrievedWithLabel.labels).toHaveLength(2);
+
+      await github.addLabel(issue.number, ['same-call', 'same-call']);
+      const sameRequestDuplicates = await github.getIssue(issue.number);
+      expect(sameRequestDuplicates.labels.map(label => label.name)).toEqual(['bug', 'priority-high', 'same-call']);
     });
 
     it('should update issue updatedAt timestamp', async () => {
@@ -477,6 +517,13 @@ describe('GitHubAPIStub', () => {
       await expect(github.request('/error1', 'GET')).rejects.toThrow('Error 1');
       await expect(github.request('/error2', 'GET')).rejects.toThrow('Error 2');
     });
+
+    it('should consume an injected error after the next matching request', async () => {
+      github.injectError('/once', new Error('One shot'));
+
+      await expect(github.request('/once', 'GET')).rejects.toThrow('One shot');
+      await expect(github.request('/once', 'GET')).resolves.toMatchObject({ status: 404 });
+    });
   });
 
   describe('injectRateLimitError', () => {
@@ -597,6 +644,7 @@ describe('GitHubAPIStub', () => {
       expect(response1.data).toEqual({ data: 'get' });
       expect(response2.data).toEqual({ data: 'get' });
       expect(response3.data).toEqual({ data: 'get' });
+      expect(github.getRequestHistory().map(request => request.method)).toEqual(['GET', 'GET', 'GET']);
     });
   });
 });

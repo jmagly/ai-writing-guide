@@ -64,7 +64,14 @@ export class FilesystemSandbox {
 
     try {
       // Ensure we're cleaning up a temp directory (safety check)
-      if (!this.sandboxPath.startsWith(os.tmpdir())) {
+      const relativeToTemp = path.relative(os.tmpdir(), this.sandboxPath);
+      if (
+        relativeToTemp === '' ||
+        relativeToTemp === '..' ||
+        relativeToTemp.startsWith(`..${path.sep}`) ||
+        path.isAbsolute(relativeToTemp) ||
+        !path.basename(this.sandboxPath).startsWith('aiwg-sandbox-')
+      ) {
         throw new Error('Refusing to cleanup: path is not in temp directory');
       }
 
@@ -94,9 +101,11 @@ export class FilesystemSandbox {
 
     const fullPath = this.resolvePath(relativePath);
     const dir = path.dirname(fullPath);
+    await this.assertNoSymlinkTraversal(fullPath);
 
     // Create directory if it doesn't exist
     await fs.mkdir(dir, { recursive: true });
+    await this.assertNoSymlinkTraversal(fullPath);
 
     // Write file with options
     await fs.writeFile(fullPath, content, options);
@@ -120,6 +129,7 @@ export class FilesystemSandbox {
     this.validatePath(relativePath);
 
     const fullPath = this.resolvePath(relativePath);
+    await this.assertNoSymlinkTraversal(fullPath);
 
     if (encoding === null) {
       return await fs.readFile(fullPath);
@@ -138,6 +148,7 @@ export class FilesystemSandbox {
     this.validatePath(relativePath);
 
     const fullPath = this.resolvePath(relativePath);
+    await this.assertNoSymlinkTraversal(fullPath);
     await fs.unlink(fullPath);
   }
 
@@ -154,6 +165,7 @@ export class FilesystemSandbox {
     const fullPath = this.resolvePath(relativePath);
 
     try {
+      await this.assertNoSymlinkTraversal(fullPath);
       const stat = await fs.stat(fullPath);
       return stat.isFile();
     } catch (error: any) {
@@ -175,6 +187,7 @@ export class FilesystemSandbox {
     this.validatePath(relativePath);
 
     const fullPath = this.resolvePath(relativePath);
+    await this.assertNoSymlinkTraversal(fullPath);
     const stat = await fs.stat(fullPath);
 
     return {
@@ -196,7 +209,9 @@ export class FilesystemSandbox {
     this.validatePath(relativePath);
 
     const fullPath = this.resolvePath(relativePath);
+    await this.assertNoSymlinkTraversal(fullPath);
     await fs.mkdir(fullPath, { recursive: true });
+    await this.assertNoSymlinkTraversal(fullPath);
   }
 
   /**
@@ -210,6 +225,7 @@ export class FilesystemSandbox {
     this.validatePath(relativePath);
 
     const fullPath = this.resolvePath(relativePath);
+    await this.assertNoSymlinkTraversal(fullPath);
 
     if (recursive) {
       await fs.rm(fullPath, { recursive: true, force: true });
@@ -229,6 +245,7 @@ export class FilesystemSandbox {
     this.validatePath(relativePath);
 
     const fullPath = this.resolvePath(relativePath);
+    await this.assertNoSymlinkTraversal(fullPath);
     return await fs.readdir(fullPath);
   }
 
@@ -245,6 +262,7 @@ export class FilesystemSandbox {
     const fullPath = this.resolvePath(relativePath);
 
     try {
+      await this.assertNoSymlinkTraversal(fullPath);
       const stat = await fs.stat(fullPath);
       return stat.isDirectory();
     } catch (error: any) {
@@ -285,9 +303,11 @@ export class FilesystemSandbox {
     const sourcePath = path.resolve(realPath);
     const targetPath = this.resolvePath(sandboxPath);
     const targetDir = path.dirname(targetPath);
+    await this.assertNoSymlinkTraversal(targetPath);
 
     // Create target directory if needed
     await fs.mkdir(targetDir, { recursive: true });
+    await this.assertNoSymlinkTraversal(targetPath);
 
     // Copy file
     await fs.copyFile(sourcePath, targetPath);
@@ -304,6 +324,7 @@ export class FilesystemSandbox {
     this.validatePath(sandboxPath);
 
     const sourcePath = this.resolvePath(sandboxPath);
+    await this.assertNoSymlinkTraversal(sourcePath);
     const targetPath = path.resolve(realPath);
     const targetDir = path.dirname(targetPath);
 
@@ -340,10 +361,36 @@ export class FilesystemSandbox {
       throw new Error('Path contains null bytes');
     }
 
-    // Resolve the full path and ensure it's within sandbox
+    // Resolve the full path and ensure it remains within the same path components.
     const fullPath = path.resolve(this.sandboxPath, relativePath);
-    if (!fullPath.startsWith(this.sandboxPath)) {
+    const relative = path.relative(this.sandboxPath, fullPath);
+    if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
       throw new Error('Path escapes sandbox directory');
+    }
+  }
+
+  /**
+   * Reject traversal through any existing symbolic-link component. Targets may
+   * be absent for creation operations, so ENOENT terminates the component walk.
+   */
+  private async assertNoSymlinkTraversal(fullPath: string): Promise<void> {
+    const relative = path.relative(this.sandboxPath, fullPath);
+    const components = relative === '' ? [] : relative.split(path.sep);
+    let current = this.sandboxPath;
+
+    for (const component of components) {
+      current = path.join(current, component);
+      try {
+        const stats = await fs.lstat(current);
+        if (stats.isSymbolicLink()) {
+          throw new Error('Symbolic links are not allowed in sandbox paths');
+        }
+      } catch (error: any) {
+        if (error?.code === 'ENOENT') {
+          return;
+        }
+        throw error;
+      }
     }
   }
 

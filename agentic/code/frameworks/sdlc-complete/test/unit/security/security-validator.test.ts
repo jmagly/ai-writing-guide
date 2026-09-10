@@ -26,7 +26,7 @@ describe('SecurityValidator', () => {
   });
 
   // ============================================================================
-  // External API Detection Tests (9 tests, reduced from 19)
+  // External API Detection Tests (10 tests)
   // ============================================================================
 
   describe('External API Detection', () => {
@@ -36,8 +36,9 @@ describe('SecurityValidator', () => {
         fetch('https://api.example.com/data');
       `);
       let calls = await validator.detectExternalAPICalls(sandbox.getPath());
-      expect(calls.length).toBeGreaterThanOrEqual(1, 'failed for fetch with string URL');
-      expect(calls.some(c => c.method === 'fetch')).toBe(true);
+      expect(calls.map(call => ({ method: call.method, url: call.url }))).toEqual([
+        { method: 'fetch', url: 'https://api.example.com/data' },
+      ]);
 
       // template literal
       await sandbox.writeFile('fetch-template.ts', `
@@ -45,8 +46,10 @@ describe('SecurityValidator', () => {
         fetch(\`https://\${domain}/api\`);
       `);
       calls = await validator.detectExternalAPICalls(sandbox.getPath());
-      expect(calls.length).toBeGreaterThanOrEqual(1, 'failed for fetch with template literal');
-      expect(calls.some(c => c.method === 'fetch')).toBe(true);
+      expect(calls.map(call => ({ method: call.method, url: call.url })).sort((a, b) => a.url.localeCompare(b.url))).toEqual([
+        { method: 'fetch', url: 'https://${domain}/api' },
+        { method: 'fetch', url: 'https://api.example.com/data' },
+      ]);
     });
 
     it('should not detect fetch to localhost or local network', async () => {
@@ -120,10 +123,15 @@ describe('SecurityValidator', () => {
           ${xhrInit}xhr.open('${method}', '${url}');
         `);
       }
+      await sandbox.writeFile('xhr-local.ts', `
+        const local = new XMLHttpRequest();
+        local.open('GET', '/api/users');
+      `);
 
       const calls = await validator.detectExternalAPICalls(sandbox.getPath());
-      expect(calls.length).toBeGreaterThanOrEqual(2, 'failed to detect all XHR patterns');
-      expect(calls.some(c => c.method === 'XMLHttpRequest')).toBe(true);
+      const xhrCalls = calls.filter(c => c.method === 'XMLHttpRequest');
+      expect(xhrCalls.map(c => c.url).sort()).toEqual(methods.map(([, url]) => url).sort());
+      expect(xhrCalls.some(c => c.url === '/api/users')).toBe(false);
     });
 
     it('should validate whitelist for all URL types', () => {
@@ -139,6 +147,32 @@ describe('SecurityValidator', () => {
       // external APIs (should NOT be whitelisted)
       expect(validator.isWhitelistedAPI('https://api.openai.com')).toBe(false);
       expect(validator.isWhitelistedAPI('https://api.stripe.com')).toBe(false);
+      expect(validator.isWhitelistedAPI('http://localhost.evil.example/api')).toBe(false);
+      expect(validator.isWhitelistedAPI('https://docs.claude.com.evil.example/guide')).toBe(false);
+      expect(validator.isWhitelistedAPI('//api.evil.example/data')).toBe(false);
+
+      const statefulWhitelist = new SecurityValidator(sandbox.getPath(), {
+        customWhitelist: [/^https:\/\/custom\.example\.com(?:\/|$)/g],
+      });
+      expect(statefulWhitelist.isWhitelistedAPI('https://custom.example.com/api')).toBe(true);
+      expect(statefulWhitelist.isWhitelistedAPI('https://custom.example.com/api')).toBe(true);
+    });
+
+    it('should scan an explicit source file with the same API result as its directory', async () => {
+      const sourcePath = sandbox.getPath('single.ts');
+      await sandbox.writeFile('single.ts', `fetch('https://api.example.com/data');`);
+
+      const fileCalls = await validator.detectExternalAPICalls(sourcePath);
+      const directoryCalls = await validator.detectExternalAPICalls(sandbox.getPath());
+
+      expect(fileCalls).toHaveLength(1);
+      expect(fileCalls[0]).toMatchObject({
+        file: sourcePath,
+        lineNumber: 1,
+        url: 'https://api.example.com/data',
+        method: 'fetch',
+      });
+      expect(fileCalls).toEqual(directoryCalls);
     });
 
     it('should handle false positives correctly', async () => {

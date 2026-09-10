@@ -50,8 +50,16 @@ describe('FilesystemSandbox', () => {
       // Safety check: refuse non-temp directories
       const unsafeSandbox = new FilesystemSandbox();
       await unsafeSandbox.initialize();
+      const originalUnsafePath = unsafeSandbox.getPath();
       (unsafeSandbox as any).sandboxPath = '/home/test';
       await expect(unsafeSandbox.cleanup()).resolves.not.toThrow();
+      expect(unsafeSandbox.getPath()).toBe('/home/test');
+      (unsafeSandbox as any).sandboxPath = `${os.tmpdir()}-lookalike/aiwg-sandbox-unsafe`;
+      await expect(unsafeSandbox.cleanup()).resolves.not.toThrow();
+      expect(unsafeSandbox.getPath()).toBe(`${os.tmpdir()}-lookalike/aiwg-sandbox-unsafe`);
+      (unsafeSandbox as any).sandboxPath = originalUnsafePath;
+      await unsafeSandbox.cleanup();
+      expect(fsSync.existsSync(originalUnsafePath)).toBe(false);
     });
   });
 
@@ -260,11 +268,12 @@ describe('FilesystemSandbox', () => {
 
     describe('copyFromReal', () => {
       it('should copy from real filesystem with auto directory creation, throw on missing source', async () => {
-        // Basic copy
-        const tempFile = path.join(os.tmpdir(), 'temp-test-file.txt');
+        const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'aiwg-copy-from-'));
+        const tempFile = path.join(tempRoot, 'source.txt');
         await fs.writeFile(tempFile, 'real content');
 
         try {
+          // Basic copy
           await sandbox.copyFromReal(tempFile, 'copied.txt');
           let content = await sandbox.readFile('copied.txt');
           expect(content).toBe('real content');
@@ -275,7 +284,7 @@ describe('FilesystemSandbox', () => {
           content = await sandbox.readFile('nested/dir/copied.txt');
           expect(content).toBe('content');
         } finally {
-          await fs.unlink(tempFile);
+          await fs.rm(tempRoot, { recursive: true, force: true });
         }
 
         // Missing source
@@ -288,33 +297,26 @@ describe('FilesystemSandbox', () => {
     describe('copyToReal', () => {
       it('should copy to real filesystem with auto directory creation, throw on missing source', async () => {
         await sandbox.writeFile('source.txt', 'sandbox content');
-
-        const tempFile = path.join(os.tmpdir(), 'temp-output-file.txt');
+        await sandbox.writeFile('source2.txt', 'content');
+        const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'aiwg-copy-to-'));
+        const tempFile = path.join(tempRoot, 'output.txt');
+        const nestedFile = path.join(tempRoot, 'nested', 'output.txt');
 
         try {
           await sandbox.copyToReal('source.txt', tempFile);
           const content = await fs.readFile(tempFile, 'utf-8');
           expect(content).toBe('sandbox content');
-        } finally {
-          await fs.unlink(tempFile);
-        }
 
-        // Auto create parent dirs
-        await sandbox.writeFile('source2.txt', 'content');
-        const tempDir = path.join(os.tmpdir(), 'temp-copy-test');
-        const nestedFile = path.join(tempDir, 'nested', 'output.txt');
-
-        try {
+          // Auto create parent dirs
           await sandbox.copyToReal('source2.txt', nestedFile);
-          const content = await fs.readFile(nestedFile, 'utf-8');
-          expect(content).toBe('content');
-        } finally {
-          await fs.rm(tempDir, { recursive: true, force: true });
-        }
+          expect(await fs.readFile(nestedFile, 'utf-8')).toBe('content');
 
-        // Missing source
-        const tempOutput = path.join(os.tmpdir(), 'temp-output-file.txt');
-        await expect(sandbox.copyToReal('nonexistent.txt', tempOutput)).rejects.toThrow();
+          // Missing source
+          const tempOutput = path.join(tempRoot, 'missing-output.txt');
+          await expect(sandbox.copyToReal('nonexistent.txt', tempOutput)).rejects.toThrow();
+        } finally {
+          await fs.rm(tempRoot, { recursive: true, force: true });
+        }
       });
     });
   });
@@ -351,6 +353,56 @@ describe('FilesystemSandbox', () => {
 
       for (const op of operations) {
         await expect(op()).rejects.toThrow('Path escapes sandbox');
+      }
+    });
+
+    it('should reject a sibling path that only shares the sandbox prefix', async () => {
+      const sandboxRoot = sandbox.getPath();
+      const siblingRoot = `${sandboxRoot}-sibling`;
+      const relativeEscape = path.join('..', path.basename(siblingRoot), 'escaped.txt');
+      await fs.mkdir(siblingRoot, { recursive: true });
+
+      try {
+        await expect(sandbox.writeFile(relativeEscape, 'escaped')).rejects.toThrow('Path escapes sandbox');
+        await expect(fs.access(path.join(siblingRoot, 'escaped.txt'))).rejects.toMatchObject({ code: 'ENOENT' });
+      } finally {
+        await fs.rm(siblingRoot, { recursive: true, force: true });
+      }
+    });
+
+    it('should reject symlink traversal across sandbox filesystem operations', async () => {
+      const externalRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'aiwg-sandbox-external-'));
+      const externalFile = path.join(externalRoot, 'outside.txt');
+      const copiedOutput = path.join(externalRoot, 'copied-output.txt');
+      const realSource = path.join(externalRoot, 'source.txt');
+      await fs.writeFile(externalFile, 'outside');
+      await fs.writeFile(realSource, 'source');
+      await fs.symlink(externalRoot, sandbox.getPath('link'));
+
+      const operations = [
+        () => sandbox.writeFile('link/escaped.txt', 'escaped'),
+        () => sandbox.readFile('link/outside.txt'),
+        () => sandbox.deleteFile('link/outside.txt'),
+        () => sandbox.fileExists('link/outside.txt'),
+        () => sandbox.getFileStats('link/outside.txt'),
+        () => sandbox.createDirectory('link/new-directory'),
+        () => sandbox.deleteDirectory('link', true),
+        () => sandbox.listDirectory('link'),
+        () => sandbox.directoryExists('link'),
+        () => sandbox.copyFromReal(realSource, 'link/copied.txt'),
+        () => sandbox.copyToReal('link/outside.txt', copiedOutput),
+      ];
+
+      try {
+        for (const operation of operations) {
+          await expect(operation()).rejects.toThrow('Symbolic links are not allowed');
+        }
+        await expect(fs.access(path.join(externalRoot, 'escaped.txt'))).rejects.toMatchObject({ code: 'ENOENT' });
+        await expect(fs.access(path.join(externalRoot, 'copied.txt'))).rejects.toMatchObject({ code: 'ENOENT' });
+        await expect(fs.access(copiedOutput)).rejects.toMatchObject({ code: 'ENOENT' });
+        await expect(fs.readFile(externalFile, 'utf8')).resolves.toBe('outside');
+      } finally {
+        await fs.rm(externalRoot, { recursive: true, force: true });
       }
     });
   });
