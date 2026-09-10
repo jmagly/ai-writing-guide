@@ -39,12 +39,14 @@ describe('PerformanceProfiler', () => {
     });
 
     it('should throw error for non-positive iterations', () => {
-      const invalidIterations = [0, -1];
+      const invalidIterations = [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY];
+      const operation = vi.fn();
       for (const iterations of invalidIterations) {
         expect(() => {
-          profiler.measureSync(() => {}, iterations);
-        }).toThrow('Iterations must be positive');
+          profiler.measureSync(operation, iterations);
+        }).toThrow('Iterations must be a positive integer');
       }
+      expect(operation).not.toHaveBeenCalled();
     });
 
     it('should complete warmup iterations before measurement', () => {
@@ -98,12 +100,14 @@ describe('PerformanceProfiler', () => {
     });
 
     it('should throw error for non-positive iterations', async () => {
-      const invalidIterations = [0, -1];
+      const invalidIterations = [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY];
+      const operation = vi.fn(async () => {});
       for (const iterations of invalidIterations) {
         await expect(
-          profiler.measureAsync(async () => {}, iterations)
-        ).rejects.toThrow('Iterations must be positive');
+          profiler.measureAsync(operation, iterations)
+        ).rejects.toThrow('Iterations must be a positive integer');
       }
+      expect(operation).not.toHaveBeenCalled();
     });
 
     it('should complete warmup iterations and measure Promise-based operations', async () => {
@@ -163,7 +167,7 @@ describe('PerformanceProfiler', () => {
 
       // Test invalid percentile values
       const samples = [1, 2, 3];
-      const invalidPercentiles = [-1, 101];
+      const invalidPercentiles = [-1, 101, Number.NaN, Number.POSITIVE_INFINITY];
       for (const percentile of invalidPercentiles) {
         expect(() => {
           profiler.calculatePercentile(samples, percentile);
@@ -226,7 +230,7 @@ describe('PerformanceProfiler', () => {
 
       // Test invalid confidence levels
       const samples = [1, 2, 3, 4, 5];
-      const invalidLevels = [0, 1, -0.5, 1.5];
+      const invalidLevels = [0, 1, -0.5, 1.5, Number.NaN, Number.POSITIVE_INFINITY];
       for (const level of invalidLevels) {
         expect(() => {
           profiler.calculateConfidenceInterval(samples, level);
@@ -248,6 +252,20 @@ describe('PerformanceProfiler', () => {
       // Higher confidence should result in wider intervals
       expect(width90).toBeLessThan(width95);
       expect(width95).toBeLessThan(width99);
+
+      const smallSamples = [1, 2, 3, 4, 5];
+      const widths = [0.8, 0.9, 0.95, 0.99].map(confidence => {
+        const [lower, upper] = profiler.calculateConfidenceInterval(smallSamples, confidence);
+        return upper - lower;
+      });
+      expect(widths[0]).toBeLessThan(widths[1]);
+      expect(widths[1]).toBeLessThan(widths[2]);
+      expect(widths[2]).toBeLessThan(widths[3]);
+
+      const [lower95Small, upper95Small] = profiler.calculateConfidenceInterval(smallSamples, 0.95);
+      const standardError = Math.sqrt(2.5) / Math.sqrt(5);
+      const observedCritical = (upper95Small - lower95Small) / (2 * standardError);
+      expect(observedCritical).toBeCloseTo(2.776445, 5);
     });
   });
 
@@ -294,6 +312,7 @@ describe('PerformanceProfiler', () => {
         max: 9.999,
         stddev: 1.234,
         confidenceInterval: [4.5, 5.7],
+        confidenceLevel: 0.9,
         samples: [5.0, 5.1, 5.2],
         iterations: 100,
       };
@@ -311,7 +330,7 @@ describe('PerformanceProfiler', () => {
         'Min:            3.111 ms',
         'Max:            9.999 ms',
         'Std Dev:        1.234 ms',
-        '95% CI:         [4.500, 5.700] ms',
+        '90.0% CI:       [4.500, 5.700] ms',
       ];
 
       for (const content of expectedContent) {
@@ -413,6 +432,17 @@ describe('PerformanceProfiler', () => {
       const samples = Array.from({ length: 100 }, (_, i) => i + 1);
       const [lower, upper] = confProfiler.calculateConfidenceInterval(samples, 0.99);
       expect(upper - lower).toBeGreaterThan(0);
+
+      for (const warmupIterations of [-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+        expect(() => new PerformanceProfiler({ warmupIterations })).toThrow(
+          'Warmup iterations must be a non-negative integer'
+        );
+      }
+      for (const confidenceLevel of [0, 1, Number.NaN, Number.POSITIVE_INFINITY]) {
+        expect(() => new PerformanceProfiler({ confidenceLevel })).toThrow(
+          'Confidence level must be between 0 and 1'
+        );
+      }
     });
   });
 

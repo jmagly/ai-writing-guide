@@ -63,6 +63,16 @@ export interface GenerateOptions {
   confidenceLevel?: number;
 }
 
+type ResolvedGenerateOptions = Omit<Required<GenerateOptions>, 'tolerance'> & {
+  tolerance?: number;
+};
+
+interface PerformanceGenerationOptions {
+  includeGroundTruth?: boolean;
+  iterations?: number;
+  confidenceLevel?: number;
+}
+
 /**
  * Performance test target specification
  */
@@ -166,8 +176,12 @@ export class NFRTestGenerator {
             targetValue: baseline.target,
             unit: baseline.unit,
             percentile: 95,
-            tolerance: opts.strictMode ? 0 : baseline.tolerance,
+            tolerance: opts.strictMode ? 0 : (opts.tolerance ?? baseline.tolerance),
             baseline: baseline.baseline,
+          }, {
+            includeGroundTruth: opts.includeGroundTruth,
+            iterations: opts.iterations,
+            confidenceLevel: opts.confidenceLevel,
           });
           break;
         case 'Accuracy':
@@ -205,7 +219,11 @@ export class NFRTestGenerator {
    * @param target - Performance target specification
    * @returns Test code (Vitest format)
    */
-  generatePerformanceTest(nfrId: string, target: PerformanceTarget): string {
+  generatePerformanceTest(
+    nfrId: string,
+    target: PerformanceTarget,
+    generationOptions: PerformanceGenerationOptions = {}
+  ): string {
     const baseline = this.corpus.nfrs.get(nfrId);
     if (!baseline) {
       throw new Error(`NFR ${nfrId} not found in ground truth corpus`);
@@ -215,6 +233,10 @@ export class NFRTestGenerator {
     const tolerance = target.tolerance ?? baseline.tolerance;
     const targetValue = target.targetValue;
     const baselineValue = target.baseline ?? baseline.baseline;
+    const iterations = generationOptions.iterations ?? 100;
+    const confidenceLevel = generationOptions.confidenceLevel ?? 0.95;
+    const includeGroundTruth = generationOptions.includeGroundTruth ?? true;
+    this.validatePerformanceTarget(target, baselineValue, tolerance, iterations, confidenceLevel);
 
     // Calculate tolerance bounds
     const lowerBound = baselineValue * (1 - tolerance / 100);
@@ -226,24 +248,24 @@ export class NFRTestGenerator {
     };
 
     return `
-  describe('${nfrId}: ${baseline.description}', () => {
-    it('should complete in <${targetValue}${target.unit} (${percentile}th percentile)', async () => {
+  describe(${this.codeString(`${nfrId}: ${baseline.description}`)}, () => {
+    it(${this.codeString(`should complete in <${targetValue}${target.unit} (${percentile}th percentile)`)}, async () => {
       const profiler = new PerformanceProfiler({
         warmupIterations: 10,
         filterOutliers: true,
-        confidenceLevel: 0.95
+        confidenceLevel: ${confidenceLevel}
       });
 
-      // Simulate workload for ${nfrId}
+      // Simulate workload for ${this.commentText(nfrId)}
       const result = await profiler.measureAsync(
         async () => {
           // TODO: Replace with actual component under test
-          await simulateWorkload('${nfrId}');
+          await simulateWorkload(${this.codeString(nfrId)});
         },
-        100
+        ${iterations}
       );
 
-      // Ground truth baseline: ${baselineValue}${target.unit} (±${tolerance}%)
+${includeGroundTruth ? `      // Ground truth baseline: ${baselineValue}${this.commentText(target.unit)} (±${tolerance}%)\n` : ''}
       expect(result.p${percentile}).toBeLessThan(${targetValue});
 
 ${tolerance > 0 ? `      // Baseline validation (allow ${tolerance}% deviation)
@@ -251,7 +273,7 @@ ${tolerance > 0 ? `      // Baseline validation (allow ${tolerance}% deviation)
       expect(result.p${percentile}).toBeLessThan(${formatNum(upperBound)});
 ` : ''}      // Statistical confidence
       expect(result.confidenceInterval[0]).toBeLessThan(${targetValue});
-      expect(result.iterations).toBe(100);
+      expect(result.iterations).toBe(${iterations});
     }, 120000); // 2 minute timeout
   });
 `;
@@ -275,23 +297,32 @@ ${tolerance > 0 ? `      // Baseline validation (allow ${tolerance}% deviation)
 
     const sampleSize = target.sampleSize ?? 1000;
     const expectedAccuracy = target.expectedAccuracy;
+    this.validateAccuracyTarget(target, sampleSize);
     const maxErrors = Math.floor(sampleSize * (1 - expectedAccuracy));
 
     return `
-  describe('${nfrId}: ${baseline.description}', () => {
-    it('should maintain ${(expectedAccuracy * 100).toFixed(1)}% accuracy on validation corpus', async () => {
-      // Load ground truth corpus for ${nfrId}
-      const corpus = await loadValidationCorpus('${nfrId}');
+  describe(${this.codeString(`${nfrId}: ${baseline.description}`)}, () => {
+    it(${this.codeString(`should maintain ${(expectedAccuracy * 100).toFixed(1)}% accuracy on validation corpus`)}, async () => {
+      // Load ground truth corpus for ${this.commentText(nfrId)}
+      const corpus = await loadValidationCorpus(${this.codeString(nfrId)});
       const samples = corpus.getSamples(${sampleSize});
 
       let correctPredictions = 0;
       let falsePositives = 0;
       let falseNegatives = 0;
+      let actualPositives = 0;
+      let actualNegatives = 0;
 
       // Run validation on each sample
       for (const sample of samples) {
         const prediction = await validateSample(sample);
         const groundTruth = sample.label;
+
+        if (groundTruth === true) {
+          actualPositives++;
+        } else if (groundTruth === false) {
+          actualNegatives++;
+        }
 
         if (prediction === groundTruth) {
           correctPredictions++;
@@ -311,10 +342,12 @@ ${tolerance > 0 ? `      // Baseline validation (allow ${tolerance}% deviation)
       expect(samples.length - correctPredictions).toBeLessThanOrEqual(${maxErrors});
 
 ${target.falsePositiveRate !== undefined ? `      // False positive rate target: ${(target.falsePositiveRate * 100).toFixed(1)}%
-      const fpRate = falsePositives / samples.length;
+      expect(actualNegatives).toBeGreaterThan(0);
+      const fpRate = falsePositives / actualNegatives;
       expect(fpRate).toBeLessThanOrEqual(${target.falsePositiveRate});
 ` : ''}${target.falseNegativeRate !== undefined ? `      // False negative rate target: ${(target.falseNegativeRate * 100).toFixed(1)}%
-      const fnRate = falseNegatives / samples.length;
+      expect(actualPositives).toBeGreaterThan(0);
+      const fnRate = falseNegatives / actualPositives;
       expect(fnRate).toBeLessThanOrEqual(${target.falseNegativeRate});
 ` : ''}    }, 60000); // 1 minute timeout
   });
@@ -341,11 +374,12 @@ ${target.falsePositiveRate !== undefined ? `      // False positive rate target:
     const retryCount = target.retryCount ?? 3;
     const timeoutMs = target.timeoutMs ?? 30000;
     const testRuns = 100;
+    this.validateReliabilityTarget(target, retryCount, timeoutMs);
     const minSuccesses = Math.floor(testRuns * successRate);
 
     return `
-  describe('${nfrId}: ${baseline.description}', () => {
-    it('should maintain ${(successRate * 100).toFixed(1)}% success rate', async () => {
+  describe(${this.codeString(`${nfrId}: ${baseline.description}`)}, () => {
+    it(${this.codeString(`should maintain ${(successRate * 100).toFixed(1)}% success rate`)}, async () => {
       let successCount = 0;
       let failureCount = 0;
       const testRuns = ${testRuns};
@@ -356,7 +390,7 @@ ${target.falsePositiveRate !== undefined ? `      // False positive rate target:
           await executeOperationWithRetry(
             async () => {
               // TODO: Replace with actual operation
-              await performOperation('${nfrId}');
+              await performOperation(${this.codeString(nfrId)});
             },
             { maxRetries: ${retryCount}, timeoutMs: ${timeoutMs} }
           );
@@ -435,15 +469,25 @@ ${target.falsePositiveRate !== undefined ? `      // False positive rate target:
    * Merge user options with defaults
    * @private
    */
-  private mergeOptions(options?: GenerateOptions): Required<GenerateOptions> {
-    return {
+  private mergeOptions(options?: GenerateOptions): ResolvedGenerateOptions {
+    const merged: ResolvedGenerateOptions = {
       includeComments: options?.includeComments ?? true,
       includeGroundTruth: options?.includeGroundTruth ?? true,
       strictMode: options?.strictMode ?? false,
-      tolerance: options?.tolerance ?? 10,
+      tolerance: options?.tolerance,
       iterations: options?.iterations ?? 100,
       confidenceLevel: options?.confidenceLevel ?? 0.95,
     };
+    if (merged.tolerance !== undefined && (!Number.isFinite(merged.tolerance) || merged.tolerance < 0)) {
+      throw new Error('Tolerance must be a non-negative finite number');
+    }
+    if (!Number.isInteger(merged.iterations) || merged.iterations <= 0) {
+      throw new Error('Iterations must be a positive integer');
+    }
+    if (!Number.isFinite(merged.confidenceLevel) || merged.confidenceLevel <= 0 || merged.confidenceLevel >= 1) {
+      throw new Error('Confidence level must be between 0 and 1');
+    }
+    return merged;
   }
 
   /**
@@ -495,16 +539,12 @@ ${target.falsePositiveRate !== undefined ? `      // False positive rate target:
    * Generate generic test for non-standard NFR categories
    * @private
    */
-  private generateGenericTest(nfrId: string, baseline: NFRBaseline, _options: Required<GenerateOptions>): string {
+  private generateGenericTest(nfrId: string, baseline: NFRBaseline, _options: ResolvedGenerateOptions): string {
     return `
-  describe('${nfrId}: ${baseline.description}', () => {
-    it('should meet NFR target: ${baseline.target} ${baseline.unit}', async () => {
-      // TODO: Implement test logic for ${nfrId}
-      // Category: ${baseline.category}
-      // Measurement method: ${baseline.measurementMethod}
-
-      expect(true).toBe(true); // Placeholder assertion
-    });
+  describe(${this.codeString(`${nfrId}: ${baseline.description}`)}, () => {
+    // Category: ${this.commentText(baseline.category)}
+    // Measurement method: ${this.commentText(baseline.measurementMethod)}
+    it.todo(${this.codeString(`implement measurement for target ${baseline.target} ${baseline.unit}`)});
   });
 `;
   }
@@ -513,7 +553,7 @@ ${target.falsePositiveRate !== undefined ? `      // False positive rate target:
    * Assemble complete test file from components
    * @private
    */
-  private assembleTestFile(imports: string, testCases: string[], options: Required<GenerateOptions>): string {
+  private assembleTestFile(imports: string, testCases: string[], options: ResolvedGenerateOptions): string {
     const header = options.includeComments ? this.generateFileHeader() : '';
     const footer = options.includeComments ? this.generateFileFooter() : '';
 
@@ -534,8 +574,8 @@ ${footer}`;
  * Auto-generated NFR Acceptance Tests
  *
  * Generated by: NFRTestGenerator
- * Corpus version: ${this.corpus.version}
- * Last updated: ${this.corpus.lastUpdated}
+ * Corpus version: ${this.commentText(this.corpus.version)}
+ * Last updated: ${this.commentText(this.corpus.lastUpdated)}
  *
  * DO NOT EDIT MANUALLY
  * Regenerate using: npm run generate-nfr-tests
@@ -553,5 +593,65 @@ ${footer}`;
 // Helper functions (to be implemented)
 // See: test/helpers/ for implementation examples
 `;
+  }
+
+  private codeString(value: string): string {
+    return JSON.stringify(value)
+      .replace(/\u2028/g, '\\u2028')
+      .replace(/\u2029/g, '\\u2029');
+  }
+
+  private commentText(value: string): string {
+    return value
+      .replace(/\*\//g, '*\\/')
+      .replace(/[\r\n\u2028\u2029]+/g, ' ');
+  }
+
+  private validatePerformanceTarget(
+    target: PerformanceTarget,
+    baselineValue: number,
+    tolerance: number,
+    iterations: number,
+    confidenceLevel: number
+  ): void {
+    const percentile = target.percentile ?? 95;
+    if (percentile !== 95 && percentile !== 99) {
+      throw new Error('Performance percentile must be 95 or 99');
+    }
+    if (!Number.isFinite(target.targetValue) || !Number.isFinite(baselineValue)) {
+      throw new Error('Performance target and baseline must be finite');
+    }
+    if (!Number.isFinite(tolerance) || tolerance < 0) {
+      throw new Error('Tolerance must be a non-negative finite number');
+    }
+    if (!Number.isInteger(iterations) || iterations <= 0) {
+      throw new Error('Iterations must be a positive integer');
+    }
+    if (!Number.isFinite(confidenceLevel) || confidenceLevel <= 0 || confidenceLevel >= 1) {
+      throw new Error('Confidence level must be between 0 and 1');
+    }
+  }
+
+  private validateAccuracyTarget(target: AccuracyTarget, sampleSize: number): void {
+    const rates = [target.expectedAccuracy, target.falsePositiveRate, target.falseNegativeRate]
+      .filter((rate): rate is number => rate !== undefined);
+    if (rates.some(rate => !Number.isFinite(rate) || rate < 0 || rate > 1)) {
+      throw new Error('Accuracy rates must be between 0 and 1');
+    }
+    if (!Number.isInteger(sampleSize) || sampleSize <= 0) {
+      throw new Error('Sample size must be a positive integer');
+    }
+  }
+
+  private validateReliabilityTarget(target: ReliabilityTarget, retryCount: number, timeoutMs: number): void {
+    if (!Number.isFinite(target.successRate) || target.successRate < 0 || target.successRate > 1) {
+      throw new Error('Success rate must be between 0 and 1');
+    }
+    if (!Number.isInteger(retryCount) || retryCount < 0) {
+      throw new Error('Retry count must be a non-negative integer');
+    }
+    if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) {
+      throw new Error('Timeout must be a positive integer');
+    }
   }
 }

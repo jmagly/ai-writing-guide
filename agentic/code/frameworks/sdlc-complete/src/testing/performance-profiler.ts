@@ -15,6 +15,8 @@
  * @module testing/performance-profiler
  */
 
+import { studentTCriticalValue } from './statistical-distributions.js';
+
 /**
  * Performance measurement result with statistical analysis
  */
@@ -33,8 +35,10 @@ export interface PerformanceResult {
   max: number;
   /** Standard deviation */
   stddev: number;
-  /** 95% confidence interval [lower, upper] bounds */
+  /** Configured confidence interval [lower, upper] bounds */
   confidenceInterval: [number, number];
+  /** Confidence level used for the interval */
+  confidenceLevel?: number;
   /** Raw sample measurements (milliseconds) */
   samples: number[];
   /** Number of iterations performed */
@@ -89,10 +93,16 @@ export class PerformanceProfiler {
   private options: Required<ProfilerOptions>;
 
   constructor(options: ProfilerOptions = {}) {
+    const warmupIterations = options.warmupIterations ?? 10;
+    const confidenceLevel = options.confidenceLevel ?? 0.95;
+    if (!Number.isInteger(warmupIterations) || warmupIterations < 0) {
+      throw new Error('Warmup iterations must be a non-negative integer');
+    }
+    this.validateConfidence(confidenceLevel);
     this.options = {
-      warmupIterations: options.warmupIterations ?? 10,
+      warmupIterations,
       filterOutliers: options.filterOutliers ?? false,
-      confidenceLevel: options.confidenceLevel ?? 0.95,
+      confidenceLevel,
     };
   }
 
@@ -104,9 +114,7 @@ export class PerformanceProfiler {
    * @returns Performance measurement results with statistics
    */
   measureSync(fn: () => void, iterations: number): PerformanceResult {
-    if (iterations <= 0) {
-      throw new Error('Iterations must be positive');
-    }
+    this.validateIterations(iterations);
 
     // Warmup phase to stabilize JIT compilation
     for (let i = 0; i < this.options.warmupIterations; i++) {
@@ -133,9 +141,7 @@ export class PerformanceProfiler {
    * @returns Performance measurement results with statistics
    */
   async measureAsync(fn: () => Promise<void>, iterations: number): Promise<PerformanceResult> {
-    if (iterations <= 0) {
-      throw new Error('Iterations must be positive');
-    }
+    this.validateIterations(iterations);
 
     // Warmup phase
     for (let i = 0; i < this.options.warmupIterations; i++) {
@@ -165,7 +171,8 @@ export class PerformanceProfiler {
     if (samples.length === 0) {
       throw new Error('Cannot calculate percentile of empty sample set');
     }
-    if (percentile < 0 || percentile > 100) {
+    this.validateSamples(samples);
+    if (!Number.isFinite(percentile) || percentile < 0 || percentile > 100) {
       throw new Error('Percentile must be between 0 and 100');
     }
 
@@ -195,9 +202,8 @@ export class PerformanceProfiler {
     if (samples.length < 2) {
       throw new Error('Need at least 2 samples to calculate confidence interval');
     }
-    if (confidence <= 0 || confidence >= 1) {
-      throw new Error('Confidence level must be between 0 and 1');
-    }
+    this.validateSamples(samples);
+    this.validateConfidence(confidence);
 
     const n = samples.length;
     const mean = this.calculateMean(samples);
@@ -270,7 +276,8 @@ export class PerformanceProfiler {
       lines.push(`  Min:            ${result.min.toFixed(3)} ms`);
       lines.push(`  Max:            ${result.max.toFixed(3)} ms`);
       lines.push(`  Std Dev:        ${result.stddev.toFixed(3)} ms`);
-      lines.push(`  95% CI:         [${result.confidenceInterval[0].toFixed(3)}, ${result.confidenceInterval[1].toFixed(3)}] ms`);
+      const confidence = (result.confidenceLevel ?? 0.95) * 100;
+      lines.push(`  ${confidence.toFixed(1)}% CI:       [${result.confidenceInterval[0].toFixed(3)}, ${result.confidenceInterval[1].toFixed(3)}] ms`);
 
       if (result.outliersRemoved !== undefined && result.outliersRemoved > 0) {
         lines.push(`  Outliers:       ${result.outliersRemoved} removed`);
@@ -306,7 +313,9 @@ export class PerformanceProfiler {
     const p99 = this.calculatePercentile(samples, 99);
     const min = Math.min(...samples);
     const max = Math.max(...samples);
-    const confidenceInterval = this.calculateConfidenceInterval(samples, this.options.confidenceLevel);
+    const confidenceInterval: [number, number] = samples.length === 1
+      ? [mean, mean]
+      : this.calculateConfidenceInterval(samples, this.options.confidenceLevel);
 
     return {
       mean,
@@ -317,6 +326,7 @@ export class PerformanceProfiler {
       max,
       stddev,
       confidenceInterval,
+      confidenceLevel: this.options.confidenceLevel,
       samples: rawSamples, // Return original samples
       iterations,
       outliersRemoved: outliersRemoved > 0 ? outliersRemoved : undefined,
@@ -365,42 +375,35 @@ export class PerformanceProfiler {
    * @private
    */
   private calculateStdDev(samples: number[], mean: number): number {
+    if (samples.length === 1) return 0;
     const variance = samples.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (samples.length - 1);
     return Math.sqrt(variance);
   }
 
   /**
    * Get critical t-value for confidence interval
-   * Uses approximation for large sample sizes
    *
    * @private
    */
   private getTCriticalValue(degreesOfFreedom: number, confidence: number): number {
-    // For large samples (df >= 30), use normal approximation
-    if (degreesOfFreedom >= 30) {
-      // Z-scores for common confidence levels
-      const zScores: Record<string, number> = {
-        '0.90': 1.645,
-        '0.95': 1.960,
-        '0.99': 2.576,
-      };
-      return zScores[confidence.toFixed(2)] ?? 1.960;
+    return studentTCriticalValue(degreesOfFreedom, confidence);
+  }
+
+  private validateIterations(iterations: number): void {
+    if (!Number.isInteger(iterations) || iterations <= 0) {
+      throw new Error('Iterations must be a positive integer');
     }
+  }
 
-    // T-table for small samples (df < 30)
-    // Simplified lookup table for 95% confidence
-    const tTable: Record<number, number> = {
-      1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571,
-      6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
-      15: 2.131, 20: 2.086, 25: 2.060, 29: 2.045,
-    };
+  private validateConfidence(confidence: number): void {
+    if (!Number.isFinite(confidence) || confidence <= 0 || confidence >= 1) {
+      throw new Error('Confidence level must be between 0 and 1');
+    }
+  }
 
-    // Find closest df in table
-    const availableDf = Object.keys(tTable).map(Number);
-    const closestDf = availableDf.reduce((prev, curr) =>
-      Math.abs(curr - degreesOfFreedom) < Math.abs(prev - degreesOfFreedom) ? curr : prev
-    );
-
-    return tTable[closestDf];
+  private validateSamples(samples: number[]): void {
+    if (samples.some(sample => !Number.isFinite(sample))) {
+      throw new Error('Samples must contain only finite numbers');
+    }
   }
 }

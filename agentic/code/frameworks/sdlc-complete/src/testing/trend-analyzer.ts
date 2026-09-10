@@ -14,6 +14,8 @@
  * @module testing/trend-analyzer
  */
 
+import { studentTTwoTailedPValue } from './statistical-distributions.js';
+
 /**
  * Time-series data point
  */
@@ -106,8 +108,9 @@ export class TrendAnalyzer {
    * @throws {Error} If windowSize is invalid
    */
   calculateMovingAverage(samples: number[], windowSize: number): number[] {
-    if (windowSize <= 0) {
-      throw new Error('Window size must be positive');
+    this.validateSamples(samples);
+    if (!Number.isInteger(windowSize) || windowSize <= 0) {
+      throw new Error('Window size must be a positive integer');
     }
     if (windowSize > samples.length) {
       throw new Error('Window size cannot exceed sample count');
@@ -141,7 +144,8 @@ export class TrendAnalyzer {
    * @throws {Error} If alpha is out of range
    */
   calculateExponentialMovingAverage(samples: number[], alpha: number = 0.3): number[] {
-    if (alpha <= 0 || alpha > 1) {
+    this.validateSamples(samples);
+    if (!Number.isFinite(alpha) || alpha <= 0 || alpha > 1) {
       throw new Error('Alpha must be between 0 and 1');
     }
     if (samples.length === 0) {
@@ -167,6 +171,7 @@ export class TrendAnalyzer {
    * @throws {Error} If method is invalid
    */
   detectOutliers(samples: number[], method: OutlierMethod = 'iqr'): boolean[] {
+    this.validateSamples(samples);
     if (samples.length === 0) {
       return [];
     }
@@ -190,6 +195,7 @@ export class TrendAnalyzer {
    * @throws {Error} If insufficient data points
    */
   fitTrendLine(data: TimeSeries): TrendLine {
+    this.validateTimeSeries(data);
     if (data.length < 2) {
       throw new Error('Need at least 2 data points to fit trend line');
     }
@@ -248,10 +254,11 @@ export class TrendAnalyzer {
    * @throws {Error} If insufficient data or invalid horizon
    */
   forecastValue(data: TimeSeries, horizon: number): ForecastResult {
+    this.validateTimeSeries(data);
     if (data.length < 2) {
       throw new Error('Need at least 2 data points to forecast');
     }
-    if (horizon < 0) {
+    if (!Number.isFinite(horizon) || horizon < 0) {
       throw new Error('Horizon must be non-negative');
     }
 
@@ -295,15 +302,19 @@ export class TrendAnalyzer {
    * @returns Change point if detected, null otherwise
    */
   detectChangePoint(data: TimeSeries, minSegmentSize: number = 5): ChangePoint | null {
+    this.validateTimeSeries(data);
+    if (!Number.isInteger(minSegmentSize) || minSegmentSize <= 0) {
+      throw new Error('Minimum segment size must be a positive integer');
+    }
     if (data.length < minSegmentSize * 2) {
       return null; // Not enough data
     }
 
-    let maxSignificance = 0;
+    let lowestPValue = 1;
     let bestChangePoint: ChangePoint | null = null;
 
     // Try each possible split point
-    for (let i = minSegmentSize; i < data.length - minSegmentSize; i++) {
+    for (let i = minSegmentSize; i <= data.length - minSegmentSize; i++) {
       const before = data.slice(0, i).map(p => p.value);
       const after = data.slice(i).map(p => p.value);
 
@@ -320,29 +331,33 @@ export class TrendAnalyzer {
       );
 
       if (pooledStd === 0) {
-        // Handle constant values - use simple mean difference
-        const tStat = Math.abs(meanAfter - meanBefore) * 10; // Scale for detection
-        if (tStat > maxSignificance) {
-          maxSignificance = tStat;
+        if (meanAfter !== meanBefore && lowestPValue > 0) {
+          lowestPValue = 0;
           bestChangePoint = {
             index: i,
             timestamp: data[i].timestamp,
             meanBefore,
             meanAfter,
-            significance: 0.01, // Highly significant
+            significance: 0,
           };
         }
         continue;
       }
 
       const tStat = Math.abs(meanAfter - meanBefore) / pooledStd;
+      const beforeVarianceTerm = Math.pow(stdBefore, 2) / before.length;
+      const afterVarianceTerm = Math.pow(stdAfter, 2) / after.length;
+      const degreesOfFreedomNumerator = Math.pow(beforeVarianceTerm + afterVarianceTerm, 2);
+      const degreesOfFreedomDenominator =
+        Math.pow(beforeVarianceTerm, 2) / (before.length - 1) +
+        Math.pow(afterVarianceTerm, 2) / (after.length - 1);
+      const degreesOfFreedom = degreesOfFreedomDenominator === 0
+        ? before.length + after.length - 2
+        : degreesOfFreedomNumerator / degreesOfFreedomDenominator;
+      const significance = studentTTwoTailedPValue(tStat, degreesOfFreedom);
 
-      // Convert t-statistic to rough p-value significance
-      // (simplified, not exact)
-      const significance = Math.min(1, 1 / (1 + tStat));
-
-      if (tStat > maxSignificance) {
-        maxSignificance = tStat;
+      if (significance < lowestPValue) {
+        lowestPValue = significance;
         bestChangePoint = {
           index: i,
           timestamp: data[i].timestamp,
@@ -353,12 +368,26 @@ export class TrendAnalyzer {
       }
     }
 
-    // Only return if change is significant (t-stat > 2.0 roughly p < 0.05)
-    if (maxSignificance > 2.0 && bestChangePoint) {
-      return bestChangePoint;
+    if (!bestChangePoint || lowestPValue >= 0.05) {
+      return null;
     }
 
-    return null;
+    // A smooth linear trend can also make the means on either side of a split
+    // differ significantly. Prefer the linear model when it explains the data
+    // at least as well as the two-level step model.
+    const stepResidual = data.reduce((sum, point, index) => {
+      const expected = index < bestChangePoint!.index
+        ? bestChangePoint!.meanBefore
+        : bestChangePoint!.meanAfter;
+      return sum + Math.pow(point.value - expected, 2);
+    }, 0);
+    const trend = this.fitTrendLine(data);
+    const linearResidual = data.reduce((sum, point) => {
+      const expected = trend.slope * point.timestamp + trend.intercept;
+      return sum + Math.pow(point.value - expected, 2);
+    }, 0);
+
+    return linearResidual <= stepResidual ? null : bestChangePoint;
   }
 
   /**
@@ -388,6 +417,18 @@ export class TrendAnalyzer {
       return 0;
     }
     return samples.reduce((sum, val) => sum + val, 0) / samples.length;
+  }
+
+  private validateSamples(samples: number[]): void {
+    if (samples.some(sample => !Number.isFinite(sample))) {
+      throw new Error('Samples must contain only finite numbers');
+    }
+  }
+
+  private validateTimeSeries(data: TimeSeries): void {
+    if (data.some(point => !Number.isFinite(point.timestamp) || !Number.isFinite(point.value))) {
+      throw new Error('Time series must contain only finite timestamps and values');
+    }
   }
 
   /**

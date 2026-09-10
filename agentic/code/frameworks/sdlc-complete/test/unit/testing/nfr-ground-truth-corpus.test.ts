@@ -19,23 +19,21 @@ import {
 } from '../../../src/testing/nfr-ground-truth-corpus';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import * as os from 'os';
 
 describe('NFRGroundTruthCorpus', () => {
   let corpus: NFRGroundTruthCorpus;
   let testCorpusPath: string;
+  let testRoot: string;
 
-  beforeEach(() => {
-    testCorpusPath = path.join('/tmp', `test-corpus-${Date.now()}.json`);
+  beforeEach(async () => {
+    testRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'aiwg-nfr-corpus-'));
+    testCorpusPath = path.join(testRoot, 'corpus.json');
     corpus = new NFRGroundTruthCorpus(testCorpusPath);
   });
 
   afterEach(async () => {
-    // Clean up test files
-    try {
-      await fs.unlink(testCorpusPath);
-    } catch {
-      // Ignore if file doesn't exist
-    }
+    await fs.rm(testRoot, { recursive: true, force: true });
   });
 
   describe('Constructor', () => {
@@ -148,6 +146,24 @@ describe('NFRGroundTruthCorpus', () => {
       const removedNonExistent = corpus.removeEntry('NFR-PERF-001', 'non-existent-id');
       expect(removedNonExistent).toBe(false);
     });
+
+    it('should reject invalid ground-truth entry data', () => {
+      const metadata = createMetadata();
+      expect(() => corpus.addEntry('', createMeasurement(1), metadata)).toThrow('NFR ID must not be empty');
+      expect(() => corpus.addEntry('NFR-BAD', createMeasurement(Number.NaN), metadata)).toThrow(
+        'Measurement value must be finite'
+      );
+      expect(() => corpus.addEntry('NFR-BAD', { value: 1, unit: 'ms', confidence: 1.1 }, metadata)).toThrow(
+        'Measurement confidence must be between 0 and 1'
+      );
+      expect(() => corpus.addEntry('NFR-BAD', {
+        value: 1,
+        unit: 'ms',
+        confidence: 1,
+        samples: [1, Number.POSITIVE_INFINITY],
+      }, metadata)).toThrow('Measurement samples must contain only finite numbers');
+      expect(corpus.getTotalEntries()).toBe(0);
+    });
   });
 
   describe('Statistical Queries', () => {
@@ -221,7 +237,7 @@ describe('NFRGroundTruthCorpus', () => {
       }).toThrow('No ground truth entries found for NFR: NFR-NONEXISTENT');
 
       // Invalid percentile values
-      const invalidPercentiles = [-1, 101];
+      const invalidPercentiles = [-1, 101, Number.NaN, Number.POSITIVE_INFINITY];
       for (const value of invalidPercentiles) {
         expect(() => {
           corpus.getPercentile('NFR-PERF-001', value);
@@ -292,6 +308,41 @@ describe('NFRGroundTruthCorpus', () => {
       expect(() => {
         corpus.validateMeasurement('NFR-NONEXISTENT', 100);
       }).toThrow('No ground truth entries found for NFR: NFR-NONEXISTENT');
+    });
+
+    it('should define zero and negative baseline deviation without dividing by zero', () => {
+      const metadata: Metadata = {
+        environment: 'test',
+        system: 'linux-x64',
+        nodeVersion: 'v20.0.0',
+      };
+      corpus.addEntry('NFR-ZERO', { value: 0, unit: 'errors', confidence: 1 }, metadata);
+      corpus.addEntry('NFR-NEGATIVE', { value: -10, unit: 'degrees', confidence: 1 }, metadata);
+
+      expect(corpus.validateMeasurement('NFR-ZERO', 0)).toMatchObject({
+        passes: true,
+        deviation: 0,
+        withinTolerance: true,
+      });
+      expect(corpus.validateMeasurement('NFR-ZERO', 1)).toMatchObject({
+        passes: false,
+        deviation: Number.POSITIVE_INFINITY,
+        withinTolerance: false,
+      });
+      expect(corpus.validateMeasurement('NFR-NEGATIVE', -11).deviation).toBeCloseTo(10);
+    });
+
+    it('should reject non-finite measurements and invalid tolerances', () => {
+      for (const value of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+        expect(() => corpus.validateMeasurement('NFR-PERF-001', value)).toThrow(
+          'Measurement value must be finite'
+        );
+      }
+      for (const tolerance of [-0.1, Number.NaN, Number.POSITIVE_INFINITY]) {
+        expect(() => corpus.validateMeasurement('NFR-PERF-001', 50, tolerance)).toThrow(
+          'Tolerance must be a non-negative finite number'
+        );
+      }
     });
   });
 
@@ -442,13 +493,13 @@ describe('NFRGroundTruthCorpus', () => {
     });
 
     it('should handle loading non-existent file', async () => {
-      const newCorpus = new NFRGroundTruthCorpus('/tmp/non-existent.json');
+      const newCorpus = new NFRGroundTruthCorpus(path.join(testRoot, 'does-not-exist.json'));
       await expect(newCorpus.load()).resolves.not.toThrow();
       expect(newCorpus.getAllNFRs()).toEqual([]);
     });
 
     it('should create directory if it does not exist', async () => {
-      const deepPath = path.join('/tmp', `test-${Date.now()}`, 'nested', 'corpus.json');
+      const deepPath = path.join(testRoot, 'deep', 'nested', 'corpus.json');
       const deepCorpus = new NFRGroundTruthCorpus(deepPath);
 
       const measurement: Measurement = {
@@ -468,8 +519,6 @@ describe('NFRGroundTruthCorpus', () => {
       const fileExists = await fs.access(deepPath).then(() => true).catch(() => false);
       expect(fileExists).toBe(true);
 
-      // Cleanup
-      await fs.rm(path.dirname(path.dirname(deepPath)), { recursive: true, force: true });
     });
 
     it('should preserve all entry fields and include version/timestamp', async () => {

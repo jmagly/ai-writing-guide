@@ -185,6 +185,7 @@ export class NFRGroundTruthCorpus {
 
       this.corpus.clear();
       for (const entry of corpusData.entries) {
+        this.validateEntryInput(entry.nfrId, entry.measurement);
         if (!this.corpus.has(entry.nfrId)) {
           this.corpus.set(entry.nfrId, []);
         }
@@ -241,6 +242,7 @@ export class NFRGroundTruthCorpus {
     category: NFRCategory = 'Performance',
     verified: boolean = false
   ): void {
+    this.validateEntryInput(nfrId, measurement);
     const entry: GroundTruthEntry = {
       id: randomUUID(),
       nfrId,
@@ -359,7 +361,17 @@ export class NFRGroundTruthCorpus {
     const stats = this.getBaselineStats(nfrId);
     const actualTolerance = tolerance ?? this.defaultTolerance;
 
-    const deviation = Math.abs(value - stats.mean) / stats.mean;
+    if (!Number.isFinite(value)) {
+      throw new Error('Measurement value must be finite');
+    }
+    if (!Number.isFinite(actualTolerance) || actualTolerance < 0) {
+      throw new Error('Tolerance must be a non-negative finite number');
+    }
+
+    const difference = Math.abs(value - stats.mean);
+    const deviation = stats.mean === 0
+      ? (difference === 0 ? 0 : Number.POSITIVE_INFINITY)
+      : difference / Math.abs(stats.mean);
     const withinTolerance = deviation <= actualTolerance;
 
     return {
@@ -385,7 +397,7 @@ export class NFRGroundTruthCorpus {
       throw new Error(`No ground truth entries found for NFR: ${nfrId}`);
     }
 
-    if (percentile < 0 || percentile > 100) {
+    if (!Number.isFinite(percentile) || percentile < 0 || percentile > 100) {
       throw new Error('Percentile must be between 0 and 100');
     }
 
@@ -495,5 +507,20 @@ export class NFRGroundTruthCorpus {
     const weight = index - lower;
 
     return sortedValues[lower] * (1 - weight) + sortedValues[upper] * weight;
+  }
+
+  private validateEntryInput(nfrId: string, measurement: Measurement): void {
+    if (typeof nfrId !== 'string' || !nfrId.trim()) {
+      throw new Error('NFR ID must not be empty');
+    }
+    if (!measurement || !Number.isFinite(measurement.value)) {
+      throw new Error('Measurement value must be finite');
+    }
+    if (!Number.isFinite(measurement.confidence) || measurement.confidence < 0 || measurement.confidence > 1) {
+      throw new Error('Measurement confidence must be between 0 and 1');
+    }
+    if (measurement.samples?.some(sample => !Number.isFinite(sample))) {
+      throw new Error('Measurement samples must contain only finite numbers');
+    }
   }
 }

@@ -45,8 +45,11 @@ describe('TrendAnalyzer', () => {
 
     it('should throw errors for invalid window sizes', () => {
       const testCases = [
-        { windowSize: 0, errorMsg: 'Window size must be positive' },
-        { windowSize: -1, errorMsg: 'Window size must be positive' },
+        { windowSize: 0, errorMsg: 'Window size must be a positive integer' },
+        { windowSize: -1, errorMsg: 'Window size must be a positive integer' },
+        { windowSize: 1.5, errorMsg: 'Window size must be a positive integer' },
+        { windowSize: Number.NaN, errorMsg: 'Window size must be a positive integer' },
+        { windowSize: Number.POSITIVE_INFINITY, errorMsg: 'Window size must be a positive integer' },
         { windowSize: 5, errorMsg: 'Window size cannot exceed sample count' },
       ];
 
@@ -74,6 +77,8 @@ describe('TrendAnalyzer', () => {
       const testCases = [
         { alpha: 0, errorMsg: 'Alpha must be between 0 and 1' },
         { alpha: 1.5, errorMsg: 'Alpha must be between 0 and 1' },
+        { alpha: Number.NaN, errorMsg: 'Alpha must be between 0 and 1' },
+        { alpha: Number.POSITIVE_INFINITY, errorMsg: 'Alpha must be between 0 and 1' },
       ];
 
       for (const { alpha, errorMsg } of testCases) {
@@ -115,6 +120,14 @@ describe('TrendAnalyzer', () => {
 
     it('should throw error for invalid method', () => {
       expect(() => analyzer.detectOutliers([1, 2, 3], 'invalid' as any)).toThrow('Invalid outlier detection method');
+    });
+
+    it('should reject non-finite samples before outlier analysis', () => {
+      for (const value of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+        expect(() => analyzer.detectOutliers([1, value, 3])).toThrow(
+          'Samples must contain only finite numbers'
+        );
+      }
     });
 
     it('should handle single value (no outliers)', () => {
@@ -248,6 +261,8 @@ describe('TrendAnalyzer', () => {
       ];
 
       expect(() => analyzer.forecastValue(data, -1000)).toThrow('Horizon must be non-negative');
+      expect(() => analyzer.forecastValue(data, Number.NaN)).toThrow('Horizon must be non-negative');
+      expect(() => analyzer.forecastValue(data, Number.POSITIVE_INFINITY)).toThrow('Horizon must be non-negative');
     });
 
     it('should forecast zero horizon (current)', () => {
@@ -286,6 +301,13 @@ describe('TrendAnalyzer', () => {
       expect(changePoint).not.toBeNull();
       expect(changePoint!.meanBefore).toBeCloseTo(10, 1);
       expect(changePoint!.meanAfter).toBeCloseTo(50, 1);
+
+      const noisyStep = [9, 10, 11, 10, 10, 9, 19, 20, 21, 20, 20, 19]
+        .map((value, timestamp) => ({ timestamp, value }));
+      const noisyChange = analyzer.detectChangePoint(noisyStep, 5);
+      expect(noisyChange).not.toBeNull();
+      expect(noisyChange!.index).toBe(6);
+      expect(noisyChange!.significance).toBeCloseTo(5.431008975875784e-10, 12);
     });
 
     it('should return null for insufficient data', () => {
@@ -312,14 +334,13 @@ describe('TrendAnalyzer', () => {
     });
 
     it('should detect gradual trend vs sudden change', () => {
-      const gradual: TimeSeries = [];
-      for (let i = 0; i < 20; i++) {
-        gradual.push({ timestamp: i * 1000, value: 10 + i * 0.5 + Math.random() * 0.5 });
-      }
+      const gradual: TimeSeries = Array.from({ length: 20 }, (_, i) => ({
+        timestamp: i * 1000,
+        value: 10 + i * 0.5,
+      }));
 
       const changePoint = analyzer.detectChangePoint(gradual);
-      expect(changePoint === null || changePoint !== null).toBe(true); // Gradual trend, not sudden change
-      // Gradual trend may or may not trigger depending on noise
+      expect(changePoint).toBeNull();
     });
 
     it('should respect minimum segment size', () => {
@@ -334,10 +355,45 @@ describe('TrendAnalyzer', () => {
 
       const changePoint = analyzer.detectChangePoint(data, 2);
       expect(changePoint).not.toBeNull(); // Should detect with minSegment=2
+      expect(changePoint!.index).toBe(3);
+
+      const exactBoundary: TimeSeries = [
+        ...Array.from({ length: 5 }, (_, i) => ({ timestamp: i, value: 0 })),
+        ...Array.from({ length: 5 }, (_, i) => ({ timestamp: i + 5, value: 0.01 })),
+      ];
+      const exactChange = analyzer.detectChangePoint(exactBoundary, 5);
+      expect(exactChange).not.toBeNull();
+      expect(exactChange!.index).toBe(5);
+      expect(exactChange!.significance).toBe(0);
+
+      for (const invalidSize of [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+        expect(() => analyzer.detectChangePoint(data, invalidSize)).toThrow(
+          'Minimum segment size must be a positive integer'
+        );
+      }
     });
   });
 
   describe('Edge Cases', () => {
+    it('should reject non-finite samples and time-series points', () => {
+      expect(() => analyzer.calculateMovingAverage([1, Number.NaN], 1)).toThrow(
+        'Samples must contain only finite numbers'
+      );
+      expect(() => analyzer.calculateExponentialMovingAverage([1, Number.POSITIVE_INFINITY])).toThrow(
+        'Samples must contain only finite numbers'
+      );
+      const invalidSeries = [
+        { timestamp: 0, value: 1 },
+        { timestamp: Number.NaN, value: 2 },
+      ];
+      expect(() => analyzer.fitTrendLine(invalidSeries)).toThrow(
+        'Time series must contain only finite timestamps and values'
+      );
+      expect(() => analyzer.detectChangePoint(invalidSeries, 1)).toThrow(
+        'Time series must contain only finite timestamps and values'
+      );
+    });
+
     it('should handle extreme value ranges', () => {
       const testCases = [
         {
@@ -400,7 +456,7 @@ describe('TrendAnalyzer', () => {
     it('should handle trend analysis on large time series', () => {
       const largeTimeSeries: TimeSeries = Array.from({ length: 5000 }, (_, i) => ({
         timestamp: i * 1000,
-        value: i + Math.random() * 10,
+        value: i + ((i * 17) % 11),
       }));
 
       const start = performance.now();
